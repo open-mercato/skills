@@ -16,7 +16,7 @@ Your job: implement the proposed change, prove it works, and stop. The next step
 
 ## Load pipeline config
 
-Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. This step uses `labels.enabled` (for the claim label) and `validation.commands` (for the gate below):
+Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. Right after loading the config, check for `.ai/agentic-overrides/apply-fix.md`; when present, apply it on top of these instructions — local rules win, but an override can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics. This step uses `labels.enabled` (for the claim label) and `validation.commands` (for the gate below):
 
 ```bash
 CONFIG=.ai/agentic.config.json

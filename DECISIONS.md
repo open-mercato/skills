@@ -24,9 +24,19 @@ All skills read a single per-repo config file, `.ai/agentic.config.json`, writte
 
 CI greps `skills/**` for tokens that would betray monorepo leakage: the `om-` prefix, Open Mercato references, a hard-coded base branch name, a hard-coded package manager, and upstream-only file conventions. The gate is scoped to `skills/**`; README, LICENSE, and this file may reference the upstream project.
 
+One token was initially banned and then deliberately unbanned: `AGENTS.md`. The ban guarded against leaked references to the upstream monorepo's root guidelines file, but AGENTS.md is an open standard and reading it is exactly how the skills pick up project specifics — including when installed into Open Mercato itself, which makes the collection a drop-in there with zero upstream changes. The gate now bans the upstream-specific concept ("Task Router") instead of the filename.
+
+## Project fit: AGENTS.md, SDLC.md, overrides
+
+Project-specific knowledge lives in three places, none of them inside the installed skills. Machine-readable settings go in `.ai/agentic.config.json`. Prose specifics (coding standards, architecture, conventions) go in the repo's own `AGENTS.md`/`CLAUDE.md`, which every skill reads before working; `setup-agent-pipeline` scaffolds a starter when none exists. Per-skill behavior changes go in `.ai/agentic-overrides/<skill-name>.md`, applied on top of the installed skill with local rules winning — the portable equivalent of skill inheritance, chosen over an `@`-include mechanism because include semantics differ across coding agents while "read this file and honor it" works in all of them. `setup-agent-pipeline` also generates `SDLC.md`, a human-readable description of the ticket flow the skills automate (stages, label state machine, QA gate, claim protocol), so the process is documented for people, not only encoded in skills.
+
+## Tracker abstraction
+
+Issue/PR state management defaults to GitHub via the `gh` CLI, called inline by the skills. The config's `tracker` field is the extension seam: a future provider (for example Linear) lands as ONE dedicated skill implementing the full set of state operations (list/read/create/close, comment, label, assign, review, merge, check status), selected by that field. One skill per provider rather than many micro-skills, to keep agent context small. v1 ships no provider other than GitHub; extracting the inline `gh` calls into a `tracker-github` skill is deliberately deferred until a second provider makes the indirection pay for itself.
+
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.
-- Issue trackers other than GitHub. `setup-agent-pipeline` is GitHub-only in v1.
+- Tracker providers other than GitHub (`tracker-linear` and friends), and the extraction of inline `gh` calls into a `tracker-github` provider skill. The seam (`tracker` config field + one-skill-per-provider contract) ships in v1; the providers do not.
 - Skills beyond the PR pipeline (module scaffolding, design-system review, integration testing). Those are product-specific upstream and were deliberately not extracted.
 - Automated sync from the upstream monorepo. Curation is manual.

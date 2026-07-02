@@ -18,7 +18,7 @@ Use this skill when the user wants a branch verified end to end and published on
 
 ## Configuration
 
-Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. The verification gates come from the config:
+Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. Right after loading the config, check for `.ai/agentic-overrides/check-and-commit.md`; when present, apply it on top of these instructions — local rules win, but an override can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics. The verification gates come from the config:
 
 ```bash
 jq -r '.validation.commands[]' .ai/agentic.config.json

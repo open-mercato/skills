@@ -34,7 +34,7 @@ LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
 QA_GATE=$(jq -r '.qaGate // false' "$CONFIG")
 ```
 
-Every label mutation below goes through the `label_exists` / `apply_label` guards from the same snippet. When `labels.enabled` is `false`, skip every label operation and note that in the closing issue comment.
+Every label mutation below goes through the `label_exists` / `apply_label` guards from the same snippet. When `labels.enabled` is `false`, skip every label operation and note that in the closing issue comment. Right after loading the config, check for `.ai/agentic-overrides/open-pr.md`; when present, apply it on top of these instructions — local rules win, but an override can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 ## Tools
 

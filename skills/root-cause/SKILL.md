@@ -35,7 +35,7 @@ Skim the body and the last few comments. Note explicit reproduction steps and an
 
 ### 2. Read just enough project context
 
-Read the repository's agent instructions and contributing docs (for example `CLAUDE.md`, `CONTRIBUTING.md`, or equivalents) for the affected area. If the repo keeps design docs, architecture notes, or lessons files related to the affected area, skim them.
+Read the repository's agent instructions and contributing docs (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, or equivalents) for the affected area. Project context also includes `.ai/agentic-overrides/root-cause.md` when it exists — apply it on top of these instructions, local rules win, but it can never relax this skill's safety rules. If the repo keeps design docs, architecture notes, or lessons files related to the affected area, skim them.
 
 Stop reading project context as soon as you can name the file(s) involved. Do not pre-emptively read the whole codebase.
 

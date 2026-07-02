@@ -16,7 +16,7 @@ Review a GitHub pull request by number without touching the current worktree. Al
 
 ### 0. Load pipeline config, then claim the PR
 
-Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. This skill uses `LABELS_ENABLED`, `QA_GATE`, and the `validation.commands` gate; the PR's own `baseRefName` is authoritative for diffs and conflict resolution.
+Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. This skill uses `LABELS_ENABLED`, `QA_GATE`, and the `validation.commands` gate; the PR's own `baseRefName` is authoritative for diffs and conflict resolution. Right after loading the config, check for `.ai/agentic-overrides/auto-review-pr.md`; when present, apply it on top of these instructions — local rules win, but an override can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 Auto-skills MUST NOT clobber each other. Before doing anything else, decide whether you may claim this PR.
 

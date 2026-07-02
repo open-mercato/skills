@@ -17,7 +17,7 @@ Resume an `auto-create-pr` run that did not finish in one go. Given a PR number,
 
 ### 0. Load pipeline config and claim the PR
 
-Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. This resolves `BASE_BRANCH`, `RUNS_DIR`, `LABELS_ENABLED`, `QA_GATE`, and the `validation.commands` gate used below.
+Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. This resolves `BASE_BRANCH`, `RUNS_DIR`, `LABELS_ENABLED`, `QA_GATE`, and the `validation.commands` gate used below. Right after loading the config, check for `.ai/agentic-overrides/auto-continue-pr.md`; when present, apply it on top of these instructions — local rules win, but an override can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 Auto-skills MUST NOT clobber each other. Before doing anything else, decide whether you may claim this PR.
 

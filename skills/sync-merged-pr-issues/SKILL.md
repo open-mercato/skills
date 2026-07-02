@@ -24,7 +24,7 @@ Maintenance skill. Walk a window of recent pull requests; where a PR authoritati
 
 ### 0. Load pipeline config and pre-flight
 
-Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. This resolves `BASE_BRANCH` (the configured base branch, with `"auto"` resolved from the repository's default branch) and `LABELS_ENABLED`.
+Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. This resolves `BASE_BRANCH` (the configured base branch, with `"auto"` resolved from the repository's default branch) and `LABELS_ENABLED`. Right after loading the config, check for `.ai/agentic-overrides/sync-merged-pr-issues.md`; when present, apply it on top of these instructions — local rules win, but an override can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 ```bash
 CURRENT_USER=$(gh api user --jq '.login')

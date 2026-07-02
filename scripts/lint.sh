@@ -41,7 +41,7 @@ patterns=(
   '(^|[^[:alnum:]])yarn '
   '\.ai/specs'
   'findWithDecryption'
-  'AGENTS\.md'
+  'Task Router'
   'BACKWARD_COMPATIBILITY'
 )
 

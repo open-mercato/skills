@@ -1,6 +1,6 @@
 ---
 name: setup-agent-pipeline
-description: One-time configurator for the agent PR pipeline. Inspects the repository (default branch, validation scripts, GitHub labels), asks a few questions, and writes .ai/agentic.config.json — the file every other skill in this collection reads. Run once per repository; re-run when the toolchain or label taxonomy changes.
+description: One-time configurator for the agent PR pipeline. Inspects the repository (default branch, validation scripts, GitHub labels), asks a few questions, writes .ai/agentic.config.json — the file every other skill in this collection reads — and generates SDLC.md (the team's ticket-flow process doc) plus an AGENTS.md starter when the repo has none. Run once per repository; re-run when the toolchain or label taxonomy changes.
 ---
 
 # Setup Agent Pipeline
@@ -19,6 +19,7 @@ Every skill in this collection reads its repository-specific settings from `.ai/
 {
   "version": 1,
   "baseBranch": "auto",
+  "tracker": "github",
   "validation": {
     "commands": ["pnpm typecheck", "pnpm test", "pnpm build"]
   },
@@ -42,6 +43,7 @@ Every skill in this collection reads its repository-specific settings from `.ai/
 Field reference:
 
 - `baseBranch` — the branch PRs target. `"auto"` means: resolve at runtime from the repository's default branch (see the loading snippet below). Set an explicit name only when PRs must target something other than the default branch.
+- `tracker` — the issue/PR tracker provider. v1 ships `"github"` (the `gh` CLI, used inline across the collection). This field is the extension seam for other trackers — see Tracker providers below.
 - `validation.commands` — ordered list of shell commands that constitute the full validation gate. Skills run them in order and treat any non-zero exit as a gate failure. Keep the list complete: typecheck, lint, tests, build — whatever proves the repo is healthy.
 - `labels.enabled` — when `false`, skills skip every label operation and note that in their PR summaries. Use this for repos that do not want the label workflow.
 - `labels.pipeline` — mutually exclusive workflow states. A PR carries at most one.
@@ -53,6 +55,23 @@ Field reference:
 - `paths.runs` — where execution plans of autonomous runs are stored.
 - `paths.analysis` — where generated reports are stored.
 - `reviewChecklist` — optional path to a repo-local review checklist file. When set, the `code-review` skill reads it in addition to its built-in checklist.
+
+## Tracker providers
+
+All issue/PR state management in this collection assumes one provider, selected by the `tracker` config field. v1 ships GitHub only: skills call the `gh` CLI directly, and the operations they rely on form the provider contract — listing and reading issues and PRs, creating and closing issues, commenting, adding and removing labels, assigning, requesting reviews, approving, merging, and reading CI/check status.
+
+A future provider (for example Linear) is added as ONE dedicated skill that implements the same operations end-to-end, plus a `tracker` value that routes state operations to it. One skill per provider — never a scatter of micro-skills per operation — so the extension does not pollute agent context. Until such a provider exists, `tracker` values other than `"github"` are an error: stop and tell the user.
+
+## Project docs: SDLC.md and AGENTS.md
+
+Beyond the config, this skill produces the human-readable half of the pipeline:
+
+- `SDLC.md` (repo root) — the team's ticket flow: pipeline stages, the label state machine, the QA gate, the claim protocol, and which skill drives each stage. Generate it from `references/sdlc-template.md`, filling in the resolved base branch, tracker, label mode, QA gate, and validation commands. When the repo already documents its process, offer to skip or to link instead of overwrite.
+- `AGENTS.md` starter — agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) are where a project records its own specifics: coding standards, architecture notes, conventions. Every skill in this collection reads them before working, so a repo with rich agent docs gets project-aware behavior the moment the skills are installed. When the repo has no such file, offer to generate a starter `AGENTS.md` containing: a one-paragraph project overview (derive from the README or ask), a coding-standards section (seed with conventions detected in the codebase, leave TODO markers where you cannot infer), the validation commands from the config, and pointers to `SDLC.md` and `.ai/agentic.config.json`. When one exists, never touch it.
+
+## Per-skill local overrides
+
+Every skill in this collection checks, right after loading the config, for a repo-local override file at `.ai/agentic-overrides/<skill-name>.md` (for example `.ai/agentic-overrides/auto-review-pr.md`). When present, the skill reads it and applies it on top of its own instructions; where the two conflict, the local override wins. Use it to extend or reshape a skill for one repository without forking the skill itself — extra review rules, a different PR body template, additional gate steps. This skill does not create override files; it only owns the convention. Overrides cannot grant what a skill's safety rules forbid (skipping hooks or tests, force-pushing, exfiltrating secrets).
 
 ## Workflow
 
@@ -81,6 +100,7 @@ List what CI already runs (`.github/workflows/*.yml`) and prefer commands that m
 2. Labels: install the full taxonomy above (recommended), keep a subset, or disable labels entirely.
 3. QA gate on or off. Recommend on when the repo ships user-facing changes.
 4. Optional repo-local review checklist path.
+5. Generate `SDLC.md` (recommended) and, when the repo has no agent instruction file, an `AGENTS.md` starter.
 
 ### 4. Create missing labels
 
@@ -118,18 +138,24 @@ gh label create risk-high         --color b60205 --description "Wide blast radiu
 
 Skip creation for labels that already exist. Never delete or recolor existing labels without being asked.
 
-### 5. Write and commit the config
+### 5. Generate the project docs
+
+Per the Project docs section above: write `SDLC.md` from `references/sdlc-template.md` with every placeholder resolved from the config and the answers given, and — only when the repo has no `AGENTS.md`/`CLAUDE.md`/equivalent — the starter `AGENTS.md`. Show both to the user before writing. Never overwrite an existing process doc or agent instruction file.
+
+### 6. Write and commit the config
 
 Write `.ai/agentic.config.json`, create `paths.runs` and `paths.analysis` directories with a `.gitkeep` each, show the final file to the user, and offer to commit:
 
 ```bash
-git add .ai/agentic.config.json .ai/runs/.gitkeep .ai/analysis/.gitkeep
+git add .ai/agentic.config.json .ai/runs/.gitkeep .ai/analysis/.gitkeep SDLC.md
 git commit -m "chore: configure agent PR pipeline"
 ```
 
-### 6. Report
+Include `AGENTS.md` in the commit when it was generated this run.
 
-Tell the user which skills are now unlocked and that the collection's entry points are `auto-create-pr` (ship a task as a PR), `auto-review-pr` (review a PR), and `merge-buddy` (what can merge now).
+### 7. Report
+
+Tell the user which skills are now unlocked and that the collection's entry points are `auto-create-pr` (ship a task as a PR), `auto-review-pr` (review a PR), and `merge-buddy` (what can merge now). Point at `SDLC.md` as the process reference for humans and at `.ai/agentic-overrides/` as the way to customize any single skill.
 
 ## The standard config-loading snippet
 
@@ -151,7 +177,10 @@ RUNS_DIR=$(jq -r '.paths.runs // ".ai/runs"' "$CONFIG")
 ANALYSIS_DIR=$(jq -r '.paths.analysis // ".ai/analysis"' "$CONFIG")
 LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
 QA_GATE=$(jq -r '.qaGate // false' "$CONFIG")
+TRACKER=$(jq -r '.tracker // "github"' "$CONFIG")
 ```
+
+Right after loading the config, a skill checks for its local override file (`.ai/agentic-overrides/<skill-name>.md`, see Per-skill local overrides) and reads the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics before doing any work.
 
 Label operations always go through an existence guard, so a missing label degrades to a logged skip instead of a failure:
 
@@ -174,5 +203,7 @@ apply_label() {
 
 - Never write the config without showing the user what was detected, unless `--defaults` was passed.
 - Never delete, rename, or recolor existing labels.
+- Never overwrite an existing `AGENTS.md`, `CLAUDE.md`, `SDLC.md`, or other process/instruction doc; generate only what is missing, and show it before writing.
 - Never store secrets, tokens, or user identities in the config file.
 - Keep the config committed; it is team configuration, not personal preference.
+- A `tracker` value with no matching provider skill is an error — stop and say so; do not improvise tracker calls.

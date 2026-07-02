@@ -21,7 +21,7 @@ Given a single PR number, submit an approving review and then squash-merge it. O
    LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
    QA_GATE=$(jq -r '.qaGate // false' "$CONFIG")
    ```
-   All label names below come from the config's label taxonomy.
+   All label names below come from the config's label taxonomy. Right after loading the config, check for `.ai/agentic-overrides/approve-merge-pr.md`; when present, apply it on top of these instructions — local rules win, but an override can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 1. **Resolve the PR and sanity-check it.** Run:
    ```bash

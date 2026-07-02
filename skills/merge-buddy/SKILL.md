@@ -18,7 +18,7 @@ LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
 QA_GATE=$(jq -r '.qaGate // false' "$CONFIG")
 ```
 
-Every label name below comes from the config's label taxonomy (`labels.pipeline`, `labels.meta`). When `labels.enabled` is `false`, skip all label-based gates, classify from reviews, CI, and mergeability alone, and say so in the report header.
+Every label name below comes from the config's label taxonomy (`labels.pipeline`, `labels.meta`). When `labels.enabled` is `false`, skip all label-based gates, classify from reviews, CI, and mergeability alone, and say so in the report header. Right after loading the config, check for `.ai/agentic-overrides/merge-buddy.md`; when present, apply it on top of these instructions — local rules win, but an override can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 ### 1. Fetch open PRs
 

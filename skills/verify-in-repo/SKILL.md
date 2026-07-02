@@ -16,7 +16,7 @@ If you say go, the next step (`root-cause`) reads the code; then `apply-fix` mak
 
 ## Load pipeline config
 
-This step needs only the base branch. Resolve it from `.ai/agentic.config.json` per the standard snippet in the `setup-agent-pipeline` skill (only the `baseBranch` field is used here). If the config file is missing, stop and tell the user to run `setup-agent-pipeline` first.
+This step needs only the base branch. Resolve it from `.ai/agentic.config.json` per the standard snippet in the `setup-agent-pipeline` skill (only the `baseBranch` field is used here). If the config file is missing, stop and tell the user to run `setup-agent-pipeline` first. Right after loading the config, check for `.ai/agentic-overrides/verify-in-repo.md`; when present, apply it on top of these instructions — local rules win, but an override can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 ```bash
 CONFIG=.ai/agentic.config.json

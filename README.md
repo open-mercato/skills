@@ -8,10 +8,10 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 ## 30-second quickstart
 
 ```bash
-npx skills add open-mercato/skills
+npx skills add open-mercato/skills --skill '*'
 ```
 
-This installs the skills for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all fifteen — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
@@ -19,7 +19,7 @@ Then, once per repository:
 /setup-agent-pipeline
 ```
 
-It inspects your repo (default branch, validation scripts, GitHub labels), asks a few questions, and writes `.ai/agentic.config.json`. Every other skill reads that file.
+It inspects your repo (default branch, validation scripts, GitHub labels), asks a few questions, writes `.ai/agentic.config.json`, and generates `SDLC.md` — your team's ticket-flow doc. Every other skill reads the config.
 
 Then ship something:
 
@@ -58,7 +58,7 @@ flowchart LR
 
 | Skill | What it does |
 |---|---|
-| `setup-agent-pipeline` | One-per-repo configurator. Inspects the repository, asks a few questions, writes `.ai/agentic.config.json`. |
+| `setup-agent-pipeline` | One-per-repo configurator. Inspects the repository, asks a few questions, writes `.ai/agentic.config.json`, generates `SDLC.md` and an `AGENTS.md` starter when missing. |
 | `auto-create-pr` | Takes a free-form task brief end-to-end: execution plan, isolated worktree, phase-by-phase commits, validation gate, labeled PR. Resumable. |
 | `auto-continue-pr` | Resumes an in-progress PR from the first unchecked step in its tracking plan. |
 | `auto-review-pr` | Reviews a PR by number in an isolated worktree, approves or requests changes, manages labels. On changes-requested, its autofix loop iterates fixes and re-review until merge-ready. |
@@ -89,6 +89,7 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
 {
   "version": 1,
   "baseBranch": "auto",
+  "tracker": "github",
   "validation": {
     "commands": ["pnpm typecheck", "pnpm test", "pnpm build"]
   },
@@ -110,6 +111,16 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
 ```
 
 A Rust repo puts `cargo test` and `cargo clippy` in `validation.commands`; a Go repo puts `go test ./...`. Skills run whatever you configure and treat any non-zero exit as a gate failure. A skill invoked in a repo without the config stops and points you at `setup-agent-pipeline`.
+
+GitHub is the default tracker; the `tracker` field is the seam for others (Linear and friends land as one provider skill each — see the tracker section in `setup-agent-pipeline`).
+
+## Make it yours
+
+Three layers of project fit, no forking:
+
+- **Agent instructions** — skills read your `AGENTS.md` / `CLAUDE.md` before working, so project conventions apply from the first run. No such file? `setup-agent-pipeline` offers a starter.
+- **`SDLC.md`** — the generated process doc: pipeline stages, label state machine, QA gate, claim protocol. Humans read it; new team members stop asking how the flow works.
+- **Per-skill overrides** — drop `.ai/agentic-overrides/<skill-name>.md` into your repo and that skill applies it on top of its own instructions; local rules win. Extra review rules, a different PR template, an added gate step — without touching the installed skill.
 
 ## Labels and the QA gate
 

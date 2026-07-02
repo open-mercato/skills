@@ -123,10 +123,10 @@ gh pr create \
 Fixes #{issueId}
 
 ## Problem
-<one-paragraph issue summary from the analyzer>
+<one-paragraph summary of the issue>
 
 ## Root Cause
-<root-cause summary from the analyzer>
+<why the bug occurred — from the apply-fix summary>
 
 ## What Changed
 - <change 1>

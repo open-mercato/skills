@@ -61,7 +61,7 @@ flowchart LR
 | `setup-agent-pipeline` | One-per-repo configurator. Inspects the repository, asks a few questions, writes `.ai/agentic.config.json`. |
 | `auto-create-pr` | Takes a free-form task brief end-to-end: execution plan, isolated worktree, phase-by-phase commits, validation gate, labeled PR. Resumable. |
 | `auto-continue-pr` | Resumes an in-progress PR from the first unchecked step in its tracking plan. |
-| `auto-review-pr` | Reviews a PR by number in an isolated worktree, approves or requests changes, manages labels. Optional autofix mode iterates fixes and re-review until merge-ready. |
+| `auto-review-pr` | Reviews a PR by number in an isolated worktree, approves or requests changes, manages labels. On changes-requested, its autofix loop iterates fixes and re-review until merge-ready. |
 | `review-prs` | Sweeps all unreviewed open PRs, newest first, through `auto-review-pr`, respecting claim locks. |
 | `merge-buddy` | Scans open PRs and reports which can merge now and which are close but blocked, based on labels, reviews, CI, and mergeability. |
 | `approve-merge-pr` | Approves and squash-merges a PR given only its number. Can file a follow-up issue at the same time. |

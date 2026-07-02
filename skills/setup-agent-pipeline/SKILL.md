@@ -46,7 +46,7 @@ Field reference:
 - `labels.enabled` — when `false`, skills skip every label operation and note that in their PR summaries. Use this for repos that do not want the label workflow.
 - `labels.pipeline` — mutually exclusive workflow states. A PR carries at most one.
 - `labels.category` — additive kind-of-change labels.
-- `labels.meta` — additive process labels. `needs-qa` requests manual QA; `skip-qa` opts out (never combine the two); `qa-approved` records that QA passed; `qa-self-verified` marks the self-QA exception; `in-progress` is the claim lock automated skills apply while working.
+- `labels.meta` — additive process labels. `needs-qa` requests manual QA; `skip-qa` opts out (never combine the two); `qa-approved` records that QA passed; `qa-self-verified` marks the self-QA exception; `in-progress` is the claim lock automated skills apply while working. One label lives outside the config taxonomy: `do-not-close`, applied by humans to issues that housekeeping skills must never auto-close — skills only ever read it.
 - `labels.priority` — mutually exclusive urgency of the work. Unset is treated as medium.
 - `labels.risk` — mutually exclusive blast radius of the change. Unset is treated as medium. Priority is how urgent the work is; risk is how dangerous the change is to ship.
 - `qaGate` — when `true`, a PR carrying `needs-qa` must not merge until it also carries `qa-approved`, even when every other check is green. When `false`, `needs-qa` is advisory only.
@@ -106,6 +106,7 @@ gh label create skip-qa           --color 0e8a16 --description "Low risk, QA not
 gh label create qa-approved       --color 0e8a16 --description "Manual QA passed"
 gh label create qa-self-verified  --color c5def5 --description "Self-QA exception used"
 gh label create in-progress       --color c5def5 --description "An automated skill is working on this"
+gh label create do-not-close      --color c5def5 --description "Humans only: never auto-close this issue"
 gh label create priority-low      --color e4e669 --description "Cosmetic or follow-up work"
 gh label create priority-medium   --color fbca04 --description "Ordinary bug or feature"
 gh label create priority-high     --color d93f0b --description "Release-blocking"

@@ -73,7 +73,7 @@ Identify from that block:
 - the approach
 - the regression test to add
 
-**Do not invent your own root cause.** If the brief is missing, empty, contradicts the repo (e.g. names files that don't exist), or ended with `Status: blocked`, end your own output with `Status: blocked` and a one-line reason. The chain will stop cleanly — better than shipping a wrong fix.
+**Do not invent your own root cause.** If the brief is missing, empty, or contradicts the repo (e.g. names files that don't exist), end your own output with `Status: blocked` and a one-line reason. The chain will stop cleanly — better than shipping a wrong fix.
 
 If the analyzer ended with `LOW_CONFIDENCE`, be extra careful — re-read the affected code yourself before editing.
 

@@ -342,7 +342,7 @@ fi
 git worktree prune
 ```
 
-If the PR was opened, flip the plan's Progress `Status` in the plan's Changelog with a `— PR #{n}` note, commit, and push.
+If the PR was opened, record it in the plan: add a `PR: #{n}` line directly under the `## Progress` heading (it is not a checklist line, so parsing is unaffected), commit, and push.
 
 ### 14. Report back
 

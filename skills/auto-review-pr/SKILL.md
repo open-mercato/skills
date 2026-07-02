@@ -1,11 +1,11 @@
 ---
 name: auto-review-pr
-description: Review or re-review a GitHub PR by number in an isolated worktree. Runs the `code-review` skill, submits approve/request-changes, manages pipeline labels. Optional autofix iterates conflict resolution/fixes/tests/validation/re-review until merge-ready. Usage - /auto-review-pr <PR-number>
+description: Review or re-review a GitHub PR by number in an isolated worktree. Runs the `code-review` skill, submits approve/request-changes, manages pipeline labels. On changes-requested, an autonomous autofix loop iterates conflict resolution/fixes/tests/validation/re-review until merge-ready. Usage - /auto-review-pr <PR-number>
 ---
 
 # Auto Review PR
 
-Review a GitHub pull request by number without touching the current worktree. Always fetch the exact PR from GitHub, review it in an isolated worktree, submit the verdict, and if the PR still has blockers offer an explicit autofix flow that keeps resolving conflicts, fixing code, testing, validating, and re-reviewing until the PR is actually ready or a non-actionable blocker remains.
+Review a GitHub pull request by number without touching the current worktree. Always fetch the exact PR from GitHub, review it in an isolated worktree, submit the verdict, and if the PR still has blockers run the autonomous autofix flow that keeps resolving conflicts, fixing code, testing, validating, and re-reviewing until the PR is actually ready or a non-actionable blocker remains.
 
 ## Arguments
 
@@ -108,7 +108,7 @@ Submit a changes-requested review with a conflict-focused body, set the pipeline
 Important:
 
 - On the initial review pass, conflicts are still an early stop.
-- On the second pass, if the user approves autofix, conflicts become actionable work and must be resolved inside the isolated worktree or carry-forward branch before re-reviewing.
+- On the autofix pass (steps 9–10), conflicts become actionable work and must be resolved inside the isolated worktree or carry-forward branch before re-reviewing.
 
 #### 3b. Check CI status
 
@@ -246,43 +246,43 @@ gh pr diff {prNumber} --name-only
 
 Record findings from the patterns below. When a pattern applies to this repository's stack and conventions, it is a mandatory finding, not an optional heuristic; skip rows that have no equivalent in this codebase (for example, the i18n row in a repo without i18n).
 
-#### Critical auto-detections
+#### Blocker auto-detections
 
 | Pattern in diff | Finding |
 |-----------------|---------|
-| Removed or renamed a published event name, message topic, or webhook type | Critical: published event names are a frozen contract surface |
-| Removed a field from an API response schema or serialized response type | Critical: response fields are additive-only |
-| Renamed or removed a database column or table in a migration without a migration path | Critical: destructive schema changes need an explicit migration/deprecation plan |
-| Removed a public export or import path without a re-export bridge or deprecation note | Critical: public entry points require a deprecation window |
-| A query missing the data-scoping filter (account/workspace/organization ID) that sibling queries in the same area apply | Critical: data-scoping breach |
+| Removed or renamed a published event name, message topic, or webhook type | Blocker: published event names are a frozen contract surface |
+| Removed a field from an API response schema or serialized response type | Blocker: response fields are additive-only |
+| Renamed or removed a database column or table in a migration without a migration path | Blocker: destructive schema changes need an explicit migration/deprecation plan |
+| Removed a public export or import path without a re-export bridge or deprecation note | Blocker: public entry points require a deprecation window |
+| A query missing the data-scoping filter (account/workspace/organization ID) that sibling queries in the same area apply | Blocker: data-scoping breach |
+| A shared data-access or security wrapper (encryption, sanitization, guarded client) replaced with a raw lower-level call | Blocker: downgrading an established security wrapper is a security regression |
 
-#### High auto-detections
-
-| Pattern in diff | Finding |
-|-----------------|---------|
-| A shared data-access or security wrapper (encryption, sanitization, guarded client) replaced with a raw lower-level call | High: established wrappers must not be downgraded |
-| New route, handler, subscriber, or worker file missing the registration or metadata exports the codebase's conventions require | High: required exports for discovery/registration |
-| Direct low-level HTTP or data call in UI or page code, outside tests, where the repo provides a shared client helper | High: must use the shared client helper |
-| Behavior change with no corresponding test file in the diff | High: behavior changes must include tests |
-
-#### Medium auto-detections
+#### Major auto-detections
 
 | Pattern in diff | Finding |
 |-----------------|---------|
-| Hardcoded user-facing string in API errors or UI labels, in a repo that uses an i18n system | Medium: must route through i18n |
-| New `any` type annotation (or the language's equivalent unchecked cast) outside tests | Medium: use typed schemas and runtime narrowing |
-| Ad-hoc `alert(` or custom toast instead of the repo's standard notification helper | Medium: use the standard helper |
-| Hand-written migration SQL that bypasses the repo's migration tooling without a scoped rationale | Medium: prefer generated/tooled migrations; manual SQL must be scoped and keep the tooling's state files in sync |
-| Entity or schema changed but no migration file or no-op rationale in the diff | Medium: create a scoped migration |
-| Missing explicit data scoping in sub-entity queries | Medium: defense in depth |
+| New route, handler, subscriber, or worker file missing the registration or metadata exports the codebase's conventions require | Major: required exports for discovery/registration |
+| Direct low-level HTTP or data call in UI or page code, outside tests, where the repo provides a shared client helper | Major: must use the shared client helper |
+| Behavior change with no corresponding test file in the diff | Major: behavior changes must include tests |
+| Entity or schema changed but no migration file or no-op rationale in the diff | Major: schema changes must ship with a scoped migration |
+| Hand-written migration SQL that bypasses the repo's migration tooling without a scoped rationale | Major: prefer generated/tooled migrations; manual SQL must be scoped and keep the tooling's state files in sync |
+| Missing explicit data scoping in sub-entity queries | Major: defense in depth |
 
-#### Low auto-detections
+#### Minor auto-detections
 
 | Pattern in diff | Finding |
 |-----------------|---------|
-| One-letter variable name outside loop counters `i`, `j`, `k` | Low: use descriptive names |
-| Inline comment on self-explanatory code | Low: remove comment |
-| Added docstring or comment on unchanged function | Low: do not annotate unchanged code |
+| Hardcoded user-facing string in API errors or UI labels, in a repo that uses an i18n system | Minor: must route through i18n |
+| New `any` type annotation (or the language's equivalent unchecked cast) outside tests | Minor: use typed schemas and runtime narrowing |
+| Ad-hoc `alert(` or custom toast instead of the repo's standard notification helper | Minor: use the standard helper |
+
+#### Nit auto-detections
+
+| Pattern in diff | Finding |
+|-----------------|---------|
+| One-letter variable name outside loop counters `i`, `j`, `k` | Nit: use descriptive names |
+| Inline comment on self-explanatory code | Nit: remove comment |
+| Added docstring or comment on unchanged function | Nit: do not annotate unchanged code |
 
 ### 6. Run the full code-review skill inside the worktree
 
@@ -301,17 +301,17 @@ Merge findings from step 5 into the final review report. Do not duplicate the sa
 
 ### 7. Classify the result
 
-Use the same severity rules as the `code-review` skill:
+Use the same severity scale as the `code-review` skill: **blocker / major / minor / nit**. Apply its verdict rule verbatim:
 
-| Condition | Decision |
-|-----------|----------|
-| Any Critical, High, or Medium finding | `changes_requested` |
-| Only Low findings | `approved` |
-| No findings | `approved` |
+- Any **blocker** → **request changes**. No exceptions.
+- Any **major** without an explicit, documented waiver → **request changes**.
+- Only minors and nits → **approve**, listing them so the author can pick them up.
+
+Map the verdict to the decision used in the following steps: **request changes** → `changes_requested`, **approve** → `approved` (no findings at all is also `approved`).
 
 ### 8. Submit the verdict and labels
 
-If approved, submit an approval review. If there are Critical, High, or Medium findings, submit a changes-requested review.
+If approved, submit an approval review. If the verdict is request changes (any blocker, or any major without a documented waiver), submit a changes-requested review.
 
 The review body must contain the full structured report from the code-review skill. For re-reviews, explicitly note that it is a re-review in the title or summary.
 
@@ -469,7 +469,7 @@ Rules for this comment:
 
 ### 9. Autonomous autofix flow
 
-After posting a `changes_requested` review, **immediately proceed to fix all actionable findings** without asking the user. The auto-review-pr skill must be fully autonomous — it reviews, fixes, re-reviews, and iterates until the PR is merge-ready or a truly critical blocker remains.
+After posting a `changes_requested` review, **immediately proceed to fix all actionable findings** without asking the user. The auto-review-pr skill must be fully autonomous — it reviews, fixes, re-reviews, and iterates until the PR is merge-ready or a real blocker remains.
 
 Only stop and ask the user in these critical situations:
 
@@ -611,14 +611,14 @@ PR #{prNumber}: {title}
 Mode: {review | re-review}
 Decision: {APPROVED | CHANGES REQUESTED}
 Label: {merge-queue | changes-requested | labels disabled in config}
-Findings: {X critical, Y high, Z medium, W low}
+Findings: {X blocker, Y major, Z minor, W nit}
 Worktree: {path}
 Review submitted successfully.
 ```
 
 If all findings were auto-fixed, the summary should note that fixes were applied and the PR is ready for merge.
 
-If a critical blocker remains that requires human judgment, the summary must describe the blocker and ask for guidance.
+If a blocker remains that requires human judgment, the summary must describe the blocker and ask for guidance.
 
 ## Rules
 
@@ -636,7 +636,7 @@ If a critical blocker remains that requires human judgment, the summary must des
 - In autofix mode, always run the test and static-check commands from `validation.commands` for the changed scope on every iteration and again on the final branch state
 - In autofix mode, continue iterating until the PR is ready or a real blocker is reported explicitly
 - Must run the full configured validation gate (`validation.commands`, in order) as part of the `code-review` pass
-- Must use the `code-review` skill severity model
+- Must use the `code-review` skill severity model (blocker / major / minor / nit) and its verdict rule: any blocker, or any major without a documented waiver, means request changes; only minors and nits means approve
 - Must run the diff-level automated checks in step 5
 - The review body must contain the full structured report
 - Always add the chosen pipeline label and remove every other pipeline label (via the `set_pipeline_label` helper built on the `setup-agent-pipeline` guards)

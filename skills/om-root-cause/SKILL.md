@@ -5,7 +5,7 @@ description: Read-only root-cause analysis for a tracker issue. Identifies the b
 
 # Root Cause
 
-You are step 2 of an autofix chain (`om-verify-in-repo` → `om-root-cause` → `om-fix` → `om-open-pr` → `om-auto-review-pr`). The chain is driven end-to-end by the `om-auto-fix-github` skill, or by an external flow runner. The previous step (`om-verify-in-repo`) already confirmed this is a real defect. The repo is checked out on an isolated branch in the current working directory.
+You are step 2 of an autofix chain (`om-verify-in-repo` → `om-root-cause` → `om-fix` → `om-open-pr` → `om-auto-review-pr`). The chain is driven end-to-end by the `om-auto-fix-issue` skill, or by an external flow runner. The previous step (`om-verify-in-repo`) already confirmed this is a real defect. The repo is checked out on an isolated branch in the current working directory.
 
 Your only job: find the root cause and define the minimal change set. The next step (`om-fix`) implements what you propose — keep that agent on rails by being specific.
 

@@ -1,0 +1,121 @@
+---
+name: om-verify-in-repo
+description: Read-only triage gate for an autofix chain. Decides whether a GitHub issue is a real, still-unfixed defect on the current branch. Stops the chain cleanly with NO_ACTION_NEEDED when the issue is already fixed, already in progress by someone else, already covered by an open PR, or not actually a bug.
+---
+
+# Verify in Repo
+
+You are step 1 of an autofix chain (`om-verify-in-repo` → `om-root-cause` → `om-fix` → `om-open-pr` → `om-auto-review-pr`). The chain is driven end-to-end by the `om-auto-fix-github` skill, or by an external flow runner. The repo is already checked out on an isolated branch in the current working directory. Your job is to decide — quickly and read-only — whether the chain should proceed.
+
+If you say go, the next step (`om-root-cause`) reads the code; then `om-fix` makes edits; then `om-open-pr` pushes and opens a PR. If you say stop, none of that runs.
+
+## Arguments
+
+- `{issueId}` (required) — the GitHub issue number, for example `1234`
+- `{repo}` (optional) — `owner/name`; if omitted, infer from the current git remote
+
+## Load pipeline config
+
+This step needs only the base branch. Resolve it from `.ai/agentic.config.json` per the standard snippet in the `om-setup-agent-pipeline` skill (only the `baseBranch` field is used here). If the config file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-verify-in-repo/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
+
+```bash
+CONFIG=.ai/agentic.config.json
+if [ ! -f "$CONFIG" ]; then
+  echo "Missing $CONFIG — run the om-setup-agent-pipeline skill first."
+  exit 1
+fi
+BASE_BRANCH=$(jq -r '.baseBranch // "auto"' "$CONFIG")
+if [ "$BASE_BRANCH" = "auto" ]; then
+  BASE_BRANCH=$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name' 2>/dev/null || true)
+  [ -z "$BASE_BRANCH" ] && BASE_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
+  [ -z "$BASE_BRANCH" ] && BASE_BRANCH="main"
+fi
+```
+
+## Tools
+
+You operate **read-only**:
+
+- File reading and code search only — no file edits, no file writes
+- Shell: read-only `gh` commands (`gh issue view`, `gh search prs`, `gh repo view`, `gh api`) and read-only git (`git log`, `git diff`, `git show`, `git status`)
+
+Do not edit files. Do not run `gh issue edit`, `gh issue comment`, `git commit`, or `git push` — claiming and writing happen in later steps.
+
+## Decision procedure
+
+Run these checks in order. The first one that triggers a stop wins.
+
+### 1. Fetch the issue and the repo handle
+
+```bash
+gh repo view --json nameWithOwner,defaultBranchRef
+gh issue view {issueId} --repo {owner}/{repo} --json number,title,body,state,author,url,labels,assignees,comments
+```
+
+If the issue is already `closed`, stop with `NO_ACTION_NEEDED`.
+
+### 2. Is it already in progress by someone else?
+
+The issue is **already in progress** when ANY of:
+
+- It carries the `in-progress` label AND its assignees do not include the current `gh api user --jq .login`
+- A `🤖`-prefixed claim comment newer than 30 minutes exists from a different actor
+
+If in-progress by another actor, stop with `NO_ACTION_NEEDED` and name the owner in your reason.
+
+Stale-lock recovery: if the `in-progress` label is older than 60 minutes and no comments/pushes occurred in that window, treat it as expired — do not stop on stale locks alone.
+
+### 3. Is the fix already in flight or already shipped?
+
+```bash
+gh search prs --repo {owner}/{repo} "#{issueId}" --state open  --json number,title,url,state
+gh search prs --repo {owner}/{repo} "#{issueId}" --state closed --json number,title,url,state
+git fetch origin "$BASE_BRANCH" 2>/dev/null || true
+git log "origin/$BASE_BRANCH" --grep="#{issueId}" --oneline
+```
+
+Stop with `NO_ACTION_NEEDED` and cite the link when:
+
+- An open PR already references the issue (`Fixes #{issueId}` / `Closes #{issueId}`)
+- A merged PR or a commit on `origin/$BASE_BRANCH` already addresses it
+
+Also scan recent issue comments for `fixed by`, `duplicate of`, `superseded by` and follow the links.
+
+### 4. Is it actually a bug?
+
+With the repo in front of you, briefly check whether the reported behavior is real, expected, or a usage error. A short read of the affected code path or test is enough — do not start root-causing.
+
+Stop with `NO_ACTION_NEEDED` when:
+
+- The behavior is the documented or intentional one
+- The issue describes an environment/usage error on the reporter's side
+- The repo already has a test or guard that contradicts the report
+
+## Output contract
+
+Write a short final message. Two shapes:
+
+**Stop the chain** (no action needed):
+
+```
+NO_ACTION_NEEDED
+<one paragraph explaining why — cite commit hashes, PR numbers, file paths, or test names as evidence>
+```
+
+The literal token `NO_ACTION_NEEDED` on its own line triggers the flow runner's clean stop.
+
+**Proceed:**
+
+```
+<one short paragraph confirming this is a real, still-unfixed defect — with the file/area you expect the root cause to live in>
+```
+
+Keep it tight (≤200 words). The next agent reads code; do not duplicate that work here.
+
+## Rules
+
+- Read-only on files: no edits, no writes.
+- Do not claim the issue (add labels/assignee/comment) — that happens in the `om-fix` step.
+- Do not create branches or commits — the workflow engine already prepared the worktree.
+- The base branch always comes from the config; never hard-code it.
+- Bias toward stopping: if you cannot defend "real, still-unfixed" with at least one piece of evidence, write `NO_ACTION_NEEDED`.

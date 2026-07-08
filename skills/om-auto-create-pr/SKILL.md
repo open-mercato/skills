@@ -192,7 +192,7 @@ Use the `om-code-review` skill against the branch diff.
 
 Explicitly verify:
 
-- No public contract was broken silently: exported APIs, HTTP routes and response shapes, event names, CLI flags, DB schema, config formats. If the project documents its own compatibility rules, honor them.
+- No public contract was broken silently: exported APIs, HTTP routes and response shapes, event names, CLI flags, DB schema, config formats. When `BACKWARD_COMPATIBILITY.md` exists at the repo root, check every touched surface against it; honor any other compatibility rules the project documents. A violation without the documented migration/deprecation path must be fixed or explicitly WARNED about in the PR body and summary comment so the user decides.
 - No security-sensitive surface was weakened: authentication, authorization, data scoping, input validation, secrets handling.
 - Scope remains what the plan says — no unrelated churn.
 

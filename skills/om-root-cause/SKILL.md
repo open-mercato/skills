@@ -1,6 +1,6 @@
 ---
 name: om-root-cause
-description: Read-only root-cause analysis for a GitHub issue. Identifies the bug's location and the minimal change surface so the next agent can implement the fix without re-exploring the repo. Outputs a short summary, the files that need to change, and the proposed approach.
+description: Read-only root-cause analysis for a tracker issue. Identifies the bug's location and the minimal change surface so the next agent can implement the fix without re-exploring the repo. Outputs a short summary, the files that need to change, and the proposed approach.
 ---
 
 # Root Cause
@@ -11,7 +11,7 @@ Your only job: find the root cause and define the minimal change set. The next s
 
 ## Arguments
 
-- `{issueId}` (required) — the GitHub issue number
+- `{issueId}` (required) — the issue number in the tracker
 - `{repo}` (optional) — `owner/name`; infer from git remote if omitted
 
 ## Tools
@@ -19,7 +19,7 @@ Your only job: find the root cause and define the minimal change set. The next s
 Read-only:
 
 - File reading and code search only — no file edits, no file writes
-- Shell: read-only `gh` and read-only git (`git log`, `git diff`, `git show`, `git status`, `git blame`)
+- Shell: read-only git (`git log`, `git diff`, `git show`, `git status`, `git blame`) and read-only tracker operations per the repo's tracker descriptor (`.ai/trackers/<tracker>.md`) — **get-issue** only.
 
 Do not edit, commit, or push.
 
@@ -27,9 +27,7 @@ Do not edit, commit, or push.
 
 ### 1. Pull the issue back into context
 
-```bash
-gh issue view {issueId} --repo {owner}/{repo} --json number,title,body,comments
-```
+Run the tracker operation **get-issue** for `{issueId}`, requesting `number`, `title`, `body`, `comments`.
 
 Skim the body and the last few comments. Note explicit reproduction steps and any links to commits, PRs, or files.
 
@@ -74,7 +72,7 @@ Keep it under ~400 words. The `om-fix` agent reads this verbatim and acts on it.
 
 ## Rules
 
-- Read-only on files and git/GitHub state.
+- read-only on files and git/tracker state.
 - Do not propose changes to multiple unrelated areas; if the issue spans concerns, pick the smallest defensible primary fix and note the rest under Risks.
 - Reference real file paths and function names — vague guidance forces the `om-fix` agent to re-explore and burns its budget.
 - If you cannot locate a confident root cause, end with `LOW_CONFIDENCE` and your best-guess analysis; the chain will continue but a human reviewer will need to check the fix more carefully.

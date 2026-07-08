@@ -1,15 +1,15 @@
 ---
 name: om-auto-fix-github
-description: Fix a GitHub issue end to end from a single command. Drives the autofix chain interactively — proves the issue still needs work (om-verify-in-repo), locates the bug (om-root-cause), implements the minimal fix with regression tests (om-fix), opens a labeled draft PR (om-open-pr), then loops om-auto-review-pr in autofix mode until clean. Runs in an isolated worktree, honors the in-progress claim protocol, and stops cleanly when the issue is already solved or already claimed.
+description: Fix a tracker issue end to end (GitHub issue by default) from a single command. Drives the autofix chain interactively — proves the issue still needs work (om-verify-in-repo), locates the bug (om-root-cause), implements the minimal fix with regression tests (om-fix), opens a labeled draft PR (om-open-pr), then loops om-auto-review-pr in autofix mode until clean. Runs in an isolated worktree, honors the in-progress claim protocol, and stops cleanly when the issue is already solved or already claimed.
 ---
 
 # Auto Fix GitHub
 
-Fix a GitHub issue end to end without disturbing the user's active worktree. This skill is the interactive driver of the autofix chain (`om-verify-in-repo` → `om-root-cause` → `om-fix` → `om-open-pr` → `om-auto-review-pr`): it makes the go/no-go decision, prepares an isolated worktree, runs each chain step in sequence, and passes every step's output to the next exactly as the chain contract expects. The chain skills stay runnable on their own under an external flow runner; this skill is that runner for a single session.
+Fix a tracker issue end to end without disturbing the user's active worktree. This skill is the interactive driver of the autofix chain (`om-verify-in-repo` → `om-root-cause` → `om-fix` → `om-open-pr` → `om-auto-review-pr`): it makes the go/no-go decision, prepares an isolated worktree, runs each chain step in sequence, and passes every step's output to the next exactly as the chain contract expects. The chain skills stay runnable on their own under an external flow runner; this skill is that runner for a single session.
 
 ## Arguments
 
-- `{issueId}` (required) — the GitHub issue number, for example `1234`
+- `{issueId}` (required) — the issue number in the tracker (a GitHub issue number by default), for example `1234`
 - `{repo}` (optional) — `owner/name`; if omitted, infer from the current git remote
 - `--force` (optional) — bypass the in-progress concurrency check; use only when intentionally taking over an issue another actor already claimed
 
@@ -17,16 +17,11 @@ Fix a GitHub issue end to end without disturbing the user's active worktree. Thi
 
 ### 0. Load pipeline config
 
-Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. This skill uses `BASE_BRANCH` and `LABELS_ENABLED` directly (plus the `label_exists` guard); the chain skills it invokes load the rest of the config themselves. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-auto-fix-github/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
+Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill; the snippet also resolves `TRACKER` and `TRACKER_FILE=".ai/trackers/${TRACKER}.md"`. If the config or the tracker descriptor is missing, stop and tell the user to run `om-setup-agent-pipeline` first. Read `$TRACKER_FILE`; every tracker operation named in this skill executes as that descriptor defines, and the label guards (`label_exists`, `apply_issue_label`, `remove_issue_label`, …) come from it. This skill uses `BASE_BRANCH` and `LABELS_ENABLED` directly (plus the `label_exists` guard); the chain skills it invokes load the rest of the config themselves. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-auto-fix-github/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 ### 1. Decide whether you may take the issue
 
-Auto-skills MUST NOT clobber each other. Before doing anything else, decide whether this run may work on the issue.
-
-```bash
-CURRENT_USER=$(gh api user --jq '.login')
-gh issue view {issueId} --repo {owner}/{repo} --json assignees,labels,number,title,comments,state
-```
+Auto-skills MUST NOT clobber each other. Before doing anything else, decide whether this run may work on the issue: resolve the automation identity as `$CURRENT_USER` with the tracker operation **current-user**, then fetch the issue with **get-issue** for `{issueId}` (and `{repo}`), requesting the `assignees`, `labels`, `number`, `title`, `comments`, and `state` fields.
 
 The issue is **already in progress** when ANY of the following is true:
 
@@ -42,7 +37,7 @@ Decision tree:
 | Not in progress | — | Proceed |
 | In progress, current user owns the lock | — | Treat as re-entry; proceed |
 | In progress, someone else owns the lock | no | **STOP.** Ask the user: "Issue #{issueId} is in progress (owner: {owner}, signal: {label/assignee/comment}). Override and continue?" Only continue on an explicit yes. |
-| In progress, someone else owns the lock | yes | Post a force-override comment naming the previous owner, then proceed |
+| In progress, someone else owns the lock | yes | Post a force-override comment naming the previous owner via **comment-issue**, then proceed |
 
 Stale-lock recovery: if the `in-progress` label is older than 60 minutes and the owner neither pushed nor commented in that window, treat the lock as expired — still ask the user before overriding unless `--force` was set.
 
@@ -145,14 +140,10 @@ If `om-auto-review-pr` cannot run (checks not yet reported, missing context), sk
 
 ### 8. Failure path: release the lock
 
-If the run aborts anywhere after `om-fix` claimed the issue but before `om-open-pr` released the lock, release it yourself — treat this as a finally-block, so a crash still clears it:
+If the run aborts anywhere after `om-fix` claimed the issue but before `om-open-pr` released the lock, release it yourself — treat this as a finally-block, so a crash still clears it. Run the tracker operation **unlabel-issue** to remove the `in-progress` label from `{issueId}` — through the guard, so `LABELS_ENABLED=false` or a missing label degrades to a skip, and tolerate failure rather than aborting the cleanup. Then run **comment-issue** on `{issueId}` with exactly this abort comment:
 
-```bash
-if [ "$LABELS_ENABLED" = "true" ] && label_exists "in-progress"; then
-  gh issue edit {issueId} --repo {owner}/{repo} --remove-label "in-progress" || true
-fi
-gh issue comment {issueId} --repo {owner}/{repo} --body \
-  "🤖 \`om-auto-fix-github\` aborted: {one-line reason}. Lock released."
+```
+🤖 `om-auto-fix-github` aborted: {one-line reason}. Lock released.
 ```
 
 Keep the assignee as-is on the failure path — a human picking the issue up can see who last worked on it.

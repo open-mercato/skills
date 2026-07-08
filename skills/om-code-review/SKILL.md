@@ -11,7 +11,7 @@ Review code changes against the repository's architecture, security, convention,
 
 **Input** — exactly one unit of review:
 
-- a PR number (fetch the diff and metadata with `gh pr diff {n}` / `gh pr view {n}`),
+- a PR number (fetch the diff and metadata via the tracker operations **get-pr-diff** / **get-pr**),
 - a branch name (review its diff against the merge-base with `$BASE_BRANCH`),
 - an explicit commit range or diff,
 - nothing — default to the current branch's diff against the merge-base with `$BASE_BRANCH`, including uncommitted changes.
@@ -27,7 +27,7 @@ Callers (`om-auto-review-pr`, `om-review-prs`, the self-review step of `om-auto-
 
 ## Review Workflow
 
-0. **Load config**: Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. This resolves `$BASE_BRANCH` and `validation.commands`. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-code-review/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics. Also read the optional repo-local checklist path:
+0. **Load config**: Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. This resolves `$BASE_BRANCH` and `validation.commands`, plus `TRACKER` and `TRACKER_FILE=".ai/trackers/${TRACKER}.md"` (stop when the descriptor is missing); read the descriptor — every tracker operation this skill names is executed as that file defines it. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-code-review/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics. Also read the optional repo-local checklist path:
 
    ```bash
    REVIEW_CHECKLIST=$(jq -r '.reviewChecklist // empty' .ai/agentic.config.json)

@@ -1,11 +1,11 @@
 ---
 name: om-auto-review-pr
-description: Review or re-review a GitHub PR by number in an isolated worktree. Runs the `om-code-review` skill, submits approve/request-changes, manages pipeline labels. On changes-requested, an autonomous autofix loop iterates conflict resolution/fixes/tests/validation/re-review until merge-ready. Usage - /om-auto-review-pr <PR-number>
+description: Review or re-review a PR by number in an isolated worktree. Runs the `om-code-review` skill, submits approve/request-changes, manages pipeline labels. On changes-requested, an autonomous autofix loop iterates conflict resolution/fixes/tests/validation/re-review until merge-ready. Usage - /om-auto-review-pr <PR-number>
 ---
 
 # Auto Review PR
 
-Review a GitHub pull request by number without touching the current worktree. Always fetch the exact PR from GitHub, review it in an isolated worktree, submit the verdict, and if the PR still has blockers run the autonomous autofix flow that keeps resolving conflicts, fixing code, testing, validating, and re-reviewing until the PR is actually ready or a non-actionable blocker remains.
+Review a pull request by number without touching the current worktree. Always fetch the exact PR from the tracker, review it in an isolated worktree, submit the verdict, and if the PR still has blockers run the autonomous autofix flow that keeps resolving conflicts, fixing code, testing, validating, and re-reviewing until the PR is actually ready or a non-actionable blocker remains.
 
 ## Arguments
 
@@ -16,14 +16,11 @@ Review a GitHub pull request by number without touching the current worktree. Al
 
 ### 0. Load pipeline config, then claim the PR
 
-Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. This skill uses `LABELS_ENABLED`, `QA_GATE`, and the `validation.commands` gate; the PR's own `baseRefName` is authoritative for diffs and conflict resolution. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-auto-review-pr/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
+Load `.ai/agentic.config.json` using the standard config-loading snippet from the `om-setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. The snippet also resolves `TRACKER` and `TRACKER_FILE=".ai/trackers/${TRACKER}.md"` and stops if the descriptor file is missing. Read `$TRACKER_FILE`; every tracker operation named in this skill executes as that descriptor defines, and the label guards come from it. This skill uses `LABELS_ENABLED`, `QA_GATE`, and the `validation.commands` gate; a `BASE_BRANCH` of `"auto"` resolves via the descriptor's **default-branch** operation, but the PR's own `baseRefName` is authoritative for diffs and conflict resolution. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-auto-review-pr/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 Auto-skills MUST NOT clobber each other. Before doing anything else, decide whether you may claim this PR.
 
-```bash
-CURRENT_USER=$(gh api user --jq '.login')
-gh pr view {prNumber} --json assignees,labels,number,title,comments
-```
+Run the tracker operation **current-user** to fill `CURRENT_USER` (the automation user's login), then **get-pr** for `{prNumber}`, requesting `assignees`, `labels`, `number`, `title`, and `comments`.
 
 A PR is considered **already in progress** when ANY of the following is true:
 
@@ -46,24 +43,25 @@ Stale lock recovery:
 
 #### Claim the PR (only after the check above passes)
 
-```bash
-gh pr edit {prNumber} --add-assignee "$CURRENT_USER"
-apply_label "in-progress" {prNumber}
-gh pr comment {prNumber} --body "🤖 \`om-auto-review-pr\` started by @${CURRENT_USER} at $(date -u +%Y-%m-%dT%H:%M:%SZ). Other auto-skills will skip this PR until the lock is released."
+Claim in three tracker operations:
+
+1. **assign-pr**: add `$CURRENT_USER` as an assignee on `{prNumber}`.
+2. Run `apply_label "in-progress" {prNumber}`.
+3. Post the claim comment via **comment-pr**, filling in `$CURRENT_USER` and the current UTC timestamp (ISO-8601, e.g. `date -u +%Y-%m-%dT%H:%M:%SZ`):
+
+```text
+🤖 `om-auto-review-pr` started by @{CURRENT_USER} at {timestamp}. Other auto-skills will skip this PR until the lock is released.
 ```
 
-Label additions always go through the `apply_label` guard from `om-setup-agent-pipeline`. When `labels.enabled` is `false`, the claim consists of the assignee plus the claim comment — other skills detect those two signals.
+Label additions always go through the `apply_label` guard from the tracker descriptor. When `labels.enabled` is `false`, the claim consists of the assignee plus the claim comment — other skills detect those two signals.
 
 The release step happens in step 11 — the lock MUST be released even on failure.
 
 ### 1. Fetch PR metadata and reviewer context
 
-Use GitHub as the source of truth. Collect enough data to decide whether this is a first review or a re-review and whether the PR comes from a fork.
+Use the tracker as the source of truth. Collect enough data to decide whether this is a first review or a re-review and whether the PR comes from a fork.
 
-```bash
-gh pr view {prNumber} --json number,title,url,author,baseRefName,baseRefOid,headRefName,headRefOid,headRepository,headRepositoryOwner,isCrossRepository,maintainerCanModify,mergeable,mergeStateStatus,reviewDecision,labels,latestReviews,reviews,commits,files
-gh api user --jq '.login'
-```
+Run the tracker operation **get-pr** for `{prNumber}`, requesting `number`, `title`, `url`, `author`, `baseRefName`, `baseRefOid`, `headRefName`, `headRefOid`, `headRepository`, `headRepositoryOwner`, `isCrossRepository`, `maintainerCanModify`, `mergeable`, `mergeStateStatus`, `reviewDecision`, `labels`, `latestReviews`, `reviews`, `commits`, and `files`. Run **current-user** for the reviewer's login if it was not already captured as `CURRENT_USER` in step 0.
 
 Capture at least:
 
@@ -97,9 +95,7 @@ Run these checks before the worktree is created. If either fails, skip the full 
 
 #### 3a. Check for merge conflicts
 
-```bash
-gh pr view {prNumber} --json mergeable,mergeStateStatus,baseRefName
-```
+Run the tracker operation **get-pr** for `{prNumber}`, requesting `mergeable`, `mergeStateStatus`, and `baseRefName`.
 
 If `mergeable` is `CONFLICTING` or `mergeStateStatus` is `DIRTY`, do not continue with checkout or review execution on the first pass.
 
@@ -112,19 +108,11 @@ Important:
 
 #### 3b. Check CI status
 
-Discover required checks first:
+Discover required checks first: run the tracker operation **get-required-checks** for the PR's base branch (`{baseRefName}`).
 
-```bash
-gh api repos/{owner}/{repo}/branches/{baseRefName}/protection/required_status_checks --jq '.contexts[]' 2>/dev/null
-```
+If branch protection is not readable (the operation reports 404/no data), treat all reported PR checks as required.
 
-If the branch protection API returns 404, treat all reported PR checks as required.
-
-Fetch the actual PR check results:
-
-```bash
-gh pr checks {prNumber} --json name,state,link
-```
+Fetch the actual PR check results with the tracker operation **get-pr-checks** for `{prNumber}`, requesting each check's `name`, `state`, and `link`.
 
 Treat these states as failing:
 
@@ -170,7 +158,7 @@ else
 fi
 ```
 
-If you reused an existing linked worktree, repoint it deliberately to the PR branch or a fresh local branch for that PR before continuing. If you created a new worktree, use the GitHub pull ref so the checkout works for both same-repo PRs and fork PRs.
+If you reused an existing linked worktree, repoint it deliberately to the PR branch or a fresh local branch for that PR before continuing. If you created a new worktree, use the code host's PR head ref (`pull/{prNumber}/head`, as fetched above) so the checkout works for both same-repo PRs and fork PRs; if that ref cannot be fetched from `origin`, fall back to the tracker operation **checkout-pr** for `{prNumber}`.
 
 After selecting the worktree, ensure you are on the correct PR branch context:
 
@@ -209,10 +197,7 @@ Before proceeding with the full review, verify that the PR does not duplicate wo
 
 Steps:
 
-1. Get the list of changed files from the PR diff:
-   ```bash
-   gh pr diff {prNumber} --name-only
-   ```
+1. Get the list of changed files from the PR diff: run the tracker operation **get-pr-diff** for `{prNumber}` in changed-file-list mode (names only, no patch content).
 
 2. For each changed file, compare the PR version against the base branch version to identify overlap:
    ```bash
@@ -237,12 +222,7 @@ If partial overlap exists (some changes are new, some are redundant):
 
 ### 5. Diff-level automated checks
 
-Before running the full om-code-review skill, scan the PR diff for hard-rule violations. Use:
-
-```bash
-gh pr diff {prNumber}
-gh pr diff {prNumber} --name-only
-```
+Before running the full om-code-review skill, scan the PR diff for hard-rule violations. Run the tracker operation **get-pr-diff** for `{prNumber}` twice: once for the full diff and once in changed-file-list mode.
 
 Record findings from the patterns below. When a pattern applies to this repository's stack and conventions, it is a mandatory finding, not an optional heuristic; skip rows that have no equivalent in this codebase (for example, the i18n row in a repo without i18n).
 
@@ -290,7 +270,7 @@ Execute the `om-code-review` skill in the isolated worktree.
 
 Mandatory scope and gates:
 
-- Scope changed files with `gh pr diff {prNumber} --name-only`
+- Scope changed files with the changed-file list from the tracker operation **get-pr-diff** for `{prNumber}`
 - Gather context from the repository's agent-instruction and contributing docs covering the changed areas, plus the repo-local review checklist when the config's `reviewChecklist` points at one
 - Run the full validation gate: every command in `validation.commands`, in order
 - Apply the full review checklist
@@ -311,11 +291,11 @@ Map the verdict to the decision used in the following steps: **request changes**
 
 ### 8. Submit the verdict and labels
 
-If approved, submit an approval review. If the verdict is request changes (any blocker, or any major without a documented waiver), submit a changes-requested review.
+If approved, submit an approval review via the tracker operation **review-pr** (verdict: approve). If the verdict is request changes (any blocker, or any major without a documented waiver), submit a changes-requested review via **review-pr** (verdict: request changes).
 
 The review body must contain the full structured report from the code-review skill. For re-reviews, explicitly note that it is a re-review in the title or summary.
 
-Every label mutation goes through the guards from `om-setup-agent-pipeline`: additions via `apply_label` (missing labels degrade to a logged skip), removals only when `LABELS_ENABLED` is `true`. When `labels.enabled` is `false`, skip every label operation in this step and say so in the completion comment and report.
+Every label mutation goes through the label guards from the tracker descriptor: additions via `apply_label` (missing labels degrade to a logged skip), removals only when `LABELS_ENABLED` is `true`. When `labels.enabled` is `false`, skip every label operation in this step and say so in the completion comment and report.
 
 Pipeline labels:
 
@@ -329,23 +309,13 @@ Pipeline labels:
 
 Keep `in-progress` separate from the pipeline-state helper. It is a lock, not a workflow state.
 
-Define and reuse a shared helper built on the guards:
+Pipeline-label transitions go through the `set_pipeline_label` helper (usage: `set_pipeline_label <prNumber> <newLabel>`), which is one of the label guards from the tracker descriptor — do not redefine it here. It operates over the pipeline group:
 
 ```bash
 PIPELINE_LABELS="review changes-requested qa qa-failed merge-queue blocked do-not-merge"
-
-set_pipeline_label() {  # usage: set_pipeline_label <prNumber> <newLabel>
-  if [ "$LABELS_ENABLED" != "true" ]; then
-    echo "Labels disabled in config — skipping pipeline label change."
-    return 0
-  fi
-  apply_label "$2" "$1"
-  for label in $PIPELINE_LABELS; do
-    [ "$label" = "$2" ] && continue
-    gh pr edit "$1" --remove-label "$label" 2>/dev/null || true
-  done
-}
 ```
+
+When `LABELS_ENABLED` is not `true`, the guard skips the pipeline label change (log that labels are disabled in config).
 
 The helper:
 
@@ -391,16 +361,14 @@ Suggested label comments:
 
 When the verdict is `changes-requested`, reassign the PR back to the original PR author after the review and pipeline label are posted, unless the author is the current reviewer, a bot account, or otherwise unavailable.
 
-Suggested flow:
+Suggested flow — fill `PR_AUTHOR` with the author's login from the tracker operation **get-pr** for `{prNumber}`, requesting `author`. If `PR_AUTHOR` is non-empty and differs from `$CURRENT_USER`:
 
-```bash
-PR_AUTHOR=$(gh pr view {prNumber} --json author --jq '.author.login')
+1. **unassign-pr**: remove `$CURRENT_USER` from `{prNumber}`'s assignees.
+2. **assign-pr**: add `$PR_AUTHOR` as the assignee.
+3. Post the handoff comment via **comment-pr** (preserving multi-line formatting):
 
-if [ -n "$PR_AUTHOR" ] && [ "$PR_AUTHOR" != "$CURRENT_USER" ]; then
-  gh pr edit {prNumber} --remove-assignee "$CURRENT_USER"
-  gh pr edit {prNumber} --add-assignee "$PR_AUTHOR"
-  gh pr comment {prNumber} --body "Thanks @${PR_AUTHOR} — review found actionable items, so I'm handing this PR back to you for the next pass. When the updates are pushed, re-request review and the automation can pick it up from the latest head."
-fi
+```markdown
+Thanks @{PR_AUTHOR} — review found actionable items, so I'm handing this PR back to you for the next pass. When the updates are pushed, re-request review and the automation can pick it up from the latest head.
 ```
 
 Rules:
@@ -415,19 +383,18 @@ When the verdict is approved AND the PR carries `needs-qa` without `skip-qa` —
 
 Build the instructions from the actual diff, not from generic boilerplate:
 
-- Scope the changed surfaces with `gh pr diff {prNumber} --name-only` and the PR title/body.
+- Scope the changed surfaces with the changed-file list from **get-pr-diff** for `{prNumber}` and the PR title/body.
 - Translate each user-facing change into concrete click paths (routes or screens), the exact actions to take, and the expected outcome to verify.
 - Group areas by priority tag: **P0** auth/sessions/data scoping/money/event reliability, **P1** primary user-facing features and UI, **P2** docs/tooling/DX. Use the three-block layout **Where QA should click** / **What human QA should verify** / **What can go wrong** per area.
 - For PRs touching web UI surfaces, add perceived-performance checks: cold-load the changed route (screenshot evidence where possible), first useful shell/loading state, interaction responsiveness, mobile viewport.
 - Call out edge cases and data-scoping/permission boundaries explicitly (cross-account isolation, permission-gated actions, empty/error states).
 
-Post it as a single comment so multi-line formatting survives:
+Post it as a single comment via the tracker operation **comment-pr** (preserving multi-line formatting):
 
-```bash
-gh pr comment {prNumber} --body-file <(cat <<'EOF'
+```markdown
 ## 🧪 Manual QA instructions (`needs-qa`)
 
-This PR is approved and requires manual QA (`needs-qa`, no `skip-qa`). It is queued in `merge-queue` but the QA-approval gate holds it until `qa-approved` is added. QA reviewer: when you pick it up, move it to `qa` (`gh pr edit {prNumber} --remove-label merge-queue --add-label qa`), then run the routes below.
+This PR is approved and requires manual QA (`needs-qa`, no `skip-qa`). It is queued in `merge-queue` but the QA-approval gate holds it until `qa-approved` is added. QA reviewer: when you pick it up, move it to `qa` by swapping the labels (remove `merge-queue`, add `qa`), then run the routes below.
 
 ### P0 — {area}
 **Where to click**
@@ -453,10 +420,8 @@ This PR is approved and requires manual QA (`needs-qa`, no `skip-qa`). It is que
 - {concrete regression symptom}
 
 ### Pass/fail
-- All routes pass → `gh pr edit {prNumber} --remove-label qa --add-label merge-queue --add-label qa-approved` (this clears the QA-approval gate)
-- Any route fails → `gh pr edit {prNumber} --remove-label qa --add-label qa-failed` with a comment describing the failure.
-EOF
-)
+- All routes pass → remove the `qa` label and add `merge-queue` plus `qa-approved` (this clears the QA-approval gate)
+- Any route fails → remove the `qa` label, add `qa-failed`, and leave a comment describing the failure.
 ```
 
 Rules for this comment:
@@ -538,7 +503,7 @@ Instead:
 4. Resolve any conflicts against `{baseRefName}` on that carry-forward branch.
 5. Run the autofix loop above until the branch is re-reviewed as approvable or a real blocker remains.
 6. Commit and push the new branch to `origin`.
-7. Open a replacement PR against `{baseRefName}`.
+7. Open a replacement PR against `{baseRefName}` via the tracker operation **create-pr**.
 8. Close the original PR only after the replacement PR exists successfully.
 
 Validation requirements for autofix mode:
@@ -587,11 +552,10 @@ Credit to @{originalAuthor} for the original implementation. The replacement PR 
 
 Always release before the skill exits — even on failure. Use a `trap` or equivalent finally-block so a crash or early stop still clears the lock.
 
-```bash
-if [ "$LABELS_ENABLED" = "true" ]; then
-  gh pr edit {prNumber} --remove-label "in-progress"
-fi
-gh pr comment {prNumber} --body "🤖 \`om-auto-review-pr\` completed: ${VERDICT}. Lock released."
+When `LABELS_ENABLED` is `true`, remove the `in-progress` label from `{prNumber}` via the tracker operation **unlabel-pr**. Then post the lock-release comment via **comment-pr**, where `VERDICT` is the decision from steps 7–8 (`APPROVED` or `CHANGES REQUESTED`):
+
+```text
+🤖 `om-auto-review-pr` completed: {VERDICT}. Lock released.
 ```
 
 Rules:
@@ -624,7 +588,7 @@ If a blocker remains that requires human judgment, the summary must describe the
 
 - Always run the step 0 in-progress check before any other action; never silently override another actor's claim
 - Always release the `in-progress` lock in step 11, even if the run fails or is aborted (use a trap/finally)
-- Always fetch the specific PR from GitHub before acting
+- Always fetch the specific PR from the tracker before acting
 - After posting a changes-requested review, immediately proceed to auto-fix all actionable findings without asking the user — only stop for critical architectural decisions, missing credentials, or contract-breaking scope changes
 - Always use an isolated worktree for checkout, review, validation, and optional fixes
 - Reuse the current linked worktree when already inside one; do not create nested worktrees
@@ -639,7 +603,7 @@ If a blocker remains that requires human judgment, the summary must describe the
 - Must use the `om-code-review` skill severity model (blocker / major / minor / nit) and its verdict rule: any blocker, or any major without a documented waiver, means request changes; only minors and nits means approve
 - Must run the diff-level automated checks in step 5
 - The review body must contain the full structured report
-- Always add the chosen pipeline label and remove every other pipeline label (via the `set_pipeline_label` helper built on the `om-setup-agent-pipeline` guards)
+- Always add the chosen pipeline label and remove every other pipeline label (via the `set_pipeline_label` helper from the tracker descriptor's label guards)
 - Route every label mutation through the guards; when `labels.enabled` is `false`, skip all label operations and say so in the completion comment and report
 - Always add a short PR comment explaining why the chosen pipeline label was applied
 - Always hand `changes-requested` PRs back to the original author with an explicit reassignment/comment handoff when possible

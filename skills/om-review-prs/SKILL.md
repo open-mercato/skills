@@ -11,14 +11,11 @@ Use this as a day-start review queue. It finds unreviewed open PRs, shows the qu
 
 ### 0. Load pipeline config
 
-Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. This skill uses `LABELS_ENABLED` for the label-based queue filters below; each individual review delegates to `om-auto-review-pr`, which loads the rest of the config itself. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-review-prs/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
+Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. The snippet resolves `TRACKER` and `TRACKER_FILE=".ai/trackers/${TRACKER}.md"`, and stops when the descriptor is missing. Read `$TRACKER_FILE`; every tracker operation named in this skill executes as that descriptor defines, and the label guards come from it. This skill uses `LABELS_ENABLED` for the label-based queue filters below; each individual review delegates to `om-auto-review-pr`, which loads the rest of the config itself. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-review-prs/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 ### 1. Fetch open PRs
 
-```bash
-gh pr list --state open --json number,title,url,author,labels,reviewDecision,createdAt,updatedAt,isDraft,assignees --limit 50
-CURRENT_USER=$(gh api user --jq '.login')
-```
+Run the tracker operation **list-prs** with state open, requesting `number,title,url,author,labels,reviewDecision,createdAt,updatedAt,isDraft,assignees`, limit 50. Run **current-user** to fill `CURRENT_USER` (the automation user's login).
 
 ### 2. Filter to PRs that still need review
 

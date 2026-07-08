@@ -1,6 +1,6 @@
 ---
 name: om-fix
-description: Implements the minimal code change identified by the om-root-cause step, adds regression tests, and runs the configured validation gate. Claims the GitHub issue at start (assignee + in-progress label + claim comment) so concurrent automation backs off. Does not commit, push, or open a PR — that is the om-open-pr step's job.
+description: Implements the minimal code change identified by the om-root-cause step, adds regression tests, and runs the configured validation gate. Claims the tracker issue at start (assignee + in-progress label + claim comment) so concurrent automation backs off. Does not commit, push, or open a PR — that is the om-open-pr step's job.
 ---
 
 # Apply Fix
@@ -11,7 +11,7 @@ Your job: implement the proposed change, prove it works, and stop. The next step
 
 ## Arguments
 
-- `{issueId}` (required) — the GitHub issue number
+- `{issueId}` (required) — the tracker issue id
 - `{repo}` (optional) — `owner/name`; infer from git remote if omitted
 
 ## Load pipeline config
@@ -24,36 +24,40 @@ if [ ! -f "$CONFIG" ]; then
   echo "Missing $CONFIG — run the om-setup-agent-pipeline skill first."
   exit 1
 fi
+TRACKER=$(jq -r '.tracker // "github"' "$CONFIG")
+TRACKER_FILE=".ai/trackers/${TRACKER}.md"
+if [ ! -f "$TRACKER_FILE" ]; then
+  echo "Missing $TRACKER_FILE — run the om-setup-agent-pipeline skill to install the tracker descriptor."
+  exit 1
+fi
 LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
-
-label_exists() {
-  gh label list --limit 200 --json name --jq '.[].name' | grep -Fxq "$1"
-}
+# validation.commands is read directly from $CONFIG in the validation loop below.
 ```
+
+Read `$TRACKER_FILE`; every tracker operation named in this skill executes as that descriptor defines, and the label guards come from it.
 
 ## Tools
 
 You have write access:
 
 - File reading, code search, editing, and creation
-- Shell: full (tests, typecheck, generators, `gh` for the claim)
+- Shell: full (tests, typecheck, generators); tracker operations for the claim (per the tracker descriptor)
 
-Do not run `git commit`, `git push`, or `gh pr create` — those are the next step's responsibility.
+Do not run `git commit`, `git push`, or the **create-pr** tracker operation — those are the next step's responsibility.
 
 ## Procedure
 
 ### 1. Claim the issue
 
-This is the only step before PR-open that mutates GitHub state. Run the claim once, up front, so any parallel automation sees the lock immediately. The claim carries all three signals: assignee, `in-progress` label, and a claim comment. The label part honors `labels.enabled` and the existence guard; the assignee and comment are applied regardless.
+This is the only step before PR-open that mutates tracker state. Run the claim once, up front, so any parallel automation sees the lock immediately. The claim carries all three signals: assignee, `in-progress` label, and a claim comment. The label part honors `labels.enabled` and the existence guard; the assignee and comment are applied regardless. Claim failures are non-fatal — log and continue.
 
-```bash
-CURRENT_USER=$(gh api user --jq '.login')
-gh issue edit {issueId} --repo {owner}/{repo} --add-assignee "$CURRENT_USER" || true
-if [ "$LABELS_ENABLED" = "true" ] && label_exists "in-progress"; then
-  gh issue edit {issueId} --repo {owner}/{repo} --add-label "in-progress" || true
-fi
-gh issue comment {issueId} --repo {owner}/{repo} --body \
-  "🤖 \`autofix\` started by @${CURRENT_USER} at $(date -u +%Y-%m-%dT%H:%M:%SZ). Other auto-skills will skip this issue until the lock is released."
+1. Set `CURRENT_USER` via the tracker operation **current-user**.
+2. **assign-issue** — assign `{issueId}` to `$CURRENT_USER`.
+3. **label-issue** — apply `in-progress` to `{issueId}` through the guard (honors `labels.enabled` and label existence; a missing label degrades to a logged skip).
+4. **comment-issue** — post the claim comment on `{issueId}`:
+
+```
+🤖 `autofix` started by @${CURRENT_USER} at <UTC timestamp>. Other auto-skills will skip this issue until the lock is released.
 ```
 
 The lock release happens in `om-open-pr` (success path) or via an external janitor (failure path). Do not release here.
@@ -145,5 +149,5 @@ If you cannot complete the fix safely (blocker discovered, change unexpectedly b
 - No commit, no push, no PR — leave that to `om-open-pr`.
 - Stay inside the worktree the engine prepared; do not create nested worktrees.
 - Keep scope minimal; refactors belong in their own PR.
-- Every label mutation honors `labels.enabled` and the existence guard from `om-setup-agent-pipeline`; a missing label degrades to a logged skip, never a failure.
+- Every label mutation honors `labels.enabled` and the existence guard from the tracker descriptor; a missing label degrades to a logged skip, never a failure.
 - Before declaring done, re-check every changed production file against the project's data-access and security conventions.

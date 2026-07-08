@@ -1,6 +1,6 @@
 ---
 name: om-setup-agent-pipeline
-description: One-time configurator for the agent PR pipeline. Inspects the repository (default branch, validation scripts, GitHub labels), asks a few questions, writes .ai/agentic.config.json — the file every other skill in this collection reads — and generates SDLC.md (the team's ticket-flow process doc) plus an AGENTS.md starter when the repo has none. Run once per repository; re-run when the toolchain or label taxonomy changes.
+description: One-time configurator for the agent PR pipeline. Inspects the repository (default branch, validation scripts, tracker labels), asks a few questions, writes .ai/agentic.config.json — the file every other skill in this collection reads — installs the tracker provider descriptor (.ai/trackers/<tracker>.md), and generates SDLC.md (the team's ticket-flow process doc) plus an AGENTS.md starter when the repo has none. Run once per repository; re-run when the toolchain or label taxonomy changes.
 ---
 
 # Setup Agent Pipeline
@@ -43,7 +43,7 @@ Every skill in this collection reads its repository-specific settings from `.ai/
 Field reference:
 
 - `baseBranch` — the branch PRs target. `"auto"` means: resolve at runtime from the repository's default branch (see the loading snippet below). Set an explicit name only when PRs must target something other than the default branch.
-- `tracker` — the issue/PR tracker provider. v1 ships `"github"` (the `gh` CLI, used inline across the collection). This field is the extension seam for other trackers — see Tracker providers below.
+- `tracker` — the issue/PR tracker provider. Selects the tracker descriptor at `.ai/trackers/<tracker>.md`, which defines how every tracker operation the skills name is executed. The collection ships `"github"` (the `gh` CLI); other trackers are added by writing one descriptor file — see Tracker providers below.
 - `validation.commands` — ordered list of shell commands that constitute the full validation gate. Skills run them in order and treat any non-zero exit as a gate failure. Keep the list complete: typecheck, lint, tests, build — whatever proves the repo is healthy.
 - `labels.enabled` — when `false`, skills skip every label operation and note that in their PR summaries. Use this for repos that do not want the label workflow.
 - `labels.pipeline` — mutually exclusive workflow states. A PR carries at most one.
@@ -58,9 +58,11 @@ Field reference:
 
 ## Tracker providers
 
-All issue/PR state management in this collection assumes one provider, selected by the `tracker` config field. v1 ships GitHub only: skills call the `gh` CLI directly, and the operations they rely on form the provider contract — listing and reading issues and PRs, creating and closing issues, commenting, adding and removing labels, assigning, requesting reviews, approving, merging, and reading CI/check status.
+No skill in this collection calls a tracker CLI or API directly. Skills name **tracker operations** — **get-issue**, **create-pr**, **comment-pr**, **merge-pr**, and the rest of the contract in `references/trackers/TEMPLATE.md` — and the repository's tracker descriptor at `.ai/trackers/<tracker>.md` (selected by the `tracker` config field) defines how each operation is executed. This skill installs the descriptor: it copies the shipped implementation from its own `references/trackers/<tracker>.md` into the repo, where it is committed alongside the config.
 
-A future provider (for example Linear) is added as ONE dedicated skill that implements the same operations end-to-end, plus a `tracker` value that routes state operations to it. One skill per provider — never a scatter of micro-skills per operation — so the extension does not pollute agent context. Until such a provider exists, `tracker` values other than `"github"` are an error: stop and tell the user.
+The repo's copy is authoritative, which is also the extension mechanism: teams edit `.ai/trackers/<tracker>.md` to extend or override any operation — extra flags, a different command, added conventions — and every skill picks the change up on its next run without touching the installed skills. A whole new tracker (for example Linear) is ONE new descriptor file written from `TEMPLATE.md`, plus the matching `tracker` value; split setups (issues in Linear, PRs on GitHub) implement the issue operations against the issue tracker and delegate the PR sections to the GitHub descriptor, as the template describes.
+
+The collection ships `github.md`. For a `tracker` value with no shipped descriptor and no existing `.ai/trackers/<tracker>.md`, scaffold the repo file from `references/trackers/TEMPLATE.md`, tell the user to fill in the operations, and stop — skills must not run against an unfilled descriptor.
 
 ## Project docs: SDLC.md and AGENTS.md
 
@@ -81,10 +83,7 @@ If `.ai/agentic.config.json` already exists, show the current content and ask wh
 
 ### 2. Detect the repository shape
 
-```bash
-BASE_BRANCH=$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name' 2>/dev/null || true)
-[ -z "$BASE_BRANCH" ] && BASE_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
-```
+Resolve the default branch via the tracker **default-branch** operation (for a fresh setup with no descriptor installed yet, use the shipped `references/trackers/github.md` — or the descriptor matching the tracker the user names — and fall back to `git symbolic-ref refs/remotes/origin/HEAD`).
 
 Detect candidate validation commands, in this order of evidence:
 
@@ -97,65 +96,43 @@ List what CI already runs (`.github/workflows/*.yml`) and prefer commands that m
 ### 3. Ask the user (skip with `--defaults`)
 
 1. Confirm or edit the detected validation commands.
-2. Labels: install the full taxonomy above (recommended), keep a subset, or disable labels entirely.
-3. QA gate on or off. Recommend on when the repo ships user-facing changes.
-4. Optional repo-local review checklist path.
-5. Generate `SDLC.md` (recommended) and, when the repo has no agent instruction file, an `AGENTS.md` starter.
+2. Which tracker provider to install (default: `github`). This sets the config's `tracker` field and which descriptor lands in `.ai/trackers/`.
+3. Labels: install the full taxonomy above (recommended), keep a subset, or disable labels entirely.
+4. QA gate on or off. Recommend on when the repo ships user-facing changes.
+5. Optional repo-local review checklist path.
+6. Generate `SDLC.md` (recommended) and, when the repo has no agent instruction file, an `AGENTS.md` starter.
 
-### 4. Create missing labels
+### 4. Install the tracker descriptor
 
-When labels are enabled, check which configured labels exist and offer to create the missing ones:
+Copy the shipped descriptor for the chosen tracker from this skill's `references/trackers/<tracker>.md` to `.ai/trackers/<tracker>.md` (create the directory). Rules:
 
-```bash
-gh label list --limit 200 --json name --jq '.[].name' > /tmp/existing-labels.txt
-gh label create review            --color 0366d6 --description "Ready for code review"
-gh label create changes-requested --color b60205 --description "Reviewer requested changes"
-gh label create qa                --color fbca04 --description "Manual QA in progress"
-gh label create qa-failed         --color b60205 --description "Manual QA failed"
-gh label create merge-queue       --color 0e8a16 --description "Approved, ready to merge"
-gh label create blocked           --color b60205 --description "Blocked by a dependency"
-gh label create do-not-merge      --color b60205 --description "Hard merge block"
-gh label create bug               --color d73a4a --description "Bug fix"
-gh label create feature           --color a2eeef --description "New capability"
-gh label create refactor          --color cfd3d7 --description "No behavior change"
-gh label create security          --color b60205 --description "Security-relevant change"
-gh label create dependencies      --color 0366d6 --description "Dependency update"
-gh label create documentation     --color 0075ca --description "Docs only"
-gh label create needs-qa          --color fbca04 --description "Requires manual QA before merge"
-gh label create skip-qa           --color 0e8a16 --description "Low risk, QA not required"
-gh label create qa-approved       --color 0e8a16 --description "Manual QA passed"
-gh label create qa-self-verified  --color c5def5 --description "Self-QA exception used"
-gh label create in-progress       --color c5def5 --description "An automated skill is working on this"
-gh label create do-not-close      --color c5def5 --description "Humans only: never auto-close this issue"
-gh label create priority-low      --color e4e669 --description "Cosmetic or follow-up work"
-gh label create priority-medium   --color fbca04 --description "Ordinary bug or feature"
-gh label create priority-high     --color d93f0b --description "Release-blocking"
-gh label create priority-extreme  --color b60205 --description "Outage or security incident"
-gh label create risk-low          --color 0e8a16 --description "Isolated, low blast radius"
-gh label create risk-medium       --color fbca04 --description "Ordinary change with tests"
-gh label create risk-high         --color b60205 --description "Wide blast radius, review deeply"
-```
+- When `.ai/trackers/<tracker>.md` already exists, never overwrite it silently — the team may have extended it. Show a diff against the shipped version and ask whether to refresh, merge, or keep.
+- When the chosen tracker has no shipped descriptor, scaffold `.ai/trackers/<tracker>.md` from `references/trackers/TEMPLATE.md` and tell the user which operations they must fill in before the other skills can run.
+
+### 5. Create missing labels
+
+When labels are enabled, list existing labels via the tracker **list-labels** operation and offer to create the missing ones via **ensure-label-taxonomy** (both defined in the installed descriptor, which also carries the recommended colors and descriptions).
 
 Skip creation for labels that already exist. Never delete or recolor existing labels without being asked.
 
-### 5. Generate the project docs
+### 6. Generate the project docs
 
 Per the Project docs section above: write `SDLC.md` from `references/sdlc-template.md` with every placeholder resolved from the config and the answers given, and — only when the repo has no `AGENTS.md`/`CLAUDE.md`/equivalent — the starter `AGENTS.md`. Show both to the user before writing. Never overwrite an existing process doc or agent instruction file.
 
-### 6. Write and commit the config
+### 7. Write and commit the config
 
 Write `.ai/agentic.config.json`, create `paths.runs` and `paths.analysis` directories with a `.gitkeep` each, show the final file to the user, and offer to commit:
 
 ```bash
-git add .ai/agentic.config.json .ai/runs/.gitkeep .ai/analysis/.gitkeep SDLC.md
+git add .ai/agentic.config.json .ai/trackers/ .ai/runs/.gitkeep .ai/analysis/.gitkeep SDLC.md
 git commit -m "chore: configure agent PR pipeline"
 ```
 
 Include `AGENTS.md` in the commit when it was generated this run.
 
-### 7. Report
+### 8. Report
 
-Tell the user which skills are now unlocked and that the collection's entry points are `om-auto-create-pr` (ship a task as a PR), `om-auto-review-pr` (review a PR), and `om-merge-buddy` (what can merge now). Point at `SDLC.md` as the process reference for humans and at repo-local skills under `.ai/skills/<skill-name>/` as the way to customize any single skill.
+Tell the user which skills are now unlocked and that the collection's entry points are `om-auto-create-pr` (ship a task as a PR), `om-auto-review-pr` (review a PR), and `om-merge-buddy` (what can merge now). Point at `SDLC.md` as the process reference for humans, at repo-local skills under `.ai/skills/<skill-name>/` as the way to customize any single skill, and at `.ai/trackers/<tracker>.md` as the way to customize tracker operations.
 
 ## The standard config-loading snippet
 
@@ -167,37 +144,25 @@ if [ ! -f "$CONFIG" ]; then
   echo "Missing $CONFIG — run the om-setup-agent-pipeline skill first."
   exit 1
 fi
-BASE_BRANCH=$(jq -r '.baseBranch // "auto"' "$CONFIG")
-if [ "$BASE_BRANCH" = "auto" ]; then
-  BASE_BRANCH=$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name' 2>/dev/null || true)
-  [ -z "$BASE_BRANCH" ] && BASE_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
-  [ -z "$BASE_BRANCH" ] && BASE_BRANCH="main"
+TRACKER=$(jq -r '.tracker // "github"' "$CONFIG")
+TRACKER_FILE=".ai/trackers/${TRACKER}.md"
+if [ ! -f "$TRACKER_FILE" ]; then
+  echo "Missing $TRACKER_FILE — run the om-setup-agent-pipeline skill to install the tracker descriptor."
+  exit 1
 fi
+BASE_BRANCH=$(jq -r '.baseBranch // "auto"' "$CONFIG")
+# "auto" resolves via the tracker descriptor's default-branch operation.
 RUNS_DIR=$(jq -r '.paths.runs // ".ai/runs"' "$CONFIG")
 ANALYSIS_DIR=$(jq -r '.paths.analysis // ".ai/analysis"' "$CONFIG")
 LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
 QA_GATE=$(jq -r '.qaGate // false' "$CONFIG")
-TRACKER=$(jq -r '.tracker // "github"' "$CONFIG")
 ```
 
-Right after loading the config, a skill checks for a repo-local skill of the same name (`.ai/skills/<skill-name>/SKILL.md`, see Per-skill local overrides) and reads the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics before doing any work.
+Right after loading the config, a skill:
 
-Label operations always go through an existence guard, so a missing label degrades to a logged skip instead of a failure:
-
-```bash
-label_exists() {
-  gh label list --limit 200 --json name --jq '.[].name' | grep -Fxq "$1"
-}
-
-apply_label() {
-  if [ "$LABELS_ENABLED" != "true" ]; then return 0; fi
-  if label_exists "$1"; then
-    gh pr edit "$2" --add-label "$1"
-  else
-    echo "Skipping label '$1' (not defined in this repo). Create it with: gh label create '$1'"
-  fi
-}
-```
+1. Checks for a repo-local skill of the same name (`.ai/skills/<skill-name>/SKILL.md`, see Per-skill local overrides).
+2. Reads the tracker descriptor at `$TRACKER_FILE`. Every **tracker operation** the skill names (**get-issue**, **create-pr**, **comment-pr**, …) is executed as that file defines it, and the label guards (`label_exists`, `apply_label`, `apply_issue_label`, `remove_issue_label`, `set_pipeline_label`) are the ones the descriptor defines — a label mutation outside those guards is a bug. When `BASE_BRANCH` is `auto`, resolve it now via the descriptor's **default-branch** operation.
+3. Reads the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics before doing any work.
 
 ## Rules
 
@@ -206,4 +171,4 @@ apply_label() {
 - Never overwrite an existing `AGENTS.md`, `CLAUDE.md`, `SDLC.md`, or other process/instruction doc; generate only what is missing, and show it before writing.
 - Never store secrets, tokens, or user identities in the config file.
 - Keep the config committed; it is team configuration, not personal preference.
-- A `tracker` value with no matching provider skill is an error — stop and say so; do not improvise tracker calls.
+- A `tracker` value with no shipped descriptor and no filled-in `.ai/trackers/<tracker>.md` is an error — scaffold from the template, say so, and stop; do not improvise tracker calls.

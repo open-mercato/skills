@@ -14,7 +14,7 @@
 
 ## Purpose
 
-This file documents how work flows from ticket to merged PR in this repository. The agent skills configured in `.ai/agentic.config.json` enforce the process; humans read it here. PRs target `{{baseBranch}}`; issues and PRs live in {{tracker}}.
+This file documents how work flows from ticket to merged PR in this repository. The agent skills configured in `.ai/agentic.config.json` enforce the process; humans read it here. PRs target `{{baseBranch}}`; issues and PRs live in {{tracker}}, with every tracker operation the skills run defined in `.ai/trackers/{{tracker}}.md` (edit that file to extend or override tracker behavior).
 
 Work enters through two paths: a free-form task brief handed to an agent, or a filed ticket. Both converge on the same review loop, the same validation gate, and the same merge gates.
 

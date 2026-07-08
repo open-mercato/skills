@@ -11,7 +11,7 @@ Use this as a day-start review queue. It finds unreviewed open PRs, shows the qu
 
 ### 0. Load pipeline config
 
-Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. This skill uses `LABELS_ENABLED` for the label-based queue filters below; each individual review delegates to `auto-review-pr`, which loads the rest of the config itself.
+Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. This skill uses `LABELS_ENABLED` for the label-based queue filters below; each individual review delegates to `auto-review-pr`, which loads the rest of the config itself. Right after loading the config, check for `.ai/agentic-overrides/review-prs.md`; when present, apply it on top of these instructions — local rules win, but an override can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 ### 1. Fetch open PRs
 

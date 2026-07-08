@@ -27,7 +27,7 @@ When a plain PR link is pasted, always run the design-doc check (step 2a) in add
    BASE_BRANCH=$(jq -r '.baseBranch // "auto"' "$CONFIG")   # resolve "auto" per the standard snippet
    LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
    ```
-   Label names come from the config's category taxonomy. When the URL points at a different repo than the current one, still honor `labels.enabled`, but run label existence checks against the target repo (`gh label list --repo <owner>/<repo>`).
+   Label names come from the config's category taxonomy. When the URL points at a different repo than the current one, still honor `labels.enabled`, but run label existence checks against the target repo (`gh label list --repo <owner>/<repo>`). Right after loading the config, check for `.ai/agentic-overrides/followup-issue-from-pr.md`; when present, apply it on top of these instructions — local rules win, but an override can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 1. **Parse the URL** into `owner`, `repo`, PR `<num>`, and comment id (if present). Note which kind of comment id it is:
    - `issuecomment-<id>` → issue/PR conversation comment.

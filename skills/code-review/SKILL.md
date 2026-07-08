@@ -27,7 +27,7 @@ Callers (`auto-review-pr`, `review-prs`, the self-review step of `auto-create-pr
 
 ## Review Workflow
 
-0. **Load config**: Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. This resolves `$BASE_BRANCH` and `validation.commands`. Also read the optional repo-local checklist path:
+0. **Load config**: Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. This resolves `$BASE_BRANCH` and `validation.commands`. Right after loading the config, check for `.ai/agentic-overrides/code-review.md`; when present, apply it on top of these instructions — local rules win, but an override can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics. Also read the optional repo-local checklist path:
 
    ```bash
    REVIEW_CHECKLIST=$(jq -r '.reviewChecklist // empty' .ai/agentic.config.json)

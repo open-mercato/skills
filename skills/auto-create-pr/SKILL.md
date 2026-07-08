@@ -18,7 +18,7 @@ Turn a free-form task brief into a disciplined autonomous run: an execution plan
 
 ### 0. Load pipeline config, pre-flight, and claim
 
-Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. This resolves `BASE_BRANCH`, `RUNS_DIR`, `LABELS_ENABLED`, `QA_GATE`, and the validation commands used below.
+Load `.ai/agentic.config.json` using the standard snippet from the `setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `setup-agent-pipeline` first. This resolves `BASE_BRANCH`, `RUNS_DIR`, `LABELS_ENABLED`, `QA_GATE`, and the validation commands used below. Right after loading the config, check for `.ai/agentic-overrides/auto-create-pr.md`; when present, apply it on top of these instructions — local rules win, but an override can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 Before writing anything, confirm no other run owns the slot.
 
@@ -67,7 +67,7 @@ If the user passed one or more `--skill-url` arguments, fetch each URL and extra
 
 Read enough project context to avoid blind work:
 
-- The repository's agent instructions and contributing docs (for example `CLAUDE.md`, `CONTRIBUTING.md`, or equivalents), plus any docs covering the affected area.
+- The repository's agent instructions and contributing docs (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, or equivalents), plus any docs covering the affected area.
 - Existing design docs or architecture notes for the same area, when the repo keeps them.
 
 Then reduce the brief to:

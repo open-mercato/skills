@@ -1,0 +1,16 @@
+{
+  "name": "@open-mercato/skills",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Agent skills that run a full PR pipeline: plan, implement, review, QA gate, merge.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/open-mercato/skills.git"
+  },
+  "scripts": {
+    "install-skills": "node scripts/install-skills.mjs",
+    "uninstall-skills": "node scripts/install-skills.mjs --uninstall",
+    "lint": "scripts/lint.sh"
+  }
+}

@@ -1,6 +1,6 @@
 ---
 name: om-verify-in-repo
-description: Read-only triage gate for an autofix chain. Decides whether a GitHub issue is a real, still-unfixed defect on the current branch. Stops the chain cleanly with NO_ACTION_NEEDED when the issue is already fixed, already in progress by someone else, already covered by an open PR, or not actually a bug.
+description: Read-only triage gate for an autofix chain. Decides whether a tracker issue is a real, still-unfixed defect on the current branch. Stops the chain cleanly with NO_ACTION_NEEDED when the issue is already fixed, already in progress by someone else, already covered by an open PR, or not actually a bug.
 ---
 
 # Verify in Repo
@@ -24,22 +24,26 @@ if [ ! -f "$CONFIG" ]; then
   echo "Missing $CONFIG — run the om-setup-agent-pipeline skill first."
   exit 1
 fi
-BASE_BRANCH=$(jq -r '.baseBranch // "auto"' "$CONFIG")
-if [ "$BASE_BRANCH" = "auto" ]; then
-  BASE_BRANCH=$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name' 2>/dev/null || true)
-  [ -z "$BASE_BRANCH" ] && BASE_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
-  [ -z "$BASE_BRANCH" ] && BASE_BRANCH="main"
+TRACKER=$(jq -r '.tracker // "github"' "$CONFIG")
+TRACKER_FILE=".ai/trackers/${TRACKER}.md"
+if [ ! -f "$TRACKER_FILE" ]; then
+  echo "Missing $TRACKER_FILE — run the om-setup-agent-pipeline skill to install the tracker descriptor."
+  exit 1
 fi
+BASE_BRANCH=$(jq -r '.baseBranch // "auto"' "$CONFIG")
+# "auto" resolves via the tracker descriptor's default-branch operation.
 ```
+
+Read `$TRACKER_FILE`; every tracker operation named in this skill executes as that descriptor defines.
 
 ## Tools
 
 You operate **read-only**:
 
 - File reading and code search only — no file edits, no file writes
-- Shell: read-only `gh` commands (`gh issue view`, `gh search prs`, `gh repo view`, `gh api`) and read-only git (`git log`, `git diff`, `git show`, `git status`)
+- Shell: read-only git (`git log`, `git diff`, `git show`, `git status`) and READ-ONLY tracker operations only — **get-issue**, **search-prs**, **repo-info**, **current-user**, **get-pr**
 
-Do not edit files. Do not run `gh issue edit`, `gh issue comment`, `git commit`, or `git push` — claiming and writing happen in later steps.
+Do not edit files. Do not run mutating tracker operations (no issue edits, comments, claims), `git commit`, or `git push` — claiming and writing happen in later steps.
 
 ## Decision procedure
 
@@ -47,10 +51,7 @@ Run these checks in order. The first one that triggers a stop wins.
 
 ### 1. Fetch the issue and the repo handle
 
-```bash
-gh repo view --json nameWithOwner,defaultBranchRef
-gh issue view {issueId} --repo {owner}/{repo} --json number,title,body,state,author,url,labels,assignees,comments
-```
+Run the tracker operation **repo-info** to get the `owner/name` handle and default branch, then **get-issue** for `{issueId}`, requesting the fields `number,title,body,state,author,url,labels,assignees,comments`.
 
 If the issue is already `closed`, stop with `NO_ACTION_NEEDED`.
 
@@ -58,7 +59,7 @@ If the issue is already `closed`, stop with `NO_ACTION_NEEDED`.
 
 The issue is **already in progress** when ANY of:
 
-- It carries the `in-progress` label AND its assignees do not include the current `gh api user --jq .login`
+- It carries the `in-progress` label AND its assignees do not include the current user (resolve via the tracker operation **current-user**)
 - A `🤖`-prefixed claim comment newer than 30 minutes exists from a different actor
 
 If in-progress by another actor, stop with `NO_ACTION_NEEDED` and name the owner in your reason.
@@ -67,9 +68,9 @@ Stale-lock recovery: if the `in-progress` label is older than 60 minutes and no 
 
 ### 3. Is the fix already in flight or already shipped?
 
+Run the tracker operation **search-prs** for `#{issueId}` twice — once in the open state and once in the closed state — requesting `number,title,url,state`. Then:
+
 ```bash
-gh search prs --repo {owner}/{repo} "#{issueId}" --state open  --json number,title,url,state
-gh search prs --repo {owner}/{repo} "#{issueId}" --state closed --json number,title,url,state
 git fetch origin "$BASE_BRANCH" 2>/dev/null || true
 git log "origin/$BASE_BRANCH" --grep="#{issueId}" --oneline
 ```

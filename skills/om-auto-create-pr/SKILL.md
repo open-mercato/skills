@@ -1,6 +1,6 @@
 ---
 name: om-auto-create-pr
-description: Run an arbitrary autonomous task end-to-end and ship it as a GitHub PR against the configured base branch. Drafts a Progress-tracked execution plan, commits on a fresh worktree branch, implements phase-by-phase, runs the configured validation gate, applies pipeline labels. Resumable via om-auto-continue-pr.
+description: Run an arbitrary autonomous task end-to-end and ship it as a PR against the configured base branch. Drafts a Progress-tracked execution plan, commits on a fresh worktree branch, implements phase-by-phase, runs the configured validation gate, applies pipeline labels. Resumable via om-auto-continue-pr.
 ---
 
 # Auto Create PR
@@ -18,12 +18,11 @@ Turn a free-form task brief into a disciplined autonomous run: an execution plan
 
 ### 0. Load pipeline config, pre-flight, and claim
 
-Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. This resolves `BASE_BRANCH`, `RUNS_DIR`, `LABELS_ENABLED`, `QA_GATE`, and the validation commands used below. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-auto-create-pr/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
+Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. The snippet resolves `TRACKER` and `TRACKER_FILE=".ai/trackers/${TRACKER}.md"` and stops when the descriptor is missing; it also resolves `BASE_BRANCH`, `RUNS_DIR`, `LABELS_ENABLED`, `QA_GATE`, and the validation commands used below. Read `$TRACKER_FILE`; every tracker operation named in this skill executes as that descriptor defines, and the label guards come from it. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-auto-create-pr/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
-Before writing anything, confirm no other run owns the slot.
+Before writing anything, confirm no other run owns the slot. Resolve `CURRENT_USER` via the tracker operation **current-user**, then compute:
 
 ```bash
-CURRENT_USER=$(gh api user --jq '.login')
 DATE=$(date +%Y-%m-%d)
 SLUG="{slug-or-derived}"
 PLAN_PATH="${RUNS_DIR}/${DATE}-${SLUG}.md"
@@ -40,7 +39,7 @@ A run is considered **already in progress** when ANY of the following is true:
 
 - A file at `$PLAN_PATH` already exists on `origin/$BASE_BRANCH` or any remote branch.
 - A remote branch `origin/${BRANCH}` already exists.
-- An open PR already references `$PLAN_PATH`.
+- An open PR already references `$PLAN_PATH` (check via **search-prs** with the plan path as the query, or by scanning open PRs via **list-prs**).
 
 Decision tree:
 
@@ -65,7 +64,7 @@ If the user passed one or more `--skill-url` arguments, fetch each URL and extra
 
 ### 2. Triage the task before coding
 
-Read enough project context to avoid blind work:
+Read sufficient project context to avoid blind work:
 
 - The repository's agent instructions and contributing docs (`AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, or equivalents), plus any docs covering the affected area.
 - Existing design docs or architecture notes for the same area, when the repo keeps them.
@@ -201,7 +200,7 @@ If self-review finds issues, fix them and loop back to step 6.
 
 ### 9. Open the PR
 
-Open the PR against `$BASE_BRANCH` in the current repository.
+Open the PR via the tracker operation **create-pr** against `$BASE_BRANCH` in the current repository, using the title convention and body template below.
 
 PR title convention: conventional-commit prefix scoped to the primary area.
 
@@ -242,7 +241,7 @@ Flip `Status:` to `complete` on the PR body once all Progress steps are checked.
 
 ### 10. Normalize labels
 
-After creating the PR, apply labels from the config's taxonomy, always through the `apply_label` guard from `om-setup-agent-pipeline` (missing labels degrade to a logged skip; `labels.enabled: false` skips everything — note that in the summary comment):
+After creating the PR, apply labels from the config's taxonomy, always through the `apply_label` guard from the tracker descriptor (missing labels degrade to a logged skip; `labels.enabled: false` skips everything — note that in the summary comment):
 
 - Apply the `review` pipeline label. New PRs from this skill always start in `review` unless the run terminated early with an explicit blocker.
 - Add `skip-qa` **only** for clearly low-risk non-user-facing changes (docs-only, dependency-only, CI-only, test-only, trivial typos, single-file maintenance).
@@ -283,7 +282,7 @@ If `om-auto-review-pr` cannot run (e.g., required checks not yet green, missing 
 
 ### 12. Post the comprehensive summary comment
 
-Every run of this skill MUST end with a single, comprehensive summary comment on the PR that the human reviewer can read top-to-bottom without clicking into the diff. Post it with `gh pr comment {prNumber} --body-file ...` so multi-line formatting is preserved.
+Every run of this skill MUST end with a single, comprehensive summary comment on the PR that the human reviewer can read top-to-bottom without clicking into the diff. Post it via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved.
 
 Minimum comment structure:
 
@@ -386,7 +385,7 @@ When one or more `--skill-url` arguments are provided:
 - Run the full validation gate (`validation.commands`) before opening the PR unless a real blocker prevents it; if blocked, document the blocker in the PR body and in the plan's Risks section.
 - Run the om-code-review and breaking-change self-review before opening the PR.
 - After the PR is open, run the `om-auto-review-pr` skill against it in autofix mode and keep applying fixes (as new commits, never as history rewrites) until it returns a clean verdict or only non-actionable findings remain. Do this before pushing the final changes, posting the summary comment, and reporting back.
-- Every run MUST end with a single comprehensive `gh pr comment` summary that includes: summary of changes, external references honored, verification phases completed, how to verify (manual smoke test + spot-check areas + rollback plan), and a what-can-go-wrong risk analysis. Keep the section headings stable across runs.
+- Every run MUST end with a single comprehensive summary comment — posted via **comment-pr** with a body file so formatting is preserved — that includes: summary of changes, external references honored, verification phases completed, how to verify (manual smoke test + spot-check areas + rollback plan), and a what-can-go-wrong risk analysis. Keep the section headings stable across runs.
 - New PRs start in the `review` pipeline state. Apply `skip-qa` only for clearly low-risk changes; `needs-qa` when user-facing behavior changes. Never both.
 - Always apply exactly one priority label and exactly one risk label (when labels are enabled); never open a PR with neither.
 - Never add `qa-approved` from this skill; when `qaGate` is on, a `needs-qa` PR stays unmergeable until QA signs off.

@@ -1,6 +1,6 @@
 ---
 name: om-sync-merged-pr-issues
-description: Reconcile recently merged (and recently closed-but-not-merged) PRs with the GitHub issue tracker — auto-close issues they authoritatively fix via `fixes`/`closes`/`resolves` keywords or `closingIssuesReferences`, and post informational comments on issues whose PRs were closed without merging. Use for post-merge housekeeping and release prep. Respects claim locks.
+description: Reconcile recently merged (and recently closed-but-not-merged) PRs with the issue tracker — auto-close issues they authoritatively fix via `fixes`/`closes`/`resolves` keywords or `closingIssuesReferences`, and post informational comments on issues whose PRs were closed without merging. Use for post-merge housekeeping and release prep. Respects claim locks.
 ---
 
 # Sync Merged PR ↔ Issue Tracker
@@ -18,75 +18,37 @@ Maintenance skill. Walk a window of recent pull requests; where a PR authoritati
 - `--since <value>` (optional) — lower bound for `mergedAt` / `closedAt`. Accepts an ISO date (`2026-04-01`), a git ref (`v0.4.10`), or the literal `last-release`. Default: `last-release` → resolve to the most recent release heading date in `CHANGELOG.md` (e.g. `# X.Y.Z (YYYY-MM-DD)`); if that cannot be parsed, fall back to the last 7 days.
 - `--limit <n>` (optional) — maximum number of PRs to process. Default: 100.
 - `--dry-run` (optional) — print planned mutations but do **not** post comments or close issues.
-- `--repo <owner>/<name>` (optional) — override repo detection. Default: inferred from `gh repo view --json nameWithOwner`.
+- `--repo <owner>/<name>` (optional) — override repo detection. Default: inferred via the tracker **repo-info** operation.
 
 ## Workflow
 
 ### 0. Load pipeline config and pre-flight
 
-Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. This resolves `BASE_BRANCH` (the configured base branch, with `"auto"` resolved from the repository's default branch) and `LABELS_ENABLED`. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-sync-merged-pr-issues/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
+Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. The snippet resolves `TRACKER` and `TRACKER_FILE=".ai/trackers/${TRACKER}.md"`, and stops when the descriptor is missing. Read `$TRACKER_FILE`; every tracker operation named in this skill executes as that descriptor defines, and the label guards come from it. The snippet also resolves `BASE_BRANCH` (the configured base branch, with `"auto"` resolved via the tracker **default-branch** operation) and `LABELS_ENABLED`. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-sync-merged-pr-issues/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
-```bash
-CURRENT_USER=$(gh api user --jq '.login')
-REPO=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
-SINCE_DATE="<resolved from --since>"
-```
+Then fill the run variables: `CURRENT_USER` via **current-user**, `REPO` via **repo-info** (or the `--repo` override), and `SINCE_DATE` resolved from `--since` as described under Arguments.
 
-Label mutations on issues go through guards following the `apply_label` pattern from `om-setup-agent-pipeline` (existence check + `labels.enabled`), adapted for `gh issue edit`:
-
-```bash
-label_exists() {
-  gh label list --repo "$REPO" --limit 200 --json name --jq '.[].name' | grep -Fxq "$1"
-}
-
-apply_issue_label() {
-  if [ "$LABELS_ENABLED" != "true" ]; then return 0; fi
-  if label_exists "$1"; then
-    gh issue edit "$2" --repo "$REPO" --add-label "$1"
-  else
-    echo "Skipping label '$1' (not defined in this repo). Create it with: gh label create '$1'"
-  fi
-}
-
-remove_issue_label() {
-  if [ "$LABELS_ENABLED" != "true" ]; then return 0; fi
-  if label_exists "$1"; then
-    gh issue edit "$2" --repo "$REPO" --remove-label "$1"
-  fi
-}
-```
+Label mutations on issues go through the label guards from the tracker descriptor (`label_exists`, `apply_issue_label`, `remove_issue_label`) — existence check + `labels.enabled`, exactly as the descriptor defines them. This skill operates on `$REPO`, so use the cross-repo variant the descriptor describes: the guards target `$REPO` (both the mutation and the label-existence check) rather than the current checkout.
 
 When `labels.enabled` is `false`, the claim consists of assignee + claim comment only, the `in-progress` lock checks degrade to assignee-only, and the report notes that label operations were skipped.
 
-Fail fast when `gh` is not authenticated (`gh auth status`). Print the resolved window, the repo, and the base branch before any mutation.
+Run **auth-check**; fail fast when unauthenticated. Print the resolved window, the repo, and the base branch before any mutation.
 
 ### 1. Enumerate recently merged PRs
 
-```bash
-gh pr list \
-  --state merged \
-  --search "merged:>=${SINCE_DATE}" \
-  --json number,title,url,body,author,mergedAt,mergeCommit,baseRefName,headRefName,closingIssuesReferences,labels \
-  --limit {limit}
-```
+Run **list-prs** with state merged, search `merged:>=${SINCE_DATE}`, requesting `number,title,url,body,author,mergedAt,mergeCommit,baseRefName,headRefName,closingIssuesReferences,labels`, limit {limit}.
 
-`closingIssuesReferences` is GitHub's authoritative parse of `Closes #N` / `Fixes #N` / `Resolves #N` links across PR body, title, and commit messages. Treat it as the primary signal.
+`closingIssuesReferences` is the tracker's authoritative parse of `Closes #N` / `Fixes #N` / `Resolves #N` links across PR body, title, and commit messages. Treat it as the primary signal.
 
 ### 2. Enumerate recently closed-but-not-merged PRs
 
-```bash
-gh pr list \
-  --state closed \
-  --search "closed:>=${SINCE_DATE} is:unmerged" \
-  --json number,title,url,body,author,closedAt,baseRefName,headRefName,closingIssuesReferences,labels \
-  --limit {limit}
-```
+Run **list-prs** with state closed, search `closed:>=${SINCE_DATE} is:unmerged`, requesting `number,title,url,body,author,closedAt,baseRefName,headRefName,closingIssuesReferences,labels`, limit {limit}.
 
 ### 3. Extract referenced issues per PR
 
 For each PR, build a set of referenced issue numbers using this precedence (stop at the first signal that yields results):
 
-1. `closingIssuesReferences` from the JSON above. This is authoritative — GitHub already parsed it.
+1. `closingIssuesReferences` from the data above. This is authoritative — the tracker already parsed it.
 2. Regex on PR body + title: `\b(fix|fixes|fixed|close|closes|closed|resolve|resolves|resolved)\s+#(\d+)\b`, case-insensitive. Reject matches where the prefix is inside a fenced code block or an inline backtick span.
 3. Stop there. **Do not** act on bare `#N` mentions — those are conversational references, not close links.
 
@@ -94,11 +56,7 @@ Record `(prNumber, issueNumbers[], prState, mergedIntoBase)` for each PR.
 
 ### 4. For each `(pr, issue)` pair
 
-Fetch the issue state first:
-
-```bash
-gh issue view {issue} --repo "$REPO" --json number,state,title,url,labels,assignees,comments
-```
+Fetch the issue state first: run **get-issue** for {issue} on `$REPO`, requesting `number,state,title,url,labels,assignees,comments`.
 
 Skip and log when any of the following holds:
 
@@ -111,44 +69,44 @@ Otherwise, branch by PR state:
 
 #### 4a. Merged into the base branch
 
-```bash
-# Claim (assignee + guarded label + claim comment)
-gh issue edit {issue} --repo "$REPO" --add-assignee "$CURRENT_USER"
-apply_issue_label "in-progress" {issue}
-gh issue comment {issue} --repo "$REPO" --body "🤖 \`om-sync-merged-pr-issues\` started by @${CURRENT_USER} at $(date -u +%Y-%m-%dT%H:%M:%SZ). Other auto-skills will skip this issue until the lock is released."
+Claim first (assignee + guarded label + claim comment): run **assign-issue** to add `$CURRENT_USER` to {issue}, then `apply_issue_label "in-progress" {issue}`, then post via **comment-issue**:
 
-# Close with link
-gh issue close {issue} --repo "$REPO" --reason completed --comment "$(cat <<EOF
-✅ Fixed by #{prNumber} ({prUrl}) — merged at ${mergedAt} (commit \`${mergeCommitSha:0:7}\`).
-
-Closed automatically by the \`om-sync-merged-pr-issues\` skill. Credit to @${prAuthor} (or the original author when the PR is a carry-forward — see the PR body for credit details).
-
-If this is incorrect, reopen the issue and add the \`do-not-close\` label so future runs leave it alone.
-EOF
-)"
-
-# Release
-remove_issue_label "in-progress" {issue}
+```text
+🤖 `om-sync-merged-pr-issues` started by @${CURRENT_USER} at ${timestamp}. Other auto-skills will skip this issue until the lock is released.
 ```
+
+(where `${timestamp}` is the current UTC time, `date -u +%Y-%m-%dT%H:%M:%SZ`)
+
+Then close via **close-issue** (reason: `completed`) with this comment:
+
+```markdown
+✅ Fixed by #{prNumber} ({prUrl}) — merged at ${mergedAt} (commit `${mergeCommitSha:0:7}`).
+
+Closed automatically by the `om-sync-merged-pr-issues` skill. Credit to @${prAuthor} (or the original author when the PR is a carry-forward — see the PR body for credit details).
+
+If this is incorrect, reopen the issue and add the `do-not-close` label so future runs leave it alone.
+```
+
+Finally release the lock: `remove_issue_label "in-progress" {issue}`.
 
 #### 4b. Merged into a non-base branch
 
-Post an informational comment but **do not** close:
+Post an informational comment via **comment-issue** but **do not** close:
 
-```bash
-gh issue comment {issue} --repo "$REPO" --body "ℹ️ #{prNumber} ({prUrl}) references this issue and was merged into \`${baseRefName}\`, which is not the configured base branch (\`${BASE_BRANCH}\`). Leaving this issue open until the change lands on \`${BASE_BRANCH}\`.
+```markdown
+ℹ️ #{prNumber} ({prUrl}) references this issue and was merged into `${baseRefName}`, which is not the configured base branch (`${BASE_BRANCH}`). Leaving this issue open until the change lands on `${BASE_BRANCH}`.
 
-Posted automatically by the \`om-sync-merged-pr-issues\` skill."
+Posted automatically by the `om-sync-merged-pr-issues` skill.
 ```
 
 #### 4c. Closed without merge
 
-Post an informational comment; do **not** close. When a different merged PR in the same window declares `Supersedes #{prNumber}`, link it:
+Post an informational comment via **comment-issue**; do **not** close. When a different merged PR in the same window declares `Supersedes #{prNumber}`, link it:
 
-```bash
-gh issue comment {issue} --repo "$REPO" --body "ℹ️ #{prNumber} ({prUrl}) referenced this issue but was closed **without merging** on ${closedAt}.${supersededBySuffix}
+```markdown
+ℹ️ #{prNumber} ({prUrl}) referenced this issue but was closed **without merging** on ${closedAt}.${supersededBySuffix}
 
-This issue remains open. Posted automatically by the \`om-sync-merged-pr-issues\` skill."
+This issue remains open. Posted automatically by the `om-sync-merged-pr-issues` skill.
 ```
 
 Where `supersededBySuffix` expands to ` It was superseded by #{newPr} ({newPrUrl}).` when a replacement was detected, and empty otherwise.
@@ -189,13 +147,13 @@ Finish with counts: `closed N`, `commented M`, `skipped K`, `dry-run-would-have 
 - Never close an issue on a bare `#N` mention. Require `closingIssuesReferences` or an explicit close-keyword (`fix(es|ed)?`, `close(s|d)?`, `resolve(s|d)?`) followed by the `#N` token.
 - Never close an issue whose PR was merged into a non-base branch — only comment.
 - Never close an issue whose PR was closed without merge — only comment.
-- Never act on draft PRs (`gh pr view --json isDraft`). Skip them.
+- Never act on draft PRs (check `isDraft` via **get-pr**). Skip them.
 - Never follow cross-repository issue references. Scope every action to `$REPO`.
 - Never overwrite an existing `in-progress` lock held by another user — skip and report `skipped: claimed by @other`.
 - Always release the `in-progress` label in a `trap`/finally so a crash still unlocks the issue.
 - Always post a short claim comment before the close/comment action so humans can see which automation run acted.
-- Every label mutation goes through the guarded helpers above; a missing label degrades to a logged skip, and `labels.enabled: false` skips label operations entirely.
-- Respect `--dry-run` absolutely: no mutating `gh` commands may fire when it is set.
+- Every label mutation goes through the tracker descriptor's label guards; a missing label degrades to a logged skip, and `labels.enabled: false` skips label operations entirely.
+- Respect `--dry-run` absolutely: no mutating tracker operation may fire when it is set.
 - Respect `do-not-close` and `blocked` labels — always skip and report the reason.
 - Never paste PR bodies verbatim into issue comments — only the number, URL, merge SHA, merge branch, and closed-at timestamp. PR bodies can contain secrets.
 - Never credit a bot account (`github-actions[bot]`, `dependabot[bot]`, `copilot`, etc.) in the close comment.

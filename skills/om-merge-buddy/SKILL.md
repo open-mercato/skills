@@ -1,6 +1,6 @@
 ---
 name: om-merge-buddy
-description: Scan open GitHub pull requests, classify merge readiness from labels, reviews, CI, and mergeability, then report which PRs can merge now and which ones are close but blocked.
+description: Scan open pull requests via the configured tracker, classify merge readiness from labels, reviews, CI, and mergeability, then report which PRs can merge now and which ones are close but blocked.
 ---
 
 # Merge Buddy
@@ -14,25 +14,27 @@ Use this skill to triage all open PRs and answer one question: what can merge ri
 Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. This skill uses:
 
 ```bash
+TRACKER=$(jq -r '.tracker // "github"' "$CONFIG")
+TRACKER_FILE=".ai/trackers/${TRACKER}.md"
+if [ ! -f "$TRACKER_FILE" ]; then
+  echo "Missing $TRACKER_FILE — run the om-setup-agent-pipeline skill to install the tracker descriptor."
+  exit 1
+fi
 LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
 QA_GATE=$(jq -r '.qaGate // false' "$CONFIG")
 ```
+
+Read `$TRACKER_FILE`; every tracker operation named in this skill executes as that descriptor defines.
 
 Every label name below comes from the config's label taxonomy (`labels.pipeline`, `labels.meta`). When `labels.enabled` is `false`, skip all label-based gates, classify from reviews, CI, and mergeability alone, and say so in the report header. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-merge-buddy/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 ### 1. Fetch open PRs
 
-```bash
-gh pr list --state open --json number,title,url,author,labels,reviewDecision,mergeable,mergeStateStatus,headRefName,baseRefName,updatedAt,isDraft --limit 100
-```
+Tracker operation **list-prs**: open PRs with fields `number,title,url,author,labels,reviewDecision,mergeable,mergeStateStatus,headRefName,baseRefName,updatedAt,isDraft`, limit 100.
 
 ### 2. Collect gate status for each PR
 
-For every non-draft PR:
-
-```bash
-gh pr checks {number} --json name,state,link
-```
+For every non-draft PR, tracker operation **get-pr-checks** with `{number}` → check runs with name, state, and link.
 
 Evaluate these gates:
 

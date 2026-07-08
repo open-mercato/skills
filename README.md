@@ -66,7 +66,7 @@ The installer never touches skills it does not own: an existing real directory (
 
 ## 🔁 The pipeline
 
-Two entry paths: hand the agent a task brief (`om-auto-create-pr`), or hand it a GitHub issue (`om-auto-fix-github`, which drives the autofix chain). Both converge on the same review loop and the same QA gate. Skills claim PRs and issues with an `in-progress` label, so concurrent agents back off instead of colliding.
+Two entry paths: hand the agent a task brief (`om-auto-create-pr`), or hand it a GitHub issue (`om-auto-fix-issue`, which drives the autofix chain). Both converge on the same review loop and the same QA gate. Skills claim PRs and issues with an `in-progress` label, so concurrent agents back off instead of colliding.
 
 ```mermaid
 flowchart LR
@@ -79,7 +79,7 @@ flowchart LR
         qaGate -- "needs-qa" --> manualQA["manual QA"]
         manualQA -- "qa-approved" --> mergePR
     end
-    subgraph issue ["From a GitHub issue: om-auto-fix-github drives the autofix chain"]
+    subgraph issue ["From a GitHub issue: om-auto-fix-issue drives the autofix chain"]
         verifyStep["om-verify-in-repo"] --> rootCause["om-root-cause"]
         rootCause --> applyFix["om-fix"]
         applyFix --> openPR["om-open-pr"]
@@ -96,7 +96,7 @@ Hand these a brief, an issue, or nothing at all — they run end-to-end without 
 | Skill | What it does autonomously |
 |---|---|
 | `om-auto-create-pr` | Takes a free-form task brief end-to-end: execution plan, isolated worktree, phase-by-phase commits, validation gate, self-review, labeled PR, then an autofix review loop until clean. Resumable. |
-| `om-auto-fix-github` | Fixes a tracker issue end-to-end by driving the autofix chain: triage gate, root-cause analysis, minimal fix with regression tests, labeled draft PR, autofix review loop. Stops cleanly when the issue is already solved or claimed. |
+| `om-auto-fix-issue` | Fixes a tracker issue end-to-end by driving the autofix chain: triage gate, root-cause analysis, minimal fix with regression tests, labeled draft PR, autofix review loop. Stops cleanly when the issue is already solved or claimed. |
 | `om-auto-continue-pr` | Resumes an in-progress PR from the first unchecked step in its tracking plan and carries it to completion — implementation, validation, review loop, summary comment. |
 | `om-auto-review-pr` | Reviews a PR by number in an isolated worktree, approves or requests changes, manages labels. On changes-requested, its autofix loop iterates fixes and re-review until merge-ready. |
 | `om-review-prs` | Sweeps all unreviewed open PRs, newest first, through `om-auto-review-pr`, respecting claim locks. |

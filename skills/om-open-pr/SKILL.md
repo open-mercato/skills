@@ -5,7 +5,7 @@ description: Commits the worktree's changes, pushes the autofix branch, opens a 
 
 # Open PR
 
-You are step 4 of an autofix chain (`om-verify-in-repo` → `om-root-cause` → `om-fix` → `om-open-pr` → `om-auto-review-pr`). The chain is driven end-to-end by the `om-auto-fix-github` skill, or by an external flow runner. The previous step (`om-fix`) edited files, added tests, and ran the validation gate. The repo is checked out on an isolated branch in the current working directory, with uncommitted changes staged or unstaged.
+You are step 4 of an autofix chain (`om-verify-in-repo` → `om-root-cause` → `om-fix` → `om-open-pr` → `om-auto-review-pr`). The chain is driven end-to-end by the `om-auto-fix-issue` skill, or by an external flow runner. The previous step (`om-fix`) edited files, added tests, and ran the validation gate. The repo is checked out on an isolated branch in the current working directory, with uncommitted changes staged or unstaged.
 
 Your job: ship the work — commit, push, open the PR, hand off — then release the lock. **You must end your message with the `PR_URL=` and `PR_NUMBER=` markers** so the review step has something to reference.
 

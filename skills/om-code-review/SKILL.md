@@ -31,13 +31,16 @@ Callers (`om-auto-review-pr`, `om-review-prs`, the self-review step of `om-auto-
 
    ```bash
    REVIEW_CHECKLIST=$(jq -r '.reviewChecklist // empty' .ai/agentic.config.json)
+   # Repo-root docs, applied automatically when present:
+   #   CODE_REVIEW.md              — repo-local review rules (additional checklist)
+   #   BACKWARD_COMPATIBILITY.md   — protected contract surfaces + required migration paths
    ```
 
 1. **Scope**: Identify changed files. Classify each by layer (HTTP handler or route, data model or schema, migration, validation, UI component or page, background job or consumer, CLI, config, build/codegen, test).
 2. **Gather context**: Read the repository's agent instructions and contributing docs for each touched area. Read design docs or architecture notes when the repo keeps them, plus any known-pitfalls notes the team maintains.
 3. **Validation gate (MANDATORY)**: Run every command in the config's `validation.commands`, in order. Every gate MUST pass before the review can conclude. If any gate fails, that is a finding — do NOT mark the review as passing. See **Validation Gate** below.
 4. **Breaking-change gate**: Check every changed file against the breaking-change checklist: exported APIs, HTTP routes and response shapes, event names, CLI flags, DB schema, config formats. Flag violations as **blocker**. If the project documents its own compatibility policy, apply it on top. See **Breaking Changes** in the Quick Rule Reference.
-5. **Run the checklists**: Apply all applicable sections of `references/review-checklist.md`. When `reviewChecklist` is set in the config, read that repo-local file and apply it IN ADDITION to the built-in checklist — repo-local rules extend the built-in ones, never replace them. Flag violations with severity, file, line, and fix suggestion.
+5. **Run the checklists**: Apply all applicable sections of `references/review-checklist.md`. When `reviewChecklist` is set in the config, read that repo-local file and apply it IN ADDITION to the built-in checklist; do the same with `CODE_REVIEW.md` from the repo root when it exists — repo-local rules extend the built-in ones, never replace them. When `BACKWARD_COMPATIBILITY.md` exists at the repo root, check every touched surface against it: a change that breaks a protected surface without following the documented deprecation/migration path is a Critical finding, and the report must explicitly WARN the user about it. Flag violations with severity, file, line, and fix suggestion.
 6. **Test coverage**: Verify changed behavior is covered by unit tests and/or integration tests. If coverage is missing, flag it with severity, file references, and the exact test cases to add.
 7. **Cross-boundary impact**: If the change touches events, messages, shared contracts, or extension points, verify the consuming side still handles the contract correctly.
 8. **Output**: Produce the review report in the format below and state the verdict.
@@ -220,7 +223,8 @@ When reviewing, pay special attention to:
 
 - Never conclude a review without running the full validation gate and reporting per-command results.
 - A failing gate command is always a blocker finding, regardless of whose change broke it.
-- Apply the built-in checklist on every review; apply the repo-local `reviewChecklist` file in addition whenever the config sets one.
+- Apply the built-in checklist on every review; apply the repo-local `reviewChecklist` file and the repo-root `CODE_REVIEW.md` in addition whenever they exist.
+- When `BACKWARD_COMPATIBILITY.md` exists, verify every touched contract surface against it and flag violations as Critical with an explicit warning to the user.
 - Findings must carry severity, file, line, and a concrete fix suggestion — vague findings are not actionable.
 - The verdict is mechanical: any blocker, or any major without a documented waiver, means request changes.
 - Review the diff you were given; do not expand scope by refactoring or restyling unrelated code as part of the review.

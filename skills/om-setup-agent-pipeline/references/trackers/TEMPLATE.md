@@ -63,6 +63,14 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 - **get-required-checks** — base branch → required status checks; when unreadable, treat all reported checks as required.
 - **get-pr-comment / get-review-comment** — comment id → body, author, URL (conversation vs inline review comment).
 
+### CI runs
+
+- **list-runs** — branch (or head SHA) → recent CI runs with id, workflow name, status, conclusion.
+- **get-run** — run id → status, conclusion, per-job breakdown.
+- **get-run-failed-logs** — run id → log output of the failed steps (the diagnosis input for CI failures).
+- **rerun-failed** — run id → re-execute only the failed jobs (used to disambiguate flakes before code changes).
+- **watch-run** — run id → block until the run completes, signaling success/failure; may degrade to polling **get-run**.
+
 ### Labels
 
 - **list-labels** — all label/tag names.

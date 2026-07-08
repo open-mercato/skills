@@ -257,6 +257,40 @@ gh api repos/{owner}/{repo}/issues/comments/{commentId} --jq '{body,user:.user.l
 gh api repos/{owner}/{repo}/pulls/comments/{commentId} --jq '{body,user:.user.login,url:.html_url}'
 ```
 
+### CI runs
+
+CI status for a *PR* comes from **get-pr-checks** / **get-required-checks** above. The operations here address CI runs directly — needed when working from a bare branch, or when a failure diagnosis needs the actual logs.
+
+#### list-runs
+Branch (or head SHA) → recent workflow runs with id, workflow name, status, and conclusion.
+```bash
+gh run list --branch {branch} --limit 20 --json databaseId,workflowName,name,status,conclusion,headSha,url,createdAt
+```
+
+#### get-run
+Run id → status, conclusion, and per-job breakdown.
+```bash
+gh run view {runId} --json status,conclusion,workflowName,headSha,url,jobs
+```
+
+#### get-run-failed-logs
+Run id → the log output of failed steps only. This is the primary diagnosis input for CI failures.
+```bash
+gh run view {runId} --log-failed
+```
+
+#### rerun-failed
+Run id → re-execute only the failed jobs of that run. Use to disambiguate flaky failures before changing any code.
+```bash
+gh run rerun {runId} --failed
+```
+
+#### watch-run
+Run id → block until the run completes, exiting non-zero on failure. Prefer this over sleep-polling; fall back to periodic **get-run** when watching is unavailable.
+```bash
+gh run watch {runId} --exit-status
+```
+
 ### Labels
 
 #### list-labels

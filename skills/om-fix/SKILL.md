@@ -116,7 +116,7 @@ If the full gate is genuinely too expensive in the time available, run the targe
 
 Run the change through the `om-code-review` skill checks plus a breaking-change review:
 
-- no public contract broken silently: exported APIs, HTTP routes and response shapes, event names, CLI flags, DB schema, config formats
+- no public contract broken silently: exported APIs, HTTP routes and response shapes, event names, CLI flags, DB schema, config formats. When `BACKWARD_COMPATIBILITY.md` exists at the repo root, check the change against its protected surfaces — a violation without the documented migration/deprecation path must be fixed or, when intentional, explicitly WARNED about in the final summary so the user decides
 - no API response fields removed
 - no data-scoping or permission-check rules weakened; the project's data-access conventions followed in every changed production file
 - fix remains minimal — no unrelated churn

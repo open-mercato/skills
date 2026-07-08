@@ -1,6 +1,6 @@
 ---
 name: om-setup-agent-pipeline
-description: One-time configurator for the agent PR pipeline. Inspects the repository (default branch, validation scripts, tracker labels), asks a few questions, writes .ai/agentic.config.json — the file every other skill in this collection reads — installs the tracker provider descriptor (.ai/trackers/<tracker>.md), and generates SDLC.md (the team's ticket-flow process doc) plus an AGENTS.md starter when the repo has none. Run once per repository; re-run when the toolchain or label taxonomy changes.
+description: One-time configurator for the agent PR pipeline. Inspects the repository (default branch, validation scripts, tracker labels), asks a few questions, writes .ai/agentic.config.json — the file every other skill in this collection reads — installs the tracker provider descriptor (.ai/trackers/<tracker>.md), and generates the project docs when missing — SDLC.md (the team's ticket-flow process doc), CODE_REVIEW.md (review rules), BACKWARD_COMPATIBILITY.md (protected contract surfaces), and an AGENTS.md starter with a task-routing table — each derived from the current repository. Run once per repository; re-run when the toolchain or label taxonomy changes.
 ---
 
 # Setup Agent Pipeline
@@ -34,7 +34,8 @@ Every skill in this collection reads its repository-specific settings from `.ai/
   "qaGate": true,
   "paths": {
     "runs": ".ai/runs",
-    "analysis": ".ai/analysis"
+    "analysis": ".ai/analysis",
+    "specs": ".ai/specs"
   },
   "reviewChecklist": null
 }
@@ -54,7 +55,8 @@ Field reference:
 - `qaGate` — when `true`, a PR carrying `needs-qa` must not merge until it also carries `qa-approved`, even when every other check is green. When `false`, `needs-qa` is advisory only.
 - `paths.runs` — where execution plans of autonomous runs are stored.
 - `paths.analysis` — where generated reports are stored.
-- `reviewChecklist` — optional path to a repo-local review checklist file. When set, the `om-code-review` skill reads it in addition to its built-in checklist.
+- `paths.specs` — where feature specifications live (default `.ai/specs`). Spec filenames follow `{YYYY-MM-DD}-{kebab-case-title}.md` (for example `2026-03-19-checkout-simple-checkout.md`). `om-spec-writing` writes here, `om-prepare-issue` links from here, and `om-followup-issue-from-pr` checks here first in design-doc mode.
+- `reviewChecklist` — optional path to a repo-local review checklist file. When set, the `om-code-review` skill reads it in addition to its built-in checklist. Independent of this field, a `CODE_REVIEW.md` at the repo root (see Project docs below) is always picked up automatically when present.
 
 ## Tracker providers
 
@@ -64,12 +66,17 @@ The repo's copy is authoritative, which is also the extension mechanism: teams e
 
 The collection ships `github.md`. For a `tracker` value with no shipped descriptor and no existing `.ai/trackers/<tracker>.md`, scaffold the repo file from `references/trackers/TEMPLATE.md`, tell the user to fill in the operations, and stop — skills must not run against an unfilled descriptor.
 
-## Project docs: SDLC.md and AGENTS.md
+## Project docs: SDLC.md, AGENTS.md, CODE_REVIEW.md, BACKWARD_COMPATIBILITY.md
 
-Beyond the config, this skill produces the human-readable half of the pipeline:
+Beyond the config, this skill produces the human-readable half of the pipeline. Every document below is **derived from the current project, never copied from someone else's**: generate content from what this repository actually contains (stack, layout, public surfaces, conventions detected in the code). Each is generated only when missing — an existing file is never touched, and the skills take existing files into consideration exactly as they would generated ones.
 
 - `SDLC.md` (repo root) — the team's ticket flow: pipeline stages, the label state machine, the QA gate, the claim protocol, and which skill drives each stage. Generate it from `references/sdlc-template.md`, filling in the resolved base branch, tracker, label mode, QA gate, and validation commands. When the repo already documents its process, offer to skip or to link instead of overwrite.
-- `AGENTS.md` starter — agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) are where a project records its own specifics: coding standards, architecture notes, conventions. Every skill in this collection reads them before working, so a repo with rich agent docs gets project-aware behavior the moment the skills are installed. When the repo has no such file, offer to generate a starter `AGENTS.md` containing: a one-paragraph project overview (derive from the README or ask), a coding-standards section (seed with conventions detected in the codebase, leave TODO markers where you cannot infer), the validation commands from the config, and pointers to `SDLC.md` and `.ai/agentic.config.json`. When one exists, never touch it.
+- `AGENTS.md` — agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) are where a project records its own specifics; every skill in this collection reads them before working. When the repo has no such file, offer to generate one (skip entirely when one exists). The generated file contains, all derived from *this* repository:
+  - A one-paragraph project overview (from the README, or ask).
+  - A **task-routing table** — the core of the file: rows mapping task types to the files an agent must read and the rules that apply, built by scanning the repo structure. Shape: `| When the task involves… | Read first | Key rules |` with one row per significant area (e.g. each top-level package/app/module group, the API layer, the UI layer, tests, CI). Populate `Read first` with real paths discovered in the repo and `Key rules` with conventions detected in the code (naming patterns, error handling, how existing code does data access); leave `TODO` markers where nothing can be inferred rather than inventing rules.
+  - The validation commands from the config, and pointers to `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, and `.ai/agentic.config.json`.
+- `CODE_REVIEW.md` (repo root) — the repo's code-review rules as a standalone human-editable document, complementing (not replacing) the `reviewChecklist` config field. Generate it from the project itself: the detected stack's high-signal review points, the conventions observed in the codebase, the validation gate, and the label/severity discipline the pipeline uses. Structure: review priorities (correctness, security, contracts), repo-specific checks (derived — e.g. "all HTTP handlers validate input with <the validation library actually used here>"), and severity guidance. `om-code-review` (and therefore `om-auto-review-pr`) automatically applies this file when present.
+- `BACKWARD_COMPATIBILITY.md` (repo root) — what this project considers a **protected contract surface** and how changes to one must be handled. Generate it by inventorying the repo's actual public surfaces: exported package APIs, HTTP routes and response shapes, CLI commands and flags, DB schema/migrations, config file formats, published events/webhooks — whichever of these the repo actually has. For each surface: what counts as a breaking change, and the required path (deprecation window, migration note, version bump). Review skills check changes against this file; implementation skills warn the user whenever a change violates it.
 
 ## Per-skill local overrides
 
@@ -99,8 +106,9 @@ List what CI already runs (`.github/workflows/*.yml`) and prefer commands that m
 2. Which tracker provider to install (default: `github`). This sets the config's `tracker` field and which descriptor lands in `.ai/trackers/`.
 3. Labels: install the full taxonomy above (recommended), keep a subset, or disable labels entirely.
 4. QA gate on or off. Recommend on when the repo ships user-facing changes.
-5. Optional repo-local review checklist path.
-6. Generate `SDLC.md` (recommended) and, when the repo has no agent instruction file, an `AGENTS.md` starter.
+5. Where specs live (`paths.specs`, default `.ai/specs`) — confirm or point at an existing design-doc directory.
+6. Optional repo-local review checklist path.
+7. Project docs to generate (each only when missing): `SDLC.md` (recommended), `AGENTS.md` with the task-routing table (when no agent instruction file exists), `CODE_REVIEW.md`, and `BACKWARD_COMPATIBILITY.md`.
 
 ### 4. Install the tracker descriptor
 
@@ -117,18 +125,25 @@ Skip creation for labels that already exist. Never delete or recolor existing la
 
 ### 6. Generate the project docs
 
-Per the Project docs section above: write `SDLC.md` from `references/sdlc-template.md` with every placeholder resolved from the config and the answers given, and — only when the repo has no `AGENTS.md`/`CLAUDE.md`/equivalent — the starter `AGENTS.md`. Show both to the user before writing. Never overwrite an existing process doc or agent instruction file.
+Per the Project docs section above, generate every doc the user opted into — each only when it does not already exist:
+
+- `SDLC.md` from `references/sdlc-template.md` with every placeholder resolved from the config and the answers given.
+- `AGENTS.md` with the task-routing table, only when the repo has no `AGENTS.md`/`CLAUDE.md`/equivalent. Build the table by scanning the actual repo layout; do not import another project's rules.
+- `CODE_REVIEW.md` derived from the detected stack and observed conventions.
+- `BACKWARD_COMPATIBILITY.md` derived from an inventory of the repo's actual public surfaces.
+
+Show each generated document to the user before writing. Never overwrite an existing process doc or agent instruction file — when one exists, skip it and note that the skills will use the existing file as-is.
 
 ### 7. Write and commit the config
 
-Write `.ai/agentic.config.json`, create `paths.runs` and `paths.analysis` directories with a `.gitkeep` each, show the final file to the user, and offer to commit:
+Write `.ai/agentic.config.json`, create the `paths.runs`, `paths.analysis`, and `paths.specs` directories with a `.gitkeep` each, show the final file to the user, and offer to commit:
 
 ```bash
-git add .ai/agentic.config.json .ai/trackers/ .ai/runs/.gitkeep .ai/analysis/.gitkeep SDLC.md
+git add .ai/agentic.config.json .ai/trackers/ .ai/runs/.gitkeep .ai/analysis/.gitkeep .ai/specs/.gitkeep SDLC.md
 git commit -m "chore: configure agent PR pipeline"
 ```
 
-Include `AGENTS.md` in the commit when it was generated this run.
+Include `AGENTS.md`, `CODE_REVIEW.md`, and `BACKWARD_COMPATIBILITY.md` in the commit when they were generated this run.
 
 ### 8. Report
 
@@ -156,19 +171,21 @@ RUNS_DIR=$(jq -r '.paths.runs // ".ai/runs"' "$CONFIG")
 ANALYSIS_DIR=$(jq -r '.paths.analysis // ".ai/analysis"' "$CONFIG")
 LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
 QA_GATE=$(jq -r '.qaGate // false' "$CONFIG")
+SPECS_DIR=$(jq -r '.paths.specs // ".ai/specs"' "$CONFIG")
 ```
 
 Right after loading the config, a skill:
 
 1. Checks for a repo-local skill of the same name (`.ai/skills/<skill-name>/SKILL.md`, see Per-skill local overrides).
 2. Reads the tracker descriptor at `$TRACKER_FILE`. Every **tracker operation** the skill names (**get-issue**, **create-pr**, **comment-pr**, …) is executed as that file defines it, and the label guards (`label_exists`, `apply_label`, `apply_issue_label`, `remove_issue_label`, `set_pipeline_label`) are the ones the descriptor defines — a label mutation outside those guards is a bug. When `BASE_BRANCH` is `auto`, resolve it now via the descriptor's **default-branch** operation.
-3. Reads the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics before doing any work.
+3. Reads the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics before doing any work — plus, when present at the repo root, `CODE_REVIEW.md` (review skills) and `BACKWARD_COMPATIBILITY.md` (review and implementation skills; implementation skills must warn the user when a change is not compliant with it).
 
 ## Rules
 
 - Never write the config without showing the user what was detected, unless `--defaults` was passed.
 - Never delete, rename, or recolor existing labels.
-- Never overwrite an existing `AGENTS.md`, `CLAUDE.md`, `SDLC.md`, or other process/instruction doc; generate only what is missing, and show it before writing.
+- Never overwrite an existing `AGENTS.md`, `CLAUDE.md`, `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, or other process/instruction doc; generate only what is missing, and show it before writing.
+- Generated docs must be derived from the current repository (stack, layout, surfaces, observed conventions) — never copied from another project's rules.
 - Never store secrets, tokens, or user identities in the config file.
 - Keep the config committed; it is team configuration, not personal preference.
 - A `tracker` value with no shipped descriptor and no filled-in `.ai/trackers/<tracker>.md` is an error — scaffold from the template, say so, and stop; do not improvise tracker calls.

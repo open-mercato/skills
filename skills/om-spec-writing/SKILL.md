@@ -9,11 +9,11 @@ Design and review feature specifications against the project's architecture, nam
 
 ## Step 0 — Context
 
-Check for a repo-local skill of the same name at `.ai/skills/om-spec-writing/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's quality gates. Read the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) — the architecture rules, canonical primitives, and naming conventions they define are mandatory review criteria, not suggestions. Load `.ai/agentic.config.json` when present for paths and validation context; this skill performs no tracker operations and does not require the pipeline config.
+Check for a repo-local skill of the same name at `.ai/skills/om-spec-writing/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's quality gates. Read the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) — the architecture rules, canonical primitives, and naming conventions they define are mandatory review criteria, not suggestions. Load `.ai/agentic.config.json` when present — it resolves the specs directory (`paths.specs`, default `.ai/specs`); this skill performs no tracker operations and works without the config by falling back to the repo's existing design-doc area.
 
 ## Where specs live
 
-Specs go in the repository's design-doc area: `docs/specs/`, `specs/`, `rfcs/`, `design/`, `proposals/`, or wherever this repo already keeps design documents — check the layout before creating anything. When no such area exists, propose `docs/specs/` and confirm with the user.
+Specs go in the directory the pipeline config names: `paths.specs` from `.ai/agentic.config.json`, default `.ai/specs`. When the repo has no config, use its existing design-doc area (`docs/specs/`, `specs/`, `rfcs/`, `design/`, `proposals/` — check the layout) or propose the `.ai/specs` default and confirm with the user.
 
 Naming: `{YYYY-MM-DD}-{kebab-case-title}.md`. This is the filename shape `om-followup-issue-from-pr` recognizes when it files `Implement:` tracking issues for merged spec PRs.
 
@@ -109,7 +109,7 @@ When asked to review or audit a spec, produce:
 1. **The architectural diff** — is the spec wasting space documenting standard CRUD and boilerplate? Cut the noise; a spec earns its length only with what is unique to this feature.
 2. **Scope cohesion** — one independently deployable capability per spec. Bundles get split.
 3. **Canonical mechanisms** — does the spec reach for the project's established primitives (its CRUD factories, form/table components, HTTP clients, cache, event bus — whatever the agent instructions name) or invent parallel substitutes? Inventions need a stated reason.
-4. **Contracts and compatibility** — which public surfaces change (APIs, events, schemas, config formats)? Is every breaking change flagged with a migration or deprecation path?
+4. **Contracts and compatibility** — which public surfaces change (APIs, events, schemas, config formats)? Is every breaking change flagged with a migration or deprecation path? When `BACKWARD_COMPATIBILITY.md` exists at the repo root, its protected-surface list is the authority.
 5. **Reversibility** — how is each state change undone? The rollback/undo logic deserves the same detail as the execute path.
 6. **Boundaries and coupling** — are cross-module effects routed through the project's decoupling mechanism (events, interfaces) or through direct imports? Are optional integrations degraded gracefully when the peer is absent?
 7. **Sensitive data** — for every PII / credential / free-text-about-people field the spec proposes: does it follow the project's data-protection conventions (encryption, scoping, access rules)? No hand-rolled crypto, no "TODO encrypt later".

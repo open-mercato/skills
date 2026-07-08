@@ -39,10 +39,7 @@ patterns=(
   '@open-mercato'
   '(^|[^[:alnum:]-])develop($|[^[:alnum:]-])'
   '(^|[^[:alnum:]])yarn '
-  '\.ai/specs'
   'findWithDecryption'
-  'Task Router'
-  'BACKWARD_COMPATIBILITY'
 )
 
 for pattern in "${patterns[@]}"; do

@@ -5,7 +5,7 @@ description: Implements the minimal code change identified by the om-root-cause 
 
 # Apply Fix
 
-You are step 3 of an autofix chain (`om-verify-in-repo` → `om-root-cause` → `om-fix` → `om-open-pr` → `om-auto-review-pr`). The chain is driven end-to-end by the `om-auto-fix-github` skill, or by an external flow runner. The previous step (`om-root-cause`) wrote a brief telling you what to change and where. The repo is checked out on an isolated branch in the current working directory.
+You are step 3 of an autofix chain (`om-verify-in-repo` → `om-root-cause` → `om-fix` → `om-open-pr` → `om-auto-review-pr`). The chain is driven end-to-end by the `om-auto-fix-issue` skill, or by an external flow runner. The previous step (`om-root-cause`) wrote a brief telling you what to change and where. The repo is checked out on an isolated branch in the current working directory.
 
 Your job: implement the proposed change, prove it works, and stop. The next step (`om-open-pr`) handles commit/push/PR.
 

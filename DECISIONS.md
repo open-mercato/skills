@@ -14,7 +14,7 @@ This repository solves a different problem: public adoption outside the Open Mer
 
 ## Naming
 
-The skills keep their upstream `om-*` names (`om-auto-create-pr`, `om-fix`, `om-auto-fix-github`, …). An earlier revision dropped the prefix; it came back deliberately, for drop-in compatibility with the upstream monorepo: with identical names, a repo that already keeps specialized versions under `.ai/skills/om-*` shadows the installed skills automatically via the repo-local override convention (see Project fit below), and existing slash-command muscle memory keeps working. The one skill with no upstream counterpart, `om-setup-agent-pipeline`, takes the prefix for consistency.
+The skills keep their upstream `om-*` names (`om-auto-create-pr`, `om-fix`, …). An earlier revision dropped the prefix; it came back deliberately, for drop-in compatibility with the upstream monorepo: with identical names, a repo that already keeps specialized versions under `.ai/skills/om-*` shadows the installed skills automatically via the repo-local override convention (see Project fit below), and existing slash-command muscle memory keeps working. The one skill with no upstream counterpart, `om-setup-agent-pipeline`, takes the prefix for consistency. One deliberate divergence from upstream naming: upstream `om-auto-fix-github` is `om-auto-fix-issue` here — with the tracker provider layer the skill fixes issues from any configured tracker, so the GitHub-specific name would misdescribe it. In a drop-in install the upstream monorepo keeps its own `om-auto-fix-github` alongside; the two do not shadow each other.
 
 ## Configuration
 

@@ -1,9 +1,9 @@
 ---
-name: om-auto-fix-github
+name: om-auto-fix-issue
 description: Fix a tracker issue end to end (GitHub issue by default) from a single command. Drives the autofix chain interactively — proves the issue still needs work (om-verify-in-repo), locates the bug (om-root-cause), implements the minimal fix with regression tests (om-fix), opens a labeled draft PR (om-open-pr), then loops om-auto-review-pr in autofix mode until clean. Runs in an isolated worktree, honors the in-progress claim protocol, and stops cleanly when the issue is already solved or already claimed.
 ---
 
-# Auto Fix GitHub
+# Auto Fix Issue
 
 Fix a tracker issue end to end without disturbing the user's active worktree. This skill is the interactive driver of the autofix chain (`om-verify-in-repo` → `om-root-cause` → `om-fix` → `om-open-pr` → `om-auto-review-pr`): it makes the go/no-go decision, prepares an isolated worktree, runs each chain step in sequence, and passes every step's output to the next exactly as the chain contract expects. The chain skills stay runnable on their own under an external flow runner; this skill is that runner for a single session.
 
@@ -17,7 +17,7 @@ Fix a tracker issue end to end without disturbing the user's active worktree. Th
 
 ### 0. Load pipeline config
 
-Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill; the snippet also resolves `TRACKER` and `TRACKER_FILE=".ai/trackers/${TRACKER}.md"`. If the config or the tracker descriptor is missing, stop and tell the user to run `om-setup-agent-pipeline` first. Read `$TRACKER_FILE`; every tracker operation named in this skill executes as that descriptor defines, and the label guards (`label_exists`, `apply_issue_label`, `remove_issue_label`, …) come from it. This skill uses `BASE_BRANCH` and `LABELS_ENABLED` directly (plus the `label_exists` guard); the chain skills it invokes load the rest of the config themselves. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-auto-fix-github/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
+Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill; the snippet also resolves `TRACKER` and `TRACKER_FILE=".ai/trackers/${TRACKER}.md"`. If the config or the tracker descriptor is missing, stop and tell the user to run `om-setup-agent-pipeline` first. Read `$TRACKER_FILE`; every tracker operation named in this skill executes as that descriptor defines, and the label guards (`label_exists`, `apply_issue_label`, `remove_issue_label`, …) come from it. This skill uses `BASE_BRANCH` and `LABELS_ENABLED` directly (plus the `label_exists` guard); the chain skills it invokes load the rest of the config themselves. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-auto-fix-issue/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 ### 1. Decide whether you may take the issue
 
@@ -59,7 +59,7 @@ Never implement the fix in the repository's primary worktree.
 REPO_ROOT=$(git rev-parse --show-toplevel)
 GIT_DIR=$(git rev-parse --git-dir)
 GIT_COMMON_DIR=$(git rev-parse --git-common-dir)
-WORKTREE_PARENT="$REPO_ROOT/.ai/tmp/om-auto-fix-github"
+WORKTREE_PARENT="$REPO_ROOT/.ai/tmp/om-auto-fix-issue"
 CREATED_WORKTREE=0
 
 if [ "$GIT_DIR" != "$GIT_COMMON_DIR" ]; then
@@ -143,7 +143,7 @@ If `om-auto-review-pr` cannot run (checks not yet reported, missing context), sk
 If the run aborts anywhere after `om-fix` claimed the issue but before `om-open-pr` released the lock, release it yourself — treat this as a finally-block, so a crash still clears it. Run the tracker operation **unlabel-issue** to remove the `in-progress` label from `{issueId}` — through the guard, so `LABELS_ENABLED=false` or a missing label degrades to a skip, and tolerate failure rather than aborting the cleanup. Then run **comment-issue** on `{issueId}` with exactly this abort comment:
 
 ```
-🤖 `om-auto-fix-github` aborted: {one-line reason}. Lock released.
+🤖 `om-auto-fix-issue` aborted: {one-line reason}. Lock released.
 ```
 
 Keep the assignee as-is on the failure path — a human picking the issue up can see who last worked on it.

@@ -156,7 +156,8 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
   "qaGate": true,
   "paths": {
     "runs": ".ai/runs",
-    "analysis": ".ai/analysis"
+    "analysis": ".ai/analysis",
+    "specs": ".ai/specs"
   },
   "reviewChecklist": null
 }

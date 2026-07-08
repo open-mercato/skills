@@ -2,7 +2,8 @@
 # Lint gate for the skills collection.
 # 1. Frontmatter: every skills/<name>/SKILL.md declares name (== directory) and a description.
 # 2. Grep gate: installable skill content must be product-agnostic — no upstream-monorepo
-#    tokens, no hard-coded base branch, no hard-coded package manager.
+#    tokens, no hard-coded base branch, no hard-coded package manager. The om- name
+#    prefix is the naming convention and is allowed; agnosticism is about behavior.
 # Scope: skills/** only. README, LICENSE, and DECISIONS.md may reference the upstream project.
 set -uo pipefail
 
@@ -34,7 +35,6 @@ for dir in skills/*/; do
 done
 
 patterns=(
-  '(^|[^[:alnum:]])om-'
   '[Oo]pen[- ][Mm]ercato'
   '@open-mercato'
   '(^|[^[:alnum:]-])develop($|[^[:alnum:]-])'

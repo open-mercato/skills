@@ -1,0 +1,89 @@
+---
+name: om-merge-buddy
+description: Scan open GitHub pull requests, classify merge readiness from labels, reviews, CI, and mergeability, then report which PRs can merge now and which ones are close but blocked.
+---
+
+# Merge Buddy
+
+Use this skill to triage all open PRs and answer one question: what can merge right now? It is read-only — it classifies and reports, and never merges, edits, comments on, or labels anything.
+
+## Workflow
+
+### 0. Load pipeline config
+
+Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. This skill uses:
+
+```bash
+LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
+QA_GATE=$(jq -r '.qaGate // false' "$CONFIG")
+```
+
+Every label name below comes from the config's label taxonomy (`labels.pipeline`, `labels.meta`). When `labels.enabled` is `false`, skip all label-based gates, classify from reviews, CI, and mergeability alone, and say so in the report header. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-merge-buddy/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
+
+### 1. Fetch open PRs
+
+```bash
+gh pr list --state open --json number,title,url,author,labels,reviewDecision,mergeable,mergeStateStatus,headRefName,baseRefName,updatedAt,isDraft --limit 100
+```
+
+### 2. Collect gate status for each PR
+
+For every non-draft PR:
+
+```bash
+gh pr checks {number} --json name,state,link
+```
+
+Evaluate these gates:
+
+- review decision must be `APPROVED`
+- required CI checks must be green
+- `mergeable` must not be `CONFLICTING`
+- `mergeStateStatus` must not be `DIRTY` or `BLOCKED`
+- the PR must not carry `changes-requested`, `qa-failed`, `blocked`, or `do-not-merge` — these are hard blocks, regardless of every other signal
+- the PR must not carry `in-progress` (an automated skill is still working on it)
+- QA-approval gate (enforced when `qaGate` is `true` in the config): if `needs-qa` is present, the PR must already carry `qa-approved` (manual QA signed off) — otherwise the QA-approval gate blocks the merge. `needs-qa` PRs legitimately sit in `merge-queue` before QA, so the pipeline label alone is not proof of QA; the `qa` pipeline label means QA is still in progress and is itself a blocker. `skip-qa` is the explicit opt-out: a PR carrying `skip-qa` does not require `qa-approved`. When `qaGate` is `false`, treat `needs-qa` without `qa-approved` as advisory — mention it in the report, but do not classify the PR as blocked on it alone.
+
+Treat `PENDING` CI as a blocker, but classify it as "almost ready" rather than "blocked" when it is the only missing gate.
+
+### 3. Classify
+
+- **Ready to merge**: all gates pass
+- **Almost ready**: only 1-2 minor blockers remain
+- **Blocked**: conflicts, failing CI, blocking labels, missing approval, missing QA sign-off, or multiple blockers
+
+### 4. Report
+
+Use this output shape:
+
+```markdown
+## Merge Buddy Report — {date}
+
+### Ready to Merge ({count})
+
+| # | Title | Author | Labels | Age |
+|---|-------|--------|--------|-----|
+| [#123](url) | Fix auth flow | @alice | `bug`, `merge-queue` | 2d |
+
+### Almost Ready ({count})
+
+| # | Title | Author | Blocker | Action needed |
+|---|-------|--------|---------|---------------|
+| [#456](url) | Add search filters | @bob | CI pending | Wait for checks or rerun |
+
+### Blocked ({count})
+
+| # | Title | Blocker(s) |
+|---|-------|------------|
+| [#789](url) | Refactor events | Merge conflicts, changes-requested |
+```
+
+## Rules
+
+- Never merge anything — this skill only classifies and reports. When the user picks a PR to ship, hand off to `om-approve-merge-pr`, which re-checks the same gates before merging.
+- The QA-approval gate is a hard rule when `qaGate` is on: a `needs-qa` PR without `qa-approved` is never "Ready to merge", even when every other check is green.
+- Sort ready PRs by oldest first.
+- Sort almost-ready PRs by fewest blockers first.
+- Skip draft PRs entirely.
+- Skip `in-progress` PRs and mention them only if the user asks for a full inventory.
+- If nothing is ready, say that directly and highlight the top almost-ready PRs.

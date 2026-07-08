@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>🧠 plan · 🔨 implement · 🔍 review · ✅ QA gate · 🚢 merge</b><br/>
-  Fifteen agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
+  Sixteen agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
 </p>
 
 <p align="center">
@@ -26,12 +26,12 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 npx skills add open-mercato/skills --skill '*'
 ```
 
-Install all fifteen — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all sixteen — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
 ```
-/setup-agent-pipeline
+/om-setup-agent-pipeline
 ```
 
 It inspects your repo (default branch, validation scripts, GitHub labels), asks a few questions, writes `.ai/agentic.config.json`, and generates `SDLC.md` — your team's ticket-flow doc. Every other skill reads the config.
@@ -39,7 +39,7 @@ It inspects your repo (default branch, validation scripts, GitHub labels), asks 
 Then ship something:
 
 ```
-/auto-create-pr "add rate limiting to the login endpoint"
+/om-auto-create-pr "add rate limiting to the login endpoint"
 ```
 
 The agent drafts an execution plan, implements it phase by phase in an isolated worktree, runs your validation commands, reviews its own diff, and opens a labeled, reviewed PR.
@@ -66,23 +66,23 @@ The installer never touches skills it does not own: an existing real directory (
 
 ## 🔁 The pipeline
 
-Two entry paths: hand the agent a task brief, or hand it a GitHub issue. Both converge on the same review loop and the same QA gate. Skills claim PRs and issues with an `in-progress` label, so concurrent agents back off instead of colliding.
+Two entry paths: hand the agent a task brief (`om-auto-create-pr`), or hand it a GitHub issue (`om-auto-fix-github`, which drives the autofix chain). Both converge on the same review loop and the same QA gate. Skills claim PRs and issues with an `in-progress` label, so concurrent agents back off instead of colliding.
 
 ```mermaid
 flowchart LR
     subgraph brief ["From a task brief"]
-        createPR["auto-create-pr"] --> reviewPR["auto-review-pr"]
-        reviewPR -- "changes requested" --> continuePR["auto-continue-pr"]
+        createPR["om-auto-create-pr"] --> reviewPR["om-auto-review-pr"]
+        reviewPR -- "changes requested" --> continuePR["om-auto-continue-pr"]
         continuePR --> reviewPR
         reviewPR -- "approved" --> qaGate{"QA gate"}
-        qaGate -- "skip-qa" --> mergePR["merge-buddy /<br/>approve-merge-pr"]
+        qaGate -- "skip-qa" --> mergePR["om-merge-buddy /<br/>om-approve-merge-pr"]
         qaGate -- "needs-qa" --> manualQA["manual QA"]
         manualQA -- "qa-approved" --> mergePR
     end
-    subgraph issue ["From a GitHub issue (autofix chain)"]
-        verifyStep["verify-in-repo"] --> rootCause["root-cause"]
-        rootCause --> applyFix["apply-fix"]
-        applyFix --> openPR["open-pr"]
+    subgraph issue ["From a GitHub issue: om-auto-fix-github drives the autofix chain"]
+        verifyStep["om-verify-in-repo"] --> rootCause["om-root-cause"]
+        rootCause --> applyFix["om-fix"]
+        applyFix --> openPR["om-open-pr"]
     end
     openPR --> reviewPR
 ```
@@ -93,16 +93,17 @@ flowchart LR
 
 | Skill | What it does |
 |---|---|
-| `setup-agent-pipeline` | One-per-repo configurator. Inspects the repository, asks a few questions, writes `.ai/agentic.config.json`, generates `SDLC.md` and an `AGENTS.md` starter when missing. |
-| `auto-create-pr` | Takes a free-form task brief end-to-end: execution plan, isolated worktree, phase-by-phase commits, validation gate, labeled PR. Resumable. |
-| `auto-continue-pr` | Resumes an in-progress PR from the first unchecked step in its tracking plan. |
-| `auto-review-pr` | Reviews a PR by number in an isolated worktree, approves or requests changes, manages labels. On changes-requested, its autofix loop iterates fixes and re-review until merge-ready. |
-| `review-prs` | Sweeps all unreviewed open PRs, newest first, through `auto-review-pr`, respecting claim locks. |
-| `merge-buddy` | Scans open PRs and reports which can merge now and which are close but blocked, based on labels, reviews, CI, and mergeability. |
-| `approve-merge-pr` | Approves and squash-merges a PR given only its number. Can file a follow-up issue at the same time. |
-| `check-and-commit` | Runs the configured validation gate on the current branch, fixes obvious drift, then commits and pushes when green. |
-| `sync-merged-pr-issues` | Post-merge housekeeping: closes issues that merged PRs fix, comments on issues whose PRs were closed without merging. |
-| `followup-issue-from-pr` | Turns a PR or a PR comment into a tracked follow-up issue, assigned to the right person. |
+| `om-setup-agent-pipeline` | One-per-repo configurator. Inspects the repository, asks a few questions, writes `.ai/agentic.config.json`, generates `SDLC.md` and an `AGENTS.md` starter when missing. |
+| `om-auto-create-pr` | Takes a free-form task brief end-to-end: execution plan, isolated worktree, phase-by-phase commits, validation gate, labeled PR. Resumable. |
+| `om-auto-fix-github` | Fixes a GitHub issue end-to-end by driving the autofix chain: triage gate, root-cause analysis, minimal fix with regression tests in an isolated worktree, labeled draft PR, autofix review loop. |
+| `om-auto-continue-pr` | Resumes an in-progress PR from the first unchecked step in its tracking plan. |
+| `om-auto-review-pr` | Reviews a PR by number in an isolated worktree, approves or requests changes, manages labels. On changes-requested, its autofix loop iterates fixes and re-review until merge-ready. |
+| `om-review-prs` | Sweeps all unreviewed open PRs, newest first, through `om-auto-review-pr`, respecting claim locks. |
+| `om-merge-buddy` | Scans open PRs and reports which can merge now and which are close but blocked, based on labels, reviews, CI, and mergeability. |
+| `om-approve-merge-pr` | Approves and squash-merges a PR given only its number. Can file a follow-up issue at the same time. |
+| `om-check-and-commit` | Runs the configured validation gate on the current branch, fixes obvious drift, then commits and pushes when green. |
+| `om-sync-merged-pr-issues` | Post-merge housekeeping: closes issues that merged PRs fix, comments on issues whose PRs were closed without merging. |
+| `om-followup-issue-from-pr` | Turns a PR or a PR comment into a tracked follow-up issue, assigned to the right person. |
 
 ### 🤝 Skills invoke each other
 
@@ -110,15 +111,15 @@ The building blocks behind the autofix chain and the review loop. You can call t
 
 | Skill | What it does |
 |---|---|
-| `verify-in-repo` | Read-only triage gate: decides whether a GitHub issue is a real, still-unfixed defect, and stops the chain cleanly when there is nothing to do. |
-| `root-cause` | Read-only analysis: locates the bug and the minimal change surface so the fix step never re-explores the repo. |
-| `apply-fix` | Implements the minimal change, adds regression tests, runs the validation gate. Does not commit or push. |
-| `open-pr` | Commits the worktree, pushes the branch, opens the PR, normalizes labels, releases the claim lock. |
-| `code-review` | The review checklist behind `auto-review-pr`: correctness, security, contract surfaces, plus your repo-local checklist when configured. |
+| `om-verify-in-repo` | Read-only triage gate: decides whether a GitHub issue is a real, still-unfixed defect, and stops the chain cleanly when there is nothing to do. |
+| `om-root-cause` | Read-only analysis: locates the bug and the minimal change surface so the fix step never re-explores the repo. |
+| `om-fix` | Implements the minimal change, adds regression tests, runs the validation gate. Does not commit or push. |
+| `om-open-pr` | Commits the worktree, pushes the branch, opens the PR, normalizes labels, releases the claim lock. |
+| `om-code-review` | The review checklist behind `om-auto-review-pr`: correctness, security, contract surfaces, plus your repo-local checklist when configured. |
 
 ## 🧰 Works with any stack
 
-Nothing here assumes JavaScript, or any particular product. The base branch, the validation commands, the label taxonomy, and the working paths all come from one committed file, `.ai/agentic.config.json`, written by `setup-agent-pipeline`:
+Nothing here assumes JavaScript, or any particular product. The base branch, the validation commands, the label taxonomy, and the working paths all come from one committed file, `.ai/agentic.config.json`, written by `om-setup-agent-pipeline`:
 
 ```json
 {
@@ -145,21 +146,21 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
 }
 ```
 
-A Rust repo puts `cargo test` and `cargo clippy` in `validation.commands`; a Go repo puts `go test ./...`. Skills run whatever you configure and treat any non-zero exit as a gate failure. A skill invoked in a repo without the config stops and points you at `setup-agent-pipeline`.
+A Rust repo puts `cargo test` and `cargo clippy` in `validation.commands`; a Go repo puts `go test ./...`. Skills run whatever you configure and treat any non-zero exit as a gate failure. A skill invoked in a repo without the config stops and points you at `om-setup-agent-pipeline`.
 
-GitHub is the default tracker; the `tracker` field is the seam for others (Linear and friends land as one provider skill each — see the tracker section in `setup-agent-pipeline`).
+GitHub is the default tracker; the `tracker` field is the seam for others (Linear and friends land as one provider skill each — see the tracker section in `om-setup-agent-pipeline`).
 
 ## 🎨 Make it yours
 
 Three layers of project fit, no forking:
 
-- **Agent instructions** — skills read your `AGENTS.md` / `CLAUDE.md` before working, so project conventions apply from the first run. No such file? `setup-agent-pipeline` offers a starter.
+- **Agent instructions** — skills read your `AGENTS.md` / `CLAUDE.md` before working, so project conventions apply from the first run. No such file? `om-setup-agent-pipeline` offers a starter.
 - **`SDLC.md`** — the generated process doc: pipeline stages, label state machine, QA gate, claim protocol. Humans read it; new team members stop asking how the flow works.
-- **Per-skill overrides** — drop `.ai/agentic-overrides/<skill-name>.md` into your repo and that skill applies it on top of its own instructions; local rules win. Extra review rules, a different PR template, an added gate step — without touching the installed skill.
+- **Repo-local skills** — drop a skill with the same name into your repo at `.ai/skills/<skill-name>/SKILL.md` and it takes precedence over the installed one. To extend rather than replace, the local skill just `@`-imports or references the installed skill and adds rules on top; local rules win. Extra review rules, a different PR template, an added gate step — without touching the installed skill. This is also what makes the collection a drop-in for repos that already keep specialized `om-*` skills under `.ai/skills/`: the installed skills defer to them automatically.
 
 ## 🏷️ Labels and the QA gate
 
-Every PR carries at most one pipeline label (`review`, `changes-requested`, `merge-queue`, ...) plus additive category, meta, priority, and risk labels; priority says how urgent the work is, risk says how dangerous the change is to ship. The full taxonomy, and whether to use labels at all, lives in the config; `setup-agent-pipeline` documents every group and creates missing labels for you.
+Every PR carries at most one pipeline label (`review`, `changes-requested`, `merge-queue`, ...) plus additive category, meta, priority, and risk labels; priority says how urgent the work is, risk says how dangerous the change is to ship. The full taxonomy, and whether to use labels at all, lives in the config; `om-setup-agent-pipeline` documents every group and creates missing labels for you.
 
 The QA gate is the one hard rule: a PR labeled `needs-qa` cannot merge until a human adds `qa-approved`, no matter how green the checks are. Automated skills request QA; they never grant it.
 

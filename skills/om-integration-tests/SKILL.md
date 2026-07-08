@@ -1,0 +1,133 @@
+---
+name: om-integration-tests
+description: Run and create integration/E2E tests (Playwright TypeScript by default) — execute the suite, generate new tests from specs or feature descriptions by exploring the running application first, and report failures with artifact-based per-test diagnosis. Use when the user says "run integration tests", "test this feature", "create test for", or "integration test".
+---
+
+# Integration Tests
+
+Generate executable integration tests by **exploring the running application** — never by guessing selectors or flows — and run existing suites with disciplined, artifact-based failure reporting.
+
+This skill deliberately prescribes **no environment**: how the app starts, which ports it uses, and how a test database is provisioned are the repository's business. Your first job is always to discover that from the repo itself.
+
+## Step 0 — Context
+
+Check for a repo-local skill of the same name at `.ai/skills/om-integration-tests/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top (a repo-local variant is the right place for environment specifics: launch commands, ports, seeded accounts). Local rules win, but a repo-local skill can never relax this skill's quality rules. Read the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents). Load `.ai/agentic.config.json` when present (validation commands, paths); this skill performs no tracker operations and does not require the pipeline config.
+
+## Discover the test setup
+
+Before writing anything, find how this repo already does integration testing:
+
+- An existing runner config: `playwright.config.*`, `cypress.config.*`, `wdio.conf.*`, or an `e2e/` / `integration/` / `__integration__/` directory.
+- Test scripts in `package.json`, a `Makefile`, or CI workflows — prefer whatever command CI runs.
+- Existing test files: mirror their location, naming, fixtures, and helper conventions exactly.
+
+When the repo has no integration test setup at all, propose Playwright (TypeScript) with a minimal shared config and ask before scaffolding it.
+
+Runtime policy: timeouts and retries belong in the **shared runner config**, not in individual test files — no per-test timeout or retry overrides. While authoring or debugging a single test, fail fast by overriding retries to 0 on the command line, never by editing the shared config.
+
+## Discover how to run the app
+
+Do not assume a URL, a port, or a start command. Establish the app's base URL by checking, in order:
+
+1. A dev server that is already running (ask the user, or probe what the repo's docs say it would be).
+2. The repository's agent instructions and README — most repos document their run command.
+3. `package.json` scripts, `Makefile` targets, container/compose files, or a repo-local run/dev skill.
+4. If the repo provides its own scripted test environment (a "test env up" script, a compose profile, an ephemeral-app command), use that — it exists precisely so tests get a clean instance.
+
+If none of these yields a runnable app, stop and ask the user how to start it rather than inventing an environment. Record the base URL you established and use it consistently; never hardcode a guessed `localhost:<port>` into tests — read it from the runner config or environment the repo already uses.
+
+## Workflow
+
+### Phase 1 — Identify what to test
+
+Determine the feature scope from one of these sources (in priority order):
+
+1. **Spec / design doc** — if one is referenced or was just implemented, read it from the repo's design-doc area. Extract testable scenarios from its API contracts, UI/UX flows, and data model sections.
+2. **User description** — map "test the company creation flow" to the relevant module and pages.
+3. **Recent changes** — after an implementation, use `git diff` or recent commits to identify changed endpoints, pages, and components.
+
+For each scenario, identify: UI test or API test; priority (High for CRUD happy paths and auth, Medium for validation/config, Low for cosmetic edge cases); and the prerequisite role or account type.
+
+### Phase 2 — Name the test
+
+Follow the repository's existing naming convention for test cases. When there is none, use `TC-{CATEGORY}-{NNN}` (category by domain area, `NNN` sequential — list existing test files to find the next number).
+
+### Phase 3 — Explore the feature in the running app
+
+Use the base URL established above. For UI tests, drive a real browser (browser automation / MCP tooling when available):
+
+1. Log in with the appropriate role.
+2. Navigate to the relevant page.
+3. Take snapshots to capture exact element labels, button text, and form fields.
+4. Walk the happy path to discover the actual flow.
+5. Note validation messages, success states, and redirects.
+
+For API tests, discover with real requests: the exact endpoint path and method, required headers and body shape, the actual response structure, and error responses for invalid input.
+
+### Phase 4 — Write the test
+
+- Place the file where this repo keeps integration tests (Phase 0 discovery); mirror existing structure.
+- Use the locators actually observed in Phase 3 — role/label/text-based locators (`getByRole`, `getByLabel`, `getByText`), never guessed CSS paths.
+- Do not hardcode entity IDs in routes, payloads, or assertions. Create fixtures at runtime (prefer API setup for stability) or select existing rows via stable text/role locators.
+- Do not rely on seeded/demo data for prerequisites; create what the test needs.
+- Clean up everything the test created in `finally`/teardown.
+- Keep tests deterministic and independent of run order and retries.
+- One scenario per test file; multiple scenarios get multiple files.
+- If the repo gates tests on optional modules or external services, use its existing metadata/skip mechanism; only env-gate tests that truly require external secrets, and keep everything else runnable without them.
+
+### Phase 5 — Optional markdown scenario
+
+Only when documentation is wanted, and only if the repo has a place for it (a QA/scenarios docs area): write a scenario file with test ID, category, priority, type, description, prerequisites, a step/expected-result table, and edge cases — filled with the **actual** actions and results observed in Phase 3, not hypothetical ones. The executable test is mandatory; the scenario is not.
+
+### Phase 6 — Verify
+
+Run the new test with the repo's runner command, fail-fast (retries 0) while iterating. If it fails, fix it — never leave a broken test behind.
+
+## Rendering and performance gates
+
+When a feature touches routes, client-side interactive components, shared providers, or loading/error boundaries, plan tests beyond CRUD correctness: verify the initial shell renders before client-only interaction is required, exercise each changed interactive component, cover loading and error states, and include accessibility assertions (labels, roles, focus, keyboard submit/cancel, icon-only buttons). Record a smoke performance signal when feasible; if not feasible in this environment, state the blocker and the exact check to run before merge.
+
+## Failure analysis and reporting (mandatory on failures)
+
+After any failed run — single test or full suite, whether you authored tests or only executed them:
+
+1. Parse the runner output for the failing test names and the first error stack/assertion.
+2. Inspect the runner's artifacts per failed test: error context, screenshots (expected/actual/diff), traces/videos, the HTML report.
+3. Classify each failure into one primary reason: product regression / real app bug; test issue (stale locator, brittle assertion, bad fixture/cleanup); environment or data issue (service unavailable, auth drift, shared-state collision).
+4. Assign ownership per failing test: `User/Product team` (real regression), `Agent/QA` (test-code quality), or `Shared`.
+5. Respond with this table **before** any narrative:
+
+| Failing test | Evidence used | Reasoning (why it failed) | Suggested owner | Next action |
+|--------------|---------------|---------------------------|-----------------|-------------|
+| `<path>::<test name>` | `output + screenshot + error context` | `Concise technical diagnosis` | `User/Product team` / `Agent/QA` / `Shared` | `Concrete fix recommendation` |
+
+Never give a generic "tests failed" summary without per-test reasoning.
+
+## Running-only mode
+
+If the user asks only to run tests (suite, category, or single file), skip the authoring phases and execute the run directly with the repo's own command. On failure, apply the failure-analysis section above.
+
+## Deriving scenarios from a spec
+
+| Spec section | Generates |
+|-------------|-----------|
+| API contracts — each endpoint | One API test per endpoint |
+| UI/UX — each user flow | One UI test per flow |
+| Edge cases / error scenarios | One test per significant error path |
+| Risks & impact review | Regression tests for documented failure modes |
+
+A typical spec produces 3–8 test cases. Happy paths first; edge cases as separate files when they earn it.
+
+## Rules
+
+- MUST explore the running app before writing — never guess selectors or flows.
+- MUST discover how to run the app from the repo itself (docs, scripts, agent instructions, or the user) — never assume a URL or port, never invent an environment.
+- MUST follow the repository's existing test layout, naming, and helper conventions; propose, don't impose, when none exist.
+- MUST NOT hardcode record IDs; create or discover entities at runtime.
+- MUST NOT rely on seeded/demo data; create required fixtures per test (prefer API setup) and clean them up in teardown.
+- MUST keep tests deterministic and isolated from run order and retries.
+- MUST NOT add per-test timeout/retry overrides; the shared runner config owns them. Debug with command-level retries 0.
+- MUST use locators observed in real snapshots (`getByRole`, `getByLabel`, `getByText`).
+- MUST verify the new test passes before finishing; never leave broken tests.
+- MUST analyze failure artifacts before reporting, and report failures in the per-test table with reason, evidence, and suggested owner — also when only running existing tests.
+- The executable test is mandatory; the markdown scenario is optional documentation.

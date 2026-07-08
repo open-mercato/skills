@@ -38,5 +38,5 @@ No skill calls a tracker CLI or API directly. Skills name **tracker operations**
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.
 - Shipped tracker descriptors other than GitHub. The seam (`tracker` config field + descriptor contract + `TEMPLATE.md`) ships in v1; teams write their own `linear.md`/`jira.md` from the template until popular ones are contributed back.
-- Skills beyond the PR pipeline (module scaffolding, design-system review, integration testing). Those are product-specific upstream and were deliberately not extracted.
+- Skills beyond the PR pipeline that are product-specific upstream (module scaffolding, design-system review). Two former members of this list were later generalized and extracted: `om-spec-writing` (upstream architecture laws replaced by the repo's own agent-instruction rules; specs live in the repo's design-doc area) and `om-integration-tests` (deliberately stripped of the upstream ephemeral-environment machinery — the skill discovers how to run the app from the repo itself, and a repo-local `.ai/skills/om-integration-tests` override is the place for environment specifics).
 - Automated sync from the upstream monorepo. Curation is manual.

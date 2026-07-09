@@ -262,20 +262,18 @@ screenshot before including it, or omit the screenshot and say so.
 - **Local mode (or no tracker):** the artifacts folder is the deliverable. Print
   its path (`$ARTIFACTS_DIR`) and the verdict. Done — do not attempt any tracker
   operation.
-- **PR mode:** post `report.md` as a single PR comment via the tracker operation
-  **comment-pr** (use a body-file so formatting and image markdown survive).
-  Screenshots cannot be uploaded inline through most trackers directly, so make
-  them referenceable first, in order of preference:
-  1. **Evidence branch (public repo, push access):** commit only the PNGs to a
-     dedicated slash-free evidence branch with plain `git` (never push to the
-     change's branch, never pollute it), then reference the code host's raw file
-     URLs — they render inline. Use a branch name without `/` (some hosts do not
-     serve raw URLs from slashed refs).
-  2. **Tracker attachment mechanism** if the descriptor defines one.
-  3. **Fallback:** list the artifact paths (they are saved under `$ARTIFACTS_DIR`)
-     and tell the reviewer they can drag-drop the PNGs into a comment for inline
-     rendering. Never block on inline rendering — a report with linked artifacts is
-     still useful.
+- **PR mode:** post the evidence with the screenshots rendered **inline** via the
+  tracker operation **attach-image-evidence** — pass `{prNumber}`, the `report.md`
+  body, a slug (`pr-{prNumber}`), and the list of screenshot paths from
+  `$ARTIFACTS_DIR`. Making the images renderable (an upload/attachment endpoint, a
+  media API, or a pushed evidence branch with raw URLs) is the tracker
+  descriptor's job — this skill never embeds host-specific upload logic. Screenshots
+  are the point of this skill, so **always** route them through
+  **attach-image-evidence**; use plain **comment-pr** only for image-free comments.
+  If the descriptor reports it cannot render images inline (e.g. a private repo),
+  it still posts the comment with image links + the artifact paths — surface that
+  limitation in the summary rather than treating it as a failure. Never store
+  evidence on the change's own branch.
 
 ### 9. Follow-up UI-test scenario (only when none exists)
 
@@ -357,9 +355,10 @@ Labels: {unchanged | qa-approved+qa-self-verified | qa-failed | n/a (local)}
   honestly; when the environment cannot boot, record the blocker and stop — never
   invent screenshots or outcomes.
 - Always write `report.json` + `report.md` and the screenshots to
-  `$ARTIFACTS_DIR`; in PR mode additionally post them as a PR comment (evidence
-  branch via plain `git` + raw URLs, tracker attachment, or artifact-path
-  fallback) without ever polluting the change's branch.
+  `$ARTIFACTS_DIR`; in PR mode additionally post them with the screenshots
+  rendered inline via the tracker operation **attach-image-evidence** (the
+  descriptor owns the upload mechanism), never polluting the change's branch and
+  never embedding host-specific upload logic in this skill.
 - Post the follow-up UI-test scenario only when the diff ships no browser-level
   test.
 - Default behavior changes no labels. `qa-approved`/`qa-self-verified` only via

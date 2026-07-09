@@ -13,6 +13,8 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+**The `om-apply-upgrade-notes` skill automates this document**: run `/om-apply-upgrade-notes` in the consuming repository and it re-syncs the tracker descriptor (preserving local edits), checks the config, and walks the notable-upgrades log below. The rest of this file is the manual path and the reference for what the skill does.
+
 **After every skills upgrade, re-sync your tracker descriptor.** A stale descriptor fails
 gracefully but silently: a skill that names a tracker operation your installed descriptor does not
 define will degrade (or skip the step) instead of erroring, so you may not notice you are missing

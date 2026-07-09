@@ -65,9 +65,8 @@ how to run and test the app there.
 
 The deliverable other skills depend on is `$ENV_DESCRIPTOR`
 (`<paths.qa>/test-env.json`, default `.ai/qa/test-env.json`). Always write it,
-even for a discovered environment, so the QA and integration-test skills
-(`om-integration-tests` and any repo-local verify skills) attach to the same
-instance:
+even for a discovered environment, so `om-auto-verify-pr-ui` and
+`om-integration-tests` attach to the same instance:
 
 ```json
 {

@@ -44,6 +44,8 @@ Then ship something:
 
 The agent drafts an execution plan, implements it phase by phase in an isolated worktree, runs your validation commands, reviews its own diff, and opens a labeled, reviewed PR.
 
+**Upgrading later?** Skills auto-update on reinstall, but repo-installed artifacts — above all `.ai/trackers/<tracker>.md` — do not. See [UPGRADE_NOTES.md](UPGRADE_NOTES.md).
+
 ## 🛠️ Local development
 
 Working on the skills themselves? Skip the `npx skills add` round-trip and symlink this checkout straight into your agents' skill directories:

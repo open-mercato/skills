@@ -16,18 +16,18 @@ If you say go, the next step (`om-root-cause`) reads the code; then `om-fix` mak
 
 ## Load pipeline config
 
-This step needs only the base branch. Resolve it from `.ai/agentic.config.json` per the standard snippet in the `om-setup-agent-pipeline` skill (only the `baseBranch` field is used here). If the config file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-verify-in-repo/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
+This step needs only the base branch. Resolve it from `.ai/agentic.config.json` per the standard snippet in the `om-setup-agent-pipeline` skill (only the `baseBranch` field is used here). If the config or the tracker descriptor is missing, do not stop — run the `om-setup-agent-pipeline` skill now to create them (interactively when a user is present to answer its questions, with `--defaults` when running unattended), then reload the config and continue from this step. Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-verify-in-repo/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top. Local rules win, but a repo-local skill can never relax this skill's safety rules. Also consult the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) for project specifics.
 
 ```bash
 CONFIG=.ai/agentic.config.json
 if [ ! -f "$CONFIG" ]; then
-  echo "Missing $CONFIG — run the om-setup-agent-pipeline skill first."
+  echo "Missing $CONFIG — pipeline not configured; run the om-setup-agent-pipeline skill, then retry."
   exit 1
 fi
 TRACKER=$(jq -r '.tracker // "github"' "$CONFIG")
 TRACKER_FILE=".ai/trackers/${TRACKER}.md"
 if [ ! -f "$TRACKER_FILE" ]; then
-  echo "Missing $TRACKER_FILE — run the om-setup-agent-pipeline skill to install the tracker descriptor."
+  echo "Missing $TRACKER_FILE — run the om-setup-agent-pipeline skill to install the tracker descriptor, then retry."
   exit 1
 fi
 BASE_BRANCH=$(jq -r '.baseBranch // "auto"' "$CONFIG")

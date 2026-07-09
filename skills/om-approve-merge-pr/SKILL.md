@@ -16,7 +16,7 @@ Given a single PR number, submit an approving review and then squash-merge it. O
 
 ## Steps
 
-0. **Load pipeline config.** Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill; it resolves `TRACKER` and `TRACKER_FILE=".ai/trackers/${TRACKER}.md"`, and stops (telling the user to run `om-setup-agent-pipeline` first) when either file is missing. Read `$TRACKER_FILE`; every tracker operation named in this skill executes as that descriptor defines, and the label guards come from it. This skill uses:
+0. **Load pipeline config.** Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill; it resolves `TRACKER` and `TRACKER_FILE=".ai/trackers/${TRACKER}.md"`, and, when either file is missing, does not stop — run the `om-setup-agent-pipeline` skill now to create them (interactively when a user is present, with `--defaults` when unattended), then reload the config and continue. Read `$TRACKER_FILE`; every tracker operation named in this skill executes as that descriptor defines, and the label guards come from it. This skill uses:
    ```bash
    LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
    QA_GATE=$(jq -r '.qaGate // false' "$CONFIG")

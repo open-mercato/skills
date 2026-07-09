@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>🧠 plan · 🔨 implement · 🔍 review · ✅ QA gate · 🚢 merge</b><br/>
-  Twenty-three agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
+  Twenty-five agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 npx skills add open-mercato/skills --skill '*'
 ```
 
-Install all twenty-three — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all twenty-five — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
@@ -118,7 +118,8 @@ Interactive helpers: they act once, report, and hand control back to you.
 | `om-followup-issue-from-pr` | Turns a PR or a PR comment into a tracked follow-up issue, assigned to the right person. |
 | `om-spec-writing` | Writes and reviews feature specs to staff-engineer standards: skeleton-first with a hard Open Questions gate, phased implementation breakdown that feeds `om-auto-create-pr`, severity-ranked architectural reviews. |
 | `om-prepare-issue` | Files a well-formed tracker issue for deferred work: dedupes against existing issues and PRs first, links the covering spec when one exists, otherwise embeds a step-by-step implementation analysis derived from the codebase. |
-| `om-integration-tests` | Creates and runs integration/E2E tests by exploring the running app first — real locators, runtime fixtures, no hardcoded IDs — and reports failures with artifact-based per-test diagnosis. Discovers how to run your app from the repo itself. |
+| `om-integration-tests` | Creates and runs integration/E2E tests by exploring the running app first — real locators, runtime fixtures, no hardcoded IDs — and reports failures with artifact-based per-test diagnosis. Reuses the shared `om-prepare-test-env` instance so QA and tests hit the same booted app. |
+| `om-auto-verify-pr-ui` | Runs the app locally and QAs a change's UI in a real browser without merging: boots via `om-prepare-test-env`, derives a scenario from the diff, drives Playwright with screenshots, and produces a pass/fail report. Posts the evidence as a PR comment when a tracker is configured; otherwise saves screenshots + a JSON/Markdown report to an artifacts folder. |
 | `om-auto-update-changelog` | Drafts a CHANGELOG.md release entry for every PR merged since the last release — emoji categories, contributor credits with the Supersede Credit Rule for carried-forward fork PRs — then delegates to `om-auto-create-pr` to ship it as a docs PR. |
 
 ### 🤝 Skills invoke each other
@@ -132,6 +133,7 @@ The building blocks behind the autofix chain and the review loop. You can call t
 | `om-fix` | Implements the minimal change, adds regression tests, runs the validation gate. Does not commit or push. |
 | `om-open-pr` | Commits the worktree, pushes the branch, opens the PR, normalizes labels, releases the claim lock. |
 | `om-code-review` | The review checklist behind `om-auto-review-pr`: correctness, security, contract surfaces, plus your repo-local checklist when configured. |
+| `om-prepare-test-env` | Boots the app for QA and tests, any stack: reuses the repo's own ephemeral/test environment when it has one, generates Docker/testcontainers-style bring-up scripts for the project's backing services (Postgres, MySQL, Mongo, …) when a disposable environment is wanted and none exists, or runs the app in dev/docker/production mode otherwise. Installs Playwright when missing and writes a shared environment descriptor so QA and tests reuse one instance. Works on macOS, Linux, WSL2, and Windows. |
 
 ## 🧰 Works with any stack
 
@@ -157,7 +159,9 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
   "paths": {
     "runs": ".ai/runs",
     "analysis": ".ai/analysis",
-    "specs": ".ai/specs"
+    "specs": ".ai/specs",
+    "scripts": ".ai/scripts",
+    "qa": ".ai/qa"
   },
   "reviewChecklist": null
 }

@@ -35,7 +35,9 @@ Every skill in this collection reads its repository-specific settings from `.ai/
   "paths": {
     "runs": ".ai/runs",
     "analysis": ".ai/analysis",
-    "specs": ".ai/specs"
+    "specs": ".ai/specs",
+    "scripts": ".ai/scripts",
+    "qa": ".ai/qa"
   },
   "reviewChecklist": null
 }
@@ -56,6 +58,8 @@ Field reference:
 - `paths.runs` — where execution plans of autonomous runs are stored.
 - `paths.analysis` — where generated reports are stored.
 - `paths.specs` — where feature specifications live (default `.ai/specs`). Spec filenames follow `{YYYY-MM-DD}-{kebab-case-title}.md` (for example `2026-03-19-checkout-simple-checkout.md`). `om-spec-writing` writes here, `om-prepare-issue` links from here, and `om-followup-issue-from-pr` checks here first in design-doc mode.
+- `paths.scripts` — where reusable environment scripts are generated (default `.ai/scripts`). `om-prepare-test-env` writes the app/service bring-up and teardown scripts here so the same instance can be re-launched with one command on any platform.
+- `paths.qa` — where QA working state and artifacts live (default `.ai/qa`). `om-prepare-test-env` writes the shared environment descriptor `test-env.json` here (and a Playwright config when it installs one); `om-auto-verify-pr-ui` writes screenshots and a JSON+Markdown verification report under `<paths.qa>/artifacts_<runId>/`; `om-integration-tests` reuses the descriptor to attach to the same booted app.
 - `reviewChecklist` — optional path to a repo-local review checklist file. When set, the `om-code-review` skill reads it in addition to its built-in checklist. Independent of this field, a `CODE_REVIEW.md` at the repo root (see Project docs below) is always picked up automatically when present.
 
 ## Tracker providers
@@ -136,10 +140,10 @@ Show each generated document to the user before writing. Never overwrite an exis
 
 ### 7. Write and commit the config
 
-Write `.ai/agentic.config.json`, create the `paths.runs`, `paths.analysis`, and `paths.specs` directories with a `.gitkeep` each, show the final file to the user, and offer to commit:
+Write `.ai/agentic.config.json`, create the `paths.runs`, `paths.analysis`, `paths.specs`, `paths.scripts`, and `paths.qa` directories with a `.gitkeep` each, show the final file to the user, and offer to commit. Add `<paths.qa>/artifacts_*/` and the running-state descriptor `<paths.qa>/test-env.json` to `.gitignore` (generated per run, not source), while keeping the generated `<paths.scripts>/` launchers committed so the environment is reproducible:
 
 ```bash
-git add .ai/agentic.config.json .ai/trackers/ .ai/runs/.gitkeep .ai/analysis/.gitkeep .ai/specs/.gitkeep SDLC.md
+git add .ai/agentic.config.json .ai/trackers/ .ai/runs/.gitkeep .ai/analysis/.gitkeep .ai/specs/.gitkeep .ai/scripts/.gitkeep .ai/qa/.gitkeep SDLC.md
 git commit -m "chore: configure agent PR pipeline"
 ```
 
@@ -172,6 +176,8 @@ ANALYSIS_DIR=$(jq -r '.paths.analysis // ".ai/analysis"' "$CONFIG")
 LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
 QA_GATE=$(jq -r '.qaGate // false' "$CONFIG")
 SPECS_DIR=$(jq -r '.paths.specs // ".ai/specs"' "$CONFIG")
+SCRIPTS_DIR=$(jq -r '.paths.scripts // ".ai/scripts"' "$CONFIG")
+QA_DIR=$(jq -r '.paths.qa // ".ai/qa"' "$CONFIG")
 ```
 
 Right after loading the config, a skill:

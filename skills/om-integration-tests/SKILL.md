@@ -13,6 +13,12 @@ This skill deliberately prescribes **no environment**: how the app starts, which
 
 Check for a repo-local skill of the same name at `.ai/skills/om-integration-tests/SKILL.md`; when present, follow it instead of these instructions — a local skill that only extends this one can `@`-import or reference it and add its own rules on top (a repo-local variant is the right place for environment specifics: launch commands, ports, seeded accounts). Local rules win, but a repo-local skill can never relax this skill's quality rules. Read the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents). Load `.ai/agentic.config.json` when present (validation commands, paths); this skill performs no tracker operations and does not require the pipeline config.
 
+## Reuse the shared test environment
+
+Before discovering how to run the app yourself, check for a shared environment descriptor written by `om-prepare-test-env` at `<paths.qa>/test-env.json` (default `.ai/qa/test-env.json`). When it reports `"status":"running"` and its `baseUrl` answers a health check, **attach to that instance** — read `baseUrl`, `credentials`, and the browser-runner `config` from it, and run tests against that same booted app. This is how QA (`om-auto-verify-pr-ui`) and integration tests share one environment instead of each booting their own, so runs are faster and identical.
+
+When no descriptor exists (or it is stale), invoke `om-prepare-test-env` to discover or provision one — it establishes the run command, provisions any backing services, installs Playwright when missing, and writes the descriptor — then attach to it. Fall back to the manual discovery below only when `om-prepare-test-env` is unavailable or the user asked to run against an already-running instance. Never hardcode a guessed `localhost:<port>`; take the base URL from the descriptor or the runner config the repo already uses.
+
 ## Discover the test setup
 
 Before writing anything, find how this repo already does integration testing:
@@ -27,7 +33,7 @@ Runtime policy: timeouts and retries belong in the **shared runner config**, not
 
 ## Discover how to run the app
 
-Do not assume a URL, a port, or a start command. Establish the app's base URL by checking, in order:
+Do not assume a URL, a port, or a start command. Prefer the shared environment descriptor from `om-prepare-test-env` (above); establish the app's base URL only when no descriptor is available, by checking, in order:
 
 1. A dev server that is already running (ask the user, or probe what the repo's docs say it would be).
 2. The repository's agent instructions and README — most repos document their run command.
@@ -121,6 +127,7 @@ A typical spec produces 3–8 test cases. Happy paths first; edge cases as separ
 ## Rules
 
 - MUST explore the running app before writing — never guess selectors or flows.
+- MUST reuse the shared `om-prepare-test-env` descriptor (`<paths.qa>/test-env.json`) when one is running, so QA and integration tests share one booted instance; discover or provision the environment via that skill otherwise.
 - MUST discover how to run the app from the repo itself (docs, scripts, agent instructions, or the user) — never assume a URL or port, never invent an environment.
 - MUST follow the repository's existing test layout, naming, and helper conventions; propose, don't impose, when none exist.
 - MUST NOT hardcode record IDs; create or discover entities at runtime.

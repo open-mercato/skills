@@ -26,7 +26,7 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 npx skills add open-mercato/skills --skill '*'
 ```
 
-Install all twenty-five — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all twenty-six — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
@@ -43,6 +43,8 @@ Then ship something:
 ```
 
 The agent drafts an execution plan, implements it phase by phase in an isolated worktree, runs your validation commands, reviews its own diff, and opens a labeled, reviewed PR.
+
+**Upgrading later?** Skills auto-update on reinstall, but repo-installed artifacts — above all `.ai/trackers/<tracker>.md` — do not. Run `/om-apply-upgrade-notes` in the repo, or follow [UPGRADE_NOTES.md](UPGRADE_NOTES.md) by hand.
 
 ## 🛠️ Local development
 
@@ -112,6 +114,7 @@ Interactive helpers: they act once, report, and hand control back to you.
 | Skill | What it does |
 |---|---|
 | `om-setup-agent-pipeline` | One-per-repo configurator. Inspects the repository, asks a few questions, writes `.ai/agentic.config.json`, installs the tracker descriptor, generates `SDLC.md` and an `AGENTS.md` starter when missing. |
+| `om-apply-upgrade-notes` | Post-upgrade migrator. Applies `UPGRADE_NOTES.md` to the repo: re-syncs the installed tracker descriptor with newly shipped operations while preserving local edits, reports gaps in custom tracker providers, and checks the config against the notable-upgrade entries. |
 | `om-merge-buddy` | Scans open PRs and reports which can merge now and which are close but blocked, based on labels, reviews, CI, and mergeability. |
 | `om-approve-merge-pr` | Approves and squash-merges a PR given only its number. Can file a follow-up issue at the same time. |
 | `om-check-and-commit` | Runs the configured validation gate on the current branch, fixes obvious drift, then commits and pushes when green. |

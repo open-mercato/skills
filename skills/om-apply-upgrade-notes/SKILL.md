@@ -45,11 +45,13 @@ itself, next to this skill:
 1. `<this skill's base directory>/../om-setup-agent-pipeline/references/trackers/` — present in
    every install mode (skills.sh, symlinked checkout, vendored copy). This is the primary source
    for `github.md` and `TEMPLATE.md`.
-2. `UPGRADE_NOTES.md` lives at the skills **repo root**, which per-skill installs do not copy.
-   Resolve it in order: a repo-root file two levels above this skill's base directory (symlinked
-   or vendored checkout) → fetch
-   `https://raw.githubusercontent.com/open-mercato/skills/main/UPGRADE_NOTES.md` → if both fail,
-   continue with the descriptor diff alone and say the notable-upgrades log was unavailable.
+2. `UPGRADE_NOTES.md` lives at the skills collection's **repo root**, which per-skill installs
+   do not copy. Resolve it in order: a repo-root file two levels above this skill's base
+   directory (symlinked or vendored checkout) → fetch the raw `UPGRADE_NOTES.md` from the
+   default branch of the collection's source repository (the `<owner>/<repo>` the skills were
+   installed from, e.g. the argument given to `npx skills add`; ask the operator once when it
+   cannot be inferred) → if both fail, continue with the descriptor diff alone and say the
+   notable-upgrades log was unavailable.
 
 ## Step 1 — Diff the installed tracker descriptor
 

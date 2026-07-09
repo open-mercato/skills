@@ -133,7 +133,7 @@ The building blocks behind the autofix chain and the review loop. You can call t
 | `om-fix` | Implements the minimal change, adds regression tests, runs the validation gate. Does not commit or push. |
 | `om-open-pr` | Commits the worktree, pushes the branch, opens the PR, normalizes labels, releases the claim lock. |
 | `om-code-review` | The review checklist behind `om-auto-review-pr`: correctness, security, contract surfaces, plus your repo-local checklist when configured. |
-| `om-prepare-test-env` | Boots the app for QA and tests, any stack: reuses the repo's own ephemeral/test environment when it has one, generates Docker/testcontainers-style bring-up scripts for the project's backing services (Postgres, MySQL, Mongo, …) when a disposable environment is wanted and none exists, or runs the app in dev/docker/production mode otherwise. Installs Playwright when missing and writes a shared environment descriptor so QA and tests reuse one instance. Works on macOS, Linux, WSL2, and Windows. |
+| `om-prepare-test-env` | Boots the app for QA and tests, any stack: reuses the repo's own ephemeral/test environment when it has one, generates Docker/testcontainers-style bring-up scripts for the project's backing services (Postgres, MySQL, Mongo, …) when a disposable environment is wanted and none exists, or runs the app in dev/docker/production mode otherwise. Keeps bootstrap fast: reuses running environments (PID-checked, health-probed, freshness-validated), caches builds behind source/env fingerprints, locks concurrent bootstraps, and records every bootstrap lesson so the next boot cannot repeat it. Installs Playwright when missing and writes a shared environment descriptor so QA and tests reuse one instance. Works on macOS, Linux, WSL2, and Windows. |
 
 ## 🧰 Works with any stack
 
@@ -167,7 +167,7 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
 }
 ```
 
-A Rust repo puts `cargo test` and `cargo clippy` in `validation.commands`; a Go repo puts `go test ./...`. Skills run whatever you configure and treat any non-zero exit as a gate failure. A skill invoked in a repo without the config stops and points you at `om-setup-agent-pipeline`.
+A Rust repo puts `cargo test` and `cargo clippy` in `validation.commands`; a Go repo puts `go test ./...`. Skills run whatever you configure and treat any non-zero exit as a gate failure. A skill invoked in a repo without the config runs `om-setup-agent-pipeline` first — interactively when you're there to answer its questions, with `--defaults` when running unattended — then continues with the freshly written config.
 
 GitHub is the default tracker, but nothing in the skills is hard-wired to it — see the tracker providers section below.
 

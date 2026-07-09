@@ -160,13 +160,13 @@ Every other skill in this collection loads the config like this; the snippet is 
 ```bash
 CONFIG=.ai/agentic.config.json
 if [ ! -f "$CONFIG" ]; then
-  echo "Missing $CONFIG — run the om-setup-agent-pipeline skill first."
+  echo "Missing $CONFIG — pipeline not configured; run the om-setup-agent-pipeline skill, then retry."
   exit 1
 fi
 TRACKER=$(jq -r '.tracker // "github"' "$CONFIG")
 TRACKER_FILE=".ai/trackers/${TRACKER}.md"
 if [ ! -f "$TRACKER_FILE" ]; then
-  echo "Missing $TRACKER_FILE — run the om-setup-agent-pipeline skill to install the tracker descriptor."
+  echo "Missing $TRACKER_FILE — run the om-setup-agent-pipeline skill to install the tracker descriptor, then retry."
   exit 1
 fi
 BASE_BRANCH=$(jq -r '.baseBranch // "auto"' "$CONFIG")
@@ -179,6 +179,8 @@ SPECS_DIR=$(jq -r '.paths.specs // ".ai/specs"' "$CONFIG")
 SCRIPTS_DIR=$(jq -r '.paths.scripts // ".ai/scripts"' "$CONFIG")
 QA_DIR=$(jq -r '.paths.qa // ".ai/qa"' "$CONFIG")
 ```
+
+When the snippet reports a missing config or tracker descriptor, the calling skill does not stop and bounce the user — it runs this skill (`om-setup-agent-pipeline`) itself: interactively when a user is present to answer the questions, with `--defaults` when running unattended (autonomous loops, headless runs). Setup runs in the repository's primary checkout; if the calling skill already created an isolated worktree, copy the generated `.ai/` files (and any generated docs) into that worktree before continuing. Once setup has written the config and installed the tracker descriptor, the calling skill re-runs the snippet and continues from the step it was on. The calling skill stops only when the user declines setup or setup itself fails.
 
 Right after loading the config, a skill:
 

@@ -11,13 +11,13 @@ Use this skill to triage all open PRs and answer one question: what can merge ri
 
 ### 0. Load pipeline config
 
-Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. This skill uses:
+Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the config or the tracker descriptor is missing, do not stop — run the `om-setup-agent-pipeline` skill now to create them (interactively when a user is present to answer its questions, with `--defaults` when running unattended), then reload the config and continue from this step. This skill uses:
 
 ```bash
 TRACKER=$(jq -r '.tracker // "github"' "$CONFIG")
 TRACKER_FILE=".ai/trackers/${TRACKER}.md"
 if [ ! -f "$TRACKER_FILE" ]; then
-  echo "Missing $TRACKER_FILE — run the om-setup-agent-pipeline skill to install the tracker descriptor."
+  echo "Missing $TRACKER_FILE — run the om-setup-agent-pipeline skill to install the tracker descriptor, then retry."
   exit 1
 fi
 LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")

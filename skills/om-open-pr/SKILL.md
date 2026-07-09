@@ -16,18 +16,18 @@ Your job: ship the work — commit, push, open the PR, hand off — then release
 
 ## Load pipeline config
 
-Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the file is missing, stop and tell the user to run `om-setup-agent-pipeline` first. This step uses `baseBranch`, `labels.enabled`, and `qaGate`:
+Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-agent-pipeline` skill. If the config or the tracker descriptor is missing, do not stop — run the `om-setup-agent-pipeline` skill now to create them (interactively when a user is present to answer its questions, with `--defaults` when running unattended), then reload the config and continue from this step. This step uses `baseBranch`, `labels.enabled`, and `qaGate`:
 
 ```bash
 CONFIG=.ai/agentic.config.json
 if [ ! -f "$CONFIG" ]; then
-  echo "Missing $CONFIG — run the om-setup-agent-pipeline skill first."
+  echo "Missing $CONFIG — pipeline not configured; run the om-setup-agent-pipeline skill, then retry."
   exit 1
 fi
 TRACKER=$(jq -r '.tracker // "github"' "$CONFIG")
 TRACKER_FILE=".ai/trackers/${TRACKER}.md"
 if [ ! -f "$TRACKER_FILE" ]; then
-  echo "Missing $TRACKER_FILE — run the om-setup-agent-pipeline skill to install the tracker descriptor."
+  echo "Missing $TRACKER_FILE — run the om-setup-agent-pipeline skill to install the tracker descriptor, then retry."
   exit 1
 fi
 BASE_BRANCH=$(jq -r '.baseBranch // "auto"' "$CONFIG")

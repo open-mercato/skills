@@ -1,6 +1,6 @@
 ---
 name: om-prepare-test-env
-description: Prepare a reusable, technology-agnostic environment for running and testing the app locally — discover the repo's own ephemeral/test environment and reuse it, or (when asked for a disposable environment and none exists) generate Docker/testcontainers-style bring-up scripts for whatever backing services the project uses (Postgres, MySQL, Mongo, Redis, …), or run the app in the best available mode (docker/compose, dev server, or a production build) and capture a reusable start script. Installs a browser test runner (Playwright by default) when missing, and writes a shared environment descriptor so QA and integration-test skills reuse the exact same instance. Use when the user says "prepare the test env", "spin up the app for testing", "set up an ephemeral environment", "get the app running so I can QA it", or when another skill needs a running instance.
+description: Prepare a reusable, technology-agnostic environment for running and testing the app locally — discover the repo's own ephemeral/test environment and reuse it, or (when asked for a disposable environment and none exists) generate Docker/testcontainers-style bring-up scripts for whatever backing services the project uses (Postgres, MySQL, Mongo, Redis, …), or run the app in the best available mode (docker/compose, dev server, or a production build) and capture a reusable start script. Keeps bootstrap fast by reusing running environments (PID-checked, health-probed) and caching build artifacts behind freshness fingerprints. Installs a browser test runner (Playwright by default) when missing, and writes a shared environment descriptor so QA and integration-test skills reuse the exact same instance. Use when the user says "prepare the test env", "spin up the app for testing", "set up an ephemeral environment", "get the app running so I can QA it", or when another skill needs a running instance.
 ---
 
 # Prepare Test Environment
@@ -29,16 +29,19 @@ CONFIG=.ai/agentic.config.json
 SCRIPTS_DIR=$(jq -r '.paths.scripts // ".ai/scripts"' "$CONFIG" 2>/dev/null || echo ".ai/scripts")
 QA_DIR=$(jq -r '.paths.qa // ".ai/qa"' "$CONFIG" 2>/dev/null || echo ".ai/qa")
 ENV_DESCRIPTOR="$QA_DIR/test-env.json"
+BUILD_CACHE="$QA_DIR/test-env-build-cache.json"
+ENV_LOCK="$QA_DIR/test-env.lock"
 mkdir -p "$SCRIPTS_DIR" "$QA_DIR"
 ```
 
 Right after loading the config, check for a repo-local skill of the same name at
 `.ai/skills/om-prepare-test-env/SKILL.md`; when present, follow it instead of
 these instructions — a repo-local variant is the right place for environment
-specifics (exact launch command, ports, seeded accounts, service versions). Local
-rules win, but a repo-local skill can never relax this skill's safety rules. Also
-read the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, README,
-`CONTRIBUTING.md`) — most repos document how to run and test the app there.
+specifics (exact launch command, ports, seeded accounts, service versions, the
+workspace preparation chain). Local rules win, but a repo-local skill can never
+relax this skill's safety rules. Also read the repository's agent instruction
+files (`AGENTS.md`, `CLAUDE.md`, README, `CONTRIBUTING.md`) — most repos document
+how to run and test the app there.
 
 ## Arguments
 
@@ -55,6 +58,8 @@ read the repository's agent instruction files (`AGENTS.md`, `CLAUDE.md`, README,
 - `--playwright <on|off>` (default `on`) — install and verify the Playwright
   browser runner when the repo has no other browser test runner already.
 - `--force` — re-provision even if a running descriptor exists (stop it first).
+- `--force-rebuild` — ignore the build cache and run the full preparation/build
+  chain, then write a fresh cache entry afterward.
 
 ## The environment descriptor
 
@@ -73,15 +78,15 @@ even for a discovered environment, so `om-auto-verify-pr-ui` and
   "startedByThisRepo": true,
   "startScript": ".ai/scripts/test-env-up.sh",
   "stopScript": ".ai/scripts/test-env-down.sh",
-  "app": { "startCommand": "<command>", "port": 4321, "healthPath": "/", "pid": null },
+  "app": { "startCommand": "<command>", "port": 4321, "healthPath": "/", "pid": 12345 },
   "services": [
     { "type": "postgres", "host": "127.0.0.1", "port": 55432, "container": "<name>", "url": "postgres://…", "env": { "DATABASE_URL": "…" } }
   ],
   "credentials": [ { "role": "admin", "username": "<demo>", "password": "<demo>" } ],
   "playwright": { "runner": "playwright", "installed": true, "config": ".ai/qa/playwright.config.ts", "browsers": ["chromium"] },
   "platform": "linux | darwin | wsl2 | win32",
-  "createdAt": "<ISO-8601 UTC>",
-  "notes": "<anything a consumer must know: how the app is torn down, seeded data, gotchas>"
+  "startedAt": "<ISO-8601 UTC>",
+  "notes": "<anything a consumer must know: how the app is torn down, seeded data, gotchas, the working preparation chain>"
 }
 ```
 
@@ -119,14 +124,29 @@ Portability rules for everything this skill generates:
 
 ### 2. Reuse a running environment first
 
-If `$ENV_DESCRIPTOR` exists and reports `"status":"running"`, health-check its
-`baseUrl` (a cheap HTTP GET to `healthPath`). If it responds, **reuse it** —
-print the `baseUrl` and stop here unless `--force` was passed. This is what makes
-repeated QA/test runs fast and identical: the environment is booted once and
-attached to many times.
+If `$ENV_DESCRIPTOR` exists and reports `"status":"running"`, reuse the recorded
+environment **only when all of these validation checks pass** — a state file is a
+claim, not proof:
 
-If the descriptor is stale (present but the URL does not answer), treat the
-environment as down and continue to provision a fresh one.
+1. **The owning process is alive.** Check the recorded PID with a zero-signal
+   probe (`kill -0 <pid>`). A dead owner means the descriptor is a leftover.
+2. **It actually responds.** Probe with bounded timeouts at increasing depth:
+   the app shell loads (`healthPath`), the API answers (an unauthenticated
+   endpoint when the app has one), and — when credentials are recorded — one
+   authenticated round trip succeeds. The deeper probes are what catch an app
+   that serves static pages but has lost its database.
+3. **It is fresh.** The environment's age (`now - startedAt`) is within a TTL
+   (default ~10 minutes; make it overridable via an env var such as
+   `TEST_ENV_CACHE_TTL_SECONDS`), **and** no tracked source file was modified
+   after `startedAt` (`find <src dirs> -newer <marker>` or an mtime comparison).
+   An environment running stale code must be rebuilt, not reused.
+
+When every check passes, print the `baseUrl` and stop here unless `--force` was
+passed — this boot-once/attach-many path is what makes repeated QA runs fast.
+When any check fails, treat the environment as stale: clear the descriptor and
+continue to provision a fresh one. When the repo's own test-env tooling already
+implements reuse (its own state file, reuse flags, cache TTL), **use its
+mechanism and honor its flags** instead of duplicating it.
 
 ### 3. Discover the repo's own environment
 
@@ -158,22 +178,48 @@ Pick the run mode from the arguments and what step 3 found:
 - `--mode reuse` and no live descriptor → stop and report that nothing is running.
 - A **discovered ephemeral/test environment** exists → use it (step 3).
 - `--mode ephemeral` (or `auto` + the app needs a database and none is discovered)
-  → **generate** a disposable environment (step 5).
+  → **generate** a disposable environment (step 6).
 - `--no-ephemeral`, or `auto` + the app needs no backing services (static site,
-  stateless server) → **run the app directly** in the best available mode (step 6).
+  stateless server) → **run the app directly** in the best available mode (step 7).
 
 When `auto` is ambiguous — e.g. the app has a database but also a plain dev
 server, and the user has not said whether they want disposable services — ask the
 user once with `AskUserQuestion` (ephemeral vs. run-against-existing), then record
 the choice. Do not provision containers the user did not ask for.
 
-### 5. Generate a disposable (ephemeral) environment
+### 5. Prepare the workspace (fresh checkouts and worktrees)
+
+A discovered ephemeral/test command almost always assumes a **fully prepared
+workspace**: dependencies installed, code generation run, workspace packages
+built. A fresh clone, a fresh worktree, or a PR-head checkout has none of that,
+and launching the env command straight away fails on missing build outputs or
+missing generated files — one avoidable failure per skipped prerequisite.
+
+Before starting any environment in a workspace that has not run before:
+
+1. **Discover the preparation chain** from the repo itself — package scripts,
+   `Makefile`, CI workflow steps (CI runs the chain in the right order every
+   day). The usual shape is: install dependencies → run code generation → build
+   workspace packages/app, with **codegen before builds** whenever builds consume
+   generated artifacts.
+2. **Run the chain in that order**, then start the environment.
+3. If the env command still fails on a missing artifact, that is the signal you
+   skipped or mis-ordered a prerequisite — fix the chain, re-run, and **record
+   the corrected chain** (see Self-improvement below) in the descriptor `notes`,
+   the generated start script, and the repo-local skill.
+
+State is **per checkout**: descriptors, locks, and build caches describe the
+workspace they live in. A worktree does not inherit the main checkout's build
+outputs — expect the full preparation chain on a worktree's first boot; the
+build cache makes every subsequent boot cheap.
+
+### 6. Generate a disposable (ephemeral) environment
 
 Only when a disposable environment is wanted and the repo has none. The goal is a
 **testcontainers-style** setup: fresh, isolated backing services on free ports,
 wired into the app, disposable on teardown, reproducible from committed scripts.
 
-**5a. Detect the backing services.** Infer what the app needs from evidence, not
+**6a. Detect the backing services.** Infer what the app needs from evidence, not
 assumption: `docker-compose*.yml` service images; ORM/driver config and
 dependencies (a Postgres/MySQL/Mongo/Redis client in the manifest); connection
 env vars in `.env.example`/`.env.sample` (`DATABASE_URL`, `MONGO_URL`,
@@ -182,14 +228,18 @@ concrete service list with an image and default port per service (e.g.
 `postgres:16`, `mysql:8`, `mongo:7`, `redis:7`). When you cannot tell, ask the
 user rather than guessing a database the app does not use.
 
-**5b. Pick free ports** so parallel runs and an already-installed local database
+**6b. Pick free ports** so parallel runs and an already-installed local database
 never collide:
 
 ```bash
 free_port() { python3 -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1]);s.close()'; }
 ```
 
-**5c. Generate the bring-up script** at `$SCRIPTS_DIR/test-env-up.sh` (plus a
+Give the reusable environment a **stable preferred port** when it is available
+(so the descriptor and probes stay predictable across runs), and fall back to an
+isolated free port when the preferred one is taken or reuse was declined.
+
+**6c. Generate the bring-up script** at `$SCRIPTS_DIR/test-env-up.sh` (plus a
 `.ps1` mirror on native Windows). It must, idempotently:
 
 - Start each detected service as a disposable Docker container bound to
@@ -199,16 +249,16 @@ free_port() { python3 -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0)
 - Wait for each service to accept connections (poll the port / run the client's
   ping) before continuing — never race the app ahead of its database.
 - Export the connection env the app expects (`DATABASE_URL` etc.) pointing at the
-  chosen host/port, matching the variable names discovered in 5a.
+  chosen host/port, matching the variable names discovered in 6a.
 - Run the project's schema setup against the fresh service — its migrate/seed/init
   command as discovered in the repo (never hand-write SQL when the repo has a
   migration tool).
-- Start the app (step 6's launch command) against those services and resolve the
+- Start the app (step 7's launch command) against those services and resolve the
   `baseUrl`.
 - Write `$ENV_DESCRIPTOR` with every service (type/host/port/container/env), the
   app port, and demo credentials the init step created.
 
-**5d. Generate the teardown script** at `$SCRIPTS_DIR/test-env-down.sh` (+ `.ps1`)
+**6d. Generate the teardown script** at `$SCRIPTS_DIR/test-env-down.sh` (+ `.ps1`)
 that stops the app process and removes exactly the containers/volumes the up
 script created (scope by the throwaway names), then marks the descriptor
 `"status":"stopped"`. Teardown must be safe to run twice and must never touch a
@@ -218,7 +268,7 @@ Keep the scripts committed-friendly and parameterized (ports and image tags as
 variables at the top). They are the durable artifact — after this run, anyone (or
 any skill) starts the exact same environment with one command.
 
-### 6. Run the app (no-ephemeral / dev / docker / prod)
+### 7. Run the app (no-ephemeral / dev / docker / prod)
 
 Establish the launch command from the repo, in this order of preference, and
 capture it into `$SCRIPTS_DIR/app-run.sh` (+ `.ps1`) as a reusable launcher:
@@ -246,7 +296,7 @@ Rules:
 - Capture the resolved launch command, port, and health path into the descriptor
   and into `app-run.sh` so the next run is a single command.
 
-### 7. Ensure a browser test runner (Playwright by default)
+### 8. Ensure a browser test runner (Playwright by default)
 
 The QA and integration-test skills drive a real browser, so make one available
 unless `--playwright off`:
@@ -268,7 +318,7 @@ unless `--playwright off`:
 
 Record the runner, config path, and installed browsers in the descriptor.
 
-### 8. Finalize and report
+### 9. Finalize and report
 
 - Health-check the `baseUrl` one last time and set the descriptor `status`.
 - Print a concise summary: mode chosen, `baseUrl`, services with their ports,
@@ -286,27 +336,114 @@ descriptor `"status":"stopped"`. Never tear down an environment this repo did no
 start (a developer's own long-running dev server), and never remove containers or
 volumes outside the scoped names the up script created.
 
+## Build cache — skip work that has not changed
+
+Compiling, code generation, and package builds are the most expensive bootstrap
+steps. Record every successful preparation/build in `$BUILD_CACHE`
+(`<paths.qa>/test-env-build-cache.json`):
+
+```json
+{
+  "builtAt": "<ISO-8601 UTC>",
+  "sourceFingerprint": "<hash over tracked inputs>",
+  "environmentFingerprint": "<hash over build-shaping env vars>",
+  "artifactPaths": ["<build outputs that must exist>"],
+  "projectRoot": "<absolute path of this checkout>"
+}
+```
+
+Skip the preparation/build chain only when **all** of these hold; otherwise
+rebuild:
+
+- The entry is within the TTL (same TTL as environment reuse).
+- The **source fingerprint** matches: a hash over tracked build inputs (source
+  dirs, lockfile, build configs) using each file's `path:size:mtime` — cheap, no
+  file reads. Ignore dependency, output, VCS, and cache directories
+  (`node_modules`, `dist`, `.git`, `.cache`, `coverage`, dot-dirs, and their
+  equivalents in the repo's stack).
+- The **environment fingerprint** matches: the values of env vars that shape the
+  build output (mode flags, feature toggles). A build made under different flags
+  is a different build.
+- Every listed artifact still exists and is non-empty.
+- `projectRoot` matches this checkout — a worktree or moved checkout never
+  inherits another checkout's cache entry.
+
+Bias toward rebuilding: any unreadable, mismatched, or ambiguous cache state
+means a full rebuild — a fast bootstrap is never worth testing stale artifacts.
+The cache covers preparation and build only; database provisioning, migration,
+and seeding still run fresh per environment.
+
+## Locks — one bootstrap at a time, PID-checked
+
+Concurrent runs (parallel agents, a human and an agent) must not build over each
+other or double-provision. Guard bootstrap with a directory lock at `$ENV_LOCK` —
+`mkdir` is atomic — holding owner metadata:
+
+- **Acquire**: `mkdir "$ENV_LOCK"`, then write `owner.json` with
+  `{pid, source, acquiredAt}` inside it.
+- **Occupied**: read `owner.json`. Owner PID dead (`kill -0` fails) → the lock is
+  stale: remove it and retake. Metadata unreadable and the lock older than the
+  wait timeout → remove it. Owner alive → poll-wait (bounded, ~5 minutes), then
+  re-check `$ENV_DESCRIPTOR` — the other process has likely produced an
+  environment you can now reuse.
+- **Release**: always, including on failure paths.
+
+When the environment serves from shared workspace artifacts (an in-repo build
+output), keep holding the lock for the environment's whole lifetime so a second
+bootstrap cannot rebuild artifacts out from under the running app — a second
+caller must reuse or wait, never build in parallel.
+
+## Self-improvement — record every bootstrap lesson
+
+When bootstrap fails for a reason these instructions did not anticipate — a
+missing prerequisite, a wrong order, an undocumented flag, a service the repo
+needs that discovery missed — fix it, verify the fix by booting successfully,
+and then **durably record the lesson** so the next run cannot repeat the
+mistake:
+
+1. Append the exact working command chain (and the failure it prevents) to the
+   repo-local skill at `.ai/skills/om-prepare-test-env/SKILL.md` — create it if
+   missing as an extension of this skill (see Step 0).
+2. Bake the fix into the generated scripts (`test-env-up.sh` / `app-run.sh`) so
+   the scripted path is correct even without the skill.
+3. Note it in the descriptor's `notes` for consumers attaching to this env.
+
+A failure you fixed but did not record is a failure you scheduled for the next
+run.
+
 ## Rules
 
 - Discover how to run and test the app from the repo itself (scripts, compose,
   Dockerfile, agent instructions, CI) — never assume a language, port, database,
   or start command.
-- Always reuse a healthy running environment before provisioning a new one; the
-  point of the descriptor is boot-once, attach-many.
-- Prefer the repo's own ephemeral/test environment when it has one; generate
-  scripts only when it does not and a disposable environment is wanted.
+- Always reuse a healthy running environment before provisioning a new one — but
+  validate reuse with PID liveness, real readiness probes, and freshness checks;
+  a descriptor alone is not proof of a running environment.
+- In a fresh checkout or worktree, run the repo's preparation chain (install →
+  codegen → build, as the repo's scripts and CI imply) before starting any
+  discovered environment command.
+- Maintain the build cache and skip preparation/build only when every validity
+  check passes; when in doubt, rebuild.
+- Guard bootstrap with the PID-checked directory lock and release it on every
+  exit path; never run two bootstraps concurrently in one checkout.
+- Prefer the repo's own ephemeral/test environment when it has one — including
+  its own reuse/caching flags — and generate scripts only when it does not and a
+  disposable environment is wanted.
 - Generated environments are disposable and isolated: fresh services on free
   ports bound to `127.0.0.1`, throwaway volumes, reproducible from committed
   scripts, safe to tear down twice.
 - Everything generated must work on macOS, Linux, WSL2, and Windows: POSIX `sh`
   primary (+ `.ps1` mirror for native Windows), Docker for services, no hardcoded
   ports or paths.
-- Always write `$ENV_DESCRIPTOR` (even for a discovered env) so
-  `om-auto-verify-pr-ui` and `om-integration-tests` attach to the same instance.
+- Always write `$ENV_DESCRIPTOR` (even for a discovered env) so the QA and
+  integration-test skills attach to the same instance.
 - Install a browser test runner when missing (Playwright by default); when
   browsers cannot be installed, record the blocker instead of faking readiness.
 - Wait for services and the app to be healthy before declaring the environment
   ready; record PIDs/containers so teardown is exact.
+- When a bootstrap failure teaches you a prerequisite, record it (repo-local
+  skill, generated scripts, descriptor notes) before finishing — self-improve on
+  every mistake.
 - Never store real secrets or production credentials in the descriptor or
   scripts — disposable/demo values only.
 - Only tear down what this repo started; never touch a developer's own running

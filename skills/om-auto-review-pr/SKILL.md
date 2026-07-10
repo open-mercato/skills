@@ -226,45 +226,11 @@ If partial overlap exists (some changes are new, some are redundant):
 
 Before running the full om-code-review skill, scan the PR diff for hard-rule violations. Run the tracker operation **get-pr-diff** for `{prNumber}` twice: once for the full diff and once in changed-file-list mode.
 
-Record findings from the patterns below. When a pattern applies to this repository's stack and conventions, it is a mandatory finding, not an optional heuristic; skip rows that have no equivalent in this codebase (for example, the i18n row in a repo without i18n).
-
-#### Blocker auto-detections
-
-| Pattern in diff | Finding |
-|-----------------|---------|
-| Removed or renamed a published event name, message topic, or webhook type | Blocker: published event names are a frozen contract surface |
-| Removed a field from an API response schema or serialized response type | Blocker: response fields are additive-only |
-| Renamed or removed a database column or table in a migration without a migration path | Blocker: destructive schema changes need an explicit migration/deprecation plan |
-| Removed a public export or import path without a re-export bridge or deprecation note | Blocker: public entry points require a deprecation window |
-| A query missing the data-scoping filter (account/workspace/organization ID) that sibling queries in the same area apply | Blocker: data-scoping breach |
-| A shared data-access or security wrapper (encryption, sanitization, guarded client) replaced with a raw lower-level call | Blocker: downgrading an established security wrapper is a security regression |
-
-#### Major auto-detections
-
-| Pattern in diff | Finding |
-|-----------------|---------|
-| New route, handler, subscriber, or worker file missing the registration or metadata exports the codebase's conventions require | Major: required exports for discovery/registration |
-| Direct low-level HTTP or data call in UI or page code, outside tests, where the repo provides a shared client helper | Major: must use the shared client helper |
-| Behavior change with no corresponding test file in the diff | Major: behavior changes must include tests |
-| Entity or schema changed but no migration file or no-op rationale in the diff | Major: schema changes must ship with a scoped migration |
-| Hand-written migration SQL that bypasses the repo's migration tooling without a scoped rationale | Major: prefer generated/tooled migrations; manual SQL must be scoped and keep the tooling's state files in sync |
-| Missing explicit data scoping in sub-entity queries | Major: defense in depth |
-
-#### Minor auto-detections
-
-| Pattern in diff | Finding |
-|-----------------|---------|
-| Hardcoded user-facing string in API errors or UI labels, in a repo that uses an i18n system | Minor: must route through i18n |
-| New `any` type annotation (or the language's equivalent unchecked cast) outside tests | Minor: use typed schemas and runtime narrowing |
-| Ad-hoc `alert(` or custom toast instead of the repo's standard notification helper | Minor: use the standard helper |
-
-#### Nit auto-detections
-
-| Pattern in diff | Finding |
-|-----------------|---------|
-| One-letter variable name outside loop counters `i`, `j`, `k` | Nit: use descriptive names |
-| Inline comment on self-explanatory code | Nit: remove comment |
-| Added docstring or comment on unchanged function | Nit: do not annotate unchanged code |
+Record findings from the patterns in `references/diff-auto-detections.md` — four
+severity-tagged tables (blocker / major / minor / nit). When a pattern applies to
+this repository's stack and conventions, it is a mandatory finding, not an
+optional heuristic; skip rows that have no equivalent in this codebase (for
+example, the i18n row in a repo without i18n).
 
 ### 6. Run the full om-code-review skill inside the worktree
 
@@ -311,21 +277,13 @@ Pipeline labels:
 
 Keep `in-progress` separate from the pipeline-state helper. It is a lock, not a workflow state.
 
-Pipeline-label transitions go through the `set_pipeline_label` helper (usage: `set_pipeline_label <prNumber> <newLabel>`), which is one of the label guards from the tracker descriptor — do not redefine it here. It operates over the pipeline group:
-
-```bash
-PIPELINE_LABELS="review changes-requested qa qa-failed merge-queue blocked do-not-merge"
-```
-
-When `LABELS_ENABLED` is not `true`, the guard skips the pipeline label change (log that labels are disabled in config).
-
-The helper:
-
-- adds `newLabel`
-- removes every other pipeline label from the list above
-- preserves category labels (`bug`, `feature`, `refactor`, `security`, `dependencies`, `documentation`), meta labels (`needs-qa`, `skip-qa`, `qa-approved`, `qa-self-verified`, `in-progress`), priority labels (`priority-low`, `priority-medium`, `priority-high`, `priority-extreme`), and risk labels (`risk-low`, `risk-medium`, `risk-high`)
-
-After every pipeline-label change, post a short PR comment explaining why that label was chosen. Keep it to one short sentence.
+Pipeline-label transitions go through the `set_pipeline_label` helper (usage:
+`set_pipeline_label <prNumber> <newLabel>`), one of the label guards from the
+tracker descriptor — do not redefine it here. Its exact behavior (the
+`PIPELINE_LABELS` group, which labels it adds/removes, and which category/meta/
+priority/risk labels it preserves) is in `references/label-transitions.md`. After
+every pipeline-label change, post a one-sentence PR comment explaining why that
+label was chosen.
 
 Label rules:
 
@@ -336,28 +294,11 @@ Label rules:
 - **Never apply `qa-approved` based on reading the diff** — code-review approval is not QA approval. `qa-approved` is earned only by manual QA (by a QA reviewer, or by an engineer via the self-QA exception). Until it lands, a `needs-qa` PR sits in `merge-queue` blocked by the QA-approval gate whenever `qaGate` is on.
 - Never leave `review`, `changes-requested`, `qa`, `qa-failed`, and `merge-queue` on the same PR together.
 
-Priority label (always ensure exactly one, when labels are enabled):
-
-- If the PR carries no priority label, infer one from the diff and the linked issue, apply it through the guard, then post a one-line comment naming the chosen priority and why. Inference rule: outage, data loss, or a security incident → `priority-extreme`; security hardening, a release-blocking regression, or fixes touching auth/session/data-scoping/money/event-reliability → `priority-high`; ordinary bug or feature → `priority-medium`; cosmetic, docs, dependency bumps, or cleanup → `priority-low`.
-- If the PR already has a priority label, keep it unless the review reveals the scope is clearly mis-rated (e.g. a "cleanup" PR that actually touches auth) — then adjust it and explain why in the comment.
-- Priority is mutually exclusive: when changing it, remove the other three priority labels.
-
-Risk label (always ensure exactly one, when labels are enabled):
-
-- If the PR carries no risk label, infer one from the diff and the linked issue, apply it through the guard, then post a one-line comment naming the chosen risk and why. Inference rule: auth/session/data scoping/money, migrations or schema, encryption, event reliability, shared contract surfaces, or broad cross-cutting edits → `risk-high`; ordinary single-area change with tests → `risk-medium`; docs, dependency bumps, test-only, typo, or isolated cleanup → `risk-low`.
-- If the PR already has a risk label, keep it unless the review reveals the scope is clearly mis-rated (e.g. a "docs" PR that actually changes a migration) — then adjust it and explain why in the comment. A `risk-high` rating reinforces the case for `needs-qa` and deeper review even when the PR would otherwise look routine.
-- Risk is mutually exclusive: when changing it, remove the other two risk labels.
-
-Suggested label comments:
-
-- `review`: `Label set to \`review\` because this PR is ready for code review.`
-- `changes-requested`: `Label set to \`changes-requested\` because review found actionable issues.`
-- `merge-queue` (QA still required): `Label set to \`merge-queue\` because code review passed; \`needs-qa\` stays on so the QA-approval gate holds the merge until a QA reviewer adds \`qa-approved\`.`
-- `merge-queue` (no QA required): `Label set to \`merge-queue\` because the required review gates passed and QA is not required (or \`qa-approved\` is already present).`
-- `blocked`: `Label set to \`blocked\` because progress depends on an external blocker.`
-- `do-not-merge`: `Label set to \`do-not-merge\` because this PR should not merge yet.`
-- `priority-*`: `Priority set to \`priority-{level}\` because {one-line rationale}.`
-- `risk-*`: `Risk set to \`risk-{level}\` because {one-line rationale}.`
+Priority and risk labels (always ensure exactly one of each, when labels are
+enabled): infer and apply one when missing, keep the existing one unless the
+review shows it is clearly mis-rated, and remove the siblings when changing it.
+The full priority/risk inference rules and the suggested comment strings for
+every label live in `references/label-transitions.md`.
 
 #### Author handoff on `changes-requested`
 
@@ -381,58 +322,19 @@ Rules:
 
 #### 8a. Manual-QA instructions when approving a `needs-qa` PR
 
-When the verdict is approved AND the PR carries `needs-qa` without `skip-qa` — i.e. you just routed it to `merge-queue` with `needs-qa` retained per the rules above — you MUST also post a **manual QA test-instructions comment** so the QA reviewer who later picks it up knows exactly what to exercise. This is an ADDITIVE step: it does not replace the short pipeline-label comment, the claim comment, or the completion comment — keep all of them. Do not set the `qa` label yourself; the QA reviewer applies it manually when they start testing. Skip this step entirely when `labels.enabled` is `false`.
+When the verdict is approved AND the PR carries `needs-qa` without `skip-qa` —
+i.e. you just routed it to `merge-queue` with `needs-qa` retained per the rules
+above — you MUST also post a **manual QA test-instructions comment** so the QA
+reviewer who later picks it up knows exactly what to exercise. This is an
+ADDITIVE step: it does not replace the short pipeline-label comment, the claim
+comment, or the completion comment — keep all of them. Do not set the `qa` label
+yourself; the QA reviewer applies it manually. Skip this step entirely when
+`labels.enabled` is `false`.
 
-Build the instructions from the actual diff, not from generic boilerplate:
-
-- Scope the changed surfaces with the changed-file list from **get-pr-diff** for `{prNumber}` and the PR title/body.
-- Translate each user-facing change into concrete click paths (routes or screens), the exact actions to take, and the expected outcome to verify.
-- Group areas by priority tag: **P0** auth/sessions/data scoping/money/event reliability, **P1** primary user-facing features and UI, **P2** docs/tooling/DX. Use the three-block layout **Where QA should click** / **What human QA should verify** / **What can go wrong** per area.
-- For PRs touching web UI surfaces, add perceived-performance checks: cold-load the changed route (screenshot evidence where possible), first useful shell/loading state, interaction responsiveness, mobile viewport.
-- Call out edge cases and data-scoping/permission boundaries explicitly (cross-account isolation, permission-gated actions, empty/error states).
-
-Post it as a single comment via the tracker operation **comment-pr** (preserving multi-line formatting):
-
-```markdown
-## 🧪 Manual QA instructions (`needs-qa`)
-
-This PR is approved and requires manual QA (`needs-qa`, no `skip-qa`). It is queued in `merge-queue` but the QA-approval gate holds it until `qa-approved` is added. QA reviewer: when you pick it up, move it to `qa` by swapping the labels (remove `merge-queue`, add `qa`), then run the routes below.
-
-### P0 — {area}
-**Where to click**
-- {route or screen}
-- {route or screen}
-
-**What to verify**
-- {concrete action → expected outcome}
-- {concrete action → expected outcome}
-
-**What can go wrong**
-- {concrete regression symptom}
-- {data-scoping/permission/edge-case to probe}
-
-### P1 — {area}
-**Where to click**
-- {route or screen}
-
-**What to verify**
-- {concrete action → expected outcome}
-
-**What can go wrong**
-- {concrete regression symptom}
-
-### Pass/fail
-- All routes pass → remove the `qa` label and add `merge-queue` plus `qa-approved` (this clears the QA-approval gate)
-- Any route fails → remove the `qa` label, add `qa-failed`, and leave a comment describing the failure.
-```
-
-Rules for this comment:
-
-- Only post it when approving a `needs-qa` PR (approved + `needs-qa` + no `skip-qa`, routed to `merge-queue`). Never post it for a PR with no QA requirement, or one routed to `changes-requested` or any other state.
-- When `qaGate` is `false`, keep the routes but replace the gate sentence with a note that `needs-qa` is advisory in this repository.
-- Never invent routes, fields, or behavior that the diff does not contain. If a change is hard to exercise manually, say so and give the closest observable check.
-- Keep it scoped to THIS PR's changes; do not turn it into a full-app regression script.
-- Never paste secrets, tokens, `.env` content, or real credentials into the instructions.
+Build the instructions from the actual diff (not boilerplate), post them as a
+single **comment-pr** comment, and follow the no-secrets/scope rules — the full
+build guidance, the P0/P1/P2 comment template, and the rules are in
+`references/manual-qa-template.md`.
 
 ### 9. Autonomous autofix flow
 
@@ -495,60 +397,14 @@ Rules:
 
 #### 10b. Fork PRs
 
-For fork PRs, do not wait on the original author and do not push to the contributor's branch by default.
-
-Instead:
-
-1. Keep the current worktree based on the fetched PR head SHA so the original commits and authorship are preserved.
-2. Create a new branch in the main repository, for example `carry/pr-{prNumber}-ready`.
-3. Implement the fixes there.
-4. Resolve any conflicts against `{baseRefName}` on that carry-forward branch.
-5. Run the autofix loop above until the branch is re-reviewed as approvable or a real blocker remains.
-6. Commit and push the new branch to `origin`.
-7. Open a replacement PR against `{baseRefName}` via the tracker operation **create-pr**.
-8. Close the original PR only after the replacement PR exists successfully.
-
-Validation requirements for autofix mode:
-
-- On every cycle, run the test commands from `validation.commands` for the changed scope.
-- On every cycle, run the typecheck (or equivalent static-check) commands from `validation.commands` for the changed scope.
-- Before the final push, run at least one last test pass and one last static-check pass against the final branch state.
-- If the original review required broader workspace validation, rerun the broader validation before opening or updating the replacement PR.
-
-Replacement PR requirements:
-
-- Use conventional-commit-style PR title scoped to the affected module or area: `fix(<area>): <summary>`, `feat(<area>): <summary>`, `refactor(<area>): <summary>`, etc. Where `<area>` is the primary affected module or package (e.g., `auth`, `api`, `ui`, `shared`)
-- Include the original PR link
-- Credit the original PR author explicitly
-- State that the new PR carries forward the original work plus the requested fixes
-- Mention that the branch was re-reviewed after autofix and is intended to be merge-ready
-- Reassign the replacement PR to the original PR author when possible, and leave a handoff comment inviting them to do the next recheck from the carried-forward branch
-
-Suggested replacement PR body:
-
-```markdown
-Supersedes #{prNumber}
-
-Credit: original implementation by @{originalAuthor}. This follow-up PR carries that work forward with the requested fixes so it can merge without waiting on the original branch.
-
-## Included work
-- Original changes from #{prNumber}
-- Follow-up fixes applied during re-review
-```
-
-Suggested replacement PR handoff comment:
-
-```markdown
-Thanks @{originalAuthor} — this replacement PR carries your original work forward with the requested fixes applied. Reassigning it to you so you can do the next recheck from the merge-ready branch.
-```
-
-Suggested original PR closing comment:
-
-```markdown
-Closing in favor of #{newPrNumber} ({newPrUrl}).
-
-Credit to @{originalAuthor} for the original implementation. The replacement PR carries the same work forward with the requested fixes so it can merge without waiting on the fork branch.
-```
+For fork PRs, do not wait on the original author and do not push to the
+contributor's branch by default. Instead, keep the fetched PR head SHA (to
+preserve authorship), build a `carry/pr-{prNumber}-ready` branch in the main
+repo, run the autofix loop there, push it, open a replacement PR crediting the
+original author, and close the original only after the replacement exists. The
+full step sequence, the autofix validation requirements, the replacement-PR
+requirements, and the suggested body / handoff / closing-comment templates are
+in `references/fork-pr-flow.md`.
 
 ### 11. Release the in-progress lock
 

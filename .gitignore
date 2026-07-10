@@ -1,0 +1,8 @@
+node_modules/
+
+# QA running state and per-run artifacts (generated per run, not source)
+.ai/qa/test-env.json
+.ai/qa/artifacts_*/
+
+# Temporary worktrees created by pipeline skills
+.ai/tmp/

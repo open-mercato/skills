@@ -1,6 +1,6 @@
 ---
 name: om-prepare-test-env
-description: Prepare a reusable, technology-agnostic environment for running and testing the app locally — expensive exactly once. On first use it discovers how the project runs (its own ephemeral/test tooling, Docker/compose, dev server, or a production build), then COMPILES that knowledge into a project-specific entrypoint script (default `.ai/scripts/test-env-up.sh`) that embeds reuse checks, a generic build cache, service provisioning, health waits, and the environment-descriptor write. Every later invocation just executes that script — no re-discovery, no re-reasoning. Installs a browser test runner (Playwright by default) when missing, and writes a shared environment descriptor (`.ai/qa/test-env.json`) so QA and integration-test skills attach to the exact same instance. Use when the user says "prepare the test env", "spin up the app for testing", "set up an ephemeral environment", "get the app running so I can QA it", or when another skill needs a running instance.
+description: Prepare a reusable, technology-agnostic environment for running and testing the app locally — expensive exactly once. On first use it discovers how the project runs (its own ephemeral/test tooling, Docker/compose, dev server, or a production build), then COMPILES that knowledge into a project-specific entrypoint script (default `.ai/scripts/test-env-up.sh`; a PowerShell `test-env-up.ps1` on native Windows) that embeds reuse checks, a generic build cache, service provisioning, health waits, and the environment-descriptor write. Every later invocation just executes that script — no re-discovery, no re-reasoning. Installs a browser test runner (Playwright by default) when missing, and writes a shared environment descriptor (`.ai/qa/test-env.json`) so QA and integration-test skills attach to the exact same instance. Use when the user says "prepare the test env", "spin up the app for testing", "set up an ephemeral environment", "get the app running so I can QA it", or when another skill needs a running instance.
 ---
 
 # Prepare Test Environment
@@ -25,10 +25,31 @@ The durable artifacts, and where they are saved:
 
 | Artifact | Default path | Purpose |
 | --- | --- | --- |
-| Entrypoint (up) | `.ai/scripts/test-env-up.sh` | The one command that brings the env up fast |
-| Teardown (down) | `.ai/scripts/test-env-down.sh` | Stops exactly what the up script started |
+| Entrypoint (up) | `.ai/scripts/test-env-up.sh` (`test-env-up.ps1` on native Windows) | The one command that brings the env up fast |
+| Teardown (down) | `.ai/scripts/test-env-down.sh` (`test-env-down.ps1` on native Windows) | Stops exactly what the up script started |
 | Environment descriptor | `.ai/qa/test-env.json` | What consumers (QA, integration tests) attach to |
 | Build cache state | `.ai/qa/test-env-build-cache.json` | Written/read by the up script, not by the agent |
+
+**Script flavor — match the platform the user is on.** The entrypoint is
+generated in the flavor that runs natively where generation happens, and every
+example in this skill must be executed in the shell the user actually has:
+
+- **POSIX `sh`** (`.sh`) on macOS, Linux, WSL2, and Git Bash/MSYS on Windows.
+  Run with `sh .ai/scripts/test-env-up.sh`.
+- **PowerShell** (`.ps1`) on native Windows (the user works in PowerShell or
+  cmd, with no WSL/Git Bash available). Run with
+  `pwsh -File .ai/scripts/test-env-up.ps1` (or `powershell -ExecutionPolicy
+  Bypass -File …` where only Windows PowerShell 5.x exists).
+
+Both flavors implement the same entrypoint contract, carry the same marker and
+`# history:` header, accept the same flags, print the same result lines, and
+write the same descriptor — consumers never care which flavor produced it. The
+shell snippets below are shown in POSIX form with PowerShell equivalents where
+the translation is not obvious; on native Windows, run the PowerShell form —
+never assume `sh`, `uname`, or other POSIX tools exist there. A repo whose team
+spans both worlds may carry both flavors side by side; they share the
+descriptor and build-cache state, and a repair applied to one must be mirrored
+to the other in the same session.
 
 The project's stack is unknown up front: Node/Astro/Next, Rails, Django, Go,
 Rust, static site, or a monorepo with its own ephemeral tooling. Phase 2
@@ -42,6 +63,8 @@ Load `.ai/agentic.config.json` with the standard config-loading snippet from the
 works without the pipeline config — when the file is missing, fall back to the
 defaults below and continue (do not stop). The paths this skill uses:
 
+From a POSIX shell (macOS, Linux, WSL2, Git Bash):
+
 ```bash
 CONFIG=.ai/agentic.config.json
 SCRIPTS_DIR=$(jq -r '.paths.scripts // ".ai/scripts"' "$CONFIG" 2>/dev/null || echo ".ai/scripts")
@@ -51,6 +74,23 @@ DOWN_SCRIPT="$SCRIPTS_DIR/test-env-down.sh"
 ENV_DESCRIPTOR="$QA_DIR/test-env.json"
 BUILD_CACHE="$QA_DIR/test-env-build-cache.json"
 mkdir -p "$SCRIPTS_DIR" "$QA_DIR"
+```
+
+From PowerShell on native Windows (no `jq`, no `sh` — parse the JSON with
+built-ins; forward-slash paths work fine in PowerShell and stay portable):
+
+```powershell
+$ScriptsDir = ".ai/scripts"; $QaDir = ".ai/qa"
+if (Test-Path ".ai/agentic.config.json") {
+  $cfg = Get-Content ".ai/agentic.config.json" -Raw | ConvertFrom-Json
+  if ($cfg.paths -and $cfg.paths.scripts) { $ScriptsDir = $cfg.paths.scripts }
+  if ($cfg.paths -and $cfg.paths.qa)      { $QaDir = $cfg.paths.qa }
+}
+$UpScript      = "$ScriptsDir/test-env-up.ps1"
+$DownScript    = "$ScriptsDir/test-env-down.ps1"
+$EnvDescriptor = "$QaDir/test-env.json"
+$BuildCache    = "$QaDir/test-env-build-cache.json"
+New-Item -ItemType Directory -Force -Path $ScriptsDir, $QaDir | Out-Null
 ```
 
 Right after loading the config, check for a repo-local skill of the same name at
@@ -99,17 +139,39 @@ and keep it quoted.
 
 ## Phase 1 — Execute the saved entrypoint (every run)
 
-This is the first thing the skill does, before any discovery:
+This is the first thing the skill does, before any discovery. Run the flavor
+that matches the current platform — from a POSIX shell:
 
 ```bash
-if [ "$1" = "--stop" ] || [ "$1" = "--down" ]; then
-  [ -x "$DOWN_SCRIPT" ] && sh "$DOWN_SCRIPT" && exit 0
+if [ "${1:-}" = "--stop" ] || [ "${1:-}" = "--down" ]; then
+  [ -f "$DOWN_SCRIPT" ] && sh "$DOWN_SCRIPT" && exit 0
 fi
-if [ -x "$UP_SCRIPT" ] && grep -q 'om-prepare-test-env: generated entrypoint' "$UP_SCRIPT" \
+if [ -f "$UP_SCRIPT" ] && grep -q 'om-prepare-test-env: generated entrypoint' "$UP_SCRIPT" \
    && [ "$REGENERATE" != 1 ]; then
   sh "$UP_SCRIPT" $PASSTHROUGH_FLAGS   # --force / --force-rebuild go straight through
 fi
 ```
+
+From PowerShell on native Windows:
+
+```powershell
+if ($args[0] -in '--stop','--down') {
+  if (Test-Path $DownScript) { & $DownScript; exit $LASTEXITCODE }
+}
+if ((Test-Path $UpScript) -and
+    (Select-String -Quiet 'om-prepare-test-env: generated entrypoint' $UpScript) -and
+    -not $Regenerate) {
+  & $UpScript @PassthroughFlags   # --force / --force-rebuild go straight through
+}
+```
+
+(If script execution is blocked by policy, invoke via
+`powershell -ExecutionPolicy Bypass -File $UpScript` instead of dot-sourcing;
+never change the machine's execution policy.) When only the *other* platform's
+flavor exists — the script was generated on a teammate's OS — do not translate
+it by hand at run time: enter Phase 2 and generate the missing flavor from the
+same discovered facts (the existing script is the best documentation of them),
+then verify it cold and warm like any generation.
 
 - **Script succeeds** → read `baseUrl` from `$ENV_DESCRIPTOR`, print the summary
   (base URL, services, whether the env was reused or rebuilt, descriptor path)
@@ -131,7 +193,9 @@ fi
 - **Script missing** (or `--regenerate`) → Phase 2.
 
 The marker line (`# om-prepare-test-env: generated entrypoint`) is how the skill
-recognizes its own artifact. A `test-env-up.sh` **without** the marker is the
+recognizes its own artifact — `#` starts a comment in both `sh` and PowerShell,
+so the marker is identical in both flavors. A `test-env-up.sh` or
+`test-env-up.ps1` **without** the marker is the
 repo's own tooling — run it as the discovered environment command, but treat the
 repo as script-owner and never overwrite it (Phase 2 then generates nothing and
 records the repo's command as the entrypoint in the repo-local skill instead).
@@ -164,6 +228,12 @@ always attach to the same instance:
   "notes": "<anything a consumer must know: teardown, seeded data, gotchas, the working preparation chain>"
 }
 ```
+
+`startScript`/`stopScript` record the paths of the scripts **actually
+generated** — the `.ps1` paths when the entrypoint is the PowerShell flavor —
+and `platform` records where the environment was booted (`win32` covers both
+native PowerShell and Git Bash; the script extension disambiguates). Consumers
+read `baseUrl` and `services` and never need to care about the flavor.
 
 Never put real secrets, production credentials, or tokens in the descriptor —
 only disposable/demo values. The descriptor is committed-adjacent working state,
@@ -284,10 +354,12 @@ after the warm run passes is Phase 2 complete.
 ### 2.6 Report
 
 Print: the scripts' paths (`$UP_SCRIPT`, `$DOWN_SCRIPT`), the descriptor path,
-the base URL, cold/warm timings, and the one-liner for next time —
-`sh .ai/scripts/test-env-up.sh` (or re-invoking this skill, which now just runs
-it). Recommend committing the scripts so worktrees and teammates get the fast
-path for free.
+the base URL, cold/warm timings, and the one-liner for next time, in the form
+that runs on **this** platform — `sh .ai/scripts/test-env-up.sh` on
+macOS/Linux/WSL2/Git Bash, `pwsh -File .ai/scripts/test-env-up.ps1` on native
+Windows (or re-invoking this skill, which now just runs it). Recommend
+committing the scripts — plus the `.gitattributes` line-ending rules from 2.1 —
+so worktrees and teammates get the fast path for free.
 
 ## The entrypoint contract — what `test-env-up.sh` must implement
 

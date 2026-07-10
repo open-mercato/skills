@@ -55,8 +55,8 @@ Fix the platform-detection snippet to work when there is no `uname` (PowerShell 
 
 ### Phase 1: Platform-flavored entrypoint
 
-- [ ] 1.1 Step 0: resolve entrypoint paths per platform; update artifacts table
-- [ ] 1.2 Phase 1 execution snippet and prose: run the flavor that exists; descriptor + report reflect actual paths
+- [x] 1.1 Step 0: resolve entrypoint paths per platform; update artifacts table — de0a9b7
+- [x] 1.2 Phase 1 execution snippet and prose: run the flavor that exists; descriptor + report reflect actual paths — de0a9b7
 
 ### Phase 2: Portable snippets and platform detection
 

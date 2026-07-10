@@ -1,0 +1,21 @@
+name: skills-audit
+
+# Surface skills.sh third-party security-audit results (Gen Agent Trust Hub,
+# Socket, Snyk) so regressions are visible. Audits run on the skills.sh side
+# against published content, so this is an awareness check, not a diff gate:
+# it runs on a schedule, on demand, and informationally on pushes to main.
+on:
+  schedule:
+    - cron: "0 6 * * 1-5" # weekday mornings UTC
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ["skills/**"]
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch skills.sh audit results
+        run: bash scripts/audit-skills.sh

@@ -249,22 +249,67 @@ phase ends.
 
 Read the agent instruction files (`AGENTS.md`, `CLAUDE.md`, README,
 `CONTRIBUTING.md`) — most repos document how to run and test the app there.
-Record the platform so the generated scripts stay portable:
+Record the platform, which also picks the script flavor to generate. From a
+POSIX shell:
 
 ```bash
 UNAME=$(uname -s 2>/dev/null || echo unknown)
 case "$UNAME" in
   Linux*)  grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null && PLATFORM=wsl2 || PLATFORM=linux ;;
   Darwin*) PLATFORM=darwin ;;
-  MINGW*|MSYS*|CYGWIN*) PLATFORM=win32 ;;
+  MINGW*|MSYS*|CYGWIN*) PLATFORM=win32 ;;   # Git Bash/MSYS: Windows, but sh works -> .sh flavor
   *) PLATFORM=unknown ;;
 esac
 ```
 
-Portability rules for everything generated: POSIX `sh` primary (`.ps1` mirror
-when the repo clearly targets native Windows shells); Docker/Compose for
-services (identical across all four platforms); bind to `127.0.0.1`; never
-hardcode a path separator or a port that might be taken.
+`uname` does not exist in PowerShell — when the working shell is PowerShell,
+detect with built-ins instead (PowerShell 5.x only runs on Windows; 7+ sets
+the `$Is*` automatics):
+
+```powershell
+$Platform = if ($PSVersionTable.PSVersion.Major -lt 6 -or $IsWindows) { 'win32' }
+            elseif ($IsMacOS) { 'darwin' } else { 'linux' }
+```
+
+Flavor choice: generate `.sh` whenever a POSIX shell is available on the
+user's machine (macOS, Linux, WSL2, Git Bash — probe with
+`sh -c 'echo ok'`); generate `.ps1` when the user is on native Windows
+without one. When in doubt on Windows, `.ps1` is the safe default — PowerShell
+is always present there.
+
+Platform notes to honor in everything generated:
+
+- **WSL2** — work inside the WSL filesystem (`~/…`), not `/mnt/c/…`: bind-mount
+  I/O across the Windows boundary is an order of magnitude slower and breaks
+  file watchers. Docker comes from Docker Desktop's WSL integration — verify
+  with `docker info` and, when it fails, say so (the fix is a Docker Desktop
+  setting, not a script change). An app bound to `127.0.0.1` inside WSL2 is
+  reachable from Windows browsers at `localhost` (auto-forwarded), so the
+  descriptor's `baseUrl` works for both sides.
+- **Line endings** — generated `.sh` scripts must be written with **LF** line
+  endings and committed with a `.gitattributes` rule so a Windows checkout
+  (`core.autocrlf=true`) cannot re-write them to CRLF, which breaks `sh` with
+  `\r: command not found`:
+
+  ```gitattributes
+  *.sh  text eol=lf
+  *.ps1 text
+  ```
+
+  Add these rules (create `.gitattributes` if missing) whenever the scripts
+  are committed. Keep generated `.ps1` content ASCII-only: Windows
+  PowerShell 5.x misreads UTF-8 without a BOM, and ASCII sidesteps the whole
+  encoding question.
+- **Paths** — use forward slashes and relative paths everywhere; they work in
+  `sh`, PowerShell, git, and Node alike. Never embed an absolute path or a
+  drive letter in a generated script; derive locations from the repo root at
+  run time.
+
+Portability rules for everything generated: one entrypoint in the platform's
+native flavor (POSIX `sh`, or PowerShell on native Windows) implementing the
+same contract; Docker/Compose for services (identical across all four
+platforms); bind to `127.0.0.1`; never hardcode a path separator or a port
+that might be taken.
 
 ### 2.2 Discover how the project runs
 
@@ -309,8 +354,10 @@ Generate `$UP_SCRIPT` and `$DOWN_SCRIPT` implementing the **entrypoint
 contract** below, with every project-specific fact discovered in 2.2 baked in as
 variables at the top of the script (commands, service images, ports, build
 inputs, artifacts, env vars). The scripts are the durable, committed-friendly
-artifact — plain POSIX `sh`, no agent needed to run them, parameterized so a
-human can read and tweak them.
+artifact — plain POSIX `sh` (or plain PowerShell in the `.ps1` flavor), no
+agent needed to run them, parameterized so a
+human can read and tweak them. Write them with LF line endings and add the
+`.gitattributes` rules from 2.1 in the same change.
 
 ### 2.4 Ensure a browser test runner (generation-time, Playwright by default)
 
@@ -361,10 +408,13 @@ Windows (or re-invoking this skill, which now just runs it). Recommend
 committing the scripts — plus the `.gitattributes` line-ending rules from 2.1 —
 so worktrees and teammates get the fast path for free.
 
-## The entrypoint contract — what `test-env-up.sh` must implement
+## The entrypoint contract — what the up script must implement
 
 The generated script is self-sufficient: everything this skill used to do per
-run now happens inside it, with no agent reasoning at run time. In order:
+run now happens inside it, with no agent reasoning at run time. The contract is
+flavor-independent — the steps below are shown as POSIX `sh`; the PowerShell
+flavor implements the identical sequence with the equivalents listed at the end
+of this section. In order:
 
 1. **Marker + parameters.** First lines after the shebang:
 
@@ -376,6 +426,18 @@ run now happens inside it, with no agent reasoning at run time. In order:
    #   <ISO date> generated (cold 184s, warm 3s)
    #   <ISO date> repair: wait for redis before migrate (fixes race on fresh boot)
    set -eu
+   ```
+
+   PowerShell flavor of the same header (no shebang; strict mode instead of
+   `set -eu`):
+
+   ```powershell
+   # om-prepare-test-env: generated entrypoint (contract v2)
+   # regenerate with: om-prepare-test-env --regenerate
+   # history:
+   #   <ISO date> generated (cold 184s, warm 3s)
+   Set-StrictMode -Version Latest
+   $ErrorActionPreference = 'Stop'
    ```
 
    The `# history:` header is the script's changelog: every generation and
@@ -416,7 +478,28 @@ run now happens inside it, with no agent reasoning at run time. In order:
    otherwise a fresh free port:
 
    ```sh
-   free_port() { python3 -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1]);s.close()'; }
+   # Never assume python3 exists — cascade through whatever the machine has,
+   # and fall back to a random high port (the caller retries on bind failure).
+   free_port() {
+     if command -v python3 >/dev/null 2>&1; then
+       python3 -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1]);s.close()'
+     elif command -v python >/dev/null 2>&1; then
+       python -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1]);s.close()'
+     elif command -v node >/dev/null 2>&1; then
+       node -e 's=require("net").createServer();s.listen(0,"127.0.0.1",()=>{console.log(s.address().port);s.close()})'
+     else
+       awk 'BEGIN{srand();print 20000+int(rand()*20000)}'
+     fi
+   }
+   ```
+
+   PowerShell flavor — no external interpreter needed:
+
+   ```powershell
+   function Get-FreePort {
+     $l = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
+     $l.Start(); $port = $l.LocalEndpoint.Port; $l.Stop(); $port
+   }
    ```
 
    Throwaway names/volumes (`--rm`, anonymous volumes), official images at the
@@ -439,10 +522,28 @@ run now happens inside it, with no agent reasoning at run time. In order:
    TEST_ENV_REUSED=1        # 0 on a fresh boot
    ```
 
-`test-env-down.sh` mirrors it: stop the app PID, remove exactly the
+The down script (`test-env-down.sh` / `test-env-down.ps1`) mirrors it: stop the
+app PID, remove exactly the
 containers/volumes the up script created (scoped by the throwaway names), mark
 the descriptor `"status":"stopped"`. Safe to run twice; never touches anything
 it did not create.
+
+When generating the PowerShell flavor, use these equivalents for the
+contract's primitives (Docker commands are identical in both):
+
+| Contract primitive | POSIX `sh` | PowerShell |
+| --- | --- | --- |
+| Fail fast on errors | `set -eu` | `Set-StrictMode -Version Latest; $ErrorActionPreference='Stop'` |
+| Atomic lock | `mkdir "$QA_DIR/test-env.lock"` | `New-Item -ItemType Directory $LockDir` (throws when it exists) |
+| Release on every exit | `trap ... EXIT` | `try { … } finally { … }` |
+| PID alive? | `kill -0 "$PID"` | `Get-Process -Id $Pid -ErrorAction SilentlyContinue` |
+| Background app start | `cmd &` + `$!` | `Start-Process -PassThru` (keep `.Id`) |
+| HTTP health probe | `curl -fsS` / `wget -q` | `Invoke-WebRequest -UseBasicParsing -TimeoutSec …` |
+| UTC timestamp | `date -u +%FT%TZ` | `(Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')` |
+| File size+mtime | `stat -f '%z:%m'` / `stat -c '%s:%Y'` | `"$($_.Length):$($_.LastWriteTimeUtc.Ticks)"` from `Get-ChildItem` |
+| Checksum for fingerprint | `cksum` | `Get-FileHash -Algorithm SHA256 -InputStream` over the joined string |
+| JSON read/write | `jq` / `sed` fallback | `ConvertFrom-Json` / `ConvertTo-Json` (built in) |
+| Free port | `free_port()` cascade above | `Get-FreePort` above |
 
 ## Generic build cache — technology-agnostic, embedded in the script
 
@@ -491,8 +592,14 @@ fi
 Adaptation notes for generation:
 
 - `path:size:mtime` per file — cheap, no file reads, portable (BSD `stat -f`
-  first, GNU `stat -c` fallback; both tested). Add the repo's own output/cache
+  first, GNU `stat -c` fallback; both tested — Git Bash and WSL2 take the GNU
+  branch). Add the repo's own output/cache
   dirs to the `find` exclusions (`target`, `build`, `.next`, `vendor`, …).
+- In the PowerShell flavor, implement the same `fingerprint`/`build_needed`
+  logic with the equivalents table above (`Get-ChildItem -Recurse` with the
+  same exclusions, `size:mtime` per file, a hash of the sorted joined listing,
+  `ConvertFrom-Json` for the cache file). The cache file format is identical,
+  so the two flavors share `$BUILD_CACHE` state.
 - The env fingerprint is part of the hash: a build made under different flags is
   a different build.
 - **Bias toward rebuilding**: any unreadable, mismatched, or ambiguous cache
@@ -584,9 +691,14 @@ scheduled for every future run.
 - Generated environments are disposable and isolated: fresh services on free
   ports bound to `127.0.0.1`, throwaway volumes, reproducible from committed
   scripts, safe to tear down twice.
-- Everything generated must work on macOS, Linux, WSL2, and Windows: POSIX `sh`
-  primary (+ `.ps1` mirror for native Windows), Docker for services, no
-  hardcoded ports or paths.
+- Everything generated must run on the platform the user is on: POSIX `sh` on
+  macOS, Linux, WSL2, and Git Bash; a PowerShell (`.ps1`) entrypoint
+  implementing the same contract on native Windows — same marker, flags,
+  descriptor, and output lines. Examples given to the user use the invocation
+  that works in **their** shell.
+- Committed scripts ship with LF line endings and the `.gitattributes` rules
+  from 2.1; Docker for services; no hardcoded ports, absolute paths, or path
+  separators.
 - The script always writes `$ENV_DESCRIPTOR` so QA and integration-test skills
   attach to the same instance; never store real secrets in it — disposable/demo
   values only.

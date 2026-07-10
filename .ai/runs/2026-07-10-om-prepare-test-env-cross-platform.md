@@ -60,5 +60,5 @@ Fix the platform-detection snippet to work when there is no `uname` (PowerShell 
 
 ### Phase 2: Portable snippets and platform detection
 
-- [ ] 2.1 Platform detection that also works in PowerShell; WSL2 and Git Bash guidance
-- [ ] 2.2 Portable free_port cascade; line-endings (LF/.gitattributes) rules; entrypoint contract + Rules updated for .ps1 parity
+- [x] 2.1 Platform detection that also works in PowerShell; WSL2 and Git Bash guidance — 067e9de
+- [x] 2.2 Portable free_port cascade; line-endings (LF/.gitattributes) rules; entrypoint contract + Rules updated for .ps1 parity — 067e9de

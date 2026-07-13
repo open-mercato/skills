@@ -45,7 +45,7 @@ Add the provided YouTube video thumbnail link to the main `README.md`, placed di
 
 ### Phase 1: README update
 
-- [ ] 1.1 Insert YouTube thumbnail link above Local development section
+- [x] 1.1 Insert YouTube thumbnail link above Local development section — 57ad0c7
 
 ### Phase 2: Validation
 

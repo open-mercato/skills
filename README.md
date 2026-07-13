@@ -46,6 +46,8 @@ The agent drafts an execution plan, implements it phase by phase in an isolated 
 
 **Upgrading later?** Skills auto-update on reinstall, but repo-installed artifacts — above all `.ai/trackers/<tracker>.md` — do not. Run `/om-apply-upgrade-notes` in the repo, or follow [UPGRADE_NOTES.md](UPGRADE_NOTES.md) by hand.
 
+[![Watch on YouTube](https://img.youtube.com/vi/zPNW-xtwNsE/maxresdefault.jpg)](https://www.youtube.com/watch?v=zPNW-xtwNsE)
+
 ## 🛠️ Local development
 
 Working on the skills themselves? Skip the `npx skills add` round-trip and symlink this checkout straight into your agents' skill directories:

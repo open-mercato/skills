@@ -40,6 +40,8 @@ Add a section heading ("See how it works!") above the YouTube video link that PR
 
 ## Progress
 
+PR: #22
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: README update

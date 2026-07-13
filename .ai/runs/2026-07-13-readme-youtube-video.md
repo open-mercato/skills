@@ -49,4 +49,4 @@ Add the provided YouTube video thumbnail link to the main `README.md`, placed di
 
 ### Phase 2: Validation
 
-- [ ] 2.1 Run validation gate and re-read diff
+- [x] 2.1 Run validation gate and re-read diff — 57ad0c7 (lint OK, no code changes needed)

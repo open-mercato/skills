@@ -44,8 +44,8 @@ Add a section heading ("See how it works!") above the YouTube video link that PR
 
 ### Phase 1: README update
 
-- [ ] 1.1 Insert "See how it works!" heading above the YouTube link
+- [x] 1.1 Insert "See how it works!" heading above the YouTube link — 5c8492c
 
 ### Phase 2: Validation
 
-- [ ] 2.1 Run validation gate and re-read diff
+- [x] 2.1 Run validation gate and re-read diff — 5c8492c (lint OK)

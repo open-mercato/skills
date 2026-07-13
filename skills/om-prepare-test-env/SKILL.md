@@ -203,431 +203,45 @@ records the repo's command as the entrypoint in the repo-local skill instead).
 ## The environment descriptor
 
 The deliverable other skills depend on is `$ENV_DESCRIPTOR`
-(`<paths.qa>/test-env.json`). The **generated script** writes it on every
-successful run, so consumers (`om-auto-verify-pr-ui`, `om-integration-tests`)
-always attach to the same instance:
-
-```json
-{
-  "version": 1,
-  "runId": "<short id, e.g. date+random>",
-  "status": "running",
-  "mode": "discovered | ephemeral | dev | docker | prod",
-  "baseUrl": "http://127.0.0.1:<port>",
-  "startedByThisRepo": true,
-  "startScript": ".ai/scripts/test-env-up.sh",
-  "stopScript": ".ai/scripts/test-env-down.sh",
-  "app": { "startCommand": "<command>", "port": 4321, "healthPath": "/", "pid": 12345 },
-  "services": [
-    { "type": "postgres", "host": "127.0.0.1", "port": 55432, "container": "<name>", "url": "postgres://…", "env": { "DATABASE_URL": "…" } }
-  ],
-  "credentials": [ { "role": "admin", "username": "<demo>", "password": "<demo>" } ],
-  "playwright": { "runner": "playwright", "installed": true, "config": ".ai/qa/playwright.config.ts", "browsers": ["chromium"] },
-  "platform": "linux | darwin | wsl2 | win32",
-  "startedAt": "<ISO-8601 UTC>",
-  "notes": "<anything a consumer must know: teardown, seeded data, gotchas, the working preparation chain>"
-}
-```
-
-`startScript`/`stopScript` record the paths of the scripts **actually
-generated** — the `.ps1` paths when the entrypoint is the PowerShell flavor —
-and `platform` records where the environment was booted (`win32` covers both
-native PowerShell and Git Bash; the script extension disambiguates). Consumers
-read `baseUrl` and `services` and never need to care about the flavor.
-
-Never put real secrets, production credentials, or tokens in the descriptor —
-only disposable/demo values. The descriptor is committed-adjacent working state,
-not a secret store.
+(`<paths.qa>/test-env.json`), which the generated script writes on every
+successful run so consumers (`om-auto-verify-pr-ui`, `om-integration-tests`)
+always attach to the same instance. Phase 1 reads `baseUrl` from it. For the
+full JSON schema, the `startScript`/`platform` semantics, and the
+no-real-secrets rule, see `references/env-descriptor.md`.
 
 ## Phase 2 — Generate the entrypoint (first run, `--regenerate`, or repair)
 
 This is the expensive phase. Its output is not a running app — it is a **pair of
 scripts that can produce a running app forever after**, verified before the
-phase ends.
+phase ends. Run the full procedure in
+`references/phase-2-generate.md`; the steps in order are:
 
-### 2.1 Read the repo's own instructions, detect the platform
+- **2.1 Read the repo's own instructions, detect the platform** — pick the
+  script flavor (`.sh` vs `.ps1`) and honor the WSL2 / line-ending / path notes.
+- **2.2 Discover how the project runs** — the repo's own ephemeral env,
+  preparation chain, backing services, launch command/port, build inputs.
+- **2.3 Write the scripts** — generate `$UP_SCRIPT`/`$DOWN_SCRIPT` implementing
+  the entrypoint contract (`references/entrypoint-contract.md`).
+- **2.4 Ensure a browser test runner** — Playwright by default, once, here.
+- **2.5 Verify the script — cold and warm** — the gate: the warm run must reuse,
+  not rebuild.
+- **2.6 Report** — script paths, descriptor, base URL, cold/warm timings.
 
-Read the agent instruction files (`AGENTS.md`, `CLAUDE.md`, README,
-`CONTRIBUTING.md`) — most repos document how to run and test the app there.
-Record the platform, which also picks the script flavor to generate. From a
-POSIX shell:
-
-```bash
-UNAME=$(uname -s 2>/dev/null || echo unknown)
-case "$UNAME" in
-  Linux*)  grep -qiE 'microsoft|wsl' /proc/version 2>/dev/null && PLATFORM=wsl2 || PLATFORM=linux ;;
-  Darwin*) PLATFORM=darwin ;;
-  MINGW*|MSYS*|CYGWIN*) PLATFORM=win32 ;;   # Git Bash/MSYS: Windows, but sh works -> .sh flavor
-  *) PLATFORM=unknown ;;
-esac
-```
-
-`uname` does not exist in PowerShell — when the working shell is PowerShell,
-detect with built-ins instead (PowerShell 5.x only runs on Windows; 7+ sets
-the `$Is*` automatics):
-
-```powershell
-$Platform = if ($PSVersionTable.PSVersion.Major -lt 6 -or $IsWindows) { 'win32' }
-            elseif ($IsMacOS) { 'darwin' } else { 'linux' }
-```
-
-Flavor choice: generate `.sh` whenever a POSIX shell is available on the
-user's machine (macOS, Linux, WSL2, Git Bash — probe with
-`sh -c 'echo ok'`); generate `.ps1` when the user is on native Windows
-without one. When in doubt on Windows, `.ps1` is the safe default — PowerShell
-is always present there.
-
-Platform notes to honor in everything generated:
-
-- **WSL2** — work inside the WSL filesystem (`~/…`), not `/mnt/c/…`: bind-mount
-  I/O across the Windows boundary is an order of magnitude slower and breaks
-  file watchers. Docker comes from Docker Desktop's WSL integration — verify
-  with `docker info` and, when it fails, say so (the fix is a Docker Desktop
-  setting, not a script change). An app bound to `127.0.0.1` inside WSL2 is
-  reachable from Windows browsers at `localhost` (auto-forwarded), so the
-  descriptor's `baseUrl` works for both sides.
-- **Line endings** — generated `.sh` scripts must be written with **LF** line
-  endings and committed with a `.gitattributes` rule so a Windows checkout
-  (`core.autocrlf=true`) cannot re-write them to CRLF, which breaks `sh` with
-  `\r: command not found`:
-
-  ```gitattributes
-  *.sh  text eol=lf
-  *.ps1 text
-  ```
-
-  Add these rules (create `.gitattributes` if missing) whenever the scripts
-  are committed. Keep generated `.ps1` content ASCII-only: Windows
-  PowerShell 5.x misreads UTF-8 without a BOM, and ASCII sidesteps the whole
-  encoding question.
-- **Paths** — use forward slashes and relative paths everywhere; they work in
-  `sh`, PowerShell, git, and Node alike. Never embed an absolute path or a
-  drive letter in a generated script; derive locations from the repo root at
-  run time.
-
-Portability rules for everything generated: one entrypoint in the platform's
-native flavor (POSIX `sh`, or PowerShell on native Windows) implementing the
-same contract; Docker/Compose for services (identical across all four
-platforms); bind to `127.0.0.1`; never hardcode a path separator or a port
-that might be taken.
-
-### 2.2 Discover how the project runs
-
-Gather everything the script will need. Discover from evidence, never assume:
-
-1. **The repo's own ephemeral/test environment** — package scripts, `Makefile`,
-   `Taskfile.yml`, `justfile` targets named like `test:*:ephemeral`, `test-env`,
-   `e2e:setup`, `dev:test`, `db:test`; CI workflows (`.github/workflows/*` —
-   prefer whatever CI actually runs); `docker-compose*.yml` / `compose*.yml`,
-   `Dockerfile`, `.devcontainer/`. When a usable environment exists, **the
-   generated script wraps the repo's own up-command** — including its own
-   reuse/caching flags when it has them — and never re-implements what the repo
-   already does.
-2. **The preparation chain** for fresh checkouts and worktrees: install
-   dependencies → run code generation → build workspace packages/app, in the
-   order the repo's scripts and CI imply (codegen before builds whenever builds
-   consume generated artifacts). A discovered env command almost always assumes
-   a fully prepared workspace; the script must run this chain — gated by the
-   build cache — before the env command.
-3. **Backing services**, from evidence: compose service images; ORM/driver
-   dependencies in the manifest; connection env vars in `.env.example`
-   (`DATABASE_URL`, `MONGO_URL`, `REDIS_URL`, …); migration folders. Produce a
-   concrete list with image and port per service (`postgres:16`, `mysql:8`,
-   `mongo:7`, `redis:7`), honoring versions the repo pins.
-4. **The launch command and port** — in order of preference: Docker/compose
-   (parity with production), the dev script (fast startup, best for iterative
-   QA), or build + start/serve. Read the port from framework config, dev-server
-   output, `EXPOSE`, or compose `ports` — never invent one.
-5. **Build inputs and artifacts** for the build cache: source directories,
-   lockfiles, build configs (inputs); the build outputs that must exist
-   (artifacts); env vars that shape the build output (mode flags, feature
-   toggles).
-
-When `auto` is ambiguous — e.g. the app has a database but also a plain dev
-server and the user has not said whether they want disposable services — ask
-once with `AskUserQuestion` (ephemeral vs. run-against-existing) and encode the
-answer in the script. Do not provision containers the user did not ask for.
-
-### 2.3 Write the scripts
-
-Generate `$UP_SCRIPT` and `$DOWN_SCRIPT` implementing the **entrypoint
-contract** below, with every project-specific fact discovered in 2.2 baked in as
-variables at the top of the script (commands, service images, ports, build
-inputs, artifacts, env vars). The scripts are the durable, committed-friendly
-artifact — plain POSIX `sh` (or plain PowerShell in the `.ps1` flavor), no
-agent needed to run them, parameterized so a
-human can read and tweak them. Write them with LF line endings and add the
-`.gitattributes` rules from 2.1 in the same change.
-
-### 2.4 Ensure a browser test runner (generation-time, Playwright by default)
-
-Unless `--playwright off`:
-
-1. If the repo already has a browser test runner (`playwright.config.*`,
-   `cypress.config.*`, `wdio.conf.*`, or equivalent), use it as-is and record
-   which one in the descriptor — do not install a second one.
-2. Otherwise install Playwright with the repo's package manager, verify the
-   binary runs (`npx playwright --version`) and at least one browser is present
-   (`npx playwright install --with-deps chromium`, falling back to
-   `npx playwright install chromium`). Write a minimal shared config at
-   `$QA_DIR/playwright.config.ts` that reads `process.env.BASE_URL` — timeouts
-   and retries live in this shared config, never in individual specs.
-3. Where browsers cannot be installed, do not fail the run: record
-   `playwright.installed: false` with the blocker in `notes` so consumers can
-   still run API-level checks and report the limitation honestly.
-
-This runs once, here — the generated script only *records* the runner state in
-the descriptor; it never re-installs browsers on the fast path.
-
-### 2.5 Verify the script — cold and warm
-
-Generation is not done until the script has proven both halves of its promise:
-
-1. **Cold run**: execute `$UP_SCRIPT` in the real workspace. It must end with a
-   healthy environment and a valid descriptor. Note the wall time.
-2. **Warm run**: execute `$UP_SCRIPT` again immediately. It must detect the
-   running environment via the reuse check and return in seconds — same
-   `runId`, no rebuild, no re-provision. If it rebuilds or re-provisions, the
-   reuse/cache logic is broken: fix the script and repeat.
-3. **Cache-invalidation spot check** (cheap): `touch` one tracked source file,
-   confirm the script's fingerprint changes (the script should report it would
-   rebuild — or actually rebuild if fast). This proves the cache is not
-   permanently stale.
-
-Record both timings in the descriptor `notes`
-(e.g. `cold: 184s, warm: 3s (reused)`), so regressions are visible later. Only
-after the warm run passes is Phase 2 complete.
-
-### 2.6 Report
-
-Print: the scripts' paths (`$UP_SCRIPT`, `$DOWN_SCRIPT`), the descriptor path,
-the base URL, cold/warm timings, and the one-liner for next time, in the form
-that runs on **this** platform — `sh .ai/scripts/test-env-up.sh` on
-macOS/Linux/WSL2/Git Bash, `pwsh -File .ai/scripts/test-env-up.ps1` on native
-Windows (or re-invoking this skill, which now just runs it). Recommend
-committing the scripts — plus the `.gitattributes` line-ending rules from 2.1 —
-so worktrees and teammates get the fast path for free.
+When the script cannot be made to pass cold+warm verification after two repair
+attempts, follow the fallback at the end of `references/phase-2-generate.md`
+(record why, fall back to the agent-driven flow, re-attempt when the blocker
+changes) — never fail silently.
 
 ## The entrypoint contract — what the up script must implement
 
 The generated script is self-sufficient: everything this skill used to do per
-run now happens inside it, with no agent reasoning at run time. The contract is
-flavor-independent — the steps below are shown as POSIX `sh`; the PowerShell
-flavor implements the identical sequence with the equivalents listed at the end
-of this section. In order:
-
-1. **Marker + parameters.** First lines after the shebang:
-
-   ```sh
-   #!/bin/sh
-   # om-prepare-test-env: generated entrypoint (contract v2)
-   # regenerate with: om-prepare-test-env --regenerate
-   # history:
-   #   <ISO date> generated (cold 184s, warm 3s)
-   #   <ISO date> repair: wait for redis before migrate (fixes race on fresh boot)
-   set -eu
-   ```
-
-   PowerShell flavor of the same header (no shebang; strict mode instead of
-   `set -eu`):
-
-   ```powershell
-   # om-prepare-test-env: generated entrypoint (contract v2)
-   # regenerate with: om-prepare-test-env --regenerate
-   # history:
-   #   <ISO date> generated (cold 184s, warm 3s)
-   Set-StrictMode -Version Latest
-   $ErrorActionPreference = 'Stop'
-   ```
-
-   The `# history:` header is the script's changelog: every generation and
-   every repair appends one dated line saying what changed and which failure it
-   prevents. It is how a future run (or a human) can tell why the script looks
-   the way it does.
-
-   Then a single block of project-specific variables (launch command, prep
-   chain, service images, preferred port, build inputs/artifacts/env-vars,
-   TTL) so tweaks never require touching the logic below. Flags: `--force`,
-   `--force-rebuild`; env override `TEST_ENV_CACHE_TTL_SECONDS` (default ~600).
-
-2. **Lock — one bootstrap at a time.** Directory lock at `$QA_DIR/test-env.lock`
-   (`mkdir` is atomic) holding `owner.json` `{pid, source, acquiredAt}`. Owner
-   PID dead → stale, remove and retake. Owner alive → bounded poll-wait
-   (~5 min), then re-check the descriptor — the other process likely produced a
-   reusable environment. Release on every exit path (`trap`). When the app
-   serves from in-repo build artifacts, hold the lock for the environment's
-   lifetime so a second bootstrap cannot rebuild artifacts under a running app.
-
-3. **Reuse check — attach, don't reboot.** If the descriptor says
-   `"status":"running"`, reuse only when **all** pass (a state file is a claim,
-   not proof): recorded PID alive (`kill -0`); real readiness probes with
-   bounded timeouts at increasing depth (app shell → unauthenticated API →
-   one authenticated round trip when credentials are recorded — the deep probes
-   catch an app that lost its database); fresh (age within TTL **and** no
-   tracked source file newer than `startedAt`). All pass → print the base URL
-   and exit 0 (unless `--force`). Any failure → treat as stale, tear down what
-   this repo started, continue.
-
-4. **Build cache — skip preparation that has not changed.** The generic
-   mechanism below. Fingerprint match and artifacts present → skip install/
-   codegen/build entirely; otherwise run the full preparation chain and write a
-   fresh cache entry.
-
-5. **Services up (ephemeral mode).** Start each backing service as a disposable
-   Docker container on `127.0.0.1:<port>` — stable preferred port when free,
-   otherwise a fresh free port:
-
-   ```sh
-   # Never assume python3 exists — cascade through whatever the machine has,
-   # and fall back to a random high port (the caller retries on bind failure).
-   free_port() {
-     if command -v python3 >/dev/null 2>&1; then
-       python3 -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1]);s.close()'
-     elif command -v python >/dev/null 2>&1; then
-       python -c 'import socket;s=socket.socket();s.bind(("127.0.0.1",0));print(s.getsockname()[1]);s.close()'
-     elif command -v node >/dev/null 2>&1; then
-       node -e 's=require("net").createServer();s.listen(0,"127.0.0.1",()=>{console.log(s.address().port);s.close()})'
-     else
-       awk 'BEGIN{srand();print 20000+int(rand()*20000)}'
-     fi
-   }
-   ```
-
-   PowerShell flavor — no external interpreter needed:
-
-   ```powershell
-   function Get-FreePort {
-     $l = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Loopback, 0)
-     $l.Start(); $port = $l.LocalEndpoint.Port; $l.Stop(); $port
-   }
-   ```
-
-   Throwaway names/volumes (`--rm`, anonymous volumes), official images at the
-   repo's pinned versions. Poll each service until it accepts connections —
-   never race the app ahead of its database. Export the connection env the app
-   expects, then run the repo's own migrate/seed command (never hand-written
-   SQL). In discovered mode, this step is replaced by the repo's own up-command
-   with its own flags.
-
-6. **App start + health wait.** Launch in the background, record the PID, poll
-   the base URL until healthy (bounded), resolve the real bound port.
-
-7. **Descriptor write + output.** Write `$ENV_DESCRIPTOR` (full schema above)
-   and print machine-readable result lines consumers can grep:
-
-   ```
-   TEST_ENV_STATUS=running
-   TEST_ENV_BASE_URL=http://127.0.0.1:4321
-   TEST_ENV_DESCRIPTOR=.ai/qa/test-env.json
-   TEST_ENV_REUSED=1        # 0 on a fresh boot
-   ```
-
-The down script (`test-env-down.sh` / `test-env-down.ps1`) mirrors it: stop the
-app PID, remove exactly the
-containers/volumes the up script created (scoped by the throwaway names), mark
-the descriptor `"status":"stopped"`. Safe to run twice; never touches anything
-it did not create.
-
-When generating the PowerShell flavor, use these equivalents for the
-contract's primitives (Docker commands are identical in both):
-
-| Contract primitive | POSIX `sh` | PowerShell |
-| --- | --- | --- |
-| Fail fast on errors | `set -eu` | `Set-StrictMode -Version Latest; $ErrorActionPreference='Stop'` |
-| Atomic lock | `mkdir "$QA_DIR/test-env.lock"` | `New-Item -ItemType Directory $LockDir` (throws when it exists) |
-| Release on every exit | `trap ... EXIT` | `try { … } finally { … }` |
-| PID alive? | `kill -0 "$PID"` | `Get-Process -Id $appPid -ErrorAction SilentlyContinue` (never name the variable `$PID` — it is a read-only automatic in PowerShell) |
-| Background app start | `cmd &` + `$!` | `Start-Process -PassThru` (keep `.Id`) |
-| HTTP health probe | `curl -fsS` / `wget -q` | `Invoke-WebRequest -UseBasicParsing -TimeoutSec …` |
-| UTC timestamp | `date -u +%FT%TZ` | `(Get-Date).ToUniversalTime().ToString('yyyy-MM-ddTHH:mm:ssZ')` |
-| File size+mtime | `stat -f '%z:%m'` / `stat -c '%s:%Y'` | `"$($_.Length):$($_.LastWriteTimeUtc.Ticks)"` from `Get-ChildItem` |
-| Checksum for fingerprint | `cksum` | `Get-FileHash -Algorithm SHA256 -InputStream` over the joined string |
-| JSON read/write | `jq` / `sed` fallback | `ConvertFrom-Json` / `ConvertTo-Json` (built in) |
-| Free port | `free_port()` cascade above | `Get-FreePort` above |
-
-## Generic build cache — technology-agnostic, embedded in the script
-
-Compiling, codegen, and package builds are the most expensive bootstrap steps.
-The cache mechanism is the same for every stack — only the three variable lists
-differ, and 2.2 discovers those. Embed this (adapted) in every generated script:
-
-```sh
-# --- build cache (generic; only the three lists are project-specific) ---
-BUILD_INPUTS="src package.json package-lock.json"   # source dirs, lockfiles, build configs
-BUILD_ENV_VARS="NODE_ENV"                           # env vars that shape the build output
-ARTIFACTS="dist"                                    # outputs that must exist and be non-empty
-
-fp_file() { stat -f '%z:%m' "$1" 2>/dev/null || stat -c '%s:%Y' "$1" 2>/dev/null; }
-fingerprint() {
-  {
-    for p in $BUILD_INPUTS; do
-      if [ -d "$p" ]; then
-        find "$p" -type f \
-          ! -path '*/node_modules/*' ! -path '*/.git/*' ! -path '*/dist/*' \
-          ! -path '*/.cache/*' ! -path '*/coverage/*'
-      elif [ -f "$p" ]; then echo "$p"; fi
-    done | LC_ALL=C sort | while IFS= read -r f; do printf '%s:%s\n' "$f" "$(fp_file "$f")"; done
-    for v in $BUILD_ENV_VARS; do eval "printf 'env:%s=%s\n' \"$v\" \"\${$v:-}\""; done
-  } | cksum | awk '{print $1"-"$2}'
-}
-
-build_needed() {
-  [ "${FORCE_REBUILD:-0}" = 1 ] && return 0
-  [ -f "$BUILD_CACHE" ] || return 0
-  CACHED_FP=$(sed -n 's/.*"sourceFingerprint": *"\([^"]*\)".*/\1/p' "$BUILD_CACHE")
-  CACHED_ROOT=$(sed -n 's/.*"projectRoot": *"\([^"]*\)".*/\1/p' "$BUILD_CACHE")
-  [ "$CACHED_FP" = "$(fingerprint)" ] || return 0
-  [ "$CACHED_ROOT" = "$(pwd)" ] || return 0          # a worktree never inherits another checkout's cache
-  for a in $ARTIFACTS; do [ -s "$a" ] || [ -d "$a" ] || return 0; done
-  return 1                                           # cache valid -> skip the build
-}
-
-if build_needed; then
-  # <project's preparation chain: install -> codegen -> build, discovered in 2.2>
-  printf '{ "builtAt": "%s", "sourceFingerprint": "%s", "projectRoot": "%s", "artifactPaths": "%s" }\n' \
-    "$(date -u +%FT%TZ)" "$(fingerprint)" "$(pwd)" "$ARTIFACTS" > "$BUILD_CACHE"
-fi
-```
-
-Adaptation notes for generation:
-
-- `path:size:mtime` per file — cheap, no file reads, portable (BSD `stat -f`
-  first, GNU `stat -c` fallback; both tested — Git Bash and WSL2 take the GNU
-  branch). Add the repo's own output/cache
-  dirs to the `find` exclusions (`target`, `build`, `.next`, `vendor`, …).
-- In the PowerShell flavor, implement the same `fingerprint`/`build_needed`
-  logic with the equivalents table above (`Get-ChildItem -Recurse` with the
-  same exclusions, `size:mtime` per file, a hash of the sorted joined listing,
-  `ConvertFrom-Json` for the cache file). The cache file format is identical,
-  so the two flavors share `$BUILD_CACHE` state.
-- The env fingerprint is part of the hash: a build made under different flags is
-  a different build.
-- **Bias toward rebuilding**: any unreadable, mismatched, or ambiguous cache
-  state returns "build needed" — a fast bootstrap is never worth testing stale
-  artifacts. The cache covers preparation/build only; database provisioning,
-  migration, and seeding still run fresh per environment.
-- State is **per checkout**: a worktree's first boot pays the full chain; the
-  cache makes every subsequent boot cheap.
-- When the repo's own tooling already implements build caching or env reuse
-  (its own state file, reuse flags, cache TTL), the script calls **its**
-  mechanism with its flags instead of duplicating it — this block then only
-  covers whatever the repo's tooling does not.
-
-## When a reliable script cannot be generated
-
-Some environments resist scripting — interactive logins, hardware dependencies,
-a stack the up-command cannot drive headlessly. If after two repair attempts the
-script still cannot pass the cold+warm verification:
-
-1. Record **why** in the repo-local skill (`.ai/skills/om-prepare-test-env/SKILL.md`),
-   with whatever partial script did work committed anyway (e.g. services-up
-   without the app).
-2. Fall back to the agent-driven flow for the unscripted part on each run —
-   expensive, but correct — and still write the descriptor so consumers attach
-   normally.
-3. Re-attempt generation when the blocker changes (the repo-local skill note is
-   the reminder). Failing to script is acceptable; failing silently is not —
-   the report must say the fast path is unavailable and why.
+run now happens inside it, with no agent reasoning at run time. During Phase 2
+step 2.3, generate the up/down scripts against the full contract in
+`references/entrypoint-contract.md` — marker + parameters, the bootstrap lock,
+the reuse check, the build cache, services up, app start + health wait, and the
+descriptor write/output lines — plus the POSIX↔PowerShell primitives table for
+the `.ps1` flavor. The build cache (step 4) uses the generic mechanism in
+`references/build-cache.md`.
 
 ## Teardown mode (`--stop` / `--down`)
 

@@ -51,8 +51,8 @@ else
   if [ ! -x "$AGENT_BROWSER_BIN" ]; then
     URL="https://github.com/vercel-labs/agent-browser/releases/latest/download/$ASSET"
     TMP="$AGENT_BROWSER_BIN.tmp.$$"
-    if command -v curl >/dev/null 2>&1; then curl -fL --retry 3 -o "$TMP" "$URL"
-    elif command -v wget >/dev/null 2>&1; then wget -O "$TMP" "$URL"
+    if command -v curl >/dev/null 2>&1; then curl -fL --retry 3 --connect-timeout 30 --max-time 600 -o "$TMP" "$URL"
+    elif command -v wget >/dev/null 2>&1; then wget -T 30 -t 3 -O "$TMP" "$URL"
     else echo "No built-in HTTP downloader is available" >&2; exit 1
     fi
     chmod 755 "$TMP"
@@ -93,7 +93,10 @@ else {
   if (-not (Test-Path $AgentBrowser)) {
     $url = 'https://github.com/vercel-labs/agent-browser/releases/latest/download/agent-browser-win32-x64.exe'
     $tmp = "$AgentBrowser.tmp.$PID"
-    Invoke-WebRequest -UseBasicParsing -Uri $url -OutFile $tmp
+    if ($PSVersionTable.PSVersion.Major -lt 7) {
+      [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    }
+    Invoke-WebRequest -UseBasicParsing -TimeoutSec 600 -Uri $url -OutFile $tmp
     Move-Item -Force $tmp $AgentBrowser
   }
 }

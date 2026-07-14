@@ -6,10 +6,11 @@ FIXTURE_SOURCE="$ROOT/scripts/fixtures/agent-browser-codex"
 TMP_ROOT=${TMPDIR:-/tmp}
 FIXTURE=$(mktemp -d "$TMP_ROOT/agent-browser-codex.XXXXXX")
 LOG_DIR="$FIXTURE/codex-logs"
-SERVER_PID=""
 
 cleanup() {
-  if [ -n "$SERVER_PID" ]; then kill "$SERVER_PID" 2>/dev/null || true; fi
+  if [ -f "$FIXTURE/.ai/scripts/test-env-down.sh" ]; then
+    (cd "$FIXTURE" && sh .ai/scripts/test-env-down.sh) >/dev/null 2>&1 || true
+  fi
   if [ "${KEEP_CODEX_E2E_FIXTURE:-0}" != 1 ]; then rm -rf "$FIXTURE"; fi
 }
 trap cleanup EXIT
@@ -25,6 +26,7 @@ done
 cp "$ROOT/skills/om-setup-agent-pipeline/references/browsers/agent-browser.md" "$FIXTURE/.ai/browsers/agent-browser.md"
 
 git -C "$FIXTURE" init -q
+git -C "$FIXTURE" branch -M main
 git -C "$FIXTURE" config user.name "Codex Browser Test"
 git -C "$FIXTURE" config user.email "codex-browser-test@example.invalid"
 git -C "$FIXTURE" add .

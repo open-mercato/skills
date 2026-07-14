@@ -34,7 +34,6 @@ always attach to the same instance:
     "notes": ""
   },
   "testRunner": { "name": "playwright | cypress | wdio | other | none", "config": "<path or empty>" },
-  "playwright": { "runner": "playwright", "installed": true, "config": ".ai/qa/playwright.config.ts", "browsers": ["chromium"] },
   "platform": "linux | darwin | wsl2 | win32",
   "startedAt": "<ISO-8601 UTC>",
   "notes": "<anything a consumer must know: teardown, seeded data, gotchas, the working preparation chain>"
@@ -50,7 +49,8 @@ read `baseUrl` and `services` and never need to care about the flavor.
 `browser` is the provider-neutral automation contract. New writers always emit
 it. `playwright` is a legacy compatibility object: emit it as well when the
 selected provider is Playwright, and preserve it when repairing an older
-descriptor. Consumers resolve the provider in this order: `browser.provider`,
+descriptor. Its shape remains `{ "runner": "playwright", "installed": true,
+"config": "<path>", "browsers": ["chromium"] }`. Consumers resolve the provider in this order: `browser.provider`,
 then a present `playwright.runner`, then the config's `browser.provider`, then
 legacy Playwright. `testRunner` describes the repository's committed E2E suite;
 it is independent of the agent-driven browser provider.

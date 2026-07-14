@@ -129,6 +129,9 @@ human can read and tweak them. Write them with LF line endings and add the
 Unless `--browser off`, resolve `BROWSER_PROVIDER` and `BROWSER_FILE` from the
 config-loading step (or the `--browser-provider` override):
 
+Validate the final provider name against `^[A-Za-z0-9._-]+$` before
+interpolating it into `.ai/browsers/<provider>.md`; reject any other value.
+
 1. If the provider was explicit and `$BROWSER_FILE` is missing, run
    `om-setup-agent-pipeline` to install the selected descriptor, reload, and
    continue. For a config created before browser descriptors existed, the

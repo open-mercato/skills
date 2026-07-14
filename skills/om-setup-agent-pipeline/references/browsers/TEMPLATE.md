@@ -29,6 +29,10 @@ BROWSER_VERSION=<version or unknown>
 BROWSER_NOTES=<empty or concrete blocker>
 ```
 
+Consumers parse everything after the first `=` as the value; they never source
+these lines as shell code. This preserves Windows command paths containing
+spaces.
+
 Unsupported OS/CPU combinations and exhausted privilege failures are explicit
 blockers. Never report installed until the live-launch check passes.
 

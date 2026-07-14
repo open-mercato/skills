@@ -57,6 +57,9 @@ CONFIG=.ai/agentic.config.json
 TRACKER=$(jq -r '.tracker // ""' "$CONFIG" 2>/dev/null || echo "")
 QA_DIR=$(jq -r '.paths.qa // ".ai/qa"' "$CONFIG" 2>/dev/null || echo ".ai/qa")
 BROWSER_PROVIDER=$(jq -r '.browser.provider // "playwright"' "$CONFIG" 2>/dev/null || echo "playwright")
+case "$BROWSER_PROVIDER" in
+  ''|*[!A-Za-z0-9._-]*) echo "Invalid browser.provider: $BROWSER_PROVIDER" >&2; exit 1 ;;
+esac
 BROWSER_FILE=".ai/browsers/${BROWSER_PROVIDER}.md"
 LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG" 2>/dev/null || echo false)
 RUN_ID="$(date -u +%Y%m%d-%H%M%S)-$$"
@@ -175,8 +178,10 @@ QA_DIR=$(jq -r '.paths.qa // ".ai/qa"' .ai/agentic.config.json 2>/dev/null || ec
 ENV_DESCRIPTOR="$QA_DIR/test-env.json"
 BASE_URL=$(jq -r '.baseUrl' "$ENV_DESCRIPTOR")
 BROWSER_PROVIDER=$(jq -r '.browser.provider // (if .playwright.runner then "playwright" else empty end) // "playwright"' "$ENV_DESCRIPTOR")
-BROWSER_FILE=$(jq -r '.browser.descriptor // empty' "$ENV_DESCRIPTOR")
-[ -z "$BROWSER_FILE" ] && BROWSER_FILE=".ai/browsers/${BROWSER_PROVIDER}.md"
+case "$BROWSER_PROVIDER" in
+  ''|*[!A-Za-z0-9._-]*) echo "Invalid browser provider in $ENV_DESCRIPTOR: $BROWSER_PROVIDER" >&2; exit 1 ;;
+esac
+BROWSER_FILE=".ai/browsers/${BROWSER_PROVIDER}.md"
 BROWSER_COMMAND=$(jq -r '.browser.command // .playwright.runner // empty' "$ENV_DESCRIPTOR")
 BROWSER_INSTALLED=$(jq -r '.browser.installed // .playwright.installed // false' "$ENV_DESCRIPTOR")
 ```

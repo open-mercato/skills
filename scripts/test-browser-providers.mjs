@@ -3,8 +3,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = new URL("../", import.meta.url).pathname;
+const root = fileURLToPath(new URL("../", import.meta.url));
 const read = (path) => readFileSync(join(root, path), "utf8");
 
 const template = read("skills/om-setup-agent-pipeline/references/browsers/TEMPLATE.md");
@@ -79,6 +80,7 @@ assert.doesNotMatch(agentBrowser, /npm install|npx |node /);
 
 assert.match(setup, /\.browser\.provider \/\/ "playwright"/);
 assert.match(setup, /"browser": \{ "provider": "agent-browser" \}/);
+assert.match(setup, /Invalid browser\.provider/);
 assert.match(prepare, /BROWSER_FILE="\.ai\/browsers\/\$\{BROWSER_PROVIDER\}\.md"/);
 assert.match(envDescriptor, /"browser": \{/);
 assert.match(envDescriptor, /legacy compatibility object/);

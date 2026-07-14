@@ -217,6 +217,9 @@ SPECS_DIR=$(jq -r '.paths.specs // ".ai/specs"' "$CONFIG")
 SCRIPTS_DIR=$(jq -r '.paths.scripts // ".ai/scripts"' "$CONFIG")
 QA_DIR=$(jq -r '.paths.qa // ".ai/qa"' "$CONFIG")
 BROWSER_PROVIDER=$(jq -r '.browser.provider // "playwright"' "$CONFIG")
+case "$BROWSER_PROVIDER" in
+  ''|*[!A-Za-z0-9._-]*) echo "Invalid browser.provider: $BROWSER_PROVIDER" >&2; exit 1 ;;
+esac
 BROWSER_FILE=".ai/browsers/${BROWSER_PROVIDER}.md"
 ```
 

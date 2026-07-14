@@ -70,6 +70,9 @@ CONFIG=.ai/agentic.config.json
 SCRIPTS_DIR=$(jq -r '.paths.scripts // ".ai/scripts"' "$CONFIG" 2>/dev/null || echo ".ai/scripts")
 QA_DIR=$(jq -r '.paths.qa // ".ai/qa"' "$CONFIG" 2>/dev/null || echo ".ai/qa")
 BROWSER_PROVIDER=$(jq -r '.browser.provider // "playwright"' "$CONFIG" 2>/dev/null || echo "playwright")
+case "$BROWSER_PROVIDER" in
+  ''|*[!A-Za-z0-9._-]*) echo "Invalid browser.provider: $BROWSER_PROVIDER" >&2; exit 1 ;;
+esac
 BROWSER_FILE=".ai/browsers/${BROWSER_PROVIDER}.md"
 UP_SCRIPT="$SCRIPTS_DIR/test-env-up.sh"
 DOWN_SCRIPT="$SCRIPTS_DIR/test-env-down.sh"
@@ -90,6 +93,7 @@ if (Test-Path ".ai/agentic.config.json") {
   if ($cfg.paths -and $cfg.paths.qa)      { $QaDir = $cfg.paths.qa }
   if ($cfg.browser -and $cfg.browser.provider) { $BrowserProvider = $cfg.browser.provider }
 }
+if ($BrowserProvider -notmatch '^[A-Za-z0-9._-]+$') { throw "Invalid browser.provider: $BrowserProvider" }
 $BrowserFile = ".ai/browsers/$BrowserProvider.md"
 $UpScript      = "$ScriptsDir/test-env-up.ps1"
 $DownScript    = "$ScriptsDir/test-env-down.ps1"
@@ -136,7 +140,8 @@ and keep it quoted.
 - `--browser <on|off>` (default `on`) — ensure the configured browser provider
   during generation.
 - `--browser-provider <name>` (optional) — override `browser.provider` for this
-  generation. The matching `.ai/browsers/<name>.md` must exist.
+  generation. Validate it against `^[A-Za-z0-9._-]+$` before building the path;
+  the matching `.ai/browsers/<name>.md` must exist.
 - `--playwright <on|off>` — compatibility alias. `on` selects the Playwright
   provider for this generation; `off` behaves like `--browser off`.
 - `--force` — restart even if a healthy environment is running (passed through

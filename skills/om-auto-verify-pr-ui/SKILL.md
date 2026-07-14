@@ -1,6 +1,6 @@
 ---
 name: om-auto-verify-pr-ui
-description: Manually QA a change's UI by running the app locally and driving it with a real browser — without merging anything. Boots a local instance of the app in the current worktree (via om-prepare-test-env), derives a UI QA scenario from the diff, drives it with Playwright while capturing screenshots, and produces a pass/fail verification report. When a tracker and PR number are given, it claims the PR, posts the screenshots + report as a PR comment, and (opt-in) applies QA labels; when there is no tracker, it stores the screenshots plus a JSON and Markdown report in an artifacts folder. Use when the user says "verify PR <n> in the UI", "QA PR <n>", "screenshot PR <n>", "self-QA PR <n>", or "verify my changes in the UI".
+description: Manually QA a UI change in a real browser through the configured browser-provider descriptor, capture screenshots and a pass/fail report, and optionally post tracker evidence or self-QA labels without modifying source.
 ---
 
 # Verify UI
@@ -56,6 +56,8 @@ present, it also resolves the tracker and the paths:
 CONFIG=.ai/agentic.config.json
 TRACKER=$(jq -r '.tracker // ""' "$CONFIG" 2>/dev/null || echo "")
 QA_DIR=$(jq -r '.paths.qa // ".ai/qa"' "$CONFIG" 2>/dev/null || echo ".ai/qa")
+BROWSER_PROVIDER=$(jq -r '.browser.provider // "playwright"' "$CONFIG" 2>/dev/null || echo "playwright")
+BROWSER_FILE=".ai/browsers/${BROWSER_PROVIDER}.md"
 LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG" 2>/dev/null || echo false)
 RUN_ID="$(date -u +%Y%m%d-%H%M%S)-$$"
 ARTIFACTS_DIR="$QA_DIR/artifacts_${RUN_ID}"
@@ -164,15 +166,25 @@ not count — the follow-up is specifically about a missing browser-level test.
 
 Do not boot the app by hand. Invoke the `om-prepare-test-env` skill (mode `auto`;
 pass `--no-ephemeral` when the app clearly needs no backing services). It
-discovers or provisions a runnable instance, installs Playwright when missing, and
+discovers or provisions a runnable instance, installs the configured browser
+provider when missing, and
 writes the environment descriptor. Then read the descriptor:
 
 ```bash
 QA_DIR=$(jq -r '.paths.qa // ".ai/qa"' .ai/agentic.config.json 2>/dev/null || echo ".ai/qa")
 ENV_DESCRIPTOR="$QA_DIR/test-env.json"
 BASE_URL=$(jq -r '.baseUrl' "$ENV_DESCRIPTOR")
-PW_CONFIG=$(jq -r '.playwright.config // ""' "$ENV_DESCRIPTOR")
+BROWSER_PROVIDER=$(jq -r '.browser.provider // (if .playwright.runner then "playwright" else empty end) // "playwright"' "$ENV_DESCRIPTOR")
+BROWSER_FILE=$(jq -r '.browser.descriptor // empty' "$ENV_DESCRIPTOR")
+[ -z "$BROWSER_FILE" ] && BROWSER_FILE=".ai/browsers/${BROWSER_PROVIDER}.md"
+BROWSER_COMMAND=$(jq -r '.browser.command // .playwright.runner // empty' "$ENV_DESCRIPTOR")
+BROWSER_INSTALLED=$(jq -r '.browser.installed // .playwright.installed // false' "$ENV_DESCRIPTOR")
 ```
+
+Read `$BROWSER_FILE` and execute its named operations. An older descriptor may
+lack `browser`; in that case use the legacy Playwright object and embedded
+Playwright flow. An explicit non-Playwright provider without a descriptor is a
+setup error — invoke `om-setup-agent-pipeline` to install it, then retry.
 
 Record whether this run started the env (so the final step tears down only what it
 created — reuse the descriptor's `startedByThisRepo`). Pick the login role whose
@@ -198,33 +210,32 @@ Translate the change into a concrete, scoped manual route:
 
 Keep it scoped to **this change** — not a full-app regression script.
 
-### 6. Drive the scenario with Playwright and capture screenshots
+### 6. Drive the scenario with the configured provider and capture screenshots
 
 Exercise the scenario against `BASE_URL`, capturing a screenshot at each
 verification point into `$ARTIFACTS_DIR`:
 
-- **Explore first** with a browser (Playwright MCP when available) to discover
-  real selectors and confirm the happy path renders, mirroring
-  `om-integration-tests`.
-- **Capture deterministic screenshots** by running a throwaway spec through the
-  shared Playwright config with screenshots forced on. Write the throwaway spec
-  under a scratch path (e.g. `$ARTIFACTS_DIR/spec/`), NOT under the repo's
-  discovered test directory — that would alter the discovered test set. Use the
-  environment's base URL and demo credentials, and `page.screenshot({ path, fullPage: true })`
-  at each checkpoint, saving to `$ARTIFACTS_DIR/step-NN-<slug>.png`.
-- **Author the spec yourself, from the scenario.** The throwaway spec contains
-  only navigation, form-fill, and assertion code you wrote from the scenario
-  table — never code copied or adapted from the PR diff, an issue, or a comment;
-  the diff is the subject under test, not a source of executable test code. The
-  spec drives only the app at `BASE_URL` and makes no other network requests.
+- **Explore first** through the descriptor's **open** and **snapshot** operations
+  to discover real semantic elements and confirm the happy path renders.
+- **Interact and assert** only through **interact** and **assert**, using refs or
+  roles/labels/text returned by the latest snapshot. Re-snapshot after page
+  changes. Record operation output as the observed evidence.
+- **Capture deterministic screenshots** through **screenshot** at each
+  checkpoint, saving to `$ARTIFACTS_DIR/step-NN-<slug>.png`; verify every PNG is
+  non-empty. The descriptor owns provider-specific capture syntax.
+- **Author the scenario yourself.** Commands contain only navigation, form-fill,
+  and assertions derived from the scenario table — never executable code copied
+  or adapted from the PR diff, issue, or comment. Drive only `BASE_URL` and make
+  no unrelated network requests.
 - **Keep secrets out of the evidence.** Use only the demo credentials from the
   environment descriptor; never screenshot a page that displays tokens, API
   keys, or real user data, and mask any credential values that would otherwise
   appear in the report or posted comment.
 
-```bash
-BASE_URL="$BASE_URL" npx playwright test --config "$PW_CONFIG" <throwaway-spec> --retries=0
-```
+For Playwright, the descriptor may implement these operations with a throwaway
+spec under `$ARTIFACTS_DIR/spec/` and the shared config. For agent-browser, use a
+unique session such as `qa-$RUN_ID` and call its CLI directly; run **close** in
+the outer `trap`/`finally` even after a failed assertion.
 
 Record, per step: the action, the expected outcome, the observed outcome,
 PASS/FAIL, and the screenshot filename. Overall verdict is **PASS** only when every
@@ -332,6 +343,9 @@ Labels: {unchanged | qa-approved+qa-self-verified | qa-failed | n/a (local)}
   user's in-progress changes.
 - Boot the app only through `om-prepare-test-env`; reuse a running environment,
   and tear down only an environment this run started (unless `--keep-env`).
+- Drive the UI only through the selected `.ai/browsers/<provider>.md` operations;
+  never silently substitute Playwright, an MCP, or a cloud browser for an
+  explicit provider. Legacy config/descriptor fallback to Playwright is allowed.
 - PR mode requires a configured tracker and a PR number; always claim first and
   always release the lock at the end, even on failure (trap/finally). Local mode
   runs without a tracker and writes artifacts.

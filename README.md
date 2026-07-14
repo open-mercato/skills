@@ -220,6 +220,21 @@ That file is yours, which makes three things easy:
 
 The claim protocol (assignee + `in-progress` + 🤖 comment), the label guards (missing label ⇒ logged skip, `labels.enabled: false` ⇒ no label ops), and the QA gate semantics are part of the contract — a provider must express them, in whatever way its tracker allows.
 
+### Browser automation providers
+
+QA and integration-test skills select `browser.provider` from
+`.ai/agentic.config.json` and execute the committed descriptor at
+`.ai/browsers/<provider>.md`. Fresh setups use agent-browser; Playwright remains
+available for existing repositories and teams that prefer it. The agent-browser
+descriptor downloads its native release binary and Chrome for Testing itself,
+then verifies a live headless launch — no Node runtime, project dependency, or
+cloud-browser subscription is required.
+
+Custom providers implement the operations in
+`skills/om-setup-agent-pipeline/references/browsers/TEMPLATE.md`. Repository E2E
+suites remain authoritative; the provider controls agent-driven exploration,
+assertions, and screenshots.
+
 ## 🏷️ Labels and the QA gate
 
 Every PR carries at most one pipeline label (`review`, `changes-requested`, `merge-queue`, ...) plus additive category, meta, priority, and risk labels; priority says how urgent the work is, risk says how dangerous the change is to ship. The full taxonomy, and whether to use labels at all, lives in the config; `om-setup-agent-pipeline` documents every group and creates missing labels for you.

@@ -56,8 +56,8 @@ Add first-class, configurable agent-browser support to the agent pipeline so bro
 
 ### Phase 1: Provider contract and setup
 
-- [ ] 1.1 Add browser config, loading contract, template, and shipped descriptors
-- [ ] 1.2 Update setup, upgrade flow, and upgrade documentation
+- [x] 1.1 Add browser config, loading contract, template, and shipped descriptors — fcbe802
+- [x] 1.2 Update setup, upgrade flow, and upgrade documentation — b935408
 
 ### Phase 2: Browser consumers
 

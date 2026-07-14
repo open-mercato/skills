@@ -68,3 +68,4 @@ Add first-class, configurable agent-browser support to the agent pipeline so bro
 
 - [x] 3.1 Add contract and cross-platform bootstrap tests — eff14d8
 - [x] 3.2 Run Codex CLI skill exercises and record evidence — 857bd0b
+- [x] Post-review fix: validate provider paths, align descriptor examples, bound downloads, and tear down the Codex fixture — 6929a9a

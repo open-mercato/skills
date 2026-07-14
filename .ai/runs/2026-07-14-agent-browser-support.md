@@ -66,5 +66,5 @@ Add first-class, configurable agent-browser support to the agent pipeline so bro
 
 ### Phase 3: Verification harness
 
-- [ ] 3.1 Add contract and cross-platform bootstrap tests
-- [ ] 3.2 Run Codex CLI skill exercises and record evidence
+- [x] 3.1 Add contract and cross-platform bootstrap tests — eff14d8
+- [x] 3.2 Run Codex CLI skill exercises and record evidence — 857bd0b

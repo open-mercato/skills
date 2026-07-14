@@ -124,25 +124,42 @@ agent needed to run them, parameterized so a
 human can read and tweak them. Write them with LF line endings and add the
 `.gitattributes` rules from 2.1 in the same change.
 
-### 2.4 Ensure a browser test runner (generation-time, Playwright by default)
+### 2.4 Ensure the configured browser provider (generation-time)
 
-Unless `--playwright off`:
+Unless `--browser off`, resolve `BROWSER_PROVIDER` and `BROWSER_FILE` from the
+config-loading step (or the `--browser-provider` override):
 
-1. If the repo already has a browser test runner (`playwright.config.*`,
-   `cypress.config.*`, `wdio.conf.*`, or equivalent), use it as-is and record
-   which one in the descriptor — do not install a second one.
-2. Otherwise install Playwright with the repo's package manager, verify the
-   binary runs (`npx playwright --version`) and at least one browser is present
-   (`npx playwright install --with-deps chromium`, falling back to
-   `npx playwright install chromium`). Write a minimal shared config at
-   `$QA_DIR/playwright.config.ts` that reads `process.env.BASE_URL` — timeouts
-   and retries live in this shared config, never in individual specs.
-3. Where browsers cannot be installed, do not fail the run: record
-   `playwright.installed: false` with the blocker in `notes` so consumers can
-   still run API-level checks and report the limitation honestly.
+Validate the final provider name against `^[A-Za-z0-9._-]+$` before
+interpolating it into `.ai/browsers/<provider>.md`; reject any other value.
 
-This runs once, here — the generated script only *records* the runner state in
-the descriptor; it never re-installs browsers on the fast path.
+1. If the provider was explicit and `$BROWSER_FILE` is missing, run
+   `om-setup-agent-pipeline` to install the selected descriptor, reload, and
+   continue. For a config created before browser descriptors existed, the
+   implicit Playwright provider may use the legacy Playwright flow below.
+2. Read `$BROWSER_FILE`; execute its **ensure-installed** operation, then its
+   **doctor** operation. The provider owns platform detection, autonomous CLI
+   and browser-engine installation, and live-launch verification. The agent runs
+   those operations itself — never hand prerequisite commands to the operator.
+3. Independently discover any repository-native committed test runner
+   (`playwright.config.*`, `cypress.config.*`, `wdio.conf.*`, or equivalent) and
+   record it as `testRunner`. Selecting agent-browser for exploration and
+   screenshots never replaces an existing suite.
+4. Record the provider operation outputs in the descriptor's `browser` object:
+   provider, installed, command, version, descriptor path, and notes. When the
+   provider is Playwright, also write the legacy `playwright` object so older
+   consumers keep working.
+5. Where installation or **doctor** fails after the descriptor exhausts its
+   autonomous paths, do not fail the app boot: record `browser.installed: false`
+   and the concrete blocker in `notes` so consumers can still run API checks and
+   report the browser limitation honestly.
+
+Legacy Playwright fallback: use the repository's existing Playwright setup when
+present. Otherwise install it with the package manager selected by the lockfile,
+install Chromium and available OS dependencies, and write a minimal shared
+config at `$QA_DIR/playwright.config.ts` reading `process.env.BASE_URL`.
+
+Provider provisioning runs once here. The generated entrypoint records the
+verified state on warm runs; it never reinstalls a healthy provider.
 
 ### 2.5 Verify the script — cold and warm
 

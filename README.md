@@ -44,7 +44,7 @@ Then ship something:
 
 The agent drafts an execution plan, implements it phase by phase in an isolated worktree, runs your validation commands, reviews its own diff, and opens a labeled, reviewed PR.
 
-**Upgrading later?** Skills auto-update on reinstall, but repo-installed artifacts — above all `.ai/trackers/<tracker>.md` — do not. Run `/om-apply-upgrade-notes` in the repo, or follow [UPGRADE_NOTES.md](UPGRADE_NOTES.md) by hand.
+**Upgrading later?** Skills auto-update on reinstall, but repo-installed artifacts — including `.ai/trackers/<tracker>.md` and `.ai/browsers/<provider>.md` — do not. Run `/om-apply-upgrade-notes` in the repo, or follow [UPGRADE_NOTES.md](UPGRADE_NOTES.md) by hand.
 
 ## 🎬 See how it works!
 
@@ -117,8 +117,8 @@ Interactive helpers: they act once, report, and hand control back to you.
 
 | Skill | What it does |
 |---|---|
-| `om-setup-agent-pipeline` | One-per-repo configurator. Inspects the repository, asks a few questions, writes `.ai/agentic.config.json`, installs the tracker descriptor, generates `SDLC.md` and an `AGENTS.md` starter when missing. |
-| `om-apply-upgrade-notes` | Post-upgrade migrator. Applies `UPGRADE_NOTES.md` to the repo: re-syncs the installed tracker descriptor with newly shipped operations while preserving local edits, reports gaps in custom tracker providers, and checks the config against the notable-upgrade entries. |
+| `om-setup-agent-pipeline` | One-per-repo configurator. Inspects the repository, asks a few questions, writes `.ai/agentic.config.json`, installs tracker and browser-provider descriptors, generates `SDLC.md` and an `AGENTS.md` starter when missing. |
+| `om-apply-upgrade-notes` | Post-upgrade migrator. Applies `UPGRADE_NOTES.md` to the repo: re-syncs installed tracker/browser descriptors while preserving local edits, reports custom-provider gaps, and checks the config against notable upgrades. |
 | `om-merge-buddy` | Scans open PRs and reports which can merge now and which are close but blocked, based on labels, reviews, CI, and mergeability. |
 | `om-approve-merge-pr` | Approves and squash-merges a PR given only its number. Can file a follow-up issue at the same time. |
 | `om-check-and-commit` | Runs the configured validation gate on the current branch, fixes obvious drift, then commits and pushes when green. |
@@ -126,7 +126,7 @@ Interactive helpers: they act once, report, and hand control back to you.
 | `om-spec-writing` | Writes and reviews feature specs to staff-engineer standards: skeleton-first with a hard Open Questions gate, phased implementation breakdown that feeds `om-auto-create-pr`, severity-ranked architectural reviews. |
 | `om-prepare-issue` | Files a well-formed tracker issue for deferred work: dedupes against existing issues and PRs first, links the covering spec when one exists, otherwise embeds a step-by-step implementation analysis derived from the codebase. |
 | `om-integration-tests` | Creates and runs integration/E2E tests by exploring the running app first — real locators, runtime fixtures, no hardcoded IDs — and reports failures with artifact-based per-test diagnosis. Reuses the shared `om-prepare-test-env` instance so QA and tests hit the same booted app. |
-| `om-auto-verify-pr-ui` | Runs the app locally and QAs a change's UI in a real browser without merging: boots via `om-prepare-test-env`, derives a scenario from the diff, drives Playwright with screenshots, and produces a pass/fail report. Posts the evidence as a PR comment when a tracker is configured; otherwise saves screenshots + a JSON/Markdown report to an artifacts folder. |
+| `om-auto-verify-pr-ui` | Runs the app locally and QAs a change's UI in a real browser without merging: boots via `om-prepare-test-env`, derives a scenario from the diff, drives the configured browser provider with screenshots, and produces a pass/fail report. Posts evidence as a PR comment when a tracker is configured; otherwise saves screenshots + JSON/Markdown reports. |
 | `om-auto-update-changelog` | Drafts a CHANGELOG.md release entry for every PR merged since the last release — emoji categories, contributor credits with the Supersede Credit Rule for carried-forward fork PRs — then delegates to `om-auto-create-pr` to ship it as a docs PR. |
 
 ### 🤝 Skills invoke each other
@@ -140,7 +140,7 @@ The building blocks behind the autofix chain and the review loop. You can call t
 | `om-fix` | Implements the minimal change, adds regression tests, runs the validation gate. Does not commit or push. |
 | `om-open-pr` | Commits the worktree, pushes the branch, opens the PR, normalizes labels, releases the claim lock. |
 | `om-code-review` | The review checklist behind `om-auto-review-pr`: correctness, security, contract surfaces, plus your repo-local checklist when configured. |
-| `om-prepare-test-env` | Boots the app for QA and tests, any stack: reuses the repo's own ephemeral/test environment when it has one, generates Docker/testcontainers-style bring-up scripts for the project's backing services (Postgres, MySQL, Mongo, …) when a disposable environment is wanted and none exists, or runs the app in dev/docker/production mode otherwise. Keeps bootstrap fast: reuses running environments (PID-checked, health-probed, freshness-validated), caches builds behind source/env fingerprints, locks concurrent bootstraps, and records every bootstrap lesson so the next boot cannot repeat it. Installs Playwright when missing and writes a shared environment descriptor so QA and tests reuse one instance. Works on macOS, Linux, WSL2, and Windows. |
+| `om-prepare-test-env` | Boots the app for QA and tests, any stack: reuses the repo's own environment or generates portable bring-up scripts, then caches builds and validates warm reuse. It autonomously provisions the configured browser provider (agent-browser by default; Playwright supported), writes a shared environment descriptor, and works on macOS, Linux, WSL2, and Windows. |
 
 ## 🧰 Works with any stack
 
@@ -151,6 +151,7 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
   "version": 1,
   "baseBranch": "auto",
   "tracker": "github",
+  "browser": { "provider": "agent-browser" },
   "validation": {
     "commands": ["pnpm typecheck", "pnpm test", "pnpm build"]
   },
@@ -177,6 +178,10 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
 A Rust repo puts `cargo test` and `cargo clippy` in `validation.commands`; a Go repo puts `go test ./...`. Skills run whatever you configure and treat any non-zero exit as a gate failure. A skill invoked in a repo without the config runs `om-setup-agent-pipeline` first — interactively when you're there to answer its questions, with `--defaults` when running unattended — then continues with the freshly written config.
 
 GitHub is the default tracker, but nothing in the skills is hard-wired to it — see the tracker providers section below.
+
+Agent-browser is the default browser automation provider for fresh setups. It
+installs itself and Chrome for Testing when needed; existing repositories remain
+on Playwright until their config makes a provider explicit.
 
 ## 🎨 Make it yours
 
@@ -214,6 +219,21 @@ That file is yours, which makes three things easy:
 - **Split setups** — issues in Linear, PRs on GitHub: implement the issue operations against Linear and delegate the PR sections to the GitHub descriptor. The template documents this pattern, including how identifiers cross-link (a `ENG-123` ticket referenced from a GitHub PR).
 
 The claim protocol (assignee + `in-progress` + 🤖 comment), the label guards (missing label ⇒ logged skip, `labels.enabled: false` ⇒ no label ops), and the QA gate semantics are part of the contract — a provider must express them, in whatever way its tracker allows.
+
+### Browser automation providers
+
+QA and integration-test skills select `browser.provider` from
+`.ai/agentic.config.json` and execute the committed descriptor at
+`.ai/browsers/<provider>.md`. Fresh setups use agent-browser; Playwright remains
+available for existing repositories and teams that prefer it. The agent-browser
+descriptor downloads its native release binary and Chrome for Testing itself,
+then verifies a live headless launch — no Node runtime, project dependency, or
+cloud-browser subscription is required.
+
+Custom providers implement the operations in
+`skills/om-setup-agent-pipeline/references/browsers/TEMPLATE.md`. Repository E2E
+suites remain authoritative; the provider controls agent-driven exploration,
+assertions, and screenshots.
 
 ## 🏷️ Labels and the QA gate
 

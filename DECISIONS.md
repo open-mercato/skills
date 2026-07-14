@@ -40,6 +40,19 @@ An earlier revision (see Deferred) removed the upstream ephemeral-environment ma
 
 No skill calls a tracker CLI or API directly. Skills name **tracker operations** (**get-issue**, **create-pr**, **comment-pr**, **merge-pr**, …) and a single committed descriptor file, `.ai/trackers/<tracker>.md` — selected by the config's `tracker` field and installed by `om-setup-agent-pipeline` — defines how each operation executes. The collection ships the GitHub descriptor (`gh` CLI) plus a `TEMPLATE.md` documenting the full contract; a new provider (Linear, Jira, …) is one descriptor file, no skill changes. The descriptor is a markdown instruction layer rather than code on purpose: it is read by the agent at runtime, so it works identically across coding agents, and the repo's committed copy is the override point — teams edit it to extend or replace any operation, the same "local file wins" model as repo-local skills. Split setups (issues in Linear, PRs on GitHub) implement issue operations against the issue tracker and delegate the PR sections to the GitHub descriptor. An earlier design kept `gh` calls inline in the skills and deferred extraction until a second provider existed; the extraction was pulled forward because inline calls made every skill GitHub-shaped and blocked the drop-in/override story. CI now enforces the layer: the lint gate rejects `gh` commands inside `skills/**` outside the shipped tracker descriptors.
 
+## Browser-provider abstraction
+
+Browser automation uses the same committed markdown-descriptor pattern as
+trackers, under `.ai/browsers/<provider>.md` and selected by
+`browser.provider`. The shared operation contract separates agent-driven
+exploration, assertions, screenshots, and autonomous tool provisioning from the
+skills that consume them. Fresh setups select agent-browser; Playwright remains
+shipped as a compatibility provider, and absent config keys/legacy
+`test-env.json` files continue to mean Playwright. Repository-native E2E suites
+stay authoritative regardless of the exploration provider. This boundary avoids
+hard-wiring every QA skill to a single CLI while keeping the repo's committed
+descriptor as the customization point.
+
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.

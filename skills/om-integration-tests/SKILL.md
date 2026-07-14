@@ -1,6 +1,6 @@
 ---
 name: om-integration-tests
-description: Run and create integration/E2E tests (Playwright TypeScript by default) — execute the suite, generate new tests from specs or feature descriptions by exploring the running application first, and report failures with artifact-based per-test diagnosis. Reuses an already-running test environment and caches build artifacts (state files, PID-checked locks, freshness fingerprints) to keep bootstrap fast. Use when the user says "run integration tests", "test this feature", "create test for", or "integration test".
+description: Run and create integration/E2E tests by exploring the live app with the configured browser provider, preserving repository-native runners, reusing the shared test environment, and diagnosing failures from concrete artifacts.
 ---
 
 # Integration Tests
@@ -17,9 +17,9 @@ Check for a repo-local skill of the same name at `.ai/skills/om-integration-test
 
 ## Reuse the shared test environment
 
-Before discovering how to run the app yourself, check for a shared environment descriptor written by `om-prepare-test-env` at `<paths.qa>/test-env.json` (default `.ai/qa/test-env.json`). When it reports `"status":"running"` and passes the validation in the fast-bootstrap contract below (PID alive, readiness probe answers, still fresh), **attach to that instance** — read `baseUrl`, `credentials`, and the browser-runner `config` from it, and run tests against that same booted app. This is how QA (`om-auto-verify-pr-ui`) and integration tests share one environment instead of each booting their own, so runs are faster and identical.
+Before discovering how to run the app yourself, check for a shared environment descriptor written by `om-prepare-test-env` at `<paths.qa>/test-env.json` (default `.ai/qa/test-env.json`). When it reports `"status":"running"` and passes the validation in the fast-bootstrap contract below (PID alive, readiness probe answers, still fresh), **attach to that instance** — read `baseUrl`, `credentials`, the provider-neutral `browser` object, and `testRunner` from it. Resolve older descriptors through the legacy `playwright` object. This is how QA (`om-auto-verify-pr-ui`) and integration tests share one environment instead of each booting their own, so runs are faster and identical.
 
-When no descriptor exists (or it is stale), invoke `om-prepare-test-env` to discover or provision one — it establishes the run command, provisions any backing services, installs Playwright when missing, and writes the descriptor — then attach to it. Fall back to the manual discovery below only when `om-prepare-test-env` is unavailable or the user asked to run against an already-running instance. Never hardcode a guessed `localhost:<port>`; take the base URL from the descriptor or the runner config the repo already uses.
+When no descriptor exists (or it is stale), invoke `om-prepare-test-env` to discover or provision one — it establishes the run command, provisions backing services, installs the configured browser provider through `.ai/browsers/<provider>.md`, and writes the descriptor — then attach to it. Fall back to the manual discovery below only when `om-prepare-test-env` is unavailable or the user asked to run against an already-running instance. Never hardcode a guessed `localhost:<port>`; take the base URL from the descriptor or the runner config the repo already uses.
 
 ## Discover the test setup
 
@@ -29,7 +29,21 @@ Before writing anything, find how this repo already does integration testing:
 - Test scripts in `package.json`, a `Makefile`, or CI workflows — prefer whatever command CI runs.
 - Existing test files: mirror their location, naming, fixtures, and helper conventions exactly.
 
-When the repo has no integration test setup at all, propose Playwright (TypeScript) with a minimal shared config and ask before scaffolding it.
+When the repo has no integration-test setup, propose a minimal executable setup
+for the configured provider and ask before scaffolding it. For agent-browser,
+create matching POSIX `sh` and native PowerShell scenario launchers that perform
+the same observed semantic actions/assertions through the provider descriptor;
+this keeps the test runnable on macOS, Linux, WSL2, Git Bash, and native
+Windows without a project runtime dependency. For Playwright, use a minimal
+shared TypeScript config. Never replace an existing runner merely because a
+different exploration provider is selected.
+
+The paired launchers must be native, not wrappers around each other. The POSIX
+launcher invokes the generated `.sh` environment entrypoint; the PowerShell
+launcher invokes `.ai/scripts/test-env-up.ps1`. A `.ps1` must never assume `sh`,
+WSL, Git Bash, or POSIX utilities exist. When the matching environment launcher
+has not been generated yet, the test reports that `om-prepare-test-env` must be
+run once on that platform; it does not call the other platform's launcher.
 
 Runtime policy: timeouts and retries belong in the **shared runner config**, not in individual test files — no per-test timeout or retry overrides. While authoring or debugging a single test, fail fast by overriding retries to 0 on the command line, never by editing the shared config.
 
@@ -73,11 +87,13 @@ Follow the repository's existing naming convention for test cases. When there is
 
 ### Phase 3 — Explore the feature in the running app
 
-Use the base URL established above. For UI tests, drive a real browser (browser automation / MCP tooling when available):
+Use the base URL established above. For UI tests, read the selected browser
+descriptor and drive its **open**, **snapshot**, **interact**, and **assert**
+operations (use MCP tooling only when it implements the selected provider):
 
 1. Log in with the appropriate role.
 2. Navigate to the relevant page.
-3. Take snapshots to capture exact element labels, button text, and form fields.
+3. Take provider snapshots to capture exact element references, labels, button text, and form fields.
 4. Walk the happy path to discover the actual flow.
 5. Note validation messages, success states, and redirects.
 
@@ -86,7 +102,11 @@ For API tests, discover with real requests: the exact endpoint path and method, 
 ### Phase 4 — Write the test
 
 - Place the file where this repo keeps integration tests (Phase 0 discovery); mirror existing structure.
-- Use the locators actually observed in Phase 3 — role/label/text-based locators (`getByRole`, `getByLabel`, `getByText`), never guessed CSS paths.
+- Use only elements actually observed in Phase 3 — semantic roles, labels, text,
+  or provider refs; never guessed CSS paths. For agent-browser scenario scripts,
+  prefer its semantic `find` commands and re-snapshot before using refreshed
+  refs. For repository-native Playwright tests, use `getByRole`, `getByLabel`,
+  and `getByText`.
 - Do not hardcode entity IDs in routes, payloads, or assertions. Create fixtures at runtime (prefer API setup for stability) or select existing rows via stable text/role locators.
 - Do not rely on seeded/demo data for prerequisites; create what the test needs.
 - Clean up everything the test created in `finally`/teardown.
@@ -100,7 +120,11 @@ Only when documentation is wanted, and only if the repo has a place for it (a QA
 
 ### Phase 6 — Verify
 
-Run the new test with the repo's runner command, fail-fast (retries 0) while iterating. If it fails, fix it — never leave a broken test behind.
+Run the new test with the repo's runner command or the selected provider's
+executable scenario launcher. Use command-level fail-fast behavior while
+iterating. Capture screenshots through **screenshot** at key assertions. If it
+fails, fix it — never leave a broken test behind. Always invoke **close** from a
+`trap`/`finally` block.
 
 ## Rendering and performance gates
 
@@ -149,7 +173,11 @@ A typical spec produces 3–8 test cases. Happy paths first; edge cases as separ
 - MUST NOT rely on seeded/demo data; create required fixtures per test (prefer API setup) and clean them up in teardown.
 - MUST keep tests deterministic and isolated from run order and retries.
 - MUST NOT add per-test timeout/retry overrides; the shared runner config owns them. Debug with command-level retries 0.
-- MUST use locators observed in real snapshots (`getByRole`, `getByLabel`, `getByText`).
+- MUST read `.ai/browsers/<provider>.md` and use its named operations for
+  agent-driven UI exploration; only the implicit legacy Playwright provider may
+  use embedded fallback instructions when an older repo has no descriptor.
+- MUST use elements observed in real snapshots (semantic roles/labels/text or
+  provider refs; Playwright tests use `getByRole`, `getByLabel`, `getByText`).
 - MUST verify the new test passes before finishing; never leave broken tests.
 - MUST analyze failure artifacts before reporting, and report failures in the per-test table with reason, evidence, and suggested owner — also when only running existing tests.
 - The executable test is mandatory; the markdown scenario is optional documentation.

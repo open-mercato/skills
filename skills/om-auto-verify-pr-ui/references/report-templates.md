@@ -12,7 +12,7 @@ in local mode and the source of the PR comment in PR mode.
   "mode": "pr | local",
   "target": { "prNumber": 1234, "title": "…", "branch": "…", "headSha": "…" },
   "verdict": "PASS | FAIL | PARTIAL",
-  "environment": { "baseUrl": "…", "role": "…", "startedByThisRepo": true },
+  "environment": { "baseUrl": "…", "role": "…", "startedByThisRepo": true, "browserProvider": "agent-browser | playwright | custom" },
   "scenario": [
     { "step": 1, "priority": "P1", "action": "…", "expected": "…", "observed": "…", "result": "PASS", "screenshot": "step-01-…​.png" }
   ],
@@ -29,7 +29,7 @@ template:
 ## 🖼️ UI QA evidence — {verdict}
 
 **Verdict:** {✅ PASS | ❌ FAIL | ⚠️ PARTIAL — environment-limited}
-**Environment:** `{baseUrl}` · role `{role}`
+**Environment:** `{baseUrl}` · role `{role}` · browser `{provider}`
 **Verified:** {branch} @ {headSha (short)}
 
 ### Scenario ({P0|P1|P2} — {area})

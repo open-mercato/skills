@@ -9,13 +9,14 @@ against them — not against the copies shipped in this repo:
 | Installed artifact | Installed by | Updated how |
 |--------------------|--------------|-------------|
 | `.ai/trackers/<tracker>.md` (tracker descriptor — the file every tracker operation executes from) | `om-setup-agent-pipeline` | Manual re-sync (see below) |
+| `.ai/browsers/<provider>.md` (browser automation and autonomous provisioning operations) | `om-setup-agent-pipeline` | Manual re-sync (see below) |
 | `.ai/agentic.config.json` | `om-setup-agent-pipeline` | Re-run `/om-setup-agent-pipeline`; it preserves answers where it can |
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
 **The `om-apply-upgrade-notes` skill automates this document**: run `/om-apply-upgrade-notes` in the consuming repository and it re-syncs the tracker descriptor (preserving local edits), checks the config, and walks the notable-upgrades log below. The rest of this file is the manual path and the reference for what the skill does.
 
-**After every skills upgrade, re-sync your tracker descriptor.** A stale descriptor fails
+**After every skills upgrade, re-sync your tracker and browser descriptors.** A stale descriptor fails
 gracefully but silently: a skill that names a tracker operation your installed descriptor does not
 define will degrade (or skip the step) instead of erroring, so you may not notice you are missing
 new behavior.
@@ -47,9 +48,36 @@ For a **custom tracker** (`.ai/trackers/<name>.md` written from `TEMPLATE.md`): 
 `TEMPLATE.md` against the version you built from, and implement any newly added operations for
 your tracker.
 
+Browser descriptors use the same process. Shipped copies live under
+`skills/om-setup-agent-pipeline/references/browsers/`; installed copies live at
+`.ai/browsers/<provider>.md`. Diff and merge by `### <operation>` section, or
+re-run `/om-setup-agent-pipeline` to choose and install a provider while
+preserving the rest of the config.
+
 ## Notable upgrades
 
 Newest first. Each entry lists the symptom you will see with a stale installation and the fix.
+
+### 2026-07 — Browser providers and first-class agent-browser
+
+Browser-capable skills now read `browser.provider` from
+`.ai/agentic.config.json` and execute named operations from
+`.ai/browsers/<provider>.md`. Fresh setups choose `agent-browser`, whose shipped
+descriptor installs its native CLI, Chrome for Testing, and available OS
+libraries autonomously on macOS, Linux, WSL2, Git Bash, and native Windows.
+Playwright remains available as a provider and as the implicit fallback for
+older configs.
+
+- **Symptom of a stale installation:** QA skills continue using their embedded
+  Playwright flow, or an explicit `browser.provider` cannot be resolved because
+  `.ai/browsers/<provider>.md` is missing.
+- **Fix:** run `/om-apply-upgrade-notes --yes` to add
+  `browser.provider: "playwright"` (behavior-preserving for an existing repo)
+  and install `.ai/browsers/playwright.md`; then change the provider to
+  `agent-browser` and install its descriptor when the team wants the new
+  default. A fresh `/om-setup-agent-pipeline` run may select agent-browser
+  directly. Custom providers must implement the operations in
+  `references/browsers/TEMPLATE.md`.
 
 ### 2026-07 — `attach-image-evidence` tracker operation (PR #14)
 

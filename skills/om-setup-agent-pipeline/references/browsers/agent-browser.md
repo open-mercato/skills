@@ -155,11 +155,17 @@ Use JSON output and compare the observed value in the current shell. Examples:
 ### screenshot
 
 ```bash
-"$AGENT_BROWSER_BIN" --session "$BROWSER_SESSION" screenshot "$SCREENSHOT_PATH" --full --json
-test -s "$SCREENSHOT_PATH"
+SCREENSHOT_DIR=$(dirname "$SCREENSHOT_PATH")
+mkdir -p "$SCREENSHOT_DIR"
+ABS_SCREENSHOT_PATH=$(cd "$SCREENSHOT_DIR" && pwd)/$(basename "$SCREENSHOT_PATH")
+"$AGENT_BROWSER_BIN" --session "$BROWSER_SESSION" screenshot --full "$ABS_SCREENSHOT_PATH" --json
+test -s "$ABS_SCREENSHOT_PATH"
 ```
 
-PowerShell checks `Test-Path $ScreenshotPath` and a non-zero file length.
+The absolute path avoids the CLI treating a relative multi-segment path as a
+selector. PowerShell resolves it with
+`[IO.Path]::GetFullPath($ScreenshotPath)`, creates the parent directory, then
+checks `Test-Path` and a non-zero file length.
 
 ### close
 

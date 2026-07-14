@@ -38,6 +38,13 @@ Windows without a project runtime dependency. For Playwright, use a minimal
 shared TypeScript config. Never replace an existing runner merely because a
 different exploration provider is selected.
 
+The paired launchers must be native, not wrappers around each other. The POSIX
+launcher invokes the generated `.sh` environment entrypoint; the PowerShell
+launcher invokes `.ai/scripts/test-env-up.ps1`. A `.ps1` must never assume `sh`,
+WSL, Git Bash, or POSIX utilities exist. When the matching environment launcher
+has not been generated yet, the test reports that `om-prepare-test-env` must be
+run once on that platform; it does not call the other platform's launcher.
+
 Runtime policy: timeouts and retries belong in the **shared runner config**, not in individual test files — no per-test timeout or retry overrides. While authoring or debugging a single test, fail fast by overriding retries to 0 on the command line, never by editing the shared config.
 
 ## Discover how to run the app

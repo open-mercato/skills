@@ -11,6 +11,8 @@
   "scripts": {
     "install-skills": "node scripts/install-skills.mjs",
     "uninstall-skills": "node scripts/install-skills.mjs --uninstall",
-    "lint": "scripts/lint.sh"
+    "lint": "scripts/lint.sh",
+    "test:browser-providers": "node scripts/test-browser-providers.mjs",
+    "test:agent-browser-codex": "bash scripts/test-agent-browser-codex.sh"
   }
 }

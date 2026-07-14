@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "baseBranch": "main",
+  "tracker": "",
+  "browser": { "provider": "agent-browser" },
+  "validation": { "commands": [] },
+  "labels": { "enabled": false },
+  "qaGate": false,
+  "paths": {
+    "runs": ".ai/runs",
+    "analysis": ".ai/analysis",
+    "specs": ".ai/specs",
+    "scripts": ".ai/scripts",
+    "qa": ".ai/qa"
+  },
+  "reviewChecklist": null
+}

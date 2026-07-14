@@ -26,7 +26,20 @@ The named operations (**get-issue**, **create-pr**, **comment-pr**, **merge-pr**
 - **Breaking:** renaming an operation, changing an operation's inputs/outputs, removing a guard, referencing a new operation from a skill without adding it to the template and shipped descriptors.
 - **Required path:** add new operations to `TEMPLATE.md` and every shipped descriptor in the same PR; skills must degrade gracefully (documented fallback) when running against an older descriptor copy that lacks a newly added operation.
 
-### 4. Cross-skill file formats
+### 4. The browser-provider operations contract
+
+The named browser operations (**ensure-installed**, **doctor**, **open**,
+**snapshot**, **interact**, **assert**, **screenshot**, **close**) defined by
+`skills/om-setup-agent-pipeline/references/browsers/TEMPLATE.md`. Consumer repos
+hold committed, possibly team-edited copies at `.ai/browsers/<provider>.md`.
+
+- **Breaking:** renaming an operation, changing its inputs/outputs, or selecting
+  a provider without installing its descriptor.
+- **Required path:** update `TEMPLATE.md` and every shipped browser descriptor in
+  the same PR. Browser consumers must retain the implicit Playwright fallback
+  for configs and environment descriptors created before this contract existed.
+
+### 5. Cross-skill file formats
 
 - **Execution-plan `## Progress` section** (`- [ ]` / `- [x]` checklists with `N.M` step ids and ` — <sha>` suffixes) — written by `om-auto-create-pr`, parsed by `om-auto-continue-pr`.
 - **PR body `Tracking plan:` and `Status:` lines** — written by `om-auto-create-pr`, parsed by `om-auto-continue-pr` and the loop skills.
@@ -35,14 +48,17 @@ The named operations (**get-issue**, **create-pr**, **comment-pr**, **merge-pr**
 
 **Breaking:** changing any of these formats so an unmodified consumer skill can no longer parse output produced by a modified producer (or vice versa). **Required path:** update producer and all consumers in one PR, and keep the parser tolerant of the previous format when consumer repos may hold old artifacts (committed plans, descriptors).
 
-### 5. The label taxonomy semantics
+Adding the provider-neutral `browser` object to `test-env.json` is additive;
+readers must continue accepting the legacy `playwright` object.
+
+### 6. The label taxonomy semantics
 
 The pipeline/category/meta/priority/risk groups, their exclusivity rules, and the QA-gate meaning of `needs-qa`/`qa-approved`/`skip-qa`. Consumer repos have these labels created in their trackers and encoded in their committed `SDLC.md`.
 
 - **Breaking:** renaming a label, changing a group's exclusivity, weakening the QA gate rule.
 - **Required path:** additive labels only; renames need a documented migration note and support for both names in the skills for one release cycle.
 
-### 6. Installer CLI (`package.json` scripts, `scripts/install-skills.mjs`)
+### 7. Installer CLI (`package.json` scripts, `scripts/install-skills.mjs`)
 
 `npm run install-skills` / `uninstall-skills` flags and behavior, and the skills.sh-compatible repo layout it relies on.
 

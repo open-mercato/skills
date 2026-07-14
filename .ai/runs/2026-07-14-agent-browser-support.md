@@ -52,6 +52,8 @@ Add first-class, configurable agent-browser support to the agent pipeline so bro
 
 ## Progress
 
+PR: #23
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Provider contract and setup

@@ -61,8 +61,8 @@ Add first-class, configurable agent-browser support to the agent pipeline so bro
 
 ### Phase 2: Browser consumers
 
-- [ ] 2.1 Update environment provisioning and descriptor compatibility
-- [ ] 2.2 Update UI verification and integration-test provider execution
+- [x] 2.1 Update environment provisioning and descriptor compatibility — b0b9c84
+- [x] 2.2 Update UI verification and integration-test provider execution — 0b2a037
 
 ### Phase 3: Verification harness
 

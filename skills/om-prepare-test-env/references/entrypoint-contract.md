@@ -116,7 +116,13 @@ of this section. In order:
    TEST_ENV_BASE_URL=http://127.0.0.1:4321
    TEST_ENV_DESCRIPTOR=.ai/qa/test-env.json
    TEST_ENV_REUSED=1        # 0 on a fresh boot
+   BROWSER_PROVIDER=agent-browser
+   BROWSER_INSTALLED=1
    ```
+
+   Preserve the provider state verified during generation. The warm entrypoint
+   does not reinstall it; when **doctor** later fails, return to generation in
+   repair mode and repair the provider installation through its descriptor.
 
 The down script (`test-env-down.sh` / `test-env-down.ps1`) mirrors it: stop the
 app PID, remove exactly the

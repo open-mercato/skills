@@ -1,6 +1,6 @@
 ---
 name: om-prepare-test-env
-description: Prepare a reusable, technology-agnostic environment for running and testing the app locally — expensive exactly once. On first use it discovers how the project runs (its own ephemeral/test tooling, Docker/compose, dev server, or a production build), then COMPILES that knowledge into a project-specific entrypoint script (default `.ai/scripts/test-env-up.sh`; a PowerShell `test-env-up.ps1` on native Windows) that embeds reuse checks, a generic build cache, service provisioning, health waits, and the environment-descriptor write. Every later invocation just executes that script — no re-discovery, no re-reasoning. Installs a browser test runner (Playwright by default) when missing, and writes a shared environment descriptor (`.ai/qa/test-env.json`) so QA and integration-test skills attach to the exact same instance. Use when the user says "prepare the test env", "spin up the app for testing", "set up an ephemeral environment", "get the app running so I can QA it", or when another skill needs a running instance.
+description: Prepare a reusable, technology-agnostic environment for local tests and QA. Compiles discovery into cross-platform launch scripts, provisions the configured browser provider autonomously, and writes the shared test-env descriptor consumed by UI and integration-test skills.
 ---
 
 # Prepare Test Environment
@@ -69,6 +69,8 @@ From a POSIX shell (macOS, Linux, WSL2, Git Bash):
 CONFIG=.ai/agentic.config.json
 SCRIPTS_DIR=$(jq -r '.paths.scripts // ".ai/scripts"' "$CONFIG" 2>/dev/null || echo ".ai/scripts")
 QA_DIR=$(jq -r '.paths.qa // ".ai/qa"' "$CONFIG" 2>/dev/null || echo ".ai/qa")
+BROWSER_PROVIDER=$(jq -r '.browser.provider // "playwright"' "$CONFIG" 2>/dev/null || echo "playwright")
+BROWSER_FILE=".ai/browsers/${BROWSER_PROVIDER}.md"
 UP_SCRIPT="$SCRIPTS_DIR/test-env-up.sh"
 DOWN_SCRIPT="$SCRIPTS_DIR/test-env-down.sh"
 ENV_DESCRIPTOR="$QA_DIR/test-env.json"
@@ -81,11 +83,14 @@ built-ins; forward-slash paths work fine in PowerShell and stay portable):
 
 ```powershell
 $ScriptsDir = ".ai/scripts"; $QaDir = ".ai/qa"
+$BrowserProvider = "playwright"
 if (Test-Path ".ai/agentic.config.json") {
   $cfg = Get-Content ".ai/agentic.config.json" -Raw | ConvertFrom-Json
   if ($cfg.paths -and $cfg.paths.scripts) { $ScriptsDir = $cfg.paths.scripts }
   if ($cfg.paths -and $cfg.paths.qa)      { $QaDir = $cfg.paths.qa }
+  if ($cfg.browser -and $cfg.browser.provider) { $BrowserProvider = $cfg.browser.provider }
 }
+$BrowserFile = ".ai/browsers/$BrowserProvider.md"
 $UpScript      = "$ScriptsDir/test-env-up.ps1"
 $DownScript    = "$ScriptsDir/test-env-down.ps1"
 $EnvDescriptor = "$QaDir/test-env.json"
@@ -128,8 +133,12 @@ and keep it quoted.
 - `--no-ephemeral` — never provision disposable services (generation-time choice).
 - `--stop` / `--down` — run the teardown script for the environment this repo's
   descriptor recorded as started by a previous run, then exit.
-- `--playwright <on|off>` (default `on`) — ensure a browser test runner during
-  generation when the repo has none.
+- `--browser <on|off>` (default `on`) — ensure the configured browser provider
+  during generation.
+- `--browser-provider <name>` (optional) — override `browser.provider` for this
+  generation. The matching `.ai/browsers/<name>.md` must exist.
+- `--playwright <on|off>` — compatibility alias. `on` selects the Playwright
+  provider for this generation; `off` behaves like `--browser off`.
 - `--force` — restart even if a healthy environment is running (passed through
   to the entrypoint script).
 - `--force-rebuild` — ignore the build cache and run the full preparation/build
@@ -222,7 +231,7 @@ phase ends. Run the full procedure in
   preparation chain, backing services, launch command/port, build inputs.
 - **2.3 Write the scripts** — generate `$UP_SCRIPT`/`$DOWN_SCRIPT` implementing
   the entrypoint contract (`references/entrypoint-contract.md`).
-- **2.4 Ensure a browser test runner** — Playwright by default, once, here.
+- **2.4 Ensure the configured browser provider** — once, through its descriptor.
 - **2.5 Verify the script — cold and warm** — the gate: the warm run must reuse,
   not rebuild.
 - **2.6 Report** — script paths, descriptor, base URL, cold/warm timings.
@@ -316,8 +325,10 @@ scheduled for every future run.
 - The script always writes `$ENV_DESCRIPTOR` so QA and integration-test skills
   attach to the same instance; never store real secrets in it — disposable/demo
   values only.
-- Ensure the browser runner at generation time (Playwright by default); when
-  browsers cannot be installed, record the blocker instead of faking readiness.
+- Ensure the configured browser provider at generation time through
+  `.ai/browsers/<provider>.md`; when installation or its live-launch check fails,
+  record the blocker instead of faking readiness. An implicit Playwright provider
+  may use the legacy embedded flow when an older repo has no descriptor.
 - Only tear down what this repo started; never touch a developer's own running
   services.
 - Every lesson the fast path teaches goes into the script and the repo-local

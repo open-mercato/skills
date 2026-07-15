@@ -41,7 +41,7 @@ Open `references/app-spec-template.md` at Phase 0, create the App Spec file from
 
 ### Phase 0 — Business context & domain model
 
-Ask the user directly (these have no other source): who pays, what is the flywheel, the primary measurable goal, and what is explicitly out of scope. Then build the ubiquitous-language glossary (one term = one meaning everywhere — the single cheapest DDD practice), the domain model with **precise entity fields** (key, type, multi-value, required — the weak-vs-precise table in the template shows the bar), and the identity model: which personas are internal (admin backend + RBAC) and which are external (dedicated surface/portal) — the decision tree and red flags are in template §2.
+Ask the user directly (these have no other source): who pays, what is the flywheel, the primary measurable goal, and what is explicitly out of scope. Then build the ubiquitous-language glossary (one term = one meaning everywhere — the single cheapest DDD practice), the domain model with **precise entity fields** (key, type, multi-value, required — the weak-vs-precise table in the template shows the bar), and the identity model: which personas live on the app's internal surface and which need a dedicated external one — expressed in whatever identity and access-control primitives the repo's agent docs name; the decision tree, the single-surface shortcut, and the red flags are in template §2.
 
 ### Challenger gate — after every completed major section
 
@@ -94,7 +94,7 @@ Batch questions per phase: collect them while working a section and present one 
 - Custom state management or a custom notification path → the platform's workflow/notification primitives do this
 - A domain term meaning different things in two sections → fix the glossary first, everything else after
 - A workflow's ROI or a story's success criteria cannot be stated → not ready to build; sharpen or cut
-- An external persona forced into the admin backend, or a portal persona needing rich internal tooling → revisit the §2 decision tree
+- An external persona forced onto the internal surface, or a portal persona needing rich internal tooling → revisit the §2 decision tree
 
 ## Rules
 

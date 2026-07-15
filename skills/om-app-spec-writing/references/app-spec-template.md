@@ -56,7 +56,7 @@ The document skeleton `om-app-spec-writing` instantiates at Phase 0 and fills ph
 #### Checklist
 - [ ] Every domain term defined once
 - [ ] Same word = same meaning across all specs and conversations
-- [ ] Source of data and period specified per term
+- [ ] Source of data specified per term; period specified for time-windowed terms (metrics, KPIs) — N/A otherwise
 
 ### 1.4 Domain Model
 
@@ -106,19 +106,21 @@ The document skeleton `om-app-spec-writing` instantiates at Phase 0 and fills ph
 
 **External-surface decision framework:**
 
-Every persona external to the operating organization is a candidate for an external identity + a dedicated external surface (portal), instead of an account in the admin backend.
+> Applies when the app distinguishes an internal surface (an admin backend or equivalent — whatever the repo's agent docs name) from a dedicated external one. When the app has a single authenticated surface, record that fact and the roles (if any) here, skip the tree, and mark the rest of this framework N/A.
+
+Every persona external to the operating organization is a candidate for an external identity + a dedicated external surface (portal), instead of an account on the internal surface.
 
 ```
 External persona?
-├─ NO → internal user + admin backend + RBAC
-└─ YES → needs brand separation or a different UX than the admin backend?
-          ├─ NO, the admin backend is fine → internal user + admin backend + RBAC
+├─ NO → internal user + internal surface + the app's access-control mechanism
+└─ YES → needs brand separation or a different UX than the internal surface?
+          ├─ NO, the internal surface is fine → internal user + internal surface
           └─ YES → external identity + dedicated external surface (portal)
 ```
 
-> **Portal red flag:** if a portal persona needs the admin backend's rich building blocks (data grids, pipeline views, bulk CRUD over many entities) — reconsider; the external surface usually lacks them. Exception: a conscious custom-UX decision recorded in the decision log.
+> **Portal red flag:** if a portal persona needs the internal surface's rich building blocks (data grids, pipeline views, bulk CRUD over many entities) — reconsider; the external surface usually lacks them. Exception: a conscious custom-UX decision recorded in the decision log.
 >
-> **Backend red flag:** if an internal persona is external to the organization, temporary, and sees 2–3 simple views — consider the external surface instead; the identity model stays clean.
+> **Internal-surface red flag:** if an internal persona is external to the organization, temporary, and sees 2–3 simple views — consider the external surface instead; the identity model stays clean.
 >
 > **Agentic cost note:** external-surface pages are custom pages the agent generates from this spec. That is not a blocker — but §3.5 MUST spec every such page with enough detail to implement without guessing. Each page = minimum 1 atomic commit in §4 gap analysis.
 
@@ -126,7 +128,7 @@ External persona?
 
 **If USED — per persona justification:**
 
-| Portal persona | Why the external surface, not the backend? | Custom pages needed? |
+| Portal persona | Why the external surface, not the internal one? | Custom pages needed? |
 |---|---|---|
 | | | |
 
@@ -141,7 +143,7 @@ External persona?
 - [ ] Identity decision justified per persona — the capabilities they need drive the choice `PM`
 - [ ] No persona has two accounts — if someone needs both identity types, the model is wrong `Architect`
 - [ ] Org scoping defined per role — who sees which orgs, read-only vs read-write `Architect`
-- [ ] Portal decision justified with the decision tree — not just "used/not used" `PM`
+- [ ] Portal decision justified with the decision tree (or the single-surface fact recorded) — not just "used/not used" `PM`
 - [ ] If Portal USED: every portal persona has a custom-page estimate `Architect`
 - [ ] If Portal USED: §3.5 includes the Portal Pages subsection with full page specs `PM`
 
@@ -185,7 +187,7 @@ External persona?
 
 #### Checklist (overall)
 - [ ] 3–7 core workflows defined `PM`
-- [ ] No workflow requires >200 lines of new code — if it does, you missed a platform capability `Architect`
+- [ ] Any workflow needing >200 lines of new code was re-checked against the agent docs for a missed platform capability — and its size justified when none exists `Architect`
 
 ---
 
@@ -389,12 +391,12 @@ Success:
 - Demo user emails follow a documented pattern (e.g. `{role}@demo.local`)
 
 **US-0.2** As someone evaluating this app, I start it after seeding
-and see realistic demo data (entities, pipeline records, relationships) so that I can
+and see realistic demo data (entities across lifecycle states, relationships) so that I can
 understand the app's domain without reading source code.
 Success:
 - At least 2–3 representative entities per major domain concept
-- Entities span different pipeline stages / lifecycle states
-- Custom fields are populated with realistic values (not "test123")
+- Entities span different lifecycle states (pipeline stages, statuses — whatever the domain has)
+- Extended/custom fields populated with realistic values (not "test123"), where the platform supports them
 - Demo data is visually distinguishable (names contain a "Demo" marker)
 
 #### Checklist (domain stories)

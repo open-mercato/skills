@@ -1,0 +1,1644 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Agent Harness Guide</title>
+<style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{margin:0}body{box-sizing:border-box;padding:1rem;background:inherit}iframe{display:block;width:100%;max-width:736px;height:calc(100vh - 2rem);margin:0 auto;border:0}</style>
+</head>
+<body>
+<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="Agent Harness Guide" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot;&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
+&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;
+&lt;title&gt;Agent Harness Guide&lt;/title&gt;
+&lt;style&gt;:root {
+  color-scheme: light dark;
+  background-color: var(--background) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: light-dark(rgb(255 255 255), rgb(24 24 24));
+  --foreground: light-dark(rgb(26 28 31), rgb(255 255 255));
+  --card: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --card-foreground: var(--foreground);
+  --popover: light-dark(rgb(255 255 255), rgb(45 45 45));
+  --popover-foreground: var(--foreground);
+  --primary: light-dark(rgb(51 156 255), rgb(131 195 255));
+  --primary-foreground: light-dark(rgb(255 255 255), rgb(13 13 13));
+  --secondary: light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%));
+  --secondary-foreground: var(--foreground);
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: light-dark(
+    rgb(26 28 31 / 49.4%),
+    rgb(255 255 255 / 49.8%)
+  );
+  --accent: light-dark(rgb(229 242 255), rgb(13 39 63));
+  --accent-foreground: var(--primary);
+  --destructive: light-dark(rgb(226 85 7), rgb(255 133 73));
+  --border: light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%));
+  --input: light-dark(
+    rgb(26 28 31 / 11.8%),
+    color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+  );
+  --ring: light-dark(rgb(51 156 255), rgb(131 195 255 / 76%));
+  --font-size-base: 14px;
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, &quot;Segoe UI&quot;, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;,
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --radius: 12.5px;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url(&quot;data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 17 17&#x27;%3E%3Cpath d=&#x27;M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z&#x27;/%3E%3C/svg%3E&quot;);
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+  --color-background-primary: var(--background);
+  --color-text-primary: var(--foreground);
+  --color-border-secondary: var(--border);
+}
+
+:root[data-theme=&quot;light&quot;] {
+  color-scheme: light;
+}
+
+:root[data-theme=&quot;dark&quot;] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html &gt; body {
+  margin: 0;
+  padding: 5px;
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans);
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--viz-font-weight-medium);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: superellipse(1.5);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget &gt; :not(.card) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls &gt; .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls &gt; .form-label &gt; :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type=&quot;file&quot;] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type=&quot;file&quot;]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type=&quot;file&quot;]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type=&quot;color&quot;] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: superellipse(1.5);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: superellipse(1.5);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  corner-shape: superellipse(1.5);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: &quot;&quot;;
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type=&quot;radio&quot;] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type=&quot;radio&quot;]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: &quot;&quot;;
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+    [aria-pressed=&quot;true&quot;],
+    [aria-selected=&quot;true&quot;],
+    .is-selected
+  ) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed=&quot;true&quot;], [aria-selected=&quot;true&quot;], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget &gt; svg {
+  width: 100%;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+html&gt;body{padding:0}&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div id=&quot;agent-harness-guide&quot;&gt;
+  &lt;style&gt;
+    #agent-harness-guide {
+      color: var(--foreground);
+      display: grid;
+      gap: 18px;
+      width: 100%;
+    }
+    #agent-harness-guide .ah-toolbar {
+      display: grid;
+      gap: 12px;
+    }
+    #agent-harness-guide .ah-profile-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    #agent-harness-guide .ah-controls-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      gap: 12px;
+    }
+    #agent-harness-guide .ah-field {
+      min-width: min(100%, 190px);
+      flex: 1 1 190px;
+    }
+    #agent-harness-guide .ah-stats {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    #agent-harness-guide .ah-stat-note {
+      color: var(--muted-foreground);
+    }
+    #agent-harness-guide .ah-figure {
+      position: relative;
+      width: 100%;
+    }
+    #agent-harness-guide .ah-diagram {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+    #agent-harness-guide .ah-diagram-mobile {
+      display: none;
+    }
+    #agent-harness-guide .ah-node rect {
+      fill: color-mix(in srgb, var(--muted) 72%, transparent);
+      stroke: var(--border);
+      stroke-width: 1.5;
+      transition: fill 180ms ease, stroke 180ms ease, opacity 180ms ease;
+    }
+    #agent-harness-guide .ah-node text {
+      fill: var(--foreground);
+      font-weight: 500;
+    }
+    #agent-harness-guide .ah-node .ah-subtext {
+      fill: var(--muted-foreground);
+      font-weight: 400;
+    }
+    #agent-harness-guide .ah-node.is-active rect {
+      fill: color-mix(in srgb, var(--viz-series-1) 18%, var(--background));
+      stroke: var(--viz-series-1);
+    }
+    #agent-harness-guide .ah-node.is-current rect {
+      fill: var(--primary);
+      stroke: var(--primary);
+      stroke-width: 2;
+    }
+    #agent-harness-guide .ah-node.is-current text,
+    #agent-harness-guide .ah-node.is-current .ah-subtext {
+      fill: var(--primary-foreground);
+    }
+    #agent-harness-guide .ah-node.is-muted {
+      opacity: 0.38;
+    }
+    #agent-harness-guide .ah-edge {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 1.5;
+      marker-end: url(#ah-arrow);
+      transition: stroke 180ms ease, opacity 180ms ease;
+    }
+    #agent-harness-guide .ah-edge.is-active {
+      stroke: var(--viz-series-1);
+      stroke-width: 2;
+    }
+    #agent-harness-guide .ah-edge.is-muted {
+      opacity: 0.25;
+    }
+    #agent-harness-guide .ah-loop-edge {
+      stroke: var(--viz-series-2);
+    }
+    #agent-harness-guide .ah-boundary {
+      fill: none;
+      stroke: var(--border);
+      stroke-width: 1;
+      stroke-dasharray: 5 5;
+    }
+    #agent-harness-guide .ah-boundary-label,
+    #agent-harness-guide .ah-lane-label {
+      fill: var(--muted-foreground);
+      font-weight: 400;
+    }
+    #agent-harness-guide .ah-pool-dot {
+      fill: var(--muted);
+      stroke: var(--border);
+    }
+    #agent-harness-guide .ah-pool-dot.is-selected {
+      fill: var(--viz-series-1);
+      stroke: var(--viz-series-1);
+    }
+    #agent-harness-guide .ah-pool-dot.is-verifier {
+      fill: var(--viz-series-2);
+      stroke: var(--viz-series-2);
+    }
+    #agent-harness-guide .ah-pool-dot.is-self-check {
+      fill: var(--muted-foreground);
+      stroke: var(--muted-foreground);
+    }
+    #agent-harness-guide .ah-pool-label {
+      fill: var(--foreground);
+      font-weight: 400;
+    }
+    #agent-harness-guide .ah-timeline {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 6px;
+      align-items: start;
+    }
+    #agent-harness-guide .ah-step {
+      display: grid;
+      justify-items: center;
+      gap: 6px;
+      color: var(--muted-foreground);
+      min-width: 0;
+      text-align: center;
+    }
+    #agent-harness-guide .ah-step-mark {
+      display: grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: var(--muted);
+      color: var(--muted-foreground);
+      font-weight: 500;
+    }
+    #agent-harness-guide .ah-step.is-complete .ah-step-mark {
+      background: color-mix(in srgb, var(--viz-series-1) 20%, var(--background));
+      color: var(--foreground);
+    }
+    #agent-harness-guide .ah-step.is-current {
+      color: var(--foreground);
+    }
+    #agent-harness-guide .ah-step.is-current .ah-step-mark {
+      background: var(--primary);
+      color: var(--primary-foreground);
+    }
+    #agent-harness-guide .ah-detail {
+      min-height: 1.5em;
+      color: var(--foreground);
+    }
+    #agent-harness-guide .ah-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      color: var(--muted-foreground);
+    }
+    #agent-harness-guide .ah-legend-item {
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+    }
+    #agent-harness-guide .ah-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--muted);
+    }
+    #agent-harness-guide .ah-swatch-active {
+      background: var(--viz-series-1);
+    }
+    #agent-harness-guide .ah-swatch-verify {
+      background: var(--viz-series-2);
+    }
+    #agent-harness-guide .ah-swatch-gate {
+      border-radius: 1px;
+      background: var(--primary);
+    }
+    #agent-harness-guide .ah-swatch-self-check {
+      background: var(--muted-foreground);
+    }
+    #agent-harness-guide .ah-only-high {
+      transition: opacity 180ms ease;
+    }
+    #agent-harness-guide[data-profile]:not([data-profile=&quot;high-assurance&quot;]) .ah-only-high {
+      opacity: 0.42;
+    }
+    @media (max-width: 560px) {
+      #agent-harness-guide .ah-stats {
+        grid-template-columns: 1fr;
+      }
+      #agent-harness-guide .ah-diagram-desktop {
+        display: none;
+      }
+      #agent-harness-guide .ah-diagram-mobile {
+        display: block;
+      }
+      #agent-harness-guide .ah-timeline {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        row-gap: 12px;
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      #agent-harness-guide .ah-node rect,
+      #agent-harness-guide .ah-edge,
+      #agent-harness-guide .ah-only-high {
+        transition: none;
+      }
+    }
+  &lt;/style&gt;
+
+  &lt;section class=&quot;ah-toolbar&quot; aria-label=&quot;Harness profile controls&quot;&gt;
+    &lt;div class=&quot;ah-profile-buttons&quot; role=&quot;group&quot; aria-label=&quot;Profile&quot;&gt;
+      &lt;button type=&quot;button&quot; class=&quot;btn btn-ghost&quot; data-profile-button=&quot;standard&quot; aria-pressed=&quot;false&quot;&gt;standard&lt;/button&gt;
+      &lt;button type=&quot;button&quot; class=&quot;btn btn-ghost&quot; data-profile-button=&quot;optimized&quot; aria-pressed=&quot;false&quot;&gt;optimized&lt;/button&gt;
+      &lt;button type=&quot;button&quot; class=&quot;btn btn-ghost&quot; data-profile-button=&quot;multi&quot; aria-pressed=&quot;false&quot;&gt;multi&lt;/button&gt;
+      &lt;button type=&quot;button&quot; class=&quot;btn btn-ghost&quot; data-profile-button=&quot;multi-optimized&quot; aria-pressed=&quot;false&quot;&gt;multi-optimized&lt;/button&gt;
+      &lt;button type=&quot;button&quot; class=&quot;btn btn-primary&quot; data-profile-button=&quot;high-assurance&quot; aria-pressed=&quot;true&quot;&gt;high-assurance&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;ah-controls-row&quot;&gt;
+      &lt;label class=&quot;form-label ah-field ah-only-high&quot; for=&quot;ah-risk&quot;&gt;
+        Packet risk
+        &lt;select class=&quot;form-select&quot; id=&quot;ah-risk&quot;&gt;
+          &lt;option value=&quot;low&quot;&gt;low&lt;/option&gt;
+          &lt;option value=&quot;medium&quot;&gt;medium&lt;/option&gt;
+          &lt;option value=&quot;high&quot; selected&gt;high&lt;/option&gt;
+          &lt;option value=&quot;critical&quot;&gt;critical&lt;/option&gt;
+        &lt;/select&gt;
+      &lt;/label&gt;
+      &lt;label class=&quot;form-label ah-field ah-only-high&quot; for=&quot;ah-state&quot;&gt;
+        Packet state
+        &lt;select class=&quot;form-select&quot; id=&quot;ah-state&quot;&gt;
+          &lt;option value=&quot;planned&quot;&gt;planned&lt;/option&gt;
+          &lt;option value=&quot;claimed&quot;&gt;claimed&lt;/option&gt;
+          &lt;option value=&quot;implementing&quot;&gt;implementing&lt;/option&gt;
+          &lt;option value=&quot;reviewing&quot; selected&gt;reviewing&lt;/option&gt;
+          &lt;option value=&quot;fixing&quot;&gt;fixing&lt;/option&gt;
+          &lt;option value=&quot;awaiting_validation&quot;&gt;awaiting validation&lt;/option&gt;
+          &lt;option value=&quot;gated&quot;&gt;gated&lt;/option&gt;
+        &lt;/select&gt;
+      &lt;/label&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;section class=&quot;ah-stats&quot; aria-label=&quot;Selected profile summary&quot;&gt;
+    &lt;div class=&quot;card viz-stat&quot;&gt;
+      &lt;span class=&quot;text-muted&quot;&gt;Implementation&lt;/span&gt;
+      &lt;span class=&quot;viz-stat-value&quot; id=&quot;ah-worker-stat&quot;&gt;1 Codex worker&lt;/span&gt;
+      &lt;span class=&quot;ah-stat-note text-small&quot; id=&quot;ah-worker-note&quot;&gt;Fresh fixer context, serialized writes&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;card viz-stat&quot;&gt;
+      &lt;span class=&quot;text-muted&quot; id=&quot;ah-reviewer-label&quot;&gt;Current packet review&lt;/span&gt;
+      &lt;span class=&quot;viz-stat-value&quot; id=&quot;ah-reviewer-stat&quot;&gt;2 reviewers&lt;/span&gt;
+      &lt;span class=&quot;ah-stat-note text-small&quot; id=&quot;ah-reviewer-note&quot;&gt;Then verifier; final council has 6 passes&lt;/span&gt;
+    &lt;/div&gt;
+    &lt;div class=&quot;card viz-stat&quot;&gt;
+      &lt;span class=&quot;text-muted&quot;&gt;Delivery boundary&lt;/span&gt;
+      &lt;span class=&quot;viz-stat-value&quot; id=&quot;ah-delivery-stat&quot;&gt;Git index only&lt;/span&gt;
+      &lt;span class=&quot;ah-stat-note text-small&quot;&gt;No commit, push, or pull request&lt;/span&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;figure class=&quot;ah-figure&quot; aria-label=&quot;Agent harness topology&quot;&gt;
+    &lt;svg class=&quot;ah-diagram ah-diagram-desktop&quot; viewBox=&quot;0 0 920 430&quot; role=&quot;img&quot; aria-labelledby=&quot;ah-desktop-title ah-desktop-desc&quot;&gt;
+      &lt;title id=&quot;ah-desktop-title&quot;&gt;Selected harness profile topology&lt;/title&gt;
+      &lt;desc id=&quot;ah-desktop-desc&quot;&gt;Claude conducts bounded implementation; bound reviews use a fresh Claude context and five fresh advisors on the same om-code-review packet before deterministic staging.&lt;/desc&gt;
+      &lt;defs&gt;
+        &lt;marker id=&quot;ah-arrow&quot; markerWidth=&quot;8&quot; markerHeight=&quot;8&quot; refX=&quot;7&quot; refY=&quot;4&quot; orient=&quot;auto&quot; markerUnits=&quot;strokeWidth&quot;&gt;
+          &lt;path d=&quot;M0,0 L8,4 L0,8 Z&quot; fill=&quot;context-stroke&quot;&gt;&lt;/path&gt;
+        &lt;/marker&gt;
+      &lt;/defs&gt;
+
+      &lt;rect class=&quot;ah-boundary&quot; x=&quot;14&quot; y=&quot;30&quot; width=&quot;742&quot; height=&quot;352&quot; rx=&quot;14&quot;&gt;&lt;/rect&gt;
+      &lt;text class=&quot;ah-boundary-label&quot; x=&quot;30&quot; y=&quot;55&quot;&gt;STAGED-ONLY HARNESS&lt;/text&gt;
+      &lt;text class=&quot;ah-boundary-label&quot; x=&quot;778&quot; y=&quot;55&quot;&gt;HUMAN-OWNED&lt;/text&gt;
+
+      &lt;path class=&quot;ah-edge is-active&quot; data-edge=&quot;host-worker&quot; d=&quot;M190 128 C230 128 236 116 276 116&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge is-active&quot; data-edge=&quot;worker-review&quot; d=&quot;M390 140 C404 174 410 188 424 213&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge is-active&quot; data-edge=&quot;host-review&quot; d=&quot;M190 140 C256 190 318 224 394 238&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge is-active&quot; data-edge=&quot;review-verify&quot; d=&quot;M548 238 C574 238 580 238 606 238&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge ah-loop-edge is-active&quot; data-edge=&quot;verify-fix&quot; d=&quot;M680 212 C680 165 628 128 548 118&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge ah-loop-edge is-active&quot; data-edge=&quot;verify-fix&quot; d=&quot;M518 152 C520 177 510 190 492 202&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge is-active&quot; data-edge=&quot;review-gate&quot; d=&quot;M500 276 C520 315 566 327 606 327&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge is-active&quot; data-edge=&quot;worker-gate&quot; d=&quot;M390 116 C510 95 626 142 649 292&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge is-active&quot; data-edge=&quot;gate-stage&quot; d=&quot;M724 327 C758 327 764 327 796 327&quot;&gt;&lt;/path&gt;
+
+      &lt;g class=&quot;ah-node is-active&quot; data-node=&quot;host&quot; transform=&quot;translate(42 94)&quot;&gt;
+        &lt;rect width=&quot;148&quot; height=&quot;72&quot; rx=&quot;10&quot;&gt;&lt;/rect&gt;
+        &lt;text x=&quot;74&quot; y=&quot;30&quot; text-anchor=&quot;middle&quot;&gt;Claude host&lt;/text&gt;
+        &lt;text class=&quot;ah-subtext&quot; id=&quot;ah-host-sub&quot; x=&quot;74&quot; y=&quot;51&quot; text-anchor=&quot;middle&quot;&gt;plan · final review&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g class=&quot;ah-node is-active&quot; data-node=&quot;worker&quot; transform=&quot;translate(276 80)&quot;&gt;
+        &lt;rect width=&quot;142&quot; height=&quot;72&quot; rx=&quot;10&quot;&gt;&lt;/rect&gt;
+        &lt;text x=&quot;71&quot; y=&quot;30&quot; text-anchor=&quot;middle&quot;&gt;Codex worker&lt;/text&gt;
+        &lt;text class=&quot;ah-subtext&quot; x=&quot;71&quot; y=&quot;51&quot; text-anchor=&quot;middle&quot;&gt;leased paths&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g class=&quot;ah-node is-active&quot; data-node=&quot;fixer&quot; transform=&quot;translate(454 80)&quot;&gt;
+        &lt;rect width=&quot;128&quot; height=&quot;72&quot; rx=&quot;10&quot;&gt;&lt;/rect&gt;
+        &lt;text x=&quot;64&quot; y=&quot;30&quot; text-anchor=&quot;middle&quot;&gt;Fresh fixer&lt;/text&gt;
+        &lt;text class=&quot;ah-subtext&quot; x=&quot;64&quot; y=&quot;51&quot; text-anchor=&quot;middle&quot;&gt;verified only&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g class=&quot;ah-node is-active&quot; data-node=&quot;review&quot; transform=&quot;translate(394 202)&quot;&gt;
+        &lt;rect width=&quot;154&quot; height=&quot;76&quot; rx=&quot;10&quot;&gt;&lt;/rect&gt;
+        &lt;text id=&quot;ah-review-node-title&quot; x=&quot;77&quot; y=&quot;29&quot; text-anchor=&quot;middle&quot;&gt;Blind reviewers&lt;/text&gt;
+        &lt;text class=&quot;ah-subtext&quot; id=&quot;ah-review-node-sub&quot; x=&quot;77&quot; y=&quot;51&quot; text-anchor=&quot;middle&quot;&gt;2 families · 2 lenses&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g class=&quot;ah-node is-active&quot; data-node=&quot;verifier&quot; transform=&quot;translate(606 202)&quot;&gt;
+        &lt;rect width=&quot;148&quot; height=&quot;76&quot; rx=&quot;10&quot;&gt;&lt;/rect&gt;
+        &lt;text x=&quot;74&quot; y=&quot;29&quot; text-anchor=&quot;middle&quot;&gt;Fresh verifier&lt;/text&gt;
+        &lt;text class=&quot;ah-subtext&quot; x=&quot;74&quot; y=&quot;51&quot; text-anchor=&quot;middle&quot;&gt;candidate findings&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g class=&quot;ah-node is-active&quot; data-node=&quot;gate&quot; transform=&quot;translate(606 292)&quot;&gt;
+        &lt;rect width=&quot;148&quot; height=&quot;70&quot; rx=&quot;10&quot;&gt;&lt;/rect&gt;
+        &lt;text x=&quot;74&quot; y=&quot;28&quot; text-anchor=&quot;middle&quot;&gt;Evidence gate&lt;/text&gt;
+        &lt;text class=&quot;ah-subtext&quot; x=&quot;74&quot; y=&quot;49&quot; text-anchor=&quot;middle&quot;&gt;criteria + diff SHA&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g class=&quot;ah-node is-active&quot; data-node=&quot;stage&quot; transform=&quot;translate(796 292)&quot;&gt;
+        &lt;rect width=&quot;112&quot; height=&quot;70&quot; rx=&quot;10&quot;&gt;&lt;/rect&gt;
+        &lt;text x=&quot;56&quot; y=&quot;28&quot; text-anchor=&quot;middle&quot;&gt;Staged files&lt;/text&gt;
+        &lt;text class=&quot;ah-subtext&quot; x=&quot;56&quot; y=&quot;49&quot; text-anchor=&quot;middle&quot;&gt;human review&lt;/text&gt;
+      &lt;/g&gt;
+
+      &lt;text class=&quot;ah-lane-label&quot; id=&quot;ah-pool-heading&quot; x=&quot;30&quot; y=&quot;409&quot;&gt;Packet reviewer pool&lt;/text&gt;
+      &lt;g transform=&quot;translate(160 404)&quot;&gt;
+        &lt;circle class=&quot;ah-pool-dot&quot; data-reviewer-dot=&quot;claude&quot; cx=&quot;0&quot; cy=&quot;0&quot; r=&quot;6&quot;&gt;&lt;/circle&gt;
+        &lt;text class=&quot;ah-pool-label&quot; x=&quot;12&quot; y=&quot;4&quot;&gt;Claude&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g transform=&quot;translate(246 404)&quot;&gt;
+        &lt;circle class=&quot;ah-pool-dot&quot; data-reviewer-dot=&quot;codex&quot; cx=&quot;0&quot; cy=&quot;0&quot; r=&quot;6&quot;&gt;&lt;/circle&gt;
+        &lt;text class=&quot;ah-pool-label&quot; data-codex-label x=&quot;12&quot; y=&quot;4&quot;&gt;Codex&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g transform=&quot;translate(344 404)&quot;&gt;
+        &lt;circle class=&quot;ah-pool-dot is-selected&quot; data-reviewer-dot=&quot;deepseek&quot; cx=&quot;0&quot; cy=&quot;0&quot; r=&quot;6&quot;&gt;&lt;/circle&gt;
+        &lt;text class=&quot;ah-pool-label&quot; x=&quot;12&quot; y=&quot;4&quot;&gt;DeepSeek&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g transform=&quot;translate(466 404)&quot;&gt;
+        &lt;circle class=&quot;ah-pool-dot is-selected&quot; data-reviewer-dot=&quot;kimi&quot; cx=&quot;0&quot; cy=&quot;0&quot; r=&quot;6&quot;&gt;&lt;/circle&gt;
+        &lt;text class=&quot;ah-pool-label&quot; x=&quot;12&quot; y=&quot;4&quot;&gt;Kimi&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g transform=&quot;translate(548 404)&quot;&gt;
+        &lt;circle class=&quot;ah-pool-dot is-verifier&quot; data-reviewer-dot=&quot;glm&quot; cx=&quot;0&quot; cy=&quot;0&quot; r=&quot;6&quot;&gt;&lt;/circle&gt;
+        &lt;text class=&quot;ah-pool-label&quot; x=&quot;12&quot; y=&quot;4&quot;&gt;GLM&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g transform=&quot;translate(626 404)&quot;&gt;
+        &lt;circle class=&quot;ah-pool-dot&quot; data-reviewer-dot=&quot;mimo&quot; cx=&quot;0&quot; cy=&quot;0&quot; r=&quot;6&quot;&gt;&lt;/circle&gt;
+        &lt;text class=&quot;ah-pool-label&quot; x=&quot;12&quot; y=&quot;4&quot;&gt;MiMo&lt;/text&gt;
+      &lt;/g&gt;
+    &lt;/svg&gt;
+
+    &lt;svg class=&quot;ah-diagram ah-diagram-mobile&quot; viewBox=&quot;0 0 360 750&quot; role=&quot;img&quot; aria-labelledby=&quot;ah-mobile-title ah-mobile-desc&quot;&gt;
+      &lt;title id=&quot;ah-mobile-title&quot;&gt;Selected harness profile topology&lt;/title&gt;
+      &lt;desc id=&quot;ah-mobile-desc&quot;&gt;A vertical view of the staged-only implementation, review, validation, and handoff path.&lt;/desc&gt;
+      &lt;defs&gt;
+        &lt;marker id=&quot;ah-arrow-mobile&quot; markerWidth=&quot;8&quot; markerHeight=&quot;8&quot; refX=&quot;7&quot; refY=&quot;4&quot; orient=&quot;auto&quot; markerUnits=&quot;strokeWidth&quot;&gt;
+          &lt;path d=&quot;M0,0 L8,4 L0,8 Z&quot; fill=&quot;context-stroke&quot;&gt;&lt;/path&gt;
+        &lt;/marker&gt;
+      &lt;/defs&gt;
+      &lt;rect class=&quot;ah-boundary&quot; x=&quot;18&quot; y=&quot;18&quot; width=&quot;324&quot; height=&quot;680&quot; rx=&quot;14&quot;&gt;&lt;/rect&gt;
+      &lt;text class=&quot;ah-boundary-label&quot; x=&quot;32&quot; y=&quot;43&quot;&gt;STAGED-ONLY HARNESS&lt;/text&gt;
+      &lt;path class=&quot;ah-edge is-active&quot; data-edge=&quot;host-worker&quot; style=&quot;marker-end:url(#ah-arrow-mobile)&quot; d=&quot;M180 108 L180 132&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge is-active&quot; data-edge=&quot;worker-review&quot; style=&quot;marker-end:url(#ah-arrow-mobile)&quot; d=&quot;M180 202 L180 226&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge is-active&quot; data-edge=&quot;host-review&quot; style=&quot;marker-end:url(#ah-arrow-mobile)&quot; d=&quot;M106 84 C42 150 42 244 106 260&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge is-active&quot; data-edge=&quot;review-verify&quot; style=&quot;marker-end:url(#ah-arrow-mobile)&quot; d=&quot;M180 296 L180 320&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge ah-loop-edge is-active&quot; data-edge=&quot;verify-fix&quot; style=&quot;marker-end:url(#ah-arrow-mobile)&quot; d=&quot;M180 390 L180 414&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge ah-loop-edge is-active&quot; data-edge=&quot;verify-fix&quot; style=&quot;marker-end:url(#ah-arrow-mobile)&quot; d=&quot;M254 450 C330 414 330 282 254 261&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge is-active&quot; data-edge=&quot;review-gate&quot; style=&quot;marker-end:url(#ah-arrow-mobile)&quot; d=&quot;M106 260 C34 330 34 514 106 543&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge is-active&quot; data-edge=&quot;worker-gate&quot; style=&quot;marker-end:url(#ah-arrow-mobile)&quot; d=&quot;M254 168 C338 260 338 494 254 543&quot;&gt;&lt;/path&gt;
+      &lt;path class=&quot;ah-edge is-active&quot; data-edge=&quot;gate-stage&quot; style=&quot;marker-end:url(#ah-arrow-mobile)&quot; d=&quot;M180 578 L180 602&quot;&gt;&lt;/path&gt;
+      &lt;g class=&quot;ah-node is-active&quot; data-node=&quot;host&quot; transform=&quot;translate(106 52)&quot;&gt;
+        &lt;rect width=&quot;148&quot; height=&quot;56&quot; rx=&quot;10&quot;&gt;&lt;/rect&gt;&lt;text x=&quot;74&quot; y=&quot;25&quot; text-anchor=&quot;middle&quot;&gt;Claude host&lt;/text&gt;&lt;text class=&quot;ah-subtext&quot; id=&quot;ah-host-sub-mobile&quot; x=&quot;74&quot; y=&quot;43&quot; text-anchor=&quot;middle&quot;&gt;plan · final review&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g class=&quot;ah-node is-active&quot; data-node=&quot;worker&quot; transform=&quot;translate(106 132)&quot;&gt;
+        &lt;rect width=&quot;148&quot; height=&quot;70&quot; rx=&quot;10&quot;&gt;&lt;/rect&gt;&lt;text x=&quot;74&quot; y=&quot;28&quot; text-anchor=&quot;middle&quot;&gt;Codex worker&lt;/text&gt;&lt;text class=&quot;ah-subtext&quot; x=&quot;74&quot; y=&quot;49&quot; text-anchor=&quot;middle&quot;&gt;leased paths&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g class=&quot;ah-node is-active&quot; data-node=&quot;review&quot; transform=&quot;translate(106 226)&quot;&gt;
+        &lt;rect width=&quot;148&quot; height=&quot;70&quot; rx=&quot;10&quot;&gt;&lt;/rect&gt;&lt;text id=&quot;ah-review-node-title-mobile&quot; x=&quot;74&quot; y=&quot;28&quot; text-anchor=&quot;middle&quot;&gt;Blind reviewers&lt;/text&gt;&lt;text class=&quot;ah-subtext&quot; id=&quot;ah-review-node-sub-mobile&quot; x=&quot;74&quot; y=&quot;49&quot; text-anchor=&quot;middle&quot;&gt;2 families · 2 lenses&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g class=&quot;ah-node is-active&quot; data-node=&quot;verifier&quot; transform=&quot;translate(106 320)&quot;&gt;
+        &lt;rect width=&quot;148&quot; height=&quot;70&quot; rx=&quot;10&quot;&gt;&lt;/rect&gt;&lt;text x=&quot;74&quot; y=&quot;28&quot; text-anchor=&quot;middle&quot;&gt;Fresh verifier&lt;/text&gt;&lt;text class=&quot;ah-subtext&quot; x=&quot;74&quot; y=&quot;49&quot; text-anchor=&quot;middle&quot;&gt;candidate findings&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g class=&quot;ah-node is-active&quot; data-node=&quot;fixer&quot; transform=&quot;translate(106 414)&quot;&gt;
+        &lt;rect width=&quot;148&quot; height=&quot;70&quot; rx=&quot;10&quot;&gt;&lt;/rect&gt;&lt;text x=&quot;74&quot; y=&quot;28&quot; text-anchor=&quot;middle&quot;&gt;Fresh fixer&lt;/text&gt;&lt;text class=&quot;ah-subtext&quot; x=&quot;74&quot; y=&quot;49&quot; text-anchor=&quot;middle&quot;&gt;verified only&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g class=&quot;ah-node is-active&quot; data-node=&quot;gate&quot; transform=&quot;translate(106 508)&quot;&gt;
+        &lt;rect width=&quot;148&quot; height=&quot;70&quot; rx=&quot;10&quot;&gt;&lt;/rect&gt;&lt;text x=&quot;74&quot; y=&quot;28&quot; text-anchor=&quot;middle&quot;&gt;Evidence gate&lt;/text&gt;&lt;text class=&quot;ah-subtext&quot; x=&quot;74&quot; y=&quot;49&quot; text-anchor=&quot;middle&quot;&gt;criteria + diff SHA&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;g class=&quot;ah-node is-active&quot; data-node=&quot;stage&quot; transform=&quot;translate(106 602)&quot;&gt;
+        &lt;rect width=&quot;148&quot; height=&quot;70&quot; rx=&quot;10&quot;&gt;&lt;/rect&gt;&lt;text x=&quot;74&quot; y=&quot;28&quot; text-anchor=&quot;middle&quot;&gt;Staged files&lt;/text&gt;&lt;text class=&quot;ah-subtext&quot; x=&quot;74&quot; y=&quot;49&quot; text-anchor=&quot;middle&quot;&gt;human review&lt;/text&gt;
+      &lt;/g&gt;
+      &lt;text class=&quot;ah-boundary-label&quot; x=&quot;180&quot; y=&quot;728&quot; text-anchor=&quot;middle&quot;&gt;commit · push · PR remain outside the harness&lt;/text&gt;
+    &lt;/svg&gt;
+  &lt;/figure&gt;
+
+  &lt;section class=&quot;ah-only-high&quot; aria-label=&quot;Packet lifecycle&quot;&gt;
+    &lt;div class=&quot;ah-timeline&quot; id=&quot;ah-timeline&quot;&gt;
+      &lt;div class=&quot;ah-step&quot; data-step=&quot;planned&quot;&gt;&lt;span class=&quot;ah-step-mark&quot;&gt;1&lt;/span&gt;&lt;span&gt;planned&lt;/span&gt;&lt;/div&gt;
+      &lt;div class=&quot;ah-step&quot; data-step=&quot;claimed&quot;&gt;&lt;span class=&quot;ah-step-mark&quot;&gt;2&lt;/span&gt;&lt;span&gt;claimed&lt;/span&gt;&lt;/div&gt;
+      &lt;div class=&quot;ah-step&quot; data-step=&quot;implementing&quot;&gt;&lt;span class=&quot;ah-step-mark&quot;&gt;3&lt;/span&gt;&lt;span&gt;implementing&lt;/span&gt;&lt;/div&gt;
+      &lt;div class=&quot;ah-step is-current&quot; data-step=&quot;reviewing&quot;&gt;&lt;span class=&quot;ah-step-mark&quot;&gt;4&lt;/span&gt;&lt;span&gt;reviewing&lt;/span&gt;&lt;/div&gt;
+      &lt;div class=&quot;ah-step&quot; data-step=&quot;fixing&quot;&gt;&lt;span class=&quot;ah-step-mark&quot;&gt;5&lt;/span&gt;&lt;span&gt;fixing&lt;/span&gt;&lt;/div&gt;
+      &lt;div class=&quot;ah-step&quot; data-step=&quot;awaiting_validation&quot;&gt;&lt;span class=&quot;ah-step-mark&quot;&gt;6&lt;/span&gt;&lt;span&gt;awaiting validation&lt;/span&gt;&lt;/div&gt;
+      &lt;div class=&quot;ah-step&quot; data-step=&quot;gated&quot;&gt;&lt;span class=&quot;ah-step-mark&quot;&gt;7&lt;/span&gt;&lt;span&gt;gated&lt;/span&gt;&lt;/div&gt;
+    &lt;/div&gt;
+  &lt;/section&gt;
+
+  &lt;p class=&quot;ah-detail&quot; id=&quot;ah-detail&quot; aria-live=&quot;polite&quot;&gt;Blind packet reviewers see only the packet contract and diff; the final checkpoint uses one hash-bound om-code-review packet across six fresh contexts.&lt;/p&gt;
+
+  &lt;div class=&quot;ah-legend text-small&quot; aria-label=&quot;Legend&quot;&gt;
+    &lt;span class=&quot;ah-legend-item&quot;&gt;&lt;span class=&quot;ah-swatch ah-swatch-active&quot;&gt;&lt;/span&gt;active role or reviewer&lt;/span&gt;
+    &lt;span class=&quot;ah-legend-item&quot;&gt;&lt;span class=&quot;ah-swatch ah-swatch-verify&quot;&gt;&lt;/span&gt;fresh verifier or fixer loop&lt;/span&gt;
+    &lt;span class=&quot;ah-legend-item&quot;&gt;&lt;span class=&quot;ah-swatch ah-swatch-self-check&quot;&gt;&lt;/span&gt;same-family self-check&lt;/span&gt;
+    &lt;span class=&quot;ah-legend-item&quot;&gt;&lt;span class=&quot;ah-swatch ah-swatch-gate&quot;&gt;&lt;/span&gt;human-controlled evidence boundary&lt;/span&gt;
+  &lt;/div&gt;
+
+  &lt;script&gt;
+    (() =&gt; {
+      const root = document.getElementById(&#x27;agent-harness-guide&#x27;);
+      if (!root) return;
+
+      const profiles = {
+        standard: {
+          worker: false,
+          review: false,
+          verifier: false,
+          fixer: false,
+          workerStat: &#x27;Claude host&#x27;,
+          workerNote: &#x27;Normal implementation; review is isolated&#x27;,
+          reviewLabel: &#x27;Final review&#x27;,
+          reviewerStat: &#x27;1 fresh context&#x27;,
+          reviewerNote: &#x27;Claude runs real om-code-review&#x27;,
+          hostSub: &#x27;implement · spawn reviewer&#x27;,
+          detail: &#x27;Implementation stays with the host; final review moves to a new Claude context with no inherited implementation transcript.&#x27;
+        },
+        optimized: {
+          worker: true,
+          review: false,
+          verifier: false,
+          fixer: false,
+          workerStat: &#x27;1 Codex worker&#x27;,
+          workerNote: &#x27;Bounded implementation packet&#x27;,
+          reviewLabel: &#x27;Final review&#x27;,
+          reviewerStat: &#x27;1 fresh context&#x27;,
+          reviewerNote: &#x27;Claude runs real om-code-review&#x27;,
+          hostSub: &#x27;conduct · spawn reviewer&#x27;,
+          detail: &#x27;A configured worker edits a bounded packet; a new Claude context reviews the integrated diff with om-code-review.&#x27;
+        },
+        multi: {
+          worker: false,
+          review: true,
+          verifier: false,
+          fixer: false,
+          workerStat: &#x27;Claude host&#x27;,
+          workerNote: &#x27;Implementation remains with the conductor&#x27;,
+          reviewLabel: &#x27;Spec + final checkpoints&#x27;,
+          reviewerStat: &#x27;6 fresh contexts&#x27;,
+          reviewerNote: &#x27;One hash-bound om-code-review packet&#x27;,
+          hostSub: &#x27;conduct · spawn Claude&#x27;,
+          detail: &#x27;Fresh Claude, Codex, DeepSeek, Kimi, GLM, and MiMo start concurrently on the same rubric, packet, and subject; the matrix waits for Claude.&#x27;
+        },
+        &#x27;multi-optimized&#x27;: {
+          worker: true,
+          review: true,
+          verifier: false,
+          fixer: false,
+          workerStat: &#x27;1 Codex worker&#x27;,
+          workerNote: &#x27;Bounded implementation packet&#x27;,
+          reviewLabel: &#x27;Spec + final checkpoints&#x27;,
+          reviewerStat: &#x27;6 fresh contexts&#x27;,
+          reviewerNote: &#x27;Codex is a same-family self-check&#x27;,
+          hostSub: &#x27;conduct · spawn Claude&#x27;,
+          detail: &#x27;All six run om-code-review on one packet; Codex reports findings but does not count as independent from the Codex worker.&#x27;
+        },
+        &#x27;high-assurance&#x27;: {
+          worker: true,
+          review: true,
+          verifier: true,
+          fixer: true,
+          workerStat: &#x27;1 Codex worker&#x27;,
+          workerNote: &#x27;Fresh fixer context, serialized writes&#x27;,
+          reviewLabel: &#x27;Current packet review&#x27;,
+          reviewerStat: &#x27;2 reviewers&#x27;,
+          reviewerNote: &#x27;Then verifier; final checkpoint has 6 fresh contexts&#x27;,
+          hostSub: &#x27;plan · spawn reviewer&#x27;,
+          detail: &#x27;Blind packet review stays risk-scaled; the final diff still gets fresh Claude plus all five advisors on one om-code-review packet.&#x27;
+        }
+      };
+
+      const states = [&#x27;planned&#x27;, &#x27;claimed&#x27;, &#x27;implementing&#x27;, &#x27;reviewing&#x27;, &#x27;fixing&#x27;, &#x27;awaiting_validation&#x27;, &#x27;gated&#x27;];
+      const stateDetails = {
+        planned: &#x27;A versioned manifest fixes the objective, risk, allowed paths, invariants, dependencies, and acceptance criteria.&#x27;,
+        claimed: &#x27;Repository-global leases prevent overlapping packets across run directories and linked worktrees.&#x27;,
+        implementing: &#x27;The sandboxed worker receives one packet, cannot publish, and is rejected for Git-ref or out-of-scope changes.&#x27;,
+        reviewing: &#x27;Blind reviewers receive distinct lenses and only the packet contract plus exact diff.&#x27;,
+        fixing: &#x27;Only independently verified findings reach a fresh fixer invocation; retry and input budgets are bounded.&#x27;,
+        awaiting_validation: &#x27;The reviewed diff is frozen by SHA-256 while trusted commands or manual checks collect acceptance evidence.&#x27;,
+        gated: &#x27;Every acceptance criterion is covered for the same diff; leases release and the packet may enter the staged handoff.&#x27;
+      };
+
+      const profileButtons = [...root.querySelectorAll(&#x27;[data-profile-button]&#x27;)];
+      const riskSelect = root.querySelector(&#x27;#ah-risk&#x27;);
+      const stateSelect = root.querySelector(&#x27;#ah-state&#x27;);
+      const workerStat = root.querySelector(&#x27;#ah-worker-stat&#x27;);
+      const workerNote = root.querySelector(&#x27;#ah-worker-note&#x27;);
+      const reviewerLabel = root.querySelector(&#x27;#ah-reviewer-label&#x27;);
+      const reviewerStat = root.querySelector(&#x27;#ah-reviewer-stat&#x27;);
+      const reviewerNote = root.querySelector(&#x27;#ah-reviewer-note&#x27;);
+      const detail = root.querySelector(&#x27;#ah-detail&#x27;);
+      const reviewerSub = root.querySelector(&#x27;#ah-review-node-sub&#x27;);
+      const reviewerSubMobile = root.querySelector(&#x27;#ah-review-node-sub-mobile&#x27;);
+      const reviewerTitle = root.querySelector(&#x27;#ah-review-node-title&#x27;);
+      const reviewerTitleMobile = root.querySelector(&#x27;#ah-review-node-title-mobile&#x27;);
+      const hostSub = root.querySelector(&#x27;#ah-host-sub&#x27;);
+      const hostSubMobile = root.querySelector(&#x27;#ah-host-sub-mobile&#x27;);
+      const poolHeading = root.querySelector(&#x27;#ah-pool-heading&#x27;);
+      const codexLabel = root.querySelector(&#x27;[data-codex-label]&#x27;);
+      let selectedProfile = &#x27;high-assurance&#x27;;
+
+      function setNode(name, active, current) {
+        root.querySelectorAll(`[data-node=&quot;${name}&quot;]`).forEach((node) =&gt; {
+          node.classList.toggle(&#x27;is-active&#x27;, active);
+          node.classList.toggle(&#x27;is-muted&#x27;, !active);
+          node.classList.toggle(&#x27;is-current&#x27;, current &amp;&amp; active);
+        });
+      }
+
+      function setEdge(name, active) {
+        root.querySelectorAll(`[data-edge=&quot;${name}&quot;]`).forEach((edge) =&gt; {
+          edge.classList.toggle(&#x27;is-active&#x27;, active);
+          edge.classList.toggle(&#x27;is-muted&#x27;, !active);
+        });
+      }
+
+      function reviewerCount() {
+        return [&#x27;high&#x27;, &#x27;critical&#x27;].includes(riskSelect.value) ? 2 : 1;
+      }
+
+      function updateReviewerPool(profile) {
+        const count = selectedProfile === &#x27;high-assurance&#x27; ? reviewerCount() : profile.review ? 5 : 0;
+        const ordered = [&#x27;deepseek&#x27;, &#x27;kimi&#x27;, &#x27;glm&#x27;, &#x27;mimo&#x27;];
+        root.querySelectorAll(&#x27;[data-reviewer-dot]&#x27;).forEach((dot) =&gt; {
+          dot.classList.remove(&#x27;is-selected&#x27;, &#x27;is-verifier&#x27;, &#x27;is-self-check&#x27;);
+          const id = dot.getAttribute(&#x27;data-reviewer-dot&#x27;);
+          if (selectedProfile === &#x27;high-assurance&#x27;) {
+            const index = ordered.indexOf(id);
+            if (index &gt;= 0 &amp;&amp; index &lt; count) dot.classList.add(&#x27;is-selected&#x27;);
+            if (index === count) dot.classList.add(&#x27;is-verifier&#x27;);
+          } else if (id === &#x27;claude&#x27;) dot.classList.add(&#x27;is-selected&#x27;);
+          else if (profile.review &amp;&amp; id === &#x27;codex&#x27; &amp;&amp; selectedProfile === &#x27;multi-optimized&#x27;) dot.classList.add(&#x27;is-self-check&#x27;);
+          else if (profile.review) dot.classList.add(&#x27;is-selected&#x27;);
+        });
+        poolHeading.textContent = selectedProfile === &#x27;high-assurance&#x27; ? &#x27;Packet reviewer pool&#x27; : &#x27;One bound om-code-review packet&#x27;;
+        codexLabel.textContent = selectedProfile === &#x27;multi-optimized&#x27; ? &#x27;Codex self-check&#x27; : &#x27;Codex&#x27;;
+        reviewerTitle.textContent = selectedProfile === &#x27;high-assurance&#x27; ? &#x27;Blind reviewers&#x27; : &#x27;om-code-review jury&#x27;;
+        reviewerTitleMobile.textContent = reviewerTitle.textContent;
+        const label = selectedProfile === &#x27;high-assurance&#x27;
+          ? `${count} ${count === 1 ? &#x27;family&#x27; : &#x27;families&#x27;} · ${count === 1 ? &#x27;combined lenses&#x27; : &#x27;2 lenses&#x27;}`
+          : profile.review ? &#x27;5 advisors · fresh · parallel&#x27; : &#x27;not selected&#x27;;
+        reviewerSub.textContent = label;
+        reviewerSubMobile.textContent = label;
+      }
+
+      function updateState() {
+        const state = stateSelect.value;
+        const currentIndex = states.indexOf(state);
+        root.querySelectorAll(&#x27;[data-step]&#x27;).forEach((step) =&gt; {
+          const index = states.indexOf(step.getAttribute(&#x27;data-step&#x27;));
+          step.classList.toggle(&#x27;is-complete&#x27;, index &lt; currentIndex);
+          step.classList.toggle(&#x27;is-current&#x27;, index === currentIndex);
+        });
+        if (selectedProfile === &#x27;high-assurance&#x27;) detail.textContent = stateDetails[state];
+        setNode(&#x27;worker&#x27;, profiles[selectedProfile].worker, state === &#x27;implementing&#x27;);
+        setNode(&#x27;review&#x27;, profiles[selectedProfile].review, state === &#x27;reviewing&#x27;);
+        setNode(&#x27;fixer&#x27;, profiles[selectedProfile].fixer, state === &#x27;fixing&#x27;);
+        setNode(&#x27;verifier&#x27;, profiles[selectedProfile].verifier, state === &#x27;reviewing&#x27;);
+        setNode(&#x27;gate&#x27;, true, state === &#x27;awaiting_validation&#x27; || state === &#x27;gated&#x27;);
+        setNode(&#x27;stage&#x27;, true, state === &#x27;gated&#x27;);
+      }
+
+      function updateProfile(profileName) {
+        selectedProfile = profileName;
+        root.dataset.profile = profileName;
+        const profile = profiles[profileName];
+        profileButtons.forEach((button) =&gt; {
+          const selected = button.getAttribute(&#x27;data-profile-button&#x27;) === profileName;
+          button.setAttribute(&#x27;aria-pressed&#x27;, String(selected));
+          button.classList.toggle(&#x27;btn-primary&#x27;, selected);
+          button.classList.toggle(&#x27;btn-ghost&#x27;, !selected);
+        });
+        riskSelect.disabled = profileName !== &#x27;high-assurance&#x27;;
+        stateSelect.disabled = profileName !== &#x27;high-assurance&#x27;;
+        workerStat.textContent = profile.workerStat;
+        workerNote.textContent = profile.workerNote;
+        reviewerLabel.textContent = profile.reviewLabel;
+        reviewerStat.textContent = profile.reviewerStat;
+        reviewerNote.textContent = profile.reviewerNote;
+        hostSub.textContent = profile.hostSub;
+        hostSubMobile.textContent = profile.hostSub;
+        detail.textContent = profile.detail;
+        setNode(&#x27;host&#x27;, true, false);
+        setNode(&#x27;worker&#x27;, profile.worker, false);
+        setNode(&#x27;review&#x27;, profile.review, false);
+        setNode(&#x27;verifier&#x27;, profile.verifier, false);
+        setNode(&#x27;fixer&#x27;, profile.fixer, false);
+        setNode(&#x27;gate&#x27;, true, false);
+        setNode(&#x27;stage&#x27;, true, false);
+        setEdge(&#x27;host-worker&#x27;, profile.worker);
+        setEdge(&#x27;worker-review&#x27;, profile.worker &amp;&amp; profile.review);
+        setEdge(&#x27;host-review&#x27;, profile.review);
+        setEdge(&#x27;review-verify&#x27;, profile.verifier);
+        setEdge(&#x27;verify-fix&#x27;, profile.fixer);
+        setEdge(&#x27;review-gate&#x27;, profile.review);
+        setEdge(&#x27;worker-gate&#x27;, profile.worker);
+        setEdge(&#x27;gate-stage&#x27;, true);
+        updateReviewerPool(profile);
+        if (profileName === &#x27;high-assurance&#x27;) updateRisk();
+      }
+
+      function updateRisk() {
+        const count = reviewerCount();
+        reviewerStat.textContent = `${count} ${count === 1 ? &#x27;reviewer&#x27; : &#x27;reviewers&#x27;}`;
+        reviewerNote.textContent = &#x27;Then verifier; final checkpoint has 6 fresh contexts&#x27;;
+        updateReviewerPool(profiles[selectedProfile]);
+        updateState();
+      }
+
+      profileButtons.forEach((button) =&gt; {
+        button.addEventListener(&#x27;click&#x27;, () =&gt; updateProfile(button.getAttribute(&#x27;data-profile-button&#x27;)));
+      });
+      riskSelect.addEventListener(&#x27;change&#x27;, updateRisk);
+      stateSelect.addEventListener(&#x27;change&#x27;, updateState);
+      updateProfile(&#x27;high-assurance&#x27;);
+      updateState();
+    })();
+  &lt;/script&gt;
+&lt;/div&gt;
+
+&lt;script src=&quot;https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set([&quot;top&quot;, &quot;right&quot;, &quot;bottom&quot;, &quot;left&quot;]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+
+  const getTrigger = (target) =&gt;
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest(&quot;[data-tooltip]&quot;)
+      : null;
+  const containsTarget = (trigger, target) =&gt;
+    target?.nodeType != null &amp;&amp; trigger.contains(target);
+  const getContent = (trigger) =&gt;
+    trigger.getAttribute(&quot;data-tooltip&quot;)?.trim() ?? &quot;&quot;;
+  const getPlacement = (trigger) =&gt; {
+    const placement = trigger.getAttribute(&quot;data-tooltip-placement&quot;);
+    return tooltipPlacements.has(placement) ? placement : &quot;top&quot;;
+  };
+  const getTooltip = () =&gt; {
+    if (tooltip == null) {
+      tooltip = document.createElement(&quot;div&quot;);
+      tooltip.id = tooltipId;
+      tooltip.className = &quot;tooltip&quot;;
+      tooltip.setAttribute(&quot;role&quot;, &quot;tooltip&quot;);
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) =&gt; {
+    const ids = new Set(
+      (trigger.getAttribute(&quot;aria-describedby&quot;) ?? &quot;&quot;)
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute(&quot;aria-describedby&quot;);
+    } else {
+      trigger.setAttribute(&quot;aria-describedby&quot;, [...ids].join(&quot; &quot;));
+    }
+  };
+  const clearOpenTimeout = () =&gt; {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) =&gt; {
+    clearOpenTimeout();
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) =&gt; {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-width&quot;,
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-height&quot;,
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: &quot;fixed&quot;,
+    })
+      .then(({ x, y }) =&gt; {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = &quot;visible&quot;;
+      })
+      .catch(() =&gt; {
+        if (activeTrigger === trigger &amp;&amp; request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) =&gt; {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = &quot;hidden&quot;;
+    floating.style.transform = &quot;translate(0, 0)&quot;;
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () =&gt; {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) =&gt; {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() &lt; skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() =&gt; {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) =&gt; {
+    if (event.pointerType === &quot;touch&quot;) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handleLeave = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(&quot;:focus-visible&quot;)) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) =&gt; {
+    if (event.key === &quot;Escape&quot;) {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () =&gt; {
+    closeTooltip(false);
+    document.removeEventListener(&quot;pointerover&quot;, handlePointerOpen);
+    document.removeEventListener(&quot;pointerout&quot;, handleLeave);
+    document.removeEventListener(&quot;focusin&quot;, handleFocusIn);
+    document.removeEventListener(&quot;focusout&quot;, handleLeave);
+    document.removeEventListener(&quot;keydown&quot;, handleKeyDown);
+    document.removeEventListener(&quot;contextmenu&quot;, handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener(&quot;pointerover&quot;, handlePointerOpen);
+  document.addEventListener(&quot;pointerout&quot;, handleLeave);
+  document.addEventListener(&quot;focusin&quot;, handleFocusIn);
+  document.addEventListener(&quot;focusout&quot;, handleLeave);
+  document.addEventListener(&quot;keydown&quot;, handleKeyDown);
+  document.addEventListener(&quot;contextmenu&quot;, handleContextMenu);
+  window.addEventListener(&quot;pagehide&quot;, destroy, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-lucide&quot; async src=&quot;https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  const initialize = () =&gt; {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById(&quot;codex-visualization-lucide&quot;)
+    ?.addEventListener(&quot;load&quot;, initialize, { once: true });
+})();
+&lt;/script&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+</body>
+</html>

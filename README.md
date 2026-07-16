@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>🧠 plan · 🔨 implement · 🔍 review · ✅ QA gate · 🚢 merge</b><br/>
-  Twenty-five agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
+  Thirty-seven agent skills for autonomous PR delivery or staged human-review handoffs. Install them into any repo, with any coding agent.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 npx skills add open-mercato/skills --skill '*'
 ```
 
-Install all twenty-six — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all thirty-seven — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
@@ -93,7 +93,69 @@ flowchart LR
     openPR --> reviewPR
 ```
 
+## 🧪 Stop before the PR
+
+The agent harness is an additive path for teams that want the same isolated
+implementation, validation, and review discipline but want a human to inspect
+the index before anything is published. It does not alter the autonomous PR
+skills above.
+
+Configure selectable workers and review advisors once:
+
+```
+/om-setup-agent-harness
+```
+
+The setup wizard starts with the bundled `cross-model-jury` preset: Codex,
+DeepSeek V4 Pro, Kimi K2.7 through its managed subscription, GLM 5.2 through
+OpenCode Zen, and MiMo 2.5 Free through OpenCode Zen. It detects and smoke-tests
+the local bindings, lets users keep any subset, and supports additional custom
+command or OpenAI-compatible models.
+
+Then run either staged-only wrapper:
+
+```
+/om-fix-issue-multi 1234
+/om-implement-feature-multi-optimized "add account export retention controls"
+/om-implement-feature "harden account export retention" --profile high-assurance
+```
+
+Both wrappers stop with an unchanged `HEAD`, a validated staged diff, a prepared
+PR body, and an absolute worktree path. The `multi` axis runs configured review
+advisors and prints a model-by-finding matrix; every selected advisor runs, and
+the quorum only determines whether enough completed successfully. With the
+bundled preset, both the spec/diagnosis checkpoint and final review contain
+fresh Claude plus Codex, DeepSeek, Kimi, GLM, and MiMo. Claude runs
+`om-code-review` in a new context with no inherited implementation transcript;
+all five advisors start concurrently and receive the same complete skill
+rubric, hash-bound packet, and subject in fresh parallel invocations. The
+runtime waits for Claude's matching artifact before finalizing the matrix. The `optimized` axis dispatches
+bounded implementation packets to configured workers. Publishing remains a
+separate explicit user action.
+
+The opt-in `high-assurance` profile adds risk-scaled blind review, fresh
+finding verification, a separate fixer context, path leases, bounded model
+budgets, and trusted acceptance evidence bound to the exact reviewed diff. It
+uses the same selectable model registry and still stops with files staged.
+
+[Explore the interactive harness guide](docs/agent-harness-guide.html) to compare profiles, packet risk, reviewer topology, lifecycle states, and the stage-only boundary.
+
 ## 📦 Skill catalog
+
+### 🧪 Staged-only harness
+
+These skills never commit, push, or open a pull request. Profile aliases stay
+thin and delegate to the two base wrappers.
+
+| Skill | What it leaves behind |
+|---|---|
+| `om-setup-agent-harness` | Additive model/profile configuration, provider readiness table, and optional Claude output style, staged for review. |
+| `om-fix-issue` | Qualified, tested, reviewed issue fix staged in an isolated worktree. |
+| `om-implement-feature` | Spec-driven, tested, reviewed feature staged in an isolated worktree. |
+| `om-fix-issue-multi` / `om-implement-feature-multi` | Base workflow plus independent diagnosis/spec and final-diff review councils. |
+| `om-fix-issue-optimized` / `om-implement-feature-optimized` | Base workflow plus configured implementation workers. |
+| `om-fix-issue-multi-optimized` / `om-implement-feature-multi-optimized` | Configured workers plus independent review councils. |
+| `om-harness` | Internal provider-neutral runtime, hash-bound `om-code-review` packets, fresh-Claude attestation, evidence-gated packet ledger, model matrix renderer, and staged-handoff verifier. |
 
 ### 🤖 Autonomous skills
 
@@ -182,6 +244,18 @@ GitHub is the default tracker, but nothing in the skills is hard-wired to it —
 Agent-browser is the default browser automation provider for fresh setups. It
 installs itself and Chrome for Testing when needed; existing repositories remain
 on Playwright until their config makes a provider explicit.
+
+The staged-only harness adds an optional `agentHarness` object to the same
+config. Team policy selects profiles and stable model ids; secrets remain in
+environment variables, managed provider authentication, or trusted user-local
+configuration. Existing configs and existing skills ignore the object when the
+harness is not used.
+
+Fresh configuration also includes an opt-in `high-assurance` profile. Its
+packet policy is additive, so the original four profiles retain their existing
+semantics. Teams may tune risk reviewer counts, independent-family minimums,
+concurrency, and bounded invocation/input budgets without changing the model
+adapters.
 
 ## 🎨 Make it yours
 

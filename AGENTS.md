@@ -1,16 +1,16 @@
 # Agent instructions
 
-This repository is the source of the **Open Mercato Skills** collection: twenty-five agent skills (`skills/<name>/SKILL.md`) that run a full PR pipeline — plan, implement, review, QA gate, merge — installable into any repo via [skills.sh](https://skills.sh). The deliverables here are markdown skill documents plus a small amount of shell/Node tooling; there is no application code.
+This repository is the source of the **Open Mercato Skills** collection: thirty-seven agent skills (`skills/<name>/SKILL.md`) that run a full PR pipeline or stop at a staged human-review handoff — plan, implement, review, QA gate, merge — installable into any repo via [skills.sh](https://skills.sh). The deliverables here are markdown skill documents plus a small amount of shell/Node tooling; there is no application code.
 
 ## Task routing
 
 | When the task involves… | Read first | Key rules |
 |---|---|---|
 | Editing or adding a skill (`skills/<name>/SKILL.md`) | `DECISIONS.md`, `scripts/lint.sh`, the skill's own `references/` dir if present | Frontmatter `name` must equal the directory name and `description` must be present. Content must stay product-agnostic: no Open Mercato product references, no hard-coded base branch or package manager (the lint gate greps for these). All tracker state management goes through named tracker operations, never direct `gh` commands (only `references/trackers/` may contain them). Config values (`baseBranch`, paths, labels, validation commands) always come from `.ai/agentic.config.json`, never hard-coded. |
-| Cross-skill contracts (tracker operations, config schema, Progress format) | `skills/om-setup-agent-pipeline/SKILL.md`, `skills/om-setup-agent-pipeline/references/trackers/TEMPLATE.md`, `BACKWARD_COMPATIBILITY.md` | Multiple skills parse each other's outputs (execution-plan Progress sections, `test-env.json`, tracker descriptors). Changing a shared format requires updating every consumer in the same PR. |
+| Cross-skill contracts (tracker operations, config schema, Progress format, harness review/staging formats) | `skills/om-setup-agent-pipeline/SKILL.md`, `skills/om-setup-agent-pipeline/references/trackers/TEMPLATE.md`, `skills/om-harness/references/`, `BACKWARD_COMPATIBILITY.md` | Multiple skills parse each other's outputs (execution-plan Progress sections, `test-env.json`, tracker descriptors, model review results, staged handoff markers). Changing a shared format requires updating every consumer in the same PR. |
 | Installer / tooling scripts (`scripts/*.sh`, `scripts/*.mjs`) | `package.json`, the script itself, `.github/workflows/` | Keep scripts POSIX-portable where they run in CI (ubuntu) and locally (macOS). `scripts/lint.sh` is the CI gate — changes to it change what every PR must pass. |
 | CI workflows (`.github/workflows/*.yml`) | `scripts/lint.sh`, `scripts/audit-skills.sh` | `lint.yml` runs the frontmatter + product-agnosticism gate on every PR. `skills-audit.yml` is informational (skills.sh third-party audit surfacing). |
-| Process / pipeline configuration | `.ai/agentic.config.json`, `SDLC.md`, `.ai/trackers/github.md` | Config and `SDLC.md` describe the same process — change them together. |
+| Process / pipeline configuration | `.ai/agentic.config.json`, `SDLC.md`, `.ai/trackers/github.md`, `skills/om-setup-agent-harness/SKILL.md` | Config and `SDLC.md` describe the same process — change them together. The optional `agentHarness` object is additive and managed by its separate setup skill. |
 | README, DECISIONS.md, LICENSE | `DECISIONS.md` | These MAY reference the upstream Open Mercato project (the agnosticism gate is scoped to `skills/**` only). Read `DECISIONS.md` before proposing structural changes — most "obvious" restructurings were already considered and decided. |
 
 ## Validation

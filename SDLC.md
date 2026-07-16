@@ -27,6 +27,45 @@ Work enters through two paths: a free-form task brief handed to an agent, or a f
 | Merge | `om-merge-buddy` reports, read-only, which PRs can merge now and which are close but blocked. `om-approve-merge-pr` re-checks every gate, approves, and squash-merges. | `om-merge-buddy` + `om-approve-merge-pr`, or a human | PR squash-merged into `main` |
 | Post-merge housekeeping | Close issues the merged PR fixes; comment on issues whose PRs were closed without merging; turn leftover asks or review comments into tracked follow-up issues. | `om-sync-merged-pr-issues`, `om-followup-issue-from-pr` | Tracker reconciled, follow-ups filed |
 
+## Optional staged handoff path
+
+The additive agent harness stops between Implement and PR when a human wants to
+review the exact index first. `om-fix-issue` and `om-implement-feature` reuse the
+same specification, validation, integration-test, UI, and code-review gates,
+optionally adding configured implementation workers and independent review
+advisors. A successful run must leave the starting commit unchanged and all
+intended files staged in an isolated worktree. It prepares a PR body but does
+not commit, push, or create a PR.
+
+The `multi` profile adds root-cause/spec and final-diff review councils. The
+`optimized` profile adds bounded implementation workers. The
+`multi-optimized` profile combines them while treating review from the worker's
+model family as a self-check rather than independent confirmation. The optional
+`agentHarness` configuration lives in `.ai/agentic.config.json` and is managed
+separately by `om-setup-agent-harness`.
+
+Every reviewer selected by a `multi` profile is invoked; quorum is a provider
+readiness threshold, not a fan-out limit. For both the spec/diagnosis checkpoint
+and final diff, the wrapper freezes one `om-code-review` packet, then starts a
+new Claude context and every configured advisor concurrently. All six receive
+the same complete rubric, packet, and subject without inherited implementation
+context or peer findings. The bundled matrix therefore contains fresh Claude,
+Codex, DeepSeek, Kimi, GLM, and MiMo review passes, with Codex marked as a
+same-family self-check when Codex also implemented the change. The runtime
+rejects stale hashes or a non-fresh Claude attestation instead of emitting a
+final council result.
+
+The opt-in `high-assurance` profile further divides implementation into
+manifest-defined, file-disjoint packets. Each packet holds path leases, receives
+risk-scaled blind review and fresh finding verification, uses a separate fixer
+context when needed, and can advance only when trusted acceptance evidence is
+bound to the exact reviewed diff. All packet ledgers must be `gated` before the
+normal final review and staged handoff.
+Fresh setup offers Codex, DeepSeek, Kimi, GLM, and MiMo as independently
+selectable advisors, then permits custom model bindings. Availability and
+subscription health are proven by per-model smoke reviews rather than inferred
+from an installed executable alone.
+
 ## Label state machine
 
 Pipeline labels are mutually exclusive: a PR carries at most one, and it names where the PR sits in the flow.
@@ -78,7 +117,7 @@ The one hard rule of this process: **a PR carrying `needs-qa` must not merge unt
 
 Before mutating an issue or PR, an agent claims it with all three signals: it assigns itself, adds the `in-progress` label, and posts a claim comment saying what it is doing. Any agent that finds an existing claim backs off instead of colliding. A PR carrying `in-progress` is also skipped by the merge tooling.
 
-The claim is released when the work finishes — on success and on failure alike. A stale `in-progress` with no recent activity may be cleared by the maintainer.
+The normal PR flow releases the claim when work is published or aborts. A successful staged-only issue handoff deliberately holds the claim while the human reviews the index; publishing or the wrapper's explicit abort path releases it. A stale `in-progress` with no recent activity may be cleared by the maintainer.
 
 ## Validation gate
 

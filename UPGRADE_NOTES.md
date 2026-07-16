@@ -10,7 +10,8 @@ against them — not against the copies shipped in this repo:
 |--------------------|--------------|-------------|
 | `.ai/trackers/<tracker>.md` (tracker descriptor — the file every tracker operation executes from) | `om-setup-agent-pipeline` | Manual re-sync (see below) |
 | `.ai/browsers/<provider>.md` (browser automation and autonomous provisioning operations) | `om-setup-agent-pipeline` | Manual re-sync (see below) |
-| `.ai/agentic.config.json` | `om-setup-agent-pipeline` | Re-run `/om-setup-agent-pipeline`; it preserves answers where it can |
+| `.ai/agentic.config.json` | `om-setup-agent-pipeline`; optional `agentHarness` section by `om-setup-agent-harness` | Re-run the owning setup skill; both preserve unrelated values |
+| `.claude/output-styles/om-harness-review.md` (optional) | `om-setup-agent-harness` | Re-run `/om-setup-agent-harness` and review the diff before replacing local edits |
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
@@ -57,6 +58,40 @@ preserving the rest of the config.
 ## Notable upgrades
 
 Newest first. Each entry lists the symptom you will see with a stale installation and the fix.
+
+### 2026-07 — Additive staged-only multi-model harness
+
+The collection now ships a separate staged-only path: `om-fix-issue` and
+`om-implement-feature` wrap existing lower-level skills, while `om-harness`
+provides configurable command/HTTP adapters, review councils, deterministic
+model matrices, and an unchanged-ref/reflog staging gate. The existing autonomous PR
+skills are unchanged.
+
+Fresh harness setup offers a bundled selectable jury: Codex, DeepSeek V4 Pro,
+managed-subscription Kimi, OpenCode Zen GLM 5.2, and OpenCode Zen MiMo 2.5 Free.
+Users may keep any subset or add custom command/OpenAI-compatible models. Setup
+probes credentials without printing them and smoke-tests every selected model.
+
+The same preset now includes an opt-in `high-assurance` profile with bounded
+packet manifests, path leases, risk-scaled blind reviewers, fresh finding
+verification, separate fixer invocations, model budgets, and deterministic
+acceptance evidence bound to the exact reviewed diff. Existing `standard`,
+`optimized`, `multi`, and `multi-optimized` configuration shapes remain
+compatible.
+
+Bound wrapper councils now prepare a version 1 `om-code-review` packet for the
+exact diagnosis/spec/diff. Claude must review it in a new context without the
+implementation transcript, and every configured advisor receives the same full
+installed rubric in a fresh invocation. The runtime validates the Claude,
+packet, subject, and rubric hashes before fan-out and renders all reviewers in
+one matrix; provider quorum does not count the mandatory Claude pass.
+
+- **Symptom of a stale installation:** staged wrapper names are unavailable, or
+  a wrapper reports that `agentHarness` is missing.
+- **Fix:** reinstall the skill collection, run `/om-setup-agent-harness`, review
+  and commit the staged config, then rerun the wrapper. Keep credentials in
+  environment variables or user-local configuration; never add them to the
+  repository config.
 
 ### 2026-07 — Browser providers and first-class agent-browser
 

@@ -11,7 +11,9 @@ The full Phase-2 procedure: for every `status: pending` story, dispatch a read-o
      --repo "$PLATFORM_REPO" --branch "$PLATFORM_BRANCH" \
      ${PLATFORM_COMPANION_REPO:+--companion-repo "$PLATFORM_COMPANION_REPO"} \
      ${PLATFORM_CANDIDATES:+--candidates "$PLATFORM_CANDIDATES"} \
-     ${PLATFORM_CLONE_URL:+--clone-url "$PLATFORM_CLONE_URL"}
+     ${PLATFORM_COMPANION_CANDIDATES:+--companion-candidates "$PLATFORM_COMPANION_CANDIDATES"} \
+     ${PLATFORM_CLONE_URL:+--clone-url "$PLATFORM_CLONE_URL"} \
+     ${PLATFORM_COMPANION_CLONE_URL:+--companion-clone-url "$PLATFORM_COMPANION_CLONE_URL"}
    ```
 
    - **Line 1, `<REPO_ROOT>` (required).** A clean checkout of `platform.repo` on `platform.branch` — not a fork or feature-branch WIP — just fetched-and-fast-forwarded, with `HEAD` asserted equal to the remote tip. This checkout carries **three** jobs: code reading for orientation, merged-code verdict grounding (`bin/gap-validate-finding` greps it), and the platform's own routing/agent docs (`AGENTS.md` files read directly from it — never from a separately vendored copy, which is just a staler duplicate).

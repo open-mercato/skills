@@ -1,6 +1,6 @@
 ---
 name: om-gap-analysis
-description: Grounded platform gap analysis at engagement scale — turn a folder of client docs into an Epic/Story tree where every coverage verdict is re-run by executable gates against a validated checkout of the platform, scored in atomic commits, license-tier-tagged, and synthesized into a client-facing summary + backlog. Use when the user says "gap analysis", "what does the platform already cover", "coverage report", "analiza luk", "co platforma już pokrywa", "ile z tego już jest w platformie". For writing the requirements themselves use om-app-spec-writing; this skill verifies coverage, it does not author requirements.
+description: Grounded platform gap analysis at engagement scale — turn a folder of client docs into an Epic/Story tree where every coverage verdict is re-run by executable gates against a validated checkout of the platform, scored in atomic commits, license-tier-tagged, and synthesized into a client-facing summary + backlog. Use when the user says "gap analysis", "what does the platform already cover", "coverage report", "analiza luk", "co platforma już pokrywa", "ile z tego już jest w platformie". This skill verifies coverage against the platform's code; it does not author requirements or specs — use the spec-writing skills for that.
 ---
 
 # Gap Analysis
@@ -50,7 +50,7 @@ For a *single* capability question ("does the platform do X?"), answer it direct
 
 ## The gates (executable, not prose)
 
-The engine's power is that its rules bind outside the model loop. All four live in this skill's `bin/` and are invoked from the repository root:
+The engine's power is that its rules bind outside the model loop. All five live in this skill's `bin/` and are invoked from the repository root:
 
 | Gate | Layer | Binds |
 |---|---|---|

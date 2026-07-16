@@ -124,15 +124,17 @@ FILENAME == ARGV[1] {
   key = kind ":" num
   known[key] = 1
   # Depth suffix: "[+A/-D, F files, STATE, updated T]". Parse additions and
-  # review state; a line without the suffix stays at additions=-1 (unknown)
-  # and can only trigger on review state (never present without the suffix).
+  # review state FROM THE SUFFIX ONLY — a PR title containing the word
+  # APPROVED must not forge the trigger. A line without the suffix stays at
+  # additions=-1 (unknown) and cannot trigger at all.
   adds[key] = -1
   state[key] = ""
-  if (match($0, /\[\+[0-9]+/)) {
-    adds[key] = substr($0, RSTART + 2, RLENGTH - 2) + 0
-    if ($0 ~ /APPROVED/)               state[key] = "APPROVED"
-    else if ($0 ~ /CHANGES_REQUESTED/) state[key] = "CHANGES_REQUESTED"
-    else if ($0 ~ /DRAFT/)             state[key] = "DRAFT"
+  if (match($0, /\[\+[0-9]+.*\]$/)) {
+    sfx = substr($0, RSTART, RLENGTH)
+    match(sfx, /\+[0-9]+/); adds[key] = substr(sfx, RSTART + 1, RLENGTH - 1) + 0
+    if (sfx ~ /APPROVED/)               state[key] = "APPROVED"
+    else if (sfx ~ /CHANGES_REQUESTED/) state[key] = "CHANGES_REQUESTED"
+    else if (sfx ~ /DRAFT/)             state[key] = "DRAFT"
   }
   next
 }

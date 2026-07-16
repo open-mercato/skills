@@ -85,23 +85,26 @@ COMPANION_ROOT="${GAP_COMPANION_ROOT:-}"
 STORY_CONTEXT="${GAP_STORY:-}"
 TIER_MAP="${GAP_TIER_MAP:-}"
 
+fail() { echo "GATE FAIL [$STORY_ID]: $1" >&2; exit 1; }
+
+# `shift 2 || fail`, never `|| true`: a value-taking flag with no value would
+# otherwise leave $1 unshifted and respin this loop forever — a silent hang in
+# an unattended batch is worse than a rejected story.
 while [ $# -gt 0 ]; do
   case "$1" in
-    --repo-root)        REPO_ROOT="${2:-}"; shift 2 || true ;;
+    --repo-root)        REPO_ROOT="${2:-}"; shift 2 || fail "missing value for --repo-root" ;;
     --repo-root=*)      REPO_ROOT="${1#--repo-root=}"; shift ;;
-    --companion-root)   COMPANION_ROOT="${2:-}"; shift 2 || true ;;
+    --companion-root)   COMPANION_ROOT="${2:-}"; shift 2 || fail "missing value for --companion-root" ;;
     --companion-root=*) COMPANION_ROOT="${1#--companion-root=}"; shift ;;
-    --story)            STORY_CONTEXT="$(cat "${2:-/dev/null}" 2>/dev/null || true)"; shift 2 || true ;;
+    --story)            STORY_CONTEXT="$(cat "${2:-/dev/null}" 2>/dev/null || true)"; shift 2 || fail "missing value for --story" ;;
     --story=*)          STORY_CONTEXT="$(cat "${1#--story=}" 2>/dev/null || true)"; shift ;;
-    --tier-map)         TIER_MAP="${2:-}"; shift 2 || true ;;
+    --tier-map)         TIER_MAP="${2:-}"; shift 2 || fail "missing value for --tier-map" ;;
     --tier-map=*)       TIER_MAP="${1#--tier-map=}"; shift ;;
     *)                  shift ;;
   esac
 done
 
 BLOCK="$(cat)"
-
-fail() { echo "GATE FAIL [$STORY_ID]: $1" >&2; exit 1; }
 
 # Returns 0 (true = degenerate) when QUERY shares no noun token with the story.
 # Stem-matches on the first 5 chars so plural/inflection (appointment/appointments)
@@ -206,8 +209,7 @@ fi
 QUERY="$(grep -E "\*\*Grounding query\*\*:" <<<"$BLOCK" | head -1 \
          | sed -E 's/.*\*\*Grounding query\*\*:[[:space:]]*//; s/^`//; s/`[[:space:]]*$//' || true)"
 GSOURCE="$(grep -E "\*\*Grounding source\*\*:" <<<"$BLOCK" | head -1 \
-           | sed -E 's/.*\*\*Grounding source\*\*:[[:space:]]*//; s/[[:space:]]*$//' | tr '[:upper:]' '[:lower:]' || true)"
-GSOURCE="${GSOURCE%%[[:space:]]*}"
+           | sed -E 's/.*\*\*Grounding source\*\*:[[:space:]]*//; s/<!--.*-->//; s/[[:space:]]*$//' | tr '[:upper:]' '[:lower:]' || true)"
 
 # Every capability claim reaching this point (missing/implemented/partial —
 # unclear already returned above) is grounded, unconditionally. Grounding
@@ -216,7 +218,7 @@ GSOURCE="${GSOURCE%%[[:space:]]*}"
 # recognized-enum check, same as Upstream pipeline.
 case "$GSOURCE" in
   core|companion) ;;
-  *) fail "missing or unrecognized **Grounding source**: '${GSOURCE:-<empty>}' (expected: core | companion)" ;;
+  *) fail "missing or unrecognized **Grounding source**: '${GSOURCE:-<empty>}' (expected exactly one of: core, companion)" ;;
 esac
 
 [ -n "$QUERY" ] || fail "verdict '$VERDICT' requires grounding but no **Grounding query** field was emitted"
@@ -256,6 +258,10 @@ else
 fi
 
 [ -n "$SEARCH_ROOT" ] || fail "verdict '$VERDICT' requires grounding but no $SEARCH_ROOT_FLAG was provided (pass the matching path bin/gap-orientation-preflight printed, or set the matching GAP_*_ROOT env var)"
+# Normalize away trailing slashes: rg prints single-slash root-prefixed paths,
+# so a trailing-slash root would defeat the tier derivation's prefix strip and
+# silently misreport a licensed-only hit as core.
+while [ "${SEARCH_ROOT%/}" != "$SEARCH_ROOT" ] && [ -n "${SEARCH_ROOT%/}" ]; do SEARCH_ROOT="${SEARCH_ROOT%/}"; done
 git -C "$SEARCH_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1 || \
   fail "$SEARCH_ROOT_FLAG '$SEARCH_ROOT' is not a git checkout — run bin/gap-orientation-preflight first and pass its stdout here"
 

@@ -1,6 +1,6 @@
 # Subagent prompt template
 
-The prompt Phase 2's orchestrator gives each read-only investigation subagent (one story per subagent). Fill `<STORY_ID>`, `<STORY_BLOCK>`, `<PLATFORM_NAME>` (the platform's display name from `platform.repo`), `<REPO_ROOT>` (stdout line 1 of `bin/gap-orientation-preflight` — the validated platform checkout; never any other local repo), `<COMPANION_ROOT>` (stdout line 2 — may be `UNAVAILABLE`), `<PIPELINE_SNAPSHOT>` (the file written in Phase 2 step 1), and `<MIN_ADDITIONS>` (the `platform.significantPrAdditions` value, or "unset").
+The prompt Phase 2's orchestrator gives each read-only investigation subagent (one story per subagent). Fill `<STORY_ID>`, `<STORY_BLOCK>`, `<PLATFORM_NAME>` (the platform's display name from `platform.repo`), `<REPO_ROOT>` (stdout line 1 of `bin/gap-orientation-preflight` — the validated platform checkout; never any other local repo), `<COMPANION_ROOT>` (stdout line 2 — may be `UNAVAILABLE`), `<PIPELINE_SNAPSHOT>` (the file written in Phase 2 step 1), and `<MIN_ADDITIONS>` (the `platform.significantPrAdditions` value). When `platform.significantPrAdditions` is unset, **omit the additions clause** from step 5's significance sentence entirely — the trigger is then the review-state half alone, keeping the instruction the subagent is given and the rule `bin/gap-depth-check` enforces on one definition.
 
 ```
 You are a read-only platform-codebase investigator in a gap analysis.

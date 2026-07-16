@@ -32,6 +32,8 @@ type: gap-analysis-summary
 
 # Gap Analysis Summary — <Project Display Name>
 
+> Verdicts are grounded against the platform's `<platform.branch>` branch<, N commits ahead of the release branch — some covered capabilities may not have shipped in a tagged release yet | when the orientation preflight reported the ahead-count; otherwise: which may include work not yet in a tagged release>.
+
 ## Executive summary
 <2–3 plain-language paragraphs: how much already exists (and how much of that is free-core vs licensed), the biggest risks, the recommended start. May be read by a client stakeholder.>
 

@@ -46,6 +46,8 @@ The phases have different cognitive shapes, and the split is load-bearing: **Pha
 2. **Verification** — preflights (validated fresh checkouts via `bin/gap-orientation-preflight`; pipeline-channel reachability via the **repo-info** operation), one orchestrator-fetched pipeline snapshot with PR depth, parallel per-story subagents (prompt: `references/subagent-prompt.md`), and the gate loop: every block through `bin/gap-validate-finding` (which re-runs the grounding query and derives the license tier) before it is written; the citation cross-check `bin/gap-pipeline-crosscheck` at the phase transition. Full procedure: `references/verification.md`.
 3. **Synthesis** — aggregate the MD into the summary (coverage split by license tier, top risks, sequencing) and the backlog; significant open PRs surface in the summary, enforced by `bin/gap-depth-check`. Full procedure + templates: `references/synthesis.md`.
 
+The end-to-end pattern around these phases — a standalone workspace hosting one folder per client, the run commands, and how the three MDs become a client-facing deck — is worked through in `references/engagement-workflow.md`.
+
 For a *single* capability question ("does the platform do X?"), answer it directly with the same evidence discipline — a validated checkout hit or a re-run absence — without spinning up the batch machinery; the batch engine is for a directory of documents, not one question.
 
 ## The gates (executable, not prose)

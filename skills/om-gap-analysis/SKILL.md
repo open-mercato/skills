@@ -56,7 +56,7 @@ The engine's power is that its rules bind outside the model loop. All five live 
 |---|---|---|
 | `bin/gap-checklist-gate` | intake | no Phase 2 on a happy-path-only tree |
 | `bin/gap-orientation-preflight` | checkout | no grounding against a fork, wrong branch, or stale checkout |
-| `bin/gap-validate-finding` | verdict | every verdict re-run locally; strawman queries rejected; tier derived from hit paths |
+| `bin/gap-validate-finding` | verdict | every verdict re-run locally; strawman queries rejected; the verdict symbol must agree with the block's per-criterion coverage rows (all/none/mixed → ✅/❌/🟡, every covered path existence-checked); tier derived from hit paths |
 | `bin/gap-pipeline-crosscheck` | citation | no missed or phantom pipeline citations |
 | `bin/gap-depth-check` | reporting | no significant cited PR buried outside the client-facing summary |
 

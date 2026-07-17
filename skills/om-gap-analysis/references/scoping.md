@@ -76,6 +76,7 @@ coverage_categories:
 <!-- Filled by phase 2 via the gate. Do not edit by hand. -->
 - **Verdict**: ⚪ not yet analyzed
 - **Evidence**:
+- **Criteria coverage**:
 - **Grounding query**:
 - **Grounding source**:
 - **Gaps**:

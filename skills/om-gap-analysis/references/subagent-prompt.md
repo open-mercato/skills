@@ -18,6 +18,7 @@ structured findings block. Investigate only the story below.
 4. For the verdict, search whichever checkout you found evidence in, locally (Grep/Glob), for domain nouns and synonyms. Only merged code counts — in either repo.
 5. Check `<PIPELINE_SNAPSHOT>` (already fetched once for this whole run) for an *open, unmerged* PR or planned spec matching this story's domain — use judgment, not exact string matching. Report it in **Upstream pipeline**; it never changes your **Verdict** (a merged companion module is a positive per steps 3+4 above, not an Upstream-pipeline note). When the snapshot line for a PR you cite is significant — additions >= <MIN_ADDITIONS>, or its review state is APPROVED or CHANGES_REQUESTED — say so explicitly in **Gaps** and **Suggested implementation path**, not only in the **Upstream pipeline** field: "adopt the pending module" and "build from scratch" are different recommendations even when the Verdict symbol stays ❌ Missing. Never call the tracker yourself — this file is the only source for this field.
 6. Name the single most decisive local search term in **Grounding query** — the orchestrator will RE-RUN it as a local search against whichever checkout you name in **Grounding source**, to verify your verdict — so pick the term that actually decides it (e.g. the module path `modules/<x>` or `packages/<module-name>`), not a vague word. Every verdict is re-run, with no exception for any source.
+7. **Your verdict is derived from the criteria, not declared.** For EACH acceptance criterion of the story, in order, emit one **Criteria coverage** row: either `covered` with the single strongest evidence path (backticked, repo-relative — the orchestrator existence-checks every one against the checkout), or `gap:` with the named missing piece. Then the verdict symbol MUST agree with your own rows: all covered → ✅ Implemented, none covered → ❌ Missing, mixed → 🟡 Partial. A verdict that disagrees with its rows is rejected outright.
 
 Tools: Read, Glob, Grep (scoped to `<REPO_ROOT>`, `<COMPANION_ROOT>`, and `<PIPELINE_SNAPSHOT>`). Never Edit/Write. Never call the tracker or any network tool — every external call for this run is centralized in the orchestrator.
 
@@ -25,6 +26,10 @@ Tools: Read, Glob, Grep (scoped to `<REPO_ROOT>`, `<COMPANION_ROOT>`, and `<PIPE
 - **Verdict**: ✅ Implemented | 🟡 Partial | ❌ Missing | ⚠️ Unclear
 - **Evidence**:
   - `<repo-relative path>`: <role it plays>
+- **Criteria coverage**:
+  - C1: covered `<repo-relative path — the single strongest evidence for this criterion>`
+  - C2: gap: <what is missing for this criterion>
+  <!-- exactly one row per acceptance criterion, in story order -->
 - **Grounding query**: `<the single local search term that decides this verdict>`
 - **Grounding source**: core | companion   <!-- 'core' = you searched <REPO_ROOT>; 'companion' = you searched <COMPANION_ROOT>. No third option — every claim must be searched in one of these two checkouts. -->
 - **Gaps**:
@@ -35,6 +40,7 @@ Tools: Read, Glob, Grep (scoped to `<REPO_ROOT>`, `<COMPANION_ROOT>`, and `<PIPE
 - **Upstream pipeline**: none | PR #<n> (open) | companion PR #<n> (open) | spec: <path> (planned, unbuilt)
 
 Rules the orchestrator's gate enforces (your block is rejected and re-dispatched if violated):
+- **Criteria coverage** has exactly one row per acceptance criterion; every `covered` path must exist in the checkout; the verdict symbol must agree with the rows (all/none/mixed → ✅/❌/🟡).
 - Effort is a number 0–5, never a T-shirt size.
 - No percentage without an N/M fraction. No hedges (approximately/around/roughly).
 - **Grounding source** must be exactly `core` or `companion` — the orchestrator re-runs your query against the checkout your source names, so an unrecognized value is rejected outright, not defaulted.

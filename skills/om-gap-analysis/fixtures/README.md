@@ -29,6 +29,8 @@ T=$(mktemp -d) && git init -q "$T/repo" && mkdir -p "$T/repo/modules/currencies"
 printf 'Story 1.1: Multi-currency support\n- currency conversion on invoices\n' > "$T/story.txt"
 
 BLOCK='- **Verdict**: ❌ Missing
+- **Criteria coverage**:
+  - C1: gap: no currency conversion anywhere
 - **Grounding query**: `currencies`
 - **Grounding source**: core
 - **Effort**: 3
@@ -40,6 +42,12 @@ printf '%s\n' "$BLOCK" | bin/gap-validate-finding 1.1 --repo-root "$T/repo" --st
 
 # Strawman guard: an unrelated query on a ❌ is rejected (exit 1).
 printf '%s\n' "$BLOCK" | sed 's/`currencies`/`zzqxnonexistent`/' \
+  | bin/gap-validate-finding 1.1 --repo-root "$T/repo" --story "$T/story.txt"
+
+# Criteria-derivation guard: a ❌ carrying a covered row disagrees with its
+# own criteria and is rejected (exit 1) — as is a covered row whose path does
+# not exist in the checkout (phantom evidence).
+printf '%s\n' "$BLOCK" | sed 's|C1: gap: no currency conversion anywhere|C1: covered `modules/currencies/index.ts`|' \
   | bin/gap-validate-finding 1.1 --repo-root "$T/repo" --story "$T/story.txt"
 ```
 

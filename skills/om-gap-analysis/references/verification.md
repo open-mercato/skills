@@ -62,7 +62,7 @@ The full Phase-2 procedure: for every `status: pending` story, dispatch a read-o
 
    The gate **requires** the story to ground a `❌ Missing` (without it, it cannot prove the grounding query references the story rather than a strawman), and **always re-runs every grounded verdict** — there is no shape-trust exemption for any `Grounding source` (a local search costs nothing).
 
-   - **exit 0 (PASS)** → write the block into the story's `#### Gap analysis`, flip `**Status**` to `done`, set `**Investigated**`. For a positive verdict, stdout carries `TIER: <tier>` — record it on the verdict line: `✅ Implemented (core)` / `(licensed)` / `(companion)` / whatever the tier map names. Tier is gate-derived from the re-run's hit paths, never subagent-claimed; it partitions the covered set (the summary splits the headline by it) and never changes *whether* something is covered.
+   - **exit 0 (PASS)** → write the block into the story's `#### Gap analysis`, flip `**Status**` to `done`, set `**Investigated**`. Stdout carries `CRITERIA: <covered>/<total>` (the criteria-derived fraction the gate verified against the block's own rows) and, for a positive verdict, `TIER: <tier>` — record both on the verdict line: `🟡 Partial (2/4, core)` / `✅ Implemented (3/3, licensed)`. Both are gate-derived, never subagent-claimed; tier partitions the covered set (the summary splits the headline by it) and neither changes *whether* something is covered.
    - **exit 1 (FAIL)** → do **not** write. Mark `**Status**: needs-review`, re-dispatch *once* with a reinforced prompt (echo the gate's stderr reason into the retry). If it fails again, leave `needs-review` and move on.
 
 5. **Report progress** briefly: "X/Y done, Z needs-review."

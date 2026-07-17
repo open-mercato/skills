@@ -4,7 +4,7 @@ The full Phase-3 procedure: read the now-complete MD, produce two derived artifa
 
 ## Steps
 
-1. **Aggregate stats**: total epics/stories, verdict distribution **split by license tier** (a `✅ (core)` and a `✅ (licensed)` are different promises to the client), atomic-commit effort totals by verdict and by priority, stories blocked by dependencies, and `needs-review` count (surfaced separately, never folded into the distribution).
+1. **Aggregate stats**: total epics/stories, verdict distribution **split by license tier** (a `✅ (core)` and a `✅ (licensed)` are different promises to the client), the **criteria total** (sum the gate-verified `N/M` fractions across capability stories — the client-facing "how much of what you specified is already there", honest per the output contract because both numbers are counts), atomic-commit effort totals by verdict and by priority, stories blocked by dependencies, and `needs-review` count (surfaced separately, never folded into the distribution).
 2. **Produce `<project>-summary.md`** (template below). Fold every PR that trips the significance trigger (additions ≥ `platform.significantPrAdditions`, or review state APPROVED / CHANGES_REQUESTED) into **Top risks** or **Open questions** — named and sized, with its review discussion from Phase 2 step 8 condensed to one line ("reviewer drove the flow end-to-end; narrow fixes pending" reads very differently from a bare open tag). Never leave a significant PR as a per-story field only a reader who opens every story block would see.
 3. **Produce `<project>-backlog.md`** (template below) — a sequenced delivery plan; every item links its Story ID(s).
 4. **Run the depth gate** — deterministic, read-only, after the summary exists:
@@ -50,6 +50,7 @@ type: gap-analysis-summary
      The tier split keeps the headline honest: coverage that carries a license
      cost is never blended into the free-core number. Split 🟡 rows by tier too
      when the run has both. -->
+**Acceptance criteria covered**: <sum covered>/<sum total> across all capability-verdict stories (gate-verified per story).
 **Total effort to close gaps**: <sum> atomic commits across <k> stories.
 
 ## Coverage by epic

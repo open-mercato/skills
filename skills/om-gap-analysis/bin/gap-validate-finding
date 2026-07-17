@@ -57,9 +57,17 @@
 #   present/absent grounding is untouched; it partitions the covered set so a
 #   paid overlay is never silently counted as free-core coverage.
 #
+# CRITERIA (derived verdicts — see the inline section below for the full
+# contract): every capability verdict must carry a **Criteria coverage** block,
+# one row per acceptance criterion — `C<i>: covered \`path\`` or
+# `C<i>: gap: <text>`. The verdict symbol must agree with its rows (all
+# covered → ✅, none → ❌, mixed → 🟡), every covered path is
+# existence-checked in a validated checkout, and stdout carries
+# `CRITERIA: <covered>/<total>` for the orchestrator to record.
+#
 # Exit codes:
-#   0  PASS  — write the block to the MD (stdout carries the TIER line for
-#              positive verdicts).
+#   0  PASS  — write the block to the MD (stdout carries the CRITERIA and
+#              TIER lines for capability verdicts).
 #   1  FAIL  — block malformed, verdict contradicted by the re-run, grounding
 #              query degenerate, the relevant --repo-root/--companion-root
 #              missing/invalid, or the query malformed (leading '-').
@@ -264,6 +272,83 @@ fi
 while [ "${SEARCH_ROOT%/}" != "$SEARCH_ROOT" ] && [ -n "${SEARCH_ROOT%/}" ]; do SEARCH_ROOT="${SEARCH_ROOT%/}"; done
 git -C "$SEARCH_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1 || \
   fail "$SEARCH_ROOT_FLAG '$SEARCH_ROOT' is not a git checkout — run bin/gap-orientation-preflight first and pass its stdout here"
+
+# ---------------------------------------------------------------------------
+# CRITERIA COVERAGE — the verdict is derived, not declared (one row per
+# acceptance criterion; the declared verdict symbol must agree with the rows,
+# or the block is rejected). This shrinks the judgment surface from "the whole
+# story" to one criterion per row, and gives the gate a per-row surface to
+# check: every `covered` row names exactly one repo-relative path that must
+# exist in a validated checkout. A verdict whose symbol disagrees with its own
+# rows (e.g. ✅ with gap rows, ❌ with covered rows) is the same
+# fabrication-shape failure as an empty positive — rejected, not trusted.
+#
+# Row shapes (inside the `- **Criteria coverage**:` block, one per criterion,
+# in story order):
+#   - C1: covered `path/inside/the/checkout`
+#   - C2: gap: <named missing piece>
+# Derivation rule the gate enforces: all covered → ✅ Implemented; none
+# covered → ❌ Missing; mixed → 🟡 Partial. On PASS, stdout carries
+# `CRITERIA: <covered>/<total>` (before TIER) for the orchestrator to record
+# on the verdict line.
+#
+# Scope honesty: the path check proves the evidence file/dir EXISTS, not that
+# it semantically satisfies the criterion — that judgment stays with the
+# subagent, but it is now reviewable one criterion at a time instead of one
+# opaque story at a time.
+# ---------------------------------------------------------------------------
+grep -q "\*\*Criteria coverage\*\*" <<<"$BLOCK" || \
+  fail "missing **Criteria coverage** block (one row per acceptance criterion: 'C<i>: covered \`path\`' or 'C<i>: gap: <text>')"
+
+COV_ROWS="$(grep -E '^[[:space:]]*- C[0-9]+: covered `[^`]+`' <<<"$BLOCK" || true)"
+GAP_ROWS="$(grep -cE '^[[:space:]]*- C[0-9]+: gap: .+' <<<"$BLOCK" || true)"
+N_COV=0; [ -n "$COV_ROWS" ] && N_COV=$(printf '%s\n' "$COV_ROWS" | grep -c . || true)
+N_GAP=${GAP_ROWS:-0}
+N_ROWS=$((N_COV + N_GAP))
+[ "$N_ROWS" -ge 1 ] || fail "**Criteria coverage** block has no parseable rows (expected 'C<i>: covered \`path\`' or 'C<i>: gap: <text>')"
+
+# One row per criterion: when the story context carries countable criteria
+# (bullet lines below the title — the orchestrator writes title + criteria),
+# the row count must match. A story file without bullets skips this count
+# (WARN), never fails it — the shape/consistency/path checks below still bind.
+if [ -n "$STORY_CONTEXT" ]; then
+  CRIT_TOTAL="$(grep -cE '^[[:space:]]*- ' <<<"$STORY_CONTEXT" || true)"
+  if [ "${CRIT_TOTAL:-0}" -gt 0 ]; then
+    [ "$N_ROWS" -eq "$CRIT_TOTAL" ] || fail "criteria rows ($N_ROWS) do not match the story's acceptance criteria ($CRIT_TOTAL) — one row per criterion, in order"
+  else
+    echo "GATE WARN [$STORY_ID]: story context has no countable criteria bullets — skipping the row-count check" >&2
+  fi
+fi
+
+# The verdict symbol must agree with the rows (derivation rule).
+case "$VERDICT" in
+  implemented) { [ "$N_GAP" -eq 0 ] && [ "$N_COV" -ge 1 ]; } || fail "✅ Implemented disagrees with its own criteria rows ($N_COV covered / $N_GAP gap) — all criteria must be covered for ✅" ;;
+  missing)     [ "$N_COV" -eq 0 ] || fail "❌ Missing disagrees with its own criteria rows ($N_COV covered) — any covered criterion makes this 🟡 Partial at least" ;;
+  partial)     { [ "$N_COV" -ge 1 ] && [ "$N_GAP" -ge 1 ]; } || fail "🟡 Partial disagrees with its own criteria rows ($N_COV covered / $N_GAP gap) — partial means some covered AND some gaps" ;;
+esac
+
+# Every covered row's path must exist in a validated checkout (the grounding-
+# source checkout first; the other checkout as fallback when provided).
+if [ "$N_COV" -ge 1 ]; then
+  OTHER_ROOT=""
+  if [ "$GSOURCE" = "companion" ]; then OTHER_ROOT="$REPO_ROOT"; else OTHER_ROOT="$COMPANION_ROOT"; fi
+  while [ "${OTHER_ROOT%/}" != "$OTHER_ROOT" ] && [ -n "${OTHER_ROOT%/}" ]; do OTHER_ROOT="${OTHER_ROOT%/}"; done
+  while IFS= read -r row; do
+    [ -n "$row" ] || continue
+    cpath="$(sed -E 's/^[[:space:]]*- C[0-9]+: covered `([^`]+)`.*/\1/' <<<"$row")"
+    case "$cpath" in
+      -*|*..*) fail "malformed criteria evidence path '$cpath'" ;;
+    esac
+    found=""
+    [ -n "$(git -C "$SEARCH_ROOT" ls-files -- "$cpath" 2>/dev/null | head -1)" ] && found=1
+    if [ -z "$found" ] && [ -n "$OTHER_ROOT" ] && git -C "$OTHER_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+      [ -n "$(git -C "$OTHER_ROOT" ls-files -- "$cpath" 2>/dev/null | head -1)" ] && found=1
+    fi
+    [ -n "$found" ] || fail "criteria evidence path \`$cpath\` not found in any validated checkout (phantom evidence)"
+  done <<< "$COV_ROWS"
+fi
+
+echo "CRITERIA: $N_COV/$N_ROWS"
 
 # Prefer rg (faster, respects .gitignore) when present; fall back to git grep.
 # Both share the same exit-code convention: 0 = match, 1 = no match (not an

@@ -39,31 +39,64 @@ delivery mode. Never load executable provider settings from the task branch.
 }
 ```
 
-`models` maps stable local identifiers to adapter definitions. The shipped
+`host` is optional and, in version 1, must be `claude` when present — the fresh
+host review is always a Claude artifact. `models` maps stable local identifiers
+to adapter definitions. The shipped
 template contains the selectable `codex`, `deepseek`, `kimi`, `glm`, and `mimo`
 jury; repositories may keep any subset and add custom ids. `profiles` maps
 profile names to `workers`, `reviewers`, `maxParallel`, `maxInputBytes`, and
 `reviewPolicy`. A profile may also declare `concurrency` and a `packetPolicy`.
 The runtime repeats criteria and splits oversized review input
-into bounded parts, then unions findings by fingerprint.
+into bounded parts, then unions findings by fingerprint. The
+official DeepSeek and OpenCode Zen auth-store endpoints are pinned inside the
+runtime; a changed endpoint requires updating both the runtime pin and the
+setup template together.
 
 Review policy modes:
 
 - `advisory` — report every result and continue even when reviewers skip.
 - `quorum` — require `minimumSuccessful` completed reviewers and
-  `minimumFamilies` distinct model families.
-- `all-required` — require every id in `requiredReviewers` to complete.
+  `minimumFamilies` distinct model families (legacy; kept for existing
+  configs, no longer the shipped default for `multi*` profiles).
+- `all-required` — require every id in `requiredReviewers` to complete. This
+  is the shipped default for `multi`, `multi-optimized`, and `high-assurance`:
+  the user selected those reviewers to hear from all of them, so a council
+  missing any of them produces no verdict.
 
-The runtime invokes every reviewer listed by the selected profile. Quorum
-values are completion/readiness thresholds, not a limit or sample size. The
+Reviewer retries (`retry`, top-level with per-profile override):
+
+```json
+"retry": {
+  "maxAttempts": 4,
+  "backoffMs": 5000,
+  "backoffMultiplier": 2,
+  "timeoutEscalation": 1.5,
+  "maxTimeoutMs": 2400000
+}
+```
+
+Every failed reviewer invocation — timeout, provider 5xx/network error,
+ref-mutation rejection, or invalid/unparseable JSON — is retried automatically
+up to `maxAttempts`, with exponential backoff between attempts and the
+per-attempt timeout escalated by `timeoutEscalation` (capped at
+`maxTimeoutMs`). A `skipped` status (missing binary or credential) is
+structural and is not retried; under `all-required` it still fails the
+council. When any required reviewer is still not `completed` after its
+retries, the run emits **no verdict** (`verdict: null`), reports each broken
+reviewer with its attempt count, and exits non-zero. The wrapper must then
+re-run the review command, repair the binding via `om-setup-agent-harness`, or
+stop for the user's explicit decision — a partial council is never a usable
+result.
+
+The runtime invokes every reviewer listed by the selected profile. The
 staged wrapper starts a genuinely fresh Claude context running
 `om-code-review` and the bound provider council concurrently. The runtime gives
 every configured advisor the same complete `om-code-review` rubric, resolved
 packet, and subject, waits for Claude's hash-matched artifact, and emits no final
 result when that artifact is invalid. With the bundled
 five-model jury, `multi` therefore means fresh Claude plus Codex, DeepSeek,
-Kimi, GLM, and MiMo in one result matrix. Claude is mandatory and separate from
-provider quorum.
+Kimi, GLM, and MiMo in one result matrix — all five must complete. Claude is
+mandatory and separate from the provider policy.
 
 The runtime validates references between profiles and models. A model can be a
 worker only when it declares the `worker` role, uses a command adapter, and
@@ -92,10 +125,11 @@ Profiles describe roles, not vendors. Users may bind any supported model to any
 role that its adapter can safely perform.
 
 `packetPolicy` is opt-in. Existing profiles and existing repository configs keep
-their prior behavior when it is absent. `concurrency` limits workers, reviewers,
-fixers, and heavy validation separately; it does not authorize writes to
-overlapping paths. `budgets` limit worker, reviewer, and fixer invocations plus
-total review input bytes so retry loops terminate predictably.
+their prior behavior when it is absent. `concurrency.reviewers` bounds parallel
+reviewer invocations (workers, fixers, and heavy validation are always serial in
+version 1); it does not authorize writes to overlapping paths. `budgets` limit
+worker, reviewer, and fixer invocations plus total review input bytes so retry
+loops terminate predictably.
 
 Version 1 serializes packet workers, fixers, and heavy validation in one
 integration worktree while parallelizing blind reviewers. This avoids

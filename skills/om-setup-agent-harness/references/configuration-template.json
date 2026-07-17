@@ -6,14 +6,24 @@
     "mode": "stage-only",
     "issueClaim": "hold"
   },
+  "retry": {
+    "maxAttempts": 4,
+    "backoffMs": 5000,
+    "backoffMultiplier": 2,
+    "timeoutEscalation": 1.5,
+    "maxTimeoutMs": 2400000
+  },
   "models": {
     "codex": {
       "adapter": "command",
       "family": "openai",
-      "model": "gpt-5.5",
+      "model": "gpt-5.6-sol",
       "reasoningEffort": "xhigh",
-      "roles": ["worker", "reviewer"],
-      "timeoutMs": 600000,
+      "roles": [
+        "worker",
+        "reviewer"
+      ],
+      "timeoutMs": 1200000,
       "workerSecurity": {
         "network": "disabled",
         "remoteWrites": "disabled",
@@ -21,9 +31,44 @@
         "enforcedBy": "codex-workspace-write-sandbox"
       },
       "commands": {
-        "probe": ["codex", "--version"],
-        "review": ["codex", "exec", "--ignore-user-config", "--ignore-rules", "--ephemeral", "--config", "model_reasoning_effort={reasoningEffort}", "--sandbox", "read-only", "--cd", "{worktree}", "--model", "{model}", "--output-schema", "{schemaFile}", "-"],
-        "worker": ["codex", "exec", "--ignore-user-config", "--ignore-rules", "--ephemeral", "--config", "model_reasoning_effort={reasoningEffort}", "--sandbox", "workspace-write", "--cd", "{worktree}", "--model", "{model}", "-"]
+        "probe": [
+          "codex",
+          "--version"
+        ],
+        "review": [
+          "codex",
+          "exec",
+          "--ignore-user-config",
+          "--ignore-rules",
+          "--ephemeral",
+          "--config",
+          "model_reasoning_effort={reasoningEffort}",
+          "--sandbox",
+          "read-only",
+          "--cd",
+          "{worktree}",
+          "--model",
+          "{model}",
+          "--output-schema",
+          "{schemaFile}",
+          "-"
+        ],
+        "worker": [
+          "codex",
+          "exec",
+          "--ignore-user-config",
+          "--ignore-rules",
+          "--ephemeral",
+          "--config",
+          "model_reasoning_effort={reasoningEffort}",
+          "--sandbox",
+          "workspace-write",
+          "--cd",
+          "{worktree}",
+          "--model",
+          "{model}",
+          "-"
+        ]
       }
     },
     "deepseek": {
@@ -31,7 +76,9 @@
       "preset": "deepseek-api",
       "family": "deepseek",
       "model": "deepseek-v4-pro",
-      "roles": ["reviewer"],
+      "roles": [
+        "reviewer"
+      ],
       "endpoint": "https://api.deepseek.com/chat/completions",
       "credentialEnv": "DEEPSEEK_API_KEY",
       "authStoreProvider": "deepseek",
@@ -43,8 +90,10 @@
       "adapter": "preset",
       "preset": "kimi-subscription",
       "family": "moonshot",
-      "model": "kimi-code/kimi-for-coding",
-      "roles": ["reviewer"],
+      "model": "kimi-code/k3",
+      "roles": [
+        "reviewer"
+      ],
       "binaryEnv": "OM_KIMI_BIN",
       "maxInputBytes": 180000,
       "timeoutMs": 600000
@@ -54,7 +103,9 @@
       "preset": "opencode-zen",
       "family": "zhipu",
       "model": "glm-5.2",
-      "roles": ["reviewer"],
+      "roles": [
+        "reviewer"
+      ],
       "endpoint": "https://opencode.ai/zen/v1/chat/completions",
       "credentialEnv": "OM_ZEN_KEY",
       "authStoreProvider": "opencode",
@@ -67,7 +118,9 @@
       "preset": "opencode-zen",
       "family": "xiaomi",
       "model": "mimo-v2.5-free",
-      "roles": ["reviewer"],
+      "roles": [
+        "reviewer"
+      ],
       "endpoint": "https://opencode.ai/zen/v1/chat/completions",
       "credentialEnv": "OM_ZEN_KEY",
       "authStoreProvider": "opencode",
@@ -80,38 +133,90 @@
     "standard": {
       "workers": [],
       "reviewers": [],
-      "reviewPolicy": { "mode": "advisory" }
+      "reviewPolicy": {
+        "mode": "advisory"
+      }
     },
     "optimized": {
-      "workers": ["codex"],
+      "workers": [
+        "codex"
+      ],
       "reviewers": [],
-      "reviewPolicy": { "mode": "advisory" }
+      "reviewPolicy": {
+        "mode": "advisory"
+      }
     },
     "multi": {
       "workers": [],
-      "reviewers": ["codex", "deepseek", "kimi", "glm", "mimo"],
+      "reviewers": [
+        "codex",
+        "deepseek",
+        "kimi",
+        "glm",
+        "mimo"
+      ],
       "maxParallel": 5,
       "maxInputBytes": 700000,
-      "reviewPolicy": { "mode": "quorum", "minimumSuccessful": 2, "minimumFamilies": 2 }
+      "reviewPolicy": {
+        "mode": "all-required",
+        "requiredReviewers": [
+          "codex",
+          "deepseek",
+          "kimi",
+          "glm",
+          "mimo"
+        ]
+      }
     },
     "multi-optimized": {
-      "workers": ["codex"],
-      "reviewers": ["codex", "deepseek", "kimi", "glm", "mimo"],
+      "workers": [
+        "codex"
+      ],
+      "reviewers": [
+        "codex",
+        "deepseek",
+        "kimi",
+        "glm",
+        "mimo"
+      ],
       "maxParallel": 5,
       "maxInputBytes": 700000,
-      "reviewPolicy": { "mode": "quorum", "minimumSuccessful": 2, "minimumFamilies": 2 }
+      "reviewPolicy": {
+        "mode": "all-required",
+        "requiredReviewers": [
+          "codex",
+          "deepseek",
+          "kimi",
+          "glm",
+          "mimo"
+        ]
+      }
     },
     "high-assurance": {
-      "workers": ["codex"],
-      "reviewers": ["codex", "deepseek", "kimi", "glm", "mimo"],
+      "workers": [
+        "codex"
+      ],
+      "reviewers": [
+        "codex",
+        "deepseek",
+        "kimi",
+        "glm",
+        "mimo"
+      ],
       "maxParallel": 5,
       "maxInputBytes": 700000,
-      "reviewPolicy": { "mode": "quorum", "minimumSuccessful": 2, "minimumFamilies": 2 },
+      "reviewPolicy": {
+        "mode": "all-required",
+        "requiredReviewers": [
+          "codex",
+          "deepseek",
+          "kimi",
+          "glm",
+          "mimo"
+        ]
+      },
       "concurrency": {
-        "workers": 1,
-        "reviewers": 3,
-        "fixers": 1,
-        "heavyValidation": 1
+        "reviewers": 3
       },
       "packetPolicy": {
         "mode": "adversarial",
@@ -134,7 +239,10 @@
         ],
         "separateFixer": true,
         "maxFixCycles": 2,
-        "blockingSeverities": ["blocker", "major"],
+        "blockingSeverities": [
+          "blocker",
+          "major"
+        ],
         "budgets": {
           "maxWorkerInvocations": 1,
           "maxReviewerInvocations": 9,

@@ -22,7 +22,8 @@ This template is rendered by the final step of `om-fix-issue`.
 
 ## Review
 
-<host verdict; include the generated reviewer-status and findings tables when multi ran>
+<host verdict; when a council ran, paste the reviewer-status table and the
+findings-by-model matrix from the final round's review-summary.md verbatim>
 
 ## Staged files
 
@@ -31,6 +32,15 @@ This template is rendered by the final step of `om-fix-issue`.
 ## Prepared pull-request body
 
 <repository template filled truthfully, without publishing it>
+
+## Publish checklist (human)
+
+1. Review the staged diff in the worktree.
+2. Commit with the suggested subject and push the branch.
+3. Open the pull request with the prepared body.
+4. Release the issue claim: remove the `in-progress` label and the harness
+   assignee through the tracker (or ask the agent to run the release step) so
+   later automation is not fenced off.
 
 No commit, push, or pull request was created.
 

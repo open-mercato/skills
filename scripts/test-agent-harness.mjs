@@ -2,7 +2,7 @@
 
 import assert from 'node:assert/strict'
 import { spawn, spawnSync } from 'node:child_process'
-import { chmodSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -48,7 +48,7 @@ writeFileSync(reviewer, `
 import { readFileSync, writeFileSync } from 'node:fs'
 const model = process.env.OM_HARNESS_MODEL || ''
 const prompt = readFileSync(process.env.OM_HARNESS_PROMPT_FILE, 'utf8')
-if (!prompt.includes('Trusted canonical om-code-review contract:') || !prompt.includes('# Code Review Checklist') || !prompt.includes('Verdict Rule')) {
+if (!prompt.includes('<trusted_rubric>') || !prompt.includes('# Code Review Checklist') || !prompt.includes('Verdict Rule')) {
   process.stderr.write('missing real om-code-review rubric')
   process.exit(9)
 }
@@ -78,7 +78,7 @@ let findings = model === 'alpha-model' && !isPacket ? [{
 if (isPacket && !isVerification && model === 'beta-model' && prompt.includes('+packet output') && !prompt.includes('+fixed packet output')) findings = [packetCandidate]
 if (isPacket && isVerification && model === 'delta-model' && prompt.includes('packet-boundary') && prompt.includes('+packet output') && !prompt.includes('+fixed packet output')) findings = [packetCandidate]
 writeFileSync(process.env.OM_HARNESS_METADATA_FILE, JSON.stringify({ actualModel: model, provider: 'fake-provider', fallbackReason: null }))
-process.stdout.write(JSON.stringify({ verdict: findings.length ? 'request_changes' : 'approve', findings, notes: [prompt.includes('worker.txt') ? 'includes-worker' : 'no-worker'] }))
+process.stdout.write(JSON.stringify({ verdict: findings.length ? 'request_changes' : 'approve', findings, notes: [prompt.includes('worker.txt') ? 'includes-worker' : 'no-worker', 'secret=' + Boolean(process.env.GITHUB_TOKEN)] }))
 `)
 
 const worker = join(TEMP, 'codex')
@@ -99,6 +99,13 @@ chmodSync(worker, 0o755)
 const invalidReviewer = join(TEMP, 'invalid-reviewer.mjs')
 writeFileSync(invalidReviewer, `process.stdout.write(JSON.stringify({ verdict: 'approve' }))\n`)
 
+const mismatchedReviewer = join(TEMP, 'mismatched-reviewer.mjs')
+writeFileSync(mismatchedReviewer, `process.stdout.write(JSON.stringify({ verdict: 'approve', findings: [{
+  severity: 'major', category: 'correctness', title: 'Mislabeled blocker',
+  location: { path: 'tracked.txt', line: 1, symbol: null },
+  evidence: 'A major defect the model labeled approve.', impact: 'Real.', remediation: 'Fix it.', confidence: 0.8
+}], notes: ['mismatch-smoke'] }))\n`)
+
 const fakeKimi = join(TEMP, 'fake-kimi')
 writeFileSync(fakeKimi, `#!/usr/bin/env node
 import { readFileSync } from 'node:fs'
@@ -106,26 +113,43 @@ if (process.argv.includes('--version')) { process.stdout.write('kimi-test 1.0');
 const agentIndex = process.argv.indexOf('--agent-file')
 const agent = agentIndex >= 0 ? readFileSync(process.argv[agentIndex + 1], 'utf8') : ''
 const toolsDisabled = /tools:\\s*\\[\\]/.test(agent)
-const promptIndex = process.argv.indexOf('--prompt')
-const prompt = promptIndex >= 0 ? process.argv[promptIndex + 1] : ''
-if (!prompt.includes('Trusted canonical om-code-review contract:') || !prompt.includes('# Code Review Checklist')) process.exit(9)
+if (process.argv.includes('--prompt')) { process.stderr.write('prompt must arrive on stdin, not argv'); process.exit(9) }
+if (!process.argv.includes('--input-format')) { process.stderr.write('stdin delivery requires --input-format'); process.exit(9) }
+const prompt = readFileSync(0, 'utf8')
+if (!prompt.includes('<trusted_rubric>') || !prompt.includes('# Code Review Checklist')) process.exit(9)
 process.stdout.write(JSON.stringify({ verdict: 'approve', findings: [], notes: [toolsDisabled ? 'kimi-tools-disabled' : 'kimi-tools-enabled'] }))
 `)
 chmodSync(fakeKimi, 0o755)
+
+const epipeReviewer = join(TEMP, 'epipe-reviewer.mjs')
+writeFileSync(epipeReviewer, `process.stdout.write(JSON.stringify({ verdict: 'approve' }))\nprocess.exit(0)\n`)
+
+const rogueReviewer = join(TEMP, 'rogue-reviewer.mjs')
+writeFileSync(rogueReviewer, `
+import { spawnSync } from 'node:child_process'
+spawnSync('git', ['commit', '--allow-empty', '-m', 'rogue reviewer commit'], { cwd: process.env.OM_HARNESS_WORKTREE })
+process.stdout.write(JSON.stringify({ verdict: 'approve', findings: [], notes: [] }))
+`)
 
 const portFile = join(TEMP, 'mock-port.txt')
 const mockServerFile = join(TEMP, 'mock-provider.mjs')
 writeFileSync(mockServerFile, `
 import { writeFileSync } from 'node:fs'
 import http from 'node:http'
-let requests = 0
+let flaked = false
 const server = http.createServer((request, response) => {
   let raw = ''
   request.on('data', (chunk) => { raw += chunk })
   request.on('end', () => {
     const body = JSON.parse(raw)
     const prompt = body.messages?.[0]?.content || ''
-    if (!prompt.includes('Trusted canonical om-code-review contract:') || !prompt.includes('# Code Review Checklist')) {
+    if (prompt.includes('FLAKY-503') && !flaked) {
+      flaked = true
+      response.writeHead(503, { 'content-type': 'application/json' })
+      response.end(JSON.stringify({ error: 'transient upstream error' }))
+      return
+    }
+    if (!prompt.includes('<trusted_rubric>') || !prompt.includes('# Code Review Checklist')) {
       response.writeHead(422, { 'content-type': 'application/json' })
       response.end(JSON.stringify({ error: 'missing real om-code-review rubric' }))
       return
@@ -133,12 +157,10 @@ const server = http.createServer((request, response) => {
     const review = { verdict: 'approve', findings: [], notes: ['preset:' + body.model] }
     response.writeHead(200, { 'content-type': 'application/json' })
     response.end(JSON.stringify({ model: body.model, choices: [{ message: { content: JSON.stringify(review) } }] }))
-    requests += 1
-    if (requests >= 3) setTimeout(() => server.close(), 10)
   })
 })
 server.listen(0, '127.0.0.1', () => writeFileSync(${JSON.stringify(portFile)}, String(server.address().port)))
-setTimeout(() => server.close(), 60000).unref()
+setTimeout(() => server.close(), 120000).unref()
 `)
 const mockServer = spawn(process.execPath, [mockServerFile], { stdio: 'ignore' })
 process.on('exit', () => { if (!mockServer.killed) mockServer.kill() })
@@ -175,6 +197,10 @@ const harnessConfig = {
       adapter: 'command', family: 'family-invalid', model: 'invalid-model', roles: ['reviewer'], timeoutMs: 10000,
       commands: { probe: [process.execPath, '--version'], review: [process.execPath, invalidReviewer] }
     },
+    mismatched: {
+      adapter: 'command', family: 'family-mismatched', model: 'mismatched-model', roles: ['reviewer'], timeoutMs: 10000,
+      commands: { probe: [process.execPath, '--version'], review: [process.execPath, mismatchedReviewer] }
+    },
     worker: {
       adapter: 'command', family: 'family-alpha', model: 'worker-model', reasoningEffort: 'xhigh', roles: ['worker'], timeoutMs: 10000,
       workerSecurity: { network: 'disabled', remoteWrites: 'disabled', refWrites: 'disabled', enforcedBy: 'codex-workspace-write-sandbox' },
@@ -190,6 +216,14 @@ const harnessConfig = {
     kimi: {
       adapter: 'preset', preset: 'kimi-subscription', family: 'moonshot', model: 'kimi-test', roles: ['reviewer'],
       binaryEnv: 'TEST_KIMI_BIN', maxInputBytes: 180000
+    },
+    epipe: {
+      adapter: 'command', family: 'family-epipe', model: 'epipe-model', roles: ['reviewer'], timeoutMs: 10000,
+      commands: { probe: [process.execPath, '--version'], review: [process.execPath, epipeReviewer] }
+    },
+    rogue: {
+      adapter: 'command', family: 'family-rogue', model: 'rogue-model', roles: ['reviewer'], timeoutMs: 10000,
+      commands: { probe: [process.execPath, '--version'], review: [process.execPath, rogueReviewer] }
     },
     glm: {
       adapter: 'preset', preset: 'opencode-zen', family: 'zhipu', model: 'glm-test', roles: ['reviewer'],
@@ -212,6 +246,16 @@ const harnessConfig = {
       reviewPolicy: { mode: 'quorum', minimumSuccessful: 2, minimumFamilies: 2 }
     },
     invalid: { workers: [], reviewers: ['invalid'], reviewPolicy: { mode: 'advisory' } },
+    'strict-retry': {
+      workers: [], reviewers: ['invalid'],
+      retry: { maxAttempts: 2, backoffMs: 10, backoffMultiplier: 1, timeoutEscalation: 1, maxTimeoutMs: 5000 },
+      reviewPolicy: { mode: 'all-required', requiredReviewers: ['invalid'] }
+    },
+    'kimi-only': { workers: [], reviewers: ['kimi'], reviewPolicy: { mode: 'advisory' } },
+    flaky: { workers: [], reviewers: ['deepseek'], reviewPolicy: { mode: 'advisory' } },
+    mismatched: { workers: [], reviewers: ['mismatched'], reviewPolicy: { mode: 'advisory' } },
+    epipe: { workers: [], reviewers: ['epipe'], reviewPolicy: { mode: 'advisory' } },
+    rogue: { workers: [], reviewers: ['rogue'], reviewPolicy: { mode: 'advisory' } },
     impossible: {
       workers: [], reviewers: ['alpha', 'missing'],
       reviewPolicy: { mode: 'quorum', minimumSuccessful: 2, minimumFamilies: 2 }
@@ -224,7 +268,7 @@ const harnessConfig = {
     'high-assurance': {
       workers: ['worker'], reviewers: ['beta', 'gamma', 'delta', 'alpha'], maxParallel: 4, maxInputBytes: 700000,
       reviewPolicy: { mode: 'quorum', minimumSuccessful: 2, minimumFamilies: 2 },
-      concurrency: { workers: 1, reviewers: 3, fixers: 1, heavyValidation: 1 },
+      concurrency: { reviewers: 3 },
       packetPolicy: {
         mode: 'adversarial',
         reviewersByRisk: { low: 1, medium: 1, high: 2, critical: 2 },
@@ -250,6 +294,9 @@ assert.equal(configured.agentHarness.delivery.mode, 'stage-only')
 const bundled = JSON.parse(readFileSync(BUNDLED_TEMPLATE, 'utf8'))
 assert.deepEqual(Object.keys(bundled.models), ['codex', 'deepseek', 'kimi', 'glm', 'mimo'])
 assert.deepEqual(bundled.profiles.multi.reviewers, ['codex', 'deepseek', 'kimi', 'glm', 'mimo'])
+assert.equal(bundled.models.codex.model, 'gpt-5.6-sol')
+assert.equal(bundled.models.codex.reasoningEffort, 'xhigh')
+assert.equal(bundled.models.kimi.model, 'kimi-code/k3')
 assert.equal(bundled.profiles['high-assurance'].packetPolicy.reviewersByRisk.high, 2)
 const bundledConfig = join(TEMP, 'bundled-config.json')
 writeFileSync(bundledConfig, `${JSON.stringify({ agentHarness: bundled }, null, 2)}\n`)
@@ -288,7 +335,14 @@ const probe = run(process.execPath, [HARNESS, 'probe', '--config', CONFIG, '--pr
 const probeRows = JSON.parse(probe.stdout)
 assert.equal(probeRows.filter((row) => row.status === 'ready').length, 2)
 assert.equal(probeRows.find((row) => row.id === 'missing').status, 'missing')
-run(process.execPath, [HARNESS, 'probe', '--config', CONFIG, '--profile', 'impossible', '--worktree', REPO], { expected: 2 })
+const impossibleProbe = run(process.execPath, [HARNESS, 'probe', '--config', CONFIG, '--profile', 'impossible', '--worktree', REPO], { expected: 2 })
+assert.match(impossibleProbe.stderr, /om-setup-agent-harness/)
+const unknownProfile = run(process.execPath, [HARNESS, 'resolve-profile', '--config', CONFIG, '--profile', 'not-configured'], { expected: 1 })
+assert.match(unknownProfile.stderr, /Unknown profile: not-configured; run om-setup-agent-harness/)
+const noHarnessConfig = join(TEMP, 'no-harness.json')
+writeFileSync(noHarnessConfig, `${JSON.stringify({ version: 1 }, null, 2)}\n`)
+const missingHarness = run(process.execPath, [HARNESS, 'validate-config', '--config', noHarnessConfig], { expected: 1 })
+assert.match(missingHarness.stderr, /run om-setup-agent-harness/)
 const presetEnv = { TEST_DEEPSEEK_KEY: 'test-deepseek', TEST_ZEN_KEY: 'test-zen', TEST_KIMI_BIN: fakeKimi }
 const presetProbe = JSON.parse(run(process.execPath, [HARNESS, 'probe', '--config', CONFIG, '--profile', 'presets', '--worktree', REPO], { env: presetEnv }).stdout)
 assert.equal(presetProbe.filter((row) => row.status === 'ready').length, 4)
@@ -306,11 +360,24 @@ assert.equal(readFileSync(join(REPO, 'worker.txt'), 'utf8'), 'worker output\n')
 const untrackedDir = join(TEMP, 'untracked review artifacts')
 const reviewPaths = join(TEMP, 'review-paths.txt')
 writeFileSync(reviewPaths, 'worker.txt\n')
-run(process.execPath, [HARNESS, 'review', '--config', CONFIG, '--profile', 'untracked', '--worktree', REPO, '--paths-file', reviewPaths, '--output-dir', untrackedDir])
+run(process.execPath, [HARNESS, 'review', '--config', CONFIG, '--profile', 'untracked', '--worktree', REPO, '--paths-file', reviewPaths, '--output-dir', untrackedDir], { env: { GITHUB_TOKEN: 'must-not-reach-reviewer' } })
 const untrackedReview = JSON.parse(readFileSync(join(untrackedDir, 'review-result.json'), 'utf8'))
-assert.deepEqual(untrackedReview.reviewers[0].review.notes, ['includes-worker'])
+assert.deepEqual(untrackedReview.reviewers[0].review.notes, ['includes-worker', 'secret=false'])
 assert.equal(untrackedReview.reviewers[0].actualModel, 'alpha-model')
 assert.equal(untrackedReview.reviewers[0].provenanceStatus, 'observed')
+
+const strictDir = join(TEMP, 'strict retry artifacts')
+const strictRun = run(process.execPath, [HARNESS, 'review', '--config', CONFIG, '--profile', 'strict-retry', '--worktree', REPO, '--paths-file', reviewPaths, '--output-dir', strictDir], { expected: 2 })
+assert.match(strictRun.stderr, /attempt 1\/2/)
+assert.match(strictRun.stderr, /after 2 attempt/)
+assert.match(strictRun.stderr, /Council policy FAILED/)
+const strictReview = JSON.parse(readFileSync(join(strictDir, 'review-result.json'), 'utf8'))
+assert.equal(strictReview.verdict, null)
+assert.equal(strictReview.policy.status, 'failed')
+assert.equal(strictReview.reviewers[0].attempts, 2)
+
+const unignoredDir = run(process.execPath, [HARNESS, 'review', '--config', CONFIG, '--profile', 'untracked', '--worktree', REPO, '--paths-file', reviewPaths, '--output-dir', join(REPO, '.ai', 'qa', 'artifacts')], { expected: 1 })
+assert.match(unignoredDir.stderr, /must be ignored by Git/)
 
 const artifact = join(TEMP, 'review subject.md')
 writeFileSync(artifact, `${'Review this bounded artifact.\n'.repeat(80)}`)
@@ -322,6 +389,28 @@ assert.equal(presetReview.reviewers.length, 4)
 assert.ok(presetReview.reviewers.every((row) => row.status === 'completed'))
 assert.deepEqual(presetReview.reviewers.find((row) => row.id === 'kimi').review.notes, ['kimi-tools-disabled'])
 for (const id of ['deepseek', 'glm', 'mimo']) assert.deepEqual(presetReview.reviewers.find((row) => row.id === id).review.notes, [`preset:${id}-test`])
+
+const bigArtifact = join(TEMP, 'big review subject.md')
+writeFileSync(bigArtifact, 'This line pads the subject far beyond the Kimi argv budget.\n'.repeat(3400))
+const kimiSplitDir = join(TEMP, 'kimi split artifacts')
+const kimiSplit = JSON.parse(run(process.execPath, [HARNESS, 'review', '--config', CONFIG, '--profile', 'kimi-only', '--worktree', REPO, '--artifact', bigArtifact, '--output-dir', kimiSplitDir], { env: presetEnv }).stdout)
+assert.equal(kimiSplit.status, 'satisfied')
+const kimiSplitReview = JSON.parse(readFileSync(join(kimiSplitDir, 'review-result.json'), 'utf8'))
+assert.equal(kimiSplitReview.reviewers[0].status, 'completed')
+assert.ok(kimiSplitReview.reviewers[0].parts > 1, 'kimi subject must split below the argv prompt limit')
+
+const flakyArtifact = join(TEMP, 'flaky subject.md')
+writeFileSync(flakyArtifact, 'FLAKY-503 marker: the first HTTP attempt fails with 503 and must be retried.\n')
+const flakyDir = join(TEMP, 'flaky artifacts')
+const flakyRun = JSON.parse(run(process.execPath, [HARNESS, 'review', '--config', CONFIG, '--profile', 'flaky', '--worktree', REPO, '--artifact', flakyArtifact, '--output-dir', flakyDir], { env: presetEnv }).stdout)
+assert.equal(flakyRun.status, 'satisfied')
+assert.equal(JSON.parse(readFileSync(join(flakyDir, 'review-result.json'), 'utf8')).reviewers[0].status, 'completed')
+
+const epipeDir = join(TEMP, 'epipe artifacts')
+const epipeRun = JSON.parse(run(process.execPath, [HARNESS, 'review', '--config', CONFIG, '--profile', 'epipe', '--worktree', REPO, '--artifact', bigArtifact, '--output-dir', epipeDir]).stdout)
+assert.equal(epipeRun.status, 'degraded')
+assert.equal(JSON.parse(readFileSync(join(epipeDir, 'review-result.json'), 'utf8')).reviewers[0].status, 'invalid')
+
 const outputDir = join(TEMP, 'review artifacts')
 const criteriaFile = join(TEMP, 'review-criteria.md')
 const reviewPacket = join(TEMP, 'review-packet.json')
@@ -405,6 +494,14 @@ if (!delayedHostWriter.killed) delayedHostWriter.kill()
 const neverWrittenHost = join(TEMP, 'never-written-host-review.json')
 const hostTimeout = run(process.execPath, [HARNESS, 'review', '--config', CONFIG, '--profile', 'untracked', '--worktree', REPO, '--artifact', artifact, '--review-packet', reviewPacket, '--host-review', neverWrittenHost, '--host-review-timeout-ms', '20', '--output-dir', parallelOutputDir], { expected: 1 })
 assert.match(hostTimeout.stderr, /Timed out waiting/)
+assert.match(hostTimeout.stderr, /provider results preserved/)
+const partialResult = JSON.parse(readFileSync(join(parallelOutputDir, 'review-result.partial.json'), 'utf8'))
+assert.equal(partialResult.reviewers.length, 1)
+assert.equal(partialResult.reviewers[0].id, 'alpha')
+assert.match(partialResult.hostError, /Timed out waiting/)
+
+const valuelessTimeout = run(process.execPath, [HARNESS, 'review', '--config', CONFIG, '--profile', 'untracked', '--worktree', REPO, '--artifact', artifact, '--review-packet', reviewPacket, '--host-review', neverWrittenHost, '--host-review-timeout-ms', '--output-dir', parallelOutputDir], { expected: 1 })
+assert.match(valuelessTimeout.stderr, /host-review-timeout-ms requires a numeric value/)
 
 writeFileSync(artifact, 'changed after packet preparation\n')
 const changedSubject = run(process.execPath, [HARNESS, 'review', '--config', CONFIG, '--profile', 'multi', '--worktree', REPO, '--artifact', artifact, '--review-packet', reviewPacket, '--host-review', hostReview, '--output-dir', outputDir], { expected: 1 })
@@ -428,6 +525,13 @@ const invalidDir = join(TEMP, 'invalid artifacts')
 const invalidReview = JSON.parse(run(process.execPath, [HARNESS, 'review', '--config', CONFIG, '--profile', 'invalid', '--worktree', REPO, '--artifact', artifact, '--output-dir', invalidDir]).stdout)
 assert.equal(invalidReview.status, 'degraded')
 assert.equal(JSON.parse(readFileSync(join(invalidDir, 'review-result.json'), 'utf8')).reviewers[0].status, 'invalid')
+
+const mismatchDir = join(TEMP, 'mismatch artifacts')
+const mismatchRun = JSON.parse(run(process.execPath, [HARNESS, 'review', '--config', CONFIG, '--profile', 'mismatched', '--worktree', REPO, '--artifact', artifact, '--output-dir', mismatchDir]).stdout)
+assert.equal(mismatchRun.verdict, 'request_changes')
+const mismatchReview = JSON.parse(readFileSync(join(mismatchDir, 'review-result.json'), 'utf8'))
+assert.equal(mismatchReview.reviewers[0].status, 'completed')
+assert.ok(mismatchReview.reviewers[0].review.notes.some((note) => note.includes('verdict coerced from approve to request_changes')))
 
 const packetRunDir = join(TEMP, 'packet runs')
 const packetManifest = join(TEMP, 'packet-one.json')
@@ -463,6 +567,12 @@ assert.ok(packetLedger.usage.reviewInputBytes > 0)
 const firstCycleMarkdown = readFileSync(join(packetRunDir, 'packets', 'packet-one', 'review-cycles', 'cycle-01.md'), 'utf8')
 assert.match(firstCycleMarkdown, /verified \(delta\)/)
 assert.match(firstCycleMarkdown, /Finding verifier status/)
+assert.ok(existsSync(join(packetRunDir, 'packets', 'packet-one', 'worker-transcript-1.log')))
+assert.ok(existsSync(join(packetRunDir, 'packets', 'packet-one', 'fixer-transcript-1.log')))
+assert.equal(packetLedger.implementation.transcript, 'worker-transcript-1.log')
+
+const sameDirRun = run(process.execPath, [HARNESS, 'packet-run', '--config', CONFIG, '--profile', 'high-assurance', '--worktree', REPO, '--run-dir', REPO, '--manifest', packetManifest], { expected: 1 })
+assert.match(sameDirRun.stderr, /must not be the worktree root/)
 
 const overlapManifest = join(TEMP, 'packet-two.json')
 const secondPacketRunDir = join(TEMP, 'second packet runs')
@@ -476,9 +586,14 @@ writeFileSync(overlapManifest, `${JSON.stringify({
   invariants: ['Do not change Git refs.'],
   acceptanceCriteria: ['packet.txt remains valid']
 }, null, 2)}\n`)
+const claimsDir = join(REPO, '.git', 'om-harness', 'claims')
+const staleMutex = join(claimsDir, '.mutex')
+writeFileSync(staleMutex, '{"pid":0}\n')
+utimesSync(staleMutex, new Date(Date.now() - 120000), new Date(Date.now() - 120000))
 const overlap = JSON.parse(run(process.execPath, [HARNESS, 'packet-run', '--config', CONFIG, '--profile', 'high-assurance', '--worktree', REPO, '--run-dir', secondPacketRunDir, '--manifest', overlapManifest], { expected: 2 }).stdout)
 assert.equal(overlap.status, 'blocked')
 assert.match(overlap.error, /overlaps active lease/)
+assert.ok(!existsSync(staleMutex), 'stale mutex must be taken over and released')
 const released = JSON.parse(run(process.execPath, [HARNESS, 'packet-release', '--run-dir', secondPacketRunDir, '--packet', 'packet-two', '--reason', 'lease conflict test complete']).stdout)
 assert.equal(released.status, 'aborted')
 
@@ -499,6 +614,31 @@ const packetStatus = JSON.parse(run(process.execPath, [HARNESS, 'packet-status',
 assert.equal(packetStatus.status, 'gated')
 assert.equal(packetStatus.leaseStatus, 'released')
 
+const corruptClaim = join(claimsDir, 'corrupted-claim.json')
+writeFileSync(corruptClaim, '{"version":1,"packetId":"crashed"')
+const corruptManifest = join(TEMP, 'packet-corrupt.json')
+writeFileSync(corruptManifest, `${JSON.stringify({
+  version: 1,
+  id: 'packet-corrupt',
+  title: 'Blocked by corrupted lease',
+  objective: 'Prove unreadable lease files block instead of being skipped.',
+  risk: 'low',
+  allowedPaths: ['corrupt.txt'],
+  invariants: ['Do not change Git refs.'],
+  acceptanceCriteria: ['corrupt.txt exists']
+}, null, 2)}\n`)
+const corruptRunDir = join(TEMP, 'corrupt packet runs')
+const corruptRun = JSON.parse(run(process.execPath, [HARNESS, 'packet-run', '--config', CONFIG, '--profile', 'high-assurance', '--worktree', REPO, '--run-dir', corruptRunDir, '--manifest', corruptManifest], { expected: 2 }).stdout)
+assert.equal(corruptRun.status, 'blocked')
+assert.match(corruptRun.error, /Unreadable packet lease file/)
+rmSync(corruptClaim)
+
+const isolatedSkills = join(TEMP, 'isolated skills')
+cpSync(join(ROOT, 'skills/om-harness'), join(isolatedSkills, 'om-harness'), { recursive: true })
+const isolatedStatus = run(process.execPath, [join(isolatedSkills, 'om-harness/scripts/harness.mjs'), 'packet-status', '--run-dir', join(TEMP, 'missing run dir'), '--packet', 'packet-one'], { expected: 1 })
+assert.match(isolatedStatus.stderr, /Packet ledger does not exist/)
+assert.doesNotMatch(isolatedStatus.stderr, /om-code-review contract is incomplete/)
+
 writeFileSync(join(REPO, 'tracked.txt'), 'changed\n')
 const pathsFile = join(TEMP, 'stage-paths.txt')
 writeFileSync(pathsFile, 'tracked.txt\nworker.txt\npacket.txt\n')
@@ -506,6 +646,7 @@ writeFileSync(join(REPO, 'unexpected.txt'), 'must not be ignored\n')
 const residual = run(process.execPath, [HARNESS, 'stage', '--worktree', REPO, '--start-state', startState, '--paths-file', pathsFile], { expected: 1 })
 assert.match(residual.stderr, /Unstaged or untracked files remain/)
 rmSync(join(REPO, 'unexpected.txt'))
+git(['update-ref', 'refs/remotes/origin/fetch-noise', startHead])
 const handoff = JSON.parse(run(process.execPath, [HARNESS, 'stage', '--worktree', REPO, '--start-state', startState, '--paths-file', pathsFile]).stdout)
 assert.equal(handoff.status, 'ready')
 assert.deepEqual(handoff.stagedPaths.sort(), ['packet.txt', 'tracked.txt', 'worker.txt'])
@@ -515,5 +656,12 @@ git(['reset', '--mixed', startHead])
 writeFileSync(join(REPO, 'tracked.txt'), 'changed again\n')
 const changedHead = run(process.execPath, [HARNESS, 'stage', '--worktree', REPO, '--start-state', startState, '--paths-file', pathsFile], { expected: 1 })
 assert.match(changedHead.stderr, /refs or reflogs changed/)
+
+const rogueDir = join(TEMP, 'rogue artifacts')
+const rogueRun = JSON.parse(run(process.execPath, [HARNESS, 'review', '--config', CONFIG, '--profile', 'rogue', '--worktree', REPO, '--artifact', artifact, '--output-dir', rogueDir]).stdout)
+assert.equal(rogueRun.status, 'degraded')
+const rogueReview = JSON.parse(readFileSync(join(rogueDir, 'review-result.json'), 'utf8'))
+assert.equal(rogueReview.reviewers[0].status, 'failed')
+assert.match(rogueReview.reviewers[0].error, /refs or reflogs/)
 
 process.stdout.write('Agent harness tests passed.\n')

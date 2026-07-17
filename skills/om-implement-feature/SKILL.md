@@ -16,7 +16,7 @@ review while keeping publication as a separate explicit user decision.
 
 ## Step 0 — Load config and context
 
-Load `.ai/agentic.config.json` using the standard config-loading snippet from the `om-setup-agent-pipeline` skill. If config is missing, run that setup skill and reload. Resolve `BASE_BRANCH`, `TRACKER`, `TRACKER_FILE`, `SPECS_DIR`, `QA_DIR`, and `validation.commands`. If `agentHarness` is absent, run `om-setup-agent-harness`, then stop so the staged setup can be reviewed and committed before an operational run trusts it.
+Load `.ai/agentic.config.json` using the standard config-loading snippet from the `om-setup-agent-pipeline` skill. If config is missing, run that setup skill and reload. Resolve `BASE_BRANCH`, `TRACKER`, `TRACKER_FILE`, `SPECS_DIR`, `QA_DIR`, and `validation.commands`. If `agentHarness` is absent and the requested profile is `standard` (the default), continue without it — `standard` uses no external model and the runtime `capture`/`stage` commands need no model configuration. For any other requested profile, run `om-setup-agent-harness` (it can bind any reviewer the user actually has, not just the bundled jury), then ask the user explicitly: stop so the staged configuration can be reviewed and committed first (recommended), or continue this run trusting the just-staged working-tree config. Never continue silently; record the choice in the report.
 
 Apply a repo-local `om-implement-feature` extension when present and read the repository's agent instructions, architecture docs, review rules, and backward-compatibility policy.
 
@@ -55,8 +55,11 @@ checkpoint commits.
 
 Add unit and integration coverage for every changed behavior. Run
 `om-integration-tests` when the repository supports it. Run the full configured
-validation gate. For UI changes, run local `om-auto-verify-pr-ui` without a PR
-number and keep its artifacts outside the stage allowlist.
+validation gate. For UI changes, enforce the repository's design system on every
+touched UI line before review — run the repo-local design-system guardian skill
+when the repository ships one, otherwise apply its documented design-system
+rules and checklist — and run local `om-auto-verify-pr-ui` without a PR
+number, keeping its artifacts outside the stage allowlist.
 
 ### 5. Review and reconcile
 
@@ -69,8 +72,12 @@ start fresh Claude and every configured advisor concurrently with the same
 complete `om-code-review` rubric and packet; then require Claude's matching
 artifact before reconciliation. Preserve minority findings,
 fix confirmed blockers, and repeat validation, packet preparation, and all
-reviews until clean or blocked. Quorum is a provider-readiness threshold, not a
-reviewer cap.
+reviews until no confirmed blocking finding remains or the loop reaches three
+iterations; then stop and report every surviving finding. Every configured
+council reviewer must complete: the runtime retries failures with backoff and
+timeout escalation, and a council missing any required reviewer yields no
+verdict — re-run it, repair the binding, or stop for the user's decision;
+never proceed on a partial council.
 
 ### 6. Stage the handoff
 
@@ -81,6 +88,8 @@ staged diff, render the report from
 
 ## Rules
 
+- For any non-`standard` profile, show the user the probe readiness table (model, binding, role, ✅ ready / 🟥 missing-or-failed) before invoking any model.
+- After every council round, paste the reviewer-status table and the findings-by-model matrix from the generated `review-summary.md` verbatim into the conversation; the final report repeats the final round's tables.
 - Never invoke `om-auto-create-pr`, `om-open-pr`, or another publication-oriented skill.
 - Never commit, push, publish, or execute the tracker `create-pr` operation.
 - Never use intermediate commits as checkpoints; use run artifacts and spec progress instead.

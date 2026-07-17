@@ -14,7 +14,9 @@ keeping the adapter registry open to custom command and OpenAI-compatible models
 
 ## Arguments
 
+- `configure --config <path> --input <path>` — validate an `agentHarness` object and install it into the pipeline config, preserving every other key.
 - `validate-config --config <path>` — validate and resolve harness configuration.
+- `resolve-profile --config <path> --profile <name>` — print the resolved profile exactly as the runtime will execute it.
 - `probe --config <path> --profile <name>` — probe the selected workers and reviewers.
 - `worker --config <path> --profile <name> --worktree <path> --prompt-file <path>` — run one configured implementation worker.
 - `prepare-review --config <path> --worktree <path> --kind <spec|diagnosis|implementation> --output <path>` — bind the exact subject, validation evidence, repository rules, and installed `om-code-review` rubric into one review packet.
@@ -39,6 +41,14 @@ Run `node scripts/harness.mjs <command> ...` from this skill directory. Pass an 
 ### 3. Preserve structured evidence
 
 Keep the generated JSON result as the source of truth. Render Markdown from that JSON; never reconstruct reviewer provenance from prose.
+
+### 4. Prevention hooks
+
+`hooks/` ships the preventive layer of the stage-only contract, installed into a
+repository by `om-setup-agent-harness`: `block-push-and-pr.sh` denies `git push`
+and PR creation at the tool boundary, and `freeze-tests.sh` denies test-file
+edits while a `.om-freeze-tests` sentinel exists at or above the target file.
+`hooks-settings-snippet.json` holds the `PreToolUse` wiring.
 
 ## Rules
 

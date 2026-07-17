@@ -79,8 +79,19 @@ advisor; the runtime unions their findings without exposing one advisor's
 result to another.
 
 The fresh Claude result appears in the same reviewer table and findings matrix
-as the configured advisors. Claude is mandatory but does not satisfy provider
-quorum; `minimumSuccessful` and `minimumFamilies` apply to the profile's
-configured reviewers. Reconcile only after every invocation reaches a terminal
-state. Preserve unique findings, validate them against repository/runtime
-evidence, and rerun the entire packet after any reviewed-subject change.
+as the configured advisors. Claude is mandatory but does not satisfy the
+provider policy, which applies to the profile's configured reviewers (under
+the shipped `all-required` default, every configured reviewer must complete).
+The runtime retries each failed invocation per the configured `retry` block
+(backoff + timeout escalation). Reconcile only after every invocation reaches
+a terminal state. Preserve unique findings, validate them against
+repository/runtime evidence, and rerun the entire packet after any
+reviewed-subject change.
+
+**Blocked council.** When the runtime exits non-zero with `verdict: null`
+because a required reviewer did not complete after its retries, the council
+produced NO result: do not reconcile, do not proceed to stage, and never
+downgrade to a smaller council silently. Re-run the `review` command (the run
+is deterministic over the same packet, so a repeat is cheap and safe); if the
+same reviewer keeps failing, repair its binding via `om-setup-agent-harness`
+or stop and surface the failure to the user for an explicit decision.

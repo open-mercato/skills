@@ -7,43 +7,59 @@ This contract is loaded before probing, reviewing, or dispatching a worker.
 Use a command adapter for a locally installed CLI. Define commands as arrays,
 never shell strings:
 
+A custom command adapter is reviewer-only. This example passes `validate-config`
+as written:
+
 ```json
 {
   "adapter": "command",
   "family": "example-family",
   "model": "example-model",
-  "roles": ["reviewer", "worker"],
+  "roles": ["reviewer"],
   "timeoutMs": 600000,
-  "workerSecurity": {
-    "network": "disabled",
-    "remoteWrites": "disabled",
-    "refWrites": "disabled",
-    "enforcedBy": "provider-sandbox"
-  },
   "commands": {
     "probe": ["example-cli", "--version"],
-    "review": ["example-cli", "review", "--model", "{model}", "{promptFile}"],
-    "worker": ["example-cli", "run", "--model", "{model}", "{promptFile}"]
+    "review": ["example-cli", "review", "--model", "{model}", "{promptFile}"]
   }
 }
 ```
 
-Supported placeholders are `{model}`, `{promptFile}`, `{schemaFile}`,
-`{worktree}`, and `{metadataFile}`. The runtime expands each placeholder as one
-argument and launches the executable without a shell. It also supplies the
-prompt on standard input.
+A worker binding must use a runtime-recognized audited adapter. Version 1
+accepts exactly one shape — `workerSecurity.enforcedBy` set to
+`codex-workspace-write-sandbox` with the audited command:
 
-A reviewer command must be read-only in the worktree. A worker command may edit
-the worktree only through a runtime-recognized audited adapter. Version 1
-recognizes only `codex-workspace-write-sandbox` and requires the exact safety
-shape: `codex exec`, ignored user config and rules, ephemeral state,
+```json
+{
+  "workerSecurity": {
+    "network": "disabled",
+    "remoteWrites": "disabled",
+    "refWrites": "disabled",
+    "enforcedBy": "codex-workspace-write-sandbox"
+  },
+  "commands": {
+    "worker": ["codex", "exec", "--ignore-user-config", "--ignore-rules", "--ephemeral", "--config", "model_reasoning_effort={reasoningEffort}", "--sandbox", "workspace-write", "--cd", "{worktree}", "--model", "{model}", "-"]
+  }
+}
+```
+
+Supported placeholders are `{model}`, `{reasoningEffort}`, `{promptFile}`,
+`{schemaFile}`, `{worktree}`, and `{metadataFile}`. The runtime expands each
+placeholder as one argument and launches the executable without a shell. It
+also supplies the prompt on standard input.
+
+A reviewer command must be read-only in the worktree; the runtime enforces this
+by running reviewer commands with a credential-stripped environment and by
+snapshotting refs and reflogs around each invocation, failing the reviewer when
+either changes. A worker command may edit the worktree only through a
+runtime-recognized audited adapter. Version 1 recognizes only
+`codex-workspace-write-sandbox` and requires the exact safety shape shown
+above: `codex exec`, ignored user config and rules, ephemeral state,
 one runtime-validated `model_reasoning_effort` override,
 `--sandbox workspace-write`, `--cd {worktree}`, no extra writable directory,
 no search, remote, profile, or other config override, and a prompt from standard
 input. Other CLIs remain reviewer-only until the runtime adds and tests an
-equivalent adapter. The runtime also strips credential-like environment
-variables, disables Git protocols and credential helpers, snapshots refs and
-reflogs around the invocation, and fails if either changes.
+equivalent adapter. Worker processes additionally run with Git protocols and
+credential helpers disabled.
 
 ## Observed invocation metadata
 
@@ -114,12 +130,15 @@ another reviewer's output. The runtime records `freshContext: true` and the
 Wrapper-level councils also require a completed fresh Claude artifact matching
 `fresh-review-result.schema.json`. That artifact is created by the host outside
 the provider adapter pool, validated before fan-out, and rendered in the same
-matrix. It cannot satisfy provider quorum.
+matrix. It cannot satisfy the provider review policy.
 
 ## Availability and fallback
 
 Probe before the run. Record selected, completed, skipped, failed, and timed-out
-states separately. Optional missing reviewers do not fail an advisory profile
-or an otherwise achievable quorum. Never substitute another model silently.
+states separately, plus the attempt count when retries ran. Failed, timed-out,
+and invalid-output invocations are retried per the configured `retry` block;
+`skipped` (missing binary or credential) is structural and is not. Optional
+missing reviewers do not fail an advisory profile; under `all-required` every
+configured reviewer must complete. Never substitute another model silently.
 When an invocation uses a fallback, record both requested and observed model
 identifiers and the reason.

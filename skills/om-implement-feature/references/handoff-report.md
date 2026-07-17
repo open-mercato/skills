@@ -22,7 +22,8 @@ This template is rendered by the final step of `om-implement-feature`.
 
 ## Review
 
-<host verdict; include reviewer-status and findings tables when multi ran>
+<host verdict; when a council ran, paste the reviewer-status table and the
+findings-by-model matrix from the final round's review-summary.md verbatim>
 
 ## Staged files
 
@@ -31,6 +32,14 @@ This template is rendered by the final step of `om-implement-feature`.
 ## Prepared pull-request body
 
 <repository template filled truthfully, without publishing it>
+
+## Publish checklist (human)
+
+1. Review the staged diff in the worktree.
+2. Commit with the suggested subject and push the branch.
+3. Open the pull request with the prepared body.
+4. Release any tracker claim this run holds (label and assignee) so later
+   automation is not fenced off.
 
 No commit, push, or pull request was created.
 

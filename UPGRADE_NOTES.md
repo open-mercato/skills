@@ -12,6 +12,7 @@ against them — not against the copies shipped in this repo:
 | `.ai/browsers/<provider>.md` (browser automation and autonomous provisioning operations) | `om-setup-agent-pipeline` | Manual re-sync (see below) |
 | `.ai/agentic.config.json` | `om-setup-agent-pipeline`; optional `agentHarness` section by `om-setup-agent-harness` | Re-run the owning setup skill; both preserve unrelated values |
 | `.claude/output-styles/om-harness-review.md` (optional) | `om-setup-agent-harness` | Re-run `/om-setup-agent-harness` and review the diff before replacing local edits |
+| `.claude/hooks/om-harness/*.sh` + `PreToolUse` entries in `.claude/settings.json` (optional prevention hooks) | `om-setup-agent-harness` | Re-run `/om-setup-agent-harness` and review the diff before replacing local edits |
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
@@ -59,6 +60,27 @@ preserving the rest of the config.
 
 Newest first. Each entry lists the symptom you will see with a stale installation and the fix.
 
+### 2026-07 — Strict councils: reviewer retries + all-required policy + restructured reviewer prompt
+
+Reviewer invocations that fail (timeout, provider 5xx/network error, invalid
+JSON, ref-mutation rejection) are now retried automatically with exponential
+backoff and per-attempt timeout escalation (`agentHarness.retry`, per-profile
+override). The shipped `multi`, `multi-optimized`, and `high-assurance`
+profiles switched from `quorum` to **`all-required`**: every selected reviewer
+must complete, and a council still missing one after retries emits **no
+verdict** (`verdict: null`, exit 2) instead of a partial result — the wrapper
+re-runs the review, repairs the binding, or stops for the user. The reviewer
+prompt was also restructured per the current prompt-engineering guidance
+(long data first inside XML tags, instructions and a strict machine-readable
+output contract with an example at the end, split-part context note).
+
+**Symptom with a stale installed config:** your `.ai/agentic.config.json`
+still carries `"mode": "quorum"` on the multi profiles, so failed reviewers
+are silently tolerated. **Fix:** re-run `/om-setup-agent-harness` (it preserves
+custom models) or hand-edit the profiles to
+`{"mode": "all-required", "requiredReviewers": [<your reviewer ids>]}` and add
+a top-level `"retry"` block (see `om-harness/references/configuration.md`).
+
 ### 2026-07 — Additive staged-only multi-model harness
 
 The collection now ships a separate staged-only path: `om-fix-issue` and
@@ -67,10 +89,18 @@ provides configurable command/HTTP adapters, review councils, deterministic
 model matrices, and an unchanged-ref/reflog staging gate. The existing autonomous PR
 skills are unchanged.
 
-Fresh harness setup offers a bundled selectable jury: Codex, DeepSeek V4 Pro,
-managed-subscription Kimi, OpenCode Zen GLM 5.2, and OpenCode Zen MiMo 2.5 Free.
+Fresh harness setup offers a bundled selectable jury: Codex (default
+`gpt-5.6-sol` at `xhigh`), DeepSeek V4 Pro,
+managed-subscription Kimi K3 (`kimi-code/k3`, thinking — `max` is its only
+effort level today), OpenCode Zen GLM 5.2, and OpenCode Zen MiMo 2.5 Free.
 Users may keep any subset or add custom command/OpenAI-compatible models. Setup
 probes credentials without printing them and smoke-tests every selected model.
+Setup also installs optional prevention hooks (`.claude/hooks/om-harness/`):
+a PreToolUse guard that denies `git push`/PR creation during staged-only runs
+and a test-freeze guard driven by the `.om-freeze-tests` sentinel. Profile
+`concurrency` now accepts only the `reviewers` key — remove the old
+`workers`/`fixers`/`heavyValidation` keys from any pre-release config before
+re-running `validate-config`.
 
 The same preset now includes an opt-in `high-assurance` profile with bounded
 packet manifests, path leases, risk-scaled blind reviewers, fresh finding
@@ -85,6 +115,13 @@ implementation transcript, and every configured advisor receives the same full
 installed rubric in a fresh invocation. The runtime validates the Claude,
 packet, subject, and rubric hashes before fan-out and renders all reviewers in
 one matrix; provider quorum does not count the mandatory Claude pass.
+
+A fresh repository needs no provider setup for the default path: `standard`
+runs use only the Claude host (fresh `om-code-review` pass plus the
+`capture`/`stage` runtime) and work without an `agentHarness` section. The
+`-multi`/`-optimized` wrappers reroute to `/om-setup-agent-harness` when their
+profile is missing or unready; that setup can bind any OpenAI-compatible
+endpoint or local CLI as a reviewer, not just the bundled jury.
 
 - **Symptom of a stale installation:** staged wrapper names are unavailable, or
   a wrapper reports that `agentHarness` is missing.

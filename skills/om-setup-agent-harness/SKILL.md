@@ -16,10 +16,19 @@ staged but uncommitted.
 - `--preset <cross-model-jury|custom>` (optional) — start from the bundled jury or an empty custom registry; default `cross-model-jury`.
 - `--defaults` (optional) — enable the detected members of the bundled cross-model jury without asking questions.
 - `--no-output-style` (optional) — do not install the optional Claude output style.
+- `--no-hooks` (optional) — do not install the prevention hooks into `.claude/hooks/` and `.claude/settings.json`.
 
 ## Step 0 — Load config and context
 
 Load `.ai/agentic.config.json` using the standard config-loading snippet from the `om-setup-agent-pipeline` skill. If the config or tracker descriptor is missing, run that setup skill first, then return here. Resolve `BASE_BRANCH`, `TRACKER`, and `TRACKER_FILE`, but do not execute mutating tracker operations.
+
+When another skill rerouted here because a requested profile was missing or
+unready, open by naming that profile and the bindings it requires (reviewers
+for `multi`, an audited worker for `optimized`), so the user understands what
+to configure and why before any question is asked. Configuring those bindings
+now is the goal of the reroute; falling back to `standard` is a valid outcome
+only as the user's explicit, informed decision after being told what the
+requested variant would have added.
 
 Right after loading the config, check for a repo-local skill of the same name at `.ai/skills/om-setup-agent-harness/SKILL.md`; when present, apply it as a repo-local extension of this skill. It may add repository-specific provider bindings but cannot relax the stage-only boundary, store secrets, or load executable settings from an untrusted task branch. Also read the repository's agent instruction files.
 
@@ -36,11 +45,22 @@ versions and credential availability without printing or copying credentials.
 The built-in DeepSeek and OpenCode Zen adapters may check their official local
 auth-store entries internally; the setup agent never reads or displays the key.
 
+When no bundled provider is detected, say so plainly and lead with the
+bring-your-own-reviewer path from the provider catalog: any OpenAI-compatible
+endpoint or any locally installed CLI can be bound as a reviewer through the
+generic adapters — the bundled jury is a default, not a requirement. The only
+fixed element is Claude as the host. A user with no external provider at all
+still has a working `standard` profile (fresh Claude review only); offer that
+explicitly instead of failing, but only after explaining what the multi-model
+profiles would have added, so choosing it is an informed decision rather than
+a silent default.
+
 ### 2. Select roles and policy
 
 Unless `--defaults` is set, ask which detected models should act as workers,
-reviewers, or both; which are required; and the desired concurrency, timeout,
-quorum, and whether to enable the `high-assurance` profile. Offer every bundled model independently, then offer “add custom
+reviewers, or both; which are required; the desired concurrency, timeout, and
+retry policy (attempts, backoff, timeout escalation); and whether to enable
+the `high-assurance` profile. Offer every bundled model independently, then offer “add custom
 model” using the generic contracts in the provider catalog. Require command
 adapters for workers. Keep HTTP and built-in subscription/API presets review-only.
 Accept a worker only when its provider or OS sandbox demonstrably disables
@@ -53,21 +73,31 @@ adapter declaration is insufficient.
 
 Build an `agentHarness` object from `references/configuration-template.json` and
 the user's choices. Remove unselected bundled models from the active profiles;
-do not delete custom models. Recalculate quorum counts from the selected
-reviewers and independent families; use advisory mode when no meaningful quorum
-remains. If `high-assurance` is enabled, require a worker plus enough reviewers
+do not delete custom models. Keep the `multi*` profiles on `all-required` with
+`requiredReviewers` recalculated to exactly the selected reviewer set; use
+advisory mode only when no reviewer is selected at all. If `high-assurance` is enabled, require a worker plus enough reviewers
 outside its model family for the configured risk and verification rules; do not
 silently weaken those rules. Detect the current Codex model from non-secret CLI
 configuration, but keep the shipped compatible default when that model fails a
 smoke review. Preserve every existing top-level config value. Resolve the
-installed sibling `om-harness/scripts/harness.mjs`, then run its `configure`
-command against the working-tree config. Show the exact diff before staging it.
+installed `om-harness` skill (its directory sits beside this skill's own install
+directory; when it is absent, stop and ask the user to install the collection
+with `om-harness` included), then run `node <om-harness>/scripts/harness.mjs
+configure` against the working-tree config. Show the exact diff before staging it.
 Keep portable team bindings in the repository object; put personal executable
 paths or endpoints in the user-local overlay named by
 `OM_AGENT_HARNESS_CONFIG`, and do not stage that overlay.
 
-Keep every selected advisor in the profile reviewer list. Quorum controls
-readiness when providers fail; it never reduces the number of reviewers invoked.
+Keep every selected advisor in the profile reviewer list. Under the shipped
+`all-required` policy every selected reviewer must complete (the runtime
+retries failures automatically); selecting a reviewer is a commitment to hear
+from it, never a best-effort hint.
+
+Write only satisfiable profiles. Keep `standard` always; include `optimized`,
+`multi-optimized`, and `high-assurance` only when an audited worker is bound,
+and `multi`/`multi-optimized` only when at least one reviewer is selected. A
+wrapper that later requests a profile this configuration does not define
+reroutes back here instead of running with an empty jury.
 
 ### 4. Validate and smoke-test
 
@@ -77,7 +107,7 @@ structured review per selected advisor using the complete installed
 correctly. This is an adapter smoke test, not an operational bound council; the
 wrappers supply the required fresh Claude artifact and exact-subject packet.
 A
-required unavailable model or failed quorum is blocking; an optional
+required unavailable model or failed review policy is blocking; an optional
 unavailable model is reported as skipped with its concrete smoke-test reason.
 For `high-assurance`, require `validate-config` to accept its packet policy and
 probe its full worker/reviewer readiness. Do not run a real worker against
@@ -89,9 +119,23 @@ Unless disabled, copy `assets/claude-review-output-style.md` to
 `.claude/output-styles/om-harness-review.md`. Never overwrite a locally edited
 copy silently; show a diff and ask whether to replace, merge, or keep it.
 
-### 6. Stage and report
+### 6. Install the prevention hooks
 
-Stage only `.ai/agentic.config.json` and the output-style file when created.
+Offer to install the structural stop-before-PR and test-freeze guards (default
+yes). Copy `block-push-and-pr.sh` and `freeze-tests.sh` from the installed
+`om-harness` skill's `hooks/` directory to `.claude/hooks/om-harness/`, keep
+them executable, and merge the `PreToolUse` entries from the sibling
+`hooks-settings-snippet.json` into `.claude/settings.json` without disturbing
+existing hooks. These are the preventive layer of the stage-only contract: the
+Bash guard denies `git push` and PR creation during a run, and the Edit/Write
+guard denies test-file edits while a `.om-freeze-tests` sentinel is present.
+Never overwrite locally edited hook files or settings silently; show a diff and
+ask.
+
+### 7. Stage and report
+
+Stage only `.ai/agentic.config.json`, the output-style file when created, and
+the hook files plus `.claude/settings.json` when the hooks were installed.
 Never commit, push, or publish. Print the readiness table defined in
 `references/provider-catalog.md`, the configured profiles, skipped adapters,
 and the staged paths. With `--check`, write and stage nothing.

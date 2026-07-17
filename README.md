@@ -107,7 +107,7 @@ Configure selectable workers and review advisors once:
 ```
 
 The setup wizard starts with the bundled `cross-model-jury` preset: Codex,
-DeepSeek V4 Pro, Kimi K2.7 through its managed subscription, GLM 5.2 through
+DeepSeek V4 Pro, Kimi K3 through its managed subscription, GLM 5.2 through
 OpenCode Zen, and MiMo 2.5 Free through OpenCode Zen. It detects and smoke-tests
 the local bindings, lets users keep any subset, and supports additional custom
 command or OpenAI-compatible models.
@@ -138,7 +138,7 @@ finding verification, a separate fixer context, path leases, bounded model
 budgets, and trusted acceptance evidence bound to the exact reviewed diff. It
 uses the same selectable model registry and still stops with files staged.
 
-[Explore the interactive harness guide](docs/agent-harness-guide.html) to compare profiles, packet risk, reviewer topology, lifecycle states, and the stage-only boundary.
+[Explore the interactive harness guide](docs/agent-harness-guide.html) to compare profiles, packet risk, reviewer topology, lifecycle states, and the stage-only boundary. For the maintained deep-dive — the full skill matrix, flow diagrams for the `optimized`/`multi`/`high-assurance` variants, the safety model, and the bring-your-own-reviewer path — read the [harness README](skills/om-harness/README.md).
 
 ## 📦 Skill catalog
 

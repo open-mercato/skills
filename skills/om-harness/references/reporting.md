@@ -35,7 +35,9 @@ Render a reviewer-status table before the findings matrix so `—` cannot be
 misread as “the reviewer did not run.” Preserve single-reviewer findings.
 The bound wrapper report lists fresh Claude first, followed by every configured
 advisor. A missing or invalid Claude artifact blocks the council rather than
-appearing as a skip. Provider quorum counts only configured profile reviewers.
+appearing as a skip. The provider review policy counts only configured profile
+reviewers; under `all-required`, a reviewer that stays broken after its
+retries blocks the council with no verdict.
 
 The host reconciler may set a finding to `confirmed`, `fixed`, `spurious`,
 `waived`, or `unresolved`. Confirm findings against code or runtime evidence;

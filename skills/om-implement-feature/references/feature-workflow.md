@@ -14,9 +14,31 @@ operations from the configured descriptor.
 
 Export the configured base revision's `.ai/agentic.config.json` to a temporary
 trusted snapshot. Pass it to the harness runtime with `--config`, plus the
-optional user-local overlay named by `OM_AGENT_HARNESS_CONFIG`. Validate and
+optional user-local overlay named by `OM_AGENT_HARNESS_CONFIG`. For `standard`
+with no `agentHarness` section, skip `validate-config` and `probe` — no
+external model is used. Otherwise validate and
 probe the requested profile before implementation. Never execute adapter
 settings from the task branch.
+
+Immediately after `probe`, render its JSON as a readiness table and show it to
+the user before any model is invoked — one row per selected model with its id,
+requested binding, role, and status: ✅ for `ready`, 🟥 for `missing` or
+`failed` with the probe note appended (same format as the staged issue
+workflow). Include the table in the run report. Proceed only when every row the
+profile requires is ✅; otherwise follow the reroute above.
+
+When the requested profile is missing from the trusted config or its probe
+fails on required bindings, do not proceed, and do not substitute another
+profile. Tell the user plainly that the requested variant needs model bindings
+that are not configured or not ready, then run `om-setup-agent-harness`
+interactively so they can bind the reviewers and workers they actually have —
+any OpenAI-compatible endpoint or local CLI through the generic adapters, not
+just the bundled jury. When setup finishes, re-probe and continue the
+originally requested profile. Only when the user, told what they would lose,
+explicitly declines to configure any external model may the run continue under
+`standard` (the mandatory fresh Claude `om-code-review` pass needs no external
+provider); state in the report that the requested profile was not used and
+why.
 
 ## Worktree and branch
 
@@ -35,13 +57,10 @@ The spec must state acceptance criteria, architecture/extension mode, protected
 contract effects, data and permission boundaries, failure behavior, rollout,
 unit tests, integration tests, and phased implementation. Store council
 artifacts under the ignored QA artifact directory. For `multi`,
-`multi-optimized`, and `high-assurance`, follow the `om-harness` bound
-`om-code-review` contract. Run `prepare-review --kind spec` against the exact
-spec, including acceptance criteria and relevant nested instruction paths.
-Predeclare the host artifact path, then concurrently create a new Claude
-reviewer context without forking this conversation and launch `review`. Claude
-runs `om-code-review` and atomically serializes its hash-matched artifact while
-every configured advisor applies the same real rubric. Confirm findings against
+`multi-optimized`, and `high-assurance`, run `prepare-review --kind spec`
+against the exact spec (including acceptance criteria and relevant nested
+instruction paths) and execute the bound council exactly as the `om-harness`
+`references/code-review-contract.md` defines it. Confirm findings against
 repository evidence and revise and re-review the spec before coding.
 
 ## Worker packets
@@ -62,19 +81,12 @@ Run file-disjoint packets concurrently only up to the profile's configured
 limit. Verify each packet immediately and redispatch once with concrete failure
 evidence before integrating it manually.
 
-For `high-assurance`, express each packet as a versioned manifest with risk,
-allowed paths, invariants, acceptance criteria, dependencies, non-goals, and
-reference patterns. Use `packet-run` instead of the raw `worker` operation. The
-runtime claims non-overlapping path leases, assigns blind reviewer lenses and
-risk-scaled independent families, verifies candidate findings in a fresh
-context, and gives verified findings to a separate fixer invocation within
-explicit budgets.
-
-After a packet reaches `awaiting_validation`, run trusted acceptance commands
-or manual checks outside the model process. Map every criterion to observed
-evidence, bind it to the ledger's diff SHA-256, and invoke `packet-gate`. Only a
-`gated` packet may be integrated. `packet-release` is an explicit abort/manual
-ownership transfer, not a successful result.
+For `high-assurance`, express each packet as a versioned manifest and follow
+the packet lifecycle exactly as the `om-harness`
+`references/packet-contract.md` defines it: `packet-run` instead of the raw
+`worker` operation, trusted gate evidence bound to the ledger's diff SHA-256,
+`packet-gate` before integration, and `packet-release` only as an explicit
+abort. Only a `gated` packet may be integrated.
 
 ## Final review and stage
 
@@ -85,19 +97,12 @@ integration tests. For `standard` and `optimized`, create a new Claude context
 with no inherited planning or implementation transcript and run
 `om-code-review` there. For `multi`, `multi-optimized`, and `high-assurance`,
 write version 1 validation evidence with the actual command arrays, exit codes,
-and observed results. Run `prepare-review --kind implementation` with that
+and observed results, run `prepare-review --kind implementation` with that
 evidence and the allowlist so the subject includes tracked, staged, unstaged,
-deleted, and newly created files. Follow the `om-harness` bound
-`om-code-review` contract: serialize the new Claude context's matching review
-artifact atomically while `review` invokes the configured advisors with the
-same packet and allowlist. Start both branches concurrently and pass the
-predeclared host path to the runtime.
-
-Invoke every reviewer id in the profile; quorum values only decide whether
-enough providers completed. The bundled result contains fresh Claude, Codex,
-DeepSeek, Kimi, GLM, and MiMo, all applying `om-code-review`. Reconcile only
-after every reviewer terminates, retain unique minority findings, and regenerate
-both artifacts after any diff change.
+deleted, and newly created files, and execute the bound council per the
+`om-harness` `references/code-review-contract.md`. Regenerate both artifacts
+after any diff change, and bound the fix-and-re-review loop at three
+iterations before stopping with the surviving findings.
 
 Invoke the harness `stage` command with `START_STATE`; any ref or reflog change,
 unexpected staged path, residual untracked file, or diff-check failure blocks

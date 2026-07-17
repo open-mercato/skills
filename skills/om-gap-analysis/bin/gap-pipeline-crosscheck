@@ -64,7 +64,7 @@
 #      contributing stem UNIQUE to that one candidate in the snapshot
 #      (df == 1) whose original token carries a capital or digit beyond its
 #      first character — engagement-central acronyms and product names
-#      ("KSeF", "DataTable") are exactly the single-token matches worth
+#      ("ShipSync", "DataTable") are exactly the single-token matches worth
 #      surfacing; snapshot-side uniqueness plus the proper-noun shape is what
 #      mechanically separates them from generic single-token collisions
 #      ("upload", "export") and from title-case ordinary first words, both
@@ -248,7 +248,7 @@ FILENAME == ARGV[1] {
     df[s]++
   }
   # Mark PROPER stems — original token carries a capital or digit BEYOND its
-  # first character ("KSeF", "DataTable", "CrudForm"). These gate the
+  # first character ("ShipSync", "DataTable", "CrudForm"). These gate the
   # single-stem match path below: an internally-cased/numbered token is an
   # acronym or product name, the kind of term worth flagging on alone. The
   # first character is deliberately ignored — real snapshot titles include

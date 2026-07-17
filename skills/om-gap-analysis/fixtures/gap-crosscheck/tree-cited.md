@@ -7,25 +7,25 @@ coverage_categories:
 
 # Gap Analysis — Fixture Crosscheck
 
-## Epic 3: Invoicing
+## Epic 3: Fulfillment
 
 #### Coverage
 - error-path: Story 3.2
 
-### Story 3.1: Manual KSeF e-invoice export
-- **Description**: as an accountant, I export invoices to KSeF manually
+### Story 3.1: Bulk order sync via ShipSync
+- **Description**: as a warehouse manager, I sync order status via ShipSync
 - **Acceptance criteria**:
-  - [ ] an invoice can be exported to KSeF on demand
+  - [ ] order status can be synced via ShipSync on demand
 - **Status**: done
 
 #### Gap analysis
 - **Verdict**: ❌ Missing
 - **Upstream pipeline**: companion PR #29 (open)
 
-### Story 3.2: Export failure is visible
-- **Description**: as an accountant, I see a failed export with a reason
+### Story 3.2: Sync failure is visible
+- **Description**: as a warehouse manager, I see a failed sync with a reason
 - **Acceptance criteria**:
-  - [ ] a failed export shows an error state
+  - [ ] a failed sync shows an error state
 - **Status**: done
 
 #### Gap analysis

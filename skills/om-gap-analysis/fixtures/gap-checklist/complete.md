@@ -3,7 +3,7 @@ project: fixture-complete
 phase: 1-scoped
 coverage_categories:
   - error-path
-  - nfr-audit
+  - audit-log
 ---
 
 # Gap Analysis — Fixture Complete
@@ -13,7 +13,7 @@ coverage_categories:
 
 #### Coverage
 - error-path: Story 1.2
-- nfr-audit: out-of-scope: client confirmed audit is handled by an external system
+- audit-log: out-of-scope: client confirmed audit is handled by an external system
 
 ### Story 1.1: Book an appointment
 - **Description**: as a customer, I book an appointment

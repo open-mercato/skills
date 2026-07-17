@@ -7,23 +7,23 @@ coverage_categories:
 
 # Gap Analysis — Fixture Depth
 
-## Epic 3: Invoicing
+## Epic 3: Fulfillment
 
 #### Coverage
 - error-path: Story 3.1
 
-### Story 3.1: Manual KSeF e-invoice export
-- **Description**: as an accountant, I export invoices to KSeF manually
+### Story 3.1: Bulk order sync via ShipSync
+- **Description**: as a warehouse manager, I sync order status via ShipSync
 - **Acceptance criteria**:
-  - [ ] an invoice can be exported to KSeF on demand
+  - [ ] order status can be synced via ShipSync on demand
 - **Status**: done
 
 #### Gap analysis
 - **Verdict**: ❌ Missing
 - **Upstream pipeline**: companion PR #29 (open)
 
-### Story 3.2: Invoice number formatting
-- **Description**: as an accountant, exported invoice numbers are formatted correctly
+### Story 3.2: Shipment tracking number formatting
+- **Description**: as a warehouse manager, exported tracking numbers are formatted correctly
 - **Acceptance criteria**:
   - [ ] numbers follow the configured format
 - **Status**: done

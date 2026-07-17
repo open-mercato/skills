@@ -9,7 +9,7 @@ a change that flips any expected code is a regression.
 | `bin/gap-checklist-gate fixtures/gap-checklist/happy-path-only.md` | exit 1 — names the phantom story ref and the reasonless out-of-scope |
 | `bin/gap-checklist-gate fixtures/gap-checklist/no-categories.md` | exit 1 — fail-closed: no `coverage_categories` declared |
 | `bin/gap-checklist-gate` | exit 2 — usage |
-| `bin/gap-pipeline-crosscheck fixtures/gap-crosscheck/tree.md fixtures/gap-crosscheck/snapshot.md` | exit 1 — Story 3.1 missing citation (companion PR #29 via the unique proper-noun stem `ksef`), Story 3.2 phantom (`companion PR #77`) |
+| `bin/gap-pipeline-crosscheck fixtures/gap-crosscheck/tree.md fixtures/gap-crosscheck/snapshot.md` | exit 1 — Story 3.1 missing citation (companion PR #29 via the unique proper-noun stem `shipsync`), Story 3.2 phantom (`companion PR #77`) |
 | `bin/gap-pipeline-crosscheck fixtures/gap-crosscheck/tree-cited.md fixtures/gap-crosscheck/snapshot.md` | exit 0 — both citations resolve |
 | `bin/gap-pipeline-crosscheck fixtures/gap-crosscheck/snapshot.md fixtures/gap-crosscheck/tree.md` | exit 2 — fail-closed on swapped files |
 | `bin/gap-depth-check fixtures/gap-depth/tree.md fixtures/gap-depth/snapshot.md fixtures/gap-depth/summary-fail.md` | exit 1 — companion PR #29 (CHANGES_REQUESTED) unsurfaced |

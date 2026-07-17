@@ -3,7 +3,7 @@ project: fixture-happy
 phase: 1-scoped
 coverage_categories:
   - error-path
-  - nfr-audit
+  - audit-log
 ---
 
 # Gap Analysis — Fixture Happy Path Only
@@ -13,7 +13,7 @@ coverage_categories:
 
 #### Coverage
 - error-path: Story 1.9
-- nfr-audit: out-of-scope:
+- audit-log: out-of-scope:
 
 ### Story 1.1: Book an appointment
 - **Description**: as a customer, I book an appointment

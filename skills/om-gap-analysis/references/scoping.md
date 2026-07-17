@@ -33,12 +33,12 @@ phase: 1-scoped
 total_epics: <n>
 total_stories: <n>
 coverage_categories:
-  - error-path
-  - permission-abuse
-  - concurrency
-  - nfr-multitenancy
-  - nfr-gdpr
-  - nfr-audit
+  - negative-path
+  - abuse-case
+  - race-condition
+  - tenant-isolation
+  - data-privacy
+  - audit-log
 ---
 <!-- coverage_categories is the completeness checklist bin/gap-checklist-gate enforces per epic.
      Extend it per domain when a run needs more (e.g. clinical-data-retention).
@@ -56,12 +56,12 @@ coverage_categories:
 #### Coverage
 <!-- Populated in Phase 1.5; checked by bin/gap-checklist-gate before Phase 2.
      Each category is EITHER a real story ref (`Story <id>`) OR `out-of-scope: <reason>` — never blank. -->
-- error-path: Story 1.2
-- permission-abuse: out-of-scope: <reason the client confirmed>
-- concurrency: Story 1.4
-- nfr-multitenancy: Story 1.3
-- nfr-gdpr: out-of-scope: <reason>
-- nfr-audit: Story 1.5
+- negative-path: Story 1.2
+- abuse-case: out-of-scope: <reason the client confirmed>
+- race-condition: Story 1.4
+- tenant-isolation: Story 1.3
+- data-privacy: out-of-scope: <reason>
+- audit-log: Story 1.5
 
 ### Story 1.1: <Story title>
 - **Description**: <as a [role], I want [capability], so that [outcome]>

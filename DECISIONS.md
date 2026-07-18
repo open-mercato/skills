@@ -65,10 +65,26 @@ is unbuilt, lands a spec on the PR as the first commit (design visible before
 implementation), then implements the spec phase-by-phase through the existing
 worktree/validation/label/review machinery. The new skill is a thin router that
 delegates to those two skills rather than duplicating their protocols. In the same
-spirit, `om-prepare-issue` stops merely recommending a spec for substantial
+spirit, `om-create-issue` stops merely recommending a spec for substantial
 features: when none exists in the repo or an open PR, it authors one via the same
 `--spec-only` spec PR and links it on the issue — its one exception to being
 tracker-only, and design-only (never implementation).
+
+## Issue skills split: create vs manage
+
+`om-prepare-issue` conflated two jobs — filing a *new* issue and improving
+*existing* ones — so it was split along that seam. `om-create-issue` owns the
+create path (dedupe, spec-linking, codebase analysis, the step-2b spec PR) and now
+applies the SDLC labels (category + inferred priority + risk) on creation.
+`om-auto-manage-issues` owns existing issues, single or in bulk: it applies missing
+SDLC labels and, for a laconic issue (a one-line body or just a title and a
+screenshot), analyzes the screenshot with the terse text, clarifies the wording
+non-destructively (the reporter's original is preserved), and posts the agent's
+understanding as a comment to confirm. It is idempotent (adds only missing labels,
+posts the understanding once) and claim-aware (skips issues another actor is
+working), so it is safe to sweep the backlog — default scope is the last ~25 open
+issues, worst-described first, narrowable by state/label/author/limit. The former
+`om-prepare-issue` name is removed; references were updated to the two new skills.
 
 ## Deferred
 

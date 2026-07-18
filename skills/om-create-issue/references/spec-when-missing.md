@@ -1,11 +1,11 @@
 # Author a spec and land it on a PR when none exists
 
-The step 2b branch of `om-prepare-issue`: when the duplicate/spec search (step 2)
+The step 2b branch of `om-create-issue`: when the duplicate/spec search (step 2)
 finds no covering spec — neither in `$SPECS_DIR` / the repo's design-doc areas nor
 in any open PR — and the task is a **feature that warrants a spec** (a substantial
 new capability where guessing the architecture would be irresponsible), this skill
 produces the design instead of just recommending it. This is the only path on
-which `om-prepare-issue` creates a PR, and the PR contains a **spec document only**
+which `om-create-issue` creates a PR, and the PR contains a **spec document only**
 — never implementation.
 
 ## When this branch applies
@@ -51,6 +51,6 @@ now-existing spec). Report both the issue and the spec PR in step 5.
 
 - The PR is design-only. Do not let the delegated run implement the feature here —
   `--spec-only` is mandatory on this path.
-- Everything else about `om-prepare-issue` stays tracker-first: duplicate search,
+- Everything else about `om-create-issue` stays tracker-first: duplicate search,
   compatibility flagging, and the label rules (category `feature`; no pipeline or
   `in-progress` labels on the issue) are unchanged.

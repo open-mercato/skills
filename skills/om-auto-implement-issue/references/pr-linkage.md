@@ -14,7 +14,7 @@ merging a PR with a `Closes`/`Fixes`/`Resolves` keyword auto-closes the FR:
 - **Implementing PR** (the normal full run — spec commit *and* implementation land
   on the same branch) → use `Closes #{issueId}`. Merging it ships the feature and
   correctly closes the FR.
-- **Design-only spec PR** (a `--spec-only` run, including the one `om-prepare-issue`
+- **Design-only spec PR** (a `--spec-only` run, including the one `om-create-issue`
   opens) → use `Refs #{issueId}` (a plain reference, **no** closing keyword). The
   feature is not implemented yet, so merging the spec must **not** close the FR —
   it stays open until the implementing PR merges. Using `Closes` here would both

@@ -53,6 +53,55 @@ stay authoritative regardless of the exploration provider. This boundary avoids
 hard-wiring every QA skill to a single CLI while keeping the repo's committed
 descriptor as the customization point.
 
+## Feature-request path: spec-then-implement
+
+Bugs and feature requests need different triage. The autofix chain's gate
+(`om-verify-in-repo`) proves a defect is real and still unfixed — the wrong
+question for a feature, which has no bug to reproduce and would be wrongly stopped
+with `NO_ACTION_NEEDED`. So the issue entry path now classifies first:
+`om-auto-fix-issue` routes a feature request to the new `om-auto-implement-issue`,
+which composes `om-spec-writing` and `om-auto-create-pr` — it confirms the feature
+is unbuilt, lands a spec on the PR as the first commit (design visible before
+implementation), then implements the spec phase-by-phase through the existing
+worktree/validation/label/review machinery. The new skill is a thin router that
+delegates to those two skills rather than duplicating their protocols. In the same
+spirit, `om-prepare-issue` stops merely recommending a spec for substantial
+features: when none exists in the repo or an open PR, it authors one via the same
+`--spec-only` spec PR and links it on the issue — its one exception to being
+tracker-only, and design-only (never implementation).
+
+## Issue skills split: create vs manage
+
+`om-prepare-issue` conflated two jobs — filing a *new* issue and improving
+*existing* ones — so the second job was split out. `om-prepare-issue` keeps its
+name and owns the create path (dedupe, spec-linking, codebase analysis, the
+step-2b spec PR) and now also applies the SDLC labels (category + inferred priority
++ risk) on creation. A new sibling, `om-auto-manage-issues`, owns existing issues,
+single or in bulk: it applies missing SDLC labels and, for a laconic issue (a
+one-line body or just a title and a screenshot), analyzes the screenshot with the
+terse text, clarifies the wording non-destructively (the reporter's original is
+preserved) via the new **update-issue** tracker operation, and posts the agent's
+understanding as a comment to confirm. It is idempotent (adds only missing labels,
+posts the understanding once) and claim-aware (skips issues another actor is
+working), so it is safe to sweep the backlog — default scope is the last ~25 open
+issues, worst-described first, narrowable by state/label/author/limit.
+
+## PR-side driver: om-auto-fix-pr
+
+The issue side had a single-command end-to-end driver (`om-auto-fix-issue`); the PR
+side did not — getting a PR merge-ready meant running `om-auto-review-pr`,
+`om-stabilize-ci`, and `om-auto-verify-pr-ui` by hand and remembering to update the
+branch first. `om-auto-fix-pr` is that missing driver: it merges the latest base in
+first, then loops review-autofix → CI-stabilize → UI-verify (re-merging base when it
+advances) until the PR is approvable, green, and QA-evidenced. It is a pure
+orchestrator — it delegates every hard step to the existing skills rather than
+duplicating their logic — and it deliberately stops short of merging: it leaves the
+PR merge-ready and hands off to `om-approve-merge-pr`/`om-merge-buddy` so the QA gate
+stays the single enforcement point. Two behaviors are explicit: non-blocking review
+findings (nits/low/out-of-scope) become follow-up issues via
+`om-followup-issue-from-pr` instead of blocking or bloating the PR, and fork PRs keep
+the carry-forward supersede/credit rules from `om-auto-review-pr`'s fork flow.
+
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.

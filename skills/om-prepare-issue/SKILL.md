@@ -1,6 +1,6 @@
 ---
 name: om-prepare-issue
-description: File a well-formed tracker issue for a task without implementing it. Searches the tracker for duplicates first, links the matching spec when one exists in the repo's specs directory, and otherwise analyzes the task against the codebase and writes detailed, step-by-step fix/implementation guidance into the issue body. Use for "file an issue for X", "park this idea", "prepare an issue to build X later".
+description: File a well-formed tracker issue for a task without implementing it. Searches the tracker for duplicates first, links the matching spec when one exists in the repo's specs directory or an open PR, and otherwise analyzes the task against the codebase and writes detailed, step-by-step guidance into the issue body. When the task is a feature that needs a spec and none exists anywhere, it authors one via om-spec-writing and lands it on a design-only spec PR, then links it. Use for "file an issue for X", "park this idea", "prepare an issue to build X later".
 ---
 
 # Prepare Issue (deferred work)
@@ -38,9 +38,29 @@ When a credible duplicate exists: do not create a new issue. Report it, and (wit
 
 Check the repo's specs directory (`$SPECS_DIR`, plus any subdirectories) and the design-doc areas the repo uses. A spec covers the task when its scope contains the brief's ask — read the TLDR/overview, do not match on filename alone.
 
-- **Spec found** → the issue links it; the spec itself is the implementation guidance. Do not duplicate its content into the issue body.
+Also **search-prs** for an open PR that already adds a covering spec (a design/spec
+document under `$SPECS_DIR` or the repo's design-doc areas) — a spec in flight
+counts as found; link that PR instead of authoring a duplicate.
+
+- **Spec found** (in the repo or an open PR) → the issue links it; the spec itself is the implementation guidance. Do not duplicate its content into the issue body.
 - **Spec partially covers** → link it and state precisely what the issue adds beyond it.
-- **No spec** → step 3 produces the guidance. For large features where guessing the architecture would be irresponsible, recommend running `om-spec-writing` first instead — say so and stop rather than filing a vague issue.
+- **No spec, and the task does not need one** (a bug, or a small feature whose change surface is obvious) → step 3 produces the inline guidance.
+- **No spec, and the task is a feature that needs one** (a substantial new capability where guessing the architecture would be irresponsible — the case that used to be "recommend `om-spec-writing` and stop") → go to step 2b: author the spec and land it on a PR, then link it. Do not file a vague placeholder issue.
+
+### 2b. Author a spec and land it on a PR (feature needs a spec, none exists)
+
+When step 2 finds no covering spec anywhere and the feature warrants one, this
+skill produces the design instead of merely recommending it. Follow
+`references/spec-when-missing.md`: create the tracking issue first (step 4, so
+there is a number to link), then delegate to the `om-auto-implement-issue` skill
+with the new issue number and `--spec-only`, which writes the spec by following
+`om-spec-writing` verbatim (**including its Open Questions hard gate**), commits it
+as the first commit, and opens a draft **spec PR** against the base branch. Then
+comment the spec path and PR link back onto the issue via **comment-issue**. The
+issue now links a real, reviewable design; implementation resumes later with
+`om-auto-continue-pr {prNumber}` or `om-auto-implement-issue {issueId}`. This is
+the one path on which `om-prepare-issue` produces a PR — it is a **design** (a
+spec), never implementation.
 
 ### 3. Analyze the task (no spec found)
 
@@ -63,7 +83,7 @@ Title: action-oriented and specific — `Implement: <feature>` for features, `Fi
 - {one-line goal from the brief}
 
 ## Spec
-- Implementation spec: `{spec path}` ({link})      <!-- only when step 2 found one -->
+- Implementation spec: `{spec path}` ({link})      <!-- when step 2 found one, or step 2b authored one (also note the spec PR #) -->
 
 ## Analysis                                         <!-- only when no spec covers it -->
 - Affected areas: {modules/files}
@@ -78,7 +98,7 @@ Title: action-oriented and specific — `Implement: <feature>` for features, `Fi
 - {None | protected surfaces touched and the required migration path per BACKWARD_COMPATIBILITY.md}
 
 ## How to pick this up
-- Run `om-auto-fix-issue {thisIssueNumber}`, or hand the spec/analysis to `om-auto-create-pr` as the brief.
+- Run `om-auto-fix-issue {thisIssueNumber}` (it routes features to `om-auto-implement-issue`), or hand the spec/analysis to `om-auto-create-pr` as the brief. When step 2b authored a spec PR, resume with `om-auto-continue-pr {specPrNumber}` or `om-auto-implement-issue {thisIssueNumber}`.
 
 ## Out of scope
 - {non-goals, so the implementer does not gold-plate}
@@ -94,18 +114,18 @@ Create it via **create-issue** with title, body, `--assignee` when passed, and l
 
 ```text
 prepare-issue: {brief}
-Issue: {url | reused #{n} — comment added | skipped: recommend om-spec-writing first}
-Spec: {path | none — analysis embedded}
+Issue: {url | reused #{n} — comment added}
+Spec: {path — linked | path — authored + spec PR #{n} | none — analysis embedded}
 Duplicates checked: {queries run, top candidates considered}
 ```
 
 ## Rules
 
-- Tracker-only: never edit, commit, or push repository files. The deliverable is the issue.
-- Always run the duplicate search (multiple query phrasings + open PRs) before creating; reuse a credible duplicate via a comment instead of filing a copy.
-- Link a covering spec instead of restating it; embed step-level analysis only when no spec covers the task.
+- Tracker-only by default: never edit, commit, or push repository files. The one exception is step 2b — a feature that needs a spec and has none — where this skill produces a **spec PR** (a design document only, never implementation) by delegating to `om-auto-implement-issue --spec-only`, then links it on the issue.
+- Always run the duplicate search (multiple query phrasings + open PRs, including PRs that already add a covering spec) before creating; reuse a credible duplicate or an in-flight spec PR via a link/comment instead of filing a copy.
+- Link a covering spec instead of restating it; embed step-level analysis only when no spec covers the task and the task does not warrant one.
 - Implementation steps must reference real paths and names from the codebase — an issue that says "add the feature" is a failed run.
 - When the task touches surfaces protected by `BACKWARD_COMPATIBILITY.md`, the issue must flag it and name the migration/deprecation expectation.
-- For large features with open architectural questions, recommend `om-spec-writing` and stop — do not file a vague placeholder issue.
+- For a substantial feature with no covering spec, author one and land it on a PR (step 2b) and link it — do not file a vague placeholder issue, and never invent answers to the spec's Open Questions gate.
 - Category label always; priority/risk only when passed; never pipeline labels or `in-progress` on the issue.
 - Never paste secrets, tokens, or `.env` content into the issue.

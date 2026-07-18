@@ -58,14 +58,14 @@ preserving the rest of the config.
 
 Newest first. Each entry lists the symptom you will see with a stale installation and the fix.
 
-### 2026-07 — `update-issue` tracker operation + issue skills split
+### 2026-07 — `update-issue` tracker operation + new `om-auto-manage-issues`
 
-`om-prepare-issue` was split into `om-create-issue` (create path) and
-`om-auto-manage-issues` (enrich existing issues — apply missing SDLC labels,
-clarify a laconic issue's wording from its screenshot + terse text, post an
-understanding comment). The enrichment rewrites the issue body through a new
-tracker operation **update-issue** (for GitHub: `gh issue edit --title --body-file`),
-which the descriptor now defines.
+`om-prepare-issue` kept its name and create role, and gained a sibling —
+`om-auto-manage-issues` — for existing issues: apply missing SDLC labels, clarify a
+laconic issue's wording from its screenshot + terse text, and post an understanding
+comment. The enrichment rewrites the issue body through a new tracker operation
+**update-issue** (for GitHub: `gh issue edit --title --body-file`), which the
+descriptor now defines.
 
 - **Symptom of a stale descriptor:** `om-auto-manage-issues` can apply labels and
   post comments but cannot rewrite a laconic issue's body — the wording-clarify

@@ -63,8 +63,13 @@ If the issue is a **feature request**, do not run the bug chain: instead delegat
 the whole run to the `om-auto-implement-issue` skill with `{issueId}` (and
 `{repo}`, `--force` if it was set), which confirms the feature is not already
 implemented, writes (or reuses) a spec and lands it on a PR, then implements it.
-Follow that skill's workflow verbatim and stop this chain — it owns the claim,
-the PR, and the report from here. When an issue mixes a defect and a new
+That skill is autonomous by default, so the spec's Open Questions gate will not
+stall this chain — it resolves any open questions with conservative documented
+defaults and posts them as an issue/PR comment for a human to override before
+merge, rather than stopping (pass `--interactive` only if a human is driving and
+wants to answer the design questions). Follow that skill's workflow verbatim and
+stop this chain — it owns the
+claim, the PR, and the report from here. When an issue mixes a defect and a new
 capability, prefer stopping and asking the user to split it (bug → this chain, FR
 → `om-auto-implement-issue`) rather than guessing. Only when the issue is a bug
 (or you cannot defend "feature request") do you continue to step 2.
@@ -197,7 +202,7 @@ When the run stopped at step 2, cite the `om-verify-in-repo` evidence (existing 
 ## Rules
 
 - Always run the step 1 concurrency check before anything else; never silently override another actor's claim — `--force` must post an explicit override comment.
-- Classify before triaging: a feature request is routed to `om-auto-implement-issue` (which specs-then-builds it), never run through the bug-confirmation gate; only bugs continue on this chain. When unsure, default to the bug chain; when an issue mixes both, ask the user to split it.
+- Classify before triaging: a feature request is routed to `om-auto-implement-issue` (autonomous by default, so it specs-then-builds it and resolves the spec's Open Questions with documented defaults + an override comment instead of stopping), never run through the bug-confirmation gate; only bugs continue on this chain. When unsure, default to the bug chain; when an issue mixes both, ask the user to split it.
 - Claiming belongs to `om-fix`; this skill never claims an issue before the triage gate confirms there is work to do.
 - The `in-progress` lock is always released by the end of the run: by `om-open-pr` on the success path, or by step 8 on any failure after the claim.
 - Invoke each chain skill's workflow verbatim and pass outputs between steps verbatim, in the exact marked blocks the next step parses.

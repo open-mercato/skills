@@ -28,14 +28,19 @@ If any fails, do not open a spec PR — fall back to step 3's inline guidance.
 2. **Delegate spec authoring to `om-auto-implement-issue`** with the new issue
    number and `--spec-only`. Follow that skill's workflow verbatim: it confirms the
    feature is not already implemented, writes the spec by following `om-spec-writing`
-   **including its Open Questions hard gate**, commits the spec as the first commit,
+   **including its Open Questions gate**, commits the spec as the first commit,
    and opens a **draft spec PR** against the base branch. Because this is a
    design-only PR, its body references the issue with `Refs #{issueId}` (**not**
    `Closes` — merging the spec must not close the still-unimplemented FR), plus
    `Source doc:` and `Status: in-progress`. It stops after the spec lands (no
-   implementation). Never answer the Open Questions gate yourself; when running
-   unattended with no user to answer, report that the spec needs the questions
-   resolved and stop rather than inventing answers.
+   implementation). Let it run in its **default autonomous mode** so the spec is
+   actually produced end-to-end: it resolves any Open Questions with conservative
+   documented defaults and posts them on the issue/PR for a human to override before
+   merge (the spec is only a draft-PR proposal for review, so nothing merges on
+   assumptions alone). When a human is filing the issue and wants to make the design
+   calls themselves, pass `--interactive` on the delegation to stop at the Open
+   Questions gate instead. Either way, a required-and-missing spec always gets
+   written here — never left as a recommendation.
 3. **Link the spec back onto the issue** via **comment-issue**: post the spec path
    and the spec PR link, and update the issue body's `## Spec` section to reference
    them. The issue now points at a real, reviewable design.

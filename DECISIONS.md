@@ -70,6 +70,19 @@ features: when none exists in the repo or an open PR, it authors one via the sam
 `--spec-only` spec PR and links it on the issue — its one exception to being
 tracker-only, and design-only (never implementation).
 
+`om-spec-writing`'s Open Questions gate is a hard human stop, which is correct when
+a person is driving but would strand an `om-auto-*` run (e.g. `om-auto-fix-issue`
+routing a feature request, or `om-prepare-issue` authoring a required spec). Since
+the `om-auto-*` family is autonomous by definition, `om-auto-implement-issue` runs
+**autonomous by default**: instead of stopping at the gate it resolves each open
+question with a conservative, reversible default, records the assumptions in the
+spec, and posts the questions + applied defaults as an issue/PR comment for a human
+to override before merge — keeping the PR draft/`needs-qa` when any default is
+high-stakes. A `--interactive` flag opts back into the human stop for the cases
+where a person wants to make the design calls. Progress beats stalling, as long as
+every assumption is surfaced and reversible and nothing merges on assumptions
+alone.
+
 ## Issue skills split: create vs manage
 
 `om-prepare-issue` conflated two jobs — filing a *new* issue and improving
@@ -85,6 +98,35 @@ understanding as a comment to confirm. It is idempotent (adds only missing label
 posts the understanding once) and claim-aware (skips issues another actor is
 working), so it is safe to sweep the backlog — default scope is the last ~25 open
 issues, worst-described first, narrowable by state/label/author/limit.
+
+## One PR opener, reused: pr-open-reuse + implement-by-continuation
+
+Several skills open or update PRs, and `om-auto-implement-issue` opens a spec-first
+PR and then needs to implement it — which naively means running `om-auto-create-pr`,
+which opens *its own* PR. That second PR is a collision. Two decisions resolve it:
+
+- **`om-auto-implement-issue` implements by continuation, not by create.** After it
+  opens the one spec PR (with a tracking plan), implementation is handed to
+  `om-auto-continue-pr` (or `om-auto-continue-pr-loop` for a large, many-step spec —
+  the skill chooses per the plan size, which also dictates the plan format it
+  writes). The continue skills resume from the plan **on the existing PR** and reuse
+  the identical implement/validate/review/label/summary machinery without opening
+  anything new. So there is exactly one PR.
+- **PR opening + labeling is one reusable procedure**, documented once in
+  `om-auto-create-pr/references/pr-open-reuse.md` and pointed at by the create,
+  continue, and implement skills: **prefer the `om-open-pr` skill when it is
+  installed** (it already implements commit → push → open draft PR → normalize
+  labels, so reuse it instead of duplicating), and **fall back to the inline
+  `create-pr` + label path when it is not** — `om-open-pr` is an optional
+  enhancement that removes duplication without changing behavior, so a repo that
+  installs `om-auto-create-pr` alone still works. The invariant across all of them:
+  never open a second PR for work that already has one.
+
+`om-auto-manage-issues` also gained a read-only implementation-prep pass: it can run
+a root-cause/impact analysis (delegating to `om-root-cause` for bugs when installed)
+and post it as an "implementation notes" comment so an existing issue is ready to
+fix — autonomously, never interactively, and defaulting off for batches because it
+reads code per issue.
 
 ## PR-side driver: om-auto-fix-pr
 

@@ -202,11 +202,16 @@ If self-review finds issues, fix them and loop back to step 6.
 
 ### 9. Open the PR
 
-Open the PR via the tracker operation **create-pr** against `$BASE_BRANCH` in the
-current repository, with a conventional-commit-prefixed title scoped to the
-primary area. Use the PR body template in `references/pr-body-template.md` — it
-**MUST** include the `Tracking plan:` line so `om-auto-continue-pr` can resume.
-Flip `Status:` to `complete` on the PR body once all Progress steps are checked.
+Open (or reuse) the PR following `references/pr-open-reuse.md`: **prefer the
+`om-open-pr` skill when it is installed** (it performs the commit → push → open
+draft PR → normalize labels mechanics and is the single shared implementation), and
+**fall back to the inline path** — the tracker operation **create-pr** against
+`$BASE_BRANCH` — when it is not, so this skill works standalone without `om-open-pr`.
+Either way, never open a second PR when one already exists for the branch. Use a
+conventional-commit-prefixed title scoped to the primary area and the PR body
+template in `references/pr-body-template.md` — it **MUST** include the
+`Tracking plan:` line so `om-auto-continue-pr` can resume. Flip `Status:` to
+`complete` on the PR body once all Progress steps are checked.
 
 ### 10. Normalize labels
 

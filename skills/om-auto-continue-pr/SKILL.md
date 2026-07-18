@@ -214,6 +214,13 @@ into it.
 
 ### 9. Update the PR, normalize labels, release the lock
 
+This step **updates the existing PR** — it never opens a new one (that would be the
+duplicate-PR collision `om-auto-create-pr/references/pr-open-reuse.md` guards
+against). The commit/push and label-normalization mechanics follow that shared
+reference: **prefer the `om-open-pr` skill when it is installed** (reuse its
+push + label-normalization rather than duplicating it), and fall back to the inline
+tracker operations below when it is not — so this skill works standalone.
+
 Update the PR body:
 
 - If all Progress steps are now `- [x]`, flip `Status: in-progress` to `Status: complete`.

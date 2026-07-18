@@ -91,7 +91,7 @@ the operator asks, draft the section for them to review.
 
 Apply the same operation-section algorithm to
 `$INSTALLED_BROWSER_DESCRIPTOR`, using `### <operation-name>` headings and the
-named support sections in `references/browsers/TEMPLATE.md`. Missing shipped
+named support sections in `om-setup-agent-pipeline/references/browsers/TEMPLATE.md`. Missing shipped
 browser descriptors are additive artifacts: create the directory and install
 the selected shipped descriptor. Preserve custom sections and ask before
 replacing edited operations.
@@ -102,7 +102,7 @@ existing behavior, then install the shipped Playwright descriptor. Do not
 silently switch an existing repository to agent-browser. The operator can choose
 agent-browser explicitly with `--browser agent-browser` or by re-running
 `om-setup-agent-pipeline`. A custom browser provider gets a gap report against
-`references/browsers/TEMPLATE.md`; never invent its installation or commands.
+`om-setup-agent-pipeline/references/browsers/TEMPLATE.md`; never invent its installation or commands.
 
 ## Step 2 — Walk the notable-upgrades log
 

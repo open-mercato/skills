@@ -43,7 +43,7 @@ logged skip; `LABELS_ENABLED=false` skips all):
   confirm its body carries `Supersedes #{originalPr}` and explicit credit to the
   original author, and that it is reassigned to them with a handoff comment — per
   `om-auto-review-pr`'s fork flow and the Supersede Credit Rule
-  (`om-auto-update-changelog`'s `references/supersede-credit-rule.md`).
+  (`om-auto-update-changelog/references/supersede-credit-rule.md`).
 
 Then **hand off**: this skill leaves the PR merge-ready and stops. The merge itself
 belongs to `om-approve-merge-pr` (single PR) or `om-merge-buddy` (sweep), which

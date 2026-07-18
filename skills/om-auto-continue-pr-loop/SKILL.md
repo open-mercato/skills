@@ -1,6 +1,6 @@
 ---
 name: om-auto-continue-pr-loop
-description: Advanced om-auto-continue-pr for PRs started by om-auto-create-pr-loop: claims the PR, resumes from the first non-done PLAN.md Tasks row in an isolated worktree, keeps the per-step commit and checkpoint discipline (integration tests + screenshots for UI), runs the full gate at completion, and preserves the run-folder and label contract. Use plain om-auto-continue-pr for simple runs.
+description: Advanced om-auto-continue-pr for PRs started by om-auto-create-pr-loop — claims the PR, resumes from the first non-done PLAN.md Tasks row in an isolated worktree, keeps the per-step commit and checkpoint discipline (integration tests + screenshots for UI), runs the full gate at completion, and preserves the run-folder and label contract. Use plain om-auto-continue-pr for simple runs.
 ---
 
 # Auto Continue PR (loop)

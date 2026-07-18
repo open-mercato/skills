@@ -1,6 +1,6 @@
 ---
 name: om-auto-create-pr-loop
-description: Advanced om-auto-create-pr for long, multi-step spec implementations needing resumability and strict step tracking: run folder (PLAN/HANDOFF/NOTIFY), one lean commit per Step, checkpoint verification every ~5 Steps with integration tests and UI screenshots, full gate at completion, ready labeled PR. Resumable via om-auto-continue-pr-loop. Use plain om-auto-create-pr for small fixes.
+description: Advanced om-auto-create-pr for long, multi-step spec implementations needing resumability and strict step tracking — run folder (PLAN/HANDOFF/NOTIFY), one lean commit per Step, checkpoint verification every ~5 Steps with integration tests and UI screenshots, full gate at completion, ready labeled PR. Resumable via om-auto-continue-pr-loop. Use plain om-auto-create-pr for small fixes.
 ---
 
 # Auto Create PR (loop)

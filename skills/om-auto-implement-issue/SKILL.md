@@ -42,8 +42,9 @@ missing descriptor triggers the same setup run); it also resolves `BASE_BRANCH`
 `QA_GATE`, and the `validation.commands` used by the implementation half. Read
 `$TRACKER_FILE`; every tracker operation named in this skill (**current-user**,
 **get-issue**, **comment-issue**, **assign-issue** / **unassign-issue**,
-**search-prs**, **search-issues**, **create-pr**, **comment-pr**, …) executes as
-that descriptor defines, and the label guards come from it.
+**search-prs**, **search-issues**, **create-pr**, **comment-pr**,
+**mark-pr-ready**, …) executes as that descriptor defines, and the label guards
+come from it.
 
 Right after loading the config, check for a repo-local skill of the same name at
 `.ai/skills/om-auto-implement-issue/SKILL.md`; when present, apply it as a
@@ -155,19 +156,32 @@ duplicate. Choose the engine per `references/implementation-engine-selection.md`
 Before handing off, make sure the PR body carries the implementing-PR linkage from
 `references/pr-linkage.md` — `Closes #{issueId}` (so the merge auto-closes the FR),
 `Source doc:`, `Tracking plan:` — and the `feature` category label, so the
-continuation preserves them. The continuation owns marking the PR ready, the review
-loop, labels, and the summary comment from here (it holds the `in-progress` lock as
-re-entry under the same owner). `--spec-only` runs never reach this step.
+continuation preserves them. The continuation runs the implement → validate →
+`om-auto-review-pr` loop → labels → `Status: complete` → summary machinery on the
+existing PR. Claim/lock note: step 4 opened the PR (which, via `om-open-pr`, hands
+the issue back and releases the **issue** `in-progress` lock), so the continuation
+claims the **PR** itself — freshly when unclaimed, or as re-entry when the same user
+already holds the PR lock; either is expected (like `om-auto-create-pr` handing to
+`om-auto-review-pr`), not a conflict. What the continuation does **not** do is
+promote the PR out of draft — `om-open-pr` opens it as a draft and leaves promotion
+to the ready state to step 6 here. `--spec-only` runs never reach this step.
 
-### 6. Release, report
+### 6. Mark ready, release, report
 
-Once the continuation reports the PR complete (or if the run aborts after step 4's
-claim, release the `in-progress` lock in the `trap`/finally with an abort comment,
-exactly as `om-auto-fix-issue` step 8 does). Confirm the summary comment the
-continuation posted names the FR number and the spec path; if the run was
-`--spec-only` (no implementation), post the summary yourself per the
-`om-auto-create-pr` step-12 template. Clean up any worktree this run created, record
-`PR: #{n}` in the plan, and report: issue, spec path, branch, PR URL, and
+Once the continuation reports the PR `complete`, **promote the PR out of draft via
+the tracker operation mark-pr-ready** — the continuation flips the body `Status:`
+text to `complete` but never leaves draft, and `om-open-pr` opened it as a draft, so
+this is the step that makes it a ready-for-review PR. Keep it a **draft** only when
+the run is `--spec-only` (design-only) or an autonomous default was flagged
+`⚠ NEEDS HUMAN CONFIRMATION` (keep `needs-qa`, never `qa-approved`). If the run
+aborts before the PR opened (i.e. before step 4 handed the issue back), release the
+issue `in-progress` lock in the `trap`/finally with an abort comment, exactly as
+`om-auto-fix-issue` step 8 does; after the PR is open the continuation owns the PR
+lock and its own release. Confirm the summary comment the continuation posted names
+the FR number and the spec path; if the run was `--spec-only` (no implementation),
+post the summary yourself per the `om-auto-create-pr` step-12 template. Clean up any
+worktree this run created, record `PR: #{n}` in the plan, and report: issue, spec
+path, branch, PR URL, and
 `{complete | spec-only — use om-auto-continue-pr <n> | in-progress}`.
 
 ## Rules
@@ -178,5 +192,5 @@ continuation posted names the FR number and the spec path; if the run was
 - Reuse, don't reinvent, and **never open a second PR**: this skill opens exactly one PR (the spec-first PR in step 4) and implements it as a **continuation** via `om-auto-continue-pr` / `om-auto-continue-pr-loop` (chosen per `references/implementation-engine-selection.md`) — which reuse `om-auto-create-pr`'s implement/validate/review/label/summary machinery on the existing PR rather than opening a fresh one. The design comes from `om-spec-writing`; PR opening/labeling follows `om-auto-create-pr/references/pr-open-reuse.md` (prefer `om-open-pr` when installed, inline otherwise). This skill only adds FR triage, spec-first ordering, engine selection, and issue linkage.
 - Every code change ships with tests; docs-only FRs still run the configured lint/check. Run the full `validation.commands` gate before marking the PR ready unless a real blocker prevents it — then document it.
 - The base branch always comes from config (`baseBranch`); never hard-code it. All tracker interaction goes through named operations via the descriptor.
-- Claim through the three-signal protocol; release the `in-progress` lock when the run reaches a terminal state (on success once the PR is ready, or in the failure `trap` on any abort) — a crashed run must never leak a lock or a worktree. The one exception is a `--spec-only` hand-off, which deliberately **retains** the lock as the resume marker for `om-auto-continue-pr` (the resuming run releases it); a hand-off is not a leak.
+- Two distinct locks, cleanly handed off: step 4 claims the **issue** (three-signal), and opening the PR hands the issue back and releases that issue lock (`om-open-pr` does this; on the inline path, release it at PR-open too). From PR-open onward the **PR** lock is owned by the continuation (or, on `--spec-only`, the PR itself is the resume handle for `om-auto-continue-pr {prNumber}`). A crash **before** the PR opens releases the issue lock in the `trap`; after PR-open the continuation owns releasing the PR lock. Never leak a lock or a worktree, and never `mark-pr-ready` a `--spec-only` design PR or one gated on a `⚠ NEEDS HUMAN CONFIRMATION` default.
 - The linkage line matches what the PR ships: an **implementing** PR carries `Closes #{issueId}` so the FR auto-closes on merge; a **`--spec-only` design PR** carries `Refs #{issueId}` (no closing keyword) so merging the spec leaves the FR open for implementation. The PR body always carries `Source doc:` and `Tracking plan:` so `om-auto-continue-pr` can resume. Never add `qa-approved` from this skill.

@@ -1,6 +1,6 @@
 ---
 name: om-auto-fix-pr
-description: Drive an open PR all the way to merge-ready from its number. First merges the latest base branch into the PR branch, then loops review-autofix (om-auto-review-pr), CI stabilization (om-stabilize-ci), and UI verification (om-auto-verify-pr-ui) until the PR is approvable, green, and QA-evidenced — re-merging base whenever it advances. Files follow-up issues for non-blocking review nits via om-followup-issue-from-pr, honors the fork carry-forward supersede/credit rules, normalizes labels, and hands a merge-ready PR to om-approve-merge-pr (it never merges itself). Use when the user says "get PR 123 merge-ready", "fix up and stabilize PR 123", "drive PR 123 to green", "doprowadź PR 123 do mergowalności", "ustabilizuj PR 123".
+description: Drive an open PR all the way to merge-ready from its number. First merges the latest base branch into the PR branch, then loops review-autofix (om-auto-review-pr), CI stabilization (om-stabilize-ci), and UI verification (om-auto-verify-pr-ui) until the PR is approvable, green, and QA-evidenced — re-merging base whenever it advances. Files follow-up issues for non-blocking review nits via om-followup-issue-from-pr, honors the fork carry-forward supersede/credit rules, normalizes labels, and hands a merge-ready PR to om-approve-merge-pr (it never merges itself). Use when the user says "get PR 123 merge-ready", "fix up and stabilize PR 123", "drive PR 123 to green".
 ---
 
 # Auto Fix PR (drive a PR to merge-ready)

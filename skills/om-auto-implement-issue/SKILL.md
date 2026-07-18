@@ -1,6 +1,6 @@
 ---
 name: om-auto-implement-issue
-description: Implement a new feature-request (FR) tracker issue end to end by combining spec-writing and auto-create-pr — first land a spec on a PR, then implement it on the same branch. Confirms the feature is not already built (never a bug-confirmation gate), writes or reuses a spec (with the Open Questions hard gate), commits it as the first commit, opens a draft PR, then delivers the spec phase-by-phase with the validation gate, labels, and the autofix review loop. Use when the user says "implement issue 123 as a feature", "build the FR in #123", "spec-then-build this feature request", "zaimplementuj feature z issue 123", "napisz spec i zbuduj tę funkcję".
+description: Implement a new feature-request (FR) tracker issue end to end by combining spec-writing and auto-create-pr — first land a spec on a PR, then implement it on the same branch. Confirms the feature is not already built (never a bug-confirmation gate), writes or reuses a spec (with the Open Questions hard gate), commits it as the first commit, opens a draft PR, then delivers the spec phase-by-phase with the validation gate, labels, and the autofix review loop. Use when the user says "implement issue 123 as a feature", "build the FR in #123", "spec-then-build this feature request".
 ---
 
 # Auto Implement Issue (FR → spec → PR → implementation)

@@ -16,7 +16,7 @@ Minimum comment structure:
 **Resume point:** {phase.step} → {last step reached in this resume}
 **Final status:** {complete | still in-progress — re-run /om-auto-continue-pr-loop {prNumber}}
 
-### Summary of changes in this resume
+### 📋 Summary of changes in this resume
 - {step-level bullet 1}
 - {step-level bullet 2}
 - {files/areas touched during this resume only}
@@ -24,24 +24,24 @@ Minimum comment structure:
 ### External references honored
 - {reminder of URLs already recorded in the plan's External References, plus anything newly consulted during this resume, with adopt/reject notes}  <!-- omit section if none -->
 
-### Verification phases completed (this resume)
+### 🧪 Verification phases completed (this resume)
 - **Checkpoint verification (every ~5 Steps in this resume):** `{run-folder}/checkpoint-<N>-checks.md` with optional `checkpoint-<N>-artifacts/` (test logs + screenshots when UI was touched in the window; screenshots also posted per checkpoint as PR evidence comments).
 - **Per-checkpoint validation:** {which validation commands ran at each checkpoint, and against which areas}
 - **Focused integration tests per checkpoint (UI-touched windows):** {which areas were exercised via om-integration-tests, screenshots captured — or skipped with reason}
-- **Full validation gate (at spec completion):** {each configured command with ✓ — or explicit blocker}
-- **Full integration suite:** {✓ / ✗ with summary — or skipped with reason (docs-only, or repo has no suite)}
+- **Full validation gate (at spec completion):** {each configured command with ✅ — or explicit blocker}
+- **Full integration suite:** {✅ / ❌ with summary — or skipped with reason (docs-only, or repo has no suite)}
 - **Style-compliance pass:** {auto-fixes applied (SHA range) | clean | residual findings listed in final-gate-checks.md | skipped — no such tooling in this repo}
 - **Self code-review:** {applied the `om-code-review` skill — findings: {none | list with commit SHA of fix}}
 - **Compatibility self-review:** {applied `BACKWARD_COMPATIBILITY.md` (when present) — findings: {none | list; WARN prominently on any violation}}
 - **`om-auto-review-pr` autofix pass:** {verdict + SHA range of follow-up commits, or note that it returned clean on first pass}
 
-### How to verify
+### 🔍 How to verify
 - **Manual smoke test:** {concrete steps a reviewer can run, including any fixtures needed}
 - **Areas to spot-check in the diff:** {short list of files/functions that benefit most from a human eye}
 - **Commands the reviewer can re-run:** {the exact commands you used}
 - **Rollback plan:** {git revert of {commit range} | feature flag to disable | migration reversal steps}
 
-### What can go wrong (risk analysis)
+### ⚠️ What can go wrong (risk analysis)
 - **Most likely regression:** {area + symptom + mitigation/test that catches it}
 - **Second-order effects:** {downstream components or consumers that could be impacted}
 - **Security-sensitive surfaces:** {auth, permissions, data scoping, or secrets surfaces touched — or "N/A"}

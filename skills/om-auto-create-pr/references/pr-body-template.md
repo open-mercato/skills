@@ -19,7 +19,7 @@ Tracking plan: {RUNS_DIR}/{DATE}-{SLUG}.md
 Source doc: {SPECS_DIR}/{spec}.md     <!-- only when a spec/design doc drives the run -->
 Status: in-progress
 
-## Goal
+## 🎯 Goal
 - {one-line task summary from brief}
 
 ## External References
@@ -28,14 +28,14 @@ Status: in-progress
 ## What Changed
 - {bullet list of phase-level changes}
 
-## Tests
+## 🧪 Tests
 - {unit tests added or updated}
 - {other checks}
 
-## Breaking Changes
+## 💥 Breaking Changes
 - {None | describe affected contracts and migration notes}
 
-## Progress
+## 📋 Progress
 See the Progress section in the tracking plan.
 ```
 

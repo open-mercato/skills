@@ -26,7 +26,7 @@ the scenario table, embedded/linked screenshots, and notes for QA. Use this
 template:
 
 ```markdown
-## 🖼️ UI QA evidence — {verdict}
+## 📸 UI QA evidence — {verdict}
 
 **Verdict:** {✅ PASS | ❌ FAIL | ⚠️ PARTIAL — environment-limited}
 **Environment:** `{baseUrl}` · role `{role}` · browser `{provider}`

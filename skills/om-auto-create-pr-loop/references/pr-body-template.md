@@ -14,7 +14,7 @@ Tracking plan: {RUNS_DIR}/{DATE}-{SLUG}/PLAN.md
 Tracking run folder: {RUNS_DIR}/{DATE}-{SLUG}/
 Status: in-progress
 
-## Goal
+## 🎯 Goal
 - {one-line task summary from brief}
 
 ## External References
@@ -23,14 +23,14 @@ Status: in-progress
 ## What Changed
 - {bullet list of phase-level changes}
 
-## Tests
+## 🧪 Tests
 - {unit tests added or updated}
 - {other checks}
 
-## Breaking Changes
+## 💥 Breaking Changes
 - {None | describe affected contracts and migration notes}
 
-## Progress
+## 📋 Progress
 See the Tasks table in the plan — that is the authoritative Step-status source (`todo` / `done`).
 
 ## Handoff & Notifications

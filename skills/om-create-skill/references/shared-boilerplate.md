@@ -67,6 +67,12 @@ contract in this repo's AGENTS.md):
 - Labels only through the descriptor guards, per the canonical rules
   (`om-open-pr` step 6 / `om-auto-create-pr/references/label-normalization.md`);
   PRs open ready-for-review unless explicitly incomplete; never `qa-approved`.
+- Emoji glossary, used consistently in all user-facing output (PR bodies,
+  comments, reports): 🤖 agent comment marker · 🎯 goal · 📋 plan/tracking ·
+  📝 spec/design · 🏷️ label rationale · 📸 UI evidence · 🔍 review findings ·
+  🧪 tests/QA · 💥 breaking changes · ✅ pass/approved · ❌ fail/changes-requested ·
+  ⚠️ needs human/risk · ⛔ blocked · 🔁 resume/continuation · 🚀 merge/release.
+  Emojis decorate; parsers key on text markers only.
 
 ## Budgets (lint-enforced)
 

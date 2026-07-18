@@ -133,7 +133,7 @@ Always through the `apply_label` guard; missing labels degrade to a logged skip;
 - **Priority (exactly one):** outage, data loss, or a security incident → `priority-extreme`; security hardening or a release-blocking regression → `priority-high`; ordinary bug or feature → `priority-medium`; cosmetic, docs, dependency bumps, cleanup → `priority-low`.
 - **Risk (exactly one):** auth, session handling, data scoping, money, DB migrations, shared contract surfaces, or broad cross-cutting edits → `risk-high`; ordinary single-area change with tests → `risk-medium`; docs, dependency bumps, test-only, isolated cleanup → `risk-low`.
 - Never add `qa-approved` — it is earned by manual QA (or the explicit self-QA sign-off in `om-auto-verify-pr-ui`).
-- After each applied label, post a short PR comment via **comment-pr** explaining why (e.g. "Label set to `review` because the PR is ready for code review.").
+- After each applied label, post a short PR comment via **comment-pr** explaining why (e.g. "🏷️ Label set to `review` because the PR is ready for code review.").
 - When `QA_GATE` is `true` and you applied `needs-qa`, state in the closing comment that the merge waits for `qa-approved`.
 
 ### 7. Post the summary comment

@@ -21,8 +21,8 @@ comment).
 
 Suggested label comments:
 
-- `review`: `Label set to \`review\` because the PR is ready for code review.`
-- `skip-qa`: `Label set to \`skip-qa\` because this is a docs-only / low-risk change.`
-- `needs-qa`: `Label set to \`needs-qa\` because this touches {area} and must be manually exercised.`
-- `priority-*`: `Priority set to \`priority-{level}\` because {one-line rationale}.`
-- `risk-*`: `Risk set to \`risk-{level}\` because {one-line rationale}.`
+- `review`: `🏷️ Label set to \`review\` because the PR is ready for code review.`
+- `skip-qa`: `🏷️ Label set to \`skip-qa\` because this is a docs-only / low-risk change.`
+- `needs-qa`: `🏷️ Label set to \`needs-qa\` because this touches {area} and must be manually exercised.`
+- `priority-*`: `🏷️ Priority set to \`priority-{level}\` because {one-line rationale}.`
+- `risk-*`: `🏷️ Risk set to \`risk-{level}\` because {one-line rationale}.`

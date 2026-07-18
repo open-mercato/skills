@@ -99,6 +99,35 @@ posts the understanding once) and claim-aware (skips issues another actor is
 working), so it is safe to sweep the backlog — default scope is the last ~25 open
 issues, worst-described first, narrowable by state/label/author/limit.
 
+## One PR opener, reused: pr-open-reuse + implement-by-continuation
+
+Several skills open or update PRs, and `om-auto-implement-issue` opens a spec-first
+PR and then needs to implement it — which naively means running `om-auto-create-pr`,
+which opens *its own* PR. That second PR is a collision. Two decisions resolve it:
+
+- **`om-auto-implement-issue` implements by continuation, not by create.** After it
+  opens the one spec PR (with a tracking plan), implementation is handed to
+  `om-auto-continue-pr` (or `om-auto-continue-pr-loop` for a large, many-step spec —
+  the skill chooses per the plan size, which also dictates the plan format it
+  writes). The continue skills resume from the plan **on the existing PR** and reuse
+  the identical implement/validate/review/label/summary machinery without opening
+  anything new. So there is exactly one PR.
+- **PR opening + labeling is one reusable procedure**, documented once in
+  `om-auto-create-pr/references/pr-open-reuse.md` and pointed at by the create,
+  continue, and implement skills: **prefer the `om-open-pr` skill when it is
+  installed** (it already implements commit → push → open draft PR → normalize
+  labels, so reuse it instead of duplicating), and **fall back to the inline
+  `create-pr` + label path when it is not** — `om-open-pr` is an optional
+  enhancement that removes duplication without changing behavior, so a repo that
+  installs `om-auto-create-pr` alone still works. The invariant across all of them:
+  never open a second PR for work that already has one.
+
+`om-auto-manage-issues` also gained a read-only implementation-prep pass: it can run
+a root-cause/impact analysis (delegating to `om-root-cause` for bugs when installed)
+and post it as an "implementation notes" comment so an existing issue is ready to
+fix — autonomously, never interactively, and defaulting off for batches because it
+reads code per issue.
+
 ## PR-side driver: om-auto-fix-pr
 
 The issue side had a single-command end-to-end driver (`om-auto-fix-issue`); the PR

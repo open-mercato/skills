@@ -367,6 +367,13 @@ secrets into it.
 
 ### 9. Update the PR, normalize labels, release the lock
 
+This step **updates the existing PR** — it never opens a new one (the duplicate-PR
+collision `om-auto-create-pr/references/pr-open-reuse.md` guards against). Its
+commit/push and label-normalization mechanics follow that shared reference:
+**prefer the `om-open-pr` skill when installed** (reuse its push + label
+normalization instead of duplicating it), falling back to the inline tracker
+operations below when it is not — so this skill works standalone.
+
 Update the PR body:
 
 - If every row in the Tasks table now has `Status: done`, flip the PR body's `Status: in-progress` to `Status: complete`.

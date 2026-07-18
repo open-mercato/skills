@@ -81,10 +81,12 @@ operation **current-user**, then fetch the issue with **get-issue** for
 Apply the same three-signal in-progress lock decision `om-auto-fix-issue` uses
 (`in-progress` label held by another, a foreign assignee, or a `🤖` claim comment
 newer than 30 minutes; 60-minute stale-lock recovery; `--force` overrides only
-with an explicit override comment). Also treat the run slot as taken when a remote
-branch `feat/issue-{issueId}-{slug}` already exists or an open PR already references this
-issue — in that case stop and tell the user to resume with
-`om-auto-continue-pr {prNumber}`. This step only decides; the claim itself
+with an explicit override comment). Also treat the run slot as taken when an open
+PR already references this issue (via **search-prs** for `#{issueId}`) — in that
+case stop and tell the user to resume with `om-auto-continue-pr {prNumber}`. (Do
+not gate on a slug-qualified branch name here — the slug is generated later, in
+step 3, from the issue title; the open-PR signal is the reliable check.) This step
+only decides; the claim itself
 (assignee + `in-progress` + claim comment) happens in step 4, after triage
 confirms there is real work — so a stopped run never leaves a stray lock.
 
@@ -136,8 +138,10 @@ configured lint/check.
 ### 6. Mark ready, link the issue, normalize labels
 
 Follow `references/pr-linkage.md`: flip the PR out of draft, ensure the body
-carries `Source doc: {spec path}`, `Tracking plan: {plan path}`, and a
-`Closes #{issueId}` line so the merge auto-closes the FR, then normalize labels
+carries `Source doc: {spec path}`, `Tracking plan: {plan path}`, and — because this
+is the implementing PR — a `Closes #{issueId}` line so the merge auto-closes the FR
+(a `--spec-only` design PR instead carries `Refs #{issueId}` and never reaches this
+step), then normalize labels
 via `om-auto-create-pr` step 10 — always adding the `feature` category label,
 exactly one priority and one risk label, and `needs-qa` vs `skip-qa` per
 user-facing impact. Post the short per-label rationale comments.
@@ -162,5 +166,5 @@ in the plan, and report: issue, spec path, branch, PR URL, and
 - Reuse, don't reinvent: delegate the worktree, Progress plan, phase commits, validation gate, labels, review loop, and summary comment to `om-auto-create-pr`, and the design to `om-spec-writing`; this skill only adds FR triage, spec-first ordering, and issue linkage.
 - Every code change ships with tests; docs-only FRs still run the configured lint/check. Run the full `validation.commands` gate before marking the PR ready unless a real blocker prevents it — then document it.
 - The base branch always comes from config (`baseBranch`); never hard-code it. All tracker interaction goes through named operations via the descriptor.
-- Claim through the three-signal protocol; release the `in-progress` lock by the end of the run (on success when the PR is ready, or in the failure `trap`) — a stopped run must never leak a lock or a worktree.
-- The PR body carries `Closes #{issueId}`, `Source doc:`, and `Tracking plan:` so the FR auto-closes on merge and `om-auto-continue-pr` can resume. Never add `qa-approved` from this skill.
+- Claim through the three-signal protocol; release the `in-progress` lock when the run reaches a terminal state (on success once the PR is ready, or in the failure `trap` on any abort) — a crashed run must never leak a lock or a worktree. The one exception is a `--spec-only` hand-off, which deliberately **retains** the lock as the resume marker for `om-auto-continue-pr` (the resuming run releases it); a hand-off is not a leak.
+- The linkage line matches what the PR ships: an **implementing** PR carries `Closes #{issueId}` so the FR auto-closes on merge; a **`--spec-only` design PR** carries `Refs #{issueId}` (no closing keyword) so merging the spec leaves the FR open for implementation. The PR body always carries `Source doc:` and `Tracking plan:` so `om-auto-continue-pr` can resume. Never add `qa-approved` from this skill.

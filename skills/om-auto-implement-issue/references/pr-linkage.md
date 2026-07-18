@@ -6,13 +6,28 @@ opens the draft PR (step 4 of the spec-first flow) and when it marks it ready
 `label-normalization.md` — reuse those; this file only adds the issue linkage and
 the feature-category defaults.
 
+## The issue-linkage line — `Closes` vs `Refs` (read this first)
+
+The linkage keyword depends on **what the PR will contain when it merges**, because
+merging a PR with a `Closes`/`Fixes`/`Resolves` keyword auto-closes the FR:
+
+- **Implementing PR** (the normal full run — spec commit *and* implementation land
+  on the same branch) → use `Closes #{issueId}`. Merging it ships the feature and
+  correctly closes the FR.
+- **Design-only spec PR** (a `--spec-only` run, including the one `om-prepare-issue`
+  opens) → use `Refs #{issueId}` (a plain reference, **no** closing keyword). The
+  feature is not implemented yet, so merging the spec must **not** close the FR —
+  it stays open until the implementing PR merges. Using `Closes` here would both
+  close the FR prematurely and make a later `om-auto-implement-issue {issueId}`
+  resume abort (its triage stops on a closed issue).
+
 ## PR body
 
-Same shape as `om-auto-create-pr`'s template, plus the two linkage lines that make
-the FR auto-close on merge and let a spec-reviewer find the design:
+Same shape as `om-auto-create-pr`'s template, plus the linkage line (per the rule
+above) and the `Source doc:` line that lets a spec-reviewer find the design:
 
 ```markdown
-Closes #{issueId}
+Closes #{issueId}        <!-- implementing PR; use "Refs #{issueId}" on a --spec-only design PR -->
 Tracking plan: {RUNS_DIR}/{DATE}-{SLUG}.md
 Source doc: {SPECS_DIR}/{DATE}-{SLUG}.md
 Status: in-progress
@@ -36,10 +51,13 @@ Status: in-progress
 See the Progress section in the tracking plan.
 ```
 
-Open the PR as a **draft** in step 4 (spec only, no implementation yet). Flip it
-out of draft (**mark-pr-ready**) and change `Status:` to `complete` in step 6,
-once every Progress step is checked. Keep the `Closes #{issueId}` line intact —
-removing it breaks auto-close.
+Open the PR as a **draft** in step 4 (spec only, no implementation yet). On a full
+run, the same PR becomes the implementing PR, so it carries `Closes #{issueId}`
+from the start; flip it out of draft (**mark-pr-ready**) and change `Status:` to
+`complete` in step 6 once every Progress step is checked, keeping the `Closes`
+line intact (removing it breaks auto-close). On a `--spec-only` run the draft PR
+carries `Refs #{issueId}` and stays a design PR — the FR closes later, when the
+implementing PR merges.
 
 ## Labels
 

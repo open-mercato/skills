@@ -29,8 +29,10 @@ If any fails, do not open a spec PR — fall back to step 3's inline guidance.
    number and `--spec-only`. Follow that skill's workflow verbatim: it confirms the
    feature is not already implemented, writes the spec by following `om-spec-writing`
    **including its Open Questions hard gate**, commits the spec as the first commit,
-   and opens a **draft spec PR** against the base branch with `Closes #{issueId}`,
-   `Source doc:`, and `Status: in-progress`. It stops after the spec lands (no
+   and opens a **draft spec PR** against the base branch. Because this is a
+   design-only PR, its body references the issue with `Refs #{issueId}` (**not**
+   `Closes` — merging the spec must not close the still-unimplemented FR), plus
+   `Source doc:` and `Status: in-progress`. It stops after the spec lands (no
    implementation). Never answer the Open Questions gate yourself; when running
    unattended with no user to answer, report that the spec needs the questions
    resolved and stop rather than inventing answers.

@@ -54,18 +54,27 @@ executes, so make sure it exists and each step leaves the app working.
 
 Push the branch, then open a **draft** PR via **create-pr** against
 `$BASE_BRANCH` with a conventional-commit title (`feat({area}): {feature}`). Use
-the PR body from `references/pr-linkage.md` — it already carries `Closes #{issueId}`,
-`Source doc:`, `Tracking plan:`, and `Status: in-progress`. Opening the PR now is
-what puts "the spec on a PR first": reviewers see the design commit before any
-implementation commit exists.
+the PR body from `references/pr-linkage.md`, with the correct linkage line: a full
+run's PR will implement the feature, so it carries `Closes #{issueId}` from the
+start; a `--spec-only` design PR carries `Refs #{issueId}` (no closing keyword —
+see step 5). It also carries `Source doc:`, `Tracking plan:`, and
+`Status: in-progress`. Opening the PR now is what puts "the spec on a PR first":
+reviewers see the design commit before any implementation commit exists.
 
 ## 5. `--spec-only` branch
 
-If `--spec-only` was passed, stop here: leave the PR in draft with
-`Status: in-progress`, apply the `feature` category label plus one priority and
-one risk label (skip `needs-qa`/`skip-qa` — there is no behavior to QA yet), post
-the label rationale comments, and tell the user the design is ready for review and
-implementation resumes with `om-auto-continue-pr {prNumber}`. Do **not** release
-the `in-progress` lock on this path if the same actor will resume; release it only
-per the normal end-of-run rule when handing off to a different owner. Otherwise
-continue to body step 5 (implement).
+If `--spec-only` was passed, stop here: the PR is a **design-only spec PR**, so its
+body carries `Refs #{issueId}` (not `Closes` — merging the spec must not close the
+still-unimplemented FR). Leave the PR in draft with `Status: in-progress`, apply
+the `feature` category label plus one priority and one risk label (skip
+`needs-qa`/`skip-qa` — there is no behavior to QA yet), and post the label
+rationale comments.
+
+Lock handoff on the `--spec-only` stop: this is a deliberate hand-off, not a
+crash, so the run intentionally **keeps** the `in-progress` label and assignee and
+leaves a `🤖` comment stating the spec is ready and implementation resumes with
+`om-auto-continue-pr {prNumber}` (or `om-auto-implement-issue {issueId}`, which
+reuses the merged spec). This retained lock is the resume marker, not a leak — the
+resuming run owns releasing it. (Contrast the failure `trap`, which *does* release
+the lock, because an aborted run is not a hand-off.) Otherwise continue to body
+step 5 (implement).

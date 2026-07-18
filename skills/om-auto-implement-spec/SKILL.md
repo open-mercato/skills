@@ -59,6 +59,7 @@ PR_NUMBER=<PR number>
 
 ## Rules
 
+- **Autonomous run — no user in the loop.** When a decision is needed, make the recommended, most-reversible call yourself and document it — in the plan/spec and as a PR/issue comment where it makes sense — instead of stopping to ask. Stop only for the explicitly gated cases (claim conflicts without --force, ⚠ NEEDS HUMAN CONFIRMATION).
 - Thin orchestrator: never re-implement planning, validation, labeling, or review — delegate to the engine skills and pass context through verbatim.
 - Spec not found is a clean stop with candidates listed, never a guess and never an improvised spec.
 - One PR per spec: reuse the spec PR when it exists; otherwise exactly one PR from the engine run.

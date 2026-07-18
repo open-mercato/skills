@@ -178,6 +178,7 @@ PR: {auto-create-pr URL}
 
 ## Rules
 
+- **Autonomous run — no user in the loop.** When a decision is needed, make the recommended, most-reversible call yourself and document it — in the plan/spec and as a PR/issue comment where it makes sense — instead of stopping to ask. Stop only for the explicitly gated cases (claim conflicts without --force, ⚠ NEEDS HUMAN CONFIRMATION).
 - Never credit a bot account (`github-actions[bot]`, `dependabot[bot]`, `copilot`, `renovate[bot]`).
 - Never credit the merge author when Path A, B, or C detects a supersede — always resolve to the original author.
 - Never fabricate a Highlights paragraph. Leave the `<!-- TODO: Highlights -->` marker for the human author to fill in; `om-auto-create-pr`'s review pass will call it out.

@@ -75,6 +75,7 @@ SPEC_PATH=<repo-relative spec path>
 
 ## Rules
 
+- **Autonomous run — no user in the loop.** When a decision is needed, make the recommended, most-reversible call yourself and document it — in the plan/spec and as a PR/issue comment where it makes sense — instead of stopping to ask. Stop only for the explicitly gated cases (claim conflicts without --force, ⚠ NEEDS HUMAN CONFIRMATION).
 - Deliverable = a published spec PR, not a local file. If the PR cannot open, report `Status: blocked` with the reason — never silently stop after writing the file.
 - Autonomous by default is this skill's only mode — a human who wants to answer the Open Questions should run `om-spec-writing` directly.
 - Every autonomous default is surfaced for override (assumptions comment + spec section); any `⚠ NEEDS HUMAN CONFIRMATION` keeps the PR a draft. Never `qa-approved` from this skill.

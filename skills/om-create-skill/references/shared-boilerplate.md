@@ -48,6 +48,12 @@ belongs in the body (layer 2), never in `references/`.
 New auto skills also carry, adapted to their role (full rules: the Cross-skill
 contract in this repo's AGENTS.md):
 
+- The first `## Rules` bullet, verbatim: **Autonomous run — no user in the
+  loop.** When a decision is needed, make the recommended, most-reversible call
+  yourself and document it — in the plan/spec and as a PR/issue comment where
+  it makes sense — instead of stopping to ask. Stop only for the explicitly
+  gated cases (claim conflicts without `--force`, `⚠ NEEDS HUMAN CONFIRMATION`).
+
 - A `## Chaining` section right after `## Arguments`: params consumed from the
   previous skill, "an existing PR is continued, never duplicated", the
   `PR_URL=` / `PR_NUMBER=` markers emitted (PR-producing/-driving skills), and a

@@ -211,6 +211,7 @@ End the report with `PR_URL=` and `PR_NUMBER=` on their own lines so the next sk
 
 ## Rules
 
+- **Autonomous run — no user in the loop.** When a decision is needed, make the recommended, most-reversible call yourself and document it — in the plan/spec and as a PR/issue comment where it makes sense — instead of stopping to ask. Stop only for the explicitly gated cases (claim conflicts without --force, ⚠ NEEDS HUMAN CONFIRMATION).
 - Always run the step 1 concurrency check before anything else; never silently override another actor's claim — `--force` must post an explicit override comment.
 - Classify before triaging: a feature request is routed to `om-auto-implement-issue` (autonomous by default, so it specs-then-builds it and resolves the spec's Open Questions with documented defaults + an override comment instead of stopping), never run through the bug-confirmation gate; only bugs continue on this chain. When unsure, default to the bug chain; when an issue mixes both, ask the user to split it.
 - Claiming belongs to `om-fix`; this skill never claims an issue before the triage gate confirms there is work to do.

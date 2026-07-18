@@ -1,6 +1,6 @@
 ---
 name: om-auto-implement-spec
-description: Implement an existing spec end to end and ship it as a verified, reviewed, ready PR. Resolves the spec by path, name, issue, or spec-PR number (stops with a clear notification when not found), reuses a spec PR's branch when one exists, delegates implementation to om-auto-create-pr / om-auto-continue-pr with the spec as Source doc, then finishes with the review autofix loop, UI verification with screenshots on the PR, and a run summary. Use for "implement the spec X", "build spec from issue 123".
+description: Implement an existing spec and ship a verified, reviewed, ready PR. Resolves the spec by path, name, issue, or spec-PR number (clean stop with candidates when not found), reuses a spec PR branch when one exists, delegates to om-auto-create-pr / om-auto-continue-pr, then runs the review loop and UI verification with screenshots. Use for "implement the spec X", "build spec from issue 123".
 ---
 
 # Auto Implement Spec (spec → implemented, verified PR)

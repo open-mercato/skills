@@ -53,6 +53,25 @@ belongs in the body (layer 2), never in `references/`.
 > where a number is expected, matching `^[A-Za-z0-9._/-]+$` otherwise) and keep
 > it quoted.
 
+## Communication contract (required for every `om-auto-*` skill)
+
+New auto skills also carry, adapted to their role (full rules: the Cross-skill
+contract in this repo's AGENTS.md):
+
+- A `## Chaining` section right after `## Arguments`: params consumed from the
+  previous skill, "an existing PR is continued, never duplicated", the
+  `PR_URL=` / `PR_NUMBER=` markers emitted (PR-producing/-driving skills), and a
+  `Companion skills:` sentence naming invoked skills + the fallback when one is
+  missing.
+- Tracker comments with stable idempotent markers — `🤖 <skill-name> — <purpose>`
+  — updated in place on re-runs, never duplicated. Standard set: claim,
+  per-label rationale, assumptions (autonomous defaults), run summary
+  (`om-auto-create-pr` step-12 structure), evidence (**attach-image-evidence**),
+  release/handback. Post only the subset the skill's role needs.
+- Labels only through the descriptor guards, per the canonical rules
+  (`om-open-pr` step 6 / `om-auto-create-pr/references/label-normalization.md`);
+  PRs open ready-for-review unless explicitly incomplete; never `qa-approved`.
+
 ## Notes
 
 - Trim the config block's resolved-keys list to what the skill really uses — an

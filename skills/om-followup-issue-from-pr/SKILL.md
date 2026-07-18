@@ -1,6 +1,6 @@
 ---
 name: om-followup-issue-from-pr
-description: Turn a PR into tracked follow-up work. Two modes (both can fire for one PR). (1) Comment mode — paste a PR or PR-comment link; the skill extracts the actionable ask, gathers PR context, and opens a follow-up issue assigned to the comment's @-mention if present, otherwise the PR author. (2) Design-doc mode — if the PR adds a design/proposal document to the repo's docs area, the skill checks whether a tracking issue for implementing it already exists and, if not, opens an `Implement:` tracking issue. Use during code review when the user says "make a follow-up issue", "create an issue for this", or pastes a PR/comment link with that intent.
+description: Turn a PR into tracked follow-up work: paste a PR or PR-comment link to extract the actionable ask and open a follow-up issue assigned to the @-mention or PR author; for a PR adding a design doc, it opens the missing `Implement:` tracking issue instead. Use for "make a follow-up issue", "create an issue for this", or a pasted PR/comment link with that intent.
 ---
 
 # Follow-up Issue from PR

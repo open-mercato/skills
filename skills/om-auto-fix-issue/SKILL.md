@@ -13,6 +13,10 @@ Fix a tracker issue end to end without disturbing the user's active worktree. Th
 - `{repo}` (optional) — `owner/name`; if omitted, infer from the current git remote
 - `--force` (optional) — bypass the in-progress concurrency check; use only when intentionally taking over an issue another actor already claimed
 
+## Chaining
+
+This skill consumes an `{issueId}` and both opens and finishes a chain: it routes feature requests to `om-auto-implement-issue` and drives bugs through the autofix chain itself. A previous skill may already have opened a PR for the issue — before `om-open-pr` runs, the shared reuse guard (`om-auto-create-pr/references/pr-open-reuse.md`) detects it via **search-prs** / the issue reference and continues on that PR instead of opening a duplicate. It ends by reporting `PR_URL=` / `PR_NUMBER=` markers so the next skill in a chain can consume them. Companion skills, invoked verbatim in sequence: `om-verify-in-repo`, `om-root-cause`, `om-fix`, `om-open-pr` (inline PR-open/label fallback when absent), `om-auto-review-pr`, and `om-auto-implement-issue` for feature requests — a missing required chain skill stops the run and names the skill to install.
+
 ## Workflow
 
 ### 0. Load pipeline config
@@ -160,7 +164,7 @@ Invoke the `om-open-pr` skill with `{issueId}`, providing the implementer's fina
 <the om-fix summary, verbatim>
 ```
 
-`om-open-pr` commits, pushes the branch, opens a draft PR against `$BASE_BRANCH`, normalizes labels through the `apply_label` guard, hands the issue back to its original author, and releases the `in-progress` lock. Capture the `PR_URL=` and `PR_NUMBER=` markers from its output.
+`om-open-pr` commits, pushes the branch, opens a PR against `$BASE_BRANCH` (ready for review by default; `--draft` only for spec-only or incomplete hand-offs), normalizes labels through the `apply_label` guard, hands the issue back to its original author, and releases the `in-progress` lock. Capture the `PR_URL=` and `PR_NUMBER=` markers from its output.
 
 If it ends with `Status: blocked`, it has already released the lock — go to step 9 and report the blocker.
 
@@ -198,6 +202,8 @@ Tests: {summary}
 ```
 
 When the run stopped at step 2, cite the `om-verify-in-repo` evidence (existing PR, commit, or explanation) instead of a branch and PR.
+
+End the report with `PR_URL=` and `PR_NUMBER=` on their own lines so the next skill in a chain can consume them.
 
 ## Rules
 

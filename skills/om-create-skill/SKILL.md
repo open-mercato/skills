@@ -1,6 +1,6 @@
 ---
 name: om-create-skill
-description: Author a new OM skill from a brief, or split an existing oversized SKILL.md into layered references/ files — conservatively, behind a hard lint + completeness gate. Understands the repo's layering philosophy (router body + on-demand references), the lint invariants, the tracker-operation abstraction, and the shared pipeline protocols, so generated skills match house conventions. Interactive by default. Use when the user says "create a skill for…", "new om-skill", "author a skill", "split this skill", "refactor SKILL.md into references", "rozbij skill na references", "stwórz skill do…", "nowy om-skill", "podziel ten skill".
+description: Author a new OM skill from a brief, or split an oversized SKILL.md into layered references/ files — conservatively, behind the lint + completeness gate. Knows the layering philosophy, lint invariants, tracker abstraction, and the cross-skill contract, so output matches house conventions. Use for "create a skill for…", "new om-skill", "split this skill into references".
 ---
 
 # Create Skill

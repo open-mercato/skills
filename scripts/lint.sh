@@ -31,6 +31,8 @@ for dir in skills/*/; do
   fi
   if [ -z "$fm_desc" ]; then
     err "$file frontmatter is missing a description"
+  elif [ "${#fm_desc}" -gt 500 ]; then
+    err "$file description is ${#fm_desc} chars (max 500; aim for ≤350) — descriptions load into every session's context"
   fi
 done
 

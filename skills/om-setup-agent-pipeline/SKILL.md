@@ -1,6 +1,6 @@
 ---
 name: om-setup-agent-pipeline
-description: One-time configurator for the agent PR pipeline. Inspects the repository (default branch, validation scripts, tracker labels), asks a few questions, writes .ai/agentic.config.json — the file every other skill in this collection reads — installs the tracker provider descriptor (.ai/trackers/<tracker>.md), and generates the project docs when missing — SDLC.md (the team's ticket-flow process doc), CODE_REVIEW.md (review rules), BACKWARD_COMPATIBILITY.md (protected contract surfaces), and an AGENTS.md starter with a task-routing table — each derived from the current repository. Run once per repository; re-run when the toolchain or label taxonomy changes.
+description: One-time pipeline configurator. Inspects the repo (default branch, validation scripts, labels), asks a few questions, writes .ai/agentic.config.json — the file every other skill reads — installs the tracker descriptor, and generates missing project docs (SDLC.md, CODE_REVIEW.md, BACKWARD_COMPATIBILITY.md, AGENTS.md starter). Re-run when the toolchain or label taxonomy changes.
 ---
 
 # Setup Agent Pipeline

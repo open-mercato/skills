@@ -1,6 +1,6 @@
 ---
 name: om-prepare-issue
-description: Create a single well-formed tracker issue from a brief without implementing it. Searches the tracker for duplicates first, links a covering spec when one exists in the repo's specs directory or an open PR, otherwise analyzes the task against the codebase and writes step-by-step guidance into the issue body, and applies the SDLC labels (category + inferred priority + risk) on creation. When the task is a feature that needs a spec and none exists anywhere, it authors one via om-spec-writing and lands it on a design-only spec PR, then links it. To enrich or relabel issues that already exist (single or in bulk), use om-auto-manage-issues instead. Use for "file an issue for X", "park this idea", "prepare an issue to build X later".
+description: Create one well-formed tracker issue from a brief without implementing it: dedupes against existing issues and PRs, links a covering spec (authoring one via om-spec-writing on a design-only PR when a feature needs it), otherwise embeds step-by-step guidance, and applies SDLC labels on creation. For existing issues use om-auto-manage-issues. Use for "file an issue for X", "park this idea".
 ---
 
 # Prepare Issue (deferred work)

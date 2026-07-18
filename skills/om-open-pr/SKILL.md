@@ -1,6 +1,6 @@
 ---
 name: om-open-pr
-description: Shared PR opener for the auto pipeline. Commits the worktree, pushes the branch, reuses an existing PR or opens a ready (non-draft) PR against the configured base branch with the unified body template, applies the full SDLC label set with rationale comments, posts the run summary, and for issue-driven runs hands the issue back and releases the lock. Emits PR_URL / PR_NUMBER markers for chaining.
+description: Shared PR opener for the auto pipeline: commits the worktree, pushes, reuses an existing PR or opens a ready (non-draft) PR against the configured base branch with the unified body template, applies the full SDLC label set with rationale comments, and for issue-driven runs hands the issue back and releases the lock. Emits PR_URL / PR_NUMBER markers.
 ---
 
 # Open PR

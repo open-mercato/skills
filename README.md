@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>🧠 plan · 🔨 implement · 🔍 review · ✅ QA gate · 🚢 merge</b><br/>
-  Thirty agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
+  Thirty-two agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 npx skills add open-mercato/skills --skill '*'
 ```
 
-Install all thirty — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all thirty-two — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
@@ -72,7 +72,9 @@ The installer never touches skills it does not own: an existing real directory (
 
 ## 🔁 The pipeline
 
-Two entry paths: hand the agent a task brief (`om-auto-create-pr`), or hand it a GitHub issue (`om-auto-fix-issue`). The issue path classifies first — a bug drives the autofix chain, a feature request is routed to `om-auto-implement-issue`, which writes a spec, lands it on a PR, then implements it. All paths converge on the same review loop and the same QA gate. Skills claim PRs and issues with an `in-progress` label, so concurrent agents back off instead of colliding.
+Three entry paths: hand the agent a task brief (`om-auto-create-pr`), a spec (`om-auto-write-spec` to author one, `om-auto-implement-spec` to build one), or a GitHub issue (`om-auto-implement-issue` / `om-auto-fix-issue`). The issue path classifies first — a bug drives the autofix chain, a feature request gets its spec resolved (or autonomously written) and implemented on the same PR. All paths converge on the same review loop and the same QA gate.
+
+The skills chain: every PR-producing skill ends with `PR_URL=` / `PR_NUMBER=` markers the next skill consumes, and every skill checks for a PR a previous skill already opened and continues on it instead of opening a duplicate. A completed autonomous run always leaves a **ready, fully labeled PR** (pipeline + category + priority + risk + QA meta) with a run-summary comment — and screenshots from the working app when the change is user-facing. Skills claim PRs and issues with an `in-progress` label, so concurrent agents back off instead of colliding.
 
 ```mermaid
 flowchart LR
@@ -91,10 +93,13 @@ flowchart LR
         verifyStep --> rootCause["om-root-cause"]
         rootCause --> applyFix["om-fix"]
         applyFix --> openPR["om-open-pr"]
-        classify -- "feature request" --> implementFR["om-auto-implement-issue<br/>(spec → PR → implement)"]
+        classify -- "feature request" --> implementFR["om-auto-implement-issue<br/>(router)"]
+        implementFR -- "no spec" --> writeSpec["om-auto-write-spec<br/>(spec PR + mockups)"]
+        writeSpec --> implementSpec["om-auto-implement-spec"]
+        implementFR -- "spec exists" --> implementSpec
     end
     openPR --> reviewPR
-    implementFR --> reviewPR
+    implementSpec --> reviewPR
 ```
 
 ## 📦 Skill catalog
@@ -107,8 +112,10 @@ Hand these a brief, an issue, or nothing at all — they run end-to-end without 
 |---|---|
 | `om-auto-create-pr` | Takes a free-form task brief end-to-end: execution plan, isolated worktree, phase-by-phase commits, validation gate, self-review, labeled PR, then an autofix review loop until clean. Resumable. |
 | `om-auto-create-pr-loop` | Advanced om-auto-create-pr for long spec implementations: run folder with PLAN/HANDOFF/NOTIFY, one commit per step, checkpoint verification every ~5 steps, executor-dispatch for many-step runs, full gate at completion. |
-| `om-auto-fix-issue` | Fixes a tracker issue end-to-end by driving the autofix chain: classifies the issue first (routing feature requests to `om-auto-implement-issue`), then for a bug runs the triage gate, root-cause analysis, minimal fix with regression tests, labeled draft PR, autofix review loop. Stops cleanly when the issue is already solved or claimed. |
-| `om-auto-implement-issue` | Implements a feature-request issue end-to-end by combining spec-writing and auto-create-pr: confirms the feature is unbuilt, writes (or reuses) a spec and lands it on a PR first, then implements it phase-by-phase with the validation gate, labels, and the autofix review loop. `--spec-only` stops after the spec PR. Resumable. |
+| `om-auto-fix-issue` | Fixes a tracker issue end-to-end by driving the autofix chain: classifies the issue first (routing feature requests to `om-auto-implement-issue`), then for a bug runs the triage gate, root-cause analysis, minimal fix with regression tests, a ready labeled PR, autofix review loop. Stops cleanly when the issue is already solved or claimed. |
+| `om-auto-implement-issue` | The issue router: bugs go whole to `om-auto-fix-issue`; features get their spec resolved or autonomously written (`om-auto-write-spec`) and implemented (`om-auto-implement-spec`) on the same PR — reviewed, UI-verified, fully labeled. `--spec-only` stops after the spec PR. |
+| `om-auto-write-spec` | Turns a brief or FR issue into a finished spec on a ready PR: autonomous Open-Questions defaults posted for override, UI mockups + current-app screenshots attached as PR evidence, full SDLC labels, chain markers for `om-auto-implement-spec`. |
+| `om-auto-implement-spec` | Implements an existing spec (by path, name, issue, or spec-PR number; clean stop when not found): reuses the spec PR's branch or runs `om-auto-create-pr`, then the review autofix loop and UI verification with screenshots on the PR. |
 | `om-auto-continue-pr` | Resumes an in-progress PR from the first unchecked step in its tracking plan and carries it to completion — implementation, validation, review loop, summary comment. |
 | `om-auto-continue-pr-loop` | Resumes runs started by `om-auto-create-pr-loop`: orients from HANDOFF.md, picks up at the first non-done Tasks-table row, keeps the per-step commit and checkpoint discipline to completion. |
 | `om-auto-review-pr` | Reviews a PR by number in an isolated worktree, approves or requests changes, manages labels. On changes-requested, its autofix loop iterates fixes and re-review until merge-ready. |
@@ -130,7 +137,7 @@ Interactive helpers: they act once, report, and hand control back to you.
 | `om-check-and-commit` | Runs the configured validation gate on the current branch, fixes obvious drift, then commits and pushes when green. |
 | `om-followup-issue-from-pr` | Turns a PR or a PR comment into a tracked follow-up issue, assigned to the right person. |
 | `om-spec-writing` | Writes and reviews feature specs to staff-engineer standards: skeleton-first with a hard Open Questions gate, phased implementation breakdown that feeds `om-auto-create-pr`, severity-ranked architectural reviews. |
-| `om-prepare-issue` | Files a single well-formed tracker issue for deferred work: dedupes against existing issues and PRs first, links a covering spec when one exists in the repo or an open PR, otherwise embeds a step-by-step implementation analysis, and applies the SDLC labels (category + inferred priority + risk) on creation — and for a feature that needs a spec but has none, authors one via `om-spec-writing` and lands it on a design-only spec PR, then links it. |
+| `om-prepare-issue` | Files a single well-formed tracker issue for deferred work: dedupes against existing issues and PRs, links (or authors) a covering spec, otherwise embeds step-by-step guidance, and applies the SDLC labels on creation. |
 | `om-auto-manage-issues` | Brings existing issues up to standard, single or in bulk: applies missing SDLC labels, and for a laconic issue (one line + a screenshot) analyzes the screenshot with the terse text, clarifies the wording non-destructively, and posts the agent's understanding as a comment. Batch defaults to the last ~25 open, worst-described first, narrowable by state/label/author/limit. Idempotent and claim-aware. |
 | `om-integration-tests` | Creates and runs integration/E2E tests by exploring the running app first — real locators, runtime fixtures, no hardcoded IDs — and reports failures with artifact-based per-test diagnosis. Reuses the shared `om-prepare-test-env` instance so QA and tests hit the same booted app. |
 | `om-auto-verify-pr-ui` | Runs the app locally and QAs a change's UI in a real browser without merging: boots via `om-prepare-test-env`, derives a scenario from the diff, drives the configured browser provider with screenshots, and produces a pass/fail report. Posts evidence as a PR comment when a tracker is configured; otherwise saves screenshots + JSON/Markdown reports. |
@@ -145,7 +152,7 @@ The building blocks behind the autofix chain and the review loop. You can call t
 | `om-verify-in-repo` | Read-only triage gate: decides whether a GitHub issue is a real, still-unfixed defect, and stops the chain cleanly when there is nothing to do. |
 | `om-root-cause` | Read-only analysis: locates the bug and the minimal change surface so the fix step never re-explores the repo. |
 | `om-fix` | Implements the minimal change, adds regression tests, runs the validation gate. Does not commit or push. |
-| `om-open-pr` | Commits the worktree, pushes the branch, opens the PR, normalizes labels, releases the claim lock. |
+| `om-open-pr` | The shared PR opener: commits, pushes, opens (or reuses) a ready PR with the unified body template, applies the full SDLC label set, posts the run summary, releases the claim lock, and emits the chain markers. |
 | `om-code-review` | The review checklist behind `om-auto-review-pr`: correctness, security, contract surfaces, plus your repo-local checklist when configured. |
 | `om-prepare-test-env` | Boots the app for QA and tests, any stack: reuses the repo's own environment or generates portable bring-up scripts, then caches builds and validates warm reuse. It autonomously provisions the configured browser provider (agent-browser by default; Playwright supported), writes a shared environment descriptor, and works on macOS, Linux, WSL2, and Windows. |
 

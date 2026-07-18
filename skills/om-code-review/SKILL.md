@@ -1,6 +1,6 @@
 ---
 name: om-code-review
-description: Review a diff, branch, or PR against correctness, security, breaking-change, and quality standards. Runs the configured validation gate, applies the built-in review checklist plus any repo-local checklist from the pipeline config, and produces categorized findings with severities and an approve/request-changes verdict. The review engine used by om-auto-review-pr, om-review-prs, and the self-review steps of om-auto-create-pr and om-auto-continue-pr.
+description: Review a diff, branch, or PR against correctness, security, breaking-change, and quality standards: runs the validation gate, applies the built-in checklist plus any repo-local one, and produces severity-ranked findings with an approve/request-changes verdict. The review engine behind om-auto-review-pr, om-review-prs, and the pipeline self-reviews.
 ---
 
 # Code Review

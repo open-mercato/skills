@@ -1,6 +1,6 @@
 ---
 name: om-auto-implement-issue
-description: Take any tracker issue to a finished, labeled, ready PR by routing it through the right pipeline. A bug is delegated whole to om-auto-fix-issue; a feature request is triaged (never a bug-confirmation gate), gets its spec resolved or autonomously written via om-auto-write-spec, and is implemented via om-auto-implement-spec on the same PR — ending reviewed, UI-verified with screenshots, and fully SDLC-labeled. Use for "implement issue 123", "build the FR in #123", "spec-then-build this feature request".
+description: Take any tracker issue to a finished, labeled, ready PR by routing to the right pipeline: bugs go whole to om-auto-fix-issue; features get their spec resolved or autonomously written (om-auto-write-spec) and implemented on the same PR (om-auto-implement-spec) — reviewed, UI-verified with screenshots, fully SDLC-labeled. Use for "implement issue 123", "build the FR in #123".
 ---
 
 # Auto Implement Issue (issue → routed → implemented PR)

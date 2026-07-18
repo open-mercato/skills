@@ -29,21 +29,21 @@ Source doc: none (meta-skill authoring; the new skill's own spec-writing step is
 
 ### Phase 1: Author `om-auto-implement-issue`
 
-- [ ] 1.1 Write `skills/om-auto-implement-issue/SKILL.md` router body
-- [ ] 1.2 Write `references/fr-triage.md` (FR-vs-bug + not-already-implemented gate)
-- [ ] 1.3 Write `references/spec-first-flow.md` (spec → first commit → draft PR)
-- [ ] 1.4 Write `references/pr-linkage.md` (PR body, Closes/Source doc, labels)
+- [x] 1.1 Write `skills/om-auto-implement-issue/SKILL.md` router body — d6f7bbd
+- [x] 1.2 Write `references/fr-triage.md` (FR-vs-bug + not-already-implemented gate) — d6f7bbd
+- [x] 1.3 Write `references/spec-first-flow.md` (spec → first commit → draft PR) — d6f7bbd
+- [x] 1.4 Write `references/pr-linkage.md` (PR body, Closes/Source doc, labels) — d6f7bbd
 
 ### Phase 2: Route FRs from `om-auto-fix-issue`
 
-- [ ] 2.1 Add issue-classification + FR delegation step to `om-auto-fix-issue`
-- [ ] 2.2 Update `om-auto-fix-issue` frontmatter description and Rules
+- [x] 2.1 Add issue-classification + FR delegation step to `om-auto-fix-issue` — 7aa1ba2
+- [x] 2.2 Update `om-auto-fix-issue` frontmatter description and Rules — 7aa1ba2
 
 ### Phase 3: Spec-when-missing in `om-prepare-issue`
 
-- [ ] 3.1 Add "write + PR a spec via om-spec-writing when none found (repo or open PRs)" branch to `om-prepare-issue`
+- [x] 3.1 Add "write + PR a spec via om-spec-writing when none found (repo or open PRs)" branch to `om-prepare-issue` — 31ec5bc
 
 ### Phase 4: Docs + gate
 
-- [ ] 4.1 Update README skill table and DECISIONS.md
-- [ ] 4.2 Run `scripts/lint.sh` and self code-review
+- [x] 4.1 Update README skill table and DECISIONS.md — 168299e
+- [x] 4.2 Run `scripts/lint.sh` and self code-review — 168299e (lint OK)

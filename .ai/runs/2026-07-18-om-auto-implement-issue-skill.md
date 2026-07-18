@@ -39,7 +39,11 @@ Source doc: none (meta-skill authoring; the new skill's own spec-writing step is
 - [ ] 2.1 Add issue-classification + FR delegation step to `om-auto-fix-issue`
 - [ ] 2.2 Update `om-auto-fix-issue` frontmatter description and Rules
 
-### Phase 3: Docs + gate
+### Phase 3: Spec-when-missing in `om-prepare-issue`
 
-- [ ] 3.1 Update README skill table and DECISIONS.md
-- [ ] 3.2 Run `scripts/lint.sh` and self code-review
+- [ ] 3.1 Add "write + PR a spec via om-spec-writing when none found (repo or open PRs)" branch to `om-prepare-issue`
+
+### Phase 4: Docs + gate
+
+- [ ] 4.1 Update README skill table and DECISIONS.md
+- [ ] 4.2 Run `scripts/lint.sh` and self code-review

@@ -1,6 +1,6 @@
 ---
 name: om-auto-fix-pr
-description: Drive an open PR all the way to merge-ready from its number. First merges the latest base branch into the PR branch, then loops review-autofix (om-auto-review-pr), CI stabilization (om-stabilize-ci), and UI verification (om-auto-verify-pr-ui) until the PR is approvable, green, and QA-evidenced — re-merging base whenever it advances. Files follow-up issues for non-blocking review nits via om-followup-issue-from-pr, honors the fork carry-forward supersede/credit rules, normalizes labels, and hands a merge-ready PR to om-approve-merge-pr (it never merges itself). Use when the user says "get PR 123 merge-ready", "fix up and stabilize PR 123", "drive PR 123 to green".
+description: Drive an open PR to merge-ready from its number: merges the latest base, then loops review-autofix (om-auto-review-pr), CI stabilization (om-stabilize-ci), and UI verification (om-auto-verify-pr-ui) until approvable, green, and QA-evidenced. Files follow-up issues for nits, normalizes labels, hands off to om-approve-merge-pr — never merges itself. Use for "get PR 123 merge-ready".
 ---
 
 # Auto Fix PR (drive a PR to merge-ready)
@@ -26,6 +26,10 @@ logic. It is the PR-side counterpart to `om-auto-fix-issue` (issue-side chain).
 - `--max-iterations <n>` (optional) — outer review→CI→UI cycles before stopping with a report. Default: `3`
 - `--no-ui` (optional) — skip UI verification even when the diff touches UI (use when there is no runnable UI surface)
 - `--force` (optional) — bypass the in-progress claim check; use only when intentionally taking over a PR another actor claimed
+
+## Chaining
+
+This skill consumes a `{prNumber}` (the `PR_NUMBER=` a PR-producing skill emitted) and drives that existing PR to merge-ready; it never opens a PR, so there is no duplicate to guard against (a fork carry-forward replacement is opened by the delegated `om-auto-review-pr` flow, not here). It ends by reporting `PR_URL=` / `PR_NUMBER=` markers so the next skill in a chain can consume them, and hands the merge-ready PR to `om-approve-merge-pr` (it never merges itself). Companion skills, each invoked verbatim: `om-auto-review-pr` (review + autofix + conflict/fork handling), `om-stabilize-ci` (green CI), `om-auto-verify-pr-ui` (UI QA), `om-followup-issue-from-pr` (nit follow-ups), and `om-approve-merge-pr` (the merge hand-off) — a missing one stops the run and names the skill to install.
 
 ## Step 0 — Load config and context
 
@@ -139,7 +143,7 @@ reassigned to the original author, then **hand off** — this skill never merges
 `om-approve-merge-pr` / `om-merge-buddy` own the merge behind the QA gate. Release
 the outer lock (in the `trap` on any exit), post one summary comment covering the
 base-merge, the loop outcome, CI status, UI evidence, follow-ups filed, and the
-merge-readiness verdict, then report to the user.
+merge-readiness verdict, then report to the user. End the report with `PR_URL=` and `PR_NUMBER=` on their own lines so the next skill in a chain can consume them.
 
 ## Rules
 

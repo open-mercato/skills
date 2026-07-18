@@ -1,6 +1,6 @@
 ---
 name: om-auto-fix-issue
-description: Fix a tracker issue end to end (GitHub issue by default) from a single command. Classifies the issue first — routes a feature request to om-auto-implement-issue (spec-then-build) — and for a bug drives the autofix chain interactively: proves the issue still needs work (om-verify-in-repo), locates the bug (om-root-cause), implements the minimal fix with regression tests (om-fix), opens a labeled draft PR (om-open-pr), then loops om-auto-review-pr in autofix mode until clean. Runs in an isolated worktree, honors the in-progress claim protocol, and stops cleanly when the issue is already solved or already claimed.
+description: Fix a bug issue end to end from a single command: classifies first (feature requests route to om-auto-implement-issue), then drives the autofix chain — om-verify-in-repo, om-root-cause, om-fix, om-open-pr (ready labeled PR), and the om-auto-review-pr autofix loop until clean. Isolated worktree, claim protocol, stops cleanly when already solved or claimed. Use for "fix issue 123".
 ---
 
 # Auto Fix Issue

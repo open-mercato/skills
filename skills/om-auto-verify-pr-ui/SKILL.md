@@ -45,6 +45,10 @@ QA and integration tests share one booted instance.
 - `--force` (optional, PR mode) — bypass the in-progress claim check to take over
   a PR another actor claimed.
 
+## Chaining
+
+In PR mode this skill consumes a `{prNumber}` (the `PR_NUMBER=` a PR-producing skill emitted) and posts screenshot QA evidence back to that existing PR; it is read-only on source and never opens a PR, so there is no duplicate to guard against. In PR mode it ends by reporting `PR_URL=` / `PR_NUMBER=` markers so the next skill in a chain can consume them; in local mode there is no PR and the artifacts folder is the deliverable. Companion skills: `om-prepare-test-env` (boots/provisions the runnable instance and browser), `om-integration-tests` (the follow-up automated UI test), and `om-setup-agent-pipeline` (installs a missing browser provider) — each runs verbatim, and a missing required one stops the run naming the skill to install.
+
 ## Step 0 — Load config, resolve mode, claim (PR mode)
 
 Load `.ai/agentic.config.json` with the standard config-loading snippet from the
@@ -340,6 +344,8 @@ Evidence: {PR comment url | artifacts dir path}
 Follow-up test: {posted | skipped — a UI test already exists}
 Labels: {unchanged | qa-approved+qa-self-verified | qa-failed | n/a (local)}
 ```
+
+In PR mode, end the report with `PR_URL=` and `PR_NUMBER=` on their own lines so the next skill in a chain can consume them.
 
 ## Rules
 

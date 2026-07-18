@@ -7,6 +7,10 @@ description: Review all currently unreviewed open pull requests, newest first, u
 
 Use this as a day-start review queue. It finds unreviewed open PRs, shows the queue, then runs the full `om-auto-review-pr` workflow one PR at a time.
 
+## Chaining
+
+This skill is a sweep, not a single-PR step: it finds every unreviewed open PR and dispatches the full `om-auto-review-pr` workflow at each one, newest first, so it consumes no `PR_URL=` / `PR_NUMBER=` markers and emits none — each delegated review reports its own verdict and markers. It respects `in-progress` claim locks and never force-claims in batch mode, skipping any PR another actor owns. Companion skills: `om-auto-review-pr` (required — reused verbatim per PR rather than reinventing a lighter review path; the run stops if it is missing) and, optionally, `om-merge-buddy`, suggested after the session to show what is now merge-ready.
+
 ## Workflow
 
 ### 0. Load pipeline config

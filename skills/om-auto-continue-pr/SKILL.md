@@ -13,6 +13,10 @@ Resume an `om-auto-create-pr` run that did not finish in one go. Given a PR numb
 - `--force` (optional) — bypass the in-progress concurrency check; use when intentionally taking over a PR that another auto-skill or human already claimed.
 - `--from <phase.step>` (optional) — override the resume point (e.g. `2.1`). Only honored when the Progress section cannot be parsed unambiguously.
 
+## Chaining
+
+This skill resumes an existing PR: it consumes a `{prNumber}` and reads the PR body's `Tracking plan:` line (written by `om-auto-create-pr`) to find the execution plan, and it updates that same PR rather than opening a duplicate (the reuse guard in `om-auto-create-pr/references/pr-open-reuse.md`). It ends by reporting `PR_URL=` / `PR_NUMBER=` markers so the next skill in a chain can consume them. Companion skills (all optional, with inline fallbacks): `om-open-pr` (push + label normalization, inline fallback when absent), `om-code-review` (breaking-change self-review), and `om-auto-review-pr` (the autofix second pass) — each runs verbatim.
+
 ## Workflow
 
 ### 0. Load pipeline config and claim the PR
@@ -266,6 +270,8 @@ Tests: {summary}
 ```
 
 If the resume still did not reach `complete`, leave `Status: in-progress` in the PR body and tell the user how to re-enter.
+
+End the report with `PR_URL=` and `PR_NUMBER=` on their own lines so the next skill in a chain can consume them.
 
 ## Rules
 

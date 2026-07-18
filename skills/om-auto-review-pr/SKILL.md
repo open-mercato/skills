@@ -12,6 +12,10 @@ Review a pull request by number without touching the current worktree. Always fe
 - `{prNumber}` (required) — the PR number to review or re-review (for example `1234`)
 - `--force` (optional) — bypass the in-progress concurrency check; use when intentionally taking over a PR that another auto-skill or human already claimed
 
+## Chaining
+
+This skill consumes a `{prNumber}` (the `PR_NUMBER=` a PR-producing skill emitted) and reviews or re-reviews that existing PR; it never opens a PR, so there is no duplicate to guard against (a fork carry-forward replacement is the one exception, opened by this skill's own fork flow). It ends by reporting its verdict (`APPROVED` / `CHANGES REQUESTED`) plus `PR_URL=` / `PR_NUMBER=` markers so the next skill in a chain can consume them. Companion skill: `om-code-review`, the review engine it runs verbatim inside the isolated worktree — if it is not installed the run stops and names it to install.
+
 ## Workflow
 
 ### 0. Load pipeline config, then claim the PR
@@ -441,6 +445,8 @@ Review submitted successfully.
 If all findings were auto-fixed, the summary should note that fixes were applied and the PR is ready for merge.
 
 If a blocker remains that requires human judgment, the summary must describe the blocker and ask for guidance.
+
+End the report with `PR_URL=` and `PR_NUMBER=` on their own lines so the next skill in a chain can consume them.
 
 ## Rules
 

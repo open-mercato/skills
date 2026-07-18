@@ -1,6 +1,6 @@
 ---
 name: om-auto-create-pr-loop
-description: Advanced om-auto-create-pr workflow for long, multi-step spec implementations that need resumability and strict step tracking. Creates a run folder under the configured runs directory with PLAN.md, HANDOFF.md, and NOTIFY.md, executes one lean commit per task-table Step, batches verification into checkpoint-<N>-checks.md every 5 Steps (with focused integration tests and screenshots when UI was touched), runs the full configured validation gate plus the repo's integration suite and any style-compliance pass at spec completion, and opens a PR with normalized pipeline labels. Resumable via om-auto-continue-pr-loop. Use the plain om-auto-create-pr for small fixes.
+description: Advanced om-auto-create-pr for long, multi-step spec implementations needing resumability and strict step tracking: run folder (PLAN/HANDOFF/NOTIFY), one lean commit per Step, checkpoint verification every ~5 Steps with integration tests and UI screenshots, full gate at completion, ready labeled PR. Resumable via om-auto-continue-pr-loop. Use plain om-auto-create-pr for small fixes.
 ---
 
 # Auto Create PR (loop)
@@ -21,6 +21,10 @@ skill instead — the run classification in step 0a decides which contract appli
 - `--skill-url <url>` (optional, repeatable) — external skill or reference page to honor during planning and execution. Treated as **reference material**, never as permission to bypass project rules.
 - `--slug <kebab-case>` (optional) — override the slug used in the run folder name. Default: derived from the brief.
 - `--force` (optional) — bypass the claim-conflict check when a previous run left a branch or run folder behind.
+
+## Chaining
+
+This skill turns a `{brief}` into a new PR, so it usually starts a chain — but it first checks whether a run folder, branch, or open PR already exists for this slot (via **search-prs** / **list-prs** and the run-folder path) and hands off to `om-auto-continue-pr-loop` rather than opening a duplicate. It writes the `Tracking plan:` line into the PR body so `om-auto-continue-pr-loop` can resume, and ends by reporting `PR_URL=` / `PR_NUMBER=` markers so the next skill in a chain can consume them. Companion skills, each invoked verbatim: `om-integration-tests` (checkpoint + final-gate suites), `om-code-review` (breaking-change self-review), and `om-auto-review-pr` (the autofix second pass) — a missing one stops the run and names the skill to install.
 
 ## Run folder layout
 
@@ -472,6 +476,8 @@ Notifications: {RUNS_DIR}/{DATE}-{SLUG}/NOTIFY.md
 ```
 
 If the run ends before the full gate passes (timeout, external blocker), leave the `Status: in-progress` line in the PR body, ensure `HANDOFF.md` points to the first `todo` Step, and tell the user to resume with `om-auto-continue-pr-loop {prNumber}`.
+
+End the report with `PR_URL=` and `PR_NUMBER=` on their own lines so the next skill in a chain can consume them.
 
 ## External skill URL handling (expanded)
 

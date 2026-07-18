@@ -1,6 +1,6 @@
 ---
 name: om-auto-continue-pr-loop
-description: Advanced `om-auto-continue-pr` workflow for PRs started by `om-auto-create-pr-loop`. Claims the PR, re-enters an isolated worktree, resumes from the first non-done row in the run folder's `PLAN.md` Tasks table, executes lean per-step commits, batches verification into `checkpoint-<N>-checks.md` every ~5 resumed steps (with focused integration tests + screenshots when UI was touched), runs the configured full validation gate plus the repo's full integration suite and any style-compliance pass at spec completion, and preserves the run-folder and label contract. Use the plain om-auto-continue-pr for simple om-auto-create-pr runs.
+description: Advanced om-auto-continue-pr for PRs started by om-auto-create-pr-loop: claims the PR, resumes from the first non-done PLAN.md Tasks row in an isolated worktree, keeps the per-step commit and checkpoint discipline (integration tests + screenshots for UI), runs the full gate at completion, and preserves the run-folder and label contract. Use plain om-auto-continue-pr for simple runs.
 ---
 
 # Auto Continue PR (loop)
@@ -21,6 +21,10 @@ as the creator skills.
 - `{prNumber}` (required) — the PR number to resume (for example `1492`).
 - `--force` (optional) — bypass the in-progress concurrency check; use when intentionally taking over a PR that another auto-skill or human already claimed.
 - `--from <phase.step>` (optional) — override the resume point (e.g. `2.1`). Only honored when the `## Tasks` table (and any legacy `## Progress` fallback) cannot be parsed unambiguously.
+
+## Chaining
+
+This skill resumes an existing loop run: it consumes a `{prNumber}` and reads the PR body's `Tracking plan:` / `Tracking run folder:` line (written by `om-auto-create-pr-loop`) to find the run folder, then updates that same PR rather than opening a duplicate (the reuse guard in `om-auto-create-pr/references/pr-open-reuse.md`). It ends by reporting `PR_URL=` / `PR_NUMBER=` markers so the next skill in a chain can consume them. Companion skills (optional, with inline fallbacks where noted): `om-open-pr` (push + label normalization, inline fallback when absent), `om-code-review` (compatibility self-review), `om-auto-review-pr` (the autofix second pass), and `om-integration-tests` (checkpoint + final-gate suites) — each runs verbatim.
 
 ## Workflow
 
@@ -428,6 +432,8 @@ Notifications: {run folder}/NOTIFY.md
 ```
 
 If the resume still did not reach `complete`, leave `Status: in-progress` in the PR body, ensure `HANDOFF.md` names the first remaining `todo` Step, and tell the user how to re-enter.
+
+End the report with `PR_URL=` and `PR_NUMBER=` on their own lines so the next skill in a chain can consume them.
 
 ## Rules
 

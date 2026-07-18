@@ -1,6 +1,6 @@
 ---
 name: om-auto-manage-issues
-description: Bring existing tracker issues up to standard without implementing anything — infer and apply the SDLC labels they are missing (category + priority + risk); for a laconic issue (a one-line body, or just a title and a screenshot) analyze the attached screenshot together with the terse text, clarify the wording in the issue body, and post the agent's understanding as a comment for a human to confirm; and prepare the issue for implementation with a read-only root-cause / impact analysis posted as a comment (non-interactively) so the next agent or human can fix it. Works on a single issue by id, or on a batch when none is given — defaulting to the most recent ~25 open issues, worst-described first, narrowable with --state/--label/--author/--limit. Idempotent and claim-aware. Use for "triage the backlog", "label these issues", "clean up issue 123", "enrich the last 25 issues", "prepare issue 123 for implementation".
+description: Bring existing tracker issues up to standard without implementing anything: applies missing SDLC labels, clarifies laconic issues (analyzing attached screenshots), and posts a read-only implementation-prep analysis as a comment. Single issue by id, or a batch (default: last ~25 open, worst-described first). Idempotent and claim-aware. Use for "triage the backlog", "clean up issue 123".
 ---
 
 # Auto Manage Issues (enrich existing issues)
@@ -31,6 +31,10 @@ different actor is actively working). For deep design work hand off to
 - `--relabel-only` (optional) — apply missing SDLC labels but skip the screenshot/wording enrichment and the implementation-prep analysis.
 - `--prep-impl` / `--no-prep` (optional) — the read-only **implementation-prep analysis** (root-cause / impact notes posted as a comment to help the next agent or human fix it). It reads code, so it defaults to **on for a single `{issueId}`** and **off for a batch** (opt in per batch with `--prep-impl`, since it runs per issue); `--no-prep` disables it entirely. Always non-interactive.
 - `--dry-run` (optional) — report what would change per issue and mutate nothing.
+
+## Chaining
+
+This skill works on tracker **issues**, not PRs, so it consumes and emits no `PR_URL=` / `PR_NUMBER=` markers. It consumes an `{issueId}` (or selects a batch) and raises issue quality — SDLC labels, laconic-issue enrichment, and read-only implementation-prep notes — then routes onward rather than implementing: hand a labelled, prepped bug to `om-auto-fix-issue` and a feature to `om-auto-implement-issue`. It is claim-aware: it skips any issue a different actor is actively working (foreign `in-progress`/assignee or a fresh `🤖` claim comment) and takes no long-lived lock of its own. Companion skills: `om-root-cause` (delegated for implementation-prep when installed, with a lighter inline analysis as fallback), plus `om-prepare-issue` and `om-spec-writing` for the create-new-issue and deep-design paths this skill deliberately does not cover.
 
 ## Step 0 — Load config and context
 

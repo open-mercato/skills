@@ -156,6 +156,78 @@ The building blocks behind the autofix chain and the review loop. You can call t
 | `om-code-review` | The review checklist behind `om-auto-review-pr`: correctness, security, contract surfaces, plus your repo-local checklist when configured. |
 | `om-prepare-test-env` | Boots the app for QA and tests, any stack: reuses the repo's own environment or generates portable bring-up scripts, then caches builds and validates warm reuse. It autonomously provisions the configured browser provider (agent-browser by default; Playwright supported), writes a shared environment descriptor, and works on macOS, Linux, WSL2, and Windows. |
 
+## 👥 Workflows by role
+
+Same pipeline, different entry points. Each role runs one or two commands; the skills chain the rest automatically. Deeper guides live under [docs/roles/](docs/roles/).
+
+### 📋 Product Manager / Analyst
+
+Turn ideas into well-formed, labeled work — and review the plan before any code is written.
+
+| ▶️ You run | ⚙️ Runs automatically inside | 🎁 You get |
+|---|---|---|
+| `/om-prepare-issue "Bulk-archive orders from the grid"` | dedupe search, `om-spec-writing` (when a feature needs a spec) | one well-formed issue with SDLC labels, a linked spec or step-by-step guidance |
+| `/om-auto-manage-issues` | claim-aware label sync, screenshot analysis, implementation-prep comment | the backlog triaged: missing labels added, laconic issues clarified, worst-described first |
+| `/om-auto-implement-issue 123 --spec-only` | `om-auto-write-spec`, `om-spec-writing --autonomous` | a spec-first PR to review before implementation starts |
+
+More: [docs/roles/product-manager.md](docs/roles/product-manager.md)
+
+### 🎨 Designer
+
+Get a written spec with visuals attached — mockups of the new layout next to screenshots of the current app.
+
+| ▶️ You run | ⚙️ Runs automatically inside | 🎁 You get |
+|---|---|---|
+| `/om-auto-write-spec "Redesign the checkout summary panel"` | `om-spec-writing --autonomous`, `om-open-pr`, `om-prepare-test-env` + browser provider | a ready spec PR with UI mockups, current-app screenshots, and an assumptions comment |
+| `/om-auto-implement-spec 2026-07-18-checkout-redesign` | `om-auto-create-pr`, `om-auto-review-pr`, `om-auto-verify-pr-ui` | the built change with before/after screenshots from the working app |
+| `/om-auto-verify-pr-ui 123` | `om-prepare-test-env`, browser provider | fresh screenshots of a PR's UI to design-review, no source touched |
+
+💡 Tip — ask for visuals explicitly to force mockups: `/om-auto-write-spec "Redesign the checkout summary panel — include mockups of the new layout and screenshots of the current one"`.
+
+More: [docs/roles/designer.md](docs/roles/designer.md)
+
+### 👩‍💻 Developer
+
+Hand off a brief, a spec, or an issue number; get back a reviewed, labeled PR.
+
+| ▶️ You run | ⚙️ Runs automatically inside | 🎁 You get |
+|---|---|---|
+| `/om-auto-write-spec "CSV export for the orders grid"` | `om-spec-writing --autonomous`, `om-open-pr`, browser provider for mockups | a ready spec PR with mockups + assumptions comment |
+| `/om-auto-implement-spec 2026-07-18-csv-export` | `om-auto-create-pr` / `om-auto-continue-pr`, `om-auto-review-pr`, `om-auto-verify-pr-ui` | an implemented, reviewed PR with screenshots from the working app |
+| `/om-auto-implement-issue 123` | the router: bugs to `om-auto-fix-issue`, features to `om-auto-write-spec` + `om-auto-implement-spec` | a finished, fully-labeled PR from an issue number |
+| `/om-auto-fix-issue 456` | `om-verify-in-repo`, `om-root-cause`, `om-fix`, `om-open-pr`, `om-auto-review-pr` | a bug-fix PR with regression tests and a clean review |
+| 🔁 `/om-auto-create-pr-loop "Implement the multi-tenant billing spec"` | run folder (PLAN/HANDOFF/NOTIFY), per-step commits, checkpoint verification | a resumable, step-tracked PR for a large spec (continue with `om-auto-continue-pr-loop`) |
+
+More: [docs/roles/developer.md](docs/roles/developer.md)
+
+### 🧪 QA
+
+Boot the app once, verify UI changes in a real browser, and add integration coverage — without touching source.
+
+| ▶️ You run | ⚙️ Runs automatically inside | 🎁 You get |
+|---|---|---|
+| `/om-prepare-test-env` | app discovery, launch-script generation, browser-provider provisioning | a reusable booted app + shared test-env descriptor the other QA skills reuse |
+| `/om-auto-verify-pr-ui 123` | `om-prepare-test-env`, browser provider | screenshots + a pass/fail report posted on the PR (evidence only, no labels changed) |
+| `/om-auto-verify-pr-ui 123 --self-qa-signoff` | same, plus label guards | `qa-approved` + `qa-self-verified` — only on a fully-green run with screenshots on a `needs-qa` PR |
+| `/om-integration-tests` | `om-prepare-test-env`, browser provider | integration/E2E tests written against the live app, with artifact-based failure diagnosis |
+
+More: [docs/roles/qa.md](docs/roles/qa.md)
+
+### 🚀 Release Manager
+
+Sweep open PRs, drive them to merge-ready, and ship — the QA gate stays a human decision.
+
+| ▶️ You run | ⚙️ Runs automatically inside | 🎁 You get |
+|---|---|---|
+| `/om-merge-buddy` | tracker scan of labels, reviews, CI, mergeability | a report of which PRs can merge now and which are close but blocked |
+| `/om-review-prs` | `om-auto-review-pr` per PR, claim-lock aware | every unreviewed open PR reviewed, newest first |
+| `/om-auto-fix-pr 123` | `om-auto-review-pr`, `om-stabilize-ci`, `om-auto-verify-pr-ui`, `om-followup-issue-from-pr` | one PR driven to approvable, green, QA-evidenced — handed to `om-approve-merge-pr`, never self-merged |
+| `/om-stabilize-ci 123` | tracker check status + failed-step logs | green CI from real fixes with tests, never by weakening checks |
+| `/om-auto-update-changelog` | `om-auto-create-pr` | a CHANGELOG release entry landed as a docs PR, with Supersede Credit |
+| `/om-approve-merge-pr 123` | approving review + squash-merge, QA-gate guard | the PR merged — refused when `needs-qa` lacks `qa-approved` or a blocking label is set |
+
+More: [docs/roles/release-manager.md](docs/roles/release-manager.md)
+
 ## 🧰 Works with any stack
 
 Nothing here assumes JavaScript, or any particular product. The base branch, the validation commands, the label taxonomy, and the working paths all come from one committed file, `.ai/agentic.config.json`, written by `om-setup-agent-pipeline`:

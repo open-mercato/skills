@@ -70,15 +70,18 @@ features: when none exists in the repo or an open PR, it authors one via the sam
 `--spec-only` spec PR and links it on the issue — its one exception to being
 tracker-only, and design-only (never implementation).
 
-`om-spec-writing`'s Open Questions gate is a hard human stop, which is correct
-interactively but would strand an autonomous run (e.g. `om-auto-fix-issue` routing
-a feature request). So `om-auto-implement-issue` takes an `--autonomous` mode
-(passed by `om-auto-fix-issue`, implied when unattended): instead of stopping, it
-resolves each open question with a conservative, reversible default, records the
-assumptions in the spec, and posts the questions + applied defaults as an issue/PR
-comment for a human to override before merge — keeping the PR draft/`needs-qa` when
-any default is high-stakes. Progress beats stalling, as long as every assumption is
-surfaced and reversible and nothing merges on assumptions alone.
+`om-spec-writing`'s Open Questions gate is a hard human stop, which is correct when
+a person is driving but would strand an `om-auto-*` run (e.g. `om-auto-fix-issue`
+routing a feature request, or `om-prepare-issue` authoring a required spec). Since
+the `om-auto-*` family is autonomous by definition, `om-auto-implement-issue` runs
+**autonomous by default**: instead of stopping at the gate it resolves each open
+question with a conservative, reversible default, records the assumptions in the
+spec, and posts the questions + applied defaults as an issue/PR comment for a human
+to override before merge — keeping the PR draft/`needs-qa` when any default is
+high-stakes. A `--interactive` flag opts back into the human stop for the cases
+where a person wants to make the design calls. Progress beats stalling, as long as
+every assumption is surfaced and reversible and nothing merges on assumptions
+alone.
 
 ## Issue skills split: create vs manage
 

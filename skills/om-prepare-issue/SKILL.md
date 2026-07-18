@@ -54,8 +54,10 @@ skill produces the design instead of merely recommending it. Follow
 `references/spec-when-missing.md`: create the tracking issue first (step 4, so
 there is a number to link), then delegate to the `om-auto-implement-issue` skill
 with the new issue number and `--spec-only`, which writes the spec by following
-`om-spec-writing` verbatim (**including its Open Questions hard gate**), commits it
-as the first commit, and opens a draft **spec PR** against the base branch. Then
+`om-spec-writing` verbatim — running in its **default autonomous mode** so the spec
+is produced end-to-end (Open Questions resolved with documented defaults + an
+override comment; pass `--interactive` when a human wants to answer them), commits
+it as the first commit, and opens a draft **spec PR** against the base branch. Then
 comment the spec path and PR link back onto the issue via **comment-issue**. The
 issue now links a real, reviewable design; implementation resumes later with
 `om-auto-continue-pr {prNumber}` or `om-auto-implement-issue {issueId}`. This is

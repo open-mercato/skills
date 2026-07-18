@@ -1,10 +1,9 @@
 # Autonomous Open Questions — resolve with defaults, post for override
 
-How `om-auto-implement-issue` clears `om-spec-writing`'s Open Questions gate in an
-**autonomous** run without stopping. Autonomous means `--autonomous` was passed,
-the run is unattended (no interactive user to answer), or a driving auto-skill
-(e.g. `om-auto-fix-issue`) delegated it. Interactive runs never reach this file —
-they stop at the gate for the human.
+How `om-auto-implement-issue` clears `om-spec-writing`'s Open Questions gate
+without stopping. As an `om-auto-*` skill it is **autonomous by default**, so this
+is the normal path; the only exception is an explicit `--interactive` run, which
+stops at the gate for the human and never reaches this file.
 
 The rule the interactive path enforces ("never answer your own gate questions")
 is deliberately inverted here **only** because a stalled autonomous run is worse

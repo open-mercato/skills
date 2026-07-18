@@ -28,17 +28,15 @@ Two paths, decided by triage:
   note precisely what you added.
 - **No spec**: write one by following the `om-spec-writing` workflow **verbatim**,
   including its skeleton-first drafting and its **Open Questions gate**. Handle the
-  gate by mode:
-  - **Interactive** (a user is present and `--autonomous` was not passed): the gate
-    is a genuine human checkpoint — present the skeleton with numbered Open
-    Questions and STOP until the user answers; never answer your own gate questions
-    to keep moving.
-  - **Autonomous** (`--autonomous`, an unattended run, or a delegating auto-skill
-    such as `om-auto-fix-issue`): do **not** stop. Resolve each Open Question with a
-    conservative, reversible default and continue, following
+  gate by mode (this skill is **autonomous by default**):
+  - **Autonomous** (the default — no `--interactive`): do **not** stop. Resolve each
+    Open Question with a conservative, reversible default and continue, following
     `references/autonomous-open-questions.md` — which also posts the questions +
     applied defaults as an issue/PR comment inviting a human to override before
     merge.
+  - **Interactive** (only when `--interactive` was passed): the gate is a genuine
+    human checkpoint — present the skeleton with numbered Open Questions and STOP
+    until the user answers; never answer your own gate questions to keep moving.
 
   Save the spec at `$SPECS_DIR/{YYYY-MM-DD}-{slug}.md` — the naming shape
   `om-followup-issue-from-pr` recognizes.

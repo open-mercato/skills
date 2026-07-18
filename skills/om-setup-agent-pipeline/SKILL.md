@@ -74,35 +74,11 @@ The collection ships `github.md`. For a `tracker` value with no shipped descript
 
 ## Browser providers
 
-Browser-capable skills use the same committed-descriptor pattern as trackers.
-They name provider operations — **ensure-installed**, **doctor**, **open**,
-**snapshot**, **interact**, **assert**, **screenshot**, and **close** — and read
-`.ai/browsers/<provider>.md`, selected by `browser.provider`. The repo's copy is
-authoritative and may extend the shipped operations without editing installed
-skills.
-
-This collection ships `agent-browser.md` and `playwright.md`, plus
-`references/browsers/TEMPLATE.md` for custom providers. `agent-browser` is the
-fresh-setup default and self-provisions its native CLI, Chrome for Testing, and
-available OS libraries on macOS, Linux, WSL2, Git Bash, and native Windows. It
-uses local browser processes only — no cloud-browser account or API key.
-
-Backward compatibility is deliberate: a config without `browser.provider` is
-read as `playwright`, and browser consumers accept the legacy `playwright`
-object in `test-env.json`. Re-run this setup skill or `om-apply-upgrade-notes`
-to make the choice explicit and install a browser descriptor.
+Browser-capable skills use the same committed-descriptor pattern as trackers: they name provider operations (**ensure-installed**, **doctor**, **open**, **snapshot**, **interact**, **assert**, **screenshot**, **close**) and read `.ai/browsers/<provider>.md`, selected by `browser.provider`. The collection ships `agent-browser.md` (the self-provisioning fresh-setup default, local processes only) and `playwright.md`, plus `references/browsers/TEMPLATE.md` for custom providers. A config without `browser.provider` is read as `playwright` for backward compatibility. Full operation contract, `agent-browser` platform support, and the compatibility path: `references/browser-providers.md`.
 
 ## Project docs: SDLC.md, AGENTS.md, CODE_REVIEW.md, BACKWARD_COMPATIBILITY.md
 
-Beyond the config, this skill produces the human-readable half of the pipeline. Every document below is **derived from the current project, never copied from someone else's**: generate content from what this repository actually contains (stack, layout, public surfaces, conventions detected in the code). Each is generated only when missing — an existing file is never touched, and the skills take existing files into consideration exactly as they would generated ones.
-
-- `SDLC.md` (repo root) — the team's ticket flow: pipeline stages, the label state machine, the QA gate, the claim protocol, and which skill drives each stage. Generate it from `references/sdlc-template.md`, filling in the resolved base branch, tracker, label mode, QA gate, and validation commands. When the repo already documents its process, offer to skip or to link instead of overwrite.
-- `AGENTS.md` — agent instruction files (`AGENTS.md`, `CLAUDE.md`, or equivalents) are where a project records its own specifics; every skill in this collection reads them before working. When the repo has no such file, offer to generate one (skip entirely when one exists). The generated file contains, all derived from *this* repository:
-  - A one-paragraph project overview (from the README, or ask).
-  - A **task-routing table** — the core of the file: rows mapping task types to the files an agent must read and the rules that apply, built by scanning the repo structure. Shape: `| When the task involves… | Read first | Key rules |` with one row per significant area (e.g. each top-level package/app/module group, the API layer, the UI layer, tests, CI). Populate `Read first` with real paths discovered in the repo and `Key rules` with conventions detected in the code (naming patterns, error handling, how existing code does data access); leave `TODO` markers where nothing can be inferred rather than inventing rules.
-  - The validation commands from the config, and pointers to `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, and `.ai/agentic.config.json`.
-- `CODE_REVIEW.md` (repo root) — the repo's code-review rules as a standalone human-editable document, complementing (not replacing) the `reviewChecklist` config field. Generate it from the project itself: the detected stack's high-signal review points, the conventions observed in the codebase, the validation gate, and the label/severity discipline the pipeline uses. Structure: review priorities (correctness, security, contracts), repo-specific checks (derived — e.g. "all HTTP handlers validate input with <the validation library actually used here>"), and severity guidance. `om-code-review` (and therefore `om-auto-review-pr`) automatically applies this file when present.
-- `BACKWARD_COMPATIBILITY.md` (repo root) — what this project considers a **protected contract surface** and how changes to one must be handled. Generate it by inventorying the repo's actual public surfaces: exported package APIs, HTTP routes and response shapes, CLI commands and flags, DB schema/migrations, config file formats, published events/webhooks — whichever of these the repo actually has. For each surface: what counts as a breaking change, and the required path (deprecation window, migration note, version bump). Review skills check changes against this file; implementation skills warn the user whenever a change violates it.
+Beyond the config, this skill produces the human-readable half of the pipeline: `SDLC.md` (ticket flow, label state machine, QA gate, claim protocol), `AGENTS.md` (project overview plus the task-routing table every skill reads), `CODE_REVIEW.md` (the repo's review rules, auto-applied by `om-code-review`), and `BACKWARD_COMPATIBILITY.md` (the protected contract surfaces review and implementation skills check against). Every document is **derived from the current project, never copied from someone else's**, and each is generated only when missing — an existing file is never touched. Full per-document generation guidance (sources, structure, the task-routing table shape): `references/project-docs.md`.
 
 ## Per-skill local overrides
 
@@ -128,17 +104,7 @@ List what CI already runs (`.github/workflows/*.yml`) and prefer commands that m
 
 ### 3. Ask the user (skip with `--defaults`)
 
-1. Confirm or edit the detected validation commands.
-2. Which tracker provider to install (default: `github`). This sets the config's `tracker` field and which descriptor lands in `.ai/trackers/`.
-3. Which browser provider to install (default: `agent-browser`; `playwright` is
-   the compatibility choice). Explain that the selected descriptor owns
-   autonomous CLI/browser provisioning and that repository-native E2E suites
-   remain authoritative.
-4. Labels: install the full taxonomy above (recommended), keep a subset, or disable labels entirely.
-5. QA gate on or off. Recommend on when the repo ships user-facing changes.
-6. Where specs live (`paths.specs`, default `.ai/specs`) — confirm or point at an existing design-doc directory.
-7. Optional repo-local review checklist path.
-8. Project docs to generate (each only when missing): `SDLC.md` (recommended), `AGENTS.md` with the task-routing table (when no agent instruction file exists), `CODE_REVIEW.md`, and `BACKWARD_COMPATIBILITY.md`.
+Confirm the detected validation commands, then ask which tracker provider (default `github`) and browser provider (default `agent-browser`) to install, the label mode (full taxonomy / subset / disabled), whether the QA gate is on, where specs live (`paths.specs`), an optional repo-local review checklist path, and which project docs to generate (each only when missing). Full question list with defaults and guidance: `references/interview-questions.md`.
 
 ### 4. Install the tracker descriptor
 

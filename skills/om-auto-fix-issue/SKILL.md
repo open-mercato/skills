@@ -1,6 +1,6 @@
 ---
 name: om-auto-fix-issue
-description: Fix a tracker issue end to end (GitHub issue by default) from a single command. Drives the autofix chain interactively — proves the issue still needs work (om-verify-in-repo), locates the bug (om-root-cause), implements the minimal fix with regression tests (om-fix), opens a labeled draft PR (om-open-pr), then loops om-auto-review-pr in autofix mode until clean. Runs in an isolated worktree, honors the in-progress claim protocol, and stops cleanly when the issue is already solved or already claimed.
+description: Fix a tracker issue end to end (GitHub issue by default) from a single command. Classifies the issue first — routes a feature request to om-auto-implement-issue (spec-then-build) — and for a bug drives the autofix chain interactively: proves the issue still needs work (om-verify-in-repo), locates the bug (om-root-cause), implements the minimal fix with regression tests (om-fix), opens a labeled draft PR (om-open-pr), then loops om-auto-review-pr in autofix mode until clean. Runs in an isolated worktree, honors the in-progress claim protocol, and stops cleanly when the issue is already solved or already claimed.
 ---
 
 # Auto Fix Issue
@@ -44,6 +44,30 @@ Decision tree:
 Stale-lock recovery: if the `in-progress` label is older than 60 minutes and the owner neither pushed nor commented in that window, treat the lock as expired — still ask the user before overriding unless `--force` was set.
 
 This step only decides. The actual claim (assignee + `in-progress` label + claim comment) happens inside `om-fix`, after triage confirms there is real work to do — so a stopped chain never leaves a stray lock behind.
+
+### 1b. Classify: bug vs feature request, and route FRs out
+
+This chain is the **bug** autofix chain: its triage gate (`om-verify-in-repo`)
+confirms a defect is real and still unfixed, which is the wrong question for a
+feature request (an FR has no bug to reproduce — a bug-confirmation gate would
+wrongly stop it with `NO_ACTION_NEEDED`). So classify the issue you already
+fetched before running the bug triage, conservatively and label-first:
+
+- **Feature / enhancement** → a `feature` (or equivalent enhancement) category
+  label, or a title/body describing a *new* capability that does not exist yet
+  ("add…", "support…", "allow…", "introduce…", "new…").
+- **Bug** → a `bug` label, or a title/body describing broken/regressed behavior
+  (error, crash, wrong output, steps-to-reproduce, "fails", "regressed").
+
+If the issue is a **feature request**, do not run the bug chain: instead delegate
+the whole run to the `om-auto-implement-issue` skill with `{issueId}` (and
+`{repo}`, `--force` if it was set), which confirms the feature is not already
+implemented, writes (or reuses) a spec and lands it on a PR, then implements it.
+Follow that skill's workflow verbatim and stop this chain — it owns the claim,
+the PR, and the report from here. When an issue mixes a defect and a new
+capability, prefer stopping and asking the user to split it (bug → this chain, FR
+→ `om-auto-implement-issue`) rather than guessing. Only when the issue is a bug
+(or you cannot defend "feature request") do you continue to step 2.
 
 ### 2. Triage gate: run `om-verify-in-repo`
 
@@ -173,6 +197,7 @@ When the run stopped at step 2, cite the `om-verify-in-repo` evidence (existing 
 ## Rules
 
 - Always run the step 1 concurrency check before anything else; never silently override another actor's claim — `--force` must post an explicit override comment.
+- Classify before triaging: a feature request is routed to `om-auto-implement-issue` (which specs-then-builds it), never run through the bug-confirmation gate; only bugs continue on this chain. When unsure, default to the bug chain; when an issue mixes both, ask the user to split it.
 - Claiming belongs to `om-fix`; this skill never claims an issue before the triage gate confirms there is work to do.
 - The `in-progress` lock is always released by the end of the run: by `om-open-pr` on the success path, or by step 8 on any failure after the claim.
 - Invoke each chain skill's workflow verbatim and pass outputs between steps verbatim, in the exact marked blocks the next step parses.

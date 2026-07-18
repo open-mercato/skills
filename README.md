@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>🧠 plan · 🔨 implement · 🔍 review · ✅ QA gate · 🚢 merge</b><br/>
-  Twenty-five agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
+  Thirty agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 npx skills add open-mercato/skills --skill '*'
 ```
 
-Install all twenty-six — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all thirty — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
@@ -129,8 +129,6 @@ Interactive helpers: they act once, report, and hand control back to you.
 | `om-approve-merge-pr` | Approves and squash-merges a PR given only its number. Can file a follow-up issue at the same time. |
 | `om-check-and-commit` | Runs the configured validation gate on the current branch, fixes obvious drift, then commits and pushes when green. |
 | `om-followup-issue-from-pr` | Turns a PR or a PR comment into a tracked follow-up issue, assigned to the right person. |
-| `om-gap-analysis` | Grounded platform gap analysis at engagement scale: a folder of client docs becomes an Epic/Story tree where every coverage verdict is re-run by executable gates against a validated platform checkout, scored in atomic commits, license-tier-tagged, and synthesized into a client-facing summary + backlog. |
-| `om-app-spec-writing` | Writes and reviews business-level App Specs — domain model, workflows with ROI, user stories with failure paths, platform gap analysis in atomic commits, phased rollout — before any feature spec exists. Per-section DDD-challenger reviews and architect checkpoints; the finished App Spec feeds `om-spec-writing`. |
 | `om-spec-writing` | Writes and reviews feature specs to staff-engineer standards: skeleton-first with a hard Open Questions gate, phased implementation breakdown that feeds `om-auto-create-pr`, severity-ranked architectural reviews. |
 | `om-prepare-issue` | Files a single well-formed tracker issue for deferred work: dedupes against existing issues and PRs first, links a covering spec when one exists in the repo or an open PR, otherwise embeds a step-by-step implementation analysis, and applies the SDLC labels (category + inferred priority + risk) on creation — and for a feature that needs a spec but has none, authors one via `om-spec-writing` and lands it on a design-only spec PR, then links it. |
 | `om-auto-manage-issues` | Brings existing issues up to standard, single or in bulk: applies missing SDLC labels, and for a laconic issue (one line + a screenshot) analyzes the screenshot with the terse text, clarifies the wording non-destructively, and posts the agent's understanding as a comment. Batch defaults to the last ~25 open, worst-described first, narrowable by state/label/author/limit. Idempotent and claim-aware. |

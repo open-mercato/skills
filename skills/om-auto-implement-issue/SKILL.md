@@ -1,6 +1,6 @@
 ---
 name: om-auto-implement-issue
-description: Implement a new feature-request (FR) tracker issue end to end by combining spec-writing and auto-create-pr — first land a spec on a PR, then implement it on the same branch. Confirms the feature is not already built (never a bug-confirmation gate), writes or reuses a spec, commits it as the first commit, opens a draft PR, then delivers the spec phase-by-phase with the validation gate, labels, and the autofix review loop. Autonomous by default: at spec-writing's Open Questions gate it applies conservative documented defaults and posts them for override instead of stopping (pass --interactive to stop for a human). Use when the user says "implement issue 123 as a feature", "build the FR in #123", "spec-then-build this feature request".
+description: Implement a new feature-request (FR) tracker issue end to end by combining spec-writing and auto-create-pr — first land a spec on a PR, then implement it on the same branch. Confirms the feature is not already built (never a bug-confirmation gate), writes or reuses a spec, commits it as the first commit, opens a draft PR, then delivers the spec phase-by-phase with the validation gate, labels, and the autofix review loop. Autonomous by default: at spec-writing's Open Questions gate it applies conservative documented defaults and posts them for override instead of stopping (pass --interactive to stop for a human). When the change is user-facing it finishes by running om-auto-verify-pr-ui to QA the UI in a real browser and post screenshots as a PR comment (skip with --no-ui). Use when the user says "implement issue 123 as a feature", "build the FR in #123", "spec-then-build this feature request".
 ---
 
 # Auto Implement Issue (FR → spec → PR → implementation)
@@ -26,6 +26,7 @@ with no tracker issue, use `om-auto-create-pr` directly; for a defect, use
 - `--spec-only` (optional) — stop after the spec lands on the PR; leave implementation to a later `om-auto-continue-pr {prNumber}` run (spec-reviewed-first workflow)
 - `--interactive` (optional) — opt into human gates. This `om-auto-*` skill runs **autonomously by default**: when `om-spec-writing`'s Open Questions gate would block, it resolves each question with a conservative documented default and continues, posting the questions + applied defaults as an issue/PR comment for later override (see `references/autonomous-open-questions.md`). Pass `--interactive` to instead **stop** at the gate and wait for a human to answer — use it when a person is driving the run and wants to make the design calls.
 - `--slug <kebab-case>` (optional) — override the slug used in the branch, plan, and spec filenames
+- `--no-ui` (optional) — skip the end-of-run UI verification (step 7) even when the change looks user-facing; use when there is no runnable UI surface
 - `--force` (optional) — bypass the in-progress / claim-conflict check when a previous run or another actor left a lock, branch, or plan behind
 
 ## Step 0 — Load config and context
@@ -43,8 +44,8 @@ missing descriptor triggers the same setup run); it also resolves `BASE_BRANCH`
 `$TRACKER_FILE`; every tracker operation named in this skill (**current-user**,
 **get-issue**, **comment-issue**, **assign-issue** / **unassign-issue**,
 **search-prs**, **search-issues**, **create-pr**, **comment-pr**,
-**mark-pr-ready**, …) executes as that descriptor defines, and the label guards
-come from it.
+**mark-pr-ready**, **get-pr-diff** / **get-pr-files**, **attach-image-evidence**,
+…) executes as that descriptor defines, and the label guards come from it.
 
 Right after loading the config, check for a repo-local skill of the same name at
 `.ai/skills/om-auto-implement-issue/SKILL.md`; when present, apply it as a
@@ -166,22 +167,44 @@ already holds the PR lock; either is expected (like `om-auto-create-pr` handing 
 promote the PR out of draft — `om-open-pr` opens it as a draft and leaves promotion
 to the ready state to step 6 here. `--spec-only` runs never reach this step.
 
-### 6. Mark ready, release, report
+### 6. Mark ready
 
 Once the continuation reports the PR `complete`, **promote the PR out of draft via
 the tracker operation mark-pr-ready** — the continuation flips the body `Status:`
 text to `complete` but never leaves draft, and `om-open-pr` opened it as a draft, so
 this is the step that makes it a ready-for-review PR. Keep it a **draft** only when
 the run is `--spec-only` (design-only) or an autonomous default was flagged
-`⚠ NEEDS HUMAN CONFIRMATION` (keep `needs-qa`, never `qa-approved`). If the run
-aborts before the PR opened (i.e. before step 4 handed the issue back), release the
-issue `in-progress` lock in the `trap`/finally with an abort comment, exactly as
-`om-auto-fix-issue` step 8 does; after the PR is open the continuation owns the PR
-lock and its own release. Confirm the summary comment the continuation posted names
-the FR number and the spec path; if the run was `--spec-only` (no implementation),
-post the summary yourself per the `om-auto-create-pr` step-12 template. Clean up any
-worktree this run created, record `PR: #{n}` in the plan, and report: issue, spec
-path, branch, PR URL, and
+`⚠ NEEDS HUMAN CONFIRMATION` (keep `needs-qa`, never `qa-approved`).
+
+### 7. Verify the UI and attach screenshots
+
+When the implemented change touches a **user-facing surface** — and the run is not
+`--spec-only` and not docs-only — verify it in a real browser and leave the
+evidence on the PR. Run `om-auto-verify-pr-ui {prNumber}` (autonomous, its default
+**evidence-only** mode): it boots the app, drives the changed UI flow, captures
+screenshots, and posts them **as a PR comment** with a pass/fail report through the
+tracker's **attach-image-evidence** operation. Because this is user-facing feature
+work, ensure the PR carries `needs-qa`; this skill never adds `qa-approved` or
+`qa-self-verified` (a human or an explicit self-QA sign-off owns those). Decide
+"user-facing" from the diff (routes, components, templates, styles, user-visible
+copy) via **get-pr-diff** / **get-pr-files**; for a purely backend/API/docs FR,
+skip this step and note `UI: n/a` in the report. Skip with a noted reason when
+`--no-ui` was passed or no runnable UI surface exists. If `om-auto-verify-pr-ui`
+cannot run (no test environment, checks not green), note it and continue rather
+than failing the whole run — the PR is still implemented and reviewed.
+
+### 8. Release, report
+
+If the run aborts before the PR opened (i.e. before step 4 handed the issue back),
+release the issue `in-progress` lock in the `trap`/finally with an abort comment,
+exactly as `om-auto-fix-issue` step 8 does; after the PR is open the continuation
+owns the PR lock and its own release (and `om-auto-verify-pr-ui` owns the claim it
+takes for QA). Confirm the summary comment the continuation posted names the FR
+number and the spec path, and that the UI screenshots/report from step 7 are on the
+PR; if the run was `--spec-only` (no implementation), post the summary yourself per
+the `om-auto-create-pr` step-12 template. Clean up any worktree this run created,
+record `PR: #{n}` in the plan, and report: issue, spec path, branch, PR URL, UI
+verification outcome, and
 `{complete | spec-only — use om-auto-continue-pr <n> | in-progress}`.
 
 ## Rules
@@ -191,6 +214,7 @@ path, branch, PR URL, and
 - Spec first, always: the spec is the first commit and is visible on the PR before implementation. Autonomous by default — do not stop at `om-spec-writing`'s Open Questions gate; apply conservative documented defaults and post them as an issue/PR comment for override (`references/autonomous-open-questions.md`), keeping the PR draft / `needs-qa` when any default is high-stakes. Only `--interactive` turns the gate into a hard stop for a human, in which case never answer your own gate questions.
 - Reuse, don't reinvent, and **never open a second PR**: this skill opens exactly one PR (the spec-first PR in step 4) and implements it as a **continuation** via `om-auto-continue-pr` / `om-auto-continue-pr-loop` (chosen per `references/implementation-engine-selection.md`) — which reuse `om-auto-create-pr`'s implement/validate/review/label/summary machinery on the existing PR rather than opening a fresh one. The design comes from `om-spec-writing`; PR opening/labeling follows `om-auto-create-pr/references/pr-open-reuse.md` (prefer `om-open-pr` when installed, inline otherwise). This skill only adds FR triage, spec-first ordering, engine selection, and issue linkage.
 - Every code change ships with tests; docs-only FRs still run the configured lint/check. Run the full `validation.commands` gate before marking the PR ready unless a real blocker prevents it — then document it.
+- A user-facing FR ends with UI verification: run `om-auto-verify-pr-ui {prNumber}` (evidence-only) so screenshots + a pass/fail report land as a PR comment via **attach-image-evidence**; keep `needs-qa`, never add `qa-approved`/`qa-self-verified`. Skip only for non-UI FRs (`UI: n/a`), `--no-ui`, or when no runnable UI surface exists; a UI-verify that cannot run is noted, not fatal.
 - The base branch always comes from config (`baseBranch`); never hard-code it. All tracker interaction goes through named operations via the descriptor.
 - Two distinct locks, cleanly handed off: step 4 claims the **issue** (three-signal), and opening the PR hands the issue back and releases that issue lock (`om-open-pr` does this; on the inline path, release it at PR-open too). From PR-open onward the **PR** lock is owned by the continuation (or, on `--spec-only`, the PR itself is the resume handle for `om-auto-continue-pr {prNumber}`). A crash **before** the PR opens releases the issue lock in the `trap`; after PR-open the continuation owns releasing the PR lock. Never leak a lock or a worktree, and never `mark-pr-ready` a `--spec-only` design PR or one gated on a `⚠ NEEDS HUMAN CONFIRMATION` default.
 - The linkage line matches what the PR ships: an **implementing** PR carries `Closes #{issueId}` so the FR auto-closes on merge; a **`--spec-only` design PR** carries `Refs #{issueId}` (no closing keyword) so merging the spec leaves the FR open for implementation. The PR body always carries `Source doc:` and `Tracking plan:` so `om-auto-continue-pr` can resume. Never add `qa-approved` from this skill.

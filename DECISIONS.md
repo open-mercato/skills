@@ -83,6 +83,14 @@ where a person wants to make the design calls. Progress beats stalling, as long 
 every assumption is surfaced and reversible and nothing merges on assumptions
 alone.
 
+A user-facing FR also ends with UI proof: `om-auto-implement-issue` runs
+`om-auto-verify-pr-ui` (evidence-only) after implementation, so a real-browser
+pass/fail report and screenshots land as a PR comment via `attach-image-evidence`.
+It stays evidence-only — screenshots for the reviewer, `needs-qa` kept, never a
+self-granted `qa-approved` — and is skipped for non-UI FRs, `--no-ui`, or when no
+runnable UI surface exists. A UI-verify that cannot run is noted, not fatal: the PR
+is still implemented and reviewed.
+
 ## Issue skills split: create vs manage
 
 `om-prepare-issue` conflated two jobs — filing a *new* issue and improving

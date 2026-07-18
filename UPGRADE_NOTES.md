@@ -14,6 +14,14 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-07-18 — `om-gap-analysis` and `om-app-spec-writing` moved out
+
+These two skills were engagement/project-oriented rather than pipeline-agnostic and now live in
+[open-mercato/open-mercato](https://github.com/open-mercato/open-mercato) under `.ai/skills/`
+(opt-in `analysis` tier; see open-mercato/open-mercato#4276). Re-running
+`npx skills add open-mercato/skills --skill '*'` no longer installs them — remove stale copies
+from your agents' skill directories if you had them, and install them from that repository instead.
+
 **The `om-apply-upgrade-notes` skill automates this document**: run `/om-apply-upgrade-notes` in the consuming repository and it re-syncs the tracker descriptor (preserving local edits), checks the config, and walks the notable-upgrades log below. The rest of this file is the manual path and the reference for what the skill does.
 
 **After every skills upgrade, re-sync your tracker and browser descriptors.** A stale descriptor fails

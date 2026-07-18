@@ -53,6 +53,23 @@ stay authoritative regardless of the exploration provider. This boundary avoids
 hard-wiring every QA skill to a single CLI while keeping the repo's committed
 descriptor as the customization point.
 
+## Feature-request path: spec-then-implement
+
+Bugs and feature requests need different triage. The autofix chain's gate
+(`om-verify-in-repo`) proves a defect is real and still unfixed — the wrong
+question for a feature, which has no bug to reproduce and would be wrongly stopped
+with `NO_ACTION_NEEDED`. So the issue entry path now classifies first:
+`om-auto-fix-issue` routes a feature request to the new `om-auto-implement-issue`,
+which composes `om-spec-writing` and `om-auto-create-pr` — it confirms the feature
+is unbuilt, lands a spec on the PR as the first commit (design visible before
+implementation), then implements the spec phase-by-phase through the existing
+worktree/validation/label/review machinery. The new skill is a thin router that
+delegates to those two skills rather than duplicating their protocols. In the same
+spirit, `om-prepare-issue` stops merely recommending a spec for substantial
+features: when none exists in the repo or an open PR, it authors one via the same
+`--spec-only` spec PR and links it on the issue — its one exception to being
+tracker-only, and design-only (never implementation).
+
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.

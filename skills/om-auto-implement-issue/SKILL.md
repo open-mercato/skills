@@ -82,7 +82,7 @@ Apply the same three-signal in-progress lock decision `om-auto-fix-issue` uses
 (`in-progress` label held by another, a foreign assignee, or a `🤖` claim comment
 newer than 30 minutes; 60-minute stale-lock recovery; `--force` overrides only
 with an explicit override comment). Also treat the run slot as taken when a remote
-branch `feat/{issueId}-{slug}` already exists or an open PR already references this
+branch `feat/issue-{issueId}-{slug}` already exists or an open PR already references this
 issue — in that case stop and tell the user to resume with
 `om-auto-continue-pr {prNumber}`. This step only decides; the claim itself
 (assignee + `in-progress` + claim comment) happens in step 4, after triage
@@ -102,7 +102,7 @@ claimed yet, so a stop leaves no lock behind.
 ### 3. Isolated worktree and feature branch
 
 Never work in the user's primary worktree. Create (or reuse) an isolated worktree
-and a `feat/{issueId}-{slug}` branch off `origin/$BASE_BRANCH` exactly as
+and a `feat/issue-{issueId}-{slug}` branch off `origin/$BASE_BRANCH` exactly as
 `om-auto-create-pr` step 4 specifies (detect an existing linked worktree; else a
 temporary one under `.ai/tmp/om-auto-implement-issue/`; install deps per the
 lockfile; clean up only what this run created, in a `trap`/finally). Sanitize

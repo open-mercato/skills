@@ -72,7 +72,7 @@ The installer never touches skills it does not own: an existing real directory (
 
 ## 🔁 The pipeline
 
-Two entry paths: hand the agent a task brief (`om-auto-create-pr`), or hand it a GitHub issue (`om-auto-fix-issue`, which drives the autofix chain). Both converge on the same review loop and the same QA gate. Skills claim PRs and issues with an `in-progress` label, so concurrent agents back off instead of colliding.
+Two entry paths: hand the agent a task brief (`om-auto-create-pr`), or hand it a GitHub issue (`om-auto-fix-issue`). The issue path classifies first — a bug drives the autofix chain, a feature request is routed to `om-auto-implement-issue`, which writes a spec, lands it on a PR, then implements it. All paths converge on the same review loop and the same QA gate. Skills claim PRs and issues with an `in-progress` label, so concurrent agents back off instead of colliding.
 
 ```mermaid
 flowchart LR
@@ -85,12 +85,16 @@ flowchart LR
         qaGate -- "needs-qa" --> manualQA["manual QA"]
         manualQA -- "qa-approved" --> mergePR
     end
-    subgraph issue ["From a GitHub issue: om-auto-fix-issue drives the autofix chain"]
-        verifyStep["om-verify-in-repo"] --> rootCause["om-root-cause"]
+    subgraph issue ["From a GitHub issue: om-auto-fix-issue classifies, then routes"]
+        classify{"bug or FR?"}
+        classify -- "bug" --> verifyStep["om-verify-in-repo"]
+        verifyStep --> rootCause["om-root-cause"]
         rootCause --> applyFix["om-fix"]
         applyFix --> openPR["om-open-pr"]
+        classify -- "feature request" --> implementFR["om-auto-implement-issue<br/>(spec → PR → implement)"]
     end
     openPR --> reviewPR
+    implementFR --> reviewPR
 ```
 
 ## 📦 Skill catalog
@@ -103,7 +107,8 @@ Hand these a brief, an issue, or nothing at all — they run end-to-end without 
 |---|---|
 | `om-auto-create-pr` | Takes a free-form task brief end-to-end: execution plan, isolated worktree, phase-by-phase commits, validation gate, self-review, labeled PR, then an autofix review loop until clean. Resumable. |
 | `om-auto-create-pr-loop` | Advanced om-auto-create-pr for long spec implementations: run folder with PLAN/HANDOFF/NOTIFY, one commit per step, checkpoint verification every ~5 steps, executor-dispatch for many-step runs, full gate at completion. |
-| `om-auto-fix-issue` | Fixes a tracker issue end-to-end by driving the autofix chain: triage gate, root-cause analysis, minimal fix with regression tests, labeled draft PR, autofix review loop. Stops cleanly when the issue is already solved or claimed. |
+| `om-auto-fix-issue` | Fixes a tracker issue end-to-end by driving the autofix chain: classifies the issue first (routing feature requests to `om-auto-implement-issue`), then for a bug runs the triage gate, root-cause analysis, minimal fix with regression tests, labeled draft PR, autofix review loop. Stops cleanly when the issue is already solved or claimed. |
+| `om-auto-implement-issue` | Implements a feature-request issue end-to-end by combining spec-writing and auto-create-pr: confirms the feature is unbuilt, writes (or reuses) a spec and lands it on a PR first, then implements it phase-by-phase with the validation gate, labels, and the autofix review loop. `--spec-only` stops after the spec PR. Resumable. |
 | `om-auto-continue-pr` | Resumes an in-progress PR from the first unchecked step in its tracking plan and carries it to completion — implementation, validation, review loop, summary comment. |
 | `om-auto-continue-pr-loop` | Resumes runs started by `om-auto-create-pr-loop`: orients from HANDOFF.md, picks up at the first non-done Tasks-table row, keeps the per-step commit and checkpoint discipline to completion. |
 | `om-auto-review-pr` | Reviews a PR by number in an isolated worktree, approves or requests changes, manages labels. On changes-requested, its autofix loop iterates fixes and re-review until merge-ready. |
@@ -126,7 +131,7 @@ Interactive helpers: they act once, report, and hand control back to you.
 | `om-gap-analysis` | Grounded platform gap analysis at engagement scale: a folder of client docs becomes an Epic/Story tree where every coverage verdict is re-run by executable gates against a validated platform checkout, scored in atomic commits, license-tier-tagged, and synthesized into a client-facing summary + backlog. |
 | `om-app-spec-writing` | Writes and reviews business-level App Specs — domain model, workflows with ROI, user stories with failure paths, platform gap analysis in atomic commits, phased rollout — before any feature spec exists. Per-section DDD-challenger reviews and architect checkpoints; the finished App Spec feeds `om-spec-writing`. |
 | `om-spec-writing` | Writes and reviews feature specs to staff-engineer standards: skeleton-first with a hard Open Questions gate, phased implementation breakdown that feeds `om-auto-create-pr`, severity-ranked architectural reviews. |
-| `om-prepare-issue` | Files a well-formed tracker issue for deferred work: dedupes against existing issues and PRs first, links the covering spec when one exists, otherwise embeds a step-by-step implementation analysis derived from the codebase. |
+| `om-prepare-issue` | Files a well-formed tracker issue for deferred work: dedupes against existing issues and PRs first, links a covering spec when one exists in the repo or an open PR, otherwise embeds a step-by-step implementation analysis — and for a feature that needs a spec but has none, authors one via `om-spec-writing` and lands it on a design-only spec PR, then links it. |
 | `om-integration-tests` | Creates and runs integration/E2E tests by exploring the running app first — real locators, runtime fixtures, no hardcoded IDs — and reports failures with artifact-based per-test diagnosis. Reuses the shared `om-prepare-test-env` instance so QA and tests hit the same booted app. |
 | `om-auto-verify-pr-ui` | Runs the app locally and QAs a change's UI in a real browser without merging: boots via `om-prepare-test-env`, derives a scenario from the diff, drives the configured browser provider with screenshots, and produces a pass/fail report. Posts evidence as a PR comment when a tracker is configured; otherwise saves screenshots + JSON/Markdown reports. |
 | `om-auto-update-changelog` | Drafts a CHANGELOG.md release entry for every PR merged since the last release — emoji categories, contributor credits with the Supersede Credit Rule for carried-forward fork PRs — then delegates to `om-auto-create-pr` to ship it as a docs PR. |

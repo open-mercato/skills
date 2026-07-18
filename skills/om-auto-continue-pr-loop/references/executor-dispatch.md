@@ -70,7 +70,7 @@ Verification the main session MUST run after each executor returns — before di
 - Local HEAD == `origin/{branch}` (push actually landed; fetch if in doubt).
 - The PLAN.md Tasks-table row for `{X.Y}` is flipped to `done` with the correct short SHA in the `Commit` column.
 
-Every 5 successful executors (or when a Phase with ≥3 Steps closes), the main session MUST run a **checkpoint pass** per step 4b before dispatching the next Step: targeted validation for all areas touched in the window, focused integration tests + screenshots when UI was touched, write `checkpoint-<N>-checks.md`, rewrite `HANDOFF.md`, append the checkpoint entry to `NOTIFY.md`, and commit as `docs(runs): checkpoint N — steps X.Y..X.Z verified`.
+Every 5 successful executors (or when a Phase with ≥3 Steps closes), the main session MUST run a **checkpoint pass** per step 4b before dispatching the next Step: targeted validation for all areas touched in the window, focused integration tests + screenshots when UI was touched (screenshots also posted to the PR as the checkpoint's **attach-image-evidence** comment, per the checkpoint pass), write `checkpoint-<N>-checks.md`, rewrite `HANDOFF.md`, append the checkpoint entry to `NOTIFY.md`, and commit as `docs(runs): checkpoint N — steps X.Y..X.Z verified`.
 
 Safety stops — the main session MUST halt dispatch (leave `Status: in-progress`, rewrite `HANDOFF.md`, append a NOTIFY entry naming the blocker, release the lock per step 9, and report back) when any of the following is true:
 

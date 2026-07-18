@@ -25,7 +25,7 @@ Minimum comment structure:
 - {reminder of URLs already recorded in the plan's External References, plus anything newly consulted during this resume, with adopt/reject notes}  <!-- omit section if none -->
 
 ### Verification phases completed (this resume)
-- **Checkpoint verification (every ~5 Steps in this resume):** `{run-folder}/checkpoint-<N>-checks.md` with optional `checkpoint-<N>-artifacts/` (test logs + screenshots when UI was touched in the window).
+- **Checkpoint verification (every ~5 Steps in this resume):** `{run-folder}/checkpoint-<N>-checks.md` with optional `checkpoint-<N>-artifacts/` (test logs + screenshots when UI was touched in the window; screenshots also posted per checkpoint as PR evidence comments).
 - **Per-checkpoint validation:** {which validation commands ran at each checkpoint, and against which areas}
 - **Focused integration tests per checkpoint (UI-touched windows):** {which areas were exercised via om-integration-tests, screenshots captured — or skipped with reason}
 - **Full validation gate (at spec completion):** {each configured command with ✓ — or explicit blocker}

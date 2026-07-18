@@ -24,7 +24,7 @@ Minimum comment structure:
 - {URL — what was adopted; what was rejected and why}  <!-- omit section if no --skill-url was used -->
 
 ### Verification phases completed
-- **Checkpoint verification (every ~5 Steps):** `{RUNS_DIR}/{DATE}-{SLUG}/checkpoint-<N>-checks.md` with optional `checkpoint-<N>-artifacts/` (browser transcripts + screenshots when UI was touched in the window).
+- **Checkpoint verification (every ~5 Steps):** `{RUNS_DIR}/{DATE}-{SLUG}/checkpoint-<N>-checks.md` with optional `checkpoint-<N>-artifacts/` (browser transcripts + screenshots when UI was touched in the window; screenshots also posted per checkpoint as PR evidence comments).
 - **Per-checkpoint validation:** {which validation commands ran per checkpoint, and against which areas}
 - **Focused integration tests per checkpoint (UI-touched windows):** {which areas were exercised via om-integration-tests, screenshots captured — or skipped with reason}
 - **Full validation gate (at spec completion):** {each configured command with ✓ — or explicit blocker}

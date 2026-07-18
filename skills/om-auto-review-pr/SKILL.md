@@ -28,7 +28,7 @@ Auto-skills MUST NOT clobber each other. Before doing anything else, decide whet
 
 Run the tracker operation **current-user** to fill `CURRENT_USER` (the automation user's login), then **get-pr** for `{prNumber}`, requesting `assignees`, `labels`, `number`, `title`, and `comments`.
 
-A PR is considered **already in progress** when ANY of the following is true:
+A PR is **already in progress** when ANY of the following is true:
 
 - It carries the `in-progress` label
 - It has at least one assignee whose login is not `$CURRENT_USER`
@@ -69,14 +69,7 @@ Use the tracker as the source of truth. Collect enough data to decide whether th
 
 Run the tracker operation **get-pr** for `{prNumber}`, requesting `number`, `title`, `url`, `author`, `baseRefName`, `baseRefOid`, `headRefName`, `headRefOid`, `headRepository`, `headRepositoryOwner`, `isCrossRepository`, `maintainerCanModify`, `mergeable`, `mergeStateStatus`, `reviewDecision`, `labels`, `latestReviews`, `reviews`, `commits`, and `files`. Run **current-user** for the reviewer's login if it was not already captured as `CURRENT_USER` in step 0.
 
-Capture at least:
-
-- PR title, URL, base branch, head branch, head SHA
-- author login
-- whether the PR is cross-repository (`isCrossRepository`)
-- whether maintainers can modify it (`maintainerCanModify`)
-- existing labels
-- existing reviews by the current reviewer
+Capture at least: PR title, URL, base branch, head branch, head SHA; author login; whether the PR is cross-repository (`isCrossRepository`); whether maintainers can modify it (`maintainerCanModify`); existing labels; existing reviews by the current reviewer.
 
 ### 2. Decide whether this is a review or a re-review
 
@@ -103,9 +96,7 @@ Run these checks before the worktree is created. If either fails, skip the full 
 
 Run the tracker operation **get-pr** for `{prNumber}`, requesting `mergeable`, `mergeStateStatus`, and `baseRefName`.
 
-If `mergeable` is `CONFLICTING` or `mergeStateStatus` is `DIRTY`, do not continue with checkout or review execution on the first pass.
-
-Submit a changes-requested review with a conflict-focused body, set the pipeline label to `changes-requested` (which also removes `merge-queue`), and stop the first pass.
+If `mergeable` is `CONFLICTING` or `mergeStateStatus` is `DIRTY`, do not continue with checkout or review execution on the first pass. Submit a changes-requested review with a conflict-focused body, set the pipeline label to `changes-requested` (which also removes `merge-queue`), and stop the first pass.
 
 Important:
 
@@ -114,25 +105,11 @@ Important:
 
 #### 3b. Check CI status
 
-Discover required checks first: run the tracker operation **get-required-checks** for the PR's base branch (`{baseRefName}`).
-
-If branch protection is not readable (the operation reports 404/no data), treat all reported PR checks as required.
+Discover required checks first: run the tracker operation **get-required-checks** for the PR's base branch (`{baseRefName}`). If branch protection is not readable (the operation reports 404/no data), treat all reported PR checks as required.
 
 Fetch the actual PR check results with the tracker operation **get-pr-checks** for `{prNumber}`, requesting each check's `name`, `state`, and `link`.
 
-Treat these states as failing:
-
-- `FAILURE`
-- `ERROR`
-- `CANCELLED`
-- `TIMED_OUT`
-
-Ignore these as non-failing:
-
-- `PENDING`
-- `SUCCESS`
-- `SKIPPED`
-- `NEUTRAL`
+Treat these states as failing: `FAILURE`, `ERROR`, `CANCELLED`, `TIMED_OUT`. Ignore these as non-failing: `PENDING`, `SUCCESS`, `SKIPPED`, `NEUTRAL`.
 
 If any required check is failing, do not continue with checkout or review execution. Submit a changes-requested review listing only the failing required checks, set the pipeline label to `changes-requested` (which also removes `merge-queue`), and stop.
 
@@ -195,11 +172,7 @@ fi
 
 ### 4a. Check for duplicated or already-merged changes
 
-Before proceeding with the full review, verify that the PR does not duplicate work already present in the base branch. This catches cases where:
-
-- The base branch already contains the same fix (e.g., merged via a different PR)
-- A parallel PR landed the same feature while this one was open
-- The PR's changes are a subset of recently merged work
+Before proceeding with the full review, verify that the PR does not duplicate work already present in the base branch. This catches: the base branch already contains the same fix (e.g., merged via a different PR); a parallel PR landed the same feature while this one was open; the PR's changes are a subset of recently merged work.
 
 Steps:
 
@@ -230,11 +203,7 @@ If partial overlap exists (some changes are new, some are redundant):
 
 Before running the full om-code-review skill, scan the PR diff for hard-rule violations. Run the tracker operation **get-pr-diff** for `{prNumber}` twice: once for the full diff and once in changed-file-list mode.
 
-Record findings from the patterns in `references/diff-auto-detections.md` — four
-severity-tagged tables (blocker / major / minor / nit). When a pattern applies to
-this repository's stack and conventions, it is a mandatory finding, not an
-optional heuristic; skip rows that have no equivalent in this codebase (for
-example, the i18n row in a repo without i18n).
+Record findings from the patterns in `references/diff-auto-detections.md` — four severity-tagged tables (blocker / major / minor / nit). When a pattern applies to this repository's stack and conventions, it is a mandatory finding, not an optional heuristic; skip rows that have no equivalent in this codebase (for example, the i18n row in a repo without i18n).
 
 ### 6. Run the full om-code-review skill inside the worktree
 
@@ -269,25 +238,11 @@ The review body must contain the full structured report from the code-review ski
 
 Every label mutation goes through the label guards from the tracker descriptor: additions via `apply_label` (missing labels degrade to a logged skip), removals only when `LABELS_ENABLED` is `true`. When `labels.enabled` is `false`, skip every label operation in this step and say so in the completion comment and report.
 
-Pipeline labels:
-
-- `review`
-- `changes-requested`
-- `qa`
-- `qa-failed`
-- `merge-queue`
-- `blocked`
-- `do-not-merge`
+Pipeline labels: `review`, `changes-requested`, `qa`, `qa-failed`, `merge-queue`, `blocked`, `do-not-merge`.
 
 Keep `in-progress` separate from the pipeline-state helper. It is a lock, not a workflow state.
 
-Pipeline-label transitions go through the `set_pipeline_label` helper (usage:
-`set_pipeline_label <prNumber> <newLabel>`), one of the label guards from the
-tracker descriptor — do not redefine it here. Its exact behavior (the
-`PIPELINE_LABELS` group, which labels it adds/removes, and which category/meta/
-priority/risk labels it preserves) is in `references/label-transitions.md`. After
-every pipeline-label change, post a one-sentence PR comment explaining why that
-label was chosen.
+Pipeline-label transitions go through the `set_pipeline_label` helper (usage: `set_pipeline_label <prNumber> <newLabel>`), one of the label guards from the tracker descriptor — do not redefine it here. Its exact behavior (the `PIPELINE_LABELS` group, which labels it adds/removes, and which category/meta/priority/risk labels it preserves) is in `references/label-transitions.md`. After every pipeline-label change, post a one-sentence PR comment explaining why that label was chosen.
 
 Label rules:
 
@@ -298,11 +253,7 @@ Label rules:
 - **Never apply `qa-approved` based on reading the diff** — code-review approval is not QA approval. `qa-approved` is earned only by manual QA (by a QA reviewer, or by an engineer via the self-QA exception). Until it lands, a `needs-qa` PR sits in `merge-queue` blocked by the QA-approval gate whenever `qaGate` is on.
 - Never leave `review`, `changes-requested`, `qa`, `qa-failed`, and `merge-queue` on the same PR together.
 
-Priority and risk labels (always ensure exactly one of each, when labels are
-enabled): infer and apply one when missing, keep the existing one unless the
-review shows it is clearly mis-rated, and remove the siblings when changing it.
-The full priority/risk inference rules and the suggested comment strings for
-every label live in `references/label-transitions.md`.
+Priority and risk labels (always ensure exactly one of each, when labels are enabled): infer and apply one when missing, keep the existing one unless the review shows it is clearly mis-rated, and remove the siblings when changing it. The full priority/risk inference rules and the suggested comment strings for every label live in `references/label-transitions.md`.
 
 #### Author handoff on `changes-requested`
 
@@ -326,19 +277,9 @@ Rules:
 
 #### 8a. Manual-QA instructions when approving a `needs-qa` PR
 
-When the verdict is approved AND the PR carries `needs-qa` without `skip-qa` —
-i.e. you just routed it to `merge-queue` with `needs-qa` retained per the rules
-above — you MUST also post a **manual QA test-instructions comment** so the QA
-reviewer who later picks it up knows exactly what to exercise. This is an
-ADDITIVE step: it does not replace the short pipeline-label comment, the claim
-comment, or the completion comment — keep all of them. Do not set the `qa` label
-yourself; the QA reviewer applies it manually. Skip this step entirely when
-`labels.enabled` is `false`.
+When the verdict is approved AND the PR carries `needs-qa` without `skip-qa` — i.e. you just routed it to `merge-queue` with `needs-qa` retained per the rules above — you MUST also post a **manual QA test-instructions comment** so the QA reviewer who later picks it up knows exactly what to exercise. This is an ADDITIVE step: it does not replace the short pipeline-label comment, the claim comment, or the completion comment — keep all of them. Do not set the `qa` label yourself; the QA reviewer applies it manually. Skip this step entirely when `labels.enabled` is `false`.
 
-Build the instructions from the actual diff (not boilerplate), post them as a
-single **comment-pr** comment, and follow the no-secrets/scope rules — the full
-build guidance, the P0/P1/P2 comment template, and the rules are in
-`references/manual-qa-template.md`.
+Build the instructions from the actual diff (not boilerplate), post them as a single **comment-pr** comment, and follow the no-secrets/scope rules — the full build guidance, the P0/P1/P2 comment template, and the rules are in `references/manual-qa-template.md`.
 
 ### 9. Autonomous autofix flow
 
@@ -355,9 +296,7 @@ For everything else — missing tests, code style issues, i18n problems, type er
 
 ### 10. Autofix and fix-forward loop
 
-Continue inside the isolated worktree.
-
-Do not stop after the first patch. Treat autofix as an iterative loop:
+Continue inside the isolated worktree. Do not stop after the first patch. Treat autofix as an iterative loop:
 
 0. **Unit test audit**: Before fixing code findings, check whether the PR includes unit tests for the changed behavior. If the PR has no test files in the diff (`*.test.*`, `*.spec.*`, `__tests__/*`, or the repo's equivalent), add appropriate unit tests as the first autofix action. Every behavior change, bug fix, or new feature must have corresponding test coverage — this is non-negotiable in autofix mode.
 1. Convert the current review findings into a concrete fix list.
@@ -372,11 +311,7 @@ Do not stop after the first patch. Treat autofix as an iterative loop:
    - the re-review outcome is `approved`, or
    - a real blocker remains that cannot be resolved autonomously in the current turn.
 
-Examples of real blockers:
-
-- ambiguous product or architecture decisions that require user input
-- environment or infrastructure failures unrelated to the changed code
-- missing credentials or missing external access
+Examples of real blockers: ambiguous product or architecture decisions that require user input; environment or infrastructure failures unrelated to the changed code; missing credentials or missing external access.
 
 Conflict-resolution rules for autofix mode:
 
@@ -401,14 +336,7 @@ Rules:
 
 #### 10b. Fork PRs
 
-For fork PRs, do not wait on the original author and do not push to the
-contributor's branch by default. Instead, keep the fetched PR head SHA (to
-preserve authorship), build a `carry/pr-{prNumber}-ready` branch in the main
-repo, run the autofix loop there, push it, open a replacement PR crediting the
-original author, and close the original only after the replacement exists. The
-full step sequence, the autofix validation requirements, the replacement-PR
-requirements, and the suggested body / handoff / closing-comment templates are
-in `references/fork-pr-flow.md`.
+For fork PRs, do not wait on the original author and do not push to the contributor's branch by default. Instead, keep the fetched PR head SHA (to preserve authorship), build a `carry/pr-{prNumber}-ready` branch in the main repo, run the autofix loop there, push it, open a replacement PR crediting the original author, and close the original only after the replacement exists. The full step sequence, the autofix validation requirements, the replacement-PR requirements, and the suggested body / handoff / closing-comment templates are in `references/fork-pr-flow.md`.
 
 ### 11. Release the in-progress lock
 
@@ -442,9 +370,7 @@ Worktree: {path}
 Review submitted successfully.
 ```
 
-If all findings were auto-fixed, the summary should note that fixes were applied and the PR is ready for merge.
-
-If a blocker remains that requires human judgment, the summary must describe the blocker and ask for guidance.
+If all findings were auto-fixed, the summary should note that fixes were applied and the PR is ready for merge. If a blocker remains that requires human judgment, the summary must describe the blocker and ask for guidance.
 
 End the report with `PR_URL=` and `PR_NUMBER=` on their own lines so the next skill in a chain can consume them.
 

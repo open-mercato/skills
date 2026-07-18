@@ -14,6 +14,14 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-07-18 — pipeline alignment: ready PRs, full labels, new spec skills
+
+- **PRs open ready-for-review by default.** `om-open-pr` (and every skill delegating to it) no longer opens drafts; draft is reserved for explicitly incomplete states (`--draft`: spec-only design PRs, interrupted hand-offs, `⚠ NEEDS HUMAN CONFIRMATION` autonomous defaults). If your process relied on agent PRs arriving as drafts, gate on the `review` pipeline label / QA gate instead.
+- **`om-open-pr` now applies the full SDLC label set** (pipeline `review` + category + QA meta + one priority + one risk) with rationale comments — previously it applied only a subset, so chains like issue → PR could end up missing the pipeline label.
+- **New skills:** `om-auto-write-spec` (brief/issue → autonomous spec PR with mockups/screenshots) and `om-auto-implement-spec` (spec → implemented, reviewed, UI-verified PR). `om-auto-implement-issue` is now a router over `om-auto-fix-issue` / these two.
+- **`om-spec-writing` gains `--autonomous`**; the Open Questions gate stays a hard stop in interactive runs.
+- Re-sync your tracker descriptor if it predates the `mark-pr-ready` / `attach-image-evidence` operations — several skills now depend on them.
+
 ## 2026-07-18 — `om-gap-analysis` and `om-app-spec-writing` moved out
 
 These two skills were engagement/project-oriented rather than pipeline-agnostic and now live in

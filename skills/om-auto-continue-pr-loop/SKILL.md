@@ -5,16 +5,7 @@ description: Advanced om-auto-continue-pr for PRs started by om-auto-create-pr-l
 
 # Auto Continue PR (loop)
 
-Resume an `om-auto-create-pr-loop` run that did not finish in one go. Given a PR
-number, you re-enter the same worktree discipline, read `HANDOFF.md` for
-session context, parse the top-of-file `## Tasks` table in `PLAN.md` (the
-authoritative Step-status source), pick up from the first row whose `Status`
-is not `done`, and drive the PR to `complete` status with **lean per-Step
-commits** and **checkpoint-batched verification** (`checkpoint-<N>-checks.md`
-every ~5 resumed Steps, with focused integration tests + screenshots when UI
-was touched), the same final validation gate plus the repo's full integration
-suite and a style-compliance pass at spec completion, and the same label rules
-as the creator skills.
+Resume an `om-auto-create-pr-loop` run that did not finish in one go. Given a PR number, you re-enter the same worktree discipline, read `HANDOFF.md` for session context, parse the top-of-file `## Tasks` table in `PLAN.md` (the authoritative Step-status source), pick up from the first row whose `Status` is not `done`, and drive the PR to `complete` status with **lean per-Step commits** and **checkpoint-batched verification** (`checkpoint-<N>-checks.md` every ~5 resumed Steps, with focused integration tests + screenshots when UI was touched), the same final validation gate plus the repo's full integration suite and a style-compliance pass at spec completion, and the same label rules as the creator skills.
 
 ## Arguments
 
@@ -38,7 +29,7 @@ Load `.ai/agentic.config.json` using the standard snippet from the `om-setup-age
 
 Auto-skills MUST NOT clobber each other. Before doing anything else, decide whether you may claim this PR. Resolve `CURRENT_USER` via the tracker operation **current-user**, then fetch the PR via **get-pr** requesting the fields `assignees,labels,number,title,body,headRefName,baseRefName,isCrossRepository,comments`.
 
-A PR is considered **already in progress** when ANY of the following is true:
+A PR is **already in progress** when ANY of the following is true:
 
 - It carries the `in-progress` label.
 - It has at least one assignee whose login is not `$CURRENT_USER`.
@@ -75,42 +66,20 @@ The release step happens at the end of step 9 — the lock MUST be released even
 
 Now that you hold the lock, decide which mode this resume runs in. The rest of the workflow branches on this choice.
 
-**Simple run** (default when unsure whether the PR looks simple):
+**Simple run** (default when unsure): bug fix (1–3 files, localized); code-review follow-up (applying review feedback to an existing PR); dependency bump; typo, copy, or docs tweak; small refactor within one file; linter/i18n/test-only changes; any PR the user flags as small ("just a quick fix", "CR follow-up").
 
-- Bug fix (1–3 files, localized).
-- Code-review follow-up (applying review feedback to an existing PR).
-- Dependency bump.
-- Typo, copy change, or docs tweak.
-- Small refactor within one file.
-- Linter, i18n, or test-only changes.
-- Any PR the user explicitly flags as small ("just a quick fix", "CR follow-up", etc.).
-
-**Spec-implementation run**:
-
-- Work driven by a file under the repo's specs directory (`paths.specs`, default `.ai/specs`).
-- Multi-phase or multi-workstream tasks (≥3 commits expected).
-- New module, new integration provider, new database entity + migration.
-- UI surface + API + tests together.
-- Anything the user describes with phases, workstreams, or deliverables.
-- Any existing creator run that already has a `${RUNS_DIR}/<date>-<slug>/` folder.
+**Spec-implementation run**: work driven by a file under the repo's specs directory (`paths.specs`, default `.ai/specs`); multi-phase or multi-workstream tasks (≥3 commits expected); new module, new integration provider, new database entity + migration; UI surface + API + tests together; anything the user describes with phases, workstreams, or deliverables; any existing creator run that already has a `${RUNS_DIR}/<date>-<slug>/` folder.
 
 Classification heuristic — evaluate in order, first match wins:
 
-1. Is there a linked spec (in the repo's specs directory) or an existing `${RUNS_DIR}/<date>-<slug>/` folder referenced from the PR body? → **Spec-implementation run**.
-2. Did the user describe the task in terms of phases / steps / deliverables? → **Spec-implementation run**.
-3. Does the task clearly span >5 files or >1 package AND introduce new contract surface (new route, new entity, new event name, new exported API, new config surface)? → **Spec-implementation run**.
+1. Linked spec (in the repo's specs directory) or an existing `${RUNS_DIR}/<date>-<slug>/` folder referenced from the PR body? → **Spec-implementation run**.
+2. User described the task in terms of phases / steps / deliverables? → **Spec-implementation run**.
+3. Task clearly spans >5 files or >1 package AND introduces new contract surface (new route, entity, event name, exported API, config surface)? → **Spec-implementation run**.
 4. Otherwise → **Simple run**.
 
-When in doubt: **default to Simple run**. It is cheaper to promote a Simple run to a Spec-implementation run mid-flight (by drafting a plan then) than to over-engineer a typo fix.
+When in doubt, **default to Simple run** — it is cheaper to promote it mid-flight than to over-engineer a typo fix. Never demote a Spec-implementation run to a Simple run.
 
-Never demote a Spec-implementation run to a Simple run.
-
-The three mode contracts — **Simple-run** (no run folder, one code commit,
-compacted summary; skip to step 2 for worktree setup), **Spec-implementation-run**
-(the full contract in the rest of this file), and the **promotion path** (Simple
-→ Spec mid-flight) — are spelled out in `references/run-mode-contracts.md`. A
-Simple run still uses an isolated worktree, the three-signal lock (already
-claimed in step 0), label discipline, and the `om-auto-review-pr` pass.
+The three mode contracts — **Simple-run** (no run folder, one code commit, compacted summary; skip to step 2 for worktree setup), **Spec-implementation-run** (the full contract in the rest of this file), and the **promotion path** (Simple → Spec mid-flight) — are in `references/run-mode-contracts.md`. A Simple run still uses an isolated worktree, the three-signal lock (already claimed in step 0), label discipline, and the `om-auto-review-pr` pass.
 
 ### 1. Locate the run folder
 
@@ -193,12 +162,7 @@ git worktree prune
 
 ### 3. Orient via HANDOFF.md, then parse PLAN.md's Tasks table
 
-**Read `HANDOFF.md` first.** It is the authoritative short-form snapshot of what the previous agent (or this agent's previous session) was doing. It tells you:
-
-- The current phase/step.
-- The last commit SHA and what it delivered.
-- The next concrete action.
-- Open blockers, environment caveats, and worktree details.
+**Read `HANDOFF.md` first.** It is the authoritative short-form snapshot of what the previous agent (or this agent's previous session) was doing. It tells you: the current phase/step; the last commit SHA and what it delivered; the next concrete action; open blockers, environment caveats, and worktree details.
 
 Then open `PLAN.md` and find the `## Tasks` table at the top of the file. It is a markdown table with exactly these columns: `Phase`, `Step`, `Title`, `Status`, `Commit`. Example shape written by `om-auto-create-pr-loop`:
 
@@ -291,16 +255,7 @@ Subagent parallelism (optional, capped at 2):
 
 > Applies only to **Spec-implementation runs**. Simple runs have at most one code commit and do not use executor dispatch.
 
-When a single invocation is expected to land **multiple Steps in one pass**, the
-main session SHOULD act as a **dispatcher** and spawn one sequential **executor
-subagent** per Step (foreground `Agent` tool, `general-purpose`), verifying each
-commit landed and pushed before dispatching the next. The full pattern —
-when/when-not to use it, the hard constraints (dispatch lives in the main session
-only; sequential, not parallel; the main session owns the lock and the summary),
-the executor prompt template, the post-executor verification checklist, the
-5-executor checkpoint cadence, and the safety stops — is in
-`references/executor-dispatch.md`. The creator counterpart
-(`om-auto-create-pr-loop`) inherits this pattern.
+When a single invocation is expected to land **multiple Steps in one pass**, the main session SHOULD act as a **dispatcher** and spawn one sequential **executor subagent** per Step (foreground `Agent` tool, `general-purpose`), verifying each commit landed and pushed before dispatching the next. The full pattern — when/when-not to use it, the hard constraints (dispatch lives in the main session only; sequential, not parallel; the main session owns the lock and the summary), the executor prompt template, the post-executor verification checklist, the 5-executor checkpoint cadence, and the safety stops — is in `references/executor-dispatch.md`. The creator counterpart (`om-auto-create-pr-loop`) inherits this pattern.
 
 ### 5. Final gate before flipping to `complete` (spec completion)
 
@@ -360,23 +315,11 @@ If `om-auto-review-pr` cannot run (required checks not yet green, missing contex
 
 ### 8. Post the comprehensive summary comment
 
-Every resume MUST end with a single, comprehensive summary comment on the PR that
-captures what this resume changed on top of the previous state. Post it via
-**comment-pr** with a body file so multi-line formatting is preserved. Use the
-full comment structure — Summary of changes in this resume, External references
-honored, Verification phases completed, How to verify, and What can go wrong — and
-its rules from `references/summary-comment-template.md`. Never post it before
-step 7 finishes, never claim a completion you did not reach, and never paste
-secrets into it.
+Every resume MUST end with a single, comprehensive summary comment on the PR that captures what this resume changed on top of the previous state. Post it via **comment-pr** with a body file so multi-line formatting is preserved. Use the full comment structure — Summary of changes in this resume, External references honored, Verification phases completed, How to verify, and What can go wrong — and its rules from `references/summary-comment-template.md`. Never post it before step 7 finishes, never claim a completion you did not reach, and never paste secrets into it.
 
 ### 9. Update the PR, normalize labels, release the lock
 
-This step **updates the existing PR** — it never opens a new one (the duplicate-PR
-collision `om-auto-create-pr/references/pr-open-reuse.md` guards against). Its
-commit/push and label-normalization mechanics follow that shared reference:
-**prefer the `om-open-pr` skill when installed** (reuse its push + label
-normalization instead of duplicating it), falling back to the inline tracker
-operations below when it is not — so this skill works standalone.
+This step **updates the existing PR** — it never opens a new one (the duplicate-PR collision `om-auto-create-pr/references/pr-open-reuse.md` guards against). Its commit/push and label-normalization mechanics follow that shared reference: **prefer the `om-open-pr` skill when installed** (reuse its push + label normalization instead of duplicating it), falling back to the inline tracker operations below when it is not — so this skill works standalone.
 
 Update the PR body:
 

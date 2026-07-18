@@ -1,7 +1,10 @@
 # Label normalization (step 10)
 
 The full label taxonomy `om-auto-create-pr` applies in step 10 after opening the
-PR, plus the suggested per-label comment strings. Every mutation goes through the
+PR, plus the suggested per-label comment strings. This is the canonical label
+contract for every PR-opening skill — `om-open-pr` step 6 carries the same rules
+inline, and the two must stay in sync (see the cross-skill contract in this
+repo's AGENTS.md). Every mutation goes through the
 `apply_label` guard from the tracker descriptor (missing labels degrade to a
 logged skip; `labels.enabled: false` skips everything — note that in the summary
 comment).

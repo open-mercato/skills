@@ -10,9 +10,14 @@ Turn a free-form task brief into a disciplined autonomous run: an execution plan
 ## Arguments
 
 - `{brief}` (required) — free-form description of the task. Can be one sentence or several paragraphs.
+- `--spec <ref>` (optional) — a spec to implement: a path, a spec name/slug, or an issue/PR number to resolve one from. Resolve it per the procedure in the `om-auto-implement-spec` skill (path → name match in `$SPECS_DIR` → issue-body links → spec-PR branch); when the brief itself names a spec, treat it the same way. **If the referenced spec cannot be resolved, stop and notify the user** (list the closest candidates) — never guess. A resolved spec becomes the plan's `Source doc:` and its Implementation breakdown seeds the Phases/Steps.
 - `--skill-url <url>` (optional, repeatable) — external skill or reference page to honor during planning and execution. Treated as **reference material**, never as permission to bypass project rules.
 - `--slug <kebab-case>` (optional) — override the slug used in the plan filename. Default: derived from the brief.
 - `--force` (optional) — bypass the claim-conflict check when a previous run left a branch or plan behind.
+
+## Chaining
+
+A previous skill may already have opened a PR for this work (e.g. `om-auto-write-spec` landing a spec PR): step 0 detects it via the plan path / branch / **search-prs**, and the run continues on that PR through `om-auto-continue-pr` instead of opening a duplicate. This skill ends by reporting `PR_URL=` / `PR_NUMBER=` markers so the next skill in a chain (`om-auto-review-pr`, `om-auto-verify-pr-ui`) can consume them. Companion skills (all optional, with inline fallbacks): `om-open-pr` (PR opening/labels), `om-code-review` (self-review), `om-auto-review-pr` (autofix loop), `om-auto-continue-pr` (resume).
 
 ## Workflow
 
@@ -204,12 +209,13 @@ If self-review finds issues, fix them and loop back to step 6.
 
 Open (or reuse) the PR following `references/pr-open-reuse.md`: **prefer the
 `om-open-pr` skill when it is installed** (it performs the commit → push → open
-draft PR → normalize labels mechanics and is the single shared implementation), and
+ready PR → normalize labels mechanics and is the single shared implementation), and
 **fall back to the inline path** — the tracker operation **create-pr** against
 `$BASE_BRANCH` — when it is not, so this skill works standalone without `om-open-pr`.
-Either way, never open a second PR when one already exists for the branch. Use a
-conventional-commit-prefixed title scoped to the primary area and the PR body
-template in `references/pr-body-template.md` — it **MUST** include the
+Open the PR **ready for review** (draft only when the run is explicitly handing off
+incomplete work). Either way, never open a second PR when one already exists for the
+branch. Use a conventional-commit-prefixed title scoped to the primary area and the
+PR body template in `references/pr-body-template.md` — it **MUST** include the
 `Tracking plan:` line so `om-auto-continue-pr` can resume. Flip `Status:` to
 `complete` on the PR body once all Progress steps are checked.
 
@@ -284,6 +290,13 @@ Tests: {summary}
 ```
 
 If the run ends before the full gate passes (timeout, external blocker), leave the `Status: in-progress` line in the PR body and tell the user to resume with `om-auto-continue-pr {prNumber}`.
+
+End the report with the chaining markers on their own lines:
+
+```
+PR_URL=<full PR URL>
+PR_NUMBER=<PR number>
+```
 
 ## External skill URL handling (expanded)
 

@@ -1,18 +1,29 @@
 ---
 name: om-open-pr
-description: Commits the worktree's changes, pushes the autofix branch, opens a draft PR against the configured base branch, normalizes PR labels, hands the issue back to the original author, and releases the in-progress lock. Emits PR_URL and PR_NUMBER markers so the next step (review) can reference the PR.
+description: Shared PR opener for the auto pipeline. Commits the worktree, pushes the branch, reuses an existing PR or opens a ready (non-draft) PR against the configured base branch with the unified body template, applies the full SDLC label set with rationale comments, posts the run summary, and for issue-driven runs hands the issue back and releases the lock. Emits PR_URL / PR_NUMBER markers for chaining.
 ---
 
 # Open PR
 
-You are step 4 of an autofix chain (`om-verify-in-repo` → `om-root-cause` → `om-fix` → `om-open-pr` → `om-auto-review-pr`). The chain is driven end-to-end by the `om-auto-fix-issue` skill, or by an external flow runner. The previous step (`om-fix`) edited files, added tests, and ran the validation gate. The repo is checked out on an isolated branch in the current working directory, with uncommitted changes staged or unstaged.
+You are the shared PR-opening step of the agent pipeline. Callers include the autofix chain (`om-verify-in-repo` → `om-root-cause` → `om-fix` → **om-open-pr** → `om-auto-review-pr`, driven by `om-auto-fix-issue`), `om-auto-create-pr`, `om-auto-continue-pr` / `-loop`, `om-auto-implement-issue`, `om-auto-write-spec`, and `om-auto-implement-spec`. The previous step edited files, added tests, and ran the validation gate. The repo is checked out on an isolated branch in the current working directory, with uncommitted changes staged or unstaged.
 
-Your job: ship the work — commit, push, open the PR, hand off — then release the lock. **You must end your message with the `PR_URL=` and `PR_NUMBER=` markers** so the review step has something to reference.
+Your job: ship the work — commit, push, open (or reuse) the PR, label it, summarize, hand off — then release any lock. **You must end your message with the `PR_URL=` and `PR_NUMBER=` markers** so the next step has something to reference.
 
 ## Arguments
 
-- `{issueId}` (required) — the tracker issue id
+- `{issueId}` (optional) — tracker issue id. When present the run is issue-driven: the body carries the linkage line, and step 7 hands the issue back and releases the `in-progress` lock. When absent (brief- or spec-driven runs), skip everything issue-specific.
 - `{repo}` (optional) — `owner/name`; infer from git remote if omitted
+- `{category}` (optional) — one of `bug | feature | refactor | security | dependencies | documentation`; drives the title prefix and category label. Infer from the diff and the previous step's summary when omitted.
+- `--title <text>` (optional) — full PR title; otherwise derive `<prefix>(<area>): <one-line summary>` from the previous step's summary
+- `--plan <path>` (optional) — execution-plan path; adds the `Tracking plan:` / `Status:` lines and the `## Progress` section to the body so `om-auto-continue-pr` can resume
+- `--draft` (optional) — open as a draft. Only for explicitly incomplete work (spec-only design PRs, interrupted runs). Default is **ready for review**: a completed autonomous run leaves a ready PR.
+- `--summary-file <path>` (optional) — caller-provided run-summary body (the `om-auto-create-pr` step-12 structure); when present, post it via **comment-pr** after labeling
+
+## Chaining
+
+A previous skill may already have opened the PR for this branch or issue. Detect it via **search-prs** / **get-pr** before opening anything and reuse it — push, update body/labels — never open a duplicate. Downstream skills consume the `PR_URL=` / `PR_NUMBER=` markers this skill emits.
+
+Companion skills: none required — this skill is itself the shared implementation other skills prefer; it depends only on the tracker descriptor.
 
 ## Load pipeline config
 
@@ -44,7 +55,7 @@ Read `$TRACKER_FILE`; every tracker operation named in this skill executes as th
 
 - File reading and code search; shell (git); tracker operations as defined by `$TRACKER_FILE`
 
-Limit file edits to PR-prep artifacts only (for example, a changelog entry if the project requires one). Do not introduce new code changes — the `om-fix` step already validated what's on disk.
+Limit file edits to PR-prep artifacts only (for example, a changelog entry if the project requires one). Do not introduce new code changes — the previous step already validated what's on disk.
 
 ## Procedure
 
@@ -52,36 +63,30 @@ Limit file edits to PR-prep artifacts only (for example, a changelog entry if th
 
 ```bash
 git status --porcelain
+git log --oneline @{u}.. 2>/dev/null || git log --oneline -5
 ```
 
-If empty, the `om-fix` step produced no edits. Stop and write:
+If there is nothing to commit **and** no unpushed commits, the previous step produced no work. Stop and write:
 
 ```
 Status: blocked
-No changes to commit — the om-fix step did not modify any files. Releasing the lock and exiting.
+No changes to commit — the previous step did not modify any files. Releasing the lock and exiting.
 ```
 
-Then release the lock (step 6 below) and finish. Do not emit `PR_URL=` markers in this case.
+Then release the lock (step 7 below) and finish. Do not emit `PR_URL=` markers in this case.
 
-### 2. Read the om-fix step's summary
+### 2. Read the previous step's summary
 
-The om-fix step's full output is included in your prompt, in a block marked:
+The previous step's full output is included in your prompt, in a block marked:
 
 ```
-— PREVIOUS STEP (om-fix) said —
-<fix summary here>
+— PREVIOUS STEP (<skill name>) said —
+<summary here>
 ```
 
-Pull out:
+Pull out: the one-paragraph summary, the files changed, the tests added, and the breaking-changes statement. You'll reuse these in the commit message, the PR body, and the summary comment.
 
-- the one-paragraph summary
-- the files changed
-- the tests added
-- the breaking-changes statement
-
-You'll reuse these in the commit message and the PR body.
-
-If the block is empty or the om-fix step ended with `Status: blocked`, the previous step did not produce a fix. End your own output with `Status: blocked` immediately (do not commit empty changes), release any lock, and exit. The flow runner will mark the chain failed and skip the review step.
+If the block is empty or the previous step ended with `Status: blocked`, do not commit empty changes — end your own output with `Status: blocked` immediately, release any lock, and exit.
 
 ### 3. Commit
 
@@ -89,10 +94,10 @@ The workflow engine may have left an autosave commit on this branch — fine, yo
 
 ```bash
 git add -A
-git commit -m "fix(<area>): <one-line summary> (#{issueId})"
+git commit -m "<prefix>(<area>): <one-line summary>${issueId:+ (#${issueId})}"
 ```
 
-Where `<area>` is the affected module/package/area (`auth`, `api`, `ui`, `cli`, etc.). Use `feat(...)` if the issue is clearly an enhancement, `refactor(...)`, or `security(...)` as appropriate — `fix(...)` is the default.
+`<prefix>` comes from `{category}` (`bug` → `fix`, otherwise the category name; `fix` is the default when nothing is known). `<area>` is the affected module/package/area (`auth`, `api`, `ui`, `cli`, etc.).
 
 If pre-commit hooks fail, address the issue (don't `--no-verify`) and re-commit.
 
@@ -102,39 +107,38 @@ If pre-commit hooks fail, address the issue (don't `--no-verify`) and re-commit.
 git push -u origin "$(git branch --show-current)"
 ```
 
-Use whatever branch name the engine prepared (typically `autofix/issue-{issueId}` or similar from the chain's configuration). Do not rename the branch.
+Use whatever branch name the caller prepared. Do not rename the branch.
 
-If push fails with a network error, retry once. If it still fails, write:
+If push fails with a network error, retry once. If it still fails, write `Status: blocked` with the error and release the lock anyway (step 7) so a human can pick it up.
 
-```
-Status: blocked
-Push failed: <error>
-```
+### 5. Reuse or open the PR
 
-Release the lock anyway (step 6) so a human can pick it up.
+First check for an existing PR via **search-prs** (head branch; in an issue-driven run also PRs referencing `#{issueId}`). If one exists, **reuse it**: the push above already updated it; refresh its body (step 5 template) and continue to labels. Never open a second PR.
 
-### 5. Open the draft PR
-
-Open the PR via **create-pr**: base `$BASE_BRANCH`, draft, title `fix(<area>):
-<one-line summary> (#{issueId})`, with the body from
-`references/pr-body-template.md` (filled from the `om-fix` summary).
+Otherwise open the PR via **create-pr**: base `$BASE_BRANCH`, **ready for review** (draft only when `--draft` was passed), title from `--title` or `<prefix>(<area>): <one-line summary>${issueId:+ (#${issueId})}`, body from `references/pr-body-template.md` filled from the previous step's summary (include the `Tracking plan:` / `Status:` / `## Progress` parts only when `--plan` was given).
 
 Set `PR_URL` and `PR_NUMBER` from the created PR (via **get-pr**) — you'll need both for the closing message.
 
-After the PR is created, normalize its labels — always through the `apply_label` guard:
+### 6. Normalize labels — the full SDLC set
 
-- Apply the `review` pipeline label
-- Add `skip-qa` only for clearly low-risk changes (docs-only, dependency-only, CI-only, test-only, trivial typo/single-file maintenance)
-- Do not add `needs-qa` automatically unless the fix clearly introduces user-facing behavior that must be manually exercised
-- Never add both `needs-qa` and `skip-qa`
-- When the repo's taxonomy includes priority and risk labels, apply exactly one of each, inferred per the `om-setup-agent-pipeline` taxonomy — an ordinary bug fix is `priority-medium` / `risk-medium`; escalate when the diff touches auth, data scoping, money, DB schema, or shared contract surfaces
-- When `qaGate` is `true` and you applied `needs-qa`, state in the closing comment that the merge waits for `qa-approved`
+Always through the `apply_label` guard; missing labels degrade to a logged skip; `labels.enabled:false` skips all label work. Apply the same taxonomy `om-auto-create-pr` step 10 applies (its `references/label-normalization.md` is the same contract — the two must stay in sync):
 
-After each applied label, post a short PR comment via **comment-pr** explaining why it was applied (e.g., "Label set to `review` because the fix PR is ready for code review.").
+- **Pipeline:** apply `review` — every PR this skill opens starts in review.
+- **Category (additive):** apply the `{category}` label (or the inferred one): `bug`, `feature`, `refactor`, `security`, `dependencies`, `documentation`.
+- **QA meta:** add `skip-qa` only for clearly low-risk non-user-facing changes (docs-only, dependency-only, CI-only, test-only, trivial typo/single-file maintenance); add `needs-qa` when the change introduces user-facing behavior that must be manually exercised; never both.
+- **Priority (exactly one):** outage, data loss, or a security incident → `priority-extreme`; security hardening or a release-blocking regression → `priority-high`; ordinary bug or feature → `priority-medium`; cosmetic, docs, dependency bumps, cleanup → `priority-low`.
+- **Risk (exactly one):** auth, session handling, data scoping, money, DB migrations, shared contract surfaces, or broad cross-cutting edits → `risk-high`; ordinary single-area change with tests → `risk-medium`; docs, dependency bumps, test-only, isolated cleanup → `risk-low`.
+- Never add `qa-approved` — it is earned by manual QA (or the explicit self-QA sign-off in `om-auto-verify-pr-ui`).
+- After each applied label, post a short PR comment via **comment-pr** explaining why (e.g. "Label set to `review` because the PR is ready for code review.").
+- When `QA_GATE` is `true` and you applied `needs-qa`, state in the closing comment that the merge waits for `qa-approved`.
 
-### 6. Hand off the issue and release the lock
+### 7. Post the summary comment
 
-Whether or not the PR opened cleanly, always release the lock — use this as a finally-block.
+When the caller provided a run summary (`--summary-file`, or a complete summary in the PREVIOUS STEP block), post it via **comment-pr** with a body file, using the `om-auto-create-pr` step-12 summary structure (`## 🤖 <caller skill> — run summary`). When no summary material exists, skip silently — the caller owns its own summary. Never post secrets or credential values.
+
+### 8. Hand off the issue and release the lock
+
+Skip this step entirely when no `{issueId}` was given. Whether or not the PR opened cleanly, always release the lock — use this as a finally-block.
 
 Resolve `CURRENT_USER` via **current-user** and `ISSUE_AUTHOR` via **get-issue** (field `author`). If `ISSUE_AUTHOR` is non-empty, differs from `CURRENT_USER`, and `PR_URL` is set:
 
@@ -143,13 +147,13 @@ Resolve `CURRENT_USER` via **current-user** and `ISSUE_AUTHOR` via **get-issue**
 3. **comment-issue** — post on `{issueId}`:
 
 ```
-Thanks @${ISSUE_AUTHOR} — a fix PR is ready: ${PR_URL}. Reassigning the issue to you for verification.
+Thanks @${ISSUE_AUTHOR} — a PR is ready: ${PR_URL}. Reassigning the issue to you for verification.
 ```
 
 Then release the lock: when `LABELS_ENABLED` is `true`, remove the `in-progress` label from `{issueId}` via **unlabel-issue** (through the descriptor's guard; tolerate failure), and post on `{issueId}` via **comment-issue** (when `PR_URL` is unset, substitute `(no PR — aborted)`):
 
 ```
-🤖 `autofix` completed: opened ${PR_URL:-(no PR — aborted)}. Lock released.
+🤖 om-open-pr — completed: opened ${PR_URL:-(no PR — aborted)}. Lock released.
 ```
 
 ## Output contract
@@ -165,25 +169,18 @@ PR_URL=<full PR URL>
 PR_NUMBER=<PR number>
 ```
 
-The two `PR_*` lines must be on their own lines (no quoting, no list markers). The next step (`om-auto-review-pr`) references them via `{{previousPullRequestUrl}}` / `{{previousPullRequestNumber}}` in its args template; if the markers are missing, the review step runs with empty arguments and produces useless output.
+The two `PR_*` lines must be on their own lines (no quoting, no list markers). Downstream skills (e.g. `om-auto-review-pr`) reference them via `{{previousPullRequestUrl}}` / `{{previousPullRequestNumber}}`; if the markers are missing, the next step runs with empty arguments and produces useless output.
 
-On the blocked paths (no changes / push failed / PR open failed), end with:
-
-```
-Status: blocked
-<one-paragraph explanation>
-```
-
-— and omit the `PR_*` lines.
+On the blocked paths (no changes / push failed / PR open failed), end with `Status: blocked` and a one-paragraph explanation — and omit the `PR_*` lines.
 
 ## Rules
 
-- Always release the `in-progress` lock at the end, even on failure — use a trap or finally pattern so a crash still clears it.
+- Always release the `in-progress` lock at the end of an issue-driven run, even on failure — use a trap or finally pattern so a crash still clears it.
 - Open the PR against the configured base branch (`baseBranch` from `.ai/agentic.config.json`); never hard-code the target.
-- Open the PR as a draft — a human reviewer promotes it.
-- Do not introduce new code changes in this step; the `om-fix` step already validated what's on disk.
-- Conventional-commit-style PR title scoped to the affected area: `fix(<area>): … (#{issueId})`.
-- Every label mutation goes through the `apply_label` guard from the tracker descriptor and honors `labels.enabled`.
-- Apply the `review` pipeline label; add `skip-qa` only for clearly low-risk changes; never both `needs-qa` and `skip-qa`.
+- Open the PR **ready for review** by default; `--draft` is only for explicitly incomplete work (spec-only design PRs, interrupted runs). A completed autonomous run leaves a ready PR.
+- Never open a duplicate PR — reuse an existing one for the branch/issue.
+- Do not introduce new code changes in this step; the previous step already validated what's on disk.
+- Conventional-commit-style PR title scoped to the affected area.
+- Every label mutation goes through the `apply_label` guard and honors `labels.enabled`; apply the full set — `review` pipeline label, category, QA meta, exactly one priority, exactly one risk — with a rationale comment per label.
 - Never add `qa-approved` from this skill — it is earned by manual QA.
 - Always emit `PR_URL=` / `PR_NUMBER=` on the success path so the next step has what it needs.

@@ -27,14 +27,21 @@ Two paths, decided by triage:
   Do not rewrite it. If it only partially covers the FR, extend it minimally and
   note precisely what you added.
 - **No spec**: write one by following the `om-spec-writing` workflow **verbatim**,
-  including its skeleton-first drafting and its **Open Questions hard gate**. That
-  gate is a genuine human checkpoint — present the skeleton with numbered Open
-  Questions and STOP until the user answers; never answer your own gate questions
-  to keep moving. When running unattended with no user to answer, stop the run and
-  report that the spec needs the Open Questions resolved before implementation can
-  proceed (do not invent answers). Save the spec at
-  `$SPECS_DIR/{YYYY-MM-DD}-{slug}.md` — the naming shape `om-followup-issue-from-pr`
-  recognizes.
+  including its skeleton-first drafting and its **Open Questions gate**. Handle the
+  gate by mode:
+  - **Interactive** (a user is present and `--autonomous` was not passed): the gate
+    is a genuine human checkpoint — present the skeleton with numbered Open
+    Questions and STOP until the user answers; never answer your own gate questions
+    to keep moving.
+  - **Autonomous** (`--autonomous`, an unattended run, or a delegating auto-skill
+    such as `om-auto-fix-issue`): do **not** stop. Resolve each Open Question with a
+    conservative, reversible default and continue, following
+    `references/autonomous-open-questions.md` — which also posts the questions +
+    applied defaults as an issue/PR comment inviting a human to override before
+    merge.
+
+  Save the spec at `$SPECS_DIR/{YYYY-MM-DD}-{slug}.md` — the naming shape
+  `om-followup-issue-from-pr` recognizes.
 
 The spec's **Implementation Plan** (Phases → testable Steps) is what step 5
 executes, so make sure it exists and each step leaves the app working.

@@ -24,6 +24,7 @@ with no tracker issue, use `om-auto-create-pr` directly; for a defect, use
 - `{issueId}` (required) — the FR issue number in the tracker (a GitHub issue number by default), e.g. `1234`
 - `{repo}` (optional) — `owner/name`; if omitted, infer from the current git remote
 - `--spec-only` (optional) — stop after the spec lands on the PR; leave implementation to a later `om-auto-continue-pr {prNumber}` run (spec-reviewed-first workflow)
+- `--autonomous` (optional) — never stop for a human gate. When `om-spec-writing`'s Open Questions gate would otherwise block, resolve each question with a conservative documented default and continue, posting the questions + applied defaults as an issue/PR comment for later override (see `references/autonomous-open-questions.md`). Implied when the run is unattended (no interactive user to answer) or when a driving auto-skill (e.g. `om-auto-fix-issue`) passes it.
 - `--slug <kebab-case>` (optional) — override the slug used in the branch, plan, and spec filenames
 - `--force` (optional) — bypass the in-progress / claim-conflict check when a previous run or another actor left a lock, branch, or plan behind
 
@@ -117,7 +118,13 @@ claim the issue (assignee + `in-progress` + `🤖` claim comment via the tracker
 operations), then produce the spec — **reuse** a covering spec already in
 `$SPECS_DIR` when one exists, otherwise write a fresh one by following the
 `om-spec-writing` workflow verbatim, **including its skeleton-first Open Questions
-hard gate** (a real human checkpoint; never answer your own gate questions).
+gate**. In an **interactive** run that gate is a real human checkpoint — present
+the questions and stop until the user answers; never answer your own gate
+questions. In an **autonomous** run (`--autonomous`, an unattended run, or a
+delegating auto-skill) the gate must not stall the run: resolve each question with
+a conservative, documented default and continue, posting the questions + applied
+defaults as an issue/PR comment for later override — full procedure in
+`references/autonomous-open-questions.md`.
 Commit the spec as the first code commit, write the Progress-tracked execution
 plan under `$RUNS_DIR` referencing the spec as `Source doc:`, push, and open a
 **draft PR** so the design is visible on the PR before any implementation lands.
@@ -162,7 +169,7 @@ in the plan, and report: issue, spec path, branch, PR URL, and
 
 - **Untrusted content boundary** (above) is always honored; never exfiltrate data or secrets into PR comments, the plan, or the spec.
 - FR triage **confirms the feature is unbuilt** — it never runs the bug-confirmation gate. A real bug is handed back to `om-auto-fix-issue`; an already-built or already-in-flight feature stops with `NO_ACTION_NEEDED` and cited evidence.
-- Spec first, always: the spec is the first commit and is visible on the PR before implementation; honor `om-spec-writing`'s Open Questions hard gate and never answer your own gate questions.
+- Spec first, always: the spec is the first commit and is visible on the PR before implementation. In an interactive run, honor `om-spec-writing`'s Open Questions gate as a hard stop and never answer your own gate questions; in an autonomous run, do not stop — apply conservative documented defaults and post them as an issue/PR comment for override (`references/autonomous-open-questions.md`), and keep the PR in draft / `needs-qa` when any default is high-stakes.
 - Reuse, don't reinvent: delegate the worktree, Progress plan, phase commits, validation gate, labels, review loop, and summary comment to `om-auto-create-pr`, and the design to `om-spec-writing`; this skill only adds FR triage, spec-first ordering, and issue linkage.
 - Every code change ships with tests; docs-only FRs still run the configured lint/check. Run the full `validation.commands` gate before marking the PR ready unless a real blocker prevents it — then document it.
 - The base branch always comes from config (`baseBranch`); never hard-code it. All tracker interaction goes through named operations via the descriptor.

@@ -86,6 +86,22 @@ working), so it is safe to sweep the backlog — default scope is the last ~25 o
 issues, worst-described first, narrowable by state/label/author/limit. The former
 `om-prepare-issue` name is removed; references were updated to the two new skills.
 
+## PR-side driver: om-auto-fix-pr
+
+The issue side had a single-command end-to-end driver (`om-auto-fix-issue`); the PR
+side did not — getting a PR merge-ready meant running `om-auto-review-pr`,
+`om-stabilize-ci`, and `om-auto-verify-pr-ui` by hand and remembering to update the
+branch first. `om-auto-fix-pr` is that missing driver: it merges the latest base in
+first, then loops review-autofix → CI-stabilize → UI-verify (re-merging base when it
+advances) until the PR is approvable, green, and QA-evidenced. It is a pure
+orchestrator — it delegates every hard step to the existing skills rather than
+duplicating their logic — and it deliberately stops short of merging: it leaves the
+PR merge-ready and hands off to `om-approve-merge-pr`/`om-merge-buddy` so the QA gate
+stays the single enforcement point. Two behaviors are explicit: non-blocking review
+findings (nits/low/out-of-scope) become follow-up issues via
+`om-followup-issue-from-pr` instead of blocking or bloating the PR, and fork PRs keep
+the carry-forward supersede/credit rules from `om-auto-review-pr`'s fork flow.
+
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.

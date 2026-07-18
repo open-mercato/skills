@@ -1,5 +1,8 @@
 # Execution Plan: add `om-auto-implement-issue` skill + FR routing in `om-auto-fix-issue`
 
+PR: #27
+
+
 ## Goal
 
 Add a new skill `om-auto-implement-issue` that implements a **feature request (FR)** issue end to end by combining `om-spec-writing` and `om-auto-create-pr`: it first lands a spec on a PR, then implements that spec on the same branch. Modify `om-auto-fix-issue` so an FR issue is routed to the new skill (write a spec + implement) instead of the bug-confirmation autofix chain — after checking the feature is not already implemented.
@@ -47,3 +50,4 @@ Source doc: none (meta-skill authoring; the new skill's own spec-writing step is
 
 - [x] 4.1 Update README skill table and DECISIONS.md — 168299e
 - [x] 4.2 Run `scripts/lint.sh` and self code-review — 168299e (lint OK)
+- [x] Post-review fix: design-only spec PR uses `Refs` (not `Closes`) so a `--spec-only` merge does not prematurely close the FR; `--spec-only` deliberately retains the lock as a resume marker (rule reconciled); dropped the premature slug-branch check in step 1 — 498e8ff

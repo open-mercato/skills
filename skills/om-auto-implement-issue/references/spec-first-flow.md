@@ -83,11 +83,12 @@ the `feature` category label plus one priority and one risk label (skip
 `needs-qa`/`skip-qa` — there is no behavior to QA yet), and post the label
 rationale comments.
 
-Lock handoff on the `--spec-only` stop: this is a deliberate hand-off, not a
-crash, so the run intentionally **keeps** the `in-progress` label and assignee and
-leaves a `🤖` comment stating the spec is ready and implementation resumes with
+Lock handoff on the `--spec-only` stop: the **PR** is the resume handle, not the
+issue lock. Opening the PR hands the issue back and releases its `in-progress` lock
+(`om-open-pr` does this; do the same on the inline path), and you leave a `🤖`
+comment on the issue/PR stating the spec is ready and implementation resumes with
 `om-auto-continue-pr {prNumber}` (or `om-auto-implement-issue {issueId}`, which
-reuses the merged spec). This retained lock is the resume marker, not a leak — the
-resuming run owns releasing it. (Contrast the failure `trap`, which *does* release
-the lock, because an aborted run is not a hand-off.) Otherwise continue to body
-step 5 (implement).
+reuses the spec). The draft PR carrying `Tracking plan:` / `Source doc:` is what a
+resume keys on. (Contrast the failure `trap` before the PR opens, which releases the
+issue lock because an aborted run left no PR to resume from.) Otherwise continue to
+body step 5 (implement).

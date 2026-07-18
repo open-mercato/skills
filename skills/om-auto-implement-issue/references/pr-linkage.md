@@ -53,10 +53,12 @@ See the Progress section in the tracking plan.
 
 Open the PR as a **draft** in step 4 (spec only, no implementation yet). On a full
 run, the same PR becomes the implementing PR, so it carries `Closes #{issueId}`
-from the start; flip it out of draft (**mark-pr-ready**) and change `Status:` to
-`complete` in step 6 once every Progress step is checked, keeping the `Closes`
-line intact (removing it breaks auto-close). On a `--spec-only` run the draft PR
-carries `Refs #{issueId}` and stays a design PR — the FR closes later, when the
+from the start. During implementation the continuation (`om-auto-continue-pr` /
+`-loop`) changes the body `Status:` to `complete` once every Progress step is
+checked; then **step 6 of this skill promotes the PR out of draft via
+mark-pr-ready** (the continuation does not leave draft). Keep the `Closes` line
+intact throughout (removing it breaks auto-close). On a `--spec-only` run the draft
+PR carries `Refs #{issueId}` and stays a design PR — the FR closes later, when the
 implementing PR merges.
 
 ## Labels

@@ -43,7 +43,8 @@ missing descriptor triggers the same setup run); it also resolves `LABELS_ENABLE
 and `QA_GATE`. Read `$TRACKER_FILE`; every tracker operation named in this skill
 (**current-user**, **get-issue**, **search-issues** — backed by the tracker's
 issue-list command and its `--state`/`--label`/`--author`/`--limit` filters —
-**comment-issue**, **list-issue-comments**, and the label guards `label_exists` /
+**comment-issue**, **update-issue** (used only for the non-destructive body
+clarification), **list-issue-comments**, and the label guards `label_exists` /
 `apply_issue_label`) executes as that descriptor defines. Read
 `SDLC.md` at the repo root — its priority/risk inference lists and label state
 machine are the authority for which labels to apply.

@@ -37,8 +37,8 @@ body; redact them (`••••`).
 
 ## Clarifying the body (non-destructive)
 
-Rewrite the issue body so a future implementer can act on it, **without discarding
-the reporter's words**:
+Rewrite the issue body via the **update-issue** tracker operation so a future
+implementer can act on it, **without discarding the reporter's words**:
 
 ```markdown
 ## Summary (clarified by om-auto-manage-issues)

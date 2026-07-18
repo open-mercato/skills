@@ -40,6 +40,7 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 - **create-issue** — title, body, assignee, labels → created issue URL.
 - **close-issue** — id, reason, closing comment.
 - **comment-issue** — id, body.
+- **update-issue** — id, new title and/or body → edits the issue's own fields (not labels/assignees).
 - **assign-issue / unassign-issue** — id, user.
 - **label-issue / unlabel-issue** — id, label (through the guard).
 - **get-issue-comment** — comment id → body, author, URL.

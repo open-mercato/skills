@@ -34,9 +34,11 @@ logged skip; `LABELS_ENABLED=false` skips all):
 - **Pipeline label**: `merge-queue` when the review is approving and every required
   check is green; otherwise the honest state (`changes-requested`, `blocked`).
 - **QA meta**: keep `needs-qa` when user-facing behavior changed and `QA_GATE` is
-  on; a clean `om-auto-verify-pr-ui` pass may carry `qa-self-verified`, but this
-  skill **never** adds `qa-approved` — the QA gate and a QA reviewer own that. When
-  the gate is on, a `needs-qa` PR stays unmergeable until signed off.
+  on. `om-auto-verify-pr-ui` runs here in evidence-only mode, so it attaches
+  screenshots but sets **no** QA labels; this skill **never** adds `qa-approved` or
+  `qa-self-verified` — the QA gate and a QA reviewer own that (a human can opt into
+  the self-QA sign-off separately). When the gate is on, a `needs-qa` PR stays
+  unmergeable until signed off.
 - **Fork supersede/credit**: if step 4 produced a carry-forward replacement PR,
   confirm its body carries `Supersedes #{originalPr}` and explicit credit to the
   original author, and that it is reassigned to them with a handoff comment — per

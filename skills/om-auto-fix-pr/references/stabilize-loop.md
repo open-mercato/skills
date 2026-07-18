@@ -21,9 +21,10 @@ Run in this order (later stages depend on earlier ones landing):
 3. **Verify UI — `om-auto-verify-pr-ui {prNumber}`** — only when the diff touches a
    user-facing surface (inspect **get-pr-diff** / **get-pr-files** for UI paths)
    and `--no-ui` was not passed. It boots the app, drives the changed flow, and
-   posts screenshots + a pass/fail report as a PR comment; it may set
-   `qa-self-verified` on a clean pass. When there is no runnable UI surface, skip
-   and note "UI: n/a".
+   posts screenshots + a pass/fail report as a PR comment. Invoke it in its default
+   **evidence-only** mode (no flags) so it sets **no** QA labels — this orchestrator
+   never self-approves QA. When there is no runnable UI surface, skip and note
+   "UI: n/a".
 4. **Re-merge base** if it advanced this cycle (see `references/base-merge.md`).
 
 ## Exit criteria

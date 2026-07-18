@@ -45,8 +45,9 @@ in `references/screenshot-analysis.md`. In short:
 
 - Analyze any attached screenshot(s) together with the terse text to reconstruct
   what is actually being reported/asked.
-- Rewrite the issue body with a **clarified description**, preserving the
-  reporter's original text verbatim in a collapsed section (non-destructive).
+- Rewrite the issue body via the **update-issue** operation with a **clarified
+  description**, preserving the reporter's original text verbatim in a collapsed
+  section (non-destructive).
 - Post the agent's **understanding** as a single comment — but **only if** no
   equivalent understanding comment from this skill already exists (scan via
   **list-issue-comments** for the skill's understanding marker). This is what

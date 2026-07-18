@@ -58,6 +58,24 @@ preserving the rest of the config.
 
 Newest first. Each entry lists the symptom you will see with a stale installation and the fix.
 
+### 2026-07 — `update-issue` tracker operation + issue skills split
+
+`om-prepare-issue` was split into `om-create-issue` (create path) and
+`om-auto-manage-issues` (enrich existing issues — apply missing SDLC labels,
+clarify a laconic issue's wording from its screenshot + terse text, post an
+understanding comment). The enrichment rewrites the issue body through a new
+tracker operation **update-issue** (for GitHub: `gh issue edit --title --body-file`),
+which the descriptor now defines.
+
+- **Symptom of a stale descriptor:** `om-auto-manage-issues` can apply labels and
+  post comments but cannot rewrite a laconic issue's body — the wording-clarify
+  step degrades or is skipped because the installed descriptor has no
+  `#### update-issue` section.
+- **Fix:** re-sync `.ai/trackers/github.md` as above (the new `#### update-issue`
+  section is the relevant addition). Custom providers: implement **update-issue**
+  per the updated `TEMPLATE.md` contract (edit the issue's own title/body; do not
+  touch labels or assignees — those have their own operations).
+
 ### 2026-07 — Browser providers and first-class agent-browser
 
 Browser-capable skills now read `browser.provider` from

@@ -46,6 +46,8 @@ The agent drafts an execution plan, implements it phase by phase in an isolated 
 
 **Upgrading later?** Skills auto-update on reinstall, but repo-installed artifacts — including `.ai/trackers/<tracker>.md` and `.ai/browsers/<provider>.md` — do not. Run `/om-apply-upgrade-notes` in the repo, or follow [UPGRADE_NOTES.md](UPGRADE_NOTES.md) by hand.
 
+ℹ️ A few skills drive a real browser through the configured browser provider — `om-prepare-test-env`, `om-integration-tests`, and `om-auto-verify-pr-ui`. Because of that, skills.sh validation may flag them as **Medium** or **High** risk. We of course recommend reading any skill before you run it — but we use these exactly as shipped at Open Mercato, with no issues so far.
+
 ## 🎬 See how it works!
 
 [![Watch on YouTube](https://img.youtube.com/vi/zPNW-xtwNsE/maxresdefault.jpg)](https://www.youtube.com/watch?v=zPNW-xtwNsE)
@@ -130,7 +132,7 @@ Interactive helpers: they act once, report, and hand control back to you.
 
 | Skill | What it does |
 |---|---|
-| `om-setup-agent-pipeline` | One-per-repo configurator. Inspects the repository, asks a few questions, writes `.ai/agentic.config.json`, installs tracker and browser-provider descriptors, generates `SDLC.md` and an `AGENTS.md` starter when missing. |
+| `om-setup-agent-pipeline` | One-per-repo configurator. Inspects the repository, asks a few questions, writes `.ai/agentic.config.json`, installs tracker and browser-provider descriptors, generates `SDLC.md` and an `AGENTS.md` starter when missing. Verifies cross-skill coverage: if an installed skill references one that isn't installed, it prints the exact `npx skills add` command to fix it. |
 | `om-apply-upgrade-notes` | Post-upgrade migrator. Applies `UPGRADE_NOTES.md` to the repo: re-syncs installed tracker/browser descriptors while preserving local edits, reports custom-provider gaps, and checks the config against notable upgrades. |
 | `om-merge-buddy` | Scans open PRs and reports which can merge now and which are close but blocked, based on labels, reviews, CI, and mergeability. |
 | `om-approve-merge-pr` | Approves and squash-merges a PR given only its number. Can file a follow-up issue at the same time. |

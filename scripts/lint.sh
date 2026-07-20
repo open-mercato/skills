@@ -66,6 +66,21 @@ done <<EOF
 $ref_hits
 EOF
 
+# Roster-sync gate: the cross-skill coverage roster shipped in
+# om-setup-agent-pipeline must list exactly the skills in skills/ — installed
+# setups use it to tell a missing collection skill from an unrelated om- token.
+roster_file=skills/om-setup-agent-pipeline/references/skill-coverage.md
+if [ ! -f "$roster_file" ]; then
+  err "missing $roster_file (cross-skill coverage roster)"
+else
+  roster=$(sed -n 's/^ROSTER="\(.*\)"$/\1/p' "$roster_file" | tr ' ' '\n' | sed '/^$/d' | sort)
+  shipped=$(ls skills | sort)
+  if [ "$roster" != "$shipped" ]; then
+    err "coverage roster in $roster_file is out of sync with skills/:"
+    diff <(printf '%s\n' "$roster") <(printf '%s\n' "$shipped") >&2
+  fi
+fi
+
 patterns=(
   '[Oo]pen[- ][Mm]ercato'
   '@open-mercato'

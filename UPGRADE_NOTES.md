@@ -74,6 +74,20 @@ preserving the rest of the config.
 
 Newest first. Each entry lists the symptom you will see with a stale installation and the fix.
 
+### 2026-07 — Cross-skill coverage check in `om-setup-agent-pipeline`
+
+Skills delegate to each other, so a cherry-picked `npx skills add … --skill <name>` install can
+leave dangling references (e.g. `om-auto-fix-issue` installed without `om-root-cause`). Setup now
+verifies coverage: it scans every installed skill for references to collection skills — by name and
+via `om-<skill>/references/<file>` pointers — and prints a paste-ready
+`npx skills add open-mercato/skills --skill <missing-1> --skill <missing-2> …` command for anything
+missing (roster + detection script: `skills/om-setup-agent-pipeline/references/skill-coverage.md`).
+
+- **Symptom of a stale installation:** a partial install only fails mid-pipeline, when a skill
+  names a next step that is not installed — nothing warns at setup time.
+- **Fix:** refresh the `om-setup-agent-pipeline` skill and re-run `/om-setup-agent-pipeline`
+  (step "Verify cross-skill coverage") — it lists what is missing and the exact install command.
+
 ### 2026-07 — `update-issue` tracker operation + new `om-auto-manage-issues`
 
 `om-prepare-issue` kept its name and create role, and gained a sibling —

@@ -82,3 +82,4 @@ Keep it under ~400 words. The `om-fix` agent reads this verbatim and acts on it.
 - Do not propose changes to multiple unrelated areas; if the issue spans concerns, pick the smallest defensible primary fix and note the rest under Risks.
 - Reference real file paths and function names — vague guidance forces the `om-fix` agent to re-explore and burns its budget.
 - If you cannot locate a confident root cause, end with `LOW_CONFIDENCE` and your best-guess analysis; the chain will continue but a human reviewer will need to check the fix more carefully.
+- Emoji glossary in user-facing output: 🎯 goal · 📋 plan · 📝 spec · 🏷️ labels · 📸 evidence · 🔍 review · 🧪 tests · 💥 breaking · ✅ pass · ❌ fail · ⚠️ needs-human · ⛔ blocked · 🔁 resume · 🚀 merge/release. Emojis decorate; parsers key on text markers only.

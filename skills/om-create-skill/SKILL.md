@@ -132,3 +132,4 @@ nothing.
   loads on every run anyway; a split must leave the map shorter than the terrain.
 - **The gate is mandatory**: never hand back a skill until `references/gates.md`
   is green.
+- Emoji glossary in user-facing output: 🎯 goal · 📋 plan · 📝 spec · 🏷️ labels · 📸 evidence · 🔍 review · 🧪 tests · 💥 breaking · ✅ pass · ❌ fail · ⚠️ needs-human · ⛔ blocked · 🔁 resume · 🚀 merge/release. Emojis decorate; parsers key on text markers only.

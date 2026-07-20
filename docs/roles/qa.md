@@ -8,15 +8,15 @@ The pipeline lets you boot the app once and reuse it for everything: UI verifica
 
 | Skill | When | Example call | What you get |
 |---|---|---|---|
-| `om-prepare-test-env` | Boot the app for QA/tests | `/om-prepare-test-env` | a reusable booted app + shared test-env descriptor the other skills reuse |
-| `om-auto-qa-pr` | QA a PR's UI (evidence only) | `/om-auto-qa-pr 123` | screenshots + a pass/fail report on the PR; no labels changed |
-| `om-auto-qa-pr` | Sign off your own green run | `/om-auto-qa-pr 123 --self-qa-signoff` | `qa-approved` + `qa-self-verified` when fully green with screenshots on a `needs-qa` PR |
-| `om-auto-qa-pr` | Flag a broken UI | `/om-auto-qa-pr 123 --apply-failure` | `qa-failed` applied with a comment on why |
-| `om-integration-tests` | Add or run E2E coverage | `/om-integration-tests` | integration/E2E tests against the live app, with artifact-based failure diagnosis |
+| [`om-prepare-test-env`](../skills/om-prepare-test-env.md) | Boot the app for QA/tests | `/om-prepare-test-env` | a reusable booted app + shared test-env descriptor the other skills reuse |
+| [`om-auto-qa-pr`](../skills/om-auto-qa-pr.md) | QA a PR's UI (evidence only) | `/om-auto-qa-pr 123` | screenshots + a pass/fail report on the PR; no labels changed |
+| [`om-auto-qa-pr`](../skills/om-auto-qa-pr.md) | Sign off your own green run | `/om-auto-qa-pr 123 --self-qa-signoff` | `qa-approved` + `qa-self-verified` when fully green with screenshots on a `needs-qa` PR |
+| [`om-auto-qa-pr`](../skills/om-auto-qa-pr.md) | Flag a broken UI | `/om-auto-qa-pr 123 --apply-failure` | `qa-failed` applied with a comment on why |
+| [`om-integration-tests`](../skills/om-integration-tests.md) | Add or run E2E coverage | `/om-integration-tests` | integration/E2E tests against the live app, with artifact-based failure diagnosis |
 
 ## What happens automatically
 
-- **Shared test env** — `om-auto-qa-pr` and `om-integration-tests` reuse the same booted app from `om-prepare-test-env` instead of each spinning up their own.
+- **Shared test env** — [`om-auto-qa-pr`](../skills/om-auto-qa-pr.md) and [`om-integration-tests`](../skills/om-integration-tests.md) reuse the same booted app from [`om-prepare-test-env`](../skills/om-prepare-test-env.md) instead of each spinning up their own.
 - **Browser provider provisioned** — the configured provider (agent-browser by default; Playwright supported) is set up autonomously.
 - **Evidence posted** — screenshots + a pass/fail report land as a PR comment via the tracker's image-evidence op (or saved locally when no tracker).
 - **Labels stay untouched by default** — verification changes no labels unless you pass a sign-off/failure flag.
@@ -24,9 +24,9 @@ The pipeline lets you boot the app once and reuse it for everything: UI verifica
 
 ## Tips
 
-- `om-auto-qa-pr` **checks the PR's review state first** — if the PR is still unreviewed it runs `om-auto-review-pr` before the browser QA, so a code review always precedes the UI pass.
+- [`om-auto-qa-pr`](../skills/om-auto-qa-pr.md) **checks the PR's review state first** — if the PR is still unreviewed it runs [`om-auto-review-pr`](../skills/om-auto-review-pr.md) before the browser QA, so a code review always precedes the UI pass.
 - `qa-approved` is **human-owned** — the QA gate blocks merge until a person adds it, no matter how green the checks are.
 - `--self-qa-signoff` is the only path to an automated `qa-approved` (+ `qa-self-verified`), and only when the run is fully green **AND** screenshots were attached **AND** the PR carries `needs-qa` without `skip-qa`. Never sign off a partial or environment-limited run.
 - Use `--apply-failure` to mark `qa-failed` when the UI is broken; it never combines with `qa-approved`.
 - Run `/om-prepare-test-env` once at the start of a QA session — the other skills warm-reuse it, which is much faster than re-booting per PR.
-- Integration tests explore the running app first for real selectors — boot the env before writing them so `om-integration-tests` sees live locators.
+- Integration tests explore the running app first for real selectors — boot the env before writing them so [`om-integration-tests`](../skills/om-integration-tests.md) sees live locators.

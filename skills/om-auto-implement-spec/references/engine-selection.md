@@ -1,6 +1,7 @@
-# Choosing the implementation engine — continue vs continue-loop
+# Choosing the implementation engine — plain vs loop, create vs continue
 
-How `om-auto-implement-spec` step 2 picks the engine when a spec PR already exists, and why implementation is then a **continuation** rather than a fresh `om-auto-create-pr` run.
+How `om-auto-implement-spec` step 2 picks the engine. Two independent axes:
+**create vs continue** is decided by whether a spec PR already exists (continuation, never a second PR); **plain vs loop** is decided by spec size — the same size criteria apply on both sides, so a long spec gets the loop engine whether it starts fresh (`om-auto-create-pr-loop`) or continues a spec PR (`om-auto-continue-pr-loop`). This is also the path an issue takes through `om-auto-fix-issue`'s feature route, so a long-spec feature issue lands on the loop engine automatically.
 
 ## Why continuation, not a new create-pr run
 
@@ -12,8 +13,8 @@ How `om-auto-implement-spec` step 2 picks the engine when a spec PR already exis
 
 Read the spec's **Implementation Plan** (Phases → Steps) and pick:
 
-- **`om-auto-continue-pr`** — the default. Use it for an ordinary spec: a handful of phases, a bounded number of steps, no need for mid-run checkpoints. Write the standard Progress-checklist plan (the format it parses) so it resumes from the first unchecked step and drives to `complete`.
-- **`om-auto-continue-pr-loop`** — for a **large, many-step** spec where resumability and strict step tracking matter: many phases/steps (roughly >8–10), UI work needing screenshots, or a plan that will not finish in one pass. It expects the **run-folder** format (`PLAN.md` Tasks table + `HANDOFF.md`/`NOTIFY.md`) that `om-auto-create-pr-loop` writes and checkpoints every ~5 steps.
+- **Plain engine** (`om-auto-continue-pr` when a spec PR exists, `om-auto-create-pr` when not) — the default. Use it for an ordinary spec: a handful of phases, a bounded number of steps, no need for mid-run checkpoints. Write the standard Progress-checklist plan (the format it parses) so it resumes from the first unchecked step and drives to `complete`.
+- **Loop engine** (`om-auto-continue-pr-loop` when a spec PR exists, `om-auto-create-pr-loop` when not) — for a **large, many-step** spec where resumability and strict step tracking matter: many phases/steps (roughly >8–10), UI work needing screenshots, or a plan that will not finish in one pass. It uses the **run-folder** format (`PLAN.md` Tasks table + `HANDOFF.md`/`NOTIFY.md`) that `om-auto-create-pr-loop` writes and checkpoints every ~5 steps.
 
 ## Consequence for the plan format
 

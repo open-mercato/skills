@@ -1,9 +1,9 @@
 # FR triage gate — is this an unbuilt feature?
 
-The read-only gate `om-auto-implement-issue` runs in step 2 before touching a
-worktree. It is the feature-side analogue of the `om-verify-in-repo` bug gate: a
-bug gate asks "is this defect real and still unfixed?"; this gate asks "is this
-really a feature request, and is the feature not already implemented?" Operate
+The read-only gate `om-auto-fix-issue`'s **feature route** runs (step F1) before
+touching a worktree. It is the feature-side analogue of the `om-verify-in-repo` bug
+gate: a bug gate asks "is this defect real and still unfixed?"; this gate asks "is
+this really a feature request, and is the feature not already implemented?" Operate
 **read-only** — file reads, code search, and read-only tracker operations
 (**get-issue**, **search-prs**, **search-issues**, **repo-info**,
 **current-user**) only. No edits, commits, claims, or branch creation.
@@ -32,10 +32,11 @@ Classify conservatively, label-first then content:
   *used to work / should work but is broken* (a regression, error, crash, wrong
   output, "broken", "fails", "regressed", stack trace, steps-to-reproduce).
 
-If the issue is clearly a **bug**, stop with `NO_ACTION_NEEDED` and state that it
-belongs on the `om-auto-fix-issue` chain, not here. When an issue mixes a defect
-and a new capability, prefer stopping and recommend the user split it (file the
-bug for `om-auto-fix-issue`, keep the FR for this skill) rather than guessing.
+If the issue is clearly a **bug**, stop this feature route with `NO_ACTION_NEEDED`
+and state that it belongs on `om-auto-fix-issue`'s bug chain, not the feature route.
+When an issue mixes a defect and a new capability, prefer stopping and recommend the
+user split it (the bug goes to the bug chain, the FR stays on the feature route)
+rather than guessing.
 
 ### 3. Is the feature already implemented, or already in flight?
 
@@ -47,7 +48,7 @@ Before writing any spec, prove the feature does not already exist:
   with `NO_ACTION_NEEDED`, citing the file/symbol.
 - **Specs directory** (`$SPECS_DIR`, plus the repo's design-doc areas): read the
   TLDR/overview of candidate specs. A spec that already fully covers the ask is
-  reused later (step 4), **not** a stop — note its path and continue. A spec plus
+  reused later (step F3), **not** a stop — note its path and continue. A spec plus
   an **open PR or merged PR/commit** already delivering it is a stop with
   `NO_ACTION_NEEDED` (search via **search-prs** for `#{issueId}` and for the
   feature name; scan `origin/$BASE_BRANCH` history).

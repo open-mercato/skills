@@ -1,6 +1,6 @@
 # Boot the app via om-prepare-test-env
 
-Detailed procedure for step 4 of `om-auto-verify-pr-ui`. Do not boot the app by hand. Invoke the `om-prepare-test-env` skill (mode `auto`; pass `--no-ephemeral` when the app clearly needs no backing services). It discovers or provisions a runnable instance, installs the configured browser provider when missing, and writes the environment descriptor. Then read the descriptor:
+Detailed procedure for step 7 of `om-auto-qa-pr`. Do not boot the app by hand. Invoke the `om-prepare-test-env` skill (mode `auto`; pass `--no-ephemeral` when the app clearly needs no backing services). It discovers or provisions a runnable instance, installs the configured browser provider when missing, and writes the environment descriptor. Then read the descriptor:
 
 ```bash
 QA_DIR=$(jq -r '.paths.qa // ".ai/qa"' .ai/agentic.config.json 2>/dev/null || echo ".ai/qa")

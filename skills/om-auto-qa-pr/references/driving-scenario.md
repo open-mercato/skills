@@ -1,6 +1,6 @@
 # Driving the scenario and capturing screenshots
 
-Detailed procedure for step 6 of `om-auto-verify-pr-ui`. Exercise the scenario against `BASE_URL`, capturing a screenshot at each verification point into `$ARTIFACTS_DIR`:
+Detailed procedure for step 9 of `om-auto-qa-pr`. Exercise the scenario against `BASE_URL`, capturing a screenshot at each verification point into `$ARTIFACTS_DIR`:
 
 - **Explore first** through the descriptor's **open** and **snapshot** operations
   to discover real semantic elements and confirm the happy path renders.

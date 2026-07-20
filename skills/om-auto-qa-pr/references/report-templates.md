@@ -1,7 +1,7 @@
-# Verification report templates (step 7)
+# Verification report templates (step 10)
 
-The machine- and human-readable report artifacts `om-auto-verify-pr-ui` writes
-into `$ARTIFACTS_DIR` in every mode (step 7). These are the primary deliverable
+The machine- and human-readable report artifacts `om-auto-qa-pr` writes
+into `$ARTIFACTS_DIR` in every mode (step 10). These are the primary deliverable
 in local mode and the source of the PR comment in PR mode.
 
 `$ARTIFACTS_DIR/report.json`:
@@ -49,3 +49,21 @@ template:
 Rules: report only what was observed; never paste secrets, tokens, `.env`
 content, or non-demo credentials; redact sensitive values that leaked into a
 screenshot before including it, or omit the screenshot and say so.
+
+## Follow-up UI-test scenario (step 12)
+
+Posted only when `HAS_UI_TEST` is false — as a second PR comment (**comment-pr**)
+in PR mode, or appended to `report.md` in local mode:
+
+```markdown
+## 🧪 Follow-up: add a UI/integration test
+
+This change ships no browser-level test. The UI QA above was manual; lock it in
+with an automated test (run `/om-integration-tests`).
+
+**Scenario (derived from the manual run above):**
+1. Setup: {fixtures to create via API — prefer the repo's integration fixtures}
+2. Act: {the UI steps exercised above}
+3. Assert: {the expected outcomes verified above}
+4. Teardown: delete every fixture created.
+```

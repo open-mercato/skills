@@ -12,7 +12,8 @@ Skip the issue (record the reason for the report, mutate nothing) when:
 
 - A **different actor holds an active claim**: it carries `in-progress` with an
   assignee who is not `$CURRENT_USER` (resolve via **current-user**), or a fresh
-  `🤖` claim comment (< ~30 min) from another actor. Never collide with active
+  `🤖` claim comment (< ~30 min) from another actor. This is the three-signal
+  check of `references/claim-pr.md`, used skip-only. Never collide with active
   work.
 - It carries a repo-defined **human-hold** label (e.g. `do-not-close`, or any
   hold label the repo's `SDLC.md` / labels config marks as agent-off-limits).
@@ -53,9 +54,39 @@ in `references/screenshot-analysis.md`. In short:
   **list-issue-comments** for the skill's understanding marker). This is what
   makes re-runs a no-op.
 
+## 4. Spec check (feature-category issues)
+
+For an issue whose category is (or becomes in step 2) `feature`, check whether a
+covering spec exists — the same approach as `om-prepare-issue` step 2, read-only:
+
+- Read the repo's specs directory (`$SPECS_DIR`, plus the design-doc areas the repo
+  uses) and judge by the spec's TLDR/overview whether its scope covers this issue's
+  ask — not by filename alone.
+- **search-prs** for an open PR that already adds a covering spec (a design/spec doc
+  under `$SPECS_DIR` or the repo's design-doc areas) — a spec in flight counts as
+  covered; note that PR.
+
+Record `SPEC_STATUS` = `covered` (spec path or spec-PR link) | `missing`. A
+`bug`/non-feature issue is `n/a`. This check mutates nothing on its own.
+
+## 5. Author a missing spec (only with `--write-missing-specs`)
+
+Default **OFF**: when the flag is not set, do nothing here — the `missing` status is
+carried into the report so a human can decide.
+
+When `--write-missing-specs` is set **and** `SPEC_STATUS` is `missing`: delegate to
+**`om-auto-write-spec {issueId}`** verbatim — it claims the issue, writes the spec
+via `om-spec-writing --autonomous`, opens the spec PR (`Refs #{issueId}`), and emits
+`SPEC_PATH` + `PR_NUMBER`. Then link the result back on the issue via
+**comment-issue** (spec path + spec-PR link), idempotently (skip when a spec-PR link
+from this skill already exists). Under `--dry-run`, record the intent and mutate
+nothing. This is the one place this housekeeping pass produces a PR — a design-only
+spec PR, never implementation.
+
 ## Idempotency summary
 
 Running this procedure twice on the same issue must change nothing the second
-time: labels already present are left alone, and the understanding comment /
-clarified-body markers are detected and not duplicated. Design every mutation as
-"add if missing", never "post again".
+time: labels already present are left alone, the understanding comment /
+clarified-body markers are detected and not duplicated, and a spec-PR link this
+skill already posted is not re-posted. Design every mutation as "add if missing",
+never "post again".

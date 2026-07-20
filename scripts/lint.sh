@@ -32,6 +32,22 @@ for dir in skills/*/; do
   if [ -z "$fm_desc" ]; then
     err "$file frontmatter is missing a description"
   fi
+
+  # A bare ': ' inside an UNQUOTED frontmatter value makes the YAML invalid
+  # ("mapping values are not allowed here"). The skills CLI does not report an
+  # error for that — it silently skips the skill, so it never installs and
+  # quietly disappears on the next reinstall. Quote the value or rephrase
+  # (the collection uses an em dash for this).
+  while IFS= read -r fm_line; do
+    fm_key=${fm_line%%:*}
+    fm_val=${fm_line#*: }
+    case "$fm_val" in
+      '"'*|"'"*) continue ;;
+    esac
+    case "$fm_val" in
+      *': '*) err "$file frontmatter '$fm_key' has a bare ': ' in an unquoted value — invalid YAML, so the skill is silently skipped on install. Quote it or use an em dash." ;;
+    esac
+  done < <(printf '%s\n' "$fm" | grep -E '^(name|description):' || true)
 done
 
 patterns=(

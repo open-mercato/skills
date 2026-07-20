@@ -108,7 +108,7 @@ flowchart LR
 
 ### 🤖 Autonomous skills
 
-Hand these a brief, an issue, or nothing at all — they run end-to-end without supervision: they claim their work with the `in-progress` lock so concurrent agents back off, work in isolated worktrees so your checkout stays untouched, run the validation gate, self-review, and finish with a PR, a review verdict, or a reconciled tracker. Safe to run on a schedule or in CI.
+**Naming convention:** the `om-auto-*` prefix means **autonomous and non-interactive** — hand these a brief, an issue, or nothing at all and they run end-to-end without supervision: they claim their work with the `in-progress` lock so concurrent agents back off, work in isolated worktrees so your checkout stays untouched, run the validation gate, self-review, make the recommended most-reversible call themselves (documented for override) instead of stopping to ask, and finish with a PR, a review verdict, or a reconciled tracker. Safe to run on a schedule or in CI. Every skill **without** the `auto` prefix is interactive: it acts once, may ask you questions, reports, and hands control back.
 
 | Skill | What it does autonomously |
 |---|---|
@@ -119,14 +119,14 @@ Hand these a brief, an issue, or nothing at all — they run end-to-end without 
 | `om-auto-implement-spec` | Implements an existing spec (by path, name, issue, or spec-PR number; clean stop when not found): reuses the spec PR's branch or runs `om-auto-create-pr`, then the review autofix loop and UI verification with screenshots on the PR. |
 | `om-auto-continue-pr` | Resumes an in-progress PR from the first unchecked step in its tracking plan and carries it to completion — implementation, validation, review loop, summary comment. |
 | `om-auto-continue-pr-loop` | Resumes runs started by `om-auto-create-pr-loop`: orients from HANDOFF.md, picks up at the first non-done Tasks-table row, keeps the per-step commit and checkpoint discipline to completion. |
-| `om-auto-review-pr` | Reviews a PR by number in an isolated worktree, approves or requests changes, manages labels. On changes-requested, its autofix loop iterates fixes and re-review until merge-ready. |
+| `om-auto-review-pr` | Reviews a PR by number in an isolated worktree, approves or requests changes, manages labels. On changes-requested, its autofix loop iterates fixes and re-review until merge-ready. A spec-only design PR gets a **specification review** instead of the code checklist: what can go wrong, backward compatibility, what's missing, how the spec can be improved, and whether it is the simplest possible solution — same severity scale and verdict rule, and the autofix loop amends the spec document (never adds implementation). |
 | `om-auto-fix-pr` | Drives one PR to merge-ready: merges the latest base in first, then loops review-autofix (`om-auto-review-pr`), its own CI-stabilization step (classify each failing check as real bug / test bug / flake / infra, fix the real ones with tests, never fake green), and UI QA (`om-auto-qa-pr`), re-merging base whenever it advances. Files follow-up issues for non-blocking nits via `om-followup-issue-from-pr`, keeps the fork carry-forward supersede/credit rules, normalizes labels, and hands off to `om-approve-merge-pr` — it never merges itself. A `--ci-only [--branch <name>]` mode drives a plain branch or no-PR change to green CI without the rest of the loop. |
 | `om-review-prs` | Sweeps all unreviewed open PRs, newest first, through `om-auto-review-pr`, respecting claim locks. |
 | `om-close-fixed-issues` | Post-merge housekeeping sweep: closes issues that merged PRs fix, comments on issues whose PRs were closed without merging. |
 
 ### 🧑‍💻 You invoke
 
-Interactive helpers: they act once, report, and hand control back to you.
+Interactive helpers (no `auto` in the name — the other half of the naming convention): they act once, may ask you questions along the way, report, and hand control back to you.
 
 | Skill | What it does |
 |---|---|
@@ -138,7 +138,7 @@ Interactive helpers: they act once, report, and hand control back to you.
 | `om-followup-issue-from-pr` | Turns a PR or a PR comment into a tracked follow-up issue, assigned to the right person. |
 | `om-spec-writing` | Writes and reviews feature specs to staff-engineer standards: skeleton-first with a hard Open Questions gate, phased implementation breakdown that feeds `om-auto-create-pr`, severity-ranked architectural reviews. |
 | `om-prepare-issue` | Files a single well-formed tracker issue for deferred work: dedupes against existing issues and PRs, links (or authors) a covering spec, otherwise embeds step-by-step guidance, and applies the SDLC labels on creation. |
-| `om-auto-manage-issues` | Brings existing issues up to standard, single or in bulk: applies missing SDLC labels, and for a laconic issue (one line + a screenshot) analyzes the screenshot with the terse text, clarifies the wording non-destructively, and posts the agent's understanding as a comment. Batch defaults to the last ~25 open, worst-described first, narrowable by state/label/author/limit. Idempotent and claim-aware. |
+| `om-auto-manage-issues` | Brings existing issues up to standard, single or in bulk: applies missing SDLC labels, and for a laconic issue (one line + a screenshot) analyzes the screenshot with the terse text, clarifies the wording non-destructively, and posts the agent's understanding as a comment. Checks spec coverage for feature issues: when one lacks a covering spec it posts a spec-required comment to the issue author (fill up the spec before implementation), or authors the spec itself via `om-auto-write-spec` with `--write-missing-specs` (default off). Batch defaults to the last ~25 open, worst-described first, narrowable by state/label/author/limit. Idempotent and claim-aware. |
 | `om-integration-tests` | Creates and runs integration/E2E tests by exploring the running app first — real locators, runtime fixtures, no hardcoded IDs — and reports failures with artifact-based per-test diagnosis. Reuses the shared `om-prepare-test-env` instance so QA and tests hit the same booted app. |
 | `om-auto-qa-pr` | QAs a change's UI in a real browser without merging. Checks the PR's review state first and runs `om-auto-review-pr` when the PR is still unreviewed, then boots the app via `om-prepare-test-env`, derives a scenario from the diff, drives the configured browser provider with screenshots, and produces a pass/fail report. Posts evidence as a PR comment when a tracker is configured; otherwise saves screenshots + JSON/Markdown reports. |
 | `om-auto-update-changelog` | Drafts a CHANGELOG.md release entry for every PR merged since the last release — emoji categories, contributor credits with the Supersede Credit Rule for carried-forward fork PRs — then delegates to `om-auto-create-pr` to ship it as a docs PR. |
@@ -167,7 +167,7 @@ Turn ideas into well-formed, labeled work — and review the plan before any cod
 | ▶️ You run | ⚙️ Runs automatically inside | 🎁 You get |
 |---|---|---|
 | `/om-prepare-issue "Bulk-archive orders from the grid"` | dedupe search, `om-spec-writing` (when a feature needs a spec) | one well-formed issue with SDLC labels, a linked spec or step-by-step guidance |
-| `/om-auto-manage-issues` | claim-aware label sync, screenshot analysis, implementation-prep comment | the backlog triaged: missing labels added, laconic issues clarified, worst-described first |
+| `/om-auto-manage-issues` | claim-aware label sync, screenshot analysis, implementation-prep comment, spec-coverage check | the backlog triaged: missing labels added, laconic issues clarified, feature issues without a spec get a spec-required comment to their author (or a spec via `--write-missing-specs`) |
 | `/om-auto-write-spec 123` | `om-spec-writing --autonomous`, `om-open-pr` | a spec-first PR to review before implementation starts |
 
 More: [docs/roles/product-manager.md](docs/roles/product-manager.md)

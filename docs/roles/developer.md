@@ -18,7 +18,7 @@ Hand the pipeline a brief, a spec, or an issue number and get back a labeled, re
 
 - **Isolated worktrees** — every autonomous run works off a fresh branch worktree; your checkout is never touched.
 - **Validation gate** — the configured commands run and any non-zero exit blocks the PR.
-- **Self-review + autofix loop** — `om-auto-review-pr` reviews the diff and iterates fixes until merge-ready.
+- **Self-review + autofix loop** — `om-auto-review-pr` reviews the diff and iterates fixes until merge-ready. On a spec-only PR it switches to a specification review (risks, backward compatibility, gaps, improvements, simplicity) and its autofix amends the spec document, never adds implementation.
 - **UI verification** — user-facing PRs get screenshots + a pass/fail report from `om-auto-qa-pr`.
 - **Chain markers** — `PR_URL` / `PR_NUMBER` are emitted so the next skill continues the same PR, never a duplicate.
 - **Full label set + run-summary comment** on the finished PR (pipeline + category + priority + risk + QA meta).

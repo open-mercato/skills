@@ -69,12 +69,36 @@ covering spec exists — the same approach as `om-prepare-issue` step 2, read-on
 Record `SPEC_STATUS` = `covered` (spec path or spec-PR link) | `missing`. A
 `bug`/non-feature issue is `n/a`. This check mutates nothing on its own.
 
-## 5. Author a missing spec (only with `--write-missing-specs`)
+## 5. Handle a missing spec
 
-Default **OFF**: when the flag is not set, do nothing here — the `missing` status is
-carried into the report so a human can decide.
+Two branches on `SPEC_STATUS = missing`, chosen by the `--write-missing-specs` flag.
 
-When `--write-missing-specs` is set **and** `SPEC_STATUS` is `missing`: delegate to
+**Default (flag OFF) — post the spec-required comment.** The skill authors nothing,
+but it does not stay silent either: post a comment on the issue, addressed to the
+issue author, saying the spec must be filled in before implementation starts. Use
+the standard idempotent marker and update in place on re-runs (never duplicate);
+skip entirely when a spec-PR link from this skill is already on the issue (the gap
+is being closed) or when the marker comment already reflects the current state:
+
+```markdown
+🤖 om-auto-manage-issues — spec required
+
+@{author} 📝 this feature issue has no covering specification (checked `$SPECS_DIR`
+and open spec PRs). Please fill up the spec before implementation starts:
+
+- write it following the repo's spec conventions (the `om-spec-writing` skill), and
+  link it here, **or**
+- have it authored autonomously: run `om-auto-write-spec {issueId}` (or re-run
+  triage with `--write-missing-specs`).
+
+⛔ Implementation skills will treat this issue as not ready until a spec is linked.
+```
+
+The `missing` status plus the comment outcome (posted / updated / skipped) is
+carried into the report. Under `--dry-run`, record the intent and post nothing.
+
+**With `--write-missing-specs`** the comment above is not posted — the gap is closed
+instead of announced: delegate to
 **`om-auto-write-spec {issueId}`** verbatim — it claims the issue, writes the spec
 via `om-spec-writing --autonomous`, opens the spec PR (`Refs #{issueId}`), and emits
 `SPEC_PATH` + `PR_NUMBER`. Then link the result back on the issue via
@@ -87,6 +111,7 @@ spec PR, never implementation.
 
 Running this procedure twice on the same issue must change nothing the second
 time: labels already present are left alone, the understanding comment /
-clarified-body markers are detected and not duplicated, and a spec-PR link this
-skill already posted is not re-posted. Design every mutation as "add if missing",
+clarified-body markers are detected and not duplicated, a spec-required comment is
+updated in place (and removed from consideration once a spec is linked), and a
+spec-PR link this skill already posted is not re-posted. Design every mutation as "add if missing",
 never "post again".

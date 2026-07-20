@@ -1,4 +1,4 @@
-# UI mockups and current-app screenshots (step 4)
+# UI mockups and current-app screenshots (step 5)
 
 Visual evidence for a UI-facing spec: what the affected screens look like **today**, and what the spec proposes they look like. Both end up on the spec PR via **attach-image-evidence**.
 
@@ -9,7 +9,7 @@ Visual evidence for a UI-facing spec: what the affected screens look like **toda
 
 ## 1. Current-state screenshots
 
-1. Boot the app through the test-env descriptor (same flow as `om-auto-verify-pr-ui` step 4 — reuse a healthy running env when the descriptor says it is fresh).
+1. Boot the app through the test-env descriptor (same flow as `om-auto-qa-pr` step 4 — reuse a healthy running env when the descriptor says it is fresh).
 2. From the spec's UI/UX section, list the existing screens/flows the feature touches (routes, admin pages, components). Cap at the 3–6 most relevant screens.
 3. Drive each screen with the browser-provider operations (open → wait for load → screenshot) into `${SPECS_DIR}/assets/${SLUG}/current-NN-<screen>.png`. Verify each PNG is non-empty.
 4. When the app cannot boot or a screen errors, capture what you can and note the gaps — partial evidence beats none.

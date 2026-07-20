@@ -31,10 +31,16 @@ Start from `references/templates/skill-skeleton.md`. Fill:
 
 - **Frontmatter** — `name` == directory; `description` crafted per
   `references/description-guide.md`.
-- **Preamble** — paste the needed blocks verbatim from
+- **Preamble** — give the new skill its own `references/agentic-setup.md`,
+  built by pasting the needed blocks verbatim from
   `references/shared-boilerplate.md` (config load, repo-local extension check,
-  untrusted-content boundary, value sanitization). Drop the tracker/label parts
-  for a read-only skill; always keep the untrusted-content boundary.
+  untrusted-content boundary, value sanitization), and a two-line step 0 in
+  the body that loads it and names the config vars / tracker operations the
+  skill uses (the this-skill-uses list). Also give it a `references/rules.md`
+  carrying the shared rules (same shape as this skill's
+  `references/rules.md`), pointed to from a one-line "Shared rules:" bullet.
+  Drop the tracker/label parts for a read-only skill; always keep the
+  untrusted-content boundary.
 - **Arguments / Contract** — the signature, concisely.
 - **Workflow skeleton** — numbered steps as one-liners; each says *what* happens
   and *which reference to open* for detail.

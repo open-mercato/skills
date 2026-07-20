@@ -1,10 +1,10 @@
-# Checkpoint pass (every 5 resumed Steps) — step 4b
+# Checkpoint pass (every 5 resumed Steps) — step 6b
 
 Fire when any of these is true:
 
 - 5 Steps have landed since the start of this resume (or since the last checkpoint in this resume).
 - The next Step would close a Phase and the Phase has ≥3 Steps.
-- Every row in the Tasks table is now `done` — the final gate in step 5 subsumes this.
+- Every row in the Tasks table is now `done` — the final gate in step 7 subsumes this.
 - A blocker stops the run mid-Phase.
 
 At a checkpoint, run the following and record them in a single `${RUN_DIR}/checkpoint-<N>-checks.md` (use the next available `<N>` — increment from the highest existing checkpoint number on the branch):

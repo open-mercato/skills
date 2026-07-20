@@ -4,7 +4,10 @@ The standard opening blocks every OM pipeline skill carries. In author mode, pas
 the ones the new skill needs verbatim (adjusting only the skill name and the list
 of config keys it actually uses). Keeping them identical across skills is the
 point — do not paraphrase. All of these are safety/orchestration content that
-belongs in the body (layer 2), never in `references/`.
+loads on **every** run: in the current house shape they live in the skill's own
+`references/agentic-setup.md`, which the body's two-line step 0 always loads
+first (with the skill's this-skill-uses list kept visible in the body) — never
+behind a conditional lazy-load.
 
 ## Config load (adjust the resolved keys to what the skill uses)
 
@@ -65,7 +68,7 @@ contract in this repo's AGENTS.md):
   (`om-auto-create-pr` step-12 structure), evidence (**attach-image-evidence**),
   release/handback. Post only the subset the skill's role needs.
 - Labels only through the descriptor guards, per the canonical rules
-  (`om-open-pr` step 6 / `om-auto-create-pr/references/label-normalization.md`);
+  (`om-open-pr` step 6 / this skill's copy in `references/pr-finalize.md`);
   PRs open ready-for-review unless explicitly incomplete; never `qa-approved`.
 - Emoji glossary, used consistently in all user-facing output (PR bodies,
   comments, reports): 🤖 agent comment marker · 🎯 goal · 📋 plan/tracking ·

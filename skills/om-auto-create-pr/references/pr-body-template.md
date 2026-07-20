@@ -1,6 +1,6 @@
-# PR body template (step 9)
+# PR body template (step 10)
 
-The PR body `om-auto-create-pr` opens the PR with in step 9 — the inline-fallback
+The PR body `om-auto-create-pr` opens the PR with in step 10 — the inline-fallback
 copy of the unified template owned by `om-open-pr` (its
 `references/pr-body-template.md`); the two must stay in sync (see the cross-skill
 contract in this repo's AGENTS.md). It **MUST** include the `Tracking plan:` line

@@ -1,6 +1,6 @@
 # Duplicated / already-merged change detection
 
-Detailed procedure for step 4a of `om-auto-review-pr`. Before proceeding with the full review, verify that the PR does not duplicate work already present in the base branch. This catches: the base branch already contains the same fix (e.g., merged via a different PR); a parallel PR landed the same feature while this one was open; the PR's changes are a subset of recently merged work.
+Detailed procedure for step 6 of `om-auto-review-pr`. Before proceeding with the full review, verify that the PR does not duplicate work already present in the base branch. This catches: the base branch already contains the same fix (e.g., merged via a different PR); a parallel PR landed the same feature while this one was open; the PR's changes are a subset of recently merged work.
 
 Steps:
 

@@ -1,6 +1,53 @@
-# Pre-flight run-ownership check
+# Claiming and releasing work — issues and PRs
 
-Before writing anything, confirm no other run owns the slot. Resolve `CURRENT_USER` via the tracker operation **current-user**, then compute:
+The generalized claim/lock procedure for any tracker item (issue or PR) an autonomous run takes ownership of. All reads and mutations go through the tracker descriptor's operations; label mutations only through the `apply_label` guard. This complements the skill-specific slot check (run folder / branch / open PR — see the specifics section below) — the slot check decides whether the *work* exists, this procedure decides who *owns* it.
+
+## Three-signal in-progress check
+
+Resolve `CURRENT_USER` via the tracker operation **current-user**, then read the item (for PRs via **get-pr**; for issues via the descriptor's issue-read operation). The item counts as **already in progress** when ANY of these signals holds:
+
+1. **Assignee** — the item is assigned to someone other than `CURRENT_USER`.
+2. **`in-progress` label** — the label is present on the item.
+3. **Recent robot claim comment** — a claim comment in the format below, posted within the stale window (default 24 h) by someone other than `CURRENT_USER`.
+
+Decision:
+
+- No signal → claim and proceed.
+- Signals point at `CURRENT_USER` → re-entry into your own run; refresh the claim (idempotent) and continue.
+- Signals point at someone else → **STOP** and report the owner — unless the lock is stale (below) or `--force` was passed.
+
+## Stale-lock recovery
+
+A claim is **stale** when the newest claim signal is older than the stale window (24 h) and the claimant has produced no commits, comments, or label changes on the item since. Recover by posting a takeover note first — `🤖 Previous claim by {owner} appears stale ({age}); taking over.` — then claim normally. Never silently overwrite a live claim.
+
+## `--force` override
+
+`--force` bypasses the conflict stop, never the transparency: post an override comment naming the previous owner and why the override happened (`🤖 --force override: taking over from {owner} — {reason}.`), then apply the claim. Document the override in the run's plan/report.
+
+## Applying the claim
+
+Idempotent — safe to re-run on re-entry:
+
+1. Assign `CURRENT_USER` to the item via the descriptor's assign operation.
+2. Apply the `in-progress` label via the `apply_label` guard (missing label → logged skip; `labels.enabled: false` → skip and note it in the report).
+3. Post the claim comment, once (skip when an identical recent comment by `CURRENT_USER` already exists):
+
+   `🤖 Claiming this {issue|PR} — starting {skill-name} run. Started: {ISO-8601 timestamp}.`
+
+## Release / handback
+
+When the run finishes, hands off, or aborts:
+
+- Remove the `in-progress` label via the guard.
+- In issue-driven runs, hand the issue back: restore the original assignee/author when the pipeline convention expects it.
+- Post a short release comment stating the outcome (PR opened with its number, blocked with the blocker, or no action needed).
+- The claimant releases their own claim — never release a lock another agent holds. A sub-skill that claims for itself (e.g. `om-auto-review-pr` during the autofix pass) owns its own release; do not second-guess it.
+
+## om-auto-create-pr-loop specifics
+
+### Pre-flight run-ownership (slot) check — step 2
+
+Before writing anything, confirm no other run owns the slot. Resolve `CURRENT_USER` via **current-user**, then compute:
 
 ```bash
 DATE=$(date +%Y-%m-%d)
@@ -34,3 +81,18 @@ Decision tree:
 | Run folder/branch exists, someone else owns it | yes | Pick a new dated slug (`${SLUG}-v2` or append a time suffix) to avoid clobber; document in the new `PLAN.md` why the original was superseded. |
 
 When an open PR already references the run folder, stop and tell the user to use `om-auto-continue-pr-loop {prNumber}` instead.
+
+### PR lock lifecycle — steps 11 → 14
+
+This skill holds the three-signal lock on its own PR from the moment **create-pr** returns until the very end of the run:
+
+1. **Claim (step 11, immediately after create-pr returns a PR number):**
+   1. **assign-pr** — add `$CURRENT_USER` as assignee.
+   2. **label-pr** — apply `in-progress` through the `apply_label` guard (when `labels.enabled` is `false`, the claim is the assignee plus the claim comment).
+   3. **comment-pr** — post: `🤖 om-auto-create-pr-loop started by @{CURRENT_USER} at {UTC ISO-8601 timestamp}. Other auto-skills will skip this PR until the lock is released.`
+   Wire the release into a `trap`/finally from here (step 14) so a crash frees the PR.
+2. **Temporary release before the autofix pass (step 12):** **unlabel-pr** removes `in-progress` through the guard, then **comment-pr** posts: `🤖 om-auto-create-pr-loop releasing lock so om-auto-review-pr can claim it.` — `om-auto-review-pr` claims and releases per its own workflow.
+3. **Reclaim when it returns (step 12):** **label-pr** re-applies `in-progress` through the guard, then **comment-pr** posts: `🤖 om-auto-create-pr-loop reclaiming lock to post the final run summary.` — covering the summary + cleanup window.
+4. **Final release (step 14, always — even on failure):** **unlabel-pr** removes `in-progress` through the guard (tolerate failure), then **comment-pr** posts: `🤖 om-auto-create-pr-loop completed. Status: {complete | in-progress}. Lock released.`
+
+Executor subagents (see `references/executor-dispatch.md`) MUST NOT claim or release this lock — the main session owns it.

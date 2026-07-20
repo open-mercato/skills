@@ -1,6 +1,6 @@
 # Per-Step loop (lean, no per-Step chatter)
 
-Step 6a. A Step is atomic: one Step = one code commit. Nothing more.
+The per-Step half of step 8. A Step is atomic: one Step = one code commit. Nothing more.
 
 1. **Implement** only the work described by the Step. Never pull work forward from later Steps.
 2. **Tests** — add or update tests for anything that changed behavior:

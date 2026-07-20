@@ -1,6 +1,6 @@
 # Spec resolution (step 1)
 
-The one procedure for turning a `{spec}` reference into a concrete spec file. Shared contract: `om-auto-create-pr --spec` and `om-auto-implement-issue`'s spec lookup follow this same order — update all consumers together.
+The one procedure for turning a `{spec}` reference into a concrete spec file. Shared contract: `om-auto-create-pr --spec` and `om-auto-fix-issue`'s feature-route spec lookup follow this same order — update all consumers together.
 
 Try in order; first hit wins:
 

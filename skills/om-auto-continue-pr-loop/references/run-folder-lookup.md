@@ -1,4 +1,4 @@
-# Locate the run folder (step 1)
+# Locate the run folder (step 3)
 
 Prefer the explicit `Tracking plan:` line in the PR body (written by `om-auto-create-pr-loop`): fetch the PR body via **get-pr** (field `body`) and take the first line matching `^Tracking (plan|run folder):` (e.g. pipe the body through `grep -E '^Tracking (plan|run folder):' | head -n1`).
 

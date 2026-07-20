@@ -1,4 +1,4 @@
-# Per-Step loop (lean, no per-Step chatter) — step 4a
+# Per-Step loop (lean, no per-Step chatter) — step 6a
 
 One Step = one code commit. Nothing more.
 

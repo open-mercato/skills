@@ -1,6 +1,6 @@
-# HANDOFF.md and NOTIFY.md templates (step 3)
+# HANDOFF.md and NOTIFY.md templates (step 5)
 
-The two tracking-file templates `om-auto-create-pr-loop` seeds in step 3 (a
+The two tracking-file templates `om-auto-create-pr-loop` seeds in step 5 (a
 Spec-implementation run), alongside `PLAN.md`. Save all three under `$RUN_DIR`;
 create the directory if it does not exist.
 

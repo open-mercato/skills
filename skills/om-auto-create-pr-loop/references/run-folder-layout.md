@@ -26,7 +26,7 @@ Rules:
 
 This section is the layout contract; `om-auto-continue-pr-loop` parses these files to resume a run.
 
-## Commit the run folder as the first commit (step 5)
+## Commit the run folder as the first commit (step 7)
 
 ```bash
 mkdir -p "$RUN_DIR"

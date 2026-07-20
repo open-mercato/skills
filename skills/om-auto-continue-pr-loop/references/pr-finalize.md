@@ -1,11 +1,21 @@
-# Update the PR, normalize labels, release the lock (step 9)
+# PR finalize — update the existing PR, labels, lock release (step 11)
 
-This step **updates the existing PR** — it never opens a new one (the duplicate-PR collision `om-auto-create-pr/references/pr-open-reuse.md` guards against). Its commit/push and label-normalization mechanics follow that shared reference: **prefer the `om-open-pr` skill when installed** (reuse its push + label normalization instead of duplicating it), falling back to the inline tracker operations below when it is not — so this skill works standalone.
+This step **updates the existing PR** — it never opens a new one. The point is **one** implementation of PR updating + labeling, reused rather than copied, and never a second PR for work that already has one.
 
-Update the PR body:
+## Never open a duplicate PR
+
+Before touching anything, remember the reuse guard: when a PR already exists for this branch (in a resume it always does — it is the `{prNumber}` argument), **reuse it** — push new commits to its head branch and update its body/labels — never open a second PR. Only the skill that first opened the PR owns opening it; everyone else updates that same PR.
+
+## Prefer the `om-open-pr` skill when installed
+
+**Prefer the `om-open-pr` skill when installed** — reuse its push + label normalization instead of duplicating it. `om-open-pr` is an **optional** enhancement: when it is absent, perform the mechanics inline via the tracker operations below so this skill works standalone. Behavior is identical either way — the same PR, the same labels.
+
+## Update the PR body
 
 - If every row in the Tasks table now has `Status: done`, flip the PR body's `Status: in-progress` to `Status: complete`.
 - Extend the `What Changed` / `Tests` sections with the new work from this resume.
+
+## Label normalization (resume state machine)
 
 Labels — every mutation goes through the `apply_label`/`label_exists` guards from the tracker descriptor; when `labels.enabled` is `false`, skip every label operation and say so in the summary comment:
 
@@ -17,11 +27,13 @@ Labels — every mutation goes through the `apply_label`/`label_exists` guards f
 - Never add `qa-approved` and never set the `qa` pipeline label from this skill. When `qaGate` is on, a `needs-qa` PR may sit in `merge-queue` while the QA-approval gate blocks the merge until a QA reviewer adds `qa-approved`; when `qaGate` is off, `needs-qa` is advisory only.
 - After any label change, post a short PR comment explaining why.
 
-Final tracking-file updates before releasing the lock:
+## Final tracking-file updates before releasing the lock
 
 - Rewrite `HANDOFF.md` one last time with either "complete" or "still in-progress — next Step: X.Y".
 - Append a closing `NOTIFY.md` entry with the final status, PR URL, and any carry-forward notes.
 - Commit and push as `docs(runs): finalize handoff for ${SLUG}` (or a similar message).
+
+## Release the lock
 
 Release the in-progress lock — **always**, even on failure (use a trap/finally): when `$LABELS_ENABLED` is `true`, remove the `in-progress` label via **unlabel-pr**; then post the completion comment via **comment-pr** (preserve multi-line formatting; `${STATUS}` is the final PR status):
 
@@ -29,7 +41,7 @@ Release the in-progress lock — **always**, even on failure (use a trap/finally
 🤖 `om-auto-continue-pr-loop` completed. Status: ${STATUS}. Lock released.
 ```
 
-Cleanup:
+## Cleanup
 
 ```bash
 cd "$REPO_ROOT"
@@ -38,3 +50,14 @@ if [ "$CREATED_WORKTREE" = "1" ]; then
 fi
 git worktree prune
 ```
+
+## Marker emission
+
+End the run's final report with the chaining markers on their own lines:
+
+```
+PR_URL=<full PR URL>
+PR_NUMBER=<PR number>
+```
+
+Chained consumers (`om-auto-review-pr`, `om-auto-qa-pr`, orchestration scripts) parse these exact text markers — never rename, translate, or decorate them.

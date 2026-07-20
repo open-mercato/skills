@@ -1,6 +1,6 @@
 # Verdict submission, label transitions, and author handoff
 
-Detailed procedure for step 8 of `om-auto-review-pr`. The authoritative label invariants also live in the skill's **Rules** section; this file is the step-by-step mechanics.
+Detailed procedure for step 10 of `om-auto-review-pr`. The authoritative label invariants also live in the skill's **Rules** section; this file is the step-by-step mechanics.
 
 ## Submit the verdict
 

@@ -1,8 +1,16 @@
-# Isolated worktree from the PR head
+# Worktree setup — isolated worktree from the PR head
 
-Detailed procedure for step 2 of `om-auto-continue-pr`. Never resume in the user's primary worktree.
+Detailed procedure for step 3 (create) and step 10 (cleanup) of `om-auto-continue-pr`. Never resume in the user's primary worktree.
 
-`HEAD_REF` and `IS_CROSS` are filled via **get-pr** (fields `headRefName`, `isCrossRepository` — already part of the step 0 fetch). On the cross-repository path, use the **checkout-pr** operation to make the PR head available locally.
+Rules:
+
+- Reuse the current linked worktree when already inside one. Never nest worktrees.
+- The main worktree must stay untouched.
+- Always clean up the temporary worktree at the end, but only if you created it this run.
+
+## om-auto-continue-pr specifics — create the worktree from the PR head (step 3)
+
+Unlike `om-auto-create-pr` (which branches a fresh `$BRANCH` off `origin/$BASE_BRANCH`), this skill checks out the **existing PR head**. `HEAD_REF` and `IS_CROSS` are filled via **get-pr** (fields `headRefName`, `isCrossRepository` — already part of the step 1 fetch). On the cross-repository path, use the **checkout-pr** operation to make the PR head available locally.
 
 ```bash
 REPO_ROOT=$(git rev-parse --show-toplevel)
@@ -33,13 +41,9 @@ cd "$WORKTREE_DIR"
 
 Then install dependencies with whatever the repository's lockfile implies (npm, pnpm, bun, cargo, etc.); skip when the project needs no install step.
 
-Rules:
+## Cleanup sequence (steps 3 and 10)
 
-- Reuse the current linked worktree when already inside one. Never nest worktrees.
-- The main worktree must stay untouched.
-- Always clean up the temporary worktree at the end, but only if you created it this run.
-
-Cleanup (in a trap/finally):
+Run in a `trap`/finally so crashes also clean up:
 
 ```bash
 cd "$REPO_ROOT"

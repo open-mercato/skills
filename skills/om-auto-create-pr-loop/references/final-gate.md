@@ -1,6 +1,6 @@
 # Final gate before opening the PR (spec completion)
 
-Step 7. Fire when every row in the Tasks table is `done`. The final gate subsumes any pending checkpoint (do not run a checkpoint immediately before it — roll it into this).
+Step 9. Fire when every row in the Tasks table is `done`. The final gate subsumes any pending checkpoint (do not run a checkpoint immediately before it — roll it into this).
 
 Record the outcome in `${RUN_DIR}/final-gate-checks.md`. If raw command output is worth keeping, save it alongside as `${RUN_DIR}/final-gate-artifacts/*.log`.
 

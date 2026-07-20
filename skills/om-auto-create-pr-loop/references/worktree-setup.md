@@ -1,10 +1,8 @@
-# Isolated worktree setup and cleanup
+# Worktree setup — isolated worktree and task branch
 
-Covers step 4 (create the worktree + task branch) and the worktree half of step 13 (cleanup).
+Detailed procedure for step 6 (create) and step 14 (cleanup) of `om-auto-create-pr-loop`. Never run in the user's primary worktree.
 
-## 4. Create an isolated worktree and task branch
-
-Never run in the user's primary worktree.
+## Create the worktree and task branch (step 6)
 
 ```bash
 REPO_ROOT=$(git rev-parse --show-toplevel)
@@ -35,18 +33,9 @@ Rules:
 - The main worktree must stay untouched.
 - Always clean up the temporary worktree at the end, but only if you created it this run.
 
-Cleanup sequence (run in a `trap`/finally so crashes also clean up):
+## Cleanup sequence (steps 6 and 14)
 
-```bash
-cd "$REPO_ROOT"
-if [ "$CREATED_WORKTREE" = "1" ]; then
-  git worktree remove --force "$WORKTREE_DIR"
-fi
-```
-
-## Cleanup at run end (step 13)
-
-Always run cleanup in a finally/trap so crashes do not leak worktrees or locks:
+Run in a `trap`/finally so crashes also clean up (registered at creation time, executed at run end):
 
 ```bash
 cd "$REPO_ROOT"

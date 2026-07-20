@@ -1,7 +1,7 @@
-# Run-mode contracts (step 0a)
+# Run-mode contracts (step 2)
 
 The Simple-run and Spec-implementation-run contracts, plus the promotion path,
-for `om-auto-continue-pr-loop`. The body keeps the step-0a classification
+for `om-auto-continue-pr-loop`. The body keeps the step-2 classification
 heuristic (which mode this resume runs in); this file holds what each mode
 requires once the choice is made.
 
@@ -17,10 +17,10 @@ For Simple runs, skip the whole run-folder ceremony. Requirements:
 - Conventional-commit subject.
 - Push the fix directly to the PR branch.
 - PR body stays short — summary + test plan + rollback (no `Tracking plan:` line, no `Status:` field, no linked run folder). If the existing body already has these tracking fields from a prior promotion, leave them; otherwise do not add them.
-- Still respect: three-signal `in-progress` lock (already claimed in step 0), label discipline (pipeline + category + meta), the compatibility self-review from step 6, the code-review self-check, and the `om-auto-review-pr` pass.
+- Still respect: three-signal `in-progress` lock (already claimed in step 1), label discipline (pipeline + category + meta), the compatibility self-review from step 8, the code-review self-check, and the `om-auto-review-pr` pass.
 - Final summary comment still posts, but compacted to: summary of changes, how to verify, what can go wrong. No "Verification phases" matrix, no "External references honored" section unless actually relevant.
 
-A Simple run still uses an isolated worktree (skip straight to step 2 for worktree setup), still runs `om-auto-review-pr` in autofix mode, and still releases the lock per step 9.
+A Simple run still uses an isolated worktree (skip straight to step 4 for worktree setup), still runs `om-auto-review-pr` in autofix mode, and still releases the lock per step 11.
 
 ## Spec-implementation-run contract
 
@@ -34,4 +34,4 @@ A Simple run MAY be promoted to a Spec-implementation run mid-flight if the resu
 - Draft the plan under `${RUNS_DIR}/<date>-<slug>/PLAN.md` (with Tasks table), `HANDOFF.md`, `NOTIFY.md`.
 - Write a seed commit that adds these files.
 - Update the PR body to add `Tracking plan:` and `Status: in-progress` lines.
-- Continue under the full Spec-implementation contract from step 1 onwards.
+- Continue under the full Spec-implementation contract from step 3 onwards.

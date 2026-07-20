@@ -1,4 +1,4 @@
-# Assumptions comment (step 6)
+# Assumptions comment (step 7)
 
 The override-invitation comment posted when `om-spec-writing --autonomous` resolved Open Questions. Post on the PR via **comment-pr** (body file), and on the FR issue via **comment-issue** in issue-driven runs. Use the stable marker line verbatim so a re-run finds and **updates** the existing comment instead of posting a duplicate.
 

@@ -1,4 +1,4 @@
-# Final gate before flipping to `complete` (step 5)
+# Final gate before flipping to `complete` (step 7)
 
 Fire when every row in the Tasks table is `done` (including work from earlier resumes + this resume). The final gate subsumes any pending checkpoint.
 

@@ -1,4 +1,4 @@
-# Orient via HANDOFF.md, then parse PLAN.md's Tasks table (step 3)
+# Orient via HANDOFF.md, then parse PLAN.md's Tasks table (step 5)
 
 **Read `HANDOFF.md` first.** It is the authoritative short-form snapshot of what the previous agent (or this agent's previous session) was doing. It tells you: the current phase/step; the last commit SHA and what it delivered; the next concrete action; open blockers, environment caveats, and worktree details.
 

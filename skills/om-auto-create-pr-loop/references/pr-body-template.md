@@ -1,6 +1,6 @@
-# PR body template (step 9)
+# PR body template (step 11)
 
-The PR body `om-auto-create-pr-loop` opens the PR with in step 9. It **MUST**
+The PR body `om-auto-create-pr-loop` opens the PR with in step 11. It **MUST**
 include the `Tracking plan:` line so `om-auto-continue-pr-loop` can resume.
 
 PR title convention: conventional-commit prefix scoped to the primary area.

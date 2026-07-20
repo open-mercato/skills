@@ -11,7 +11,7 @@ The pipeline turns your ideas into tracked, well-formed work and — when you wa
 | `om-prepare-issue` | Park an idea as one clean issue | `/om-prepare-issue "Bulk-archive orders from the grid"` | a deduped, SDLC-labeled issue with a linked spec or step-by-step guidance |
 | `om-auto-manage-issues` | Triage or enrich the backlog | `/om-auto-manage-issues` | missing labels added, laconic issues clarified (screenshots analyzed), implementation-prep comment posted |
 | `om-auto-manage-issues` | Clean up one issue | `/om-auto-manage-issues 123` | that issue relabeled and clarified in place |
-| `om-auto-implement-issue` | Review the plan before code | `/om-auto-implement-issue 123 --spec-only` | a spec-first PR; implementation left for a later run |
+| `om-auto-write-spec` | Review the plan before code | `/om-auto-write-spec 123` | a spec-first PR; implementation left for a later run |
 | `om-spec-writing` | Draft or review a spec directly | `/om-spec-writing` | a staff-level spec, skeleton-first with an Open Questions gate |
 
 ## What happens automatically
@@ -24,8 +24,8 @@ The pipeline turns your ideas into tracked, well-formed work and — when you wa
 
 ## Tips
 
-- Use `--spec-only` on `om-auto-implement-issue` when you want to sign off on the approach before any implementation happens — it stops after the spec PR lands.
-- Specs are **autonomous by default**: `om-spec-writing --autonomous` posts its Open-Questions assumptions as a comment for you to override, rather than blocking. Pass `--interactive` (on `om-auto-implement-issue` / `om-auto-fix-issue` / `om-prepare-issue`) when you'd rather answer the questions live.
+- Use `om-auto-write-spec <issue>` when you want to sign off on the approach before any implementation happens — it stops after the spec PR lands; a later `om-auto-fix-issue` run picks the spec up and implements it on the same PR.
+- Specs are **autonomous by default**: `om-spec-writing --autonomous` posts its Open-Questions assumptions as a comment for you to override, rather than blocking. Pass `--interactive` (on `om-auto-fix-issue` / `om-prepare-issue`) when you'd rather answer the questions live.
 - To override an autonomous assumption, just reply on the PR/issue comment — the defaults are posted precisely so you can correct them.
 - Batch triage defaults to the last ~25 open issues, worst-described first; narrow it by state, label, author, or limit when you want a focused pass.
-- `om-prepare-issue` files work but never implements it — reach for `om-auto-implement-issue` (or a developer) when you're ready to build.
+- `om-prepare-issue` files work but never implements it — reach for `om-auto-fix-issue` (or a developer) when you're ready to build.

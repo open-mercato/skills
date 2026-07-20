@@ -74,6 +74,18 @@ preserving the rest of the config.
 
 Newest first. Each entry lists the symptom you will see with a stale installation and the fix.
 
+### 2026-07 — skill consolidation and renames
+
+The collection consolidated to thirty skills. Two skills were renamed and two were absorbed into the driver that already invoked them:
+
+- `om-auto-verify-pr-ui` → `om-auto-qa-pr` (and it now runs `om-auto-review-pr` first when the PR is still unreviewed, then the browser UI QA).
+- `om-sync-merged-pr-issues` → `om-close-fixed-issues` (rename only; same behavior).
+- `om-stabilize-ci` → **absorbed into `om-auto-fix-pr`**; its standalone use is now `om-auto-fix-pr --ci-only [--branch <name>]`.
+- `om-auto-implement-issue` → **absorbed into `om-auto-fix-issue`**, now the single issue-to-PR entry point (it classifies, then routes bugs to the fix chain and features to spec-then-build).
+
+- **Symptom of a stale installation:** the old skill directories (`om-auto-verify-pr-ui`, `om-sync-merged-pr-issues`, `om-stabilize-ci`, `om-auto-implement-issue`) linger in your agents' skill directories, so `/om-…` still resolves to a removed skill; and any repo-local override kept under an old name (`.ai/skills/<old-name>/SKILL.md`) is silently ignored, because the installed skill it shadowed no longer exists.
+- **Fix:** reinstall the collection (`npx skills add open-mercato/skills --skill '*'`), then delete the four old skill directories from each agent's skill directory — they are not removed automatically. Rename any repo-local overrides to the new names: `.ai/skills/om-auto-verify-pr-ui/` → `.ai/skills/om-auto-qa-pr/`, and `.ai/skills/om-sync-merged-pr-issues/` → `.ai/skills/om-close-fixed-issues/`. For the two absorbed skills, fold the override into the absorbing skill's override: `.ai/skills/om-stabilize-ci/` into `.ai/skills/om-auto-fix-pr/`, and `.ai/skills/om-auto-implement-issue/` into `.ai/skills/om-auto-fix-issue/`.
+
 ### 2026-07 — Cross-skill coverage check in `om-setup-agent-pipeline`
 
 Skills delegate to each other, so a cherry-picked `npx skills add … --skill <name>` install can

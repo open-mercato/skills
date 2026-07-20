@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>🧠 plan · 🔨 implement · 🔍 review · ✅ QA gate · 🚢 merge</b><br/>
-  Thirty-two agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
+  Thirty agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 npx skills add open-mercato/skills --skill '*'
 ```
 
-Install all thirty-two — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all thirty — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
@@ -46,7 +46,7 @@ The agent drafts an execution plan, implements it phase by phase in an isolated 
 
 **Upgrading later?** Skills auto-update on reinstall, but repo-installed artifacts — including `.ai/trackers/<tracker>.md` and `.ai/browsers/<provider>.md` — do not. Run `/om-apply-upgrade-notes` in the repo, or follow [UPGRADE_NOTES.md](UPGRADE_NOTES.md) by hand.
 
-ℹ️ A few skills drive a real browser through the configured browser provider — `om-prepare-test-env`, `om-integration-tests`, and `om-auto-verify-pr-ui`. Because of that, skills.sh validation may flag them as **Medium** or **High** risk. We of course recommend reading any skill before you run it — but we use these exactly as shipped at Open Mercato, with no issues so far.
+ℹ️ A few skills drive a real browser through the configured browser provider — `om-prepare-test-env`, `om-integration-tests`, and `om-auto-qa-pr`. Because of that, skills.sh validation may flag them as **Medium** or **High** risk. We of course recommend reading any skill before you run it — but we use these exactly as shipped at Open Mercato, with no issues so far.
 
 ## 🎬 See how it works!
 
@@ -74,7 +74,7 @@ The installer never touches skills it does not own: an existing real directory (
 
 ## 🔁 The pipeline
 
-Three entry paths: hand the agent a task brief (`om-auto-create-pr`), a spec (`om-auto-write-spec` to author one, `om-auto-implement-spec` to build one), or a GitHub issue (`om-auto-implement-issue` / `om-auto-fix-issue`). The issue path classifies first — a bug drives the autofix chain, a feature request gets its spec resolved (or autonomously written) and implemented on the same PR. All paths converge on the same review loop and the same QA gate.
+Three entry paths: hand the agent a task brief (`om-auto-create-pr`), a spec (`om-auto-write-spec` to author one, `om-auto-implement-spec` to build one), or a GitHub issue (`om-auto-fix-issue`). The issue path classifies first — a bug drives the autofix chain, a feature request gets its spec resolved (or autonomously written) and implemented on the same PR. All paths converge on the same review loop and the same QA gate.
 
 The skills chain: every PR-producing skill ends with `PR_URL=` / `PR_NUMBER=` markers the next skill consumes, and every skill checks for a PR a previous skill already opened and continues on it instead of opening a duplicate. A completed autonomous run always leaves a **ready, fully labeled PR** (pipeline + category + priority + risk + QA meta) with a run-summary comment — and screenshots from the working app when the change is user-facing. Skills claim PRs and issues with an `in-progress` label, so concurrent agents back off instead of colliding.
 
@@ -95,10 +95,10 @@ flowchart LR
         verifyStep --> rootCause["om-root-cause"]
         rootCause --> applyFix["om-fix"]
         applyFix --> openPR["om-open-pr"]
-        classify -- "feature request" --> implementFR["om-auto-implement-issue<br/>(router)"]
-        implementFR -- "no spec" --> writeSpec["om-auto-write-spec<br/>(spec PR + mockups)"]
+        classify -- "feature request" --> specExists{"spec exists?"}
+        specExists -- "no spec" --> writeSpec["om-auto-write-spec<br/>(spec PR + mockups)"]
         writeSpec --> implementSpec["om-auto-implement-spec"]
-        implementFR -- "spec exists" --> implementSpec
+        specExists -- "spec exists" --> implementSpec
     end
     openPR --> reviewPR
     implementSpec --> reviewPR
@@ -114,17 +114,15 @@ Hand these a brief, an issue, or nothing at all — they run end-to-end without 
 |---|---|
 | `om-auto-create-pr` | Takes a free-form task brief end-to-end: execution plan, isolated worktree, phase-by-phase commits, validation gate, self-review, labeled PR, then an autofix review loop until clean. Resumable. |
 | `om-auto-create-pr-loop` | Advanced om-auto-create-pr for long spec implementations: run folder with PLAN/HANDOFF/NOTIFY, one commit per step, checkpoint verification every ~5 steps, executor-dispatch for many-step runs, full gate at completion. |
-| `om-auto-fix-issue` | Fixes a tracker issue end-to-end by driving the autofix chain: classifies the issue first (routing feature requests to `om-auto-implement-issue`), then for a bug runs the triage gate, root-cause analysis, minimal fix with regression tests, a ready labeled PR, autofix review loop. Stops cleanly when the issue is already solved or claimed. |
-| `om-auto-implement-issue` | The issue router: bugs go whole to `om-auto-fix-issue`; features get their spec resolved or autonomously written (`om-auto-write-spec`) and implemented (`om-auto-implement-spec`) on the same PR — reviewed, UI-verified, fully labeled. `--spec-only` stops after the spec PR. |
+| `om-auto-fix-issue` | The single issue-to-PR entry point: classifies the issue first, then routes. A bug drives the autofix chain — triage gate, root-cause analysis, minimal fix with regression tests, a ready labeled PR, autofix review loop. A feature request takes the feature route — claims the issue, resolves its spec (autonomously written via `om-auto-write-spec` when none exists, implemented via `om-auto-implement-spec`), and verifies the contract on the same PR — reviewed, UI-verified, fully labeled. For a spec without implementation, run `om-auto-write-spec` directly. Stops cleanly when the issue is already solved or claimed. |
 | `om-auto-write-spec` | Turns a brief or FR issue into a finished spec on a ready PR: autonomous Open-Questions defaults posted for override, UI mockups + current-app screenshots attached as PR evidence, full SDLC labels, chain markers for `om-auto-implement-spec`. |
 | `om-auto-implement-spec` | Implements an existing spec (by path, name, issue, or spec-PR number; clean stop when not found): reuses the spec PR's branch or runs `om-auto-create-pr`, then the review autofix loop and UI verification with screenshots on the PR. |
 | `om-auto-continue-pr` | Resumes an in-progress PR from the first unchecked step in its tracking plan and carries it to completion — implementation, validation, review loop, summary comment. |
 | `om-auto-continue-pr-loop` | Resumes runs started by `om-auto-create-pr-loop`: orients from HANDOFF.md, picks up at the first non-done Tasks-table row, keeps the per-step commit and checkpoint discipline to completion. |
 | `om-auto-review-pr` | Reviews a PR by number in an isolated worktree, approves or requests changes, manages labels. On changes-requested, its autofix loop iterates fixes and re-review until merge-ready. |
-| `om-auto-fix-pr` | Drives one PR to merge-ready: merges the latest base in first, then loops review-autofix (`om-auto-review-pr`), CI stabilization (`om-stabilize-ci`), and UI verification (`om-auto-verify-pr-ui`), re-merging base whenever it advances. Files follow-up issues for non-blocking nits via `om-followup-issue-from-pr`, keeps the fork carry-forward supersede/credit rules, normalizes labels, and hands off to `om-approve-merge-pr` — it never merges itself. |
+| `om-auto-fix-pr` | Drives one PR to merge-ready: merges the latest base in first, then loops review-autofix (`om-auto-review-pr`), its own CI-stabilization step (classify each failing check as real bug / test bug / flake / infra, fix the real ones with tests, never fake green), and UI QA (`om-auto-qa-pr`), re-merging base whenever it advances. Files follow-up issues for non-blocking nits via `om-followup-issue-from-pr`, keeps the fork carry-forward supersede/credit rules, normalizes labels, and hands off to `om-approve-merge-pr` — it never merges itself. A `--ci-only [--branch <name>]` mode drives a plain branch or no-PR change to green CI without the rest of the loop. |
 | `om-review-prs` | Sweeps all unreviewed open PRs, newest first, through `om-auto-review-pr`, respecting claim locks. |
-| `om-sync-merged-pr-issues` | Post-merge housekeeping sweep: closes issues that merged PRs fix, comments on issues whose PRs were closed without merging. |
-| `om-stabilize-ci` | Drives a PR or branch to green CI: reads failing checks and their logs through tracker operations, classifies each failure (real bug / test bug / flake / infra), fixes with tests in an isolated worktree, pushes, and re-checks until every required check passes. Never fakes green. |
+| `om-close-fixed-issues` | Post-merge housekeeping sweep: closes issues that merged PRs fix, comments on issues whose PRs were closed without merging. |
 
 ### 🧑‍💻 You invoke
 
@@ -142,7 +140,7 @@ Interactive helpers: they act once, report, and hand control back to you.
 | `om-prepare-issue` | Files a single well-formed tracker issue for deferred work: dedupes against existing issues and PRs, links (or authors) a covering spec, otherwise embeds step-by-step guidance, and applies the SDLC labels on creation. |
 | `om-auto-manage-issues` | Brings existing issues up to standard, single or in bulk: applies missing SDLC labels, and for a laconic issue (one line + a screenshot) analyzes the screenshot with the terse text, clarifies the wording non-destructively, and posts the agent's understanding as a comment. Batch defaults to the last ~25 open, worst-described first, narrowable by state/label/author/limit. Idempotent and claim-aware. |
 | `om-integration-tests` | Creates and runs integration/E2E tests by exploring the running app first — real locators, runtime fixtures, no hardcoded IDs — and reports failures with artifact-based per-test diagnosis. Reuses the shared `om-prepare-test-env` instance so QA and tests hit the same booted app. |
-| `om-auto-verify-pr-ui` | Runs the app locally and QAs a change's UI in a real browser without merging: boots via `om-prepare-test-env`, derives a scenario from the diff, drives the configured browser provider with screenshots, and produces a pass/fail report. Posts evidence as a PR comment when a tracker is configured; otherwise saves screenshots + JSON/Markdown reports. |
+| `om-auto-qa-pr` | QAs a change's UI in a real browser without merging. Checks the PR's review state first and runs `om-auto-review-pr` when the PR is still unreviewed, then boots the app via `om-prepare-test-env`, derives a scenario from the diff, drives the configured browser provider with screenshots, and produces a pass/fail report. Posts evidence as a PR comment when a tracker is configured; otherwise saves screenshots + JSON/Markdown reports. |
 | `om-auto-update-changelog` | Drafts a CHANGELOG.md release entry for every PR merged since the last release — emoji categories, contributor credits with the Supersede Credit Rule for carried-forward fork PRs — then delegates to `om-auto-create-pr` to ship it as a docs PR. |
 
 ### 🤝 Skills invoke each other
@@ -170,7 +168,7 @@ Turn ideas into well-formed, labeled work — and review the plan before any cod
 |---|---|---|
 | `/om-prepare-issue "Bulk-archive orders from the grid"` | dedupe search, `om-spec-writing` (when a feature needs a spec) | one well-formed issue with SDLC labels, a linked spec or step-by-step guidance |
 | `/om-auto-manage-issues` | claim-aware label sync, screenshot analysis, implementation-prep comment | the backlog triaged: missing labels added, laconic issues clarified, worst-described first |
-| `/om-auto-implement-issue 123 --spec-only` | `om-auto-write-spec`, `om-spec-writing --autonomous` | a spec-first PR to review before implementation starts |
+| `/om-auto-write-spec 123` | `om-spec-writing --autonomous`, `om-open-pr` | a spec-first PR to review before implementation starts |
 
 More: [docs/roles/product-manager.md](docs/roles/product-manager.md)
 
@@ -181,8 +179,8 @@ Get a written spec with visuals attached — mockups of the new layout next to s
 | ▶️ You run | ⚙️ Runs automatically inside | 🎁 You get |
 |---|---|---|
 | `/om-auto-write-spec "Redesign the checkout summary panel"` | `om-spec-writing --autonomous`, `om-open-pr`, `om-prepare-test-env` + browser provider | a ready spec PR with UI mockups, current-app screenshots, and an assumptions comment |
-| `/om-auto-implement-spec 2026-07-18-checkout-redesign` | `om-auto-create-pr`, `om-auto-review-pr`, `om-auto-verify-pr-ui` | the built change with before/after screenshots from the working app |
-| `/om-auto-verify-pr-ui 123` | `om-prepare-test-env`, browser provider | fresh screenshots of a PR's UI to design-review, no source touched |
+| `/om-auto-implement-spec 2026-07-18-checkout-redesign` | `om-auto-create-pr`, `om-auto-review-pr`, `om-auto-qa-pr` | the built change with before/after screenshots from the working app |
+| `/om-auto-qa-pr 123` | `om-prepare-test-env`, browser provider | fresh screenshots of a PR's UI to design-review, no source touched |
 
 💡 Tip — ask for visuals explicitly to force mockups: `/om-auto-write-spec "Redesign the checkout summary panel — include mockups of the new layout and screenshots of the current one"`.
 
@@ -195,8 +193,8 @@ Hand off a brief, a spec, or an issue number; get back a reviewed, labeled PR.
 | ▶️ You run | ⚙️ Runs automatically inside | 🎁 You get |
 |---|---|---|
 | `/om-auto-write-spec "CSV export for the orders grid"` | `om-spec-writing --autonomous`, `om-open-pr`, browser provider for mockups | a ready spec PR with mockups + assumptions comment |
-| `/om-auto-implement-spec 2026-07-18-csv-export` | `om-auto-create-pr` / `om-auto-continue-pr`, `om-auto-review-pr`, `om-auto-verify-pr-ui` | an implemented, reviewed PR with screenshots from the working app |
-| `/om-auto-implement-issue 123` | the router: bugs to `om-auto-fix-issue`, features to `om-auto-write-spec` + `om-auto-implement-spec` | a finished, fully-labeled PR from an issue number |
+| `/om-auto-implement-spec 2026-07-18-csv-export` | `om-auto-create-pr` / `om-auto-continue-pr`, `om-auto-review-pr`, `om-auto-qa-pr` | an implemented, reviewed PR with screenshots from the working app |
+| `/om-auto-fix-issue 123` | classifies then routes: bugs to the autofix chain, features to `om-auto-write-spec` + `om-auto-implement-spec` | a finished, fully-labeled PR from an issue number |
 | `/om-auto-fix-issue 456` | `om-verify-in-repo`, `om-root-cause`, `om-fix`, `om-open-pr`, `om-auto-review-pr` | a bug-fix PR with regression tests and a clean review |
 | 🔁 `/om-auto-create-pr-loop "Implement the multi-tenant billing spec"` | run folder (PLAN/HANDOFF/NOTIFY), per-step commits, checkpoint verification | a resumable, step-tracked PR for a large spec (continue with `om-auto-continue-pr-loop`) |
 
@@ -209,8 +207,8 @@ Boot the app once, verify UI changes in a real browser, and add integration cove
 | ▶️ You run | ⚙️ Runs automatically inside | 🎁 You get |
 |---|---|---|
 | `/om-prepare-test-env` | app discovery, launch-script generation, browser-provider provisioning | a reusable booted app + shared test-env descriptor the other QA skills reuse |
-| `/om-auto-verify-pr-ui 123` | `om-prepare-test-env`, browser provider | screenshots + a pass/fail report posted on the PR (evidence only, no labels changed) |
-| `/om-auto-verify-pr-ui 123 --self-qa-signoff` | same, plus label guards | `qa-approved` + `qa-self-verified` — only on a fully-green run with screenshots on a `needs-qa` PR |
+| `/om-auto-qa-pr 123` | `om-prepare-test-env`, browser provider | screenshots + a pass/fail report posted on the PR (evidence only, no labels changed) |
+| `/om-auto-qa-pr 123 --self-qa-signoff` | same, plus label guards | `qa-approved` + `qa-self-verified` — only on a fully-green run with screenshots on a `needs-qa` PR |
 | `/om-integration-tests` | `om-prepare-test-env`, browser provider | integration/E2E tests written against the live app, with artifact-based failure diagnosis |
 
 More: [docs/roles/qa.md](docs/roles/qa.md)
@@ -223,8 +221,8 @@ Sweep open PRs, drive them to merge-ready, and ship — the QA gate stays a huma
 |---|---|---|
 | `/om-merge-buddy` | tracker scan of labels, reviews, CI, mergeability | a report of which PRs can merge now and which are close but blocked |
 | `/om-review-prs` | `om-auto-review-pr` per PR, claim-lock aware | every unreviewed open PR reviewed, newest first |
-| `/om-auto-fix-pr 123` | `om-auto-review-pr`, `om-stabilize-ci`, `om-auto-verify-pr-ui`, `om-followup-issue-from-pr` | one PR driven to approvable, green, QA-evidenced — handed to `om-approve-merge-pr`, never self-merged |
-| `/om-stabilize-ci 123` | tracker check status + failed-step logs | green CI from real fixes with tests, never by weakening checks |
+| `/om-auto-fix-pr 123` | `om-auto-review-pr`, its CI-stabilization step, `om-auto-qa-pr`, `om-followup-issue-from-pr` | one PR driven to approvable, green, QA-evidenced — handed to `om-approve-merge-pr`, never self-merged |
+| `/om-auto-fix-pr 123 --ci-only` | tracker check status + failed-step logs | green CI from real fixes with tests, never by weakening checks |
 | `/om-auto-update-changelog` | `om-auto-create-pr` | a CHANGELOG release entry landed as a docs PR, with Supersede Credit |
 | `/om-approve-merge-pr 123` | approving review + squash-merge, QA-gate guard | the PR merged — refused when `needs-qa` lacks `qa-approved` or a blocking label is set |
 
@@ -281,6 +279,10 @@ Four layers of project fit, no forking:
 - **Tracker descriptor** — every issue/PR/label command the skills run lives in one committed file, `.ai/trackers/<tracker>.md`, that you can edit or replace (details below).
 
 ## 🧩 Extending the skills
+
+### How a skill is laid out
+
+Each skill keeps its numbered main algorithm in `SKILL.md` and factors its repeatable procedures into per-skill `references/<step>.md` files under standard names — `agentic-setup.md`, `worktree-setup.md`, `claim-pr.md`, `pr-finalize.md`, `review-report.md`, `rules.md`. These standard step files are deliberately **duplicated inside every skill that uses them** rather than shared through cross-skill pointers, so each skill installs and runs standalone (`om-auto-create-pr` holds the canonical copy). The trade-off is intentional: standalone installability over DRY. When you edit a standard step file in one skill, sync the same change into the other skills that carry it — the collection's own contributor rule is to ask whether to propagate before doing so.
 
 ### Repo-local skill overrides
 

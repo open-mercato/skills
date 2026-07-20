@@ -6,3 +6,6 @@ node_modules/
 
 # Temporary worktrees created by pipeline skills
 .ai/tmp/
+
+# skill-optimizer run artifacts (report + metrics + candidates, generated per run)
+.ai/analysis/skill-optimizer/

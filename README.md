@@ -72,6 +72,24 @@ npm run uninstall-skills                   # remove only the links owned by this
 
 The installer never touches skills it does not own: an existing real directory (e.g. installed earlier via `npx skills add`) is skipped with a warning unless you pass `--force`, and uninstall removes only symlinks that point into this checkout.
 
+## 🧬 How to optimize skills
+
+Running these skills on a big model at scale is expensive. `scripts/skill-optimizer.mjs` **lowers that cost** by making a skill direct enough that a cheaper model runs it correctly — its default target is **sonnet**. It runs the skill headless in a hermetic mock repo, measures cost/speed **and quality** (finding recall, step completion, rule violations, and — for code-modifying skills — whether the produced change still meets the goal), rewrites `SKILL.md` toward what the cheaper model got wrong, and re-measures — N passes. Nothing lands unless you ask.
+
+```bash
+# Hermetic default: optimize for sonnet against a built-in mock, 2 passes.
+node scripts/skill-optimizer.mjs --skill om-code-review
+
+# Downshift: hold an opus quality bar, target sonnet (or haiku), and A/B the result.
+node scripts/skill-optimizer.mjs --skill om-code-review \
+  --baseline-model opus --run-model sonnet --compare-models sonnet,opus --passes 3
+
+# Blind run: optimize and just review a PR (fresh branch, never merges).
+node scripts/skill-optimizer.mjs --skill om-code-review --open-pr
+```
+
+The report ends with a **downshift verdict** — parity reached (with the cost delta, e.g. *runs on sonnet at 34% of opus cost at equal quality*) or not (what still fails and the recommended minimum model). It never touches `skills/<name>` unless you pass `--apply-final` or `--open-pr`, and no run can commit, push, or reach a tracker. **Full guide, including every flag, the mock scenarios, quality scoring, and CI dispatch: [docs/skill-optimizer.md](docs/skill-optimizer.md).**
+
 ## 🔁 The pipeline
 
 Three entry paths: hand the agent a task brief ([`om-auto-create-pr`](docs/skills/om-auto-create-pr.md)), a spec ([`om-auto-write-spec`](docs/skills/om-auto-write-spec.md) to author one, [`om-auto-implement-spec`](docs/skills/om-auto-implement-spec.md) to build one), or a GitHub issue ([`om-auto-fix-issue`](docs/skills/om-auto-fix-issue.md)). The issue path classifies first — a bug drives the autofix chain, a feature request gets its spec resolved (or autonomously written) and implemented on the same PR. All paths converge on the same review loop and the same QA gate.

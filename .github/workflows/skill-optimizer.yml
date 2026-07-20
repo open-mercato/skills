@@ -17,6 +17,11 @@ on:
         required: false
         default: "2"
         type: string
+      mock:
+        description: "Built-in mock scenario to run against (hermetic; keeps CI off real repos)"
+        required: false
+        default: "review"
+        type: string
       task:
         description: "Optional scenario brief for the run (blank = canned dry-run brief)"
         required: false
@@ -43,6 +48,7 @@ jobs:
           node scripts/skill-optimizer.mjs \
             --skill "${{ inputs.skill }}" \
             --passes "${{ inputs.passes }}" \
+            --mock "${{ inputs.mock }}" \
             --mode api \
             --out "$GITHUB_WORKSPACE/skill-optimizer-out" \
             ${{ inputs.task && format('--task "{0}"', inputs.task) || '' }}

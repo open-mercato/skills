@@ -45,8 +45,13 @@ Options:
                         N passes = N runs and N-1 optimization rounds.
   --task "<brief>"      scenario brief handed to the skill run
                         (default: a small skill-agnostic dry-run brief)
-  --target-repo <path>  repo to exercise the skill against
-                        (default: a disposable copy of this skills repo)
+  --target-repo <path>  exercise the skill against a sandbox COPY of this repo
+                        (remotes stripped). Mutually exclusive with --mock*.
+  --mock [scenario]     generate a hermetic mock repo instead of copying one
+                        (default scenario: review). This is the DEFAULT source
+                        when neither --target-repo nor --mock-spec is given.
+  --mock-spec <path>    generate a mock repo from a JSON scenario spec
+                        ({ files, branches }); see docs/skill-optimizer.md.
   --model <model>       model for both the run and the analysis call
                         (default: the CLI's configured model)
   --out <dir>           artifacts dir
@@ -69,11 +74,15 @@ function parseArgs(argv) {
     passes: 2,
     task: null,
     targetRepo: null,
+    mock: null,          // scenario name when --mock is present
+    mockGiven: false,    // whether --mock was passed at all
+    mockSpec: null,      // path to a --mock-spec file
     model: null,
     out: null,
     applyFinal: false,
     mode: null,
     parseFixture: null,
+    genMock: null,       // hidden: generate a mock repo at this dir and exit (tests)
     help: false,
   }
   for (let i = 0; i < argv.length; i++) {
@@ -88,11 +97,20 @@ function parseArgs(argv) {
       case '--passes': opts.passes = parseInt(next(), 10); break
       case '--task': opts.task = next(); break
       case '--target-repo': opts.targetRepo = next(); break
+      case '--mock': {
+        opts.mockGiven = true
+        // Optional scenario value: consume the next token only if it is not a flag.
+        const peek = argv[i + 1]
+        if (peek !== undefined && !peek.startsWith('--')) { opts.mock = argv[++i] }
+        break
+      }
+      case '--mock-spec': opts.mockSpec = next(); break
       case '--model': opts.model = next(); break
       case '--out': opts.out = next(); break
       case '--mode': opts.mode = next(); break
       case '--apply-final': opts.applyFinal = true; break
       case '--parse-fixture': opts.parseFixture = next(); break
+      case '--gen-mock': opts.genMock = next(); break
       case '-h': case '--help': opts.help = true; break
       default: fail(`unknown argument: ${a}`)
     }
@@ -260,36 +278,237 @@ function run(cmd, args, opts = {}) {
   return r.stdout
 }
 
-// Build a throwaway copy of targetRepo and install `candidateDir` as the skill
-// under test. Returns the sandbox path. Strips all git remotes so no push
-// target exists.
-function makeSandbox(targetRepo, skillName, candidateDir) {
+// Build a throwaway repo and install `candidateDir` as the skill under test.
+// `source` is either { type: 'repo', path } (sandbox copy, remotes stripped) or
+// { type: 'mock', spec } (a generated hermetic fixture). Returns
+// { sandbox, manifest } where manifest describes the mock's planted findings
+// (null for a real-repo source).
+function makeSandbox(skillName, candidateDir, source) {
   const sandbox = path.join(tmpdir(), `skopt-${skillName}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`)
-  const isGit = existsSync(path.join(targetRepo, '.git'))
-  if (isGit) {
-    run('git', ['clone', '--local', '--no-hardlinks', '--quiet', targetRepo, sandbox])
-    // Remove every remote so nothing can be pushed even if a guard is bypassed.
-    const remotes = run('git', ['-C', sandbox, 'remote']).split('\n').map((s) => s.trim()).filter(Boolean)
-    for (const r of remotes) run('git', ['-C', sandbox, 'remote', 'remove', r])
+  let manifest = null
+  if (source.type === 'repo') {
+    const targetRepo = source.path
+    const isGit = existsSync(path.join(targetRepo, '.git'))
+    if (isGit) {
+      run('git', ['clone', '--local', '--no-hardlinks', '--quiet', targetRepo, sandbox])
+      // Remove every remote so nothing can be pushed even if a guard is bypassed.
+      const remotes = run('git', ['-C', sandbox, 'remote']).split('\n').map((s) => s.trim()).filter(Boolean)
+      for (const r of remotes) run('git', ['-C', sandbox, 'remote', 'remove', r])
+    } else {
+      mkdirSync(sandbox, { recursive: true })
+      cpSync(targetRepo, sandbox, { recursive: true, filter: (src) => !src.includes(`${path.sep}.git${path.sep}`) && !src.endsWith(`${path.sep}.git`) })
+      gitInit(sandbox)
+      gitCommitAll(sandbox, 'sandbox baseline')
+    }
   } else {
-    mkdirSync(sandbox, { recursive: true })
-    cpSync(targetRepo, sandbox, { recursive: true, filter: (src) => !src.includes(`${path.sep}.git${path.sep}`) && !src.endsWith(`${path.sep}.git`) })
-    run('git', ['-C', sandbox, 'init', '--quiet'])
-    run('git', ['-C', sandbox, 'add', '-A'])
-    run('git', ['-C', sandbox, '-c', 'user.email=opt@local', '-c', 'user.name=opt', 'commit', '--quiet', '-m', 'sandbox baseline', '--no-gpg-sign'])
+    manifest = generateMockRepo(sandbox, source.spec)
   }
   // Install the candidate skill at project scope so the headless run loads it.
   const dest = path.join(sandbox, '.claude', 'skills', skillName)
   mkdirSync(path.dirname(dest), { recursive: true })
   cpSync(candidateDir, dest, { recursive: true })
-  return sandbox
+  return { sandbox, manifest }
+}
+
+function gitInit(dir) {
+  run('git', ['-c', 'init.defaultBranch=main', 'init', '--quiet', dir])
+}
+function gitCommitAll(dir, message) {
+  run('git', ['-C', dir, 'add', '-A'])
+  run('git', ['-C', dir, '-c', 'user.email=opt@local', '-c', 'user.name=opt', 'commit', '--quiet', '-m', message, '--no-gpg-sign'])
+}
+
+// ---------------------------------------------------------------------------
+// Mock evaluation repos
+// ---------------------------------------------------------------------------
+
+// Common, hermetic base project shared by every mock scenario: a tiny Node
+// project with a fast passing `npm test` (node:test) and a configured agentic
+// pipeline (labels/qaGate off, `npm test` as the validation gate) so a skill's
+// preflight finds a pipeline and never needs a live tracker.
+function baseMockFiles() {
+  const config = {
+    version: 1,
+    baseBranch: 'main',
+    tracker: 'github',
+    validation: { commands: ['npm test'] },
+    labels: { enabled: false },
+    qaGate: false,
+    paths: { runs: '.ai/runs', analysis: '.ai/analysis', specs: '.ai/specs', scripts: '.ai/scripts', qa: '.ai/qa' },
+    reviewChecklist: null,
+  }
+  const files = {
+    'package.json': JSON.stringify({
+      name: 'skopt-mock', version: '0.0.0', private: true,
+      description: 'Hermetic mock repo for skill-optimizer evaluation runs.',
+      scripts: { test: 'node --test' },
+    }, null, 2) + '\n',
+    'README.md': '# skopt-mock\n\nA disposable fixture repo generated by skill-optimizer. Not real code.\n',
+    'src/index.js': 'function add(a, b) {\n  return a + b\n}\n\nmodule.exports = { add }\n',
+    'src/format.js': "function greet(name) {\n  return `Hello, ${name}!`\n}\n\nmodule.exports = { greet }\n",
+    'test/basic.test.js':
+      "const test = require('node:test')\n" +
+      "const assert = require('node:assert')\n" +
+      "const { add } = require('../src/index.js')\n" +
+      "const { greet } = require('../src/format.js')\n\n" +
+      "test('add sums two numbers', () => {\n  assert.strictEqual(add(2, 3), 5)\n})\n\n" +
+      "test('greet builds a greeting', () => {\n  assert.strictEqual(greet('Ada'), 'Hello, Ada!')\n})\n",
+    '.ai/agentic.config.json': JSON.stringify(config, null, 2) + '\n',
+    '.gitignore': 'node_modules/\n',
+  }
+  // Ship the real GitHub tracker descriptor so tracker-operation preflight passes.
+  const trackerSrc = path.join(repoRoot, 'skills', 'om-setup-agent-pipeline', 'references', 'trackers', 'github.md')
+  if (existsSync(trackerSrc)) files['.ai/trackers/github.md'] = readFileSync(trackerSrc, 'utf8')
+  return files
+}
+
+// Built-in scenarios. Each returns { files?, branches:[{name, files, commitMessage, plantedFindings}] }
+// layered over the base project.
+const MOCK_SCENARIOS = {
+  review: () => ({
+    branches: [{
+      name: 'feat/coupon-stacking',
+      commitMessage: 'feat: stack coupon discounts on an order',
+      files: {
+        'src/coupons.js':
+          '// Apply a list of coupons to an order, stacking their discounts.\n' +
+          'function stackCoupons(order, coupons) {\n' +
+          '  try {\n' +
+          '    for (let i = 0; i <= coupons.length; i++) {\n' +
+          '      const c = coupons[i]\n' +
+          '      if (c == undefined) continue\n' +
+          '      order.applied.push(c.code)\n' +
+          '      order.total -= c.amount\n' +
+          '    }\n' +
+          '  } catch (e) {\n' +
+          '    // ignore\n' +
+          '  }\n' +
+          '  return order\n' +
+          '}\n\n' +
+          'module.exports = { stackCoupons }\n',
+      },
+      plantedFindings: [
+        'Off-by-one loop bound: `i <= coupons.length` reads one past the end, so `coupons[length]` is undefined on the last iteration.',
+        'Loose equality: `c == undefined` uses `==` instead of a strict check, and also skips legitimately falsy entries.',
+        'Caller-object mutation: `order.applied.push(...)` assumes the caller initialized `order.applied` — throws a TypeError when it is absent.',
+        'Swallowed catch: the empty `catch (e) {}` hides every error, including the TypeError from the missing `order.applied`.',
+        'Missing tests: `stackCoupons` ships with no unit test covering it.',
+      ],
+    }],
+  }),
+}
+
+// Resolve --mock / --mock-spec / (default) into a normalized spec:
+// { scenario, baseBranch, files, branches:[{name, files, commitMessage, plantedFindings}] }.
+export function resolveMockSpec(opts) {
+  const base = baseMockFiles()
+  if (opts.mockSpec) {
+    const raw = readMockSpecFile(opts.mockSpec)
+    const userFiles = raw.files || {}
+    return {
+      scenario: `spec:${path.basename(opts.mockSpec)}`,
+      baseBranch: 'main',
+      files: { ...base, ...userFiles },
+      branches: raw.branches.map((b) => ({
+        name: b.name,
+        commitMessage: b.commitMessage || `mock: ${b.name}`,
+        files: b.files || {},
+        plantedFindings: b.plantedFindings || [],
+      })),
+    }
+  }
+  const scenarioName = opts.mock || 'review'
+  const scenario = MOCK_SCENARIOS[scenarioName]
+  if (!scenario) fail(`unknown --mock scenario '${scenarioName}'. Built-in: ${Object.keys(MOCK_SCENARIOS).join(', ')}`)
+  const s = scenario()
+  return {
+    scenario: scenarioName,
+    baseBranch: 'main',
+    files: { ...base, ...(s.files || {}) },
+    branches: (s.branches || []).map((b) => ({
+      name: b.name,
+      commitMessage: b.commitMessage || `mock: ${b.name}`,
+      files: b.files || {},
+      plantedFindings: b.plantedFindings || [],
+    })),
+  }
+}
+
+// Read + validate a user --mock-spec file. Fails with a clear message on a bad
+// shape.
+function readMockSpecFile(specPath) {
+  const resolved = path.resolve(specPath)
+  if (!existsSync(resolved)) fail(`--mock-spec file not found: ${resolved}`)
+  let raw
+  try { raw = JSON.parse(readFileSync(resolved, 'utf8')) } catch (e) { fail(`--mock-spec is not valid JSON: ${e.message}`) }
+  const err = validateMockSpec(raw)
+  if (err) fail(`--mock-spec invalid: ${err}`)
+  return raw
+}
+
+// Returns an error string, or null when the spec is well-formed.
+export function validateMockSpec(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return 'top level must be an object'
+  const isStrMap = (o) => o && typeof o === 'object' && !Array.isArray(o) && Object.entries(o).every(([k, v]) => typeof k === 'string' && typeof v === 'string')
+  if (raw.files !== undefined && !isStrMap(raw.files)) return '"files" must be an object mapping path -> string content'
+  if (raw.branches === undefined) return '"branches" is required (an array of { name, files?, commitMessage?, plantedFindings? })'
+  if (!Array.isArray(raw.branches) || raw.branches.length === 0) return '"branches" must be a non-empty array'
+  const seen = new Set()
+  for (let i = 0; i < raw.branches.length; i++) {
+    const b = raw.branches[i]
+    const at = `branches[${i}]`
+    if (!b || typeof b !== 'object' || Array.isArray(b)) return `${at} must be an object`
+    if (typeof b.name !== 'string' || !b.name.trim()) return `${at}.name must be a non-empty string`
+    if (/\s/.test(b.name)) return `${at}.name must not contain whitespace (got '${b.name}')`
+    if (seen.has(b.name)) return `duplicate branch name '${b.name}'`
+    seen.add(b.name)
+    if (b.files !== undefined && !isStrMap(b.files)) return `${at}.files must be an object mapping path -> string content`
+    if (b.commitMessage !== undefined && typeof b.commitMessage !== 'string') return `${at}.commitMessage must be a string`
+    if (b.plantedFindings !== undefined && (!Array.isArray(b.plantedFindings) || b.plantedFindings.some((f) => typeof f !== 'string'))) return `${at}.plantedFindings must be an array of strings`
+  }
+  return null
+}
+
+// Materialize a resolved mock spec into `sandbox` as a git repo: base files on
+// `main`, then one branch per scenario branch. Leaves the checkout on the last
+// branch (the scenario branch under review). Returns the manifest object.
+export function generateMockRepo(sandbox, spec) {
+  mkdirSync(sandbox, { recursive: true })
+  writeFiles(sandbox, spec.files)
+  gitInit(sandbox)
+  gitCommitAll(sandbox, 'chore: mock base project')
+
+  const branches = []
+  for (const b of spec.branches) {
+    run('git', ['-C', sandbox, 'checkout', '--quiet', '-b', b.name, spec.baseBranch])
+    writeFiles(sandbox, b.files)
+    gitCommitAll(sandbox, b.commitMessage)
+    branches.push({ name: b.name, commitMessage: b.commitMessage, plantedFindings: b.plantedFindings })
+  }
+
+  const manifest = { scenario: spec.scenario, baseBranch: spec.baseBranch, branches }
+  // Keep the manifest in the sandbox but out of git, so it never shows up in the
+  // diff the skill reviews.
+  writeFileSync(path.join(sandbox, '.mock-manifest.json'), JSON.stringify(manifest, null, 2) + '\n')
+  const excludePath = path.join(sandbox, '.git', 'info', 'exclude')
+  if (existsSync(path.dirname(excludePath))) writeFileSync(excludePath, '.mock-manifest.json\n')
+  return manifest
+}
+
+function writeFiles(root, files) {
+  for (const [rel, content] of Object.entries(files || {})) {
+    if (rel.includes('..') || path.isAbsolute(rel)) throw new Error(`unsafe mock file path: ${rel}`)
+    const dest = path.join(root, rel)
+    mkdirSync(path.dirname(dest), { recursive: true })
+    writeFileSync(dest, content)
+  }
 }
 
 // ---------------------------------------------------------------------------
 // Prompts
 // ---------------------------------------------------------------------------
 
-function runPrompt(skillName, task) {
+function runPrompt(skillName, task, repoContext) {
   return `You are evaluating the "${skillName}" Claude Code skill in a DRY RUN.
 
 DRY-RUN RULES — non-negotiable:
@@ -299,7 +518,7 @@ DRY-RUN RULES — non-negotiable:
 - This sandbox has no git remote and no tracker token on purpose. Treat every
   outbound/mutating action as "describe, do not perform".
 - Read-only inspection of the repo is fine.
-
+${repoContext ? `\nREPO CONTEXT:\n${repoContext}\n` : ''}
 TASK for this run:
 ${task}
 
@@ -479,15 +698,28 @@ function fmtMs(ms) { return ms === null || ms === undefined ? '—' : `${(ms / 1
 function fmtNum(n) { return n === null || n === undefined ? '—' : n.toLocaleString('en-US') }
 function fmtCost(c) { return c === null || c === undefined ? '—' : `$${c.toFixed(4)}` }
 
-function buildReport({ skillName, task, mode, model, passes, targetRepo, shippedDir, finalDir, diffText }) {
+function buildReport({ skillName, task, mode, model, passes, sourceLabel, shippedDir, finalDir, diffText, manifest }) {
   const L = []
   L.push(`# skill-optimizer report — \`${skillName}\``, '')
   L.push(`- Skill: \`${skillName}\``)
   L.push(`- Task: ${task}`)
   L.push(`- Mode: \`${mode}\`  |  Model: \`${model || 'CLI default'}\``)
-  L.push(`- Target repo: \`${targetRepo}\``)
+  L.push(`- Source: \`${sourceLabel}\``)
   L.push(`- Passes: ${passes.length}`)
   L.push('')
+  if (manifest) {
+    L.push('## Mock scenario — planted findings', '')
+    L.push(`Scenario \`${manifest.scenario}\` (base branch \`${manifest.baseBranch}\`). Compare these against what each pass reported to judge finding recall.`, '')
+    for (const b of manifest.branches) {
+      L.push(`**Branch \`${b.name}\`** — ${b.commitMessage}`)
+      if (b.plantedFindings && b.plantedFindings.length) {
+        for (const f of b.plantedFindings) L.push(`- ${f}`)
+      } else {
+        L.push('- _(no planted findings declared)_')
+      }
+      L.push('')
+    }
+  }
   L.push('## Per-pass metrics', '')
   L.push('| Pass | Steps | Tool calls | Tokens in | Tokens out | Cost | Wall time | Error? |')
   L.push('|---|---|---|---|---|---|---|---|')
@@ -574,6 +806,14 @@ async function main() {
     return
   }
 
+  if (opts.genMock) {
+    // Hidden: generate a mock repo (no claude call) so tests can verify it.
+    const spec = resolveMockSpec(opts)
+    const manifest = generateMockRepo(path.resolve(opts.genMock), spec)
+    console.log(JSON.stringify(manifest, null, 2))
+    return
+  }
+
   if (!opts.skill) fail('--skill <name> is required')
   if (!Number.isInteger(opts.passes) || opts.passes < 1) fail('--passes must be a positive integer')
   const shippedDir = path.join(repoRoot, 'skills', opts.skill)
@@ -583,18 +823,44 @@ async function main() {
   if (!['cli', 'api'].includes(mode)) fail(`--mode must be cli or api (got ${mode})`)
   if (mode === 'api' && !process.env.ANTHROPIC_API_KEY) fail('--mode api requires ANTHROPIC_API_KEY in the environment')
 
-  const targetRepo = path.resolve(opts.targetRepo || repoRoot)
-  if (!existsSync(targetRepo)) fail(`--target-repo does not exist: ${targetRepo}`)
+  // Evaluation source: real-repo copy vs generated mock. Default = mock.
+  if (opts.targetRepo && (opts.mockGiven || opts.mockSpec)) fail('--target-repo is mutually exclusive with --mock / --mock-spec')
+  if (opts.mockGiven && opts.mockSpec) fail('--mock and --mock-spec are mutually exclusive (a spec names its own scenario)')
+  let source
+  let mockSpec = null
+  let sourceLabel
+  if (opts.targetRepo) {
+    const targetRepo = path.resolve(opts.targetRepo)
+    if (!existsSync(targetRepo)) fail(`--target-repo does not exist: ${targetRepo}`)
+    source = { type: 'repo', path: targetRepo }
+    sourceLabel = `repo copy: ${targetRepo}`
+  } else {
+    mockSpec = resolveMockSpec(opts)
+    source = { type: 'mock', spec: mockSpec }
+    sourceLabel = `mock: ${mockSpec.scenario}`
+  }
+
+  const mockBranch = mockSpec && mockSpec.branches.length ? mockSpec.branches[mockSpec.branches.length - 1] : null
+  const repoContext = mockSpec
+    ? `This is a generated MOCK evaluation repo (not real code). Base branch: `
+      + `\`${mockSpec.baseBranch}\`. The current checkout is branch `
+      + `\`${mockBranch ? mockBranch.name : mockSpec.baseBranch}\`, whose changes vs `
+      + `\`${mockSpec.baseBranch}\` are the material to evaluate. A configured `
+      + `pipeline (.ai/agentic.config.json, npm test) is present; treat any tracker `
+      + `issue/PR reference as hypothetical and describe what you would do.`
+    : null
 
   const task = opts.task
-    || `Run this skill's workflow against this repository in DRY-RUN mode on a trivial example (do not mutate anything; describe what you would do). Keep it small.`
+    || (mockSpec
+      ? `Run this skill's workflow (DRY-RUN) against the current branch's changes vs ${mockSpec.baseBranch}. Do not mutate anything; describe what you would do.`
+      : `Run this skill's workflow against this repository in DRY-RUN mode on a trivial example (do not mutate anything; describe what you would do). Keep it small.`)
 
   const ts = new Date().toISOString().replace(/[:.]/g, '-')
   const outDir = path.resolve(opts.out || path.join(repoRoot, '.ai', 'analysis', 'skill-optimizer', `${opts.skill}-${ts}`))
   mkdirSync(outDir, { recursive: true })
 
   console.error(`skill-optimizer: skill=${opts.skill} passes=${opts.passes} mode=${mode} model=${opts.model || 'CLI default'}`)
-  console.error(`  target repo : ${targetRepo}`)
+  console.error(`  source      : ${sourceLabel}`)
   console.error(`  artifacts   : ${outDir}`)
 
   // Candidate for pass 1 = the shipped skill.
@@ -602,6 +868,7 @@ async function main() {
   cpSync(shippedDir, candidateDir, { recursive: true })
 
   const passes = []
+  let manifest = null
 
   for (let i = 1; i <= opts.passes; i++) {
     console.error(`\n=== Pass ${i}/${opts.passes}: measure ===`)
@@ -611,8 +878,10 @@ async function main() {
     const measuredDir = path.join(passDir, 'skill-candidate')
     cpSync(candidateDir, measuredDir, { recursive: true })
 
-    const sandbox = makeSandbox(targetRepo, opts.skill, candidateDir)
-    const prompt = runPrompt(opts.skill, task)
+    const built = makeSandbox(opts.skill, candidateDir, source)
+    const sandbox = built.sandbox
+    if (built.manifest) manifest = built.manifest
+    const prompt = runPrompt(opts.skill, task, repoContext)
     writeFileSync(path.join(passDir, 'run-prompt.txt'), prompt)
     const transcriptPath = path.join(passDir, 'transcript.jsonl')
 
@@ -687,9 +956,11 @@ async function main() {
   const diff = spawnSync('diff', ['-ru', shippedDir, finalDir], { encoding: 'utf8' })
   const diffText = diff.stdout || ''
 
+  if (manifest) writeFileSync(path.join(outDir, 'mock-manifest.json'), JSON.stringify(manifest, null, 2) + '\n')
+
   const report = buildReport({
     skillName: opts.skill, task, mode, model: opts.model,
-    passes, targetRepo, shippedDir, finalDir, diffText,
+    passes, sourceLabel, shippedDir, finalDir, diffText, manifest,
   })
   writeFileSync(path.join(outDir, 'report.md'), report)
   console.error(`\nReport: ${path.join(outDir, 'report.md')}`)

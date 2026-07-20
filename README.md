@@ -70,7 +70,7 @@ npm run uninstall-skills                   # remove only the links owned by this
 
 The installer never touches skills it does not own: an existing real directory (e.g. installed earlier via `npx skills add`) is skipped with a warning unless you pass `--force`, and uninstall removes only symlinks that point into this checkout.
 
-**Optimizing a skill:** `node scripts/skill-optimizer.mjs --skill <name>` runs a skill headlessly in a throwaway sandbox, measures the run (per-step tokens, tool calls, wall time), proposes `SKILL.md` edits to a candidate copy, and re-measures — N passes — then writes a report and a diff for you to review. It never touches `skills/<name>` unless you pass `--apply-final`, and no run can commit, push, or reach a tracker. See [docs/skill-optimizer.md](docs/skill-optimizer.md).
+**Optimizing a skill:** `node scripts/skill-optimizer.mjs --skill <name>` runs a skill headlessly against a generated, hermetic mock repo (or a sandbox copy of a real one via `--target-repo`), measures the run (per-step tokens, tool calls, wall time), proposes `SKILL.md` edits to a candidate copy, and re-measures — N passes — then writes a report and a diff for you to review. It never touches `skills/<name>` unless you pass `--apply-final`, and no run can commit, push, or reach a tracker. See [docs/skill-optimizer.md](docs/skill-optimizer.md).
 
 ## 🔁 The pipeline
 

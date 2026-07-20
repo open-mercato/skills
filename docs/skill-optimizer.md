@@ -11,6 +11,12 @@ until you say so.
 
 It has zero npm dependencies and needs Node ≥ 20 and the `claude` CLI on `PATH`.
 
+**Hermetic by default.** With no `--target-repo`, the tool generates a
+self-contained mock repo (see [Evaluation repo](#evaluation-repo-hermetic-by-default))
+and runs the skill against that — so a run never touches, copies, or depends on
+a production repo. Point `--target-repo` at a real repo only when you accept the
+sandbox copy of it.
+
 ## What one run looks like
 
 ```
@@ -37,7 +43,9 @@ node scripts/skill-optimizer.mjs --skill <name> [options]
 | `--skill <name>` | (required) | Directory under `skills/` to optimize. |
 | `--passes N` | `2` | measure→analyze→optimize iterations. |
 | `--task "<brief>"` | canned dry-run brief | Scenario handed to the run. |
-| `--target-repo <path>` | this repo | Repo the skill is exercised against. |
+| `--target-repo <path>` | (off) | Exercise against a sandbox **copy** of a real repo (remotes stripped). Mutually exclusive with `--mock*`. |
+| `--mock [scenario]` | **default source** | Generate a hermetic mock repo (default scenario `review`). |
+| `--mock-spec <path>` | | Generate a mock repo from a JSON scenario spec. |
 | `--model <model>` | CLI default | Model for both the run and analysis calls. |
 | `--out <dir>` | `.ai/analysis/skill-optimizer/<skill>-<ts>/` | Artifacts dir. |
 | `--mode cli\|api` | auto (see below) | Which credential the child uses. |
@@ -57,13 +65,99 @@ Both modes invoke the **same** `claude` binary. `--mode` only controls whether
 Default: `api` when `ANTHROPIC_API_KEY` is set **and** `CI=true`; otherwise
 `cli`. `--mode api` errors if no key is present.
 
+## Evaluation repo: hermetic by default
+
+The skill has to run *against something*. There are two sources, and the
+default is hermetic so runs never pollute production repos:
+
+- **Mock (default).** With no `--target-repo`, the tool generates a fresh,
+  self-contained fixture repo inside the sandbox. It never reads or copies any
+  real repo. `--mock [scenario]` selects a built-in scenario (default `review`).
+- **Real-repo copy.** `--target-repo <path>` copies an existing repo into the
+  sandbox (`git clone --local`, remotes stripped) and runs there. Use this only
+  when you deliberately want to exercise the skill against real content — you
+  still get the sandbox copy, never the original.
+
+The two are mutually exclusive.
+
+### The mock repo
+
+Every mock is a tiny, configured Node project so a skill's preflight finds a
+real pipeline and never needs a live tracker:
+
+- `package.json` with a fast **passing `npm test`** (`node --test`), plus a
+  couple of `src/` files and a test.
+- `.ai/agentic.config.json` with `labels.enabled=false`, `qaGate=false`,
+  `validation.commands=["npm test"]`, `baseBranch=main`.
+- `.ai/trackers/github.md` — the real GitHub tracker descriptor — so tracker
+  operations resolve.
+
+A **scenario** then overlays one or more git branches on top. The built-in
+`review` scenario adds a `feat/coupon-stacking` branch with a
+`stackCoupons(order, coupons)` function carrying deliberately planted findings
+for review-type skills:
+
+- an off-by-one loop bound (`i <= coupons.length`),
+- a loose `==` comparison,
+- a caller-object mutation (`order.applied.push(...)` assuming the caller set it up),
+- a swallowed `catch`,
+- and missing tests.
+
+The planted-findings list is recorded two ways so you can judge **finding
+recall** per pass: `.mock-manifest.json` inside the sandbox (git-ignored, so it
+never shows up in the diff the skill reviews) and a **Mock scenario — planted
+findings** section echoed into `report.md` (and `mock-manifest.json` in the out
+dir).
+
+### Custom scenarios: `--mock-spec <path.json>`
+
+Define your own fixture with a JSON file:
+
+```json
+{
+  "files": {
+    "src/discount.js": "function pct(n){ return n/100 }\nmodule.exports={pct}\n"
+  },
+  "branches": [
+    {
+      "name": "feat/apply-discount",
+      "commitMessage": "feat: apply a percentage discount",
+      "files": {
+        "src/apply.js": "function apply(order, pct){\n  for (let i=0; i<=order.items.length; i++){\n    order.items[i].price *= (1 - pct)\n  }\n}\nmodule.exports={apply}\n"
+      },
+      "plantedFindings": [
+        "Off-by-one: i <= order.items.length indexes one past the end.",
+        "Mutates caller's order.items in place with no guard."
+      ]
+    }
+  ]
+}
+```
+
+Run it:
+
+```
+node scripts/skill-optimizer.mjs --skill om-code-review --mock-spec ./my-scenario.json
+```
+
+Schema:
+
+- `files` (optional) — a map of `path → file content`, layered **on top of** the
+  base project on the `main` branch.
+- `branches` (required, non-empty) — each `{ name` (required, no whitespace,
+  unique)`, files?` (path→content)`, commitMessage?`, `plantedFindings?` (array
+  of strings) `}`. Each branch is created from `main` and committed.
+
+The run is left checked out on the **last** branch, and its changes vs `main`
+are what the skill evaluates. Invalid shapes fail fast with a specific message.
+
 ## The dry-run safety model
 
 Every skill run is side-effect-free by construction — belt *and* braces:
 
-1. **Sandbox, never the real repo.** `--target-repo` is copied into a temp
-   sandbox (`git clone --local` for a repo, or `cp` + fresh `git init`
-   otherwise). The skill runs there.
+1. **Sandbox, never the real repo.** The default source is a generated mock
+   repo; `--target-repo` is *copied* into a temp sandbox (`git clone --local`,
+   remotes stripped). Either way the skill runs against a throwaway copy.
 2. **No push target.** Every git remote is stripped from the sandbox, so there
    is nothing to push to even if a guard were bypassed.
 3. **Tool restrictions.** The headless run is launched with
@@ -87,7 +181,8 @@ rejected and noted in the report.
 
 ```
 <out>/
-  report.md                 # human-readable summary + final diff
+  report.md                 # human-readable summary + planted findings + final diff
+  mock-manifest.json        # (mock runs) scenario + planted findings per branch
   candidate-current/        # working candidate (pass 1 = shipped skill)
   candidate-pass-<i>/        # candidate produced for pass i
   final-candidate/          # the last measured skill version
@@ -117,7 +212,8 @@ rejected and noted in the report.
 `.github/workflows/skill-optimizer.yml` runs the loop on demand:
 
 1. Actions → **skill-optimizer** → *Run workflow*.
-2. Inputs: `skill` (required), `passes` (default `2`), `task` (optional).
+2. Inputs: `skill` (required), `passes` (default `2`), `mock` (default `review`,
+   keeps CI hermetic), `task` (optional).
 3. It installs `@anthropic-ai/claude-code`, runs with `--mode api` using the
    `ANTHROPIC_API_KEY` secret, and uploads the out dir as an artifact.
 

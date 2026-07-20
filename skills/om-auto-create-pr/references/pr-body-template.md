@@ -1,7 +1,10 @@
-# PR body template (step 9)
+# PR body template (step 10)
 
-The PR body `om-auto-create-pr` opens the PR with in step 9. It **MUST** include
-the `Tracking plan:` line so `om-auto-continue-pr` can resume.
+The PR body `om-auto-create-pr` opens the PR with in step 10 — the inline-fallback
+copy of the unified template owned by `om-open-pr` (its
+`references/pr-body-template.md`); the two must stay in sync (see the cross-skill
+contract in this repo's AGENTS.md). It **MUST** include the `Tracking plan:` line
+so `om-auto-continue-pr` can resume.
 
 PR title convention: conventional-commit prefix scoped to the primary area.
 Examples: `feat(ui): add accessible confirmation dialog wrapper`,
@@ -10,10 +13,13 @@ Examples: `feat(ui): add accessible confirmation dialog wrapper`,
 `docs(skills): add om-auto-create-pr and om-auto-continue-pr`.
 
 ```markdown
+Closes #{issueId}                <!-- only in issue-driven runs; `Refs #{issueId}`
+                                      for a spec-only design PR -->
 Tracking plan: {RUNS_DIR}/{DATE}-{SLUG}.md
+Source doc: {SPECS_DIR}/{spec}.md     <!-- only when a spec/design doc drives the run -->
 Status: in-progress
 
-## Goal
+## 🎯 Goal
 - {one-line task summary from brief}
 
 ## External References
@@ -22,14 +28,14 @@ Status: in-progress
 ## What Changed
 - {bullet list of phase-level changes}
 
-## Tests
+## 🧪 Tests
 - {unit tests added or updated}
 - {other checks}
 
-## Breaking Changes
+## 💥 Breaking Changes
 - {None | describe affected contracts and migration notes}
 
-## Progress
+## 📋 Progress
 See the Progress section in the tracking plan.
 ```
 

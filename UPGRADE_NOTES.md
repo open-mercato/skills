@@ -14,6 +14,14 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-07-18 — pipeline alignment: ready PRs, full labels, new spec skills
+
+- **PRs open ready-for-review by default.** `om-open-pr` (and every skill delegating to it) no longer opens drafts; draft is reserved for explicitly incomplete states (`--draft`: spec-only design PRs, interrupted hand-offs, `⚠ NEEDS HUMAN CONFIRMATION` autonomous defaults). If your process relied on agent PRs arriving as drafts, gate on the `review` pipeline label / QA gate instead.
+- **`om-open-pr` now applies the full SDLC label set** (pipeline `review` + category + QA meta + one priority + one risk) with rationale comments — previously it applied only a subset, so chains like issue → PR could end up missing the pipeline label.
+- **New skills:** `om-auto-write-spec` (brief/issue → autonomous spec PR with mockups/screenshots) and `om-auto-implement-spec` (spec → implemented, reviewed, UI-verified PR). `om-auto-implement-issue` is now a router over `om-auto-fix-issue` / these two.
+- **`om-spec-writing` gains `--autonomous`**; the Open Questions gate stays a hard stop in interactive runs.
+- Re-sync your tracker descriptor if it predates the `mark-pr-ready` / `attach-image-evidence` operations — several skills now depend on them.
+
 ## 2026-07-18 — `om-gap-analysis` and `om-app-spec-writing` moved out
 
 These two skills were engagement/project-oriented rather than pipeline-agnostic and now live in
@@ -65,6 +73,32 @@ preserving the rest of the config.
 ## Notable upgrades
 
 Newest first. Each entry lists the symptom you will see with a stale installation and the fix.
+
+### 2026-07 — skill consolidation and renames
+
+The collection consolidated to thirty skills. Two skills were renamed and two were absorbed into the driver that already invoked them:
+
+- `om-auto-verify-pr-ui` → `om-auto-qa-pr` (and it now runs `om-auto-review-pr` first when the PR is still unreviewed, then the browser UI QA).
+- `om-sync-merged-pr-issues` → `om-close-fixed-issues` (rename only; same behavior).
+- `om-stabilize-ci` → **absorbed into `om-auto-fix-pr`**; its standalone use is now `om-auto-fix-pr --ci-only [--branch <name>]`.
+- `om-auto-implement-issue` → **absorbed into `om-auto-fix-issue`**, now the single issue-to-PR entry point (it classifies, then routes bugs to the fix chain and features to spec-then-build).
+
+- **Symptom of a stale installation:** the old skill directories (`om-auto-verify-pr-ui`, `om-sync-merged-pr-issues`, `om-stabilize-ci`, `om-auto-implement-issue`) linger in your agents' skill directories, so `/om-…` still resolves to a removed skill; and any repo-local override kept under an old name (`.ai/skills/<old-name>/SKILL.md`) is silently ignored, because the installed skill it shadowed no longer exists.
+- **Fix:** reinstall the collection (`npx skills add open-mercato/skills --skill '*'`), then delete the four old skill directories from each agent's skill directory — they are not removed automatically. Rename any repo-local overrides to the new names: `.ai/skills/om-auto-verify-pr-ui/` → `.ai/skills/om-auto-qa-pr/`, and `.ai/skills/om-sync-merged-pr-issues/` → `.ai/skills/om-close-fixed-issues/`. For the two absorbed skills, fold the override into the absorbing skill's override: `.ai/skills/om-stabilize-ci/` into `.ai/skills/om-auto-fix-pr/`, and `.ai/skills/om-auto-implement-issue/` into `.ai/skills/om-auto-fix-issue/`.
+
+### 2026-07 — Cross-skill coverage check in `om-setup-agent-pipeline`
+
+Skills delegate to each other, so a cherry-picked `npx skills add … --skill <name>` install can
+leave dangling references (e.g. `om-auto-fix-issue` installed without `om-root-cause`). Setup now
+verifies coverage: it scans every installed skill for references to collection skills — by name and
+via `om-<skill>/references/<file>` pointers — and prints a paste-ready
+`npx skills add open-mercato/skills --skill <missing-1> --skill <missing-2> …` command for anything
+missing (roster + detection script: `skills/om-setup-agent-pipeline/references/skill-coverage.md`).
+
+- **Symptom of a stale installation:** a partial install only fails mid-pipeline, when a skill
+  names a next step that is not installed — nothing warns at setup time.
+- **Fix:** refresh the `om-setup-agent-pipeline` skill and re-run `/om-setup-agent-pipeline`
+  (step "Verify cross-skill coverage") — it lists what is missing and the exact install command.
 
 ### 2026-07 — `update-issue` tracker operation + new `om-auto-manage-issues`
 

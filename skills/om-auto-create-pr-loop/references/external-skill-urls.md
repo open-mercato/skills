@@ -1,7 +1,7 @@
 # External skill URL handling (expanded)
 
 The full handling `om-auto-create-pr-loop` applies when one or more `--skill-url`
-arguments are provided. The body's step 1 gives the short form; this is the
+arguments are provided. The body's step 3 gives the short form; this is the
 expanded contract.
 
 When one or more `--skill-url` arguments are provided:

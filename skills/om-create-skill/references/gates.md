@@ -44,8 +44,10 @@ comm -23 /tmp/base_lines.txt /tmp/new_lines.txt | while IFS= read -r line; do
   grep -Fq -- "$norm" /tmp/refs.txt || echo "REVIEW (only intro/pointer prose is acceptable here): $line"
 done
 
-# 2c. Safety boundary stayed in the body.
-grep -q "Untrusted content boundary" "$dir/SKILL.md" && echo "untrusted boundary: in body" || echo "FAIL: safety boundary left the body"
+# 2c. Safety boundary still loads on every run (body, or the step-0
+#     references/agentic-setup.md the body always loads first).
+grep -q "Untrusted content boundary" "$dir/SKILL.md" "$dir/references/agentic-setup.md" 2>/dev/null \
+  && echo "untrusted boundary: loads on every run" || echo "FAIL: safety boundary lost"
 
 # 2d. Description unchanged (routing must not move).
 diff <(git show "$BASE_REF:$dir/SKILL.md" | sed -n '/^---$/,/^---$/{/^description:/p}') \

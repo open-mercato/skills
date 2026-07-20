@@ -25,7 +25,7 @@ Overriding rule: **`SKILL.md` = router + map. `references/` = the terrain.**
 - **Output template → always layer 3.** Long "this is what the PR comment / QA report looks like" blocks are needed only in the step that produces them.
 - **Conditional section → layer 3.** If it runs only in one branch (`if fork`, `if --stop`, `if first run`), it should not load on every run.
 - **Reference table > ~15 rows → layer 3**, unless the model needs it for the branch decision itself.
-- **Safety rules stay in the body.** The untrusted-content boundary, no-exfiltration rules, and QA gates must be visible whenever the skill runs. Never hide safety behind a lazy-load.
+- **Safety loads on every run.** The untrusted-content boundary, no-exfiltration rules, and QA gates must be visible whenever the skill runs — in the body, or in the step-0 `references/agentic-setup.md` the body always loads first. Never hide safety behind a conditional lazy-load.
 - **Decision logic stays in the body.** The *premise* that selects a branch stays up; only the *content* of the branch goes down.
 
 ## The readability test (the gate for "did I split well?")

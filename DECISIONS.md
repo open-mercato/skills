@@ -152,6 +152,17 @@ findings (nits/low/out-of-scope) become follow-up issues via
 `om-followup-issue-from-pr` instead of blocking or bloating the PR, and fork PRs keep
 the carry-forward supersede/credit rules from `om-auto-review-pr`'s fork flow.
 
+## 2026-07-20 — Skill consolidation: four fewer skills, standard step files per skill
+
+Four changes reduced the collection to thirty skills without losing behavior:
+
+- **`om-auto-verify-pr-ui` → `om-auto-qa-pr`**, and it now checks the PR's review state first: on an unreviewed PR it runs `om-auto-review-pr` before the browser UI QA, so a code review always precedes the UI pass. The rename also drops the "verify" framing for the plainer "QA".
+- **`om-sync-merged-pr-issues` → `om-close-fixed-issues`** — a plain rename to name the skill after what it does (close the issues a merged PR authoritatively fixes); behavior is unchanged.
+- **`om-stabilize-ci` absorbed into `om-auto-fix-pr`.** CI stabilization was only ever invoked from the PR driver, so a standalone skill meant a second thing to install and keep in sync. Its procedure is now `om-auto-fix-pr`'s own step, and a new `--ci-only [--branch <name>]` mode covers the standalone use it previously served — a plain branch or no-PR change driven to green CI.
+- **`om-auto-implement-issue` absorbed into `om-auto-fix-issue`.** The router was a thin dispatcher over the bug and feature routes; folding it in makes `om-auto-fix-issue` the single issue-to-PR entry point. It classifies the issue, sends bugs down the fix chain, and takes features through the feature route — claim, spec resolution (author via `om-auto-write-spec` when none exists, implement via `om-auto-implement-spec`), and contract verification — on one PR. `--spec-only` still stops after the spec PR.
+
+Alongside the consolidation, every skill's repeatable procedures now live in per-skill `references/<step>.md` files under standard names (`agentic-setup.md`, `worktree-setup.md`, `claim-pr.md`, `pr-finalize.md`, `review-report.md`, `rules.md`); `SKILL.md` keeps the numbered main algorithm, and `om-auto-create-pr` holds the canonical copy. These standard files are **deliberately duplicated in each skill that uses them** rather than shared through cross-skill file pointers. The decision is standalone installability over DRY: a skill cherry-picked with `npx skills add … --skill <one>` must run without depending on a file that lives inside a sibling skill. The cost is that a standard step file edited in one skill can drift from the others, so the contributor rule (now recorded in AGENTS.md) is: when you change a standard file in one skill, ask whether to sync the others.
+
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.

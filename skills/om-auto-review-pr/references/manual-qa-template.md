@@ -1,4 +1,4 @@
-# Manual-QA instructions comment (step 8a)
+# Manual-QA instructions comment (step 10)
 
 The additive comment `om-auto-review-pr` posts when the verdict is approved AND
 the PR carries `needs-qa` without `skip-qa` — i.e. it was just routed to

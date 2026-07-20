@@ -1,7 +1,7 @@
-# Run-mode contracts (step 0a)
+# Run-mode contracts (step 1)
 
 The Simple-run and Spec-implementation-run contracts, plus the promotion path,
-for `om-auto-create-pr-loop`. The body keeps the step-0a classification heuristic
+for `om-auto-create-pr-loop`. The body keeps the step-1 classification heuristic
 (which mode to run in); this file holds what each mode requires once the choice
 is made.
 
@@ -34,4 +34,4 @@ A Simple run MAY be promoted to a Spec-implementation run mid-flight if the agen
 - Draft the plan under `${RUNS_DIR}/<date>-<slug>/PLAN.md` (with Tasks table), `HANDOFF.md`, `NOTIFY.md`.
 - Write a seed commit that adds these files.
 - Update the PR body to add `Tracking plan:` and `Status: in-progress` lines.
-- Continue under the full Spec-implementation contract from step 0 onwards.
+- Continue under the full Spec-implementation contract from step 2 onwards.

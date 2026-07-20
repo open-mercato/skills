@@ -14,7 +14,7 @@ Minimum comment structure:
 **Branch:** {BRANCH}
 **Final status:** {complete | in-progress — use om-auto-continue-pr {prNumber}}
 
-### Summary of changes
+### 📋 Summary of changes
 - {phase-level bullet 1}
 - {phase-level bullet 2}
 - {files/areas touched at a glance}
@@ -22,20 +22,20 @@ Minimum comment structure:
 ### External references honored
 - {URL — what was adopted; what was rejected and why}  <!-- omit section if no --skill-url was used -->
 
-### Verification phases completed
+### 🧪 Verification phases completed
 - **Targeted validation (per phase):** {which validation commands ran per phase}
-- **Full validation gate:** {each configured command with ✓, or an explicit blocker}
+- **Full validation gate:** {each configured command with ✅, or an explicit blocker}
 - **Self code-review:** {applied the om-code-review skill — findings: {none | list with commit SHA of fix}}
 - **Breaking-change self-review:** {contracts checked — findings: {none | list}}
 - **`om-auto-review-pr` autofix pass:** {verdict + SHA range of follow-up commits, or note that it returned clean on first pass}
 
-### How to verify
+### 🔍 How to verify
 - **Manual smoke test:** {concrete steps a reviewer can run locally, including any fixtures needed}
 - **Areas to spot-check in the diff:** {short list of files/functions that benefit most from a human eye}
 - **Commands the reviewer can re-run:** {the exact commands you used}
 - **Rollback plan:** {git revert of {commit range} | feature flag to disable | migration reversal steps}
 
-### What can go wrong (risk analysis)
+### ⚠️ What can go wrong (risk analysis)
 - **Most likely regression:** {area + symptom + mitigation/test that catches it}
 - **Second-order effects:** {downstream components or consumers that could be impacted}
 - **Security-sensitive surfaces:** {auth, permissions, data scoping, or secrets surfaces touched — or "N/A"}

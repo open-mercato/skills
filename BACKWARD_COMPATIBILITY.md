@@ -43,7 +43,7 @@ hold committed, possibly team-edited copies at `.ai/browsers/<provider>.md`.
 
 - **Execution-plan `## Progress` section** (`- [ ]` / `- [x]` checklists with `N.M` step ids and ` — <sha>` suffixes) — written by `om-auto-create-pr`, parsed by `om-auto-continue-pr`.
 - **PR body `Tracking plan:` and `Status:` lines** — written by `om-auto-create-pr`, parsed by `om-auto-continue-pr` and the loop skills.
-- **`<paths.qa>/test-env.json`** — written by `om-prepare-test-env`, consumed by `om-auto-verify-pr-ui` and `om-integration-tests`.
+- **`<paths.qa>/test-env.json`** — written by `om-prepare-test-env`, consumed by `om-auto-qa-pr` and `om-integration-tests`.
 - **Generated launcher scripts in `<paths.scripts>/`** — created by `om-prepare-test-env`, re-run by later runs and other skills.
 
 **Breaking:** changing any of these formats so an unmodified consumer skill can no longer parse output produced by a modified producer (or vice versa). **Required path:** update producer and all consumers in one PR, and keep the parser tolerant of the previous format when consumer repos may hold old artifacts (committed plans, descriptors).

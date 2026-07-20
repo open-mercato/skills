@@ -50,7 +50,7 @@ detect and skip it:
 **Compatibility:** {None | protected surfaces touched + required migration per BACKWARD_COMPATIBILITY.md}
 **Confidence:** {high / medium / low — what a human should double-check}
 
-Pick this up with `om-auto-fix-issue {issueId}` (features route to `om-auto-implement-issue`).
+Pick this up with `om-auto-fix-issue {issueId}` (it handles both bugs and features).
 ```
 
 Optionally fold a one-line "Likely area" pointer into the clarified description when

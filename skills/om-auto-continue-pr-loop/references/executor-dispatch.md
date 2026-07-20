@@ -1,9 +1,9 @@
-# Multi-Step runs: executor-dispatch pattern (step 4)
+# Multi-Step runs: executor-dispatch pattern (step 6)
 
 The dispatcher/executor pattern `om-auto-continue-pr-loop` uses when a single
 invocation is expected to land **multiple Steps in one pass**. Applies only to
 **Spec-implementation runs** — Simple runs have at most one code commit and do
-not use executor dispatch. The body enters this file from step 4.
+not use executor dispatch. The body enters this file from step 6.
 
 When a single invocation is expected to land **multiple Steps in one pass**, the main session SHOULD act as a **dispatcher** and spawn one **executor subagent** per Step (foreground `Agent` tool call, `subagent_type: "general-purpose"`). The executor implements exactly that Step end-to-end (code commit + Tasks-table flip + push). The main session waits for the executor to return, verifies the commit landed and pushed, then dispatches the next Step.
 
@@ -21,8 +21,8 @@ Hard constraints:
 
 - Subagents do NOT have access to the `Agent` tool. A coordinator subagent **cannot** spawn executors. Dispatch MUST live in the main session.
 - Dispatch is **sequential** (one executor at a time). This is not parallelism — the cap-at-2 rule above still applies to the rare case where you want an implementer and a reviewer running side-by-side; an executor-dispatch run is a sequence of one-at-a-time executors.
-- The main session claims the `in-progress` lock **once** at step 0 and releases it **once** at step 9 (or on early exit). Executors MUST NOT claim or release the lock.
-- The main session posts the final summary comment (step 8) at the end. Executors MUST NOT post the final summary.
+- The main session claims the `in-progress` lock **once** at step 1 and releases it **once** at step 11 (or on early exit). Executors MUST NOT claim or release the lock.
+- The main session posts the final summary comment (step 10) at the end. Executors MUST NOT post the final summary.
 
 Executor prompt template — the main session writes this into each spawned `Agent` call:
 
@@ -70,9 +70,9 @@ Verification the main session MUST run after each executor returns — before di
 - Local HEAD == `origin/{branch}` (push actually landed; fetch if in doubt).
 - The PLAN.md Tasks-table row for `{X.Y}` is flipped to `done` with the correct short SHA in the `Commit` column.
 
-Every 5 successful executors (or when a Phase with ≥3 Steps closes), the main session MUST run a **checkpoint pass** per step 4b before dispatching the next Step: targeted validation for all areas touched in the window, focused integration tests + screenshots when UI was touched, write `checkpoint-<N>-checks.md`, rewrite `HANDOFF.md`, append the checkpoint entry to `NOTIFY.md`, and commit as `docs(runs): checkpoint N — steps X.Y..X.Z verified`.
+Every 5 successful executors (or when a Phase with ≥3 Steps closes), the main session MUST run a **checkpoint pass** per step 6b before dispatching the next Step: targeted validation for all areas touched in the window, focused integration tests + screenshots when UI was touched (screenshots also posted to the PR as the checkpoint's **attach-image-evidence** comment, per the checkpoint pass), write `checkpoint-<N>-checks.md`, rewrite `HANDOFF.md`, append the checkpoint entry to `NOTIFY.md`, and commit as `docs(runs): checkpoint N — steps X.Y..X.Z verified`.
 
-Safety stops — the main session MUST halt dispatch (leave `Status: in-progress`, rewrite `HANDOFF.md`, append a NOTIFY entry naming the blocker, release the lock per step 9, and report back) when any of the following is true:
+Safety stops — the main session MUST halt dispatch (leave `Status: in-progress`, rewrite `HANDOFF.md`, append a NOTIFY entry naming the blocker, release the lock per step 11, and report back) when any of the following is true:
 
 - An executor returns a blocker, failing tests, or an error.
 - `git status` is not clean after an executor returns.

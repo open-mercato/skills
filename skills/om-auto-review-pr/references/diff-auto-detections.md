@@ -1,7 +1,7 @@
 # Diff-level auto-detections
 
 The severity-tagged pattern tables the `om-auto-review-pr` body scans the PR diff
-against in step 5, before running the full `om-code-review` skill. When a pattern
+against in step 7, before running the full `om-code-review` skill. When a pattern
 applies to this repository's stack and conventions, it is a mandatory finding,
 not an optional heuristic; skip rows that have no equivalent in this codebase
 (for example, the i18n row in a repo without i18n).

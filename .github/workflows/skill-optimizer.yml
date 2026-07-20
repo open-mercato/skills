@@ -1,0 +1,56 @@
+name: skill-optimizer
+
+# On-demand eval-and-optimize loop for a single skill. Runs headless Claude Code
+# against a disposable sandbox copy of this repo, measures the run, proposes
+# SKILL.md edits to a CANDIDATE copy, and re-measures — never committing anything.
+# The artifact (report + per-pass metrics + candidate diff) is for a human to
+# review; adopting a change is a separate, manual PR.
+on:
+  workflow_dispatch:
+    inputs:
+      skill:
+        description: "Skill directory under skills/ to optimize (e.g. om-fix)"
+        required: true
+        type: string
+      passes:
+        description: "measure->analyze->optimize iterations"
+        required: false
+        default: "2"
+        type: string
+      task:
+        description: "Optional scenario brief for the run (blank = canned dry-run brief)"
+        required: false
+        type: string
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run skill-optimizer
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CI: "true"
+        run: |
+          node scripts/skill-optimizer.mjs \
+            --skill "${{ inputs.skill }}" \
+            --passes "${{ inputs.passes }}" \
+            --mode api \
+            --out "$GITHUB_WORKSPACE/skill-optimizer-out" \
+            ${{ inputs.task && format('--task "{0}"', inputs.task) || '' }}
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skill-optimizer-${{ inputs.skill }}
+          path: skill-optimizer-out
+          if-no-files-found: warn

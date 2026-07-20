@@ -13,6 +13,8 @@
     "uninstall-skills": "node scripts/install-skills.mjs --uninstall",
     "lint": "scripts/lint.sh",
     "test:browser-providers": "node scripts/test-browser-providers.mjs",
-    "test:agent-browser-codex": "bash scripts/test-agent-browser-codex.sh"
+    "test:agent-browser-codex": "bash scripts/test-agent-browser-codex.sh",
+    "test:skill-optimizer": "node scripts/test-skill-optimizer.mjs",
+    "skill-optimizer": "node scripts/skill-optimizer.mjs"
   }
 }

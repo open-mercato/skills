@@ -32,7 +32,7 @@ Idempotent — safe to re-run on re-entry:
 2. Apply the `in-progress` label via the `apply_label` guard (missing label → logged skip; `labels.enabled: false` → skip and note it in the report).
 3. Post the claim comment, once (skip when an identical recent comment by `CURRENT_USER` already exists):
 
-   `🤖 Claiming this {issue|PR} — starting {skill-name} run. Started: {ISO-8601 timestamp}.`
+   `` 🤖 Claiming this {issue|PR} — starting `{skill-name}` run. Started: {ISO-8601 timestamp}. ``
 
 ## Release / handback
 
@@ -62,5 +62,5 @@ This skill does not open a new claim: it inherits the `in-progress` lock an earl
 **Lock release.** When `LABELS_ENABLED` is `true`, remove the `in-progress` label from `{issueId}` via **unlabel-issue** (through the descriptor's guard; tolerate failure), then post on `{issueId}` via **comment-issue** (when `PR_URL` is unset, substitute `(no PR — aborted)`):
 
 ```
-🤖 om-open-pr — completed: opened ${PR_URL:-(no PR — aborted)}. Lock released.
+🤖 `om-open-pr` — completed: opened ${PR_URL:-(no PR — aborted)}. Lock released.
 ```

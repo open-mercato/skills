@@ -69,7 +69,7 @@ After the PR exists, publish the step-5 visuals via **attach-image-evidence**: `
 Every run ends with a single comprehensive summary comment the human reviewer can read top-to-bottom without clicking into the diff. Post it via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. Never claim a completion you did not reach, and never paste secrets into it. Structure:
 
 ```markdown
-## 🤖 om-auto-write-spec — run summary
+## 🤖 `om-auto-write-spec` — run summary
 
 **Spec:** ${SPEC_PATH}
 **Branch:** spec/${SLUG}

@@ -76,7 +76,7 @@ If any of this is wrong, reply and I'll re-run; otherwise it's ready for `om-aut
 ```
 
 Before posting, scan **list-issue-comments** for an existing comment beginning with
-that `🤖 om-auto-manage-issues understanding` marker; if one exists, update the
+that `` 🤖 `om-auto-manage-issues` understanding `` marker; if one exists, update the
 body's clarified section if needed but do **not** post a second understanding
 comment. Under `--dry-run`, produce the clarified body and understanding text for
 the report but post/edit nothing.

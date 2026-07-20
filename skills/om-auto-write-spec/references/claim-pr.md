@@ -32,7 +32,7 @@ Idempotent — safe to re-run on re-entry:
 2. Apply the `in-progress` label via the `apply_label` guard (missing label → logged skip; `labels.enabled: false` → skip and note it in the report).
 3. Post the claim comment, once (skip when an identical recent comment by `CURRENT_USER` already exists):
 
-   `🤖 Claiming this {issue|PR} — starting {skill-name} run. Started: {ISO-8601 timestamp}.`
+   `` 🤖 Claiming this {issue|PR} — starting `{skill-name}` run. Started: {ISO-8601 timestamp}. ``
 
 ## Release / handback
 
@@ -50,5 +50,5 @@ When the run finishes, hands off, or aborts:
 - Release/handback happens in step 8. Delegate to `om-open-pr` when it ran — its hand-off step already performs the handback and lock release. Inline otherwise:
   1. **unassign-issue** — remove `CURRENT_USER` from `{issueId}` (tolerate failure).
   2. **assign-issue** — add the issue author back (tolerate failure); post via **comment-issue**: `Thanks @{ISSUE_AUTHOR} — a PR is ready: {PR_URL}. Reassigning the issue to you for verification.`
-  3. Remove the `in-progress` label via the guard, then post the release comment: `🤖 om-auto-write-spec — completed: opened {PR_URL}. Lock released.` (substitute `(no PR — aborted)` when no PR opened).
+  3. Remove the `in-progress` label via the guard, then post the release comment: `` 🤖 `om-auto-write-spec` — completed: opened {PR_URL}. Lock released. `` (substitute `(no PR — aborted)` when no PR opened).
 - Always release in a finally/trap so an aborted run still clears the lock.

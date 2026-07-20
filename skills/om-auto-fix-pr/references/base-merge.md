@@ -22,11 +22,12 @@ whole loop judges the real merge result against the current base.
 
 A fork head branch usually cannot be pushed to (no write access to the
 contributor's fork). Do **not** try to force the base merge onto it here. Instead,
-let step 4's `om-auto-review-pr` run its **fork carry-forward flow**
-(`om-auto-review-pr`'s `references/fork-pr-flow.md`): it bases a new branch in the
-main repo on the fetched PR head, merges/rebases against the base there, applies
-fixes, and opens a **replacement PR** that `Supersedes #{prNumber}` with credit to
-the original author. From that point, `{prNumber}` in the rest of `om-auto-fix-pr`
+let step 4's `om-auto-review-pr` run its **fork carry-forward flow**: it bases a
+new branch in the main repo on the fetched PR head, merges/rebases against the
+base there, applies fixes, and opens a **replacement PR** that
+`Supersedes #{prNumber}` with credit to the original author (the requirements this
+skill verifies on that replacement live in `references/pr-finalize.md`, fork
+supersede/credit section). From that point, `{prNumber}` in the rest of `om-auto-fix-pr`
 refers to the replacement PR, and the base-merge happens on the carry branch you
 can push.
 

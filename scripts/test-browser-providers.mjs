@@ -7,15 +7,25 @@ import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const read = (path) => readFileSync(join(root, path), "utf8");
+// Since the standard-step-files alignment, each skill's config-loading snippet
+// (BROWSER_PROVIDER/BROWSER_FILE resolution, validation) lives in its own
+// references/agentic-setup.md — assert over SKILL.md and that file together.
+const readSkill = (name) => {
+  let text = read(`skills/${name}/SKILL.md`);
+  try {
+    text += read(`skills/${name}/references/agentic-setup.md`);
+  } catch {}
+  return text;
+};
 
 const template = read("skills/om-setup-agent-pipeline/references/browsers/TEMPLATE.md");
 const agentBrowser = read("skills/om-setup-agent-pipeline/references/browsers/agent-browser.md");
 const playwright = read("skills/om-setup-agent-pipeline/references/browsers/playwright.md");
-const setup = read("skills/om-setup-agent-pipeline/SKILL.md");
-const prepare = read("skills/om-prepare-test-env/SKILL.md");
+const setup = readSkill("om-setup-agent-pipeline");
+const prepare = readSkill("om-prepare-test-env");
 const envDescriptor = read("skills/om-prepare-test-env/references/env-descriptor.md");
-const verifyUi = read("skills/om-auto-verify-pr-ui/SKILL.md");
-const integration = read("skills/om-integration-tests/SKILL.md");
+const qaPr = readSkill("om-auto-qa-pr");
+const integration = readSkill("om-integration-tests");
 
 const operations = [
   "ensure-installed",
@@ -84,7 +94,7 @@ assert.match(setup, /Invalid browser\.provider/);
 assert.match(prepare, /BROWSER_FILE="\.ai\/browsers\/\$\{BROWSER_PROVIDER\}\.md"/);
 assert.match(envDescriptor, /"browser": \{/);
 assert.match(envDescriptor, /legacy compatibility object/);
-for (const consumer of [verifyUi, integration]) {
+for (const consumer of [qaPr, integration]) {
   assert.match(consumer, /\.ai\/browsers\/<provider>\.md|\.ai\/browsers\/\$\{BROWSER_PROVIDER\}\.md/);
   for (const operation of ["open", "snapshot", "interact", "assert"]) {
     assert.match(consumer, new RegExp(`\\*\\*${operation}\\*\\*`), `consumer operation ${operation}`);

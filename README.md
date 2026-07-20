@@ -124,7 +124,7 @@ flowchart LR
 | `om-review-prs` | Sweeps all unreviewed open PRs, newest first, through `om-auto-review-pr`, respecting claim locks. |
 | `om-close-fixed-issues` | Post-merge housekeeping sweep: closes issues that merged PRs fix, comments on issues whose PRs were closed without merging. |
 
-### 🧑‍💻 You invoke
+### 🧑‍💻 Interactive skills
 
 Interactive helpers (no `auto` in the name — the other half of the naming convention): they act once, may ask you questions along the way, report, and hand control back to you.
 

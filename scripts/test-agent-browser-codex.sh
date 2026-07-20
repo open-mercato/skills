@@ -20,7 +20,7 @@ command -v node >/dev/null 2>&1 || { echo "node is required by the local fixture
 
 cp -R "$FIXTURE_SOURCE/." "$FIXTURE/"
 mkdir -p "$FIXTURE/.agents/skills" "$FIXTURE/.ai/browsers" "$LOG_DIR"
-for skill in om-setup-agent-pipeline om-prepare-test-env om-auto-verify-pr-ui om-integration-tests; do
+for skill in om-setup-agent-pipeline om-prepare-test-env om-auto-qa-pr om-integration-tests; do
   ln -s "$ROOT/skills/$skill" "$FIXTURE/.agents/skills/$skill"
 done
 cp "$ROOT/skills/om-setup-agent-pipeline/references/browsers/agent-browser.md" "$FIXTURE/.ai/browsers/agent-browser.md"
@@ -45,7 +45,7 @@ run_codex prepare 'Use $om-prepare-test-env with --mode dev --no-ephemeral and -
 test -s "$FIXTURE/.ai/qa/test-env.json"
 node -e 'const d=require(process.argv[1]); if(d.status!=="running"||d.browser?.provider!=="agent-browser"||d.browser?.installed!==true) process.exit(1)' "$FIXTURE/.ai/qa/test-env.json"
 
-run_codex verify 'Use $om-auto-verify-pr-ui in local evidence-only mode with --keep-env. Verify the uncommitted title and button-text change through the configured agent-browser provider. Proceed without questions. Require a PASS report and a non-empty PNG under .ai/qa; do not modify index.html.'
+run_codex verify 'Use $om-auto-qa-pr in local evidence-only mode with --keep-env. Verify the uncommitted title and button-text change through the configured agent-browser provider. Proceed without questions. Require a PASS report and a non-empty PNG under .ai/qa; do not modify index.html.'
 
 REPORT=$(find "$FIXTURE/.ai/qa" -path '*/report.json' -type f | head -n 1)
 test -n "$REPORT"

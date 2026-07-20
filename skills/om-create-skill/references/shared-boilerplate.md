@@ -62,8 +62,11 @@ contract in this repo's AGENTS.md):
   `PR_URL=` / `PR_NUMBER=` markers emitted (PR-producing/-driving skills), and a
   `Companion skills:` sentence naming invoked skills + the fallback when one is
   missing.
-- Tracker comments with stable idempotent markers — `🤖 <skill-name> — <purpose>`
-  — updated in place on re-runs, never duplicated. Standard set: claim,
+- Tracker comments with stable idempotent markers — `` 🤖 `<skill-name>` — <purpose> ``
+  (skill name is a backtick-wrapped code span, as in all user-facing output) —
+  updated in place on re-runs, never duplicated. The marker-parse pattern accepts
+  both the backticked and the legacy bare `🤖 <skill> —` form, so detection on
+  older comments never breaks. Standard set: claim,
   per-label rationale, assumptions (autonomous defaults), run summary
   (`om-auto-create-pr` step-12 structure), evidence (**attach-image-evidence**),
   release/handback. Post only the subset the skill's role needs.

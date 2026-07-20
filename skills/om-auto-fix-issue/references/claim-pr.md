@@ -32,7 +32,7 @@ Idempotent — safe to re-run on re-entry:
 2. Apply the `in-progress` label via the `apply_label` guard (missing label → logged skip; `labels.enabled: false` → skip and note it in the report).
 3. Post the claim comment, once (skip when an identical recent comment by `CURRENT_USER` already exists):
 
-   `🤖 Claiming this {issue|PR} — starting {skill-name} run. Started: {ISO-8601 timestamp}.`
+   `` 🤖 Claiming this {issue|PR} — starting `{skill-name}` run. Started: {ISO-8601 timestamp}. ``
 
 ## Release / handback
 

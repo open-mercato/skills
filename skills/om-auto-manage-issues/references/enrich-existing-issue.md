@@ -81,7 +81,7 @@ skip entirely when a spec-PR link from this skill is already on the issue (the g
 is being closed) or when the marker comment already reflects the current state:
 
 ```markdown
-🤖 om-auto-manage-issues — spec required
+🤖 `om-auto-manage-issues` — spec required
 
 @{author} 📝 this feature issue has no covering specification (checked `$SPECS_DIR`
 and open spec PRs). Please fill up the spec before implementation starts:

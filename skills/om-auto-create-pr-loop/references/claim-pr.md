@@ -32,7 +32,7 @@ Idempotent — safe to re-run on re-entry:
 2. Apply the `in-progress` label via the `apply_label` guard (missing label → logged skip; `labels.enabled: false` → skip and note it in the report).
 3. Post the claim comment, once (skip when an identical recent comment by `CURRENT_USER` already exists):
 
-   `🤖 Claiming this {issue|PR} — starting {skill-name} run. Started: {ISO-8601 timestamp}.`
+   `` 🤖 Claiming this {issue|PR} — starting `{skill-name}` run. Started: {ISO-8601 timestamp}. ``
 
 ## Release / handback
 
@@ -89,10 +89,10 @@ This skill holds the three-signal lock on its own PR from the moment **create-pr
 1. **Claim (step 11, immediately after create-pr returns a PR number):**
    1. **assign-pr** — add `$CURRENT_USER` as assignee.
    2. **label-pr** — apply `in-progress` through the `apply_label` guard (when `labels.enabled` is `false`, the claim is the assignee plus the claim comment).
-   3. **comment-pr** — post: `🤖 om-auto-create-pr-loop started by @{CURRENT_USER} at {UTC ISO-8601 timestamp}. Other auto-skills will skip this PR until the lock is released.`
+   3. **comment-pr** — post: `` 🤖 `om-auto-create-pr-loop` started by @{CURRENT_USER} at {UTC ISO-8601 timestamp}. Other auto-skills will skip this PR until the lock is released. ``
    Wire the release into a `trap`/finally from here (step 14) so a crash frees the PR.
-2. **Temporary release before the autofix pass (step 12):** **unlabel-pr** removes `in-progress` through the guard, then **comment-pr** posts: `🤖 om-auto-create-pr-loop releasing lock so om-auto-review-pr can claim it.` — `om-auto-review-pr` claims and releases per its own workflow.
-3. **Reclaim when it returns (step 12):** **label-pr** re-applies `in-progress` through the guard, then **comment-pr** posts: `🤖 om-auto-create-pr-loop reclaiming lock to post the final run summary.` — covering the summary + cleanup window.
-4. **Final release (step 14, always — even on failure):** **unlabel-pr** removes `in-progress` through the guard (tolerate failure), then **comment-pr** posts: `🤖 om-auto-create-pr-loop completed. Status: {complete | in-progress}. Lock released.`
+2. **Temporary release before the autofix pass (step 12):** **unlabel-pr** removes `in-progress` through the guard, then **comment-pr** posts: `` 🤖 `om-auto-create-pr-loop` releasing lock so `om-auto-review-pr` can claim it. `` — `om-auto-review-pr` claims and releases per its own workflow.
+3. **Reclaim when it returns (step 12):** **label-pr** re-applies `in-progress` through the guard, then **comment-pr** posts: `` 🤖 `om-auto-create-pr-loop` reclaiming lock to post the final run summary. `` — covering the summary + cleanup window.
+4. **Final release (step 14, always — even on failure):** **unlabel-pr** removes `in-progress` through the guard (tolerate failure), then **comment-pr** posts: `` 🤖 `om-auto-create-pr-loop` completed. Status: {complete | in-progress}. Lock released. ``
 
 Executor subagents (see `references/executor-dispatch.md`) MUST NOT claim or release this lock — the main session owns it.

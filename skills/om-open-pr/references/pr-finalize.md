@@ -47,7 +47,7 @@ Suggested label comments:
 
 ### om-open-pr specifics — caller-provided summary
 
-Unlike the authoring skills, this skill does not compose the run summary itself — the caller owns it. When the caller provided one (`--summary-file <path>`, or a complete summary in the PREVIOUS STEP block), post it via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved, keeping the caller's structure with the heading shape `## 🤖 <caller skill> — run summary`. When no summary material exists, skip silently — the caller posts its own. Never post secrets or credential values, and never claim a completion the caller did not reach.
+Unlike the authoring skills, this skill does not compose the run summary itself — the caller owns it. When the caller provided one (`--summary-file <path>`, or a complete summary in the PREVIOUS STEP block), post it via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved, keeping the caller's structure with the heading shape `` ## 🤖 `<caller skill>` — run summary ``. When no summary material exists, skip silently — the caller posts its own. Never post secrets or credential values, and never claim a completion the caller did not reach.
 
 ## Marker emission
 

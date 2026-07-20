@@ -10,6 +10,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
   parseTranscript, checkSkillBody, validateMockSpec, resolveMockSpec, generateMockRepo,
+  resolveModels, finalizeQuality, buildComparisonTable,
 } from './skill-optimizer.mjs'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
@@ -60,6 +61,67 @@ eq(checkSkillBody(noName).ok, false, 'guard rejects missing name')
 const bigBody = `---\nname: om-demo\ndescription: big.\n---\n` + 'x'.repeat(20001)
 eq(checkSkillBody(bigBody).ok, false, 'guard rejects oversized body')
 
+// --- batched-markers parser fallback ----------------------------------------
+const batched = parseTranscript(readFileSync(path.join(here, 'fixtures', 'skill-optimizer-batched.jsonl'), 'utf8').split('\n'))
+eq(batched.stepCount, 2, 'batched stepCount')
+eq(batched.markersBatched, true, 'batched flag set')
+eq(batched.toolCallsTotal, 4, 'batched global tool total')
+eq(batched.steps[0].toolCalls, 2, 'batched step1 tools redistributed')
+eq(batched.steps[1].toolCalls, 2, 'batched step2 tools redistributed')
+eq(batched.steps[0].approxTokens + batched.steps[1].approxTokens, 80, 'batched tokens redistributed to output total')
+eq(batched.steps[0].wallMs, null, 'batched wall unknown')
+// The non-batched fixture must NOT trip the fallback.
+eq(m.markersBatched, false, 'clean fixture not flagged batched')
+
+// --- model resolution -------------------------------------------------------
+eq(resolveModels({}).runModel, 'sonnet', 'run-model defaults to sonnet')
+eq(resolveModels({}).analysisModel, null, 'analysis-model defaults to CLI default (null)')
+eq(resolveModels({}).baselineModel, null, 'baseline off by default')
+eq(resolveModels({ runModel: 'haiku' }).runModel, 'haiku', 'run-model honored')
+eq(resolveModels({ model: 'opus' }).runModel, 'opus', 'shorthand sets run-model')
+eq(resolveModels({ model: 'opus' }).analysisModel, 'opus', 'shorthand sets analysis-model')
+eq(resolveModels({ baselineGiven: true }).baselineModel, 'opus', 'baseline bare defaults to opus')
+eq(resolveModels({ baselineGiven: true, baseline: 'sonnet' }).baselineModel, 'sonnet', 'baseline value honored')
+eq(resolveModels({ compareModels: ['haiku', 'opus'] }).compareModels, ['haiku', 'opus'], 'compare-models passed through')
+let threw = false
+try { resolveModels({ model: 'opus', runModel: 'haiku' }) } catch { threw = true }
+eq(threw, true, 'model + run-model conflict throws')
+
+// --- quality finalization ---------------------------------------------------
+const qWithManifest = finalizeQuality({
+  findings: { caught: ['a', 'b', 'c'], missed: ['d', 'e'], hallucinated: ['x'] },
+  stepCompletion: { expected: 5, completed: 5, skipped: [], outOfOrder: false },
+  ruleViolations: [],
+  summary: 'ok',
+}, { hasManifest: true })
+eq(qWithManifest.recall, 0.6, 'quality recall 3/5')
+eq(qWithManifest.precision, 0.75, 'quality precision 3/4')
+eq(qWithManifest.score, 65, 'quality composite score (0.7*recall+0.3*precision)')
+
+const qPenalties = finalizeQuality({
+  findings: { caught: [], missed: [], hallucinated: [] },
+  stepCompletion: { skipped: ['step 3'], outOfOrder: false },
+  ruleViolations: ['would have committed'],
+  outcome: { verdict: 'degraded', specifics: ['dropped the tests'] },
+}, { hasManifest: false })
+eq(qPenalties.recall, null, 'no-manifest recall is null')
+eq(qPenalties.score, 60, 'penalties: 100 -10 rule -5 skip -25 degraded')
+
+const qImproved = finalizeQuality({ findings: {}, stepCompletion: {}, ruleViolations: [], outcome: { verdict: 'improved' } }, { hasManifest: false })
+eq(qImproved.score, 100, 'improved outcome caps at 100')
+eq(qPenalties.outcome.verdict, 'degraded', 'outcome verdict preserved')
+
+// --- comparison table assembly ----------------------------------------------
+const cmp = buildComparisonTable([
+  { model: 'haiku', metrics: { stepCount: 6, toolCallsTotal: 12, totals: { tokensIn: 40000, tokensOut: 3000, costUsd: 0.03, wallMs: 45000 } }, quality: { score: 70, recall: 0.6 } },
+  { model: 'opus', metrics: { stepCount: 8, toolCallsTotal: 17, totals: { tokensIn: 90000, tokensOut: 6000, costUsd: 0.2, wallMs: 90000 } }, quality: { score: 100, recall: 1 } },
+])
+truthy(cmp.includes('| `haiku` |'), 'comparison table has haiku row')
+truthy(cmp.includes('| `opus` |'), 'comparison table has opus row')
+truthy(cmp.includes('70/100'), 'comparison table shows quality score')
+truthy(cmp.includes('60%'), 'comparison table shows recall percent')
+eq(cmp.split('\n').length, 4, 'comparison table = header + separator + 2 rows')
+
 // --- mock-spec validation ---------------------------------------------------
 eq(validateMockSpec({ branches: [{ name: 'feat/x' }] }), null, 'validate accepts minimal spec')
 eq(validateMockSpec({ files: { 'a.js': 'x' }, branches: [{ name: 'feat/x', files: { 'b.js': 'y' }, plantedFindings: ['f'] }] }), null, 'validate accepts full spec')
@@ -71,6 +133,17 @@ truthy(validateMockSpec({ branches: [{ name: 'has space' }] }), 'validate reject
 truthy(validateMockSpec({ branches: [{ name: 'a' }, { name: 'a' }] }), 'validate rejects duplicate branch')
 truthy(validateMockSpec({ files: { k: 5 }, branches: [{ name: 'a' }] }), 'validate rejects non-string file content')
 truthy(validateMockSpec({ branches: [{ name: 'a', plantedFindings: [1] }] }), 'validate rejects non-string finding')
+eq(validateMockSpec({ goal: 'do a thing', outcomeProperties: ['x'], branches: [{ name: 'task/x' }] }), null, 'validate accepts goal + outcomeProperties')
+truthy(validateMockSpec({ goal: 5, branches: [{ name: 'a' }] }), 'validate rejects non-string goal')
+truthy(validateMockSpec({ outcomeProperties: 'x', branches: [{ name: 'a' }] }), 'validate rejects non-array outcomeProperties')
+
+// --- implement scenario resolves with goal + outcome properties -------------
+const implSpec = resolveMockSpec({ mock: 'implement' })
+eq(implSpec.scenario, 'implement', 'implement scenario name')
+truthy(implSpec.goal && implSpec.goal.length > 0, 'implement scenario has a goal')
+eq(implSpec.outcomeProperties.length, 5, 'implement scenario outcome properties')
+truthy('src/coupons.js' in implSpec.files, 'implement ships coupons on base')
+eq(implSpec.branches[0].name, 'task/harden-coupons', 'implement task branch')
 
 // --- mock generator produces a real git repo with a green npm test ----------
 const work = mkdtempSync(path.join(tmpdir(), 'skopt-test-'))

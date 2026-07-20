@@ -1,36 +1,52 @@
 # skill-optimizer
 
-`scripts/skill-optimizer.mjs` measures a skill by running it and then tries to
-make it better — automatically. It runs a skill through Claude Code in headless
-mode inside a throwaway sandbox, reads the run's stream-json trace to measure it
-(per-step wall time, tool calls, tokens, plus run totals and cost), asks a
-second headless Claude call to propose `SKILL.md` edits, applies them to a
-**candidate copy** (never to `skills/<name>` in the repo), and re-runs — for N
-passes. You get a report, per-pass metrics, and a diff to review. Nothing lands
-until you say so.
+**Lower your pipeline costs by running skills on cheaper models.** Bigger models
+are expensive to run at scale. `scripts/skill-optimizer.mjs` verifies a skill on
+a cheaper model, measures where that model falls short of a stronger one, and
+rewrites the skill text to be direct enough that the cheaper model does the job
+correctly — then proves it with a side-by-side quality comparison. The headline
+workflow is the **downshift**: hold a quality bar with a strong model, target a
+cheaper one, and iterate the skill until the cheap model reaches parity.
 
-It has zero npm dependencies and needs Node ≥ 20 and the `claude` CLI on `PATH`.
+It runs the skill through Claude Code headless in a throwaway sandbox, measures
+the run (tokens, cost, wall time, per-step trace), **scores its quality**
+(findings recall, step completion, rule violations, and — for code-modifying
+skills — whether the produced change still achieves the goal), asks a second
+Claude call to propose `SKILL.md` edits biased toward what the cheap model got
+wrong, applies them to a **candidate copy** (never `skills/<name>`), and
+re-measures — N passes. Nothing lands until you say so.
 
-**Hermetic by default.** With no `--target-repo`, the tool generates a
-self-contained mock repo (see [Evaluation repo](#evaluation-repo-hermetic-by-default))
-and runs the skill against that — so a run never touches, copies, or depends on
-a production repo. Point `--target-repo` at a real repo only when you accept the
-sandbox copy of it.
+Zero npm dependencies; needs Node ≥ 20 and the `claude` CLI on `PATH`.
 
-## What one run looks like
+## The headline example — downshift to sonnet (or haiku)
 
 ```
-node scripts/skill-optimizer.mjs --skill om-fix --passes 2
+# Can sonnet run this skill as well as opus? Optimize it until it can.
+node scripts/skill-optimizer.mjs --skill om-code-review \
+  --baseline-model opus --run-model sonnet --passes 3
+
+# Aggressive savings: target haiku, analyze with opus, and A/B the result.
+node scripts/skill-optimizer.mjs --skill om-code-review \
+  --baseline-model opus --run-model haiku --analysis-model opus \
+  --compare-models haiku,sonnet,opus --passes 3
 ```
 
-- **Pass 1** installs the *shipped* skill into a sandbox and measures a dry-run.
-- Between passes, the analysis call proposes edits; guarded ones are applied to
-  a fresh candidate.
-- **Pass 2** measures the *candidate*. With `--passes N` you get N runs and N−1
-  optimization rounds (pass N always ends on a measurement).
+`report.md` ends with a **Downshift result** verdict — either *parity reached*
+(`runs on sonnet at 34% of opus cost at equal quality`) or *parity not reached*
+(what still fails, plus a recommended minimum model).
 
-At the end you get `report.md` — a per-pass metrics table, what each round
-changed and why, and `diff -ru` of the final candidate vs the shipped skill.
+`--run-model` defaults to **sonnet** — the standard optimization target.
+
+## Hermetic by default
+
+With no `--target-repo`, the tool generates a self-contained mock repo (see
+[Evaluation repo](#evaluation-repo-hermetic-by-default)) and runs the skill
+against that — a run never touches, copies, or depends on a production repo.
+Point `--target-repo` at a real repo only when you accept the sandbox copy of it.
+
+```
+node scripts/skill-optimizer.mjs --skill om-code-review   # hermetic, sonnet target, 2 passes
+```
 
 ## CLI
 
@@ -42,14 +58,19 @@ node scripts/skill-optimizer.mjs --skill <name> [options]
 |---|---|---|
 | `--skill <name>` | (required) | Directory under `skills/` to optimize. |
 | `--passes N` | `2` | measure→analyze→optimize iterations. |
-| `--task "<brief>"` | canned dry-run brief | Scenario handed to the run. |
-| `--target-repo <path>` | (off) | Exercise against a sandbox **copy** of a real repo (remotes stripped). Mutually exclusive with `--mock*`. |
-| `--mock [scenario]` | **default source** | Generate a hermetic mock repo (default scenario `review`). |
-| `--mock-spec <path>` | | Generate a mock repo from a JSON scenario spec. |
-| `--model <model>` | CLI default | Model for both the run and analysis calls. |
+| `--task "<brief>"` | scenario default | Brief handed to the run (overrides a scenario goal). |
+| `--target-repo <path>` | (off) | Exercise against a sandbox **copy** of a real repo. Mutually exclusive with `--mock*`. |
+| `--mock [scenario]` | **default source** | Hermetic mock repo. Scenarios: `review`, `implement`. |
+| `--mock-spec <path>` | | Mock repo from a JSON scenario spec. |
+| `--run-model <model>` | `sonnet` | **Optimization target** — the model the skill is run and measured under every pass. |
+| `--analysis-model <m>` | CLI default | Model for the analyze/optimize + quality-scoring calls. |
+| `--baseline-model [m]` | (off; bare = `opus`) | Measure the shipped skill under this model first; its quality is the downshift parity bar. |
+| `--compare-models <l>` | (off) | After the final pass, measure the final candidate under each comma-separated model and emit a cross-model comparison. |
+| `--model <model>` | | Shorthand that sets **both** run and analysis model (error if combined with either). |
 | `--out <dir>` | `.ai/analysis/skill-optimizer/<skill>-<ts>/` | Artifacts dir. |
-| `--mode cli\|api` | auto (see below) | Which credential the child uses. |
+| `--mode cli\|api` | auto | Which credential the child uses (see below). |
 | `--apply-final` | off | Copy the final candidate over `skills/<name>/`. |
+| `--open-pr` | off | Blind-run: commit the final candidate on a fresh branch and open a PR. |
 | `--help` | | Usage. |
 
 ## The two auth modes
@@ -57,181 +78,270 @@ node scripts/skill-optimizer.mjs --skill <name> [options]
 Both modes invoke the **same** `claude` binary. `--mode` only controls whether
 `ANTHROPIC_API_KEY` reaches the child process:
 
-- **`cli`** — for local use. `ANTHROPIC_API_KEY` is *removed* from the child
-  environment so the run uses your logged-in Claude Code subscription and the
-  API key can never bill by accident.
+- **`cli`** — for local use. `ANTHROPIC_API_KEY` is *removed* from the child so
+  the run uses your logged-in Claude Code subscription and the API key can never
+  bill by accident.
 - **`api`** — for CI. `ANTHROPIC_API_KEY` is exported into the child.
 
 Default: `api` when `ANTHROPIC_API_KEY` is set **and** `CI=true`; otherwise
 `cli`. `--mode api` errors if no key is present.
 
+## Model targeting
+
+Three model roles, independently settable:
+
+- **`--run-model`** (default `sonnet`) is the *optimization target*: the model
+  the skill executes under on every pass. Accepts CLI aliases (`haiku`,
+  `sonnet`, `opus`) and full model ids. This is the model you want to run the
+  skill on cheaply in production.
+- **`--analysis-model`** (default: the CLI's configured model) runs the
+  analyze/optimize and quality-scoring calls. Analyzing a weak run with a
+  stronger model is the expected setup.
+- **`--baseline-model`** (off unless given; bare defaults to `opus`) measures the
+  *shipped* skill once, up front, to set the quality bar (see Downshift).
+
+When the run model is cheaper than the analysis/baseline model, the optimizer
+switches into **directness bias**: the analysis prompt is told its primary job
+is to make the skill text robust enough that the cheap model succeeds — explicit
+numbered imperatives, concrete pass/fail criteria instead of judgment calls, no
+reliance on implicit repo knowledge, tighter step scoping, pre-answered edge
+cases — with token trims strictly secondary to correctness.
+
+## Quality scoring — correctness, not just cost
+
+Every measured pass gets a **quality score** (`pass-<i>/quality.json`, a Quality
+column in the report), because a cheaper/faster run is worthless if it does the
+job wrong. Sources, strongest first:
+
+1. **Findings recall/precision** — when a mock manifest is present, the analysis
+   model compares the run's output against the planted findings: caught / missed
+   / hallucinated → recall and precision.
+2. **Step completion** — the `SKILL_STEP` markers vs the skill's documented
+   workflow; skipped, aborted, or out-of-order steps are flagged.
+3. **Rule violations** — anything the run did that the skill forbids (would have
+   committed, skipped the validation gate, produced the wrong verdict shape).
+
+A **quality regression** between passes is called out in `report.md` as a
+regression, and the final candidate is chosen by **highest quality, not lowest
+tokens** — the optimizer never silently trades correctness for cost. A poor
+score is the signal that drives the next optimization round: the analysis prompt
+receives the quality report and prioritizes fixing what the run model got wrong.
+
+### Outcome equivalence for code-modifying skills
+
+For skills whose job is to *produce a change* (om-fix, om-auto-create-pr,
+om-auto-continue-pr, …), a report is not the deliverable — the code is. After
+each pass the tool snapshots the skill's work product (`git diff` of the sandbox
+working tree → `pass-<i>/workproduct.diff`, final text → `pass-<i>/outcome.txt`).
+A non-empty diff marks the run as code-modifying, and quality scoring adds an
+**outcome verdict** comparing the candidate's work product against the baseline
+pass's work product and the task goal:
+
+- `equivalent` — same behavior, goal still met.
+- `improved` — better (e.g. added the missing tests).
+- `degraded` — shallower: dropped tests, missing input checks, narrower
+  implementation. A `degraded` verdict is a quality regression: it blocks silent
+  acceptance and becomes the top fix priority for the next round.
+
+In `--compare-models`, when work products exist, the comparison diffs the code
+each model produced, so the downshift verdict rests on the actual code, not just
+trace metrics.
+
+## Comparison mode — "which model can run this skill?"
+
+`--compare-models haiku,sonnet,opus` measures the final candidate once under
+each model, then runs an analysis pass that **diffs the runs**: where the cheaper
+model diverged (missed findings, skipped steps, shallower analysis, weaker code),
+and whether each divergence is a **skill-text problem** (fixable by making the
+skill more direct) or a **capability gap** (the model is simply too weak). Output
+is `comparison.md` + a Model comparison section in `report.md`, ending with a
+**recommended minimum model**.
+
+It works **without** the optimization loop, too — pure evaluation:
+
+```
+# Which model can run the shipped skill as-is?
+node scripts/skill-optimizer.mjs --skill om-code-review --passes 1 \
+  --compare-models haiku,sonnet,opus
+```
+
+## Downshift verdict
+
+When `--baseline-model` is set, the run opens with a **baseline pass** — the
+*shipped* skill measured under the baseline model — whose quality score becomes
+the parity bar. Every run-model pass is judged against it, and `report.md` ends
+with a verdict:
+
+- **Parity reached** — `runs on <run-model> at X% of <baseline-model> cost at
+  equal quality`, with the token and cost delta.
+- **Parity not reached** — what still fails and the recommended minimum model.
+
+## Blind-run shipping: `--open-pr`
+
+`--open-pr` lets you run the optimizer and just review a PR. After the final
+pass, in the **collection repo** (never the sandbox — the sandbox stays dry) it:
+
+1. creates branch `optimize/<skill>--<run-model>` from the current branch,
+2. applies the final candidate over `skills/<name>/`,
+3. runs `scripts/lint.sh`,
+4. commits (`feat(<skill>): optimizer candidate for <run-model>`), pushes, and
+   opens a PR against `main` with the full evidence (run config, per-pass metrics,
+   finding-recall table, what the analysis proposed, downshift verdict), attaching
+   `report.md` as a comment.
+
+Safety: it **refuses on a dirty working tree**, only ever writes `skills/<name>/`
+on a fresh branch, and never merges. A candidate that **breaks lint** is still
+committed, but the PR is opened as a **DRAFT** with the lint failure quoted, so a
+broken candidate can never look mergeable.
+
 ## Evaluation repo: hermetic by default
 
-The skill has to run *against something*. There are two sources, and the
-default is hermetic so runs never pollute production repos:
+Two sources; the default is hermetic:
 
 - **Mock (default).** With no `--target-repo`, the tool generates a fresh,
-  self-contained fixture repo inside the sandbox. It never reads or copies any
-  real repo. `--mock [scenario]` selects a built-in scenario (default `review`).
+  self-contained fixture repo inside the sandbox. `--mock [scenario]` selects a
+  built-in scenario.
 - **Real-repo copy.** `--target-repo <path>` copies an existing repo into the
-  sandbox (`git clone --local`, remotes stripped) and runs there. Use this only
-  when you deliberately want to exercise the skill against real content — you
-  still get the sandbox copy, never the original.
-
-The two are mutually exclusive.
+  sandbox (`git clone --local`, remotes stripped) and runs there.
 
 ### The mock repo
 
-Every mock is a tiny, configured Node project so a skill's preflight finds a
-real pipeline and never needs a live tracker:
+Every mock is a tiny, configured Node project so a skill's preflight finds a real
+pipeline and never needs a live tracker: a `package.json` with a fast passing
+`npm test` (`node --test`), a couple of `src/` files, a committed
+`.ai/agentic.config.json` (`labels.enabled=false`, `qaGate=false`,
+`validation.commands=["npm test"]`, `baseBranch=main`), and the real
+`.ai/trackers/github.md`.
 
-- `package.json` with a fast **passing `npm test`** (`node --test`), plus a
-  couple of `src/` files and a test.
-- `.ai/agentic.config.json` with `labels.enabled=false`, `qaGate=false`,
-  `validation.commands=["npm test"]`, `baseBranch=main`.
-- `.ai/trackers/github.md` — the real GitHub tracker descriptor — so tracker
-  operations resolve.
+Built-in scenarios:
 
-A **scenario** then overlays one or more git branches on top. The built-in
-`review` scenario adds a `feat/coupon-stacking` branch with a
-`stackCoupons(order, coupons)` function carrying deliberately planted findings
-for review-type skills:
+- **`review`** — a `feat/coupon-stacking` branch whose `stackCoupons()` carries
+  five planted findings (off-by-one loop bound, loose `==`, caller-object
+  mutation, swallowed `catch`, missing tests). For review-type skills; scored by
+  finding recall.
+- **`implement`** — ships the same buggy `stackCoupons()` on `main` plus a
+  `task/harden-coupons` branch and a **goal** ("add input validation + tests,
+  fix the off-by-one, guard `order.applied`") with a manifest of required
+  **outcome properties**. For code-modifying skills; scored by outcome
+  equivalence against those properties.
 
-- an off-by-one loop bound (`i <= coupons.length`),
-- a loose `==` comparison,
-- a caller-object mutation (`order.applied.push(...)` assuming the caller set it up),
-- a swallowed `catch`,
-- and missing tests.
-
-The planted-findings list is recorded two ways so you can judge **finding
-recall** per pass: `.mock-manifest.json` inside the sandbox (git-ignored, so it
-never shows up in the diff the skill reviews) and a **Mock scenario — planted
-findings** section echoed into `report.md` (and `mock-manifest.json` in the out
-dir).
+The planted findings / outcome properties are recorded in `.mock-manifest.json`
+inside the sandbox (git-ignored, so they never appear in the diff the skill
+reviews) and echoed into `report.md` + `mock-manifest.json` in the out dir.
 
 ### Custom scenarios: `--mock-spec <path.json>`
 
-Define your own fixture with a JSON file:
-
 ```json
 {
+  "goal": "Add input validation and tests to applyDiscount.",
+  "outcomeProperties": ["rejects a negative percentage", "adds a unit test"],
   "files": {
-    "src/discount.js": "function pct(n){ return n/100 }\nmodule.exports={pct}\n"
+    "src/discount.js": "function apply(o, pct){ for (let i=0;i<=o.items.length;i++){ o.items[i].price *= (1-pct) } }\nmodule.exports={apply}\n"
   },
   "branches": [
-    {
-      "name": "feat/apply-discount",
-      "commitMessage": "feat: apply a percentage discount",
-      "files": {
-        "src/apply.js": "function apply(order, pct){\n  for (let i=0; i<=order.items.length; i++){\n    order.items[i].price *= (1 - pct)\n  }\n}\nmodule.exports={apply}\n"
-      },
-      "plantedFindings": [
-        "Off-by-one: i <= order.items.length indexes one past the end.",
-        "Mutates caller's order.items in place with no guard."
-      ]
-    }
+    { "name": "task/harden-discount", "commitMessage": "chore: scaffold", "files": {} }
   ]
 }
 ```
 
-Run it:
-
 ```
-node scripts/skill-optimizer.mjs --skill om-code-review --mock-spec ./my-scenario.json
+node scripts/skill-optimizer.mjs --skill om-fix --mock-spec ./my-scenario.json
 ```
 
 Schema:
 
-- `files` (optional) — a map of `path → file content`, layered **on top of** the
-  base project on the `main` branch.
+- `files` (optional) — `path → content`, layered on the base project on `main`.
+- `goal` (optional string) / `outcomeProperties` (optional string array) — the
+  goal handed to the run and the properties the outcome is scored against.
 - `branches` (required, non-empty) — each `{ name` (required, no whitespace,
-  unique)`, files?` (path→content)`, commitMessage?`, `plantedFindings?` (array
-  of strings) `}`. Each branch is created from `main` and committed.
+  unique)`, files?`, `commitMessage?`, `plantedFindings?` `}`. A branch with no
+  `files` stays even with `main`, so the skill's own edits become the diff (used
+  by `implement`-style scenarios). The run is left checked out on the **last**
+  branch.
 
-The run is left checked out on the **last** branch, and its changes vs `main`
-are what the skill evaluates. Invalid shapes fail fast with a specific message.
+Invalid shapes fail fast with a specific message.
 
 ## The dry-run safety model
 
 Every skill run is side-effect-free by construction — belt *and* braces:
 
-1. **Sandbox, never the real repo.** The default source is a generated mock
-   repo; `--target-repo` is *copied* into a temp sandbox (`git clone --local`,
-   remotes stripped). Either way the skill runs against a throwaway copy.
-2. **No push target.** Every git remote is stripped from the sandbox, so there
-   is nothing to push to even if a guard were bypassed.
-3. **Tool restrictions.** The headless run is launched with
-   `--permission-mode dontAsk` and `--disallowedTools` covering
-   `Bash(git push:*)`, `Bash(git commit:*)`, and `Bash(gh:*)` — no push, no
+1. **Sandbox, never the real repo.** Default source is a generated mock; a
+   `--target-repo` is *copied* (remotes stripped). The skill may edit the sandbox
+   working tree (that is the measured work product for code-modifying skills) but
+   never the original.
+2. **No push target.** Every git remote is stripped from the sandbox.
+3. **Tool restrictions.** `--permission-mode dontAsk` with `--disallowedTools`
+   covering `Bash(git push:*)`, `Bash(git commit:*)`, `Bash(gh:*)` — no push, no
    commit, no `gh`/tracker mutation.
-4. **No tokens in the child.** `GH_TOKEN` and `GITHUB_TOKEN` are removed from
-   the child environment (and in `cli` mode, so is `ANTHROPIC_API_KEY`).
-5. **Prompt-level dry-run rules.** The run prompt tells the model to never
-   commit/push and never create/edit/comment on any issue or PR — to *describe*
-   what it would do instead.
+4. **No tokens in the child.** `GH_TOKEN`/`GITHUB_TOKEN` removed from the child
+   env (and in `cli` mode, `ANTHROPIC_API_KEY` too).
+5. **Prompt-level rules.** The run prompt forbids committing/pushing and any
+   issue/PR/tracker mutation — describe, don't perform.
+
+The analysis prompt carries a hard rule: **do not optimize for sandbox quirks** —
+proposed edits must be correct in real environments; weakening tracker
+integration or dropping a step because the sandbox denied it is forbidden.
 
 Candidate edits are applied **only** to the copy in the out dir. `skills/<name>`
-in your checkout is touched only when you pass `--apply-final`, and only after
-you have seen the report and diff. Every proposed `SKILL.md` edit is also passed
-through the same body-budget guard the lint gate uses: it must keep the
-frontmatter `name`/`description` and stay under 20000 bytes, or the change is
-rejected and noted in the report.
+is touched only with `--apply-final` or `--open-pr` (on a fresh branch). Every
+proposed `SKILL.md` edit passes the same body-budget guard as the lint gate
+(keeps frontmatter `name`/`description`, stays under 20000 bytes) or is rejected
+and noted.
 
 ## Artifacts layout
 
 ```
 <out>/
-  report.md                 # human-readable summary + planted findings + final diff
-  mock-manifest.json        # (mock runs) scenario + planted findings per branch
-  candidate-current/        # working candidate (pass 1 = shipped skill)
-  candidate-pass-<i>/        # candidate produced for pass i
-  final-candidate/          # the last measured skill version
-  pass-<i>/
-    run-prompt.txt          # exact prompt used for the run
-    transcript.jsonl        # raw stream-json from the headless run
-    metrics.json            # parsed per-step + totals + SKILL_TRACE
-    skill-candidate/        # the exact skill version measured this pass
-    analysis-prompt.txt     # (passes < N) prompt sent to the analysis call
-    analysis.json           # (passes < N) proposed changes + rationale
+  report.md                 # summary: metrics, quality, downshift verdict, comparison, diff
+  comparison.md             # (--compare-models) cross-model table + divergence analysis
+  mock-manifest.json        # (mock runs) scenario, goal, planted findings / outcome props
+  candidate-current/  candidate-pass-<i>/  final-candidate/
+  baseline/                 # (--baseline-model) the baseline measurement
+  pass-<i>/  compare-<model>/
+    run-prompt.txt  transcript.jsonl  metrics.json  skill-candidate/
+    workproduct.diff  outcome.txt        # what the skill produced
+    quality-prompt.txt  quality.json     # the quality score
+    analysis-prompt.txt  analysis.json   # (passes < N) proposed changes
 ```
 
 ## How to read the report
 
-- **Per-pass metrics** — watch tokens, wall time, tool calls, and step count
-  trend down across passes. A pass that regresses (or errors) is a signal the
-  proposed edit hurt; the candidate diff shows exactly what changed.
-- **Per-pass step breakdown** — the `SKILL_STEP_*` markers the run emits, timed
-  and attributed. Long or tool-heavy steps are the optimization targets.
-- **What changed each round** — the analysis call's bottlenecks, redundant work,
-  ambiguities, and which edits were applied vs rejected by the guard.
-- **Final candidate diff** — `diff -ru` of `final-candidate/` vs the shipped
-  skill. This is what `--apply-final` would write.
+- **Downshift result / Model comparison** (top / bottom) — the bottom line: does
+  the cheap model run the skill, at what cost, and what is the minimum model.
+- **Per-pass metrics** — tokens, wall, cost, and the **Quality** and **Recall**
+  columns. Trust the quality column over raw token deltas.
+- **Quality regressions** — called out explicitly; the final candidate is the
+  highest-quality one.
+- **Per-pass quality** — caught/missed/hallucinated findings, step completion,
+  rule violations, outcome verdict.
+- **What changed each round** — the analysis call's quality fixes, ambiguities,
+  and applied vs rejected edits.
+- **Final candidate diff** — `diff -ru` vs the shipped skill; what `--apply-final`
+  / `--open-pr` would write.
 
 ## Run it in CI (workflow_dispatch)
 
-`.github/workflows/skill-optimizer.yml` runs the loop on demand:
+`.github/workflows/skill-optimizer.yml`:
 
 1. Actions → **skill-optimizer** → *Run workflow*.
-2. Inputs: `skill` (required), `passes` (default `2`), `mock` (default `review`,
-   keeps CI hermetic), `task` (optional).
-3. It installs `@anthropic-ai/claude-code`, runs with `--mode api` using the
-   `ANTHROPIC_API_KEY` secret, and uploads the out dir as an artifact.
-
-The workflow never commits results — download the artifact, read `report.md`,
-and open a normal PR if you want to adopt a change.
+2. Inputs: `skill` (required), `passes` (default `2`), `mock` (`review` |
+   `implement`), `run_model` (default `sonnet`), `analysis_model` (optional),
+   `open_pr` (boolean), `task` (optional).
+3. Installs `@anthropic-ai/claude-code`, runs with `--mode api` using the
+   `ANTHROPIC_API_KEY` secret, and uploads the out dir as an artifact. With
+   `open_pr` it opens a PR using the workflow token.
 
 ## Notes and limitations
 
 - **Candidate precedence.** The candidate is installed at project scope
-  (`<sandbox>/.claude/skills/<name>/`), which takes precedence over any
-  user-level (`~/.claude/skills`) copy of the same skill. If your environment
-  loads the skill some other way, verify the sandbox copy is the one exercised.
-- **Measurement is noisy.** Wall time and tokens vary run to run (caching,
-  model load, tool latency). Treat single-digit-percent moves as noise; look for
-  clear trends and structural changes (fewer steps, fewer tool calls).
-- **Per-step tokens are approximate.** They attribute assistant output tokens to
-  the open step from the stream; totals and cost come from the run's `result`
-  event and are exact.
-- **The analysis call can be conservative.** If it proposes nothing (or every
-  change fails the guard), the candidate is carried forward unchanged and the
-  next pass simply re-measures.
+  (`<sandbox>/.claude/skills/<name>/`), which takes precedence over a user-level
+  copy. If your environment loads skills differently, verify the sandbox copy is
+  the one exercised.
+- **Measurement is noisy.** Wall time and tokens vary run to run. Trust the
+  quality column and structural changes over small deltas.
+- **Per-step attribution is approximate.** When the model emits step markers in
+  one batch, per-step tool/token counts are redistributed and flagged (`markers
+  batched`); run totals and cost come from the run `result` event and are exact.
+- **Quality scoring is an LLM judgment.** Recall/precision and the composite
+  score are computed deterministically from the analysis model's finding lists,
+  but those lists are still a model's read — spot-check the per-pass detail.

@@ -18,10 +18,24 @@ on:
         default: "2"
         type: string
       mock:
-        description: "Built-in mock scenario to run against (hermetic; keeps CI off real repos)"
+        description: "Built-in mock scenario to run against (review | implement; hermetic, keeps CI off real repos)"
         required: false
         default: "review"
         type: string
+      run_model:
+        description: "Optimization target: the model the skill is executed under (default sonnet)"
+        required: false
+        default: "sonnet"
+        type: string
+      analysis_model:
+        description: "Model for the analyze/optimize + scoring calls (blank = CLI default)"
+        required: false
+        type: string
+      open_pr:
+        description: "Open a PR with the final candidate (blind-run mode)"
+        required: false
+        default: false
+        type: boolean
       task:
         description: "Optional scenario brief for the run (blank = canned dry-run brief)"
         required: false
@@ -30,6 +44,10 @@ on:
 jobs:
   optimize:
     runs-on: ubuntu-latest
+    # contents/pull-requests write are only needed when open_pr is true.
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
 
@@ -43,14 +61,18 @@ jobs:
       - name: Run skill-optimizer
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
           CI: "true"
         run: |
           node scripts/skill-optimizer.mjs \
             --skill "${{ inputs.skill }}" \
             --passes "${{ inputs.passes }}" \
             --mock "${{ inputs.mock }}" \
+            --run-model "${{ inputs.run_model }}" \
             --mode api \
             --out "$GITHUB_WORKSPACE/skill-optimizer-out" \
+            ${{ inputs.analysis_model && format('--analysis-model "{0}"', inputs.analysis_model) || '' }} \
+            ${{ inputs.open_pr && '--open-pr' || '' }} \
             ${{ inputs.task && format('--task "{0}"', inputs.task) || '' }}
 
       - name: Upload artifacts

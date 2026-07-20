@@ -60,7 +60,7 @@ node scripts/skill-optimizer.mjs --skill <name> [options]
 | `--passes N` | `2` | measure→analyze→optimize iterations. |
 | `--task "<brief>"` | scenario default | Brief handed to the run (overrides a scenario goal). |
 | `--target-repo <path>` | (off) | Exercise against a sandbox **copy** of a real repo. Mutually exclusive with `--mock*`. |
-| `--mock [scenario]` | **default source** | Hermetic mock repo. Scenarios: `review`, `implement`. |
+| `--mock [scenario]` | **default source** | Hermetic mock repo. Scenarios: `review` (default), `implement`, `mini`. |
 | `--mock-spec <path>` | | Mock repo from a JSON scenario spec. |
 | `--run-model <model>` | `sonnet` | **Optimization target** — the model the skill is run and measured under every pass. |
 | `--analysis-model <m>` | CLI default | Model for the analyze/optimize + quality-scoring calls. |
@@ -206,24 +206,34 @@ Two sources; the default is hermetic:
 
 ### The mock repo
 
-Every mock is a tiny, configured Node project so a skill's preflight finds a real
-pipeline and never needs a live tracker: a `package.json` with a fast passing
-`npm test` (`node --test`), a couple of `src/` files, a committed
-`.ai/agentic.config.json` (`labels.enabled=false`, `qaGate=false`,
-`validation.commands=["npm test"]`, `baseBranch=main`), and the real
-`.ai/trackers/github.md`.
+The default mock is a **small-but-real multi-file TypeScript app** — a mini
+order-management domain (`types.ts`, `money.ts`, `discount.ts`, `coupons.ts`,
+`orders.ts`, `api/handlers.ts`, `index.ts`) with real cross-module imports, a
+`tsconfig.json`, and tests under `tests/`. It runs with **no build step and zero
+dependencies** on Node's native TypeScript type-stripping (Node ≥ 23 runs
+erasable-syntax `.ts` directly; the collection targets Node 24), validated by
+`node --test tests/*.test.ts`. It ships a committed `.ai/agentic.config.json`
+(`labels.enabled=false`, `qaGate=false`, `validation.commands=["npm test"]`,
+`baseBranch=main`) and the real `.ai/trackers/github.md`, so a skill's preflight
+finds a configured pipeline and never needs a live tracker. **You never have to
+write a spec — the built-in scenarios are meant to be enough.**
 
 Built-in scenarios:
 
-- **`review`** — a `feat/coupon-stacking` branch whose `stackCoupons()` carries
-  five planted findings (off-by-one loop bound, loose `==`, caller-object
-  mutation, swallowed `catch`, missing tests). For review-type skills; scored by
-  finding recall.
-- **`implement`** — ships the same buggy `stackCoupons()` on `main` plus a
-  `task/harden-coupons` branch and a **goal** ("add input validation + tests,
-  fix the off-by-one, guard `order.applied`") with a manifest of required
-  **outcome properties**. For code-modifying skills; scored by outcome
+- **`review`** (default) — a `feat/loyalty-pricing` branch that reworks coupon
+  stacking across **several files**, with a coherent, file-attributed set of
+  planted findings: a widened type in `types.ts`, an off-by-one and a dropped cap
+  in `coupons.ts`, **`orders.ts` left un-updated** (the interesting cross-file
+  inconsistency — `priceOrder` can now go negative), a swallowed error in
+  `api/handlers.ts`, and missing tests. Scored by finding recall. The flaws are
+  latent (they pass the existing tests), so a real review is needed to catch them.
+- **`implement`** — ships the correct app on `main` plus a `task/currency-rounding`
+  branch and a multi-file **goal** ("add banker's rounding to `money.ts` and
+  thread it through `discount.ts` and `orders.ts`, with tests") plus a manifest of
+  required **outcome properties**. For code-modifying skills; scored by outcome
   equivalence against those properties.
+- **`mini`** — the original tiny single-file JS fixture (one buggy `coupons.js` +
+  a basic test). Fast and cheap — for smoke-testing the optimizer itself / CI.
 
 The planted findings / outcome properties are recorded in `.mock-manifest.json`
 inside the sandbox (git-ignored, so they never appear in the diff the skill
@@ -231,15 +241,22 @@ reviews) and echoed into `report.md` + `mock-manifest.json` in the out dir.
 
 ### Custom scenarios: `--mock-spec <path.json>`
 
+Custom scenarios are **optional** — the built-in defaults are the intended
+experience. When you do want one, a spec layers files/branches on a base app
+(TypeScript by default) and can carry its own run `task`:
+
 ```json
 {
-  "goal": "Add input validation and tests to applyDiscount.",
-  "outcomeProperties": ["rejects a negative percentage", "adds a unit test"],
+  "name": "rounding-eval",
+  "base": "ts",
+  "task": "Add a formatMoney() to money.ts and use it in api/handlers.ts, with tests.",
+  "goal": "Money is formatted through one helper; handler returns a formatted string.",
+  "outcomeProperties": ["money.ts exports formatMoney", "handlers.ts uses it", "tests cover formatting"],
   "files": {
-    "src/discount.js": "function apply(o, pct){ for (let i=0;i<=o.items.length;i++){ o.items[i].price *= (1-pct) } }\nmodule.exports={apply}\n"
+    "src/notes.ts": "export const OWNER = 'orders-team'\n"
   },
   "branches": [
-    { "name": "task/harden-discount", "commitMessage": "chore: scaffold", "files": {} }
+    { "name": "task/format-money", "commitMessage": "chore: scaffold", "files": {} }
   ]
 }
 ```
@@ -250,14 +267,18 @@ node scripts/skill-optimizer.mjs --skill om-fix --mock-spec ./my-scenario.json
 
 Schema:
 
-- `files` (optional) — `path → content`, layered on the base project on `main`.
-- `goal` (optional string) / `outcomeProperties` (optional string array) — the
-  goal handed to the run and the properties the outcome is scored against.
+- `base` (optional, `"ts"` (default) | `"mini"`) — which built-in base app the
+  spec layers on.
+- `name` (optional) — scenario label used in the report/manifest.
+- `task` (optional) — the brief handed to the run (falls back to `goal`, then a
+  generic brief). `--task` on the CLI still overrides it.
+- `goal` / `outcomeProperties` (optional) — the goal and the properties the
+  outcome is scored against.
+- `files` (optional) — `path → content`, layered on the base app on `main`.
 - `branches` (required, non-empty) — each `{ name` (required, no whitespace,
   unique)`, files?`, `commitMessage?`, `plantedFindings?` `}`. A branch with no
-  `files` stays even with `main`, so the skill's own edits become the diff (used
-  by `implement`-style scenarios). The run is left checked out on the **last**
-  branch.
+  `files` stays even with `main`, so the skill's own edits become the diff. The
+  run is left checked out on the **last** branch.
 
 Invalid shapes fail fast with a specific message.
 
@@ -325,8 +346,8 @@ and noted.
 
 1. Actions → **skill-optimizer** → *Run workflow*.
 2. Inputs: `skill` (required), `passes` (default `2`), `mock` (`review` |
-   `implement`), `run_model` (default `sonnet`), `analysis_model` (optional),
-   `open_pr` (boolean), `task` (optional).
+   `implement` | `mini`), `run_model` (default `sonnet`), `analysis_model`
+   (optional), `open_pr` (boolean), `task` (optional).
 3. Installs `@anthropic-ai/claude-code`, runs with `--mode api` using the
    `ANTHROPIC_API_KEY` secret, and uploads the out dir as an artifact. With
    `open_pr` it opens a PR using the workflow token.

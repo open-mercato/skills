@@ -136,45 +136,52 @@ truthy(validateMockSpec({ branches: [{ name: 'a', plantedFindings: [1] }] }), 'v
 eq(validateMockSpec({ goal: 'do a thing', outcomeProperties: ['x'], branches: [{ name: 'task/x' }] }), null, 'validate accepts goal + outcomeProperties')
 truthy(validateMockSpec({ goal: 5, branches: [{ name: 'a' }] }), 'validate rejects non-string goal')
 truthy(validateMockSpec({ outcomeProperties: 'x', branches: [{ name: 'a' }] }), 'validate rejects non-array outcomeProperties')
+eq(validateMockSpec({ task: 'run it', name: 'my-scn', base: 'ts', branches: [{ name: 'b' }] }), null, 'validate accepts task + name + base')
+truthy(validateMockSpec({ task: 5, branches: [{ name: 'a' }] }), 'validate rejects non-string task')
+truthy(validateMockSpec({ base: 'python', branches: [{ name: 'a' }] }), 'validate rejects unknown base')
 
 // --- implement scenario resolves with goal + outcome properties -------------
 const implSpec = resolveMockSpec({ mock: 'implement' })
 eq(implSpec.scenario, 'implement', 'implement scenario name')
 truthy(implSpec.goal && implSpec.goal.length > 0, 'implement scenario has a goal')
+truthy(implSpec.task && implSpec.task.length > 0, 'implement scenario has a run task')
 eq(implSpec.outcomeProperties.length, 5, 'implement scenario outcome properties')
-truthy('src/coupons.js' in implSpec.files, 'implement ships coupons on base')
-eq(implSpec.branches[0].name, 'task/harden-coupons', 'implement task branch')
+truthy('src/money.ts' in implSpec.files, 'implement ships the TS app on base')
+eq(implSpec.branches[0].name, 'task/currency-rounding', 'implement task branch')
 
-// --- mock generator produces a real git repo with a green npm test ----------
-const work = mkdtempSync(path.join(tmpdir(), 'skopt-test-'))
-try {
-  const spec = resolveMockSpec({ mock: 'review' })
-  const repo = path.join(work, 'mock')
-  const manifest = generateMockRepo(repo, spec)
+// --- default review scenario = multi-file TypeScript app --------------------
+const reviewSpec = resolveMockSpec({ mock: 'review' })
+truthy('tsconfig.json' in reviewSpec.files, 'review base has a tsconfig')
+truthy('src/orders.ts' in reviewSpec.files, 'review base is multi-file TS')
+truthy(reviewSpec.branches[0].plantedFindings.some((f) => f.startsWith('src/orders.ts:')), 'review has a cross-file (orders.ts) finding')
+truthy(JSON.parse(reviewSpec.files['package.json']).scripts.test.includes('node --test tests/'), 'review validation runs the .ts tests')
 
-  eq(manifest.scenario, 'review', 'mock manifest scenario')
-  eq(manifest.branches.length, 1, 'mock has one branch')
-  eq(manifest.branches[0].name, 'feat/coupon-stacking', 'mock branch name')
-  eq(manifest.branches[0].plantedFindings.length, 5, 'mock planted findings count')
-  truthy(existsSync(path.join(repo, 'src', 'coupons.js')), 'mock planted file present')
-
-  const branches = spawnSync('git', ['-C', repo, 'branch', '--format=%(refname:short)'], { encoding: 'utf8' }).stdout.split('\n').map((s) => s.trim()).filter(Boolean).sort()
-  eq(branches, ['feat/coupon-stacking', 'main'], 'mock git branches')
-  const head = spawnSync('git', ['-C', repo, 'rev-parse', '--abbrev-ref', 'HEAD'], { encoding: 'utf8' }).stdout.trim()
-  eq(head, 'feat/coupon-stacking', 'mock checked out on scenario branch')
-
-  // Manifest exists but is invisible to git (info/exclude).
-  truthy(existsSync(path.join(repo, '.mock-manifest.json')), 'mock manifest written')
-  const porcelain = spawnSync('git', ['-C', repo, 'status', '--porcelain'], { encoding: 'utf8' }).stdout.trim()
-  eq(porcelain, '', 'mock working tree clean (manifest ignored)')
-
-  // npm test is fast and green on the base branch.
-  spawnSync('git', ['-C', repo, 'checkout', '-q', 'main'], { encoding: 'utf8' })
-  const test = spawnSync('npm', ['test'], { cwd: repo, encoding: 'utf8' })
-  eq(test.status, 0, 'mock npm test passes')
-} finally {
-  rmSync(work, { recursive: true, force: true })
+// --- mock generator: TS app builds a real git repo with a green npm test ----
+function genAndTest(scenarioName, expectBranch, expectFindings, greenFile) {
+  const work = mkdtempSync(path.join(tmpdir(), 'skopt-test-'))
+  try {
+    const spec = resolveMockSpec({ mock: scenarioName })
+    const repo = path.join(work, 'mock')
+    const manifest = generateMockRepo(repo, spec)
+    eq(manifest.scenario, scenarioName, `${scenarioName} manifest scenario`)
+    eq(manifest.branches[0].name, expectBranch, `${scenarioName} branch name`)
+    eq(manifest.branches[0].plantedFindings.length, expectFindings, `${scenarioName} planted findings count`)
+    truthy(existsSync(path.join(repo, greenFile)), `${scenarioName} ships ${greenFile}`)
+    const head = spawnSync('git', ['-C', repo, 'rev-parse', '--abbrev-ref', 'HEAD'], { encoding: 'utf8' }).stdout.trim()
+    eq(head, expectBranch, `${scenarioName} checked out on scenario branch`)
+    const porcelain = spawnSync('git', ['-C', repo, 'status', '--porcelain'], { encoding: 'utf8' }).stdout.trim()
+    eq(porcelain, '', `${scenarioName} working tree clean (manifest ignored)`)
+    // npm test is green on the base branch.
+    spawnSync('git', ['-C', repo, 'checkout', '-q', 'main'], { encoding: 'utf8' })
+    const test = spawnSync('npm', ['test'], { cwd: repo, encoding: 'utf8' })
+    eq(test.status, 0, `${scenarioName} base npm test passes`)
+  } finally {
+    rmSync(work, { recursive: true, force: true })
+  }
 }
+genAndTest('review', 'feat/loyalty-pricing', 6, 'src/orders.ts')
+genAndTest('implement', 'task/currency-rounding', 0, 'src/money.ts')
+genAndTest('mini', 'feat/coupon-stacking', 5, 'src/index.js')
 
 if (failures) { console.error(`\n${failures} assertion(s) failed`); process.exit(1) }
 console.log('\nAll skill-optimizer tests passed.')

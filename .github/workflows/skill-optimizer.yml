@@ -18,7 +18,7 @@ on:
         default: "2"
         type: string
       mock:
-        description: "Built-in mock scenario to run against (review | implement; hermetic, keeps CI off real repos)"
+        description: "Built-in mock scenario (review = multi-file TS app | implement | mini; hermetic)"
         required: false
         default: "review"
         type: string

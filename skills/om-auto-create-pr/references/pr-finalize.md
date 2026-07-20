@@ -23,9 +23,17 @@ Before opening anything, check whether a PR already exists for this branch (or, 
 
 Detect availability simply: if invoking `om-open-pr` is not possible in this environment (skill not present), take the inline path. Behavior is identical either way — the same PR, the same labels — so installing `om-open-pr` only removes duplication, it never changes the outcome.
 
-## Ready vs draft
+## Early draft PR, then ready
 
-Open the PR **ready for review**. Draft only when the run is explicitly handing off incomplete work (a spec-only design PR, or an interrupted run leaving `Status: in-progress`).
+The run **always** leaves a PR the user can watch, even when it never finishes:
+
+1. **Open early as a bare draft** — right after the plan's first commit (skill step 6), open the PR via **create-pr** with the draft flag, carrying the body template's `Tracking plan:` line and `Status: in-progress`. Keep it bare here — no labels, no summary yet; those are premature on a run that just started. This is the natural point: the branch has its first commit, so an interrupted run leaves a draft PR carrying the committed plan/Progress rather than a branch with no PR. (Do **not** delegate this early open to `om-open-pr` — that skill also applies labels and posts a summary, which belong at steps 10–12.)
+2. **Reuse it** — steps 10–12 update this same PR (never open a second one): apply labels (delegating to `om-open-pr`'s reuse path when installed — it refreshes the body and labels without disturbing the draft state), run the review pass, post the summary comment.
+3. **Flip to ready at completion** — at cleanup (skill step 13), once `Status:` is `complete` (all Progress steps `- [x]`), promote the draft with **mark-pr-ready**. A run that ends `in-progress` stays a draft for the user to resume. A spec-only design PR stays draft by intent.
+
+## Verification comments on the PR
+
+Verification proofs land on the PR, not only in the plan. The end-of-run summary comment carries the "Verification phases completed" section; when a verification (validation gate, integration or UI check) runs mid-flight and is worth surfacing before the summary, post it as its own idempotent comment with the marker `` 🤖 `om-auto-create-pr` — verification `` (re-run updates it in place). Attach screenshots via **attach-image-evidence** whenever UI was touched.
 
 ## PR body
 

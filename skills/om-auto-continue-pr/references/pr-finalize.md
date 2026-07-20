@@ -16,7 +16,7 @@ Before opening anything, check whether a PR already exists for this branch via *
 
 ## PR body updates
 
-- If all Progress steps are now `- [x]`, flip `Status: in-progress` to `Status: complete`.
+- If all Progress steps are now `- [x]`, flip `Status: in-progress` to `Status: complete` **and flip the PR from draft to ready via mark-pr-ready** — `om-auto-create-pr` leaves the PR a draft while unfinished, so completing the resume is what promotes it. A resume that stays `in-progress` leaves the PR a draft the user can watch and re-enter.
 - Extend the `What Changed` / `Tests` sections with the new work from this resume.
 
 ## Label normalization — resume semantics
@@ -33,7 +33,7 @@ Every mutation goes through the `apply_label`/`label_exists` guards from the tra
 
 ## Summary comment
 
-Every resume ends with a single comprehensive summary comment the human reviewer can read top-to-bottom without clicking into the diff, posted in step 9 via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. Full structure and rules: `references/summary-comment-template.md`. Never post it before the automated review loop (step 8) finishes, never claim a completion you did not reach, and never paste secrets into it.
+Every resume ends with a single comprehensive summary comment the human reviewer can read top-to-bottom without clicking into the diff, posted in step 9 via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. Full structure and rules: `references/summary-comment-template.md`. Never post it before the automated review loop (step 8) finishes, never claim a completion you did not reach, and never paste secrets into it. The summary's "Verification phases completed" section is where this resume's validation-gate and integration/UI outcomes land on the PR; when a verification runs mid-flight and is worth surfacing early, post it as its own idempotent `` 🤖 `om-auto-continue-pr` — verification `` comment (screenshots via **attach-image-evidence** when UI changed).
 
 ## Marker emission
 

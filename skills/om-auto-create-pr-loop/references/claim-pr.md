@@ -82,11 +82,11 @@ Decision tree:
 
 When an open PR already references the run folder, stop and tell the user to use `om-auto-continue-pr-loop {prNumber}` instead.
 
-### PR lock lifecycle — steps 11 → 14
+### PR lock lifecycle — steps 7 → 14
 
-This skill holds the three-signal lock on its own PR from the moment **create-pr** returns until the very end of the run:
+This skill holds the three-signal lock on its own PR from the moment the draft PR opens (step 7) until the very end of the run:
 
-1. **Claim (step 11, immediately after create-pr returns a PR number):**
+1. **Claim (step 7, immediately after opening the draft PR):**
    1. **assign-pr** — add `$CURRENT_USER` as assignee.
    2. **label-pr** — apply `in-progress` through the `apply_label` guard (when `labels.enabled` is `false`, the claim is the assignee plus the claim comment).
    3. **comment-pr** — post: `` 🤖 `om-auto-create-pr-loop` started by @{CURRENT_USER} at {UTC ISO-8601 timestamp}. Other auto-skills will skip this PR until the lock is released. ``

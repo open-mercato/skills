@@ -21,7 +21,7 @@ Hard constraints:
 
 - Subagents do NOT have access to the `Agent` tool. A coordinator subagent **cannot** spawn executors. Dispatch MUST live in the main session.
 - Dispatch is **sequential** (one executor at a time). This is not parallelism — the cap-at-2 rule above still applies to the rare case where you want an implementer and a reviewer running side-by-side; an executor-dispatch run is a sequence of one-at-a-time executors.
-- The main session claims the PR's three-signal `in-progress` lock **once** at step 11 (or the matching point during an early-dispatch run) and releases it per step 14. Executors MUST NOT claim or release the lock. If dispatch happens before the PR exists (pre-step-11), the lock is simply not yet relevant — executors still do not post PR comments.
+- The main session claims the PR's three-signal `in-progress` lock **once** at step 7 (when the draft PR opens) and releases it per step 14. Executors MUST NOT claim or release the lock, and MUST NOT post PR comments — checkpoint evidence and verification comments are the main session's job.
 - The main session posts the final summary comment (step 13). Executors MUST NOT post the final summary.
 
 Executor prompt template — the main session writes this into each spawned `Agent` call:

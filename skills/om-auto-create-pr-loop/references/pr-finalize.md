@@ -1,6 +1,6 @@
 # PR finalize — open, labels, summary comment, markers
 
-The single procedure for the "commit → push → open (or reuse) the PR → normalize labels → summary comment → chaining markers" mechanics (steps 11, 13, and 15 of the skill body). The point is **one** implementation of PR opening + labeling, reused rather than copied, and never a second PR for work that already has one.
+The single procedure for the "commit → push → open (or reuse) the PR → normalize labels → summary comment → chaining markers" mechanics (the draft PR opens at step 7; reuse/labels at 11, summary at 13, ready-flip + release at 14). The point is **one** implementation of PR opening + labeling, reused rather than copied, and never a second PR for work that already has one.
 
 ## Never open a duplicate PR
 
@@ -8,15 +8,15 @@ Before opening anything, check whether a PR already exists for this branch (or o
 
 ## Opening the PR (inline, via **create-pr**)
 
-This skill always opens the PR inline — it does not delegate to `om-open-pr`, because it owns the three-signal lock lifecycle and the run-folder contract itself (see specifics below):
+This skill always opens the PR inline — it does not delegate to `om-open-pr`, because it owns the three-signal lock lifecycle and the run-folder contract itself (see specifics below). Commit the worktree changes with a conventional-commit subject, push the branch, open the PR via **create-pr** against `$BASE_BRANCH` with the body template below, and normalize labels per the section below.
 
-1. Commit the worktree changes with a conventional-commit subject; push the branch.
-2. Open the PR via the tracker operation **create-pr** against `$BASE_BRANCH`, with the body template below.
-3. Normalize labels per the section below.
+## Early draft PR, then ready
 
-## Ready vs draft
+The run **always** leaves a PR the user can watch, even when it never finishes:
 
-Open the PR **ready for review**. Draft only when the run is explicitly handing off incomplete work (an interrupted run leaving `Status: in-progress`).
+1. **Open early as a draft** — right after the run-folder commit (skill step 7), open the PR with the draft flag, carrying the `Tracking plan:` line and `Status: in-progress`, and claim it (three-signal lock, PR lock lifecycle in `references/claim-pr.md`). The run folder is committed, so an interrupted run leaves a draft PR carrying the plan/Tasks table rather than a run folder with no PR.
+2. **Reuse it** — steps 8–13 update this same PR: checkpoint evidence + verification comments, the review pass, labels, the summary comment.
+3. **Flip to ready at completion** — at cleanup (skill step 14), once `Status:` is `complete` (every Tasks row `done`), promote the draft with **mark-pr-ready**. A run that ends `in-progress` stays a draft for the user to resume.
 
 ## PR body
 
@@ -61,7 +61,8 @@ Chained consumers (`om-auto-review-pr`, `om-auto-qa-pr`, orchestration scripts) 
 
 ## om-auto-create-pr-loop specifics
 
-- **Claim immediately after opening.** As soon as **create-pr** returns a PR number, claim the PR with the three-signal lock (assign-pr + label-pr `in-progress` via the guard + claim comment) and wire the release into a `trap`/finally — full sequence and comment strings: `references/claim-pr.md` (PR lock lifecycle).
-- **Flush deferred checkpoint evidence.** Right after the PR opens, for each checkpoint that captured screenshots before the PR existed, post one **attach-image-evidence** comment per checkpoint — marker `` 🤖 `om-auto-create-pr-loop` — checkpoint <N> evidence ``, slug `checkpoint-<N>` — per `references/checkpoint-pass.md`.
+- **Claim immediately after opening.** As soon as the draft PR opens (step 7), claim it with the three-signal lock (assign-pr + label-pr `in-progress` via the guard + claim comment) and wire the release into a `trap`/finally — full sequence and comment strings: `references/claim-pr.md` (PR lock lifecycle).
+- **Checkpoint & final-gate verification on the PR.** The PR exists from step 7, so each checkpoint (step 8) and the final gate (step 9) post their verification outcome to the PR immediately — an idempotent `` 🤖 `om-auto-create-pr-loop` — checkpoint <N> / final gate verification `` comment plus **attach-image-evidence** screenshots (marker `` 🤖 `om-auto-create-pr-loop` — checkpoint <N> evidence ``, slug `checkpoint-<N>`) when UI was touched — never only in the run folder. Full procedure: `references/checkpoint-pass.md`.
+- **Flip to ready at completion.** At step 14, once `Status:` is `complete` (every Tasks row `done`), promote the draft with **mark-pr-ready**; a run that ends `in-progress` stays a draft.
 - **Final run-folder update lands under the lock.** If the PR was opened, write a final `HANDOFF.md` + `NOTIFY.md` entry (closing timestamp + PR URL), commit, and push **before** releasing the `in-progress` label so the final update lands under the same lock (step 14).
 - **Simple runs** open the PR directly with a short body — summary + test plan + rollback; no `Tracking plan:` line, no `Status:` field, no linked run folder (`references/run-mode-contracts.md`). Label normalization and the lock lifecycle still apply in full.

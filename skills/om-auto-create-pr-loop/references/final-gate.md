@@ -1,4 +1,4 @@
-# Final gate before opening the PR (spec completion)
+# Final gate at spec completion
 
 Step 9. Fire when every row in the Tasks table is `done`. The final gate subsumes any pending checkpoint (do not run a checkpoint immediately before it — roll it into this).
 

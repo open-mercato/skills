@@ -21,7 +21,7 @@ Status: in-progress                          <!-- flip to `complete` when every
                                                   Progress step is checked -->
 
 ## 🎯 Goal
-- {one-line summary of the task, issue, or spec}
+- {1–2 sentences naming the user-visible outcome this PR delivers; for a fix, state the symptom it removes (root cause goes in the section below)}
 
 ## 🔍 Problem                                <!-- bug fixes only -->
 {one-paragraph summary of the issue}
@@ -33,11 +33,11 @@ Status: in-progress                          <!-- flip to `complete` when every
 - {url — what was adopted, what was rejected}
 
 ## What Changed
-- {bullet list of changes, phase-level for planned runs}
+- {one bullet per changed area — name the files/modules touched and the behavioral change; write for a reviewer who has not opened the diff, not a one-line restatement of the title}
 
 ## 🧪 Tests
-- {unit tests added or updated}
-- {validation gate results — note any skipped commands}
+- {commands run with result counts, e.g. `npm test — 2927 passed / 172 files`; note any skipped or failing gate}
+- {the new/updated test cases and what behavior they lock in}
 
 ## 💥 Breaking Changes
 - {None | describe affected contracts and migration notes}

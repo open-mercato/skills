@@ -32,16 +32,14 @@ Apply labels from the config's taxonomy after opening the PR, always through the
 - Add additive category labels when they clearly apply: `bug`, `feature`, `refactor`, `security`, `dependencies`, `documentation` — for this skill, the `{category}` argument (or the inferred one) drives it.
 - Apply exactly one priority label. Infer it from the change: outage, data loss, or a security incident → `priority-extreme`; security hardening or a release-blocking regression → `priority-high`; ordinary bug or feature → `priority-medium`; cosmetic, docs, dependency bumps, or cleanup → `priority-low`.
 - Apply exactly one risk label. Infer it from the diff: changes to auth, session handling, data scoping, money, DB migrations, or shared contract surfaces, or broad cross-cutting edits → `risk-high`; an ordinary single-area change with tests → `risk-medium`; docs, dependency bumps, test-only, or isolated cleanup → `risk-low`.
-- After each applied label, post a short PR comment explaining why.
+- After applying the label set, post **one** consolidated rationale comment covering every applied label — never one comment per label (that spams the PR timeline and multiplies tracker API calls). Labels are still applied individually through the `apply_label` guard; only the commentary consolidates. The comment carries the standard idempotent marker, so a re-run updates it in place.
 - When `qaGate` is `true`, a `needs-qa` PR will not be mergeable until QA signs off with `qa-approved`. Never add `qa-approved` from this skill — it is earned by manual QA (or the explicit self-QA sign-off in `om-auto-qa-pr`). When `QA_GATE` is `true` and you applied `needs-qa`, state in the closing comment that the merge waits for `qa-approved`.
 
-Suggested label comments:
+Consolidated label-rationale comment — **one** comment listing only the labels you actually applied, each with a one-line reason (drop the segments for labels you did not apply):
 
-- `review`: `🏷️ Label set to \`review\` because the PR is ready for code review.`
-- `skip-qa`: `🏷️ Label set to \`skip-qa\` because this is a docs-only / low-risk change.`
-- `needs-qa`: `🏷️ Label set to \`needs-qa\` because this touches {area} and must be manually exercised.`
-- `priority-*`: `🏷️ Priority set to \`priority-{level}\` because {one-line rationale}.`
-- `risk-*`: `🏷️ Risk set to \`risk-{level}\` because {one-line rationale}.`
+```
+🤖 `om-open-pr` — 🏷️ label rationale: `review` (ready for code review) · `<category>` ({why this category}) · `needs-qa`|`skip-qa` ({why it needs / can skip manual QA}) · `priority-{level}` ({why this priority}) · `risk-{level}` ({why this risk})
+```
 
 ## Summary comment
 

@@ -120,25 +120,25 @@ Source doc: none (brief-driven).
 
 ### Phase 1: Contract definition
 
-- [ ] 1.1 AGENTS.md marker contract rewrite
-- [ ] 1.2 rules.md boilerplate swap across all 30 skills
-- [ ] 1.3 om-create-skill boilerplate + invariants
-- [ ] 1.4 BACKWARD_COMPATIBILITY.md entry
+- [x] 1.1 AGENTS.md marker contract rewrite — d9dfd4b
+- [x] 1.2 rules.md boilerplate swap across all 30 skills — d9dfd4b
+- [x] 1.3 om-create-skill boilerplate + invariants — d9dfd4b
+- [x] 1.4 BACKWARD_COMPATIBILITY.md entry — d9dfd4b
 
 ### Phase 2: Emitters
 
-- [ ] 2.1 pr-finalize.md marker blocks (9 files)
-- [ ] 2.2 SKILL.md final-report templates (PR-producing/-driving skills)
-- [ ] 2.3 Issue-driven/-producing skills emit `Issue:`
+- [x] 2.1 pr-finalize.md marker blocks (9 files) — 9fd9c21
+- [x] 2.2 SKILL.md final-report templates (PR-producing/-driving skills) — 9fd9c21
+- [x] 2.3 Issue-driven/-producing skills emit `Issue:` — 9fd9c21
 
 ### Phase 3: Consumers and cross-references
 
-- [ ] 3.1 Chaining prose in SKILL.md consumers
-- [ ] 3.2 references/*.md cross-file sweep to zero stale mentions
+- [x] 3.1 Chaining prose in SKILL.md consumers — 9fd9c21
+- [x] 3.2 references/*.md cross-file sweep to zero stale mentions — 9fd9c21
 
 ### Phase 4: Docs mirrors + validation
 
-- [ ] 4.1 docs/skills mirrors + top-level docs
+- [x] 4.1 docs/skills mirrors + top-level docs — 9fd9c21
 - [ ] 4.2 Lint gate + self-review
 
 ### Phase 5: cezar companion PR

@@ -131,7 +131,8 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
    teardown removes only what it created) and pick the `credentials` login role
    that covers the changed surface. If the app cannot boot or browsers cannot be
    installed, do **not** fabricate results: record the blocker honestly,
-   post/save it, and release the lock. Full descriptor-reading commands and the
+   post/save it, and release a lock this run opened (an inherited chain lock is
+   retained per step 13). Full descriptor-reading commands and the
    legacy-Playwright fallback: `references/boot-env.md`.
 
 8. **Derive the UI QA scenario from the diff.** Translate the change into a
@@ -254,9 +255,11 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
 - Drive the UI only through the selected `.ai/browsers/<provider>.md` operations;
   never silently substitute Playwright, an MCP, or a cloud browser for an
   explicit provider. Legacy config/descriptor fallback to Playwright is allowed.
-- PR mode requires a configured tracker and a PR number; always claim first and
-  always release the lock at the end, even on failure (trap/finally). Local mode
-  runs without a tracker and writes artifacts.
+- PR mode requires a configured tracker and a PR number; always claim (or
+  take over an inherited chain lock) first, and at the end — even on failure
+  (trap/finally) — release a lock this run opened; an inherited chain lock is
+  retained (`Lock retained — chain continues.`) for the chain's driver to
+  release. Local mode runs without a tracker and writes artifacts.
 - Always use an isolated worktree in PR mode; reuse the current linked worktree
   when inside one; never nest; clean up any worktree this run created.
 - Report only observed results. Never fabricate a PASS; mark un-exercised steps

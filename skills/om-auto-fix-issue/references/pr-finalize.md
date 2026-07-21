@@ -8,7 +8,7 @@ Before opening anything, check whether a PR already exists for this branch (or o
 
 ## Prefer the `om-open-pr` skill when installed
 
-`om-open-pr` already implements exactly this: it commits the worktree, pushes the branch, opens a **ready-for-review** PR against `$BASE_BRANCH` (draft only with `--draft`) with the unified body template, applies the full SDLC label set (pipeline `review`, category, QA meta, one priority, one risk) through the descriptor guards with rationale comments, posts the caller's summary comment, and — in an issue-driven run — hands the issue back and releases the `in-progress` lock, emitting the `PR:` / `Issue:` chaining reference lines. When it is installed, **delegate to it** instead of re-deriving the steps: invoke `om-open-pr {issueId} {category}` (add `--draft` only for spec-only or incomplete hand-offs) and capture the PR number and URL from its `PR:` reference line.
+`om-open-pr` already implements exactly this: it commits the worktree, pushes the branch, opens a **ready-for-review** PR against `$BASE_BRANCH` (draft only with `--draft`) with the unified body template, applies the full SDLC label set (pipeline `review`, category, QA meta, one priority, one risk) through the descriptor guards with rationale comments, posts the caller's summary comment, and — in an issue-driven run — transfers the chain lock onto the PR when `--handoff` is passed, then hands the issue back and releases the issue's `in-progress` lock, emitting the `PR:` / `Issue:` chaining reference lines. When it is installed, **delegate to it** instead of re-deriving the steps: invoke `om-open-pr {issueId} {category} --handoff om-auto-review-pr` (add `--draft` only for spec-only or incomplete hand-offs; the `--handoff` keeps the PR continuously locked for the step-9 review — see `references/claim-pr.md`, chained hand-off) and capture the PR number and URL from its `PR:` reference line.
 
 ## Graceful fallback when `om-open-pr` is NOT installed
 
@@ -16,9 +16,11 @@ Before opening anything, check whether a PR already exists for this branch (or o
 
 1. Commit the worktree changes with a conventional-commit subject; push the branch.
 2. Open the PR via the tracker operation **create-pr** against `$BASE_BRANCH`, with a conventional-commit-prefixed title scoped to the primary area and a body that carries the linkage line (`Fixes #{issueId}`), the fix summary, tests added, and the breaking-changes statement.
-3. Normalize labels per the section below, then hand the issue back and release the `in-progress` lock per `references/claim-pr.md`.
+3. Normalize labels per the section below.
+4. Transfer the chain lock onto the PR — **assign-pr** `$CURRENT_USER`, `apply_label "in-progress" {prNumber}`, and the 🤖 hand-off comment naming `om-auto-review-pr` — exactly as `om-open-pr --handoff` would (`references/claim-pr.md`, chained hand-off).
+5. Then hand the issue back and release the issue's `in-progress` lock per `references/claim-pr.md`.
 
-Detect availability simply: if invoking `om-open-pr` is not possible in this environment (skill not present), take the inline path. Behavior is identical either way — the same PR, the same labels.
+Detect availability simply: if invoking `om-open-pr` is not possible in this environment (skill not present), take the inline path. Behavior is identical either way — the same PR, the same labels, the same lock hand-off.
 
 ## Ready vs draft
 
@@ -59,6 +61,6 @@ Chained consumers (`om-auto-review-pr`, orchestration scripts) parse these exact
 
 ## om-auto-fix-issue specifics
 
-- **Bug route (step 8).** Provide `om-open-pr` the implementer's final summary in the exact block shape it expects (`— PREVIOUS STEP (om-fix) said —` followed by the verbatim summary). `om-open-pr` hands the issue back to its original author and releases the `in-progress` lock; if it ends with `Status: blocked`, it has already released the lock — go to the final report and state the blocker.
+- **Bug route (step 8).** Provide `om-open-pr` the implementer's final summary in the exact block shape it expects (`— PREVIOUS STEP (om-fix) said —` followed by the verbatim summary) and pass `--handoff om-auto-review-pr`. `om-open-pr` transfers the chain lock onto the PR, then hands the issue back to its original author and releases the issue's `in-progress` lock; if it ends with `Status: blocked`, it has already released the issue lock and no PR lock exists — go to the final report and state the blocker.
 - **Feature route (F4).** The delegated skills own PR opening; this skill only verifies the contract — exactly one PR references the issue; ready unless a `⚠ NEEDS HUMAN CONFIRMATION` guard applies; full label set present (pipeline state, `feature` category, QA meta, one priority, one risk — re-run the normalization above on anything missing); linkage matches what ships (`Closes #{issueId}` implementing, `Refs #{issueId}` spec-only) — and passes the chaining reference lines through.
 - Carry a `LOW_CONFIDENCE` flag from `om-root-cause` into the PR body so a human reviewer looks harder.

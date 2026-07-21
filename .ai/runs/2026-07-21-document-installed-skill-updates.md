@@ -26,8 +26,11 @@ Explain how users update an existing Open Mercato Skills installation to the lat
 
 - CLI syntax can evolve; commands are based on the current official `vercel-labs/skills` documentation.
 - Users may confuse skill-file updates with repository artifact migrations, so the README must state the two-step distinction explicitly.
+- The automated second-pass review found no issues, but GitHub rejected its approval because the authenticated reviewer is also the PR author. The PR remains a draft pending independent approval.
 
 ## Progress
+
+PR: #42
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 

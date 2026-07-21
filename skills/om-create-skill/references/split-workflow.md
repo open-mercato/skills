@@ -47,7 +47,8 @@ instruction content itself lives verbatim in the reference.
 Confirm every branch, marker, and rule from the original now has a home (body or
 reference) — nothing vanished. The mechanical checks are in `references/gates.md`
 (fenced code blocks preserved; every moved line reappears in references;
-untrusted-content boundary still in body; description unchanged).
+untrusted-content boundary still loads on every run — body or the step-0
+`references/agentic-setup.md`; description unchanged).
 
 ## 6. Readability + lint gate
 

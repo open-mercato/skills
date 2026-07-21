@@ -59,8 +59,8 @@ unit tests, integration tests, and phased implementation. Store council
 artifacts under the ignored QA artifact directory. For `multi`,
 `multi-optimized`, and `high-assurance`, run `prepare-review --kind spec`
 against the exact spec (including acceptance criteria and relevant nested
-instruction paths) and execute the bound council exactly as the `om-harness`
-`references/code-review-contract.md` defines it. Confirm findings against
+instruction paths) and execute the bound council exactly as
+`om-harness/references/code-review-contract.md` defines it. Confirm findings against
 repository evidence and revise and re-review the spec before coding.
 
 ## Worker packets
@@ -82,8 +82,8 @@ limit. Verify each packet immediately and redispatch once with concrete failure
 evidence before integrating it manually.
 
 For `high-assurance`, express each packet as a versioned manifest and follow
-the packet lifecycle exactly as the `om-harness`
-`references/packet-contract.md` defines it: `packet-run` instead of the raw
+the packet lifecycle exactly as
+`om-harness/references/packet-contract.md` defines it: `packet-run` instead of the raw
 `worker` operation, trusted gate evidence bound to the ledger's diff SHA-256,
 `packet-gate` before integration, and `packet-release` only as an explicit
 abort. Only a `gated` packet may be integrated.
@@ -99,8 +99,8 @@ with no inherited planning or implementation transcript and run
 write version 1 validation evidence with the actual command arrays, exit codes,
 and observed results, run `prepare-review --kind implementation` with that
 evidence and the allowlist so the subject includes tracked, staged, unstaged,
-deleted, and newly created files, and execute the bound council per the
-`om-harness` `references/code-review-contract.md`. Regenerate both artifacts
+deleted, and newly created files, and execute the bound council per 
+`om-harness/references/code-review-contract.md`. Regenerate both artifacts
 after any diff change, and bound the fix-and-re-review loop at three
 iterations before stopping with the surviving findings.
 

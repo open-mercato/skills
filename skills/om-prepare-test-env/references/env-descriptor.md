@@ -7,7 +7,7 @@ successful run per the entrypoint contract).
 
 The deliverable other skills depend on is `$ENV_DESCRIPTOR`
 (`<paths.qa>/test-env.json`). The **generated script** writes it on every
-successful run, so consumers (`om-auto-verify-pr-ui`, `om-integration-tests`)
+successful run, so consumers (`om-auto-qa-pr`, `om-integration-tests`)
 always attach to the same instance:
 
 ```json

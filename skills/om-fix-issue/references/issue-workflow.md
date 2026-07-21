@@ -77,8 +77,8 @@ last report line.
 Write the issue symptom, located cause, evidence, files-to-change list, proposed
 regression test, and acceptance criteria to an artifact under the ignored QA
 artifact directory. Run `prepare-review --kind diagnosis` on that artifact, then
-execute the bound council exactly as the `om-harness`
-`references/code-review-contract.md` defines it (fresh Claude context plus the
+execute the bound council exactly as
+`om-harness/references/code-review-contract.md` defines it (fresh Claude context plus the
 concurrent runtime `review` command). The host confirms or
 rejects findings empirically. A confirmed diagnosis finding loops back to
 `om-root-cause`; a single minority finding remains visible even when rejected.
@@ -109,7 +109,7 @@ validation gate. For `standard` and `optimized`, create a new Claude context
 with no inherited diagnosis or implementation transcript and run
 `om-code-review` there. For `multi`, `multi-optimized`, and `high-assurance`,
 run `prepare-review --kind implementation` with those inputs and execute the
-bound council per `references/code-review-contract.md`, passing `--paths-file`
+bound council per `om-harness/references/code-review-contract.md`, passing `--paths-file`
 so tracked, staged, unstaged, deleted, and newly created files all appear in
 every reviewer's subject. Read the generated status table before the finding
 matrix. Confirm every blocker/major against the
@@ -124,7 +124,7 @@ them to the stage allowlist.
 
 For the `high-assurance` profile, replace the raw `worker` dispatch above with
 one versioned manifest per file-disjoint packet and follow the packet lifecycle
-exactly as the `om-harness` `references/packet-contract.md` defines it:
+exactly as `om-harness/references/packet-contract.md` defines it:
 `packet-run`, trusted gate evidence bound to the reviewed diff SHA-256,
 `packet-gate`, and `packet-release` only for an explicit abort. Do not continue
 to integration while any packet is not `gated`.

@@ -55,8 +55,9 @@ hold committed, possibly team-edited copies at `.ai/browsers/<provider>.md`.
 
 - **Execution-plan `## Progress` section** (`- [ ]` / `- [x]` checklists with `N.M` step ids and ` — <sha>` suffixes) — written by `om-auto-create-pr`, parsed by `om-auto-continue-pr`.
 - **PR body `Tracking plan:` and `Status:` lines** — written by `om-auto-create-pr`, parsed by `om-auto-continue-pr` and the loop skills.
-- **`<paths.qa>/test-env.json`** — written by `om-prepare-test-env`, consumed by `om-auto-verify-pr-ui` and `om-integration-tests`.
+- **`<paths.qa>/test-env.json`** — written by `om-prepare-test-env`, consumed by `om-auto-qa-pr` and `om-integration-tests`.
 - **Generated launcher scripts in `<paths.scripts>/`** — created by `om-prepare-test-env`, re-run by later runs and other skills.
+- **Chaining reference lines** (`PR: #<number> (link: <url>)`, `Issue: #<number> (link: <url>)`, `Spec: <path>`) — emitted at the end of every PR-producing/-driving skill's final report, parsed by the next skill in a chain and by session orchestrators (e.g. cezar).
 - **Harness review result version 1** (`review-result.json`) — written by `om-harness`, rendered into the reviewer-status table and model-by-finding matrix.
 - **Harness code-review packet version 1** (`code-review-packet.schema.json`) — binds a diagnosis, spec, or implementation subject to the installed `om-code-review` rubric, resolved repository rules, criteria, and host validation evidence.
 - **Harness fresh-review result version 1** (`fresh-review-result.schema.json`) — attests that Claude ran `om-code-review` in a new context without inheriting the implementation transcript and binds that result to the packet and subject hashes.
@@ -65,6 +66,8 @@ hold committed, possibly team-edited copies at `.ai/browsers/<provider>.md`.
 - **Staged handoff markers** (`WORKTREE=<absolute path>`, unchanged starting `HEAD`, branch, staged-path list, and issue-claim state) — written by `om-fix-issue` and `om-implement-feature` for a human publication decision.
 
 **Breaking:** changing any of these formats so an unmodified consumer skill can no longer parse output produced by a modified producer (or vice versa). **Required path:** update producer and all consumers in one PR, and keep the parser tolerant of the previous format when consumer repos may hold old artifacts (committed plans, descriptors).
+
+The 2026-07-21 marker migration (`PR_URL=` / `PR_NUMBER=` / `SPEC_PATH=` → the human-friendly `PR:` / `Issue:` / `Spec:` lines) follows that path: emitters write only the new form; every consumer keeps accepting the legacy lines for output produced by older skill versions.
 
 Adding the provider-neutral `browser` object to `test-env.json` is additive;
 readers must continue accepting the legacy `playwright` object.

@@ -58,7 +58,7 @@ Add unit and integration coverage for every changed behavior. Run
 validation gate. For UI changes, enforce the repository's design system on every
 touched UI line before review — run the repo-local design-system guardian skill
 when the repository ships one, otherwise apply its documented design-system
-rules and checklist — and run local `om-auto-verify-pr-ui` without a PR
+rules and checklist — and run local `om-auto-qa-pr` without a PR
 number, keeping its artifacts outside the stage allowlist.
 
 ### 5. Review and reconcile

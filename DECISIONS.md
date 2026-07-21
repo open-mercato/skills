@@ -108,6 +108,124 @@ stay authoritative regardless of the exploration provider. This boundary avoids
 hard-wiring every QA skill to a single CLI while keeping the repo's committed
 descriptor as the customization point.
 
+## Feature-request path: spec-then-implement
+
+Bugs and feature requests need different triage. The autofix chain's gate
+(`om-verify-in-repo`) proves a defect is real and still unfixed — the wrong
+question for a feature, which has no bug to reproduce and would be wrongly stopped
+with `NO_ACTION_NEEDED`. So the issue entry path now classifies first:
+`om-auto-fix-issue` routes a feature request to the new `om-auto-implement-issue`,
+which composes `om-spec-writing` and `om-auto-create-pr` — it confirms the feature
+is unbuilt, lands a spec on the PR as the first commit (design visible before
+implementation), then implements the spec phase-by-phase through the existing
+worktree/validation/label/review machinery. The new skill is a thin router that
+delegates to those two skills rather than duplicating their protocols. In the same
+spirit, `om-prepare-issue` stops merely recommending a spec for substantial
+features: when none exists in the repo or an open PR, it authors one via the same
+`--spec-only` spec PR and links it on the issue — its one exception to being
+tracker-only, and design-only (never implementation).
+
+`om-spec-writing`'s Open Questions gate is a hard human stop, which is correct when
+a person is driving but would strand an `om-auto-*` run (e.g. `om-auto-fix-issue`
+routing a feature request, or `om-prepare-issue` authoring a required spec). Since
+the `om-auto-*` family is autonomous by definition, `om-auto-implement-issue` runs
+**autonomous by default**: instead of stopping at the gate it resolves each open
+question with a conservative, reversible default, records the assumptions in the
+spec, and posts the questions + applied defaults as an issue/PR comment for a human
+to override before merge — keeping the PR draft/`needs-qa` when any default is
+high-stakes. A `--interactive` flag opts back into the human stop for the cases
+where a person wants to make the design calls. Progress beats stalling, as long as
+every assumption is surfaced and reversible and nothing merges on assumptions
+alone.
+
+A user-facing FR also ends with UI proof: `om-auto-implement-issue` runs
+`om-auto-verify-pr-ui` (evidence-only) after implementation, so a real-browser
+pass/fail report and screenshots land as a PR comment via `attach-image-evidence`.
+It stays evidence-only — screenshots for the reviewer, `needs-qa` kept, never a
+self-granted `qa-approved` — and is skipped for non-UI FRs, `--no-ui`, or when no
+runnable UI surface exists. A UI-verify that cannot run is noted, not fatal: the PR
+is still implemented and reviewed.
+
+## Issue skills split: create vs manage
+
+`om-prepare-issue` conflated two jobs — filing a *new* issue and improving
+*existing* ones — so the second job was split out. `om-prepare-issue` keeps its
+name and owns the create path (dedupe, spec-linking, codebase analysis, the
+step-2b spec PR) and now also applies the SDLC labels (category + inferred priority
++ risk) on creation. A new sibling, `om-auto-manage-issues`, owns existing issues,
+single or in bulk: it applies missing SDLC labels and, for a laconic issue (a
+one-line body or just a title and a screenshot), analyzes the screenshot with the
+terse text, clarifies the wording non-destructively (the reporter's original is
+preserved) via the new **update-issue** tracker operation, and posts the agent's
+understanding as a comment to confirm. It is idempotent (adds only missing labels,
+posts the understanding once) and claim-aware (skips issues another actor is
+working), so it is safe to sweep the backlog — default scope is the last ~25 open
+issues, worst-described first, narrowable by state/label/author/limit.
+
+## One PR opener, reused: pr-open-reuse + implement-by-continuation
+
+Several skills open or update PRs, and `om-auto-implement-issue` opens a spec-first
+PR and then needs to implement it — which naively means running `om-auto-create-pr`,
+which opens *its own* PR. That second PR is a collision. Two decisions resolve it:
+
+- **`om-auto-implement-issue` implements by continuation, not by create.** After it
+  opens the one spec PR (with a tracking plan), implementation is handed to
+  `om-auto-continue-pr` (or `om-auto-continue-pr-loop` for a large, many-step spec —
+  the skill chooses per the plan size, which also dictates the plan format it
+  writes). The continue skills resume from the plan **on the existing PR** and reuse
+  the identical implement/validate/review/label/summary machinery without opening
+  anything new. So there is exactly one PR.
+- **PR opening + labeling is one reusable procedure**, documented once in
+  `om-auto-create-pr/references/pr-open-reuse.md` and pointed at by the create,
+  continue, and implement skills: **prefer the `om-open-pr` skill when it is
+  installed** (it already implements commit → push → open draft PR → normalize
+  labels, so reuse it instead of duplicating), and **fall back to the inline
+  `create-pr` + label path when it is not** — `om-open-pr` is an optional
+  enhancement that removes duplication without changing behavior, so a repo that
+  installs `om-auto-create-pr` alone still works. The invariant across all of them:
+  never open a second PR for work that already has one.
+
+`om-auto-manage-issues` also gained a read-only implementation-prep pass: it can run
+a root-cause/impact analysis (delegating to `om-root-cause` for bugs when installed)
+and post it as an "implementation notes" comment so an existing issue is ready to
+fix — autonomously, never interactively, and defaulting off for batches because it
+reads code per issue.
+
+## PR-side driver: om-auto-fix-pr
+
+The issue side had a single-command end-to-end driver (`om-auto-fix-issue`); the PR
+side did not — getting a PR merge-ready meant running `om-auto-review-pr`,
+`om-stabilize-ci`, and `om-auto-verify-pr-ui` by hand and remembering to update the
+branch first. `om-auto-fix-pr` is that missing driver: it merges the latest base in
+first, then loops review-autofix → CI-stabilize → UI-verify (re-merging base when it
+advances) until the PR is approvable, green, and QA-evidenced. It is a pure
+orchestrator — it delegates every hard step to the existing skills rather than
+duplicating their logic — and it deliberately stops short of merging: it leaves the
+PR merge-ready and hands off to `om-approve-merge-pr`/`om-merge-buddy` so the QA gate
+stays the single enforcement point. Two behaviors are explicit: non-blocking review
+findings (nits/low/out-of-scope) become follow-up issues via
+`om-followup-issue-from-pr` instead of blocking or bloating the PR, and fork PRs keep
+the carry-forward supersede/credit rules from `om-auto-review-pr`'s fork flow.
+
+## 2026-07-20 — Skill consolidation: four fewer skills, standard step files per skill
+
+Four changes reduced the collection to thirty skills without losing behavior:
+
+- **`om-auto-verify-pr-ui` → `om-auto-qa-pr`**, and it now checks the PR's review state first: on an unreviewed PR it runs `om-auto-review-pr` before the browser UI QA, so a code review always precedes the UI pass. The rename also drops the "verify" framing for the plainer "QA".
+- **`om-sync-merged-pr-issues` → `om-close-fixed-issues`** — a plain rename to name the skill after what it does (close the issues a merged PR authoritatively fixes); behavior is unchanged.
+- **`om-stabilize-ci` absorbed into `om-auto-fix-pr`.** CI stabilization was only ever invoked from the PR driver, so a standalone skill meant a second thing to install and keep in sync. Its procedure is now `om-auto-fix-pr`'s own step, and a new `--ci-only [--branch <name>]` mode covers the standalone use it previously served — a plain branch or no-PR change driven to green CI.
+- **`om-auto-implement-issue` absorbed into `om-auto-fix-issue`.** The router was a thin dispatcher over the bug and feature routes; folding it in makes `om-auto-fix-issue` the single issue-to-PR entry point. It classifies the issue, sends bugs down the fix chain, and takes features through the feature route — claim, spec resolution (author via `om-auto-write-spec` when none exists, implement via `om-auto-implement-spec`), and contract verification — on one PR. `--spec-only` still stops after the spec PR.
+
+Alongside the consolidation, every skill's repeatable procedures now live in per-skill `references/<step>.md` files under standard names (`agentic-setup.md`, `worktree-setup.md`, `claim-pr.md`, `pr-finalize.md`, `review-report.md`, `rules.md`); `SKILL.md` keeps the numbered main algorithm, and `om-auto-create-pr` holds the canonical copy. These standard files are **deliberately duplicated in each skill that uses them** rather than shared through cross-skill file pointers. The decision is standalone installability over DRY: a skill cherry-picked with `npx skills add … --skill <one>` must run without depending on a file that lives inside a sibling skill. The cost is that a standard step file edited in one skill can drift from the others, so the contributor rule (now recorded in AGENTS.md) is: when you change a standard file in one skill, ask whether to sync the others.
+
+## 2026-07-21 — Chain locks are handed off, never dropped and re-acquired
+
+The autofix chain's original contract released the issue lock in `om-open-pr` and let `om-auto-review-pr` "claim the PR fresh." That left a window — observed on a production PR (open-mercato/skills#39) and reproduced deterministically on the skills-evaluation mock repo — where the PR under active review carried **no** lock signal at all: a concurrent actor's three-signal check read "not in progress" and could legitimately start duplicate work, and humans watching the tracker saw no owner and no state. Worse, because the parent skill framed the chained review as an embedded engine run, the descriptive "it will claim fresh" re-claim was skippable in practice — the production round-1 review ran with no claim comment ever posted.
+
+The contract is now transfer-based. `om-open-pr --handoff <next-skill>` claims the PR for the chain (assignee + `in-progress` + hand-off comment) *before* releasing the issue lock; every downstream skill treats an inherited same-user lock as re-entry, posts a take-over comment naming itself **before any work product**, and never releases a lock its run did not open — the chain's driving skill releases exactly once, at the end of its run or on its failure path. The generic contract lives in every skill's `references/claim-pr.md` under "Chained hand-off" (synced across all copies per the standard-file rule); `om-auto-fix-pr`'s pre-existing outer-lock pattern is the same idea and is unchanged.
+
+In the same change, `om-auto-fix-issue`'s bug route gained a UI-verification step: a fix whose diff touches a user-facing surface gets `om-auto-qa-pr` evidence whether or not a spec exists (previously UI QA only ran on the spec-driven routes), skippable with `--no-ui`.
+
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.

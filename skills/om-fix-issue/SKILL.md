@@ -71,7 +71,7 @@ every configured advisor concurrently with the same complete `om-code-review`
 rubric and packet; then require Claude's matching artifact before
 reconciliation. Reconcile every finding against code or
 runtime evidence. Every configured council reviewer must complete — the runtime retries failures and a council missing any required reviewer yields no verdict; re-run it, repair the binding, or stop for the user's decision. For UI changes, run local verification through
-`om-auto-verify-pr-ui` without a PR number.
+`om-auto-qa-pr` without a PR number.
 
 ### 6. Stage the handoff
 

@@ -1,6 +1,6 @@
-# Pipeline-label mechanics, priority/risk inference, and comment text (step 8)
+# Pipeline-label mechanics, priority/risk inference, and comment text (step 10)
 
-The detailed label machinery `om-auto-review-pr` uses in step 8 once the verdict
+The detailed label machinery `om-auto-review-pr` uses in step 10 once the verdict
 is known. The body keeps the core verdict→label decisions and the QA safety
 rules; this file holds the `set_pipeline_label` helper's behavior, the
 priority/risk inference rules, and the suggested comment strings.
@@ -37,11 +37,11 @@ After every pipeline-label change, post a short PR comment explaining why that l
 
 ## Suggested label comments
 
-- `review`: `Label set to \`review\` because this PR is ready for code review.`
-- `changes-requested`: `Label set to \`changes-requested\` because review found actionable issues.`
-- `merge-queue` (QA still required): `Label set to \`merge-queue\` because code review passed; \`needs-qa\` stays on so the QA-approval gate holds the merge until a QA reviewer adds \`qa-approved\`.`
-- `merge-queue` (no QA required): `Label set to \`merge-queue\` because the required review gates passed and QA is not required (or \`qa-approved\` is already present).`
-- `blocked`: `Label set to \`blocked\` because progress depends on an external blocker.`
-- `do-not-merge`: `Label set to \`do-not-merge\` because this PR should not merge yet.`
-- `priority-*`: `Priority set to \`priority-{level}\` because {one-line rationale}.`
-- `risk-*`: `Risk set to \`risk-{level}\` because {one-line rationale}.`
+- `review`: `🏷️ Label set to \`review\` because this PR is ready for code review.`
+- `changes-requested`: `🏷️ Label set to \`changes-requested\` because review found actionable issues.`
+- `merge-queue` (QA still required): `🏷️ Label set to \`merge-queue\` because code review passed; \`needs-qa\` stays on so the QA-approval gate holds the merge until a QA reviewer adds \`qa-approved\`.`
+- `merge-queue` (no QA required): `🏷️ Label set to \`merge-queue\` because the required review gates passed and QA is not required (or \`qa-approved\` is already present).`
+- `blocked`: `🏷️ Label set to \`blocked\` because progress depends on an external blocker.`
+- `do-not-merge`: `🏷️ Label set to \`do-not-merge\` because this PR should not merge yet.`
+- `priority-*`: `🏷️ Priority set to \`priority-{level}\` because {one-line rationale}.`
+- `risk-*`: `🏷️ Risk set to \`risk-{level}\` because {one-line rationale}.`

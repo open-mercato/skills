@@ -1,9 +1,9 @@
-# Fork PRs — carry-forward replacement flow (step 10b)
+# Fork PRs — carry-forward replacement flow (step 11)
 
 The autofix branch `om-auto-review-pr` takes when the PR head branch lives in a
 fork instead of the main repository. For fork PRs, do not wait on the original
 author and do not push to the contributor's branch by default. (Same-repo PRs
-stay in the body, step 10a.)
+are covered in `references/review-report.md`.)
 
 Instead:
 
@@ -11,7 +11,7 @@ Instead:
 2. Create a new branch in the main repository, for example `carry/pr-{prNumber}-ready`.
 3. Implement the fixes there.
 4. Resolve any conflicts against `{baseRefName}` on that carry-forward branch.
-5. Run the autofix loop above until the branch is re-reviewed as approvable or a real blocker remains.
+5. Run the autofix loop from `references/review-report.md` until the branch is re-reviewed as approvable or a real blocker remains.
 6. Commit and push the new branch to `origin`.
 7. Open a replacement PR against `{baseRefName}` via the tracker operation **create-pr**.
 8. Close the original PR only after the replacement PR exists successfully.

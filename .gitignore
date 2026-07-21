@@ -6,3 +6,6 @@ node_modules/
 
 # Temporary worktrees created by pipeline skills
 .ai/tmp/
+
+# Serena MCP local tooling state
+.serena/

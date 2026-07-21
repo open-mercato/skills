@@ -44,7 +44,27 @@ Then ship something:
 
 The agent drafts an execution plan, implements it phase by phase in an isolated worktree, runs your validation commands, reviews its own diff, and opens a labeled, reviewed PR.
 
-**Upgrading later?** Skills auto-update on reinstall, but repo-installed artifacts — including `.ai/trackers/<tracker>.md` and `.ai/browsers/<provider>.md` — do not. Run `/om-apply-upgrade-notes` in the repo, or follow [UPGRADE_NOTES.md](UPGRADE_NOTES.md) by hand.
+## 🔄 Update an existing installation
+
+Update project-installed skills from the project directory:
+
+```bash
+npx skills update -p
+```
+
+For skills installed globally, update the global installation instead:
+
+```bash
+npx skills update -g
+```
+
+This refreshes the installed skill files to their latest versions. It does not overwrite artifacts that the setup skill previously generated inside your repository, including `.ai/trackers/<tracker>.md` and `.ai/browsers/<provider>.md`. After updating, run:
+
+```text
+/om-apply-upgrade-notes
+```
+
+That skill applies the relevant [UPGRADE_NOTES.md](UPGRADE_NOTES.md) migrations while preserving local edits.
 
 ℹ️ A few skills drive a real browser through the configured browser provider — [`om-prepare-test-env`](docs/skills/om-prepare-test-env.md), [`om-integration-tests`](docs/skills/om-integration-tests.md), and [`om-auto-qa-pr`](docs/skills/om-auto-qa-pr.md). Because of that, skills.sh validation may flag them as **Medium** or **High** risk. We of course recommend reading any skill before you run it — but we use these exactly as shipped at Open Mercato, with no issues so far.
 

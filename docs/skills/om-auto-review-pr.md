@@ -13,7 +13,7 @@ Reviews or re-reviews a PR by number in an isolated worktree, leaving your curre
 
 ## Works with
 
-Consumes a `{prNumber}` (the `PR_NUMBER=` a PR-producing skill emitted), reviews that existing PR, and ends by reporting its verdict (`APPROVED` / `CHANGES REQUESTED`) plus `PR_URL=` / `PR_NUMBER=` markers for the next skill in a chain. It runs [om-code-review](om-code-review.md) verbatim as its review engine inside the isolated worktree, and is itself invoked by chain skills such as [om-auto-fix-issue](om-auto-fix-issue.md), [om-auto-fix-pr](om-auto-fix-pr.md), and [om-auto-qa-pr](om-auto-qa-pr.md).
+Consumes a `{prNumber}` (the `PR:` reference line a PR-producing skill emitted), reviews that existing PR, and ends by reporting its verdict (`APPROVED` / `CHANGES REQUESTED`) plus the `PR:` reference line for the next skill in a chain. It runs [om-code-review](om-code-review.md) verbatim as its review engine inside the isolated worktree, and is itself invoked by chain skills such as [om-auto-fix-issue](om-auto-fix-issue.md), [om-auto-fix-pr](om-auto-fix-pr.md), and [om-auto-qa-pr](om-auto-qa-pr.md).
 
 ---
 *Source: [`skills/om-auto-review-pr/SKILL.md`](../../skills/om-auto-review-pr/SKILL.md)*

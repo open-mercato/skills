@@ -12,4 +12,4 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 ## om-fix specifics
 
 - The claim-etiquette bullet's "release your own claim when done" is deliberately deferred here: om-fix is a mid-chain step, so the lock it applies is released by `om-open-pr` (success) or an external janitor (failure) — never by this step. Details: `references/claim-pr.md`.
-- This skill emits no `PR_URL`/`PR_NUMBER`/`SPEC_PATH` markers; its machine-parsed contract is the `Status: ready` / `Status: blocked` output block defined in the skill body.
+- This skill emits no chaining reference lines; its machine-parsed contract is the `Status: ready` / `Status: blocked` output block defined in the skill body.

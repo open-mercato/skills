@@ -20,7 +20,7 @@ Raises the quality of tracker issues that already exist — in bulk or one at a 
 
 ## Works with
 
-Works on tracker issues (not PRs), so it emits no `PR_URL=` / `PR_NUMBER=` markers except the spec-PR link when `--write-missing-specs` authors one, and routes a labelled, prepped issue onward to [om-auto-fix-issue](om-auto-fix-issue.md). It delegates implementation-prep to [om-root-cause](om-root-cause.md) when installed and, under `--write-missing-specs`, to [om-auto-write-spec](om-auto-write-spec.md); [om-prepare-issue](om-prepare-issue.md) and [om-spec-writing](om-spec-writing.md) cover the create-new and deep-design paths it deliberately does not.
+Works on tracker issues (not PRs), so it emits no `PR:` chaining reference lines except the spec-PR link when `--write-missing-specs` authors one, and routes a labelled, prepped issue onward to [om-auto-fix-issue](om-auto-fix-issue.md). It delegates implementation-prep to [om-root-cause](om-root-cause.md) when installed and, under `--write-missing-specs`, to [om-auto-write-spec](om-auto-write-spec.md); [om-prepare-issue](om-prepare-issue.md) and [om-spec-writing](om-spec-writing.md) cover the create-new and deep-design paths it deliberately does not.
 
 ---
 *Source: [`skills/om-auto-manage-issues/SKILL.md`](../../skills/om-auto-manage-issues/SKILL.md)*

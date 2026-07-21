@@ -18,7 +18,7 @@ Takes one open PR by number and drives it to merge-ready without merging it. It 
 
 ## Works with
 
-Consumes a `{prNumber}` (the `PR_NUMBER=` a PR-producing skill emitted) and ends by emitting `PR_URL=` / `PR_NUMBER=` markers. It orchestrates [om-auto-review-pr](om-auto-review-pr.md) (review + autofix + conflict/fork handling), [om-auto-qa-pr](om-auto-qa-pr.md) (UI QA), and [om-followup-issue-from-pr](om-followup-issue-from-pr.md) (nit follow-ups), then hands the merge-ready PR to [om-approve-merge-pr](om-approve-merge-pr.md); CI stabilization is built in.
+Consumes a `{prNumber}` (the `PR:` reference line a PR-producing skill emitted) and ends by emitting the `PR:` / `Issue:` chaining reference lines. It orchestrates [om-auto-review-pr](om-auto-review-pr.md) (review + autofix + conflict/fork handling), [om-auto-qa-pr](om-auto-qa-pr.md) (UI QA), and [om-followup-issue-from-pr](om-followup-issue-from-pr.md) (nit follow-ups), then hands the merge-ready PR to [om-approve-merge-pr](om-approve-merge-pr.md); CI stabilization is built in.
 
 ---
 *Source: [`skills/om-auto-fix-pr/SKILL.md`](../../skills/om-auto-fix-pr/SKILL.md)*

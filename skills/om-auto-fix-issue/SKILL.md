@@ -18,7 +18,7 @@ Take a tracker issue end to end without disturbing the user's active worktree. T
 
 ## Chaining
 
-This skill consumes an `{issueId}` and both opens and finishes a chain: it drives bugs through the autofix chain and features through the feature route, both itself. A previous skill may already have opened a PR for the issue — before `om-open-pr` runs (bug route), the reuse guard in `references/pr-finalize.md` detects it via **search-prs** / the issue reference and continues on that PR instead of opening a duplicate; on the feature route an open PR referencing the issue means resume/continue, never a duplicate. It ends by reporting `PR_URL=` / `PR_NUMBER=` markers so the next skill in a chain can consume them. Companion skills, invoked verbatim: bug route — `om-verify-in-repo`, `om-root-cause`, `om-fix`, `om-open-pr` (inline PR-open/label fallback when absent), `om-auto-review-pr`; feature route — `om-auto-write-spec` and `om-auto-implement-spec` (and through them the review/UI pipeline). A missing required chain skill stops the run and names the skill to install.
+This skill consumes an `{issueId}` and both opens and finishes a chain: it drives bugs through the autofix chain and features through the feature route, both itself. A previous skill may already have opened a PR for the issue — before `om-open-pr` runs (bug route), the reuse guard in `references/pr-finalize.md` detects it via **search-prs** / the issue reference and continues on that PR instead of opening a duplicate; on the feature route an open PR referencing the issue means resume/continue, never a duplicate. It ends by reporting the `PR:` / `Issue:` chaining reference lines so the next skill in a chain can consume them. Companion skills, invoked verbatim: bug route — `om-verify-in-repo`, `om-root-cause`, `om-fix`, `om-open-pr` (inline PR-open/label fallback when absent), `om-auto-review-pr`; feature route — `om-auto-write-spec` and `om-auto-implement-spec` (and through them the review/UI pipeline). A missing required chain skill stops the run and names the skill to install.
 
 ## Workflow
 
@@ -47,7 +47,7 @@ This skill consumes an `{issueId}` and both opens and finishes a chain: it drive
    1. **FR triage gate** (`references/fr-triage.md`) — confirm the feature is not already implemented and not already specced + in flight; already built / in flight → stop with `NO_ACTION_NEEDED`. Nothing claimed yet, so a stop leaves no lock.
    2. **Claim / resume** — the step-1 three-signal lock applies. An open PR already referencing the issue → stop and point at `om-auto-continue-pr {prNumber}`, **unless** it is a spec-only design PR (draft, `Refs #{issueId}`, spec but no implementation), which resumes at step 3b as `SPEC_PR`.
    3. **Resolve the spec and implement** — (a) resolve via `references/spec-resolution.md` (`{spec}` = the issue id); (b) **spec found** (path or `SPEC_PR`) → `om-auto-implement-spec {SPEC_PATH-or-SPEC_PR} [--no-ui] [--force]` verbatim, ensuring the PR body carries `Closes #{issueId}`; (c) **no spec** → `om-auto-write-spec {issueId} [--slug …] [--force]` (interactive spec-writing when `--interactive`), then chain `om-auto-implement-spec {SPEC_PATH}` on that same PR/branch. For a spec without implementation, users run `om-auto-write-spec` directly.
-   4. **Confirm the contract, report** — exactly one PR references the issue; ready unless a `⚠ NEEDS HUMAN CONFIRMATION` guard; full label set (pipeline state, `feature`, QA meta, one priority, one risk — re-run the `references/pr-finalize.md` normalization on gaps); linkage matches what ships (`Closes` implementing, `Refs` spec-only). End with the `PR_URL=` / `PR_NUMBER=` markers passed through. Then stop — do not continue to step 4.
+   4. **Confirm the contract, report** — exactly one PR references the issue; ready unless a `⚠ NEEDS HUMAN CONFIRMATION` guard; full label set (pipeline state, `feature`, QA meta, one priority, one risk — re-run the `references/pr-finalize.md` normalization on gaps); linkage matches what ships (`Closes` implementing, `Refs` spec-only). End with the chaining reference lines passed through. Then stop — do not continue to step 4.
 
 4. **Triage gate (bug route): run `om-verify-in-repo`.** Invoke the `om-verify-in-repo` skill with `{issueId}` (and `{repo}`) in the current checkout — it is read-only, so no worktree is needed yet. Follow its workflow verbatim. If its output contains the `NO_ACTION_NEEDED` token, stop the whole run: report its reason and evidence (PR links, commit hashes, file paths) to the user instead of duplicating work — nothing was claimed, so there is no lock to release. If it says proceed, keep its one-paragraph confirmation — the report at the end references it.
 
@@ -71,7 +71,7 @@ This skill consumes an `{issueId}` and both opens and finishes a chain: it drive
    <the om-fix summary, verbatim>
    ```
 
-   `om-open-pr` commits, pushes the branch, opens a PR against `$BASE_BRANCH` (ready for review by default; `--draft` only for spec-only or incomplete hand-offs), normalizes labels through the `apply_label` guard, hands the issue back to its original author, and releases the `in-progress` lock. Capture the `PR_URL=` and `PR_NUMBER=` markers from its output. Reuse guard, inline fallback when `om-open-pr` is absent, and the full label contract: `references/pr-finalize.md`. If it ends with `Status: blocked`, it has already released the lock — go to step 11 and report the blocker.
+   `om-open-pr` commits, pushes the branch, opens a PR against `$BASE_BRANCH` (ready for review by default; `--draft` only for spec-only or incomplete hand-offs), normalizes labels through the `apply_label` guard, hands the issue back to its original author, and releases the `in-progress` lock. Capture the PR number and URL from the `PR:` reference line in its output. Reuse guard, inline fallback when `om-open-pr` is absent, and the full label contract: `references/pr-finalize.md`. If it ends with `Status: blocked`, it has already released the lock — go to step 11 and report the blocker.
 
 9. **Review loop: run `om-auto-review-pr` in autofix mode** against `PR_NUMBER`, following its entire workflow verbatim (its claim check will see the PR is unclaimed and claim it fresh; it owns releasing that claim). Apply fixes in the same worktree as new commits — never rewrite history — re-running targeted validation after each batch (the full gate when a fix reaches beyond a single module/test file), and loop until a clean verdict or only documented non-actionable findings remain. If it cannot run, skip the loop, note it in the final report, and leave the PR in the `review` pipeline state for a human or a later `om-review-prs` sweep. Full procedure and verdict handling: `references/review-report.md`.
 
@@ -89,12 +89,12 @@ This skill consumes an `{issueId}` and both opens and finishes a chain: it drive
     Issue #{issueId}: {title}
     Status: {fixed | no action needed | already in progress | blocked}
     Branch: {branch}
-    PR: {url or —}
+    PR: {#{number} (link: {url}) | —}
     Review: {om-auto-review-pr verdict | skipped: reason}
     Tests: {summary}
     ```
 
-    When the run stopped at step 4, cite the `om-verify-in-repo` evidence (existing PR, commit, or explanation) instead of a branch and PR. End the report with `PR_URL=` and `PR_NUMBER=` on their own lines so the next skill in a chain can consume them.
+    When the run stopped at step 4, cite the `om-verify-in-repo` evidence (existing PR, commit, or explanation) instead of a branch and PR. End the report with the chaining reference lines — `PR: #<number> (link: <url>)`, plus `Issue: #<number> (link: <url>)` when the run has a subject issue — so the next skill in a chain can consume them.
 
 ## Rules
 

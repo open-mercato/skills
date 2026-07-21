@@ -16,7 +16,7 @@ Turns a feature brief or a feature-request issue into a fully written spec that 
 
 ## Works with
 
-Requires [om-spec-writing](om-spec-writing.md) as its document engine and prefers [om-open-pr](om-open-pr.md) to ship the spec (with an inline create-pr fallback); UI evidence uses [om-prepare-test-env](om-prepare-test-env.md) plus a browser provider, degrading to a text-only spec when unavailable. It ends with `PR_URL=` / `PR_NUMBER=` / `SPEC_PATH=` markers so the spec PR feeds [om-auto-implement-spec](om-auto-implement-spec.md) (or the feature route of [om-auto-fix-issue](om-auto-fix-issue.md)), which reuse the same branch and PR.
+Requires [om-spec-writing](om-spec-writing.md) as its document engine and prefers [om-open-pr](om-open-pr.md) to ship the spec (with an inline create-pr fallback); UI evidence uses [om-prepare-test-env](om-prepare-test-env.md) plus a browser provider, degrading to a text-only spec when unavailable. It ends with the `PR:` / `Spec:` (and `Issue:` when issue-driven) reference lines so the spec PR feeds [om-auto-implement-spec](om-auto-implement-spec.md) (or the feature route of [om-auto-fix-issue](om-auto-fix-issue.md)), which reuse the same branch and PR.
 
 ---
 *Source: [`skills/om-auto-write-spec/SKILL.md`](../../skills/om-auto-write-spec/SKILL.md)*

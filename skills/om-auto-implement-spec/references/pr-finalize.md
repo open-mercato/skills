@@ -1,6 +1,6 @@
 # PR finalize — open or reuse, labels, summary comment, markers
 
-The single procedure for the "commit → push → open (or reuse) the PR → normalize labels → summary comment → chaining markers" mechanics. The point is **one** implementation of PR opening + labeling, reused rather than copied, and never a second PR for work that already has one. In `om-auto-implement-spec` these mechanics run **inside the engine skills** (`om-auto-create-pr`, `om-auto-continue-pr`/`-loop`, and through them `om-open-pr`); this file is the contract this skill routes by (step 2) and confirms at the end (step 4).
+The single procedure for the "commit → push → open (or reuse) the PR → normalize labels → summary comment → chaining reference lines" mechanics. The point is **one** implementation of PR opening + labeling, reused rather than copied, and never a second PR for work that already has one. In `om-auto-implement-spec` these mechanics run **inside the engine skills** (`om-auto-create-pr`, `om-auto-continue-pr`/`-loop`, and through them `om-open-pr`); this file is the contract this skill routes by (step 2) and confirms at the end (step 4).
 
 ## Never open a duplicate PR
 
@@ -8,7 +8,7 @@ Before opening anything, check whether a PR already exists for this branch (or, 
 
 ## Prefer the `om-open-pr` skill when installed
 
-`om-open-pr` already implements exactly this: it commits the worktree, pushes the branch, opens a **ready-for-review** PR against `$BASE_BRANCH` (draft only with `--draft`) with the unified body template, applies the full SDLC label set (pipeline `review`, category, QA meta, one priority, one risk) through the descriptor guards with rationale comments, posts the caller's summary comment, and (in an issue-driven run) hands the issue back and releases the `in-progress` lock — emitting `PR_URL=` / `PR_NUMBER=` markers. When it is installed, the engine **delegates to it** instead of re-deriving the steps.
+`om-open-pr` already implements exactly this: it commits the worktree, pushes the branch, opens a **ready-for-review** PR against `$BASE_BRANCH` (draft only with `--draft`) with the unified body template, applies the full SDLC label set (pipeline `review`, category, QA meta, one priority, one risk) through the descriptor guards with rationale comments, posts the caller's summary comment, and (in an issue-driven run) hands the issue back and releases the `in-progress` lock — emitting the `PR:` / `Issue:` chaining reference lines. When it is installed, the engine **delegates to it** instead of re-deriving the steps.
 
 ## Graceful fallback when `om-open-pr` is NOT installed
 
@@ -42,11 +42,11 @@ Every run ends with a single comprehensive summary comment the human reviewer ca
 
 ## Marker emission
 
-End the run's final report with the chaining markers on their own lines:
+End the run's final report with the chaining reference lines, one per line, exact shape — include `Issue:` only when the run has a subject issue:
 
 ```
-PR_URL=<full PR URL>
-PR_NUMBER=<PR number>
+Issue: #<issue number> (link: <full issue URL>)
+PR: #<PR number> (link: <full PR URL>)
 ```
 
 Chained consumers (`om-auto-review-pr`, `om-auto-qa-pr`, orchestration scripts) parse these exact text markers — never rename, translate, or decorate them.
@@ -57,4 +57,4 @@ This skill never opens a PR itself; it enforces the contract at two points:
 
 - **Before invoking an engine (step 2)** — the reuse guard decides the route: when `SPEC_PR` is set (e.g. from `om-auto-write-spec`), implementation is a **continuation of that PR** via `om-auto-continue-pr` / `-loop`; a fresh `om-auto-create-pr` run on top would open a second PR for the same work, the exact collision this contract forbids. One PR per spec, always.
 - **Finish-state confirmation (step 4)** — after the engine reports the PR complete, confirm: PR **ready** (the engine flips draft spec PRs to ready via **mark-pr-ready** once `Status: complete` — except under a `⚠ NEEDS HUMAN CONFIRMATION` assumptions guard, which keeps the PR draft for the user); the full label set above present, with user-facing PRs carrying `needs-qa` and never `qa-approved` / `qa-self-verified`; the engine's summary comment posted, with the UI-verification outcome appended to it or posted as its own evidence comment; when `ISSUE_ID` is known, the PR body carries `Closes #${ISSUE_ID}` and the plan the `Source doc:` line. Anything missing that this skill can add through the descriptor operations (a label via the guard, the UI outcome via **comment-pr**), add; anything engine-owned that is wrong, report as a defect rather than papering over.
-- Then report spec path, engine used, branch, PR URL, validation/review outcome, UI verification outcome — and emit the `PR_URL=` / `PR_NUMBER=` markers exactly as above.
+- Then report spec path, engine used, branch, PR URL, validation/review outcome, UI verification outcome — and emit the chaining reference lines exactly as above.

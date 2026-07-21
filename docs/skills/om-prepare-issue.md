@@ -16,7 +16,7 @@ Creates a single, well-formed tracker issue from a brief without implementing an
 
 ## Works with
 
-Emits one tracker issue (with SDLC labels), and on the spec-needed path also a design-only spec PR (emitting `SPEC_PATH` / `PR_NUMBER`) by delegating to [om-auto-write-spec](om-auto-write-spec.md). It hands off to [om-spec-writing](om-spec-writing.md) when a full spec is wanted, to [om-auto-create-pr](om-auto-create-pr.md) or [om-auto-fix-issue](om-auto-fix-issue.md) when the work should be done now, and to [om-auto-manage-issues](om-auto-manage-issues.md) for enriching existing issues.
+Emits one tracker issue (with SDLC labels), and on the spec-needed path also a design-only spec PR (emitting the `Spec:` and `PR:` reference lines) by delegating to [om-auto-write-spec](om-auto-write-spec.md). It hands off to [om-spec-writing](om-spec-writing.md) when a full spec is wanted, to [om-auto-create-pr](om-auto-create-pr.md) or [om-auto-fix-issue](om-auto-fix-issue.md) when the work should be done now, and to [om-auto-manage-issues](om-auto-manage-issues.md) for enriching existing issues.
 
 ---
 *Source: [`skills/om-prepare-issue/SKILL.md`](../../skills/om-prepare-issue/SKILL.md)*

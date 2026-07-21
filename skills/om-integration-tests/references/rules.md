@@ -11,5 +11,5 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-integration-tests specifics
 
-- This skill performs no tracker operations, mutates no labels, holds no claims, and defines no chaining markers; the label-discipline, claim-etiquette, and marker bullets apply only if a repo-local extension adds such behavior (and it may not relax them).
+- This skill performs no tracker operations, mutates no labels, holds no claims, and defines no chaining reference lines; the label-discipline, claim-etiquette, and marker bullets apply only if a repo-local extension adds such behavior (and it may not relax them).
 - User in the loop when present: when the repo has no integration-test setup, propose a minimal scaffold and ask before creating it; when no runnable app can be discovered, stop and ask how to start it. The autonomous-decision bullet governs only unattended runs invoked from an autonomous chain — and even then, never invent an environment or a base URL: report the blocker instead.

@@ -14,7 +14,7 @@ Resume an `om-auto-create-pr` run that did not finish in one go. Given a PR numb
 
 ## Works with
 
-Consumes a `{prNumber}`, reads the `Tracking plan:` line written by [om-auto-create-pr](om-auto-create-pr.md), and ends by emitting `PR_URL=` / `PR_NUMBER=` markers for the next skill in a chain. It invokes the companion skills [om-open-pr](om-open-pr.md) (push + label normalization), [om-code-review](om-code-review.md) (breaking-change self-review), and [om-auto-review-pr](om-auto-review-pr.md) (the autofix second pass), each with inline fallbacks.
+Consumes a `{prNumber}`, reads the `Tracking plan:` line written by [om-auto-create-pr](om-auto-create-pr.md), and ends by emitting the `PR:` / `Issue:` chaining reference lines for the next skill in a chain. It invokes the companion skills [om-open-pr](om-open-pr.md) (push + label normalization), [om-code-review](om-code-review.md) (breaking-change self-review), and [om-auto-review-pr](om-auto-review-pr.md) (the autofix second pass), each with inline fallbacks.
 
 ---
 *Source: [`skills/om-auto-continue-pr/SKILL.md`](../../skills/om-auto-continue-pr/SKILL.md)*

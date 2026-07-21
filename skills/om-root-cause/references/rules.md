@@ -12,4 +12,4 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 ## om-root-cause specifics
 
 - This skill itself never claims, labels, or mutates tracker state — it is read-only (**get-issue** only). The autofix chain's claim is taken by the `om-fix` step; the label and claim bullets above describe the chain contract this step's report feeds into, not actions this step performs.
-- This skill defines no `PR_URL=`/`PR_NUMBER=`/`SPEC_PATH=` markers; its output contract is the plain-text root-cause report defined in the skill body.
+- This skill defines no chaining reference lines; its output contract is the plain-text root-cause report defined in the skill body.

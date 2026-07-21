@@ -14,7 +14,7 @@ Review a pull request by number without touching the current worktree. Always fe
 
 ## Chaining
 
-This skill consumes a `{prNumber}` (the `PR_NUMBER=` a PR-producing skill emitted) and reviews or re-reviews that existing PR; it never opens a PR, so there is no duplicate to guard against (a fork carry-forward replacement is the one exception, opened by this skill's own fork flow). It ends by reporting its verdict (`APPROVED` / `CHANGES REQUESTED`) plus `PR_URL=` / `PR_NUMBER=` markers so the next skill in a chain can consume them. Companion skill: `om-code-review`, the review engine it runs verbatim inside the isolated worktree — if it is not installed the run stops and names it to install.
+This skill consumes a `{prNumber}` (the `PR:` reference line a PR-producing skill emitted) and reviews or re-reviews that existing PR; it never opens a PR, so there is no duplicate to guard against (a fork carry-forward replacement is the one exception, opened by this skill's own fork flow). It ends by reporting its verdict (`APPROVED` / `CHANGES REQUESTED`) plus the `PR:` reference line so the next skill in a chain can consume it. Companion skill: `om-code-review`, the review engine it runs verbatim inside the isolated worktree — if it is not installed the run stops and names it to install.
 
 ## Workflow
 
@@ -62,7 +62,7 @@ This skill consumes a `{prNumber}` (the `PR_NUMBER=` a PR-producing skill emitte
     Review submitted successfully.
     ```
 
-    If all findings were auto-fixed, note that fixes were applied and the PR is ready for merge. If a blocker remains that requires human judgment, describe the blocker and ask for guidance. End the report with `PR_URL=` and `PR_NUMBER=` on their own lines so the next skill in a chain can consume them.
+    If all findings were auto-fixed, note that fixes were applied and the PR is ready for merge. If a blocker remains that requires human judgment, describe the blocker and ask for guidance. End the report with the chaining reference lines — `PR: #<number> (link: <url>)`, plus `Issue: #<number> (link: <url>)` when the run has a subject issue — so the next skill in a chain can consume them.
 
 ## Rules
 

@@ -12,4 +12,4 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 ## om-verify-in-repo specifics
 
 - This skill performs only the **read side** of claim etiquette: it runs the in-progress check to decide whether to stop the chain, but it never claims, labels, assigns, comments, or releases — the autofix chain's claim is taken later by the `om-fix` step. The label-discipline bullet above describes the chain contract this step's verdict feeds into, not actions this step performs.
-- This skill defines no `PR_URL=`/`PR_NUMBER=`/`SPEC_PATH=` markers; its machine-parsed contract is the literal `NO_ACTION_NEEDED` token on its own line (skill body, Output contract) that triggers the flow runner's clean stop.
+- This skill defines no chaining reference lines; its machine-parsed contract is the literal `NO_ACTION_NEEDED` token on its own line (skill body, Output contract) that triggers the flow runner's clean stop.

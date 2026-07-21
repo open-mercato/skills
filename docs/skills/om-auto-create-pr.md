@@ -16,7 +16,7 @@ Turn a free-form task brief into a disciplined autonomous run that ships as a PR
 
 ## Works with
 
-Turns a `{brief}` into a new PR (detecting and reusing an existing PR for the same work rather than duplicating it), and ends by emitting `PR_URL=` / `PR_NUMBER=` markers for the next skill in a chain. Companion skills, all optional with inline fallbacks: [om-open-pr](om-open-pr.md) (PR opening/labels), [om-code-review](om-code-review.md) (self-review), [om-auto-review-pr](om-auto-review-pr.md) (the autofix loop), and [om-auto-continue-pr](om-auto-continue-pr.md) (resume).
+Turns a `{brief}` into a new PR (detecting and reusing an existing PR for the same work rather than duplicating it), and ends by emitting the `PR:` / `Issue:` chaining reference lines for the next skill in a chain. Companion skills, all optional with inline fallbacks: [om-open-pr](om-open-pr.md) (PR opening/labels), [om-code-review](om-code-review.md) (self-review), [om-auto-review-pr](om-auto-review-pr.md) (the autofix loop), and [om-auto-continue-pr](om-auto-continue-pr.md) (resume).
 
 ---
 *Source: [`skills/om-auto-create-pr/SKILL.md`](../../skills/om-auto-create-pr/SKILL.md)*

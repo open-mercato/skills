@@ -11,6 +11,6 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-prepare-test-env specifics
 
-- This skill performs no tracker operations, mutates no labels, holds no claims, and defines no chaining markers; the label-discipline, claim-etiquette, and marker bullets apply only if a repo-local extension adds such behavior (and it may not relax them).
+- This skill performs no tracker operations, mutates no labels, holds no claims, and defines no chaining reference lines; the label-discipline, claim-etiquette, and marker bullets apply only if a repo-local extension adds such behavior (and it may not relax them).
 - The autonomous-decision bullet governs environment choices: pick the most-reversible mode/port/service option yourself and record it in the script's `# history:` header, the descriptor's `notes`, and the report. The explicitly gated stop here is the Phase 2 fallback — when the script cannot pass cold+warm verification after two repair attempts, record why and fall back per `references/phase-2-generate.md`; never fail silently, never fake readiness.
 - Secrets hygiene extends to the environment descriptor: never store real secrets in `test-env.json` — disposable/demo values only (see `references/env-descriptor.md`).

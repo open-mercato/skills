@@ -11,5 +11,5 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-review-prs specifics
 
-- This sweep defines no chaining markers of its own — it consumes no `PR_URL=`/`PR_NUMBER=` and emits none; each delegated `om-auto-review-pr` run reports its own verdict and markers.
+- This sweep defines no chaining reference lines of its own — it consumes no chaining reference lines and emits none; each delegated `om-auto-review-pr` run reports its own verdict and markers.
 - Claim etiquette applies in read-only form here: the sweep filters on claim signals but never claims, forces, or releases (`references/claim-pr.md`, "om-review-prs specifics").

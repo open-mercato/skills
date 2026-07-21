@@ -12,4 +12,4 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 ## om-auto-update-changelog specifics
 
 - This skill claims nothing and mutates no labels itself: worktree, branch, commit, claim/lock, PR opening, label normalization, and the review pass are all delegated to the `om-auto-create-pr` invocation, which runs the full claim procedure and label guards under its own rules.
-- The `PR_URL=` / `PR_NUMBER=` markers are emitted by `om-auto-create-pr`; this skill surfaces the resulting PR URL in its own report.
+- The chaining reference lines are emitted by `om-auto-create-pr`; this skill surfaces the resulting PR URL in its own report.

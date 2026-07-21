@@ -42,7 +42,7 @@ c. **No spec** → invoke **`om-auto-write-spec {issueId} [--slug …] [--force]
    verbatim (run its spec-writing step interactively when `--interactive` was
    passed). It claims the issue, writes the spec autonomously, attaches
    mockups/screenshots, opens the spec PR (`Refs #{issueId}`), posts the assumptions
-   comment, and emits `SPEC_PATH` + `PR_NUMBER`. Then chain straight into
+   comment, and emits the `Spec:` and `PR:` reference lines. Then chain straight into
    **`om-auto-implement-spec {SPEC_PATH}`**, which continues **on that same
    PR/branch** (the linkage flips from `Refs` to `Closes #{issueId}` once
    implementation lands). For a spec **without** implementation, users run
@@ -67,5 +67,5 @@ The delegated skills own the machinery; verify the contract held:
   PR.
 
 Report the route taken, spec path, branch, PR URL, and verification outcome, then
-end with the `PR_URL=` / `PR_NUMBER=` markers passed through from the delegated
+end with the chaining reference lines passed through from the delegated
 skill. Then stop — do not continue to the bug chain.

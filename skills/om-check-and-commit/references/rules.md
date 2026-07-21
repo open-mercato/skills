@@ -12,5 +12,5 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 ## om-check-and-commit specifics
 
 - This skill runs with the user in the loop: it commits and pushes **only** when the user explicitly asked for publication in the same request — the autonomous-decision bullet never overrides that gate.
-- It performs no tracker operations, mutates no labels, holds no claims, and defines no chaining markers; the label-discipline, claim-etiquette, and marker bullets apply only if a repo-local extension adds such behavior (and it may not relax them).
+- It performs no tracker operations, mutates no labels, holds no claims, and defines no chaining reference lines; the label-discipline, claim-etiquette, and marker bullets apply only if a repo-local extension adds such behavior (and it may not relax them).
 - Never skip commit hooks (no `--no-verify`), never force-push, never amend existing commits unless the user asked for it.

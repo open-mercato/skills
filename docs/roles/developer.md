@@ -1,6 +1,6 @@
 # 👩‍💻 Developer
 
-Hand the pipeline a brief, a spec, or an issue number and get back a labeled, reviewed PR — implemented phase by phase in an isolated worktree so your checkout stays clean, run through the validation gate, self-reviewed, and UI-verified with screenshots when the change is user-facing. Every PR-producing skill emits `PR_URL` / `PR_NUMBER` markers and reuses an existing PR instead of opening a duplicate, so the steps chain end to end. Long specs run on a resumable, step-tracked loop.
+Hand the pipeline a brief, a spec, or an issue number and get back a labeled, reviewed PR — implemented phase by phase in an isolated worktree so your checkout stays clean, run through the validation gate, self-reviewed, and UI-verified with screenshots when the change is user-facing. Every PR-producing skill emits the `PR: #<number> (link: <url>)` reference line and reuses an existing PR instead of opening a duplicate, so the steps chain end to end. Long specs run on a resumable, step-tracked loop.
 
 ← Back to the [README](../../README.md#-workflows-by-role)
 
@@ -20,7 +20,7 @@ Hand the pipeline a brief, a spec, or an issue number and get back a labeled, re
 - **Validation gate** — the configured commands run and any non-zero exit blocks the PR.
 - **Self-review + autofix loop** — [`om-auto-review-pr`](../skills/om-auto-review-pr.md) reviews the diff and iterates fixes until merge-ready. On a spec-only PR it switches to a specification review (risks, backward compatibility, gaps, improvements, simplicity) and its autofix amends the spec document, never adds implementation.
 - **UI verification** — user-facing PRs get screenshots + a pass/fail report from [`om-auto-qa-pr`](../skills/om-auto-qa-pr.md).
-- **Chain markers** — `PR_URL` / `PR_NUMBER` are emitted so the next skill continues the same PR, never a duplicate.
+- **Chaining reference lines** — `PR: #<number> (link: <url>)` (plus `Issue:` / `Spec:` where defined) are emitted so the next skill continues the same PR, never a duplicate.
 - **Full label set + run-summary comment** on the finished PR (pipeline + category + priority + risk + QA meta).
 - **Claim locks** — the `in-progress` label + assignee + 🤖 comment make concurrent agents back off.
 

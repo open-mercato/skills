@@ -12,4 +12,4 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 ## om-code-review specifics
 
 - This skill is the read-only review engine: it reviews the unit it was given via **get-pr** / **get-pr-diff**, takes no tracker-item claim, and mutates no labels — callers (`om-auto-review-pr`, `om-review-prs`, the self-review steps of `om-auto-create-pr` and `om-auto-continue-pr`) own the claim protocol, label transitions, and verdict submission. The claim-etiquette and label-discipline bullets have no touchpoints here but still bind any repo-local extension.
-- It defines no chaining markers; its machine-readable contract is the report structure in `references/output-format.md` and the **approve** / **request changes** verdict, which is mechanical (see Severity and Verdict in the skill body) and may never be softened by a repo-local override.
+- It defines no chaining reference lines; its machine-readable contract is the report structure in `references/output-format.md` and the **approve** / **request changes** verdict, which is mechanical (see Severity and Verdict in the skill body) and may never be softened by a repo-local override.

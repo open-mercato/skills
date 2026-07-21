@@ -12,5 +12,5 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 ## om-spec-writing specifics
 
 - **Interactive by default.** The Open Questions gate is a hard stop in interactive runs — never answer your own gate questions to keep moving. The autonomous-run bullet applies only when the skill is invoked with `--autonomous`; then the gate resolves per the skill body's Autonomous defaults, with every default surfaced for override.
-- This skill performs no tracker operations, mutates no labels, holds no claims, and defines no chaining markers of its own (callers such as `om-auto-write-spec` emit `SPEC_PATH=` for the spec it writes); the label-discipline, claim-etiquette, and marker bullets apply only if a repo-local extension adds such behavior — and it may not relax them.
+- This skill performs no tracker operations, mutates no labels, holds no claims, and defines no chaining reference lines of its own (callers such as `om-auto-write-spec` emit the `Spec:` reference line for the spec it writes); the label-discipline, claim-etiquette, and marker bullets apply only if a repo-local extension adds such behavior — and it may not relax them.
 - Never edit code while writing or reviewing a spec — the deliverable is the document.

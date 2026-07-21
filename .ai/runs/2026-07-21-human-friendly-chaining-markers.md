@@ -101,6 +101,7 @@ plain GitHub links:
   and no higher tier owns it.
 - Unit + store tests; spec note in `.ai/specs/`.
 - Open PR to open-mercato/cezar with its label conventions; record the PR link here.
+  Opened: https://github.com/open-mercato/cezar/pull/534 (labels: review, feature, skip-qa, priority-medium, risk-low; full validation gate green — 2927 tests).
 
 ## Risks
 
@@ -143,6 +144,6 @@ Source doc: none (brief-driven).
 
 ### Phase 5: cezar companion PR
 
-- [ ] 5.1 task-markers report-tier parsing + tests
-- [ ] 5.2 store referenced-issue tier + tests
-- [ ] 5.3 cezar spec note + validation + PR opened
+- [x] 5.1 task-markers report-tier parsing + tests — open-mercato/cezar@226ca1b
+- [x] 5.2 store referenced-issue tier + tests — open-mercato/cezar@226ca1b
+- [x] 5.3 cezar spec note + validation + PR opened — open-mercato/cezar@226ca1b

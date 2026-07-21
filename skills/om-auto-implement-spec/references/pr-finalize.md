@@ -47,6 +47,7 @@ End the run's final report with the chaining reference lines, one per line, exac
 ```
 Issue: #<issue number> (link: <full issue URL>)
 PR: #<PR number> (link: <full PR URL>)
+Spec: <repo-relative spec path>
 ```
 
 Chained consumers (`om-auto-review-pr`, `om-auto-qa-pr`, orchestration scripts) parse these exact text markers — never rename, translate, or decorate them.

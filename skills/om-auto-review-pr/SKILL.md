@@ -14,7 +14,7 @@ Review a pull request by number without touching the current worktree. Always fe
 
 ## Chaining
 
-This skill consumes a `{prNumber}` (the `PR:` reference line a PR-producing skill emitted) and reviews or re-reviews that existing PR; it never opens a PR, so there is no duplicate to guard against (a fork carry-forward replacement is the one exception, opened by this skill's own fork flow). It ends by reporting its verdict (`APPROVED` / `CHANGES REQUESTED`) plus the `PR:` reference line so the next skill in a chain can consume it. Companion skill: `om-code-review`, the review engine it runs verbatim inside the isolated worktree — if it is not installed the run stops and names it to install.
+This skill consumes a `{prNumber}` (the `PR:` reference line a PR-producing skill emitted) and reviews or re-reviews that existing PR; it never opens a PR, so there is no duplicate to guard against (a fork carry-forward replacement is the one exception, opened by this skill's own fork flow). It ends by reporting its verdict (`APPROVED` / `CHANGES REQUESTED`) plus the `PR:` reference line (and `Issue:` when the run has a subject issue) so the next skill in a chain can consume them. Companion skill: `om-code-review`, the review engine it runs verbatim inside the isolated worktree — if it is not installed the run stops and names it to install.
 
 ## Workflow
 

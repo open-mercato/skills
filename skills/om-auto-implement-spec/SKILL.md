@@ -41,6 +41,7 @@ A previous skill (typically `om-auto-write-spec`) may already have opened the sp
    ```
    Issue: #<issue number> (link: <full issue URL>)
    PR: #<PR number> (link: <full PR URL>)
+   Spec: <repo-relative spec path>
    ```
 
 ## Rules

@@ -15,7 +15,7 @@ Takes an existing spec and returns an implemented, code-reviewed, UI-verified, r
 
 ## Works with
 
-Continues on the spec PR that [om-auto-write-spec](om-auto-write-spec.md) may already have opened rather than opening a second one, and ends with the `PR:` chaining reference line. It delegates implementation to [om-auto-create-pr](om-auto-create-pr.md) (fresh runs) or [om-auto-continue-pr](om-auto-continue-pr.md) (when a PR exists), then runs [om-auto-review-pr](om-auto-review-pr.md) and [om-auto-qa-pr](om-auto-qa-pr.md), with [om-open-pr](om-open-pr.md) as a fallback piece.
+Continues on the spec PR that [om-auto-write-spec](om-auto-write-spec.md) may already have opened rather than opening a second one, and ends with the `PR:` / `Spec:` chaining reference lines. It delegates implementation to [om-auto-create-pr](om-auto-create-pr.md) (fresh runs) or [om-auto-continue-pr](om-auto-continue-pr.md) (when a PR exists), then runs [om-auto-review-pr](om-auto-review-pr.md) and [om-auto-qa-pr](om-auto-qa-pr.md), with [om-open-pr](om-open-pr.md) as a fallback piece.
 
 ---
 *Source: [`skills/om-auto-implement-spec/SKILL.md`](../../skills/om-auto-implement-spec/SKILL.md)*

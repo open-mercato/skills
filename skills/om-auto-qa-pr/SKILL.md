@@ -234,7 +234,8 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
     ```
 
     In PR mode, end the report with the `PR: #<number> (link: <url>)` reference
-    line so the next skill in a chain can consume it.
+    line — plus `Issue: #<number> (link: <url>)` when the run has a subject
+    issue — so the next skill in a chain can consume them.
 
 ## Rules
 

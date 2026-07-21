@@ -18,7 +18,7 @@ The advanced variant of `om-auto-create-pr`; for small fixes, use that skill. St
 
 ## Chaining
 
-This skill turns a `{brief}` into a new PR, so it usually starts a chain — but it first checks (via **search-prs** / **list-prs** and the run-folder path) whether a run folder, branch, or open PR already exists for this slot and hands off to `om-auto-continue-pr-loop` rather than opening a duplicate. It writes the `Tracking plan:` line into the PR body so `om-auto-continue-pr-loop` can resume, and ends by reporting the `PR:` chaining reference line for the next skill in a chain. Companion skills, each invoked verbatim: `om-integration-tests` (checkpoint + final-gate suites), `om-code-review` (breaking-change self-review), and `om-auto-review-pr` (the autofix second pass) — a missing one stops the run and names the skill to install.
+This skill turns a `{brief}` into a new PR, so it usually starts a chain — but it first checks (via **search-prs** / **list-prs** and the run-folder path) whether a run folder, branch, or open PR already exists for this slot and hands off to `om-auto-continue-pr-loop` rather than opening a duplicate. It writes the `Tracking plan:` line into the PR body so `om-auto-continue-pr-loop` can resume, and ends by reporting the `PR:` chaining reference line (plus `Issue:` when the run has a subject issue) for the next skill in a chain. Companion skills, each invoked verbatim: `om-integration-tests` (checkpoint + final-gate suites), `om-code-review` (breaking-change self-review), and `om-auto-review-pr` (the autofix second pass) — a missing one stops the run and names the skill to install.
 
 ## Run folder layout
 

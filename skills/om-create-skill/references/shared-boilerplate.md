@@ -70,7 +70,8 @@ contract in this repo's AGENTS.md):
   updated in place on re-runs, never duplicated. The marker-parse pattern accepts
   both the backticked and the legacy bare `🤖 <skill> —` form, so detection on
   older comments never breaks. Standard set: claim,
-  per-label rationale, assumptions (autonomous defaults), run summary
+  consolidated label rationale (one comment for the whole applied set, not one
+  per label), assumptions (autonomous defaults), run summary
   (`om-auto-create-pr` step-12 structure), evidence (**attach-image-evidence**),
   release/handback. Post only the subset the skill's role needs.
 - Labels only through the descriptor guards, per the canonical rules

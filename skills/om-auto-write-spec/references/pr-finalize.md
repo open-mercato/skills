@@ -52,13 +52,11 @@ Status: complete           <!-- draft/gated runs state the ⚠ merge gate here -
 
 Apply labels from the config's taxonomy after opening the PR, always through the `apply_label` guard from the tracker descriptor (missing labels degrade to a logged skip; `labels.enabled: false` skips everything — note that in the summary comment).
 
-For a spec PR the set is: `review` (pipeline), `documentation` (category), `skip-qa` (docs-only — a spec PR changes no runtime behavior), exactly one priority (inferred from the brief/issue), exactly one risk (typically `risk-low` for design-only changes). Never both `needs-qa` and `skip-qa`; never `qa-approved` from this skill. After each applied label, post a short PR comment explaining why:
+For a spec PR the set is: `review` (pipeline), `documentation` (category), `skip-qa` (docs-only — a spec PR changes no runtime behavior), exactly one priority (inferred from the brief/issue), exactly one risk (typically `risk-low` for design-only changes). Never both `needs-qa` and `skip-qa`; never `qa-approved` from this skill. After applying the set, post **one** consolidated rationale comment covering every applied label — never one comment per label (that spams the PR timeline and multiplies tracker API calls). Labels are still applied individually through the `apply_label` guard; only the commentary consolidates. The comment carries the standard idempotent marker, so a re-run updates it in place:
 
-- `review`: `🏷️ Label set to \`review\` because the PR is ready for code review.`
-- `documentation`: `🏷️ Label set to \`documentation\` because this PR lands a spec document.`
-- `skip-qa`: `🏷️ Label set to \`skip-qa\` because this is a docs-only / design-only change.`
-- `priority-*`: `🏷️ Priority set to \`priority-{level}\` because {one-line rationale}.`
-- `risk-*`: `🏷️ Risk set to \`risk-{level}\` because {one-line rationale}.`
+```
+🤖 `om-auto-write-spec` — 🏷️ label rationale: `review` (ready for code review) · `documentation` (lands a spec document) · `skip-qa` (docs/design-only, no runtime behavior) · `priority-{level}` ({why this priority}) · `risk-{level}` ({why this risk})
+```
 
 ## Evidence comment
 

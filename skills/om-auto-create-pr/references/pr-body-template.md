@@ -20,17 +20,17 @@ Source doc: {SPECS_DIR}/{spec}.md     <!-- only when a spec/design doc drives th
 Status: in-progress
 
 ## 🎯 Goal
-- {one-line task summary from brief}
+- {1–2 sentences: the user-visible outcome this PR delivers, and the problem/root cause when this is a fix}
 
 ## External References
 - {url — what was adopted, what was rejected}  <!-- only if --skill-url was used -->
 
 ## What Changed
-- {bullet list of phase-level changes}
+- {one bullet per changed area — name the files/modules touched and the behavioral change; write for a reviewer who has not opened the diff, not a one-line restatement of the title}
 
 ## 🧪 Tests
-- {unit tests added or updated}
-- {other checks}
+- {commands run with result counts, e.g. `npm test — 2927 passed / 172 files`; note any skipped or failing gate}
+- {the new/updated test cases and what behavior they lock in}
 
 ## 💥 Breaking Changes
 - {None | describe affected contracts and migration notes}

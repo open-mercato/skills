@@ -33,7 +33,7 @@ Labels come from the config's taxonomy, always through the `apply_label` guard f
 - `needs-qa` when the run touches UI or other user-facing behavior that requires manual exercise.
 - Never both `needs-qa` and `skip-qa`.
 - Additive category labels when they clearly apply: `bug`, `feature`, `refactor`, `security`, `dependencies`, `documentation`.
-- Exactly one priority label and exactly one risk label, each with a short rationale comment.
+- Exactly one priority label and exactly one risk label. The engine posts **one** consolidated rationale comment covering the whole applied label set — not one comment per label.
 - When `qaGate` is `true`, a `needs-qa` PR will not be mergeable until QA signs off with `qa-approved`. `qa-approved` is never added by an authoring skill — it is earned by manual QA or the self-QA exception.
 
 ## Summary comment

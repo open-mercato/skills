@@ -218,9 +218,15 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
       for reuse.
     - Remove any worktree this run created (PR mode); never touch the primary
       worktree (`references/worktree-setup.md`).
-    - **PR mode:** release the lock and post the completion comment per
+    - **PR mode, lock this run opened:** release the lock and post the completion comment per
       `references/claim-pr.md` (remove `in-progress` via **unlabel-pr**, drop the
       lock-only assignee claim, **comment-pr** the completion notice).
+    - **PR mode, inherited chain lock** (re-entry — a flow runner such as
+      `om-auto-fix-issue` or `om-auto-fix-pr` handed the lock off to this run):
+      do not release it. Post the completion notice as `🤖 … completed: {verdict}.
+      Lock retained — chain continues.` and leave the label and assignee in place;
+      the chain's driving skill releases at the end of its run
+      (`references/claim-pr.md`, chained hand-off).
 
 14. **Report back.** Print a concise summary:
 

@@ -1,6 +1,6 @@
 # Worktree setup — isolated worktree and fix branch
 
-Detailed procedure for step 5 (create) and step 11 (cleanup) of `om-auto-fix-issue`. Never run in the user's primary worktree.
+Detailed procedure for step 5 (create) and step 12 (cleanup) of `om-auto-fix-issue`. Never run in the user's primary worktree.
 
 ## Create the worktree and fix branch (step 5)
 

@@ -1,6 +1,6 @@
 # Feature route — spec-then-build on one PR
 
-The route `om-auto-fix-issue` takes (instead of the bug chain, steps 4–11) when
+The route `om-auto-fix-issue` takes (instead of the bug chain, steps 4–12) when
 step 2 classifies the issue as a feature request. It specs-then-builds the feature
 on a single PR, autonomous by default. The delegated skills own the worktree, the
 claim, the review autofix loop, and UI verification — this route only triages,

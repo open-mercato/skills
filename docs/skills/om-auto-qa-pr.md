@@ -19,7 +19,7 @@ QAs a PR's UI change in a real browser through the configured browser-provider d
 
 ## Works with
 
-In PR mode consumes a `{prNumber}` (the `PR_NUMBER=` a PR-producing skill emitted), posts screenshot QA evidence back to that PR, and ends with `PR_URL=` / `PR_NUMBER=` markers; in local mode the artifacts folder is the deliverable. Its review-first gate runs [om-auto-review-pr](om-auto-review-pr.md) when the PR is unreviewed, it boots the app via [om-prepare-test-env](om-prepare-test-env.md), records a follow-up scenario for [om-integration-tests](om-integration-tests.md), and defers a missing browser provider to [om-setup-agent-pipeline](om-setup-agent-pipeline.md).
+In PR mode consumes a `{prNumber}` (the `PR:` reference line a PR-producing skill emitted), posts screenshot QA evidence back to that PR, and ends with the `PR:` reference line (plus `Issue:` when known); in local mode the artifacts folder is the deliverable. Its review-first gate runs [om-auto-review-pr](om-auto-review-pr.md) when the PR is unreviewed, it boots the app via [om-prepare-test-env](om-prepare-test-env.md), records a follow-up scenario for [om-integration-tests](om-integration-tests.md), and defers a missing browser provider to [om-setup-agent-pipeline](om-setup-agent-pipeline.md).
 
 ---
 *Source: [`skills/om-auto-qa-pr/SKILL.md`](../../skills/om-auto-qa-pr/SKILL.md)*

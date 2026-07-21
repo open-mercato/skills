@@ -14,7 +14,7 @@ The advanced counterpart to `om-auto-continue-pr`, for resuming long spec-implem
 
 ## Works with
 
-Consumes a `{prNumber}`, reads the `Tracking plan:` / `Tracking run folder:` line written by [om-auto-create-pr-loop](om-auto-create-pr-loop.md), and ends by emitting `PR_URL=` / `PR_NUMBER=` markers for the next skill in a chain. It invokes the companion skills [om-open-pr](om-open-pr.md) (push + label normalization), [om-code-review](om-code-review.md) (compatibility self-review), [om-auto-review-pr](om-auto-review-pr.md) (the autofix second pass), and [om-integration-tests](om-integration-tests.md) (checkpoint + final-gate suites).
+Consumes a `{prNumber}`, reads the `Tracking plan:` / `Tracking run folder:` line written by [om-auto-create-pr-loop](om-auto-create-pr-loop.md), and ends by emitting the `PR:` / `Issue:` chaining reference lines for the next skill in a chain. It invokes the companion skills [om-open-pr](om-open-pr.md) (push + label normalization), [om-code-review](om-code-review.md) (compatibility self-review), [om-auto-review-pr](om-auto-review-pr.md) (the autofix second pass), and [om-integration-tests](om-integration-tests.md) (checkpoint + final-gate suites).
 
 ---
 *Source: [`skills/om-auto-continue-pr-loop/SKILL.md`](../../skills/om-auto-continue-pr-loop/SKILL.md)*

@@ -101,7 +101,7 @@ carried into the report. Under `--dry-run`, record the intent and post nothing.
 instead of announced: delegate to
 **`om-auto-write-spec {issueId}`** verbatim — it claims the issue, writes the spec
 via `om-spec-writing --autonomous`, opens the spec PR (`Refs #{issueId}`), and emits
-`SPEC_PATH` + `PR_NUMBER`. Then link the result back on the issue via
+the `Spec:` and `PR:` reference lines. Then link the result back on the issue via
 **comment-issue** (spec path + spec-PR link), idempotently (skip when a spec-PR link
 from this skill already exists). Under `--dry-run`, record the intent and mutate
 nothing. This is the one place this housekeeping pass produces a PR — a design-only

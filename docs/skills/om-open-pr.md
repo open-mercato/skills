@@ -2,7 +2,7 @@
 
 > 🧑‍💻 Interactive — acts once, may ask questions, hands control back
 
-The shared PR-opening step of the agent pipeline. It commits the worktree, pushes the branch, and either reuses an existing PR or opens a ready (non-draft) one against the configured base branch using the unified body template. It applies the full SDLC label set — pipeline, category, QA meta, one priority, one risk — with a rationale comment per label, and for issue-driven runs it hands the issue back to its author and releases the in-progress lock. It always ends by emitting `PR_URL` and `PR_NUMBER` markers so the next step can reference the PR.
+The shared PR-opening step of the agent pipeline. It commits the worktree, pushes the branch, and either reuses an existing PR or opens a ready (non-draft) one against the configured base branch using the unified body template. It applies the full SDLC label set — pipeline, category, QA meta, one priority, one risk — with a rationale comment per label, and for issue-driven runs it hands the issue back to its author and releases the in-progress lock. It always ends by emitting the `PR: #<number> (link: <url>)` reference line (plus `Issue:` when issue-driven) so the next step can reference the PR.
 
 ## Parameters
 
@@ -18,7 +18,7 @@ The shared PR-opening step of the agent pipeline. It commits the worktree, pushe
 
 ## Works with
 
-Called by the autofix chain (after [om-fix](om-fix.md), driven by [om-auto-fix-issue](om-auto-fix-issue.md)), [om-auto-create-pr](om-auto-create-pr.md), [om-auto-continue-pr](om-auto-continue-pr.md)/`-loop`, [om-auto-write-spec](om-auto-write-spec.md), and [om-auto-implement-spec](om-auto-implement-spec.md). It detects and reuses any PR already opened for the branch or issue rather than duplicating, and emits `PR_URL=` / `PR_NUMBER=` markers that downstream skills like [om-auto-review-pr](om-auto-review-pr.md) consume.
+Called by the autofix chain (after [om-fix](om-fix.md), driven by [om-auto-fix-issue](om-auto-fix-issue.md)), [om-auto-create-pr](om-auto-create-pr.md), [om-auto-continue-pr](om-auto-continue-pr.md)/`-loop`, [om-auto-write-spec](om-auto-write-spec.md), and [om-auto-implement-spec](om-auto-implement-spec.md). It detects and reuses any PR already opened for the branch or issue rather than duplicating, and emits the `PR:` / `Issue:` reference lines that downstream skills like [om-auto-review-pr](om-auto-review-pr.md) consume.
 
 ---
 *Source: [`skills/om-open-pr/SKILL.md`](../../skills/om-open-pr/SKILL.md)*

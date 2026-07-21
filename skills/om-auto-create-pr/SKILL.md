@@ -17,7 +17,7 @@ Turn a free-form task brief into a disciplined autonomous run: an execution plan
 
 ## Chaining
 
-A previous skill may already have opened a PR for this work (e.g. `om-auto-write-spec` landing a spec PR): step 1 detects it via the plan path / branch / **search-prs**, and the run continues on that PR through `om-auto-continue-pr` instead of opening a duplicate. This skill ends by reporting `PR_URL=` / `PR_NUMBER=` markers so the next skill in a chain (`om-auto-review-pr`, `om-auto-qa-pr`) can consume them. Companion skills (all optional, with inline fallbacks): `om-open-pr` (PR opening/labels), `om-code-review` (self-review), `om-auto-review-pr` (autofix loop), `om-auto-continue-pr` (resume).
+A previous skill may already have opened a PR for this work (e.g. `om-auto-write-spec` landing a spec PR): step 1 detects it via the plan path / branch / **search-prs**, and the run continues on that PR through `om-auto-continue-pr` instead of opening a duplicate. This skill ends by reporting the `PR:` / `Issue:` chaining reference lines so the next skill in a chain (`om-auto-review-pr`, `om-auto-qa-pr`) can consume them. Companion skills (all optional, with inline fallbacks): `om-open-pr` (PR opening/labels), `om-code-review` (self-review), `om-auto-review-pr` (autofix loop), `om-auto-continue-pr` (resume).
 
 ## Workflow
 
@@ -112,17 +112,12 @@ A previous skill may already have opened a PR for this work (e.g. `om-auto-write
     om-auto-create-pr: {brief}
     Plan: {RUNS_DIR}/{DATE}-{SLUG}.md
     Branch: {branch}
-    PR: {url}
+    PR: #{number} (link: {url})
     Status: {complete | partial — use om-auto-continue-pr <prNumber>}
     Tests: {summary}
     ```
 
-    If the run ends before the full gate passes (timeout, external blocker), leave the `Status: in-progress` line in the PR body and tell the user to resume with `om-auto-continue-pr {prNumber}`. End the report with the chaining markers on their own lines:
-
-    ```
-    PR_URL=<full PR URL>
-    PR_NUMBER=<PR number>
-    ```
+    If the run ends before the full gate passes (timeout, external blocker), leave the `Status: in-progress` line in the PR body and tell the user to resume with `om-auto-continue-pr {prNumber}`. The report's `PR:` line doubles as the chaining reference line — keep its exact shape, `PR: #<number> (link: <full PR URL>)`, and add `Issue: #<issue number> (link: <full issue URL>)` on its own line when the run has a subject issue.
 
 ## Rules
 

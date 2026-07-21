@@ -18,7 +18,7 @@ The advanced variant of `om-auto-create-pr`; for small fixes, use that skill. St
 
 ## Chaining
 
-This skill turns a `{brief}` into a new PR, so it usually starts a chain — but it first checks (via **search-prs** / **list-prs** and the run-folder path) whether a run folder, branch, or open PR already exists for this slot and hands off to `om-auto-continue-pr-loop` rather than opening a duplicate. It writes the `Tracking plan:` line into the PR body so `om-auto-continue-pr-loop` can resume, and ends by reporting `PR_URL=` / `PR_NUMBER=` markers for the next skill in a chain. Companion skills, each invoked verbatim: `om-integration-tests` (checkpoint + final-gate suites), `om-code-review` (breaking-change self-review), and `om-auto-review-pr` (the autofix second pass) — a missing one stops the run and names the skill to install.
+This skill turns a `{brief}` into a new PR, so it usually starts a chain — but it first checks (via **search-prs** / **list-prs** and the run-folder path) whether a run folder, branch, or open PR already exists for this slot and hands off to `om-auto-continue-pr-loop` rather than opening a duplicate. It writes the `Tracking plan:` line into the PR body so `om-auto-continue-pr-loop` can resume, and ends by reporting the `PR:` chaining reference line (plus `Issue:` when the run has a subject issue) for the next skill in a chain. Companion skills, each invoked verbatim: `om-integration-tests` (checkpoint + final-gate suites), `om-code-review` (breaking-change self-review), and `om-auto-review-pr` (the autofix second pass) — a missing one stops the run and names the skill to install.
 
 ## Run folder layout
 
@@ -75,12 +75,12 @@ Every run is a folder (never a flat file): `PLAN.md` (Tasks table + plan), `HAND
     om-auto-create-pr-loop: {brief}
     Run folder: {RUNS_DIR}/{DATE}-{SLUG}/  (PLAN.md, HANDOFF.md, NOTIFY.md)
     Branch: {branch}
-    PR: {url}
+    PR: #{number} (link: {url})
     Status: {complete | partial — use om-auto-continue-pr-loop <prNumber>}
     Tests: {summary}
     ```
 
-    If the run ends before the full gate passes, leave `Status: in-progress`, point `HANDOFF.md` at the first `todo` Step, and resume with `om-auto-continue-pr-loop {prNumber}`. End the report with `PR_URL=` and `PR_NUMBER=` on their own lines so the next skill in a chain can consume them.
+    If the run ends before the full gate passes, leave `Status: in-progress`, point `HANDOFF.md` at the first `todo` Step, and resume with `om-auto-continue-pr-loop {prNumber}`. End the report with the chaining reference lines — `PR: #<number> (link: <url>)`, plus `Issue: #<number> (link: <url>)` when the run has a subject issue — so the next skill in a chain can consume them.
 
 ## Rules
 

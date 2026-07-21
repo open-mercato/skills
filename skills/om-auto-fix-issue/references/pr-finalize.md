@@ -1,6 +1,6 @@
 # PR finalize — open or reuse, labels, markers
 
-The single procedure for the "commit → push → open (or reuse) the PR → normalize labels → chaining markers" mechanics (step 8 of the bug chain, and the feature route's F4 contract check). The point is **one** implementation of PR opening + labeling, reused rather than copied, and never a second PR for work that already has one.
+The single procedure for the "commit → push → open (or reuse) the PR → normalize labels → chaining reference lines" mechanics (step 8 of the bug chain, and the feature route's F4 contract check). The point is **one** implementation of PR opening + labeling, reused rather than copied, and never a second PR for work that already has one.
 
 ## Never open a duplicate PR
 
@@ -8,7 +8,7 @@ Before opening anything, check whether a PR already exists for this branch (or o
 
 ## Prefer the `om-open-pr` skill when installed
 
-`om-open-pr` already implements exactly this: it commits the worktree, pushes the branch, opens a **ready-for-review** PR against `$BASE_BRANCH` (draft only with `--draft`) with the unified body template, applies the full SDLC label set (pipeline `review`, category, QA meta, one priority, one risk) through the descriptor guards with rationale comments, posts the caller's summary comment, and — in an issue-driven run — hands the issue back and releases the `in-progress` lock, emitting `PR_URL=` / `PR_NUMBER=` markers. When it is installed, **delegate to it** instead of re-deriving the steps: invoke `om-open-pr {issueId} {category}` (add `--draft` only for spec-only or incomplete hand-offs) and capture its `PR_URL` / `PR_NUMBER`.
+`om-open-pr` already implements exactly this: it commits the worktree, pushes the branch, opens a **ready-for-review** PR against `$BASE_BRANCH` (draft only with `--draft`) with the unified body template, applies the full SDLC label set (pipeline `review`, category, QA meta, one priority, one risk) through the descriptor guards with rationale comments, posts the caller's summary comment, and — in an issue-driven run — hands the issue back and releases the `in-progress` lock, emitting the `PR:` / `Issue:` chaining reference lines. When it is installed, **delegate to it** instead of re-deriving the steps: invoke `om-open-pr {issueId} {category}` (add `--draft` only for spec-only or incomplete hand-offs) and capture the PR number and URL from its `PR:` reference line.
 
 ## Graceful fallback when `om-open-pr` is NOT installed
 
@@ -48,11 +48,11 @@ Suggested label comments:
 
 ## Marker emission
 
-End the run's final report with the chaining markers on their own lines:
+End the run's final report with the chaining reference lines, one per line, exact shape — include `Issue:` only when the run has a subject issue:
 
 ```
-PR_URL=<full PR URL>
-PR_NUMBER=<PR number>
+Issue: #<issue number> (link: <full issue URL>)
+PR: #<PR number> (link: <full PR URL>)
 ```
 
 Chained consumers (`om-auto-review-pr`, orchestration scripts) parse these exact text markers — never rename, translate, or decorate them.
@@ -60,5 +60,5 @@ Chained consumers (`om-auto-review-pr`, orchestration scripts) parse these exact
 ## om-auto-fix-issue specifics
 
 - **Bug route (step 8).** Provide `om-open-pr` the implementer's final summary in the exact block shape it expects (`— PREVIOUS STEP (om-fix) said —` followed by the verbatim summary). `om-open-pr` hands the issue back to its original author and releases the `in-progress` lock; if it ends with `Status: blocked`, it has already released the lock — go to the final report and state the blocker.
-- **Feature route (F4).** The delegated skills own PR opening; this skill only verifies the contract — exactly one PR references the issue; ready unless a `⚠ NEEDS HUMAN CONFIRMATION` guard applies; full label set present (pipeline state, `feature` category, QA meta, one priority, one risk — re-run the normalization above on anything missing); linkage matches what ships (`Closes #{issueId}` implementing, `Refs #{issueId}` spec-only) — and passes the `PR_URL=` / `PR_NUMBER=` markers through.
+- **Feature route (F4).** The delegated skills own PR opening; this skill only verifies the contract — exactly one PR references the issue; ready unless a `⚠ NEEDS HUMAN CONFIRMATION` guard applies; full label set present (pipeline state, `feature` category, QA meta, one priority, one risk — re-run the normalization above on anything missing); linkage matches what ships (`Closes #{issueId}` implementing, `Refs #{issueId}` spec-only) — and passes the chaining reference lines through.
 - Carry a `LOW_CONFIDENCE` flag from `om-root-cause` into the PR body so a human reviewer looks harder.

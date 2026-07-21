@@ -42,7 +42,7 @@ If any fails, do not open a spec PR — fall back to step 4's inline guidance.
    calls themselves, run its spec-writing step interactively (the Open Questions
    gate stops for answers) instead of `--autonomous`. Either way, a
    required-and-missing spec always gets written here — never left as a
-   recommendation. The run ends with `SPEC_PATH` + `PR_NUMBER` markers — use them
+   recommendation. The run ends with the `Spec:` and `PR:` reference lines — use them
    in procedure item 3 below.
 3. **Link the spec back onto the issue** via **comment-issue**: post the spec path
    and the spec PR link, and update the issue body's `## Spec` section to reference

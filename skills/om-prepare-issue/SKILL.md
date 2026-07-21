@@ -36,7 +36,7 @@ This skill only **creates** issues. To bring an issue that **already exists** up
    - **No spec, and the task does not need one** (a bug, or a small feature whose change surface is obvious) → step 4 produces the inline guidance.
    - **No spec, and the task is a feature that needs one** (a substantial new capability where guessing the architecture would be irresponsible) → go to step 3: author the spec and land it on a PR, then link it. Do not file a vague placeholder issue.
 
-3. **Author a spec and land it on a PR** (feature needs a spec, none exists) — follow `references/spec-when-missing.md`: create the tracking issue first (step 5, so there is a number to link), then delegate to **`om-auto-write-spec {issueId}`** — the dedicated spec-authoring skill. It claims the issue, writes the spec via `om-spec-writing --autonomous` (Open Questions resolved with conservative documented defaults, posted for override; when a human filing the issue wants to make the design calls, run its spec-writing step interactively instead), attaches UI mockups and current-app screenshots when a browser provider exists, opens a **ready spec PR** against the base branch with `Refs #{issueId}`, and emits `SPEC_PATH` + `PR_NUMBER`. Then comment the spec path and PR link back onto the issue via **comment-issue**. The issue now links a real, reviewable design; implementation resumes later with `om-auto-implement-spec {SPEC_PATH}` or `om-auto-fix-issue {issueId}` (both continue that same PR). This is the one path on which `om-prepare-issue` produces a PR — it is a **design** (a spec), never implementation.
+3. **Author a spec and land it on a PR** (feature needs a spec, none exists) — follow `references/spec-when-missing.md`: create the tracking issue first (step 5, so there is a number to link), then delegate to **`om-auto-write-spec {issueId}`** — the dedicated spec-authoring skill. It claims the issue, writes the spec via `om-spec-writing --autonomous` (Open Questions resolved with conservative documented defaults, posted for override; when a human filing the issue wants to make the design calls, run its spec-writing step interactively instead), attaches UI mockups and current-app screenshots when a browser provider exists, opens a **ready spec PR** against the base branch with `Refs #{issueId}`, and emits the `Spec:` and `PR:` reference lines. Then comment the spec path and PR link back onto the issue via **comment-issue**. The issue now links a real, reviewable design; implementation resumes later with `om-auto-implement-spec {SPEC_PATH}` or `om-auto-fix-issue {issueId}` (both continue that same PR). This is the one path on which `om-prepare-issue` produces a PR — it is a **design** (a spec), never implementation.
 
 4. **Analyze the task (no spec found).** Read enough of the codebase to write credible guidance — not to build it:
 
@@ -89,9 +89,11 @@ This skill only **creates** issues. To bring an issue that **already exists** up
 
    ```text
    prepare-issue: {brief}
-   Issue: {url | reused #{n} — comment added}
+   Issue: #{n} (link: {url})
+   Issue mode: {new | reused — comment added}
    Labels: {category}, {priority-*}, {risk-*}
-   Spec: {path — linked | path — authored + spec PR #{n} | none — analysis embedded}
+   Spec: {path | none — analysis embedded}
+   Spec PR: {#{n} (link: {url}) — authored | linked existing | —}
    Evidence: {n images attached | local paths referenced — upload unavailable | none}
    Duplicates checked: {queries run, top candidates considered}
    ```

@@ -16,7 +16,7 @@ the rest from the brief and the repo. The ones that matter:
 - **Tracker interaction** — does it mutate PRs/issues (then it needs the
   three-signal claim/lock and label discipline) or is it read-only?
 - **Chain membership** — is it a step in the autofix chain (then it needs the
-  `PR_URL`/`PR_NUMBER` markers and the `— PREVIOUS STEP said —` handoff), or
+  `PR:` reference line and the `— PREVIOUS STEP said —` handoff), or
   standalone?
 - **Arguments** — required/optional inputs, and any `--flags`.
 - **Isolation** — does it need an isolated worktree (any run that builds/tests/

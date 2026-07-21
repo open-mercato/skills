@@ -1,13 +1,13 @@
 ---
 name: om-open-pr
-description: Shared PR opener for the auto pipeline — commits the worktree, pushes, reuses an existing PR or opens a ready (non-draft) PR against the configured base branch with the unified body template, applies the full SDLC label set with rationale comments, and for issue-driven runs hands the issue back and releases the lock. Emits PR_URL / PR_NUMBER markers.
+description: Shared PR opener for the auto pipeline — commits the worktree, pushes, reuses an existing PR or opens a ready (non-draft) PR against the configured base branch with the unified body template, applies the full SDLC label set with rationale comments, and for issue-driven runs hands the issue back and releases the lock. Emits the `PR:`/`Issue:` chaining reference lines.
 ---
 
 # Open PR
 
 You are the shared PR-opening step of the agent pipeline. Callers include the autofix chain (`om-verify-in-repo` → `om-root-cause` → `om-fix` → **om-open-pr** → `om-auto-review-pr`, driven by `om-auto-fix-issue`), `om-auto-create-pr`, `om-auto-continue-pr` / `-loop`, `om-auto-write-spec`, and `om-auto-implement-spec`. The previous step edited files, added tests, and ran the validation gate. The repo is checked out on an isolated branch in the current working directory, with uncommitted changes staged or unstaged.
 
-Your job: ship the work — commit, push, open (or reuse) the PR, label it, summarize, hand off — then release any lock. **You must end your message with the `PR_URL=` and `PR_NUMBER=` markers** so the next step has something to reference.
+Your job: ship the work — commit, push, open (or reuse) the PR, label it, summarize, hand off — then release any lock. **You must end your message with the `PR: #<number> (link: <url>)` reference line** (plus `Issue:` when issue-driven) so the next step has something to reference.
 
 ## Arguments
 
@@ -21,7 +21,7 @@ Your job: ship the work — commit, push, open (or reuse) the PR, label it, summ
 
 ## Chaining
 
-A previous skill may already have opened the PR for this branch or issue. Detect it via **search-prs** / **get-pr** before opening anything and reuse it — push, update body/labels — never open a duplicate. Downstream skills consume the `PR_URL=` / `PR_NUMBER=` markers this skill emits.
+A previous skill may already have opened the PR for this branch or issue. Detect it via **search-prs** / **get-pr** before opening anything and reuse it — push, update body/labels — never open a duplicate. Downstream skills consume the `PR:` / `Issue:` reference lines this skill emits.
 
 Companion skills: none required — this skill is itself the shared implementation other skills prefer; it depends only on the tracker descriptor.
 
@@ -43,7 +43,7 @@ Companion skills: none required — this skill is itself the shared implementati
    No changes to commit — the previous step did not modify any files. Releasing the lock and exiting.
    ```
 
-   Then release the lock (step 8 below) and finish. Do not emit `PR_URL=` markers in this case.
+   Then release the lock (step 8 below) and finish. Do not emit a `PR:` reference line in this case.
 
 2. **Read the previous step's summary.** The previous step's full output is included in your prompt, in a block marked:
 
@@ -81,20 +81,20 @@ Companion skills: none required — this skill is itself the shared implementati
 
 ## Output contract
 
-End with a final message in **exactly** this shape — the flow runner parses the markers:
+End with a final message in **exactly** this shape — the flow runner parses the reference lines:
 
 ```
 Status: ready
 Branch: <branch name>
 PR opened: <title>
 
-PR_URL=<full PR URL>
-PR_NUMBER=<PR number>
+Issue: #<issue number> (link: <full issue URL>)
+PR: #<PR number> (link: <full PR URL>)
 ```
 
-The two `PR_*` lines must be on their own lines (no quoting, no list markers). Downstream skills (e.g. `om-auto-review-pr`) reference them via `{{previousPullRequestUrl}}` / `{{previousPullRequestNumber}}`; if the markers are missing, the next step runs with empty arguments and produces useless output.
+The reference lines must be on their own lines, exact shape, no quoting or list markers; include `Issue:` only when an `{issueId}` was given. Downstream skills (e.g. `om-auto-review-pr`) reference them via `{{previousPullRequestUrl}}` / `{{previousPullRequestNumber}}`; if the lines are missing, the next step runs with empty arguments and produces useless output.
 
-On the blocked paths (no changes / push failed / PR open failed), end with `Status: blocked` and a one-paragraph explanation — and omit the `PR_*` lines.
+On the blocked paths (no changes / push failed / PR open failed), end with `Status: blocked` and a one-paragraph explanation — and omit the `PR:` / `Issue:` reference lines.
 
 ## Rules
 
@@ -106,4 +106,4 @@ On the blocked paths (no changes / push failed / PR open failed), end with `Stat
 - Do not introduce new code changes in this step; the previous step already validated what's on disk. Limit file edits to PR-prep artifacts only (for example, a required changelog entry).
 - Conventional-commit-style PR title scoped to the affected area.
 - Apply the full label set — `review` pipeline label, category, QA meta, exactly one priority, exactly one risk — with a rationale comment per label.
-- Always emit `PR_URL=` / `PR_NUMBER=` on the success path so the next step has what it needs.
+- Always emit the `PR:` reference line (and `Issue:` when issue-driven) on the success path so the next step has what it needs.

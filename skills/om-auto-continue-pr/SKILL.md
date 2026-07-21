@@ -15,7 +15,7 @@ Resume an `om-auto-create-pr` run that did not finish in one go. Given a PR numb
 
 ## Chaining
 
-This skill resumes an existing PR: it consumes a `{prNumber}` and reads the PR body's `Tracking plan:` line (written by `om-auto-create-pr`) to find the execution plan, and it updates that same PR rather than opening a duplicate (the reuse guard in `references/pr-finalize.md`). It ends by reporting `PR_URL=` / `PR_NUMBER=` markers so the next skill in a chain can consume them. Companion skills (all optional, with inline fallbacks): `om-open-pr` (push + label normalization, inline fallback when absent), `om-code-review` (breaking-change self-review), and `om-auto-review-pr` (the autofix second pass) — each runs verbatim.
+This skill resumes an existing PR: it consumes a `{prNumber}` and reads the PR body's `Tracking plan:` line (written by `om-auto-create-pr`) to find the execution plan, and it updates that same PR rather than opening a duplicate (the reuse guard in `references/pr-finalize.md`). It ends by reporting the `PR:` / `Issue:` chaining reference lines so the next skill in a chain can consume them. Companion skills (all optional, with inline fallbacks): `om-open-pr` (push + label normalization, inline fallback when absent), `om-code-review` (breaking-change self-review), and `om-auto-review-pr` (the autofix second pass) — each runs verbatim.
 
 ## Workflow
 
@@ -84,7 +84,7 @@ This skill resumes an existing PR: it consumes a `{prNumber}` and reads the PR b
     Tests: {summary}
     ```
 
-    If the resume still did not reach `complete`, leave `Status: in-progress` in the PR body and tell the user how to re-enter. End the report with `PR_URL=` and `PR_NUMBER=` on their own lines so the next skill in a chain can consume them.
+    If the resume still did not reach `complete`, leave `Status: in-progress` in the PR body and tell the user how to re-enter. End the report with the chaining reference lines — `PR: #<number> (link: <url>)`, plus `Issue: #<number> (link: <url>)` when the run has a subject issue — so the next skill in a chain can consume them.
 
 ## Rules
 

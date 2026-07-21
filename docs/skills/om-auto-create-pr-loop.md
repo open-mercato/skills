@@ -15,7 +15,7 @@ The advanced variant of `om-auto-create-pr`, for long, multi-step spec implement
 
 ## Works with
 
-Turns a `{brief}` into a new PR (checking for an existing run folder, branch, or open PR first and handing off to [om-auto-continue-pr-loop](om-auto-continue-pr-loop.md) rather than duplicating), writes the `Tracking plan:` line into the PR body so it can resume, and ends by emitting `PR_URL=` / `PR_NUMBER=` markers for the next skill in a chain. Companion skills, each invoked verbatim (a missing one stops the run): [om-integration-tests](om-integration-tests.md) (checkpoint + final-gate suites), [om-code-review](om-code-review.md) (breaking-change self-review), and [om-auto-review-pr](om-auto-review-pr.md) (the autofix second pass).
+Turns a `{brief}` into a new PR (checking for an existing run folder, branch, or open PR first and handing off to [om-auto-continue-pr-loop](om-auto-continue-pr-loop.md) rather than duplicating), writes the `Tracking plan:` line into the PR body so it can resume, and ends by emitting the `PR:` / `Issue:` chaining reference lines for the next skill in a chain. Companion skills, each invoked verbatim (a missing one stops the run): [om-integration-tests](om-integration-tests.md) (checkpoint + final-gate suites), [om-code-review](om-code-review.md) (breaking-change self-review), and [om-auto-review-pr](om-auto-review-pr.md) (the autofix second pass).
 
 ---
 *Source: [`skills/om-auto-create-pr-loop/SKILL.md`](../../skills/om-auto-create-pr-loop/SKILL.md)*

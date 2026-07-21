@@ -10,7 +10,7 @@ This skill takes no parameters.
 
 ## Works with
 
-A sweep that consumes and emits no `PR_URL` / `PR_NUMBER` markers itself — each delegated review reports its own verdict and markers. It requires [om-auto-review-pr](om-auto-review-pr.md) (reused verbatim per PR; the run stops if it is missing) and optionally suggests [om-merge-buddy](om-merge-buddy.md) afterward to show what is now merge-ready.
+A sweep that consumes and emits no chaining reference lines itself — each delegated review reports its own verdict and markers. It requires [om-auto-review-pr](om-auto-review-pr.md) (reused verbatim per PR; the run stops if it is missing) and optionally suggests [om-merge-buddy](om-merge-buddy.md) afterward to show what is now merge-ready.
 
 ---
 *Source: [`skills/om-review-prs/SKILL.md`](../../skills/om-review-prs/SKILL.md)*

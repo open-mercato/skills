@@ -25,7 +25,7 @@ When the repo already has a `CHANGELOG.md`, match its existing format exactly �
 
 ## Chaining
 
-This skill drafts a `CHANGELOG.md` entry and delegates the PR mechanics to `om-auto-create-pr` — branch, worktree, commit, docs-only gate, labels, the `om-auto-review-pr` autofix pass, and the summary comment — so `om-auto-create-pr` is what opens the PR (checking for an existing changelog PR first) and what emits the `PR_URL=` / `PR_NUMBER=` markers the next skill in a chain consumes; this skill surfaces that PR URL in its own report. Companion skills: `om-auto-create-pr` (required — the run stops if it is missing) and, optionally, `om-sync-merged-pr-issues`, which consumes the same window of merged PRs and runs well alongside it.
+This skill drafts a `CHANGELOG.md` entry and delegates the PR mechanics to `om-auto-create-pr` — branch, worktree, commit, docs-only gate, labels, the `om-auto-review-pr` autofix pass, and the summary comment — so `om-auto-create-pr` is what opens the PR (checking for an existing changelog PR first) and what emits the `PR:` chaining reference line the next skill in a chain consumes; this skill surfaces that PR URL in its own report. Companion skills: `om-auto-create-pr` (required — the run stops if it is missing) and, optionally, `om-sync-merged-pr-issues`, which consumes the same window of merged PRs and runs well alongside it.
 
 ## Workflow
 
@@ -138,7 +138,7 @@ This skill drafts a `CHANGELOG.md` entry and delegates the PR mechanics to `om-a
     Contributors: {count}
     CHANGELOG entry preview:
       <first 10 lines of the new block>
-    PR: {auto-create-pr URL}
+    PR: #{number} (link: {url from om-auto-create-pr})
     ```
 
 ## Rules

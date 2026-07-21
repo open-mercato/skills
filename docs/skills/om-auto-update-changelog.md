@@ -16,7 +16,7 @@ Drafts a `CHANGELOG.md` release entry covering every PR merged since the last re
 
 ## Works with
 
-Consumes a window of merged PRs and delegates all PR mechanics to [om-auto-create-pr](om-auto-create-pr.md) (required — the run stops if it is missing), which opens the docs PR and emits the `PR_URL=` / `PR_NUMBER=` markers this skill surfaces in its report. It pairs well with [om-close-fixed-issues](om-close-fixed-issues.md), which processes the same PR window but mutates the issue tracker instead.
+Consumes a window of merged PRs and delegates all PR mechanics to [om-auto-create-pr](om-auto-create-pr.md) (required — the run stops if it is missing), which opens the docs PR and emits the `PR:` chaining reference line this skill surfaces in its report. It pairs well with [om-close-fixed-issues](om-close-fixed-issues.md), which processes the same PR window but mutates the issue tracker instead.
 
 ---
 *Source: [`skills/om-auto-update-changelog/SKILL.md`](../../skills/om-auto-update-changelog/SKILL.md)*

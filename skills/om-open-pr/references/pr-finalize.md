@@ -1,6 +1,6 @@
 # PR finalize — open or reuse, labels, summary comment, markers
 
-The single procedure for the "commit → push → open (or reuse) the PR → normalize labels → summary comment → chaining markers" mechanics (steps 3–7 of the skill body). The point is **one** implementation of PR opening + labeling, reused rather than copied, and never a second PR for work that already has one.
+The single procedure for the "commit → push → open (or reuse) the PR → normalize labels → summary comment → chaining reference lines" mechanics (steps 3–7 of the skill body). The point is **one** implementation of PR opening + labeling, reused rather than copied, and never a second PR for work that already has one.
 
 ## Never open a duplicate PR
 
@@ -10,7 +10,7 @@ Before opening anything, check whether a PR already exists for this branch (or, 
 
 `om-open-pr` is the canonical PR-opening implementation the other pipeline skills prefer to delegate to (their own `pr-finalize.md` files carry an inline fallback for when it is not installed). Behavior must stay identical either way — the same PR, the same labels — so keep this file in sync with the label and body contract in `om-auto-create-pr`. Callers invoke it as:
 
-- Issue-driven run (an `{issueId}` is in scope): `om-open-pr {issueId} {category}` (plus `--plan <path>` when an execution plan exists, `--draft` for a spec-only design PR); the caller captures the emitted `PR_URL` / `PR_NUMBER`.
+- Issue-driven run (an `{issueId}` is in scope): `om-open-pr {issueId} {category}` (plus `--plan <path>` when an execution plan exists, `--draft` for a spec-only design PR); the caller captures the PR number and URL from the emitted `PR:` reference line.
 - Brief- or spec-driven run (no issue): invoke without `{issueId}`; the issue-handback and lock-release parts don't apply.
 
 ## Ready vs draft
@@ -51,11 +51,11 @@ Unlike the authoring skills, this skill does not compose the run summary itself 
 
 ## Marker emission
 
-End the run's final report with the chaining markers on their own lines:
+End the run's final report with the chaining reference lines, one per line, exact shape — include `Issue:` only when the run has a subject issue:
 
 ```
-PR_URL=<full PR URL>
-PR_NUMBER=<PR number>
+Issue: #<issue number> (link: <full issue URL>)
+PR: #<PR number> (link: <full PR URL>)
 ```
 
 Chained consumers (`om-auto-review-pr`, `om-auto-qa-pr`, orchestration scripts) parse these exact text markers — never rename, translate, or decorate them.

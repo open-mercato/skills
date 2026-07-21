@@ -1,6 +1,6 @@
 # PR finalize — follow-ups, labels, summary comment, markers
 
-The single procedure for the "file follow-ups → normalize labels → summary comment → chaining markers" mechanics (steps 5 and 6 of the skill body), run once the stabilization loop settles: turn non-blocking review findings into tracked issues, then leave the PR merge-ready and hand it off.
+The single procedure for the "file follow-ups → normalize labels → summary comment → chaining reference lines" mechanics (steps 5 and 6 of the skill body), run once the stabilization loop settles: turn non-blocking review findings into tracked issues, then leave the PR merge-ready and hand it off.
 
 ## Never open a PR (and never a duplicate)
 
@@ -19,11 +19,11 @@ Every run ends with a single comprehensive summary comment the human reviewer ca
 
 ## Marker emission
 
-End the run's final report with the chaining markers on their own lines:
+End the run's final report with the chaining reference lines, one per line, exact shape — include `Issue:` only when the run has a subject issue:
 
 ```
-PR_URL=<full PR URL>
-PR_NUMBER=<PR number>
+Issue: #<issue number> (link: <full issue URL>)
+PR: #<PR number> (link: <full PR URL>)
 ```
 
 Chained consumers (`om-approve-merge-pr`, orchestration scripts) parse these exact text markers — never rename, translate, or decorate them.

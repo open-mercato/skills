@@ -1,6 +1,6 @@
 # PR finalize — open or reuse, labels, evidence, summary comment, markers
 
-The single procedure for the "commit → push → open (or reuse) the PR → normalize labels → evidence → summary comment → chaining markers" mechanics (steps 6 and 7 of the skill body). The point is **one** implementation of PR opening + labeling, reused rather than copied, and never a second PR for work that already has one.
+The single procedure for the "commit → push → open (or reuse) the PR → normalize labels → evidence → summary comment → chaining reference lines" mechanics (steps 6 and 7 of the skill body). The point is **one** implementation of PR opening + labeling, reused rather than copied, and never a second PR for work that already has one.
 
 ## Never open a duplicate PR
 
@@ -8,9 +8,9 @@ Before opening anything, check whether a PR already exists for this branch (or, 
 
 ## Prefer the `om-open-pr` skill when installed
 
-`om-open-pr` already implements exactly this: it commits the worktree, pushes the branch, opens a **ready-for-review** PR against `$BASE_BRANCH` (draft only with `--draft`) with the unified body template, applies the full SDLC label set (pipeline `review`, category, QA meta, one priority, one risk) through the descriptor guards with rationale comments, posts the caller's summary comment, and (in an issue-driven run) hands the issue back and releases the `in-progress` lock — emitting `PR_URL=` / `PR_NUMBER=` markers. When it is installed, **delegate to it** instead of re-deriving the steps:
+`om-open-pr` already implements exactly this: it commits the worktree, pushes the branch, opens a **ready-for-review** PR against `$BASE_BRANCH` (draft only with `--draft`) with the unified body template, applies the full SDLC label set (pipeline `review`, category, QA meta, one priority, one risk) through the descriptor guards with rationale comments, posts the caller's summary comment, and (in an issue-driven run) hands the issue back and releases the `in-progress` lock — emitting the `PR:` / `Issue:` chaining reference lines. When it is installed, **delegate to it** instead of re-deriving the steps:
 
-- Issue-driven run: invoke `om-open-pr {issueId} documentation --title "docs(specs): ${TITLE}"` (add `--draft` when the high-stakes guard applies) and capture its `PR_URL` / `PR_NUMBER`.
+- Issue-driven run: invoke `om-open-pr {issueId} documentation --title "docs(specs): ${TITLE}"` (add `--draft` when the high-stakes guard applies) and capture the PR number and URL from its `PR:` reference line.
 - Brief-driven run (no issue): invoke it without `{issueId}`; the issue-handback and lock-release parts don't apply.
 
 ## Graceful fallback when `om-open-pr` is NOT installed
@@ -87,12 +87,12 @@ Implement with: `om-auto-implement-spec ${SPEC_PATH}` (or `om-auto-continue-pr {
 
 ## Marker emission
 
-End the run's final report with the chaining markers on their own lines:
+End the run's final report with the chaining reference lines, one per line, exact shape — include `Issue:` only when the run is issue-driven:
 
 ```
-PR_URL=<full PR URL>
-PR_NUMBER=<PR number>
-SPEC_PATH=<repo-relative spec path>
+Issue: #<issue number> (link: <full issue URL>)
+PR: #<PR number> (link: <full PR URL>)
+Spec: <repo-relative spec path>
 ```
 
 Chained consumers (`om-auto-implement-spec`, `om-auto-review-pr`, orchestration scripts) parse these exact text markers — never rename, translate, or decorate them.

@@ -16,7 +16,7 @@ Run unattended: the user starts you with a spec reference and comes back to an *
 
 ## Chaining
 
-A previous skill (typically `om-auto-write-spec`) may already have opened the spec PR — this skill **continues on that branch and PR**, never opening a second one. Downstream, it ends with `PR_URL=` / `PR_NUMBER=` markers. Companion skills: `om-auto-create-pr` (required engine for fresh runs), `om-auto-continue-pr` (engine when a PR exists; `-loop` for very large specs), `om-auto-review-pr`, `om-auto-qa-pr`, `om-open-pr` — each optional pieces fall back per the shared open-or-reuse contract in `references/pr-finalize.md`.
+A previous skill (typically `om-auto-write-spec`) may already have opened the spec PR — this skill **continues on that branch and PR**, never opening a second one. Downstream, it ends with the `PR:` / `Spec:` reference lines. Companion skills: `om-auto-create-pr` (required engine for fresh runs), `om-auto-continue-pr` (engine when a PR exists; `-loop` for very large specs), `om-auto-review-pr`, `om-auto-qa-pr`, `om-open-pr` — each optional pieces fall back per the shared open-or-reuse contract in `references/pr-finalize.md`.
 
 ## Workflow
 
@@ -36,11 +36,12 @@ A previous skill (typically `om-auto-write-spec`) may already have opened the sp
 
 3. **Verify the UI and attach screenshots.** After the engine reports the PR complete, when the change touches a user-facing surface (decide from the diff via **get-pr-diff** / **get-pr-files**: routes, components, templates, styles, user-visible copy) and `--no-ui` was not passed: run `om-auto-qa-pr {prNumber}` in its default evidence-only mode — it boots the app, drives the changed flows, and posts screenshots + a pass/fail report on the PR via **attach-image-evidence**. Ensure user-facing PRs carry `needs-qa`; never add `qa-approved` / `qa-self-verified`. For a purely backend/API/docs spec, note `UI: n/a`. A UI-verify that cannot run (no test env, checks not green) is noted on the PR and in your report — not fatal.
 
-4. **Finish and report.** Confirm the final state per `references/pr-finalize.md`: PR **ready** (the engine flips draft spec PRs to ready via **mark-pr-ready** once `Status: complete` — except under a `⚠ NEEDS HUMAN CONFIRMATION` assumptions guard), full label set present, engine summary comment posted (with the UI-verification outcome appended or posted as its own evidence comment). Report to the user: spec path, engine used, branch, PR URL, validation/review outcome, UI verification outcome. End with the markers on their own lines:
+4. **Finish and report.** Confirm the final state per `references/pr-finalize.md`: PR **ready** (the engine flips draft spec PRs to ready via **mark-pr-ready** once `Status: complete` — except under a `⚠ NEEDS HUMAN CONFIRMATION` assumptions guard), full label set present, engine summary comment posted (with the UI-verification outcome appended or posted as its own evidence comment). Report to the user: spec path, engine used, branch, PR URL, validation/review outcome, UI verification outcome. End with the chaining reference lines on their own lines (`Issue:` only when an issue drives the run):
 
    ```
-   PR_URL=<full PR URL>
-   PR_NUMBER=<PR number>
+   Issue: #<issue number> (link: <full issue URL>)
+   PR: #<PR number> (link: <full PR URL>)
+   Spec: <repo-relative spec path>
    ```
 
 ## Rules

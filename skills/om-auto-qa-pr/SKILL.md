@@ -46,7 +46,7 @@ one instance with integration tests.
 
 ## Chaining
 
-In PR mode this skill consumes a `{prNumber}` (the `PR_NUMBER=` a PR-producing skill emitted) and posts screenshot QA evidence back to that existing PR; it is read-only on source and never opens a PR, so there is no duplicate to guard against. In PR mode it ends by reporting `PR_URL=` / `PR_NUMBER=` markers so the next skill in a chain can consume them; in local mode there is no PR and the artifacts folder is the deliverable. Companion skills: `om-auto-review-pr` (the review-first gate runs it when the PR has not been reviewed yet), `om-prepare-test-env` (boots/provisions the runnable instance and browser), `om-integration-tests` (the follow-up automated UI test), and `om-setup-agent-pipeline` (installs a missing browser provider) — each runs verbatim, and a missing required one stops the run naming the skill to install.
+In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-producing skill emitted) and posts screenshot QA evidence back to that existing PR; it is read-only on source and never opens a PR, so there is no duplicate to guard against. In PR mode it ends by reporting the `PR:` / `Issue:` chaining reference lines so the next skill in a chain can consume them; in local mode there is no PR and the artifacts folder is the deliverable. Companion skills: `om-auto-review-pr` (the review-first gate runs it when the PR has not been reviewed yet), `om-prepare-test-env` (boots/provisions the runnable instance and browser), `om-integration-tests` (the follow-up automated UI test), and `om-setup-agent-pipeline` (installs a missing browser provider) — each runs verbatim, and a missing required one stops the run naming the skill to install.
 
 ## Workflow
 
@@ -233,8 +233,9 @@ In PR mode this skill consumes a `{prNumber}` (the `PR_NUMBER=` a PR-producing s
     Labels: {unchanged | qa-approved+qa-self-verified | qa-failed | n/a (local)}
     ```
 
-    In PR mode, end the report with `PR_URL=` and `PR_NUMBER=` on their own lines
-    so the next skill in a chain can consume them.
+    In PR mode, end the report with the `PR: #<number> (link: <url>)` reference
+    line — plus `Issue: #<number> (link: <url>)` when the run has a subject
+    issue — so the next skill in a chain can consume them.
 
 ## Rules
 

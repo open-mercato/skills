@@ -17,7 +17,7 @@ Takes a tracker issue (a GitHub issue by default) from a single command all the 
 
 ## Works with
 
-Consumes an `{issueId}` and finishes by emitting `PR_URL=` / `PR_NUMBER=` markers for the next skill in a chain. On the bug route it invokes [om-verify-in-repo](om-verify-in-repo.md), [om-root-cause](om-root-cause.md), [om-fix](om-fix.md), [om-open-pr](om-open-pr.md), and [om-auto-review-pr](om-auto-review-pr.md); on the feature route it delegates to [om-auto-write-spec](om-auto-write-spec.md) and [om-auto-implement-spec](om-auto-implement-spec.md).
+Consumes an `{issueId}` and finishes by emitting the `PR:` / `Issue:` chaining reference lines for the next skill in a chain. On the bug route it invokes [om-verify-in-repo](om-verify-in-repo.md), [om-root-cause](om-root-cause.md), [om-fix](om-fix.md), [om-open-pr](om-open-pr.md), and [om-auto-review-pr](om-auto-review-pr.md); on the feature route it delegates to [om-auto-write-spec](om-auto-write-spec.md) and [om-auto-implement-spec](om-auto-implement-spec.md).
 
 ---
 *Source: [`skills/om-auto-fix-issue/SKILL.md`](../../skills/om-auto-fix-issue/SKILL.md)*

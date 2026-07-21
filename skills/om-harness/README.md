@@ -235,3 +235,18 @@ stage            stage the allowlisted handoff and assert nothing else changed
 | Staging assertions | [`references/stage-only-contract.md`](references/stage-only-contract.md) |
 | Reporting and reconciliation | [`references/reporting.md`](references/reporting.md) |
 | JSON schemas (packets, results, gate evidence) | [`references/*.schema.json`](references/) |
+
+## Maintainers
+
+<p align="center">
+  <a href="https://www.omdyo.com">
+    <img src="https://www.omdyo.com/assets/omdyo-logo.svg" alt="Omdyo" width="240" />
+  </a>
+</p>
+
+<p align="center">
+  <strong>Developed and maintained by <a href="https://www.omdyo.com">Omdyo</a></strong> — an agency building digital systems for real operations.<br/>
+  Commercial support, custom agent-pipeline and multi-model review work → <a href="https://www.omdyo.com"><strong>www.omdyo.com</strong></a>
+</p>
+
+<p align="center"><sub>Staged-only multi-model agent harness · MIT-licensed</sub></p>

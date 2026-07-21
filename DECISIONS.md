@@ -20,6 +20,61 @@ The skills keep their upstream `om-*` names (`om-auto-create-pr`, `om-fix`, …)
 
 All skills read a single per-repo config file, `.ai/agentic.config.json`, written once by the `om-setup-agent-pipeline` skill. This mirrors the config-file design merged upstream (Open Mercato PR #3686, which replaces per-skill override documents with a wizard-generated config). Base branch, validation commands, label taxonomy, QA gate, and working paths all come from that file; nothing is hard-coded. A skill invoked in a repo without the config runs `om-setup-agent-pipeline` itself before continuing — interactively when a user is present to answer the setup questions, with `--defaults` when running unattended — so the pipeline self-configures on first use instead of bouncing the user.
 
+## Additive staged-only agent harness
+
+The configurable multi-model harness is a separate execution layer, not a
+refactor of the existing PR pipeline. `om-harness` owns shared runtime contracts;
+`om-fix-issue` and `om-implement-feature` wrap lower-level analysis,
+implementation, testing, and review skills; thin `multi`, `optimized`, and
+`multi-optimized` aliases select profiles. Existing `om-auto-*`, publication,
+and review skills remain unchanged and keep their current behavior.
+
+Harness runs have a structural delivery boundary: work occurs in an isolated
+worktree, the starting refs and reflogs are recorded, no intermediate commit is
+allowed, and the run succeeds only when that Git state is unchanged and all
+intended files are staged from an explicit allowlist. Commit, push, and PR
+creation remain a later explicit user decision. Issue runs keep their claim on
+a successful staged handoff and expose an abort path that releases it.
+
+Harness policy is an optional `agentHarness` object in the existing
+`.ai/agentic.config.json`; it is configured independently by
+`om-setup-agent-harness` so users can rerun model setup without regenerating the
+general pipeline. Executable provider commands, endpoints, and credential
+environment-variable names come only from a trusted base-revision snapshot plus
+an optional user-local overlay, never from the task branch. Reviewers emit a
+versioned JSON result; Claude-facing Markdown, including the model-by-finding
+matrix, is rendered deterministically from that artifact.
+
+Profile reviewer lists define fan-out: every selected reviewer is invoked.
+Quorum fields define the minimum successful evidence required when a provider
+is unavailable; they never sample or cap that list. Wrapper-level review starts
+in a new Claude context with no inherited implementation transcript. The
+runtime prepares the exact subject, validation evidence, repository rules, and
+installed `om-code-review` rubric as one SHA-256-bound packet. Fresh Claude and
+the provider council start concurrently; the runtime waits for and validates
+Claude's matching artifact before it emits the final result. Every advisor
+receives the same full rubric and packet in a fresh process or API invocation.
+The bundled `multi` result therefore contains
+Claude plus all five configured model passes in one matrix, while provider
+quorum remains separate from the mandatory Claude pass.
+
+The bundled jury also exposes an opt-in `high-assurance` profile without
+changing the four original profiles. It adds a versioned packet manifest and
+ledger, path leases, risk-scaled blind reviewer assignments, fresh finding
+verification, a separate fixer context, explicit model budgets, and an
+exact-diff deterministic evidence gate. Gate commands remain host-run trusted
+operations; the runtime records their evidence but never executes commands from
+model-authored artifacts. This keeps orchestration policy separate from the
+existing skills and preserves the stage-only boundary.
+
+The setup skill ships a selectable cross-model jury matching the reference
+deployment: Codex, DeepSeek through its API, Kimi through its managed
+subscription, and GLM plus MiMo through OpenCode Zen. These are defaults rather
+than a closed list. Users may enable any subset or add generic command and
+OpenAI-compatible bindings. Provider authentication remains local: environment
+variables, managed CLI login, or official local provider auth stores; secrets
+are never copied into repository configuration or reports.
+
 ## Product-agnosticism gate
 
 CI greps `skills/**` for tokens that would betray monorepo leakage: Open Mercato product references, a hard-coded base branch name, a hard-coded package manager, and upstream-only file conventions. The `om-` prefix itself is not banned — it is the naming convention (see Naming); agnosticism is about behavior, not the name. The gate is scoped to `skills/**`; README, LICENSE, and this file may reference the upstream project.

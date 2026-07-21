@@ -41,7 +41,7 @@ Runnable check (POSIX shell; run from the repository root so repo-local
 ```bash
 # SKILLS_ROOT: parent directory of this skill's installed directory.
 SKILLS_ROOT=${SKILLS_ROOT:-"$HOME/.claude/skills"}
-ROSTER="om-apply-upgrade-notes om-approve-merge-pr om-auto-continue-pr om-auto-continue-pr-loop om-auto-create-pr om-auto-create-pr-loop om-auto-fix-issue om-auto-fix-pr om-auto-implement-spec om-auto-manage-issues om-auto-qa-pr om-auto-review-pr om-auto-update-changelog om-auto-write-spec om-check-and-commit om-close-fixed-issues om-code-review om-create-skill om-fix om-followup-issue-from-pr om-integration-tests om-merge-buddy om-open-pr om-prepare-issue om-prepare-test-env om-review-prs om-root-cause om-setup-agent-pipeline om-spec-writing om-verify-in-repo"
+ROSTER="om-apply-upgrade-notes om-approve-merge-pr om-auto-continue-pr om-auto-continue-pr-loop om-auto-create-pr om-auto-create-pr-loop om-auto-fix-issue om-auto-fix-pr om-auto-implement-spec om-auto-manage-issues om-auto-qa-pr om-auto-review-pr om-auto-update-changelog om-auto-write-spec om-check-and-commit om-close-fixed-issues om-code-review om-create-skill om-fix om-fix-issue om-fix-issue-multi om-fix-issue-multi-optimized om-fix-issue-optimized om-followup-issue-from-pr om-harness om-implement-feature om-implement-feature-multi om-implement-feature-multi-optimized om-implement-feature-optimized om-integration-tests om-merge-buddy om-open-pr om-prepare-issue om-prepare-test-env om-review-prs om-root-cause om-setup-agent-harness om-setup-agent-pipeline om-spec-writing om-verify-in-repo"
 missing=""
 add_missing() { case " $missing " in *" $1 "*) ;; *) missing="$missing $1" ;; esac; }
 for dir in "$SKILLS_ROOT"/om-*/; do

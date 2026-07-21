@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implement Feature Optimized"
+  short_description: "Build staged feature with model workers"
+  default_prompt: "Use $om-implement-feature-optimized for a staged feature using configured workers."

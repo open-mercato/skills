@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fix Issue Multi Optimized"
+  short_description: "Run staged fix with workers and council"
+  default_prompt: "Use $om-fix-issue-multi-optimized for configured workers plus independent reviewers."

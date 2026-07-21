@@ -36,3 +36,13 @@ One card per skill, with its parameters and the companion skills it works with. 
 | [om-fix](om-fix.md) | 🧑‍💻 | Implements the minimal change with regression tests and runs the validation gate. |
 | [om-open-pr](om-open-pr.md) | 🧑‍💻 | The shared PR opener: commits, pushes, opens or reuses a labeled PR, emits chain markers. |
 | [om-code-review](om-code-review.md) | 🧑‍💻 | The review checklist behind om-auto-review-pr: correctness, security, contract surfaces. |
+| [om-setup-agent-harness](om-setup-agent-harness.md) | 🧑‍💻 | Configures the staged-only harness: worker/reviewer models, profiles, probes, hooks. |
+| [om-fix-issue](om-fix-issue.md) | 🧑‍💻 | Fixes an issue end to end and stops with a verified staged diff — no commit or PR. |
+| [om-fix-issue-multi](om-fix-issue-multi.md) | 🧑‍💻 | om-fix-issue plus a cross-model review council on the diagnosis and final diff. |
+| [om-fix-issue-optimized](om-fix-issue-optimized.md) | 🧑‍💻 | om-fix-issue with implementation offloaded to a sandboxed worker model. |
+| [om-fix-issue-multi-optimized](om-fix-issue-multi-optimized.md) | 🧑‍💻 | om-fix-issue with both model workers and the full review council. |
+| [om-implement-feature](om-implement-feature.md) | 🧑‍💻 | Builds a feature from a brief and stops with a verified staged diff — no commit or PR. |
+| [om-implement-feature-multi](om-implement-feature-multi.md) | 🧑‍💻 | om-implement-feature plus a cross-model council on the spec and final diff. |
+| [om-implement-feature-optimized](om-implement-feature-optimized.md) | 🧑‍💻 | om-implement-feature with implementation offloaded to a sandboxed worker model. |
+| [om-implement-feature-multi-optimized](om-implement-feature-multi-optimized.md) | 🧑‍💻 | om-implement-feature with both model workers and the full review council. |
+| [om-harness](om-harness.md) | 🧑‍💻 | Internal runtime for the staged-only wrappers: adapters, councils, packets, staging gate. |

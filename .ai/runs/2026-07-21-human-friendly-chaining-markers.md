@@ -117,6 +117,8 @@ Source doc: none (brief-driven).
 
 ## Progress
 
+PR: #38
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Contract definition
@@ -140,7 +142,7 @@ Source doc: none (brief-driven).
 ### Phase 4: Docs mirrors + validation
 
 - [x] 4.1 docs/skills mirrors + top-level docs — 9fd9c21
-- [ ] 4.2 Lint gate + self-review
+- [x] 4.2 Lint gate + self-review — see review-fix commit
 
 ### Phase 5: cezar companion PR
 

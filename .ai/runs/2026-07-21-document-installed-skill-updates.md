@@ -33,5 +33,5 @@ Explain how users update an existing Open Mercato Skills installation to the lat
 
 ### Phase 1: Documentation
 
-- [ ] 1.1 Add copy-pasteable update instructions and scope guidance to the README
-- [ ] 1.2 Run the repository validation gate and review the documentation diff
+- [x] 1.1 Add copy-pasteable update instructions and scope guidance to the README — 8570ed6
+- [x] 1.2 Run the repository validation gate and review the documentation diff — 8570ed6

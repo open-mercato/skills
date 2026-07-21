@@ -6,7 +6,7 @@ Detailed procedure for step 9 of `om-auto-fix-issue` (bug route): subject the fr
 
 Before the final report, subject the PR to an automated pass with the `om-auto-review-pr` skill. This is the equivalent of a peer reviewer catching issues the implementation missed.
 
-`om-auto-fix-issue` does not hold an `in-progress` lock on the PR at this point (`om-open-pr` released the issue lock), so `om-auto-review-pr`'s claim check will see the PR is unclaimed and claim it fresh. That is expected — `om-auto-review-pr` owns releasing its claim when it finishes, per its own workflow (see `references/claim-pr.md`). Do not second-guess its claim/release protocol.
+The PR already carries the chain's `in-progress` lock: `om-open-pr` transferred it there (`--handoff om-auto-review-pr`) *before* releasing the issue lock, so at no point between chain steps is the PR observably unclaimed. `om-auto-review-pr`'s claim check therefore finds the lock held by `$CURRENT_USER`, treats it as re-entry, and posts its take-over comment **before any review work** (see `references/claim-pr.md`, chained hand-off). When it finishes it keeps the inherited lock (`Lock retained — chain continues.`) — `om-auto-fix-issue` releases the PR lock exactly once, at the end of the run (step 12). Do not second-guess its claim protocol, and do not let review work begin before its take-over comment is posted.
 
 Invoke the `om-auto-review-pr` skill against `PR_NUMBER` in autofix mode:
 
@@ -19,4 +19,4 @@ Invoke the `om-auto-review-pr` skill against `PR_NUMBER` in autofix mode:
 
 - **Clean verdict** → proceed to cleanup and the final report; name the verdict and any follow-up commits there.
 - **Only non-actionable findings remain** → proceed, but list each remaining finding and why it is out of scope or a false positive in the PR comment and the final report.
-- **Cannot run** (e.g., required checks not yet reported, missing context) → skip the loop, note it in the final report, and leave the PR in the `review` pipeline state for a human or a later `om-review-prs` sweep.
+- **Cannot run** (e.g., required checks not yet reported, missing context) → skip the loop, release the chain's PR lock with a comment explaining why (an idle locked PR would block the later sweep), note it in the final report, and leave the PR in the `review` pipeline state for a human or a later `om-review-prs` sweep.

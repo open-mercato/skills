@@ -41,9 +41,25 @@ When the run finishes, hands off, or aborts:
 - Post a short release comment stating the outcome (PR opened with its number, blocked with the blocker, or no action needed).
 - The claimant releases their own claim — never release a lock another agent holds. A sub-skill that claims for itself owns its own release; do not second-guess it.
 
+## Chained hand-off — a live chain never drops its lock
+
+When the same run (same `CURRENT_USER`) finishes one skill and continues on the same item with another — `om-open-pr` → `om-auto-review-pr`, review → UI QA, or any flow-runner chain — the lock is **transferred, never released and re-acquired**. A release-then-reclaim seam leaves the item observably unclaimed mid-run: any concurrent actor's three-signal check reads "not in progress" and legitimately starts duplicate work, and humans watching the tracker see no owner and no state.
+
+- **Hand-off (finishing step):** keep the `in-progress` label and lock assignee in place; instead of the release comment, post a hand-off comment naming the next phase:
+
+  `` 🤖 `{finishing-skill}` completed: {outcome}. Lock handed off to `{next-skill}` — chain continues on this {issue|PR}. ``
+
+- **Take-over (next step):** the three-signal check finds the lock held by `CURRENT_USER` → re-entry. **Before any other work** — fetching diffs, running validation, posting findings — refresh the claim comment so the tracker always shows who holds the item and why:
+
+  `` 🤖 `{next-skill}` taking over the chain lock — {phase}. Started: {ISO-8601 timestamp}. ``
+
+- **Ownership:** a skill releases only a lock its own run opened. An inherited (handed-off) lock is annotated in the completion comment (`Lock retained — chain continues.`) and released by the chain's driving skill at the end of the run, or by its failure path — "the claimant releases their own claim" applies to the chain as a whole.
+- **Crash recovery (adoption):** a hand-off lock is live only while its chain is running. A **standalone** run (one not invoked as a chain step) that re-enters a same-`CURRENT_USER` lock whose newest 🤖 claim/take-over/hand-off comment is older than the stale window treats the chain as dead: post an adoption note — `` 🤖 Adopting a stale chain lock ({age}) — previous run presumed dead. `` — then own the lock as if this run opened it, releasing it at the end. Chained invocations never adopt; their driver owns release.
+- **Invariant:** an item under active automation is never observably unclaimed — the claim or take-over comment precedes any work product, and the hand-off or release is the step's last tracker mutation.
+
 ## om-verify-in-repo specifics
 
-This skill performs only the **read side** of this protocol — the in-progress check in its workflow step 2. It never applies, refreshes, or releases a claim; the autofix chain's claim is taken later by the `om-fix` step and released by `om-open-pr`.
+This skill performs only the **read side** of this protocol — the in-progress check in its workflow step 2. It never applies, refreshes, or releases a claim; the autofix chain's claim is taken later by the `om-fix` step, and `om-open-pr` releases the issue side of it after its `--handoff` transfers the chain lock to the PR — the chain's driving skill releases the PR lock at the end of the run (see the chained hand-off section above).
 
 - The skill body's decision criteria override the generic thresholds for this fast triage gate: the issue counts as in progress by someone else when it carries the `in-progress` label AND its assignees do not include `CURRENT_USER`, or when a `🤖`-prefixed claim comment **newer than 30 minutes** exists from a different actor (not the 24 h default).
 - Stale-lock window is tightened to **60 minutes**: an `in-progress` label older than 60 minutes with no comments or pushes in that window is treated as expired — never stop on a stale lock alone, and never post a takeover note (read-only; recovery/takeover belongs to the claiming steps).

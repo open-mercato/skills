@@ -40,6 +40,22 @@ When the run finishes, hands off, or aborts:
 - Post a short release comment stating the outcome.
 - The claimant releases their own claim — never release a lock another agent holds.
 
+## Chained hand-off — a live chain never drops its lock
+
+When the same run (same `CURRENT_USER`) finishes one skill and continues on the same item with another — `om-open-pr` → `om-auto-review-pr`, review → UI QA, or any flow-runner chain — the lock is **transferred, never released and re-acquired**. A release-then-reclaim seam leaves the item observably unclaimed mid-run: any concurrent actor's three-signal check reads "not in progress" and legitimately starts duplicate work, and humans watching the tracker see no owner and no state.
+
+- **Hand-off (finishing step):** keep the `in-progress` label and lock assignee in place; instead of the release comment, post a hand-off comment naming the next phase:
+
+  `` 🤖 `{finishing-skill}` completed: {outcome}. Lock handed off to `{next-skill}` — chain continues on this {issue|PR}. ``
+
+- **Take-over (next step):** the three-signal check finds the lock held by `CURRENT_USER` → re-entry. **Before any other work** — fetching diffs, running validation, posting findings — refresh the claim comment so the tracker always shows who holds the item and why:
+
+  `` 🤖 `{next-skill}` taking over the chain lock — {phase}. Started: {ISO-8601 timestamp}. ``
+
+- **Ownership:** a skill releases only a lock its own run opened. An inherited (handed-off) lock is annotated in the completion comment (`Lock retained — chain continues.`) and released by the chain's driving skill at the end of the run, or by its failure path — "the claimant releases their own claim" applies to the chain as a whole.
+- **Crash recovery (adoption):** a hand-off lock is live only while its chain is running. A **standalone** run (one not invoked as a chain step) that re-enters a same-`CURRENT_USER` lock whose newest 🤖 claim/take-over/hand-off comment is older than the stale window treats the chain as dead: post an adoption note — `` 🤖 Adopting a stale chain lock ({age}) — previous run presumed dead. `` — then own the lock as if this run opened it, releasing it at the end. Chained invocations never adopt; their driver owns release.
+- **Invariant:** an item under active automation is never observably unclaimed — the claim or take-over comment precedes any work product, and the hand-off or release is the step's last tracker mutation.
+
 ## om-auto-review-pr specifics
 
 This skill claims the PR itself (step 1 of the skill body) and uses tighter windows than the generic defaults.
@@ -51,7 +67,7 @@ Decision tree:
 | State | `--force` set? | Action |
 |-------|---------------|--------|
 | Not in progress | — | Claim and proceed |
-| In progress, current user owns the lock | — | Treat as re-entry; proceed without re-claiming |
+| In progress, current user owns the lock | — | Re-entry (incl. a chain hand-off lock from `om-open-pr --handoff` or a flow runner's outer claim): post the take-over comment naming this skill **before any review work**, then proceed without re-claiming |
 | In progress, someone else owns the lock | no | **STOP**. Ask the user: "PR #{prNumber} is in progress (owner: {owner}, signal: {label/assignee/comment}). Override and continue?" Only continue when the user explicitly says yes. |
 | In progress, someone else owns the lock | yes | Post a force-override comment naming the previous owner, then claim and proceed |
 
@@ -79,3 +95,11 @@ When `labels.enabled` is `false`, the claim consists of the assignee plus the cl
 ```
 
 The completion comment carries the verdict plus a short summary (and, when autofix ran, how many fix iterations completed). For `changes-requested`, the assignee is already handed back to the author before release; for approved outcomes, keep the current assignee unless a handoff changed it.
+
+**Inherited chain lock (re-entry).** When step 1 found the lock already held by `$CURRENT_USER` because a chain handed it off (see the chained hand-off section above), this run did not open the claim and must not release it: skip the **unlabel-pr**, keep the assignee, and post the completion comment as:
+
+```text
+🤖 `om-auto-review-pr` completed: {VERDICT}. Lock retained — chain continues.
+```
+
+The chain's driving skill (e.g. `om-auto-fix-issue`) releases the lock at the end of its run.

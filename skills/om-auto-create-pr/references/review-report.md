@@ -16,7 +16,7 @@ If self-review finds issues, fix them and loop back to the implementation step (
 
 Before you post the final summary comment, push the last commits, or report back, subject the PR to an automated second pass with the `om-auto-review-pr` skill. This is the equivalent of a peer reviewer catching issues the self-review missed.
 
-`om-auto-create-pr` does not hold an `in-progress` lock on the PR at this point (only `om-auto-continue-pr` does), so `om-auto-review-pr`'s claim check will see "not in progress, current user is the author/assignee" and claim it fresh by applying the `in-progress` label. That is expected — `om-auto-review-pr` owns releasing the label when it finishes, per its own workflow (see `references/claim-pr.md`). Do not second-guess its claim/release protocol.
+`om-auto-create-pr` may not hold an `in-progress` lock on the PR at this point (only `om-auto-continue-pr` does). `om-auto-review-pr`'s claim check runs **first, before any review work**, in every invocation mode: it either claims the PR fresh (`in-progress` label + claim comment — the PR must never be under review while observably unclaimed) or, when the lock is already held by `$CURRENT_USER`, re-enters with a take-over comment and leaves release to the lock's owner. It releases only a claim its own run opened, per its workflow (see `references/claim-pr.md`, chained hand-off). Do not second-guess its claim/release protocol.
 
 Invoke the `om-auto-review-pr` skill against `{prNumber}` in autofix mode:
 

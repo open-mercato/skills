@@ -163,6 +163,14 @@ Four changes reduced the collection to thirty skills without losing behavior:
 
 Alongside the consolidation, every skill's repeatable procedures now live in per-skill `references/<step>.md` files under standard names (`agentic-setup.md`, `worktree-setup.md`, `claim-pr.md`, `pr-finalize.md`, `review-report.md`, `rules.md`); `SKILL.md` keeps the numbered main algorithm, and `om-auto-create-pr` holds the canonical copy. These standard files are **deliberately duplicated in each skill that uses them** rather than shared through cross-skill file pointers. The decision is standalone installability over DRY: a skill cherry-picked with `npx skills add … --skill <one>` must run without depending on a file that lives inside a sibling skill. The cost is that a standard step file edited in one skill can drift from the others, so the contributor rule (now recorded in AGENTS.md) is: when you change a standard file in one skill, ask whether to sync the others.
 
+## 2026-07-21 — Chain locks are handed off, never dropped and re-acquired
+
+The autofix chain's original contract released the issue lock in `om-open-pr` and let `om-auto-review-pr` "claim the PR fresh." That left a window — observed on a production PR (open-mercato/skills#39) and reproduced deterministically on the skills-evaluation mock repo — where the PR under active review carried **no** lock signal at all: a concurrent actor's three-signal check read "not in progress" and could legitimately start duplicate work, and humans watching the tracker saw no owner and no state. Worse, because the parent skill framed the chained review as an embedded engine run, the descriptive "it will claim fresh" re-claim was skippable in practice — the production round-1 review ran with no claim comment ever posted.
+
+The contract is now transfer-based. `om-open-pr --handoff <next-skill>` claims the PR for the chain (assignee + `in-progress` + hand-off comment) *before* releasing the issue lock; every downstream skill treats an inherited same-user lock as re-entry, posts a take-over comment naming itself **before any work product**, and never releases a lock its run did not open — the chain's driving skill releases exactly once, at the end of its run or on its failure path. The generic contract lives in every skill's `references/claim-pr.md` under "Chained hand-off" (synced across all copies per the standard-file rule); `om-auto-fix-pr`'s pre-existing outer-lock pattern is the same idea and is unchanged.
+
+In the same change, `om-auto-fix-issue`'s bug route gained a UI-verification step: a fix whose diff touches a user-facing surface gets `om-auto-qa-pr` evidence whether or not a spec exists (previously UI QA only ran on the spec-driven routes), skippable with `--no-ui`.
+
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.

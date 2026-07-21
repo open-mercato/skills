@@ -66,7 +66,9 @@ A generated skill that touches PRs/issues should reuse these, not parallel copie
   (`needs-qa`, `skip-qa`, `qa-approved`, `qa-self-verified`, `in-progress`), one
   `priority-*` and one `risk-*`; every mutation goes through the descriptor's
   label guards.
-- **Chain handoff contract**: emit `PR_URL=` / `PR_NUMBER=` markers on success;
+- **Chain handoff contract**: emit the chaining reference lines on success —
+  `PR: #<number> (link: <url>)`, plus `Issue:` / `Spec:` lines where defined
+  (parse legacy `PR_URL=` / `PR_NUMBER=` / `SPEC_PATH=` input, never emit it);
   read prior-step output from a `— PREVIOUS STEP (<skill>) said —` block; honor
   `NO_ACTION_NEEDED` / `LOW_CONFIDENCE` tokens; keep each chain skill
   independently runnable.

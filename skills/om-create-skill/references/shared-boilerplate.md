@@ -59,7 +59,10 @@ contract in this repo's AGENTS.md):
 
 - A `## Chaining` section right after `## Arguments`: params consumed from the
   previous skill, "an existing PR is continued, never duplicated", the
-  `PR_URL=` / `PR_NUMBER=` markers emitted (PR-producing/-driving skills), and a
+  chaining reference lines emitted — `PR: #<number> (link: <url>)`, plus
+  `Issue: #<number> (link: <url>)` / `Spec: <path>` where defined
+  (PR-producing/-driving skills; consumers also accept the legacy
+  `PR_URL=` / `PR_NUMBER=` / `SPEC_PATH=` lines, emitters never write them) — and a
   `Companion skills:` sentence naming invoked skills + the fallback when one is
   missing.
 - Tracker comments with stable idempotent markers — `` 🤖 `<skill-name>` — <purpose> ``

@@ -37,17 +37,19 @@
 
 ## Progress
 
+PR: #47
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Core rule
 
-- [ ] 1.1 Rewrite engine-selection.md with the deterministic plain-default rule
-- [ ] 1.2 Add --loop and align om-auto-implement-spec SKILL.md step 2
+- [x] 1.1 Rewrite engine-selection.md with the deterministic plain-default rule — 86011f3
+- [x] 1.2 Add --loop and align om-auto-implement-spec SKILL.md step 2 — 86011f3
 
 ### Phase 2: Consumer alignment
 
-- [ ] 2.1 Align om-auto-fix-issue arguments and feature-route wording
+- [x] 2.1 Align om-auto-fix-issue arguments and feature-route wording — b4c1665
 
 ### Phase 3: Gate
 
-- [ ] 3.1 Lint gate + self-review
+- [x] 3.1 Lint gate + self-review — b4c1665

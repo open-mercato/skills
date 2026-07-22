@@ -181,6 +181,17 @@ PR_URL=$(gh pr view --json url --jq .url)
 PR_NUMBER=$(gh pr view --json number --jq .number)
 ```
 
+#### update-pr
+`{prNumber}`, new title and/or new body → the PR's own title/body rewritten in place (not a comment). Used when a resume must reframe a PR whose original title/body no longer describes it — e.g. a doc-originated spec PR that has since grown a feature implementation. Pass whichever of `--title` / `--body-file` changed; omit the other. Use a body file so multi-line bodies (including preserved-verbatim collapsed sections) survive.
+```bash
+gh pr edit {prNumber} --title "<title>"
+gh pr edit {prNumber} --body-file <path-or-process-substitution>
+```
+If `gh pr edit` silently no-ops in this repo (some GitHub setups do), fall back to the REST API:
+```bash
+gh api -X PATCH repos/{owner}/{repo}/pulls/{prNumber} -f title="<title>" -f body="$(cat <path>)"
+```
+
 #### comment-pr
 `{prNumber}`, body. For long structured comments:
 ```bash

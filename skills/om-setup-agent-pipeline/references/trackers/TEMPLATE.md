@@ -50,6 +50,7 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 - **list-prs** — state/search filters, limit → PRs.
 - **search-prs** — free-text query (e.g. an issue reference), state → matching PRs.
 - **create-pr** — base branch, draft flag, title, body → PR URL + number.
+- **update-pr** — number, new title and/or new body → the PR's own title/body rewritten in place (not a comment). For reframing a PR whose original wording no longer fits (e.g. a doc-originated spec PR that grew a feature implementation).
 - **comment-pr** — number, body (multi-line bodies must preserve formatting).
 - **assign-pr / unassign-pr** — number, user.
 - **label-pr / unlabel-pr** — number, label (through the guard; pipeline labels are mutually exclusive).

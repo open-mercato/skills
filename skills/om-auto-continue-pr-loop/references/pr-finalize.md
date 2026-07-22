@@ -12,12 +12,12 @@ Before touching anything, remember the reuse guard: when a PR already exists for
 
 ## Reframe a doc-originated PR (spec → feature)
 
-When this PR was opened as a **spec/design-only PR** (by `om-auto-write-spec` / `om-open-pr`, then continued here by `om-auto-implement-spec` as a Spec-implementation run) but this run — or an earlier resume — has landed implementation code, its original title and body no longer describe it. A PR still titled `docs(specs): …` with a body that reads `Breaking Changes: None — design only` misrepresents a branch that now carries the feature (the concrete failure this guard fixes). Reframe it, and preserve the original wording **for the record** — the same non-destructive rewrite `om-auto-manage-issues` applies to laconic issue bodies.
+When this PR was opened as a **spec/design-only PR** (by `om-auto-write-spec` / `om-open-pr`, then continued here by `om-auto-implement-spec` as a Spec-implementation run) and this run — or an earlier resume — has landed implementation code, its `docs(specs): …` title and `Breaking Changes: None — design only` body misrepresent a branch that now carries the feature. Reframe it, preserving the original wording **for the record** (the same non-destructive rewrite `om-auto-manage-issues` applies to issue bodies).
 
 Reframe when **both** hold:
 
 - **Doc origin.** The PR title starts with `docs(specs):`, or the body carries a `Source doc:` line together with the `documentation` category label / a `None — design only` Breaking Changes line.
-- **Now implements code.** The branch diff against `origin/$BASE_BRANCH` (via **get-pr-files** / **get-pr-diff**) touches files outside the specs and runs directories (`$SPECS_DIR`, `$RUNS_DIR`) — real implementation landed, not just the spec, plan, and run-folder docs.
+- **Now implements code.** The branch diff against `origin/$BASE_BRANCH` touches files outside the specs and runs directories (`$SPECS_DIR`, `$RUNS_DIR`) — real implementation landed, not just the spec, plan, and run-folder docs.
 
 Idempotency: skip if the body already contains the `Original spec-PR description (for the record)` marker — a prior resume already reframed it. A genuine docs-only PR that never grew code is never reframed. (This applies to Spec-implementation runs continuing a spec PR; a Simple run over an already-feature PR has nothing to reframe.)
 

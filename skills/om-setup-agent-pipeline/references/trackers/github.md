@@ -188,7 +188,7 @@ PR_NUMBER=$(gh pr view --json number --jq .number)
 ```
 
 #### update-pr
-`{prNumber}`, new title and/or new body → the PR's own title/body rewritten in place (not a comment). Used when a resume must reframe a PR whose original title/body no longer describes it — e.g. a doc-originated spec PR that has since grown a feature implementation. Pass whichever of `--title` / `--body-file` changed; omit the other. Use a body file so multi-line bodies (including preserved-verbatim collapsed sections) survive.
+`{prNumber}`, new title and/or new body → the PR's own title/body rewritten in place (not a comment), e.g. reframing a doc-originated spec PR that grew a feature implementation. Pass whichever of `--title` / `--body-file` changed; omit the other. Use a body file so multi-line bodies survive.
 ```bash
 gh pr edit {prNumber} --title "<title>"
 gh pr edit {prNumber} --body-file <path-or-process-substitution>

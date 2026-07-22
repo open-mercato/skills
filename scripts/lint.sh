@@ -31,8 +31,55 @@ for dir in skills/*/; do
   fi
   if [ -z "$fm_desc" ]; then
     err "$file frontmatter is missing a description"
+  elif [ "${#fm_desc}" -gt 500 ]; then
+    err "$file description is ${#fm_desc} chars (max 500; aim for ≤350) — descriptions load into every session's context"
+  fi
+  # Unquoted ": " inside a plain YAML scalar is invalid YAML and the most common
+  # cross-client parse failure (agentskills.io client guide). Quote it or rephrase.
+  case "$fm_desc" in
+    \"*|\'*) : ;;
+    *": "*) err "$file description contains an unquoted ': ' — invalid YAML for strict parsers; rephrase (use — ) or quote the value" ;;
+  esac
+  # Progressive-disclosure budget: a SKILL.md body should stay under ~5k tokens
+  # (~20000 chars); push detail into references/ instead (agentskills.io tier-2 guidance).
+  body_chars=$(awk 'f{print} /^---$/{c++; if(c==2) f=1}' "$file" | wc -c)
+  if [ "$body_chars" -gt 20000 ]; then
+    err "$file body is ${body_chars} chars (budget 20000 ≈ 5k tokens) — move detail into references/"
   fi
 done
+
+# Reference-resolution gate: every `references/...` pointer in a skill's markdown
+# must resolve — same-skill pointers relative to the skill dir, cross-skill
+# pointers written as explicit om-<skill>/references/<file> paths.
+ref_hits=$(grep -roE --include='*.md' '(om-[a-z-]+/)?references/[A-Za-z0-9._/-]+\.(md|py|sh|png)' skills 2>/dev/null | sort -u || true)
+while IFS= read -r line; do
+  [ -n "$line" ] || continue
+  src=${line%%:*}
+  ref=${line#*:}
+  skill_dir=$(printf '%s' "$src" | cut -d/ -f1-2)
+  case "$ref" in
+    om-*) target="skills/$ref" ;;
+    *)    target="$skill_dir/$ref" ;;
+  esac
+  [ -e "$target" ] || err "$src points at missing $ref"
+done <<EOF
+$ref_hits
+EOF
+
+# Roster-sync gate: the cross-skill coverage roster shipped in
+# om-setup-agent-pipeline must list exactly the skills in skills/ — installed
+# setups use it to tell a missing collection skill from an unrelated om- token.
+roster_file=skills/om-setup-agent-pipeline/references/skill-coverage.md
+if [ ! -f "$roster_file" ]; then
+  err "missing $roster_file (cross-skill coverage roster)"
+else
+  roster=$(sed -n 's/^ROSTER="\(.*\)"$/\1/p' "$roster_file" | tr ' ' '\n' | sed '/^$/d' | sort)
+  shipped=$(ls skills | sort)
+  if [ "$roster" != "$shipped" ]; then
+    err "coverage roster in $roster_file is out of sync with skills/:"
+    diff <(printf '%s\n' "$roster") <(printf '%s\n' "$shipped") >&2
+  fi
+fi
 
 patterns=(
   '[Oo]pen[- ][Mm]ercato'

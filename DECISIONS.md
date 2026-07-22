@@ -18,7 +18,7 @@ The skills keep their upstream `om-*` names (`om-auto-create-pr`, `om-fix`, …)
 
 ## Configuration
 
-All skills read a single per-repo config file, `.ai/agentic.config.json`, written once by the `om-setup-agent-pipeline` skill. This mirrors the config-file design merged upstream (Open Mercato PR #3686, which replaces per-skill override documents with a wizard-generated config). Base branch, validation commands, label taxonomy, QA gate, and working paths all come from that file; nothing is hard-coded. A skill invoked in a repo without the config stops and points the user at `om-setup-agent-pipeline`.
+All skills read a single per-repo config file, `.ai/agentic.config.json`, written once by the `om-setup-agent-pipeline` skill. This mirrors the config-file design merged upstream (Open Mercato PR #3686, which replaces per-skill override documents with a wizard-generated config). Base branch, validation commands, label taxonomy, QA gate, and working paths all come from that file; nothing is hard-coded. A skill invoked in a repo without the config runs `om-setup-agent-pipeline` itself before continuing — interactively when a user is present to answer the setup questions, with `--defaults` when running unattended — so the pipeline self-configures on first use instead of bouncing the user.
 
 ## Product-agnosticism gate
 
@@ -30,13 +30,150 @@ Several tokens were initially banned and later deliberately unbanned as they tur
 
 Project-specific knowledge lives in three places, none of them inside the installed skills. Machine-readable settings go in `.ai/agentic.config.json`. Prose specifics (coding standards, architecture, conventions) go in the repo's own `AGENTS.md`/`CLAUDE.md`, which every skill reads before working; `om-setup-agent-pipeline` scaffolds a starter when none exists. Per-skill behavior changes go in a repo-local skill of the same name at `.ai/skills/<skill-name>/SKILL.md`, which every installed skill checks for right after loading the config and follows when present — local rules win, but a local skill can never relax the installed skill's safety rules. A local skill that only extends the installed one `@`-imports or references it and adds rules on top; where a coding agent does not expand `@`-imports natively, "read the referenced skill and honor it" works the same. This replaced the earlier `.ai/agentic-overrides/<skill-name>.md` convention: the local variant now lives where the upstream monorepo already keeps its own skills, and is itself a complete skill — so a repo can move from extending a skill to fully owning it without changing paths, and installing this collection into the upstream monorepo makes the installed skills defer to the specialized `om-*` versions automatically. `om-setup-agent-pipeline` also generates `SDLC.md`, a human-readable description of the ticket flow the skills automate (stages, label state machine, QA gate, claim protocol), so the process is documented for people, not only encoded in skills. The same setup generates — each only when missing, always derived from the target repository rather than copied from upstream — `CODE_REVIEW.md` (repo review rules, auto-applied by om-code-review), `BACKWARD_COMPATIBILITY.md` (protected contract surfaces; review skills flag violations as Critical and implementation skills warn the user), and an `AGENTS.md` with a task-routing table built by scanning the repo layout.
 
+## Test environment: agnostic, not stripped
+
+An earlier revision (see Deferred) removed the upstream ephemeral-environment machinery from `om-integration-tests` entirely, leaving each skill to rediscover how to run the app. That under-served the QA path: `om-auto-verify-pr-ui` needs a *running* app to drive a browser against, and re-deriving the boot on every run is slow and non-deterministic. The resolution is a dedicated, product-agnostic skill — `om-prepare-test-env` — that owns "get the app running and make it reusable" without assuming a stack. It does one of three things, chosen from what the repo actually contains: reuse the repo's own ephemeral/test environment when it ships one (open-mercato's is exactly this case); generate Docker/testcontainers-style bring-up scripts for the project's detected backing services when a disposable environment is wanted and none exists; or run the app directly (docker/dev/production build) for apps that need no services (a static/SSR site is exactly this case). It writes a shared environment descriptor (`<paths.qa>/test-env.json`) so `om-auto-verify-pr-ui` and `om-integration-tests` attach to one booted instance instead of each booting their own. This keeps the collection agnostic — the machinery is discovered or generated per repo, never copied from upstream — while restoring the boot-once/attach-many property the upstream ephemeral env provided. Two config keys back it: `paths.scripts` (default `.ai/scripts`, generated launchers — committed, reproducible) and `paths.qa` (default `.ai/qa`, running-state descriptor + per-run QA artifacts — gitignored).
+
+`om-auto-verify-pr-ui` is migrated from upstream but generalized on two axes beyond stack-agnosticism: it is **tracker-optional** (with a tracker + PR number it claims the PR and posts evidence as a comment; without one it verifies the local worktree and writes a JSON+Markdown report plus screenshots to `<paths.qa>/artifacts_<runId>/`), and it delegates the boot to `om-prepare-test-env` rather than hard-coding an ephemeral command. The upstream name is kept per the naming policy (drop-in compatibility with the monorepo's own `.ai/skills/om-auto-verify-pr-ui`).
+
 ## Tracker abstraction
 
 No skill calls a tracker CLI or API directly. Skills name **tracker operations** (**get-issue**, **create-pr**, **comment-pr**, **merge-pr**, …) and a single committed descriptor file, `.ai/trackers/<tracker>.md` — selected by the config's `tracker` field and installed by `om-setup-agent-pipeline` — defines how each operation executes. The collection ships the GitHub descriptor (`gh` CLI) plus a `TEMPLATE.md` documenting the full contract; a new provider (Linear, Jira, …) is one descriptor file, no skill changes. The descriptor is a markdown instruction layer rather than code on purpose: it is read by the agent at runtime, so it works identically across coding agents, and the repo's committed copy is the override point — teams edit it to extend or replace any operation, the same "local file wins" model as repo-local skills. Split setups (issues in Linear, PRs on GitHub) implement issue operations against the issue tracker and delegate the PR sections to the GitHub descriptor. An earlier design kept `gh` calls inline in the skills and deferred extraction until a second provider existed; the extraction was pulled forward because inline calls made every skill GitHub-shaped and blocked the drop-in/override story. CI now enforces the layer: the lint gate rejects `gh` commands inside `skills/**` outside the shipped tracker descriptors.
+
+## Browser-provider abstraction
+
+Browser automation uses the same committed markdown-descriptor pattern as
+trackers, under `.ai/browsers/<provider>.md` and selected by
+`browser.provider`. The shared operation contract separates agent-driven
+exploration, assertions, screenshots, and autonomous tool provisioning from the
+skills that consume them. Fresh setups select agent-browser; Playwright remains
+shipped as a compatibility provider, and absent config keys/legacy
+`test-env.json` files continue to mean Playwright. Repository-native E2E suites
+stay authoritative regardless of the exploration provider. This boundary avoids
+hard-wiring every QA skill to a single CLI while keeping the repo's committed
+descriptor as the customization point.
+
+## Feature-request path: spec-then-implement
+
+Bugs and feature requests need different triage. The autofix chain's gate
+(`om-verify-in-repo`) proves a defect is real and still unfixed — the wrong
+question for a feature, which has no bug to reproduce and would be wrongly stopped
+with `NO_ACTION_NEEDED`. So the issue entry path now classifies first:
+`om-auto-fix-issue` routes a feature request to the new `om-auto-implement-issue`,
+which composes `om-spec-writing` and `om-auto-create-pr` — it confirms the feature
+is unbuilt, lands a spec on the PR as the first commit (design visible before
+implementation), then implements the spec phase-by-phase through the existing
+worktree/validation/label/review machinery. The new skill is a thin router that
+delegates to those two skills rather than duplicating their protocols. In the same
+spirit, `om-prepare-issue` stops merely recommending a spec for substantial
+features: when none exists in the repo or an open PR, it authors one via the same
+`--spec-only` spec PR and links it on the issue — its one exception to being
+tracker-only, and design-only (never implementation).
+
+`om-spec-writing`'s Open Questions gate is a hard human stop, which is correct when
+a person is driving but would strand an `om-auto-*` run (e.g. `om-auto-fix-issue`
+routing a feature request, or `om-prepare-issue` authoring a required spec). Since
+the `om-auto-*` family is autonomous by definition, `om-auto-implement-issue` runs
+**autonomous by default**: instead of stopping at the gate it resolves each open
+question with a conservative, reversible default, records the assumptions in the
+spec, and posts the questions + applied defaults as an issue/PR comment for a human
+to override before merge — keeping the PR draft/`needs-qa` when any default is
+high-stakes. A `--interactive` flag opts back into the human stop for the cases
+where a person wants to make the design calls. Progress beats stalling, as long as
+every assumption is surfaced and reversible and nothing merges on assumptions
+alone.
+
+A user-facing FR also ends with UI proof: `om-auto-implement-issue` runs
+`om-auto-verify-pr-ui` (evidence-only) after implementation, so a real-browser
+pass/fail report and screenshots land as a PR comment via `attach-image-evidence`.
+It stays evidence-only — screenshots for the reviewer, `needs-qa` kept, never a
+self-granted `qa-approved` — and is skipped for non-UI FRs, `--no-ui`, or when no
+runnable UI surface exists. A UI-verify that cannot run is noted, not fatal: the PR
+is still implemented and reviewed.
+
+## Issue skills split: create vs manage
+
+`om-prepare-issue` conflated two jobs — filing a *new* issue and improving
+*existing* ones — so the second job was split out. `om-prepare-issue` keeps its
+name and owns the create path (dedupe, spec-linking, codebase analysis, the
+step-2b spec PR) and now also applies the SDLC labels (category + inferred priority
++ risk) on creation. A new sibling, `om-auto-manage-issues`, owns existing issues,
+single or in bulk: it applies missing SDLC labels and, for a laconic issue (a
+one-line body or just a title and a screenshot), analyzes the screenshot with the
+terse text, clarifies the wording non-destructively (the reporter's original is
+preserved) via the new **update-issue** tracker operation, and posts the agent's
+understanding as a comment to confirm. It is idempotent (adds only missing labels,
+posts the understanding once) and claim-aware (skips issues another actor is
+working), so it is safe to sweep the backlog — default scope is the last ~25 open
+issues, worst-described first, narrowable by state/label/author/limit.
+
+## One PR opener, reused: pr-open-reuse + implement-by-continuation
+
+Several skills open or update PRs, and `om-auto-implement-issue` opens a spec-first
+PR and then needs to implement it — which naively means running `om-auto-create-pr`,
+which opens *its own* PR. That second PR is a collision. Two decisions resolve it:
+
+- **`om-auto-implement-issue` implements by continuation, not by create.** After it
+  opens the one spec PR (with a tracking plan), implementation is handed to
+  `om-auto-continue-pr` (or `om-auto-continue-pr-loop` for a large, many-step spec —
+  the skill chooses per the plan size, which also dictates the plan format it
+  writes). The continue skills resume from the plan **on the existing PR** and reuse
+  the identical implement/validate/review/label/summary machinery without opening
+  anything new. So there is exactly one PR.
+- **PR opening + labeling is one reusable procedure**, documented once in
+  `om-auto-create-pr/references/pr-open-reuse.md` and pointed at by the create,
+  continue, and implement skills: **prefer the `om-open-pr` skill when it is
+  installed** (it already implements commit → push → open draft PR → normalize
+  labels, so reuse it instead of duplicating), and **fall back to the inline
+  `create-pr` + label path when it is not** — `om-open-pr` is an optional
+  enhancement that removes duplication without changing behavior, so a repo that
+  installs `om-auto-create-pr` alone still works. The invariant across all of them:
+  never open a second PR for work that already has one.
+
+`om-auto-manage-issues` also gained a read-only implementation-prep pass: it can run
+a root-cause/impact analysis (delegating to `om-root-cause` for bugs when installed)
+and post it as an "implementation notes" comment so an existing issue is ready to
+fix — autonomously, never interactively, and defaulting off for batches because it
+reads code per issue.
+
+## PR-side driver: om-auto-fix-pr
+
+The issue side had a single-command end-to-end driver (`om-auto-fix-issue`); the PR
+side did not — getting a PR merge-ready meant running `om-auto-review-pr`,
+`om-stabilize-ci`, and `om-auto-verify-pr-ui` by hand and remembering to update the
+branch first. `om-auto-fix-pr` is that missing driver: it merges the latest base in
+first, then loops review-autofix → CI-stabilize → UI-verify (re-merging base when it
+advances) until the PR is approvable, green, and QA-evidenced. It is a pure
+orchestrator — it delegates every hard step to the existing skills rather than
+duplicating their logic — and it deliberately stops short of merging: it leaves the
+PR merge-ready and hands off to `om-approve-merge-pr`/`om-merge-buddy` so the QA gate
+stays the single enforcement point. Two behaviors are explicit: non-blocking review
+findings (nits/low/out-of-scope) become follow-up issues via
+`om-followup-issue-from-pr` instead of blocking or bloating the PR, and fork PRs keep
+the carry-forward supersede/credit rules from `om-auto-review-pr`'s fork flow.
+
+## 2026-07-20 — Skill consolidation: four fewer skills, standard step files per skill
+
+Four changes reduced the collection to thirty skills without losing behavior:
+
+- **`om-auto-verify-pr-ui` → `om-auto-qa-pr`**, and it now checks the PR's review state first: on an unreviewed PR it runs `om-auto-review-pr` before the browser UI QA, so a code review always precedes the UI pass. The rename also drops the "verify" framing for the plainer "QA".
+- **`om-sync-merged-pr-issues` → `om-close-fixed-issues`** — a plain rename to name the skill after what it does (close the issues a merged PR authoritatively fixes); behavior is unchanged.
+- **`om-stabilize-ci` absorbed into `om-auto-fix-pr`.** CI stabilization was only ever invoked from the PR driver, so a standalone skill meant a second thing to install and keep in sync. Its procedure is now `om-auto-fix-pr`'s own step, and a new `--ci-only [--branch <name>]` mode covers the standalone use it previously served — a plain branch or no-PR change driven to green CI.
+- **`om-auto-implement-issue` absorbed into `om-auto-fix-issue`.** The router was a thin dispatcher over the bug and feature routes; folding it in makes `om-auto-fix-issue` the single issue-to-PR entry point. It classifies the issue, sends bugs down the fix chain, and takes features through the feature route — claim, spec resolution (author via `om-auto-write-spec` when none exists, implement via `om-auto-implement-spec`), and contract verification — on one PR. `--spec-only` still stops after the spec PR.
+
+Alongside the consolidation, every skill's repeatable procedures now live in per-skill `references/<step>.md` files under standard names (`agentic-setup.md`, `worktree-setup.md`, `claim-pr.md`, `pr-finalize.md`, `review-report.md`, `rules.md`); `SKILL.md` keeps the numbered main algorithm, and `om-auto-create-pr` holds the canonical copy. These standard files are **deliberately duplicated in each skill that uses them** rather than shared through cross-skill file pointers. The decision is standalone installability over DRY: a skill cherry-picked with `npx skills add … --skill <one>` must run without depending on a file that lives inside a sibling skill. The cost is that a standard step file edited in one skill can drift from the others, so the contributor rule (now recorded in AGENTS.md) is: when you change a standard file in one skill, ask whether to sync the others.
+
+## 2026-07-21 — Chain locks are handed off, never dropped and re-acquired
+
+The autofix chain's original contract released the issue lock in `om-open-pr` and let `om-auto-review-pr` "claim the PR fresh." That left a window — observed on a production PR (open-mercato/skills#39) and reproduced deterministically on the skills-evaluation mock repo — where the PR under active review carried **no** lock signal at all: a concurrent actor's three-signal check read "not in progress" and could legitimately start duplicate work, and humans watching the tracker saw no owner and no state. Worse, because the parent skill framed the chained review as an embedded engine run, the descriptive "it will claim fresh" re-claim was skippable in practice — the production round-1 review ran with no claim comment ever posted.
+
+The contract is now transfer-based. `om-open-pr --handoff <next-skill>` claims the PR for the chain (assignee + `in-progress` + hand-off comment) *before* releasing the issue lock; every downstream skill treats an inherited same-user lock as re-entry, posts a take-over comment naming itself **before any work product**, and never releases a lock its run did not open — the chain's driving skill releases exactly once, at the end of its run or on its failure path. The generic contract lives in every skill's `references/claim-pr.md` under "Chained hand-off" (synced across all copies per the standard-file rule); `om-auto-fix-pr`'s pre-existing outer-lock pattern is the same idea and is unchanged.
+
+In the same change, `om-auto-fix-issue`'s bug route gained a UI-verification step: a fix whose diff touches a user-facing surface gets `om-auto-qa-pr` evidence whether or not a spec exists (previously UI QA only ran on the spec-driven routes), skippable with `--no-ui`.
 
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.
 - Shipped tracker descriptors other than GitHub. The seam (`tracker` config field + descriptor contract + `TEMPLATE.md`) ships in v1; teams write their own `linear.md`/`jira.md` from the template until popular ones are contributed back.
-- Skills beyond the PR pipeline that are product-specific upstream (module scaffolding, design-system review). Two former members of this list were later generalized and extracted: `om-spec-writing` (upstream architecture laws replaced by the repo's own agent-instruction rules; specs live in the repo's design-doc area) and `om-integration-tests` (deliberately stripped of the upstream ephemeral-environment machinery — the skill discovers how to run the app from the repo itself, and a repo-local `.ai/skills/om-integration-tests` override is the place for environment specifics).
+- Skills beyond the PR pipeline that are product-specific upstream (module scaffolding, design-system review). Two former members of this list were later generalized and extracted: `om-spec-writing` (upstream architecture laws replaced by the repo's own agent-instruction rules; specs live in the repo's design-doc area) and `om-integration-tests` (the upstream ephemeral-environment machinery was first stripped, then re-introduced in agnostic form as the standalone `om-prepare-test-env` skill — see Test environment above; a repo-local `.ai/skills/om-integration-tests` override remains the place for environment specifics). A third pair was later migrated and generalized: `om-prepare-test-env` (new, no upstream counterpart) and `om-auto-verify-pr-ui` (migrated from upstream, made stack-agnostic and tracker-optional).
 - Automated sync from the upstream monorepo. Curation is manual.

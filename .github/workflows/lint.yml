@@ -12,3 +12,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Frontmatter and product-agnosticism gate
         run: bash scripts/lint.sh
+      - name: Browser provider contract and platform matrix
+        run: node scripts/test-browser-providers.mjs

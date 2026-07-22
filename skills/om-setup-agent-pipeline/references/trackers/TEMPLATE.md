@@ -52,6 +52,7 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 - **list-prs** — state/search filters, limit → PRs.
 - **search-prs** — free-text query (e.g. an issue reference), state → matching PRs.
 - **create-pr** — base branch, draft flag, title, body → PR URL + number.
+- **update-pr** — number, new title and/or new body → the PR's own title/body rewritten in place (not a comment). For reframing a PR whose original wording no longer fits.
 - **comment-pr** — number, body (multi-line bodies must preserve formatting).
 - **attach-image-evidence** — number, a comment body, a slug (e.g. `pr-<n>`), and a list of local image file paths → post a single comment that embeds the images so they render **inline** in the tracker, and return the comment URL. The mechanism is the tracker's business (an upload/attachment endpoint, a media API, or a pushed evidence branch referenced by raw URLs) — the skills only name the operation and pass image paths. Contract: never mutate the change's own branch to store evidence; when the tracker cannot render uploaded images (e.g. a private repo whose raw URLs need auth), still post the comment with links to the images and say so rather than failing the caller. This is how QA skills post screenshots without any host-specific logic living in the skill.
 - **assign-pr / unassign-pr** — number, user.

@@ -74,6 +74,26 @@ preserving the rest of the config.
 
 Newest first. Each entry lists the symptom you will see with a stale installation and the fix.
 
+### 2026-07 — `update-pr` tracker operation + spec→feature PR reframe (PR #46)
+
+`om-auto-continue-pr` and `om-auto-continue-pr-loop` now reframe a doc-originated
+spec PR (opened by `om-auto-write-spec`, continued by `om-auto-implement-spec`)
+into a feature PR once a resume lands implementation code: title, body, and
+`documentation`/`skip-qa`/`risk-low` labels are rewritten to describe the shipped
+work, with the original spec description preserved verbatim in a collapsed
+`Original spec-PR description (for the record)` section. The rewrite goes through
+a new tracker operation **update-pr** (for GitHub: `gh pr edit --title --body-file`,
+with a `gh api` PATCH fallback), which the descriptor now defines.
+
+- **Symptom of a stale descriptor:** a spec PR that grew an implementation keeps
+  shipping under its `docs(specs):` title with a `Breaking Changes: None — design
+  only` body — the reframe step degrades or is skipped because the installed
+  descriptor has no `#### update-pr` section.
+- **Fix:** re-sync `.ai/trackers/github.md` as above (the new `#### update-pr`
+  section is the relevant addition). Custom providers: implement **update-pr**
+  per the updated `TEMPLATE.md` contract (rewrite the PR's own title/body in
+  place — not a comment; labels and assignees have their own operations).
+
 ### 2026-07 — skill consolidation and renames
 
 The collection consolidated to thirty skills. Two skills were renamed and two were absorbed into the driver that already invoked them:

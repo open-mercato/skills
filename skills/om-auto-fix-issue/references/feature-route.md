@@ -32,12 +32,12 @@ a. **Resolve the spec** — follow the spec-resolution procedure in
    id (checks `$SPECS_DIR` links in the issue body, name matches on the issue title,
    and open spec-PR branches).
 b. **Spec found** (a path, or the spec-only `SPEC_PR` from F2) → invoke
-   **`om-auto-implement-spec {SPEC_PATH-or-SPEC_PR} [--no-ui] [--loop] [--force]`** verbatim.
-   It reuses the spec PR's branch when one exists (never a second PR), implements via
-   the continue/create engines (plain by default; the loop variants only on `--loop`
-   or a >20-Step plan, per `om-auto-implement-spec`'s engine selection), runs the
-   review autofix loop and UI verification with
-   screenshots, and leaves a ready PR. Ensure the implementing PR body carries
+   **`om-auto-implement-spec {SPEC_PATH-or-SPEC_PR} [--no-ui] [--force]`** verbatim.
+   Never pass `--loop` from this route — the plain engines are the default; the loop
+   variants are selected only by `om-auto-implement-spec`'s own >20-Step rule
+   (`om-auto-implement-spec`'s engine selection). It reuses the spec PR's branch when
+   one exists (never a second PR), runs the review autofix loop and UI verification
+   with screenshots, and leaves a ready PR. Ensure the implementing PR body carries
    `Closes #{issueId}` so the merge auto-closes the issue.
 c. **No spec** → invoke **`om-auto-write-spec {issueId} [--slug …] [--force]`**
    verbatim (run its spec-writing step interactively when `--interactive` was

@@ -1,7 +1,7 @@
 # Choosing the implementation engine — plain vs loop, create vs continue
 
 How `om-auto-implement-spec` step 2 picks the engine. Two independent axes:
-**create vs continue** is decided by whether a spec PR already exists (continuation, never a second PR); **plain vs loop** is decided by the deterministic rule below — the same rule applies on both sides, so a qualifying spec gets the loop engine whether it starts fresh (`om-auto-create-pr-loop`) or continues a spec PR (`om-auto-continue-pr-loop`). This is also the path an issue takes through `om-auto-fix-issue`'s feature route, so the rule (and the `--loop` pass-through) applies there automatically.
+**create vs continue** is decided by whether a spec PR already exists (continuation, never a second PR); **plain vs loop** is decided by the deterministic rule below — the same rule applies on both sides, so a qualifying spec gets the loop engine whether it starts fresh (`om-auto-create-pr-loop`) or continues a spec PR (`om-auto-continue-pr-loop`). This is also the path an issue takes through `om-auto-fix-issue`'s feature route, so the rule applies there automatically (that route never passes `--loop` — only the >20-Step rule can select the loop for an issue-driven run).
 
 ## Why continuation, not a new create-pr run
 
@@ -15,7 +15,7 @@ The **plain engine** (`om-auto-continue-pr` when a spec PR exists, `om-auto-crea
 
 Select the **loop engine** (`om-auto-continue-pr-loop` when a spec PR exists, `om-auto-create-pr-loop` when not) only when at least one holds:
 
-1. **`--loop` was passed** to `om-auto-implement-spec` (or passed through from a routing skill such as `om-auto-fix-issue`) — the caller explicitly bought the loop's resumability and checkpoint discipline.
+1. **`--loop` was passed** to `om-auto-implement-spec` directly by the user — the caller explicitly bought the loop's resumability and checkpoint discipline. Routing skills never add it on their own.
 2. **The plan exceeds 20 Steps.** Count the Steps (not Phases) in the spec's Implementation Plan — the same items that become the plan's checklist/Tasks rows. More than 20 → loop.
 
 Nothing else selects the loop: not UI work (the plain engines post screenshots via `om-auto-qa-pr` / **attach-image-evidence**), not "might not finish in one pass" (`om-auto-continue-pr` resumes a plain run fine), not subjective "feels large". If the count is ambiguous (the spec lacks a step breakdown), draft the plan first, count its Steps, then decide.

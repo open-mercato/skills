@@ -14,6 +14,7 @@ Take a tracker issue end to end without disturbing the user's active worktree. T
 - `--interactive` (optional, feature route) — opt into human gates: the spec is written with `om-spec-writing`'s interactive Open Questions hard stop instead of `--autonomous` defaults. Default is fully autonomous (defaults applied and posted for override).
 - `--slug <kebab-case>` (optional, feature route) — override the derived slug (passed through to the delegated skills)
 - `--no-ui` (optional) — skip UI verification (bug route: skip step 10; feature route: passed through) — for example, to save resources
+- `--loop` (optional, feature route) — forwarded verbatim to `om-auto-implement-spec` **only when the user passed it to this skill**; the route never adds it on its own. Without it the loop engine is selected solely by the >20-Step rule.
 - `--force` (optional) — bypass the in-progress concurrency check; use only when intentionally taking over an issue another actor already claimed
 
 ## Chaining

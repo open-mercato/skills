@@ -33,7 +33,7 @@ Priority and risk labels (always ensure exactly one of each, when labels are ena
 
 When the verdict is `changes-requested`, reassign the PR back to the original PR author after the review and pipeline label are posted, unless the author is the current reviewer, a bot account, or otherwise unavailable.
 
-Flow — fill `PR_AUTHOR` with the author's login from **get-pr** for `{prNumber}`, requesting `author`. If `PR_AUTHOR` is non-empty and differs from `$CURRENT_USER`:
+Flow — `PR_AUTHOR` is the author login already captured by the step 2 **get-pr** (the author does not change between steps); no re-fetch is needed. If `PR_AUTHOR` is non-empty and differs from `$CURRENT_USER`:
 
 1. **unassign-pr**: remove `$CURRENT_USER` from `{prNumber}`'s assignees.
 2. **assign-pr**: add `$PR_AUTHOR` as the assignee.

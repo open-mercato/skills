@@ -23,7 +23,7 @@ Review code changes against the repository's architecture, security, convention,
 - a breaking-change checklist,
 - a verdict: **approve** or **request changes** (see Severity and Verdict).
 
-Callers (`om-auto-review-pr`, `om-review-prs`) read the verdict and the blocker/major findings to drive labels and the autofix loop — but they post **this whole report, verbatim in its `references/output-format.md` structure (emoji headings, full sentences)**, as the PR review body. It is the reviewer-facing deliverable, not an internal analysis to condense into a short summary; keep the verdict and findings unambiguous and the report complete.
+Callers (`om-auto-review-pr`, `om-review-prs`) consume the verdict and the blocker/major findings; keep both unambiguous.
 
 ## Review Workflow
 

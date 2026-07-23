@@ -1,9 +1,6 @@
 # Run-mode contracts (step 2)
 
-The Simple-run and Spec-implementation-run contracts, plus the promotion path,
-for `om-auto-continue-pr-loop`. The body keeps the step-2 classification
-heuristic (which mode this resume runs in); this file holds what each mode
-requires once the choice is made.
+What each mode requires once step 2's classification picks it.
 
 ## Simple-run contract
 
@@ -17,10 +14,8 @@ For Simple runs, skip the whole run-folder ceremony. Requirements:
 - Conventional-commit subject.
 - Push the fix directly to the PR branch.
 - PR body stays short — summary + test plan + rollback (no `Tracking plan:` line, no `Status:` field, no linked run folder). If the existing body already has these tracking fields from a prior promotion, leave them; otherwise do not add them.
-- Still respect: three-signal `in-progress` lock (already claimed in step 1), label discipline (pipeline + category + meta), the compatibility checks inside the single step-8 `om-auto-review-pr` pass.
+- Still respect: an isolated worktree (skip straight to step 4 for worktree setup); the three-signal `in-progress` lock (already claimed in step 1, released at run end); label discipline (pipeline + category + meta); the single step-8 `om-auto-review-pr` pass in autofix mode (compatibility checks inside it).
 - Final summary comment still posts, but compacted to: summary of changes, how to verify, what can go wrong. No "Verification phases" matrix, no "External references honored" section unless actually relevant.
-
-A Simple run still uses an isolated worktree (skip straight to step 4 for worktree setup), still runs `om-auto-review-pr` in autofix mode, and still releases the lock per step 11.
 
 ## Spec-implementation-run contract
 

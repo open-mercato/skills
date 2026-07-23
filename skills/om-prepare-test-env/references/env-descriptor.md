@@ -1,14 +1,9 @@
 # Environment descriptor
 
 Full schema and rules for `$ENV_DESCRIPTOR` (`<paths.qa>/test-env.json`) — the
-deliverable other skills depend on. Loaded from the `om-prepare-test-env` body
-(Phase 1 reads `baseUrl` from it; the generated script writes it on every
-successful run per the entrypoint contract).
-
-The deliverable other skills depend on is `$ENV_DESCRIPTOR`
-(`<paths.qa>/test-env.json`). The **generated script** writes it on every
-successful run, so consumers (`om-auto-qa-pr`, `om-integration-tests`)
-always attach to the same instance:
+deliverable other skills depend on. Phase 1 reads `baseUrl` from it; the
+**generated script** writes it on every successful run, so consumers
+(`om-auto-qa-pr`, `om-integration-tests`) always attach to the same instance:
 
 ```json
 {

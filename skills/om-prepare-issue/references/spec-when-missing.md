@@ -51,9 +51,9 @@ If any fails, do not open a spec PR — fall back to step 4's inline guidance.
 ## After this branch
 
 The issue links a design a human can review, and the spec PR carries the design
-commit. Implementation resumes later with `om-auto-implement-spec {SPEC_PATH}` or
-`om-auto-fix-issue {issueId}` (both continue the same spec PR — never a
-second one), or `om-auto-continue-pr {specPrNumber}` directly. Report both the
+commit. Implementation happens later via `om-auto-implement-spec {SPEC_PATH}` or
+`om-auto-fix-issue {issueId}` — both keep the spec PR design-only and ship the
+implementation on its own PR referencing it (`Refs #{specPr}`). Report both the
 issue and the spec PR in step 6.
 
 ## Guardrails

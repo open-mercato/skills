@@ -25,7 +25,7 @@ When the repo already has a `CHANGELOG.md`, match its existing format exactly �
 
 ## Chaining
 
-This skill drafts a `CHANGELOG.md` entry and delegates the PR mechanics to `om-auto-create-pr` — branch, worktree, commit, docs-only gate, labels, the `om-auto-review-pr` autofix pass, and the summary comment — so `om-auto-create-pr` is what opens the PR (checking for an existing changelog PR first) and what emits the `PR:` chaining reference line the next skill in a chain consumes; this skill surfaces that PR URL in its own report. Companion skills: `om-auto-create-pr` (required — the run stops if it is missing) and, optionally, `om-sync-merged-pr-issues`, which consumes the same window of merged PRs and runs well alongside it.
+This skill drafts a `CHANGELOG.md` entry and delegates the PR mechanics to `om-auto-create-pr` — branch, worktree, commit, docs-only gate, labels, the `om-auto-review-pr` autofix pass, and the summary comment. `om-auto-create-pr` opens the PR (checking for an existing changelog PR first) and emits the `PR:` chaining reference line; this skill surfaces that PR URL in its own report. Companion skills: `om-auto-create-pr` (required — the run stops if it is missing) and, optionally, `om-sync-merged-pr-issues`, which consumes the same window of merged PRs.
 
 ## Workflow
 
@@ -125,7 +125,7 @@ This skill drafts a `CHANGELOG.md` entry and delegates the PR mechanics to `om-a
    Apply labels: documentation, skip-qa.
    ```
 
-   Let `om-auto-create-pr` handle branch creation, the isolated worktree, the commit, the docs-only validation gate, the PR body, label normalization, the `om-auto-review-pr` autofix pass, and the comprehensive summary comment. Important: this skill never runs the full validation gate itself. That is `om-auto-create-pr`'s job, and a changelog edit is docs-only by definition.
+   Let `om-auto-create-pr` handle branch creation, the isolated worktree, the commit, the docs-only validation gate, the PR body, label normalization, the `om-auto-review-pr` autofix pass, and the summary comment. This skill never runs the full validation gate itself — that is `om-auto-create-pr`'s job.
 
 9. **Honor `--dry-run`.** When `--dry-run` is set: compute the full entry in memory, print the dry-run report per `references/report-templates.md` — the full drafted entry, the per-PR audit table (category, emoji, credited author, supersede notes), and a full-sentence closing paragraph. Do **not** edit `CHANGELOG.md`; do **not** call `om-auto-create-pr`.
 
@@ -149,10 +149,9 @@ This skill drafts a `CHANGELOG.md` entry and delegates the PR mechanics to `om-a
 
 ## Reporting
 
-Both report shapes — the final run report (step 10) and the dry-run report with its per-PR audit table (step 9) — live in `references/report-templates.md`; fill them exactly and expand with detail. The CHANGELOG entry and line formats in steps 5–6 are the product format, not run reporting, and stay authoritative where they are.
+Both report shapes (steps 9–10) live in `references/report-templates.md`; fill them exactly and expand with detail. The CHANGELOG entry and line formats in steps 5–6 are the product format, not run reporting, and stay authoritative where they are.
 
 ## Notes
 
 - Runs well after `om-sync-merged-pr-issues` — the two skills consume the same window of merged PRs but mutate different surfaces (issue tracker vs `CHANGELOG.md`).
-- The generated entry is intentionally a *draft*. A human maintainer should still fill in the Highlights paragraph, possibly regroup subsections, and adjust the narrative. `om-auto-create-pr` opens the PR in `review` so a maintainer sees it before merge.
-- Because the work is delegated to `om-auto-create-pr`, this skill inherits all of its guarantees: isolated worktree, incremental commits, single `om-auto-review-pr` review/autofix pass (including breaking-change checks), and the comprehensive summary comment.
+- The generated entry is intentionally a *draft*: a maintainer fills in Highlights and adjusts the narrative; `om-auto-create-pr` opens the PR in `review` so they see it before merge.

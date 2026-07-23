@@ -56,10 +56,8 @@ before generating, and it **will not hand back a result that fails the gate** â€
    2. **Draft the router body** from `references/templates/skill-skeleton.md`:
       a two-line step 0 pointing at the new skill's own
       `references/agentic-setup.md`, built from the shared preamble blocks in
-      `references/shared-boilerplate.md` pasted verbatim (config load,
-      repo-local extension check, untrusted-content boundary, value
-      sanitization), plus the new skill's `references/rules.md` with the shared
-      rules.
+      `references/shared-boilerplate.md` pasted verbatim, plus the new skill's
+      `references/rules.md` with the shared rules.
    3. **Push detail down** to `references/` using the up/down rule in
       `references/philosophy.md` â€” output templates, conditional branches, big
       tables, and detailed sub-procedures start in layer 3, not the body.

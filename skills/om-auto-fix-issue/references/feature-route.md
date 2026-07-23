@@ -4,9 +4,8 @@ The route `om-auto-fix-issue` takes (instead of the bug chain, steps 4–12) whe
 step 2 classifies the issue as a feature request. It specs-then-builds the feature —
 the spec (when one is authored) lands on its own design-only spec PR, and the
 implementation ships on exactly one implementation PR referencing it — autonomous
-by default. The delegated skills own the worktree, the
-claim, the review autofix loop, and UI verification — this route only triages,
-decides claim/resume, resolves the spec, and confirms the contract.
+by default. The delegated skills own the worktree, the claim, the review autofix
+loop, and UI verification.
 
 ## F1. FR triage gate
 
@@ -17,10 +16,9 @@ Nothing is claimed yet, so a stop leaves no lock behind.
 
 ## F2. Claim / resume decision
 
-The step-1 three-signal in-progress lock decision applies (`in-progress` held by
-another actor, a foreign assignee, or a `🤖` claim comment newer than 30 minutes;
-60-minute stale-lock recovery; `--force` overrides only with an explicit override
-comment). Also treat the slot as taken when an open PR already references this issue
+The step-1 three-signal in-progress lock decision applies, with its 60-minute
+stale-lock recovery and `--force` override rules. Also treat the slot as taken
+when an open PR already references this issue
 (**search-prs** for `#{issueId}`): stop and point at
 `om-auto-continue-pr {prNumber}` — **unless** that PR is a **spec-only design PR**
 (draft, `Refs #{issueId}`, a spec file but no implementation commits), which is this

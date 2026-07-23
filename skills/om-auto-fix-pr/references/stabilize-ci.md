@@ -2,10 +2,9 @@
 
 Two related things `om-auto-fix-pr` runs: the **outer loop** that drives a PR to
 approvable + green + QA-evidenced, and the **CI stabilization procedure** the loop's
-CI stage (and the skill's `--ci-only` mode) uses to drive checks green. Both live
-here so the CI stage points at its own reference instead of invoking a separate
-skill. Each sub-skill named below is invoked verbatim; this file sequences them and
-defines the exit criteria and the CI-fixing detail.
+CI stage (and the skill's `--ci-only` mode) uses to drive checks green. Each
+sub-skill named below is invoked verbatim; this file sequences them and defines the
+exit criteria and the CI-fixing detail.
 
 ## The outer stabilization loop (full PR mode)
 
@@ -101,8 +100,7 @@ Per iteration:
 
 For each confirmed flake (failed, passed on rerun, unrelated to the diff), file a
 tracked follow-up (via `om-followup-issue-from-pr` or **create-issue**): test name,
-failure signature, run link, rerun evidence. Flaky tests that go unrecorded get
-rediscovered the hard way.
+failure signature, run link, rerun evidence.
 
 ## Outer-loop exit criteria
 

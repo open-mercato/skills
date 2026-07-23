@@ -17,7 +17,7 @@ Run unattended: the user starts you with a spec reference and comes back to an *
 
 ## Chaining
 
-A previous skill (typically `om-auto-write-spec`) may already have opened the **spec PR** — that PR stays a design-only deliverable; this skill ships the implementation on its **own PR** that references it (`Refs #{specPr}` plus the `Source doc:` line), keeping both PRs atomic. An open implementation PR already referencing the spec is resumed, never duplicated. Downstream, it ends with the `PR:` / `Spec:` reference lines. Companion skills: `om-auto-create-pr` (required engine for fresh runs), `om-auto-continue-pr` (engine when a PR exists; `-loop` only on `--loop` or a >20-Step plan), `om-auto-review-pr`, `om-auto-qa-pr`, `om-open-pr` — each optional pieces fall back per the shared open-or-reuse contract in `references/pr-finalize.md`.
+A previous skill (typically `om-auto-write-spec`) may already have opened the **spec PR** — that PR stays a design-only deliverable; this skill ships the implementation on its **own PR** referencing it (`Refs #{specPr}` plus the `Source doc:` line). An open implementation PR already referencing the spec is resumed, never duplicated. Ends with the `PR:` / `Spec:` reference lines. Companion skills: `om-auto-create-pr` (required engine for fresh runs), `om-auto-continue-pr` (engine when a PR exists; `-loop` only on `--loop` or a >20-Step plan), `om-auto-review-pr`, `om-auto-qa-pr`, `om-open-pr` — optional pieces fall back per `references/pr-finalize.md`.
 
 ## Workflow
 
@@ -26,12 +26,12 @@ A previous skill (typically `om-auto-write-spec`) may already have opened the **
 1. **Resolve the spec.** Follow `references/spec-resolution.md`. Outcome is exactly one of:
 
    - `SPEC_PATH` (repo-relative) + optionally `SPEC_PR` (an open PR whose branch carries the spec) + optionally `ISSUE_ID`.
-   - **Not found** → stop with the notification format in that file (closest candidates listed). Never guess, never write a spec yourself — that is `om-auto-write-spec`'s job. Report `Status: blocked`.
+   - **Not found** → stop with the notification format in that file (closest candidates listed). Never guess or write a spec yourself — that is `om-auto-write-spec`'s job. Report `Status: blocked`.
 
 2. **Choose the engine and implement — on an implementation PR, never on the spec PR.**
 
    - **An implementation PR already exists** (**search-prs**: an open PR carrying `Source doc: ${SPEC_PATH}` or `Refs #{SPEC_PR}` with implementation commits): resume it — invoke `om-auto-continue-pr {implPrNumber}` verbatim (`om-auto-continue-pr-loop` only when `--loop` was passed or the plan exceeds 20 Steps, `references/engine-selection.md`). Never open a second implementation PR.
-   - **Otherwise — fresh implementation run**: `om-auto-create-pr` is the default engine; use **`om-auto-create-pr-loop` only when `--loop` was passed or the spec's Implementation Plan exceeds 20 Steps** (`references/engine-selection.md`). When `SPEC_PR` is set and the spec file is not on base yet, materialize it for the engine (fetch the spec PR head and check out `${SPEC_PATH}` from it into the worktree — the spec document still merges via its own spec PR; do not commit it to the implementation branch). Invoke the chosen engine verbatim with the brief "Implement the spec at ${SPEC_PATH}" and `--spec ${SPEC_PATH}` — it resolves the plan from the spec's Implementation Plan, uses branch `feat/${SLUG}`, opens the implementation PR ready-for-review via `om-open-pr`/inline with full labels, runs the validation gate and the single `om-auto-review-pr` review/autofix loop, and posts the summary comment (the loop engine additionally writes its run folder and checkpoints, resumable via `om-auto-continue-pr-loop`).
+   - **Otherwise — fresh implementation run**: `om-auto-create-pr` is the default engine; use **`om-auto-create-pr-loop` only when `--loop` was passed or the spec's Implementation Plan exceeds 20 Steps** (`references/engine-selection.md`). When `SPEC_PR` is set and the spec file is not on base yet, materialize it for the engine (fetch the spec PR head and check out `${SPEC_PATH}` from it into the worktree — the spec document still merges via its own spec PR; do not commit it to the implementation branch). Invoke the chosen engine verbatim with the brief "Implement the spec at ${SPEC_PATH}" and `--spec ${SPEC_PATH}` — it resolves the plan from the spec's Implementation Plan, uses branch `feat/${SLUG}`, opens the implementation PR ready-for-review via `om-open-pr`/inline with full labels, runs the validation gate and the single `om-auto-review-pr` review/autofix loop, and posts the summary comment (the loop engine additionally writes its run folder and checkpoints).
 
    Either way the engine owns: worktree isolation, incremental commits, validation gate, labels, review loop, summary comment. Pass `--force` through when given. Ensure the implementation PR body carries `Refs #{SPEC_PR}` when a spec PR exists — and post one idempotent `` 🤖 `om-auto-implement-spec` — 🔁 implementation PR `` comment on the spec PR linking it — plus `Closes #${ISSUE_ID}` when an issue drives the run, and the plan the `Source doc:` line.
 
@@ -43,7 +43,7 @@ A previous skill (typically `om-auto-write-spec`) may already have opened the **
 
 - Shared rules: `references/rules.md` — autonomous-run contract, emoji glossary, label discipline, secrets, markers. They always apply.
 - Thin orchestrator: never re-implement planning, validation, labeling, or review — delegate to the engine skills and pass context through verbatim.
-- Spec not found is a clean stop with candidates listed, never a guess and never an improvised spec.
-- Atomic PRs: the spec PR stays design-only — implementation never lands on its branch. Exactly one implementation PR per spec, carrying `Refs #{specPr}` + `Source doc:`; resume an existing one, never open a second (`references/pr-finalize.md`).
+- Spec not found is a clean stop with candidates listed, never a guess or an improvised spec.
+- Atomic PRs: the spec PR stays design-only — implementation never lands on its branch. Exactly one implementation PR per spec (`Refs #{specPr}` + `Source doc:`); resume, never duplicate (`references/pr-finalize.md`).
 - The finished state is a ready (non-draft) PR with full SDLC labels, a run summary comment, and — for user-facing changes — screenshots from the working app on the PR.
 - All tracker interaction goes through named descriptor operations; the base branch always comes from config.

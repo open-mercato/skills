@@ -31,7 +31,7 @@ Use this skill to triage all open PRs and answer one question: what can merge ri
    - **Almost ready**: only 1-2 minor blockers remain
    - **Blocked**: conflicts, failing CI, blocking labels, missing approval, missing QA sign-off, or multiple blockers
 
-4. **Report.** The report is this skill's whole deliverable, so it stays inline — never a bare label dump. Every row carries a "why" / "what's missing" cell written in full sentences: name the concrete gates that pass or fail and what would move the PR forward, so a reader who did not run the scan understands each classification. Use this output shape:
+4. **Report.** The report is this skill's whole deliverable, so it stays inline — never a bare label dump. Every row carries a "why" / "what's missing" cell in full sentences: name the concrete gates that pass or fail and what would move the PR forward. Use this output shape:
 
    ```markdown
    ## Merge Buddy Report — {date}

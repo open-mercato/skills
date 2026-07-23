@@ -1,13 +1,11 @@
 # Cross-skill coverage check
 
-Skills in this collection delegate to each other by name (for example the autofix
+Skills in this collection delegate to each other by name (e.g. the autofix
 chain `om-verify-in-repo` → `om-root-cause` → `om-fix` → `om-open-pr` →
 `om-auto-review-pr`) and point at each other's reference files
-(`om-<skill>/references/<file>` — most commonly the tracker and browser
-descriptors shipped inside `om-setup-agent-pipeline`). A cherry-picked install
-can leave those references dangling: a skill runs, names its next step, and the
-step's skill is simply not installed. This check finds every dangling reference
-and produces one ready-to-paste command that installs everything missing.
+(`om-<skill>/references/<file>`). A cherry-picked install can leave those
+references dangling. This check finds every dangling reference and produces one
+ready-to-paste command that installs everything missing.
 
 Run it during setup (workflow step "Verify cross-skill coverage") and any time
 the user reports a skill "not found" mid-pipeline.

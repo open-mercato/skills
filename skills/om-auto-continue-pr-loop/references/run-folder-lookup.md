@@ -1,6 +1,6 @@
 # Locate the run folder (step 3)
 
-Prefer the explicit `Tracking plan:` line in the PR body (written by `om-auto-create-pr-loop`): fetch the PR body via **get-pr** (field `body`) and take the first line matching `^Tracking (plan|run folder):` (e.g. pipe the body through `grep -E '^Tracking (plan|run folder):' | head -n1`).
+Prefer the explicit `Tracking plan:` line in the PR body (written by `om-auto-create-pr-loop`): from the `body` already fetched by the step 1 **get-pr** (no second fetch), take the first line matching `^Tracking (plan|run folder):` (e.g. pipe the body through `grep -E '^Tracking (plan|run folder):' | head -n1`).
 
 Expected value (current format): `Tracking plan: ${RUNS_DIR}/<date>-<slug>/PLAN.md`.
 

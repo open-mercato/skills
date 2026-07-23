@@ -1,9 +1,9 @@
 # Supersede Credit Rule
 
 The credited-author resolution algorithm `om-auto-update-changelog` runs in
-step 3 to compute `primaryAuthor` and optional `viaAuthor` for every merged PR.
+step 4 to compute `primaryAuthor` and optional `viaAuthor` for every merged PR.
 
-The central problem this skill solves: when `om-auto-review-pr` carries a fork contributor's PR forward (because the fork author went quiet and the reviewer applied the fixes themselves), the **merged** PR's author field is the reviewer, not the original contributor. A naive changelog generator would credit the reviewer. That is wrong — the original contributor did the work. Three detection paths, in priority order:
+The problem: when `om-auto-review-pr` carries a fork contributor's PR forward, the **merged** PR's author field is the reviewer, not the original contributor — who did the work and must get the credit. Three detection paths, in priority order:
 
 ## Path A: `Supersedes #N` in the PR body
 

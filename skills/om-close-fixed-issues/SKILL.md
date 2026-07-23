@@ -41,8 +41,7 @@ Maintenance skill. Walk a window of recent pull requests; where a PR authoritati
    Skip and log when any of the following holds:
 
    - Issue state is not `OPEN`.
-   - Issue carries `do-not-close`, `blocked`, or `in-progress` labels.
-   - Issue is assigned to a user other than `${CURRENT_USER}` **and** carries `in-progress` (claimed by another run).
+   - Issue carries `do-not-close`, `blocked`, or `in-progress` labels (an `in-progress` label here means another run has already claimed it — this run has not claimed yet, so skip rather than collide).
    - Issue belongs to a different repository (cross-repo references are explicitly out of scope).
 
    Otherwise, branch by PR state:

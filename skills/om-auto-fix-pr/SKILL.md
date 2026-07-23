@@ -13,19 +13,16 @@ instead of blocking the PR. Fork PRs keep the carry-forward supersede/credit
 rules. The PR is left **merge-ready** with normalized labels; the actual merge
 stays with `om-approve-merge-pr` / `om-merge-buddy` behind the QA gate.
 
-This skill is an **orchestrator** over existing skills — `om-auto-review-pr`
-(review + autofix + conflict/fork handling), `om-auto-qa-pr` (UI QA), and
-`om-followup-issue-from-pr` (nit follow-ups) — plus a **built-in CI stabilization
-procedure** (`references/stabilize-ci.md`: classify each failure as real bug / test
-bug / flake / infra, fix the real ones with tests, push, re-check — never green by
-weakening a check). It holds the outer claim and coordinates them; it does not
+This skill is an **orchestrator**: it holds the outer claim and coordinates
+`om-auto-review-pr` (review + autofix + conflict/fork handling), `om-auto-qa-pr`
+(UI QA), and `om-followup-issue-from-pr` (nit follow-ups), plus the **built-in CI
+stabilization procedure** (`references/stabilize-ci.md`); it does not
 re-implement the delegated skills' logic. It is the PR-side counterpart to
 `om-auto-fix-issue` (issue-side chain).
 
 A **`--ci-only` mode** drives just CI green — on a PR (`om-auto-fix-pr 123
 --ci-only`) or on a plain branch with no PR yet (`om-auto-fix-pr --ci-only --branch
-<name>`) — skipping review, UI, and follow-ups. It runs only the CI stabilization
-procedure and reports.
+<name>`) — skipping review, UI, and follow-ups.
 
 ## Arguments
 

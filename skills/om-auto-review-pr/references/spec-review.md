@@ -1,11 +1,10 @@
 # Specification review (spec-only PRs)
 
-People run reviews over PRs that contain only a specification — a design
-document, no implementation. Reviewing such a PR with the code checklist alone
-misses the point: there is no code to gate, and the questions that matter are
-design questions. This fork replaces the code-review pass (SKILL.md steps 7–8)
-for spec-only PRs; every other step — claim, worktree, verdict, labels, autofix
-loop, release, report — applies unchanged.
+A spec-only PR contains a design document and no implementation — the questions
+that matter are design questions, not code gates. This fork replaces the
+code-review pass (SKILL.md steps 7–8) for spec-only PRs; every other step —
+claim, worktree, verdict, labels, autofix loop, release, report — applies
+unchanged.
 
 ## Detection — `SPEC_ONLY`
 

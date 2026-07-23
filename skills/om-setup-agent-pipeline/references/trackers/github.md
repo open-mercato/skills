@@ -1,8 +1,8 @@
 # Tracker provider: GitHub
 
-This file is the GitHub implementation of the tracker operations contract (see `TEMPLATE.md` for the contract itself). Every skill in the collection performs issue/PR state management through **named tracker operations** — `**get-issue**`, `**comment-pr**`, and so on — and this file defines what each operation means for GitHub, using the `gh` CLI.
+This file is the GitHub implementation of the tracker operations contract (see `TEMPLATE.md` for the contract itself). Skills perform issue/PR state management through **named tracker operations** — `**get-issue**`, `**comment-pr**`, and so on — and this file defines what each operation means for GitHub, using the `gh` CLI.
 
-How it is used at runtime: `om-setup-agent-pipeline` copies this file into the repository at `.ai/trackers/github.md`, and the config's `tracker` field selects it. When a skill says "tracker operation **get-pr**", execute the command documented under that operation heading in the repo's copy. The repo's copy is authoritative: teams extend or override any operation by editing it — add flags, swap a command, append repo-specific conventions — and every skill picks the change up on its next run. An operation not covered by an edit keeps its behavior from this file's text as copied.
+At runtime: `om-setup-agent-pipeline` copies this file into the repository at `.ai/trackers/github.md`, and the config's `tracker` field selects it. When a skill says "tracker operation **get-pr**", execute the command documented under that operation heading in the repo's copy. The repo's copy is authoritative: teams extend or override any operation by editing it, and every skill picks the change up on its next run. An operation not covered by an edit keeps its behavior from this file's text as copied.
 
 ## Prerequisites
 

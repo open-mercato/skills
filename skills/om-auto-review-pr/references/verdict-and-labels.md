@@ -4,9 +4,9 @@ Detailed procedure for step 10 of `om-auto-review-pr`. The authoritative label i
 
 ## Submit the verdict
 
-If approved, submit an approval review via the tracker operation **review-pr** (verdict: approve). If the verdict is request changes (any blocker, or any major without a documented waiver), submit a changes-requested review via **review-pr** (verdict: request changes).
+Submit the review via the tracker operation **review-pr**: verdict approve when approved; verdict request changes on any blocker, or any major without a documented waiver.
 
-The review body must contain the full structured report from the code-review skill. For re-reviews, explicitly note that it is a re-review in the title or summary.
+The review body must contain the full structured report from the code-review skill. For re-reviews, note that it is a re-review in the title or summary.
 
 ## Label mechanics
 
@@ -16,7 +16,7 @@ Pipeline labels: `review`, `changes-requested`, `qa`, `qa-failed`, `merge-queue`
 
 Keep `in-progress` separate from the pipeline-state helper. It is a lock, not a workflow state.
 
-Pipeline-label transitions go through the `set_pipeline_label` helper (usage: `set_pipeline_label <prNumber> <newLabel>`), one of the label guards from the tracker descriptor — do not redefine it here. Its exact behavior (the `PIPELINE_LABELS` group, which labels it adds/removes, and which category/meta/priority/risk labels it preserves) is in `references/label-transitions.md`. Every label change lands in the single consolidated `🏷️ label rationale` comment (one label per line with its emoji and a full-sentence reason), updated in place via **update-comment** — never a new comment per change (template: `references/label-transitions.md`).
+Pipeline-label transitions go through the `set_pipeline_label` helper (usage: `set_pipeline_label <prNumber> <newLabel>`), one of the label guards from the tracker descriptor — do not redefine it here; its exact behavior is in `references/label-transitions.md`. Every label change lands in the single consolidated `🏷️ label rationale` comment, updated in place via **update-comment** — never a new comment per change (template: `references/label-transitions.md`).
 
 Label rules:
 
@@ -33,7 +33,7 @@ Priority and risk labels (always ensure exactly one of each, when labels are ena
 
 When the verdict is `changes-requested`, reassign the PR back to the original PR author after the review and pipeline label are posted, unless the author is the current reviewer, a bot account, or otherwise unavailable.
 
-Suggested flow — fill `PR_AUTHOR` with the author's login from the tracker operation **get-pr** for `{prNumber}`, requesting `author`. If `PR_AUTHOR` is non-empty and differs from `$CURRENT_USER`:
+Flow — `PR_AUTHOR` is the author login already captured by the step 2 **get-pr** (the author does not change between steps); no re-fetch is needed. If `PR_AUTHOR` is non-empty and differs from `$CURRENT_USER`:
 
 1. **unassign-pr**: remove `$CURRENT_USER` from `{prNumber}`'s assignees.
 2. **assign-pr**: add `$PR_AUTHOR` as the assignee.

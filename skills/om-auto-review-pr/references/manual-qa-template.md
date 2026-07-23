@@ -2,11 +2,10 @@
 
 The additive comment `om-auto-review-pr` posts when the verdict is approved AND
 the PR carries `needs-qa` without `skip-qa` — i.e. it was just routed to
-`merge-queue` with `needs-qa` retained. It tells the QA reviewer who later picks
-the PR up exactly what to exercise. This does not replace the short
-pipeline-label comment, the claim comment, or the completion comment — keep all
-of them. Do not set the `qa` label yourself; the QA reviewer applies it manually
-when they start testing. Skip this step entirely when `labels.enabled` is
+`merge-queue` with `needs-qa` retained. It tells the QA reviewer exactly what to
+exercise. It does not replace the pipeline-label, claim, or completion comments
+— keep all of them. Do not set the `qa` label yourself; the QA reviewer applies
+it when they start testing. Skip this step entirely when `labels.enabled` is
 `false`.
 
 Build the instructions from the actual diff, not from generic boilerplate:

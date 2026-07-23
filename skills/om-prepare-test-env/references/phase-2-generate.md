@@ -1,13 +1,9 @@
 # Phase 2 — Generate the entrypoint (first run, `--regenerate`, or repair)
 
 Full procedure for the generation phase of `om-prepare-test-env`, steps 2.1–2.6,
-plus the fallback for when a reliable script cannot be generated. The `SKILL.md`
-body enters this file when no marker-bearing entrypoint exists, on `--regenerate`,
-or in repair mode after a Phase 1 script failure.
-
-This is the expensive phase. Its output is not a running app — it is a **pair of
-scripts that can produce a running app forever after**, verified before the
-phase ends.
+plus the fallback for when a reliable script cannot be generated. Entered when no
+marker-bearing entrypoint exists, on `--regenerate`, or in repair mode after a
+Phase 1 script failure.
 
 ### 2.1 Read the repo's own instructions, detect the platform
 
@@ -115,14 +111,13 @@ answer in the script. Do not provision containers the user did not ask for.
 ### 2.3 Write the scripts
 
 Generate `$UP_SCRIPT` and `$DOWN_SCRIPT` implementing the **entrypoint
-contract** (see `references/entrypoint-contract.md`), with every
-project-specific fact discovered in 2.2 baked in as
-variables at the top of the script (commands, service images, ports, build
-inputs, artifacts, env vars). The scripts are the durable, committed-friendly
-artifact — plain POSIX `sh` (or plain PowerShell in the `.ps1` flavor), no
-agent needed to run them, parameterized so a
-human can read and tweak them. Write them with LF line endings and add the
-`.gitattributes` rules from 2.1 in the same change.
+contract** (`references/entrypoint-contract.md`), with every project-specific
+fact discovered in 2.2 baked in as variables at the top of the script
+(commands, service images, ports, build inputs, artifacts, env vars). The
+scripts are the durable, committed-friendly artifact — plain `sh` (or plain
+PowerShell), no agent needed to run them, readable and tweakable by a human.
+Write them with LF line endings and add the `.gitattributes` rules from 2.1 in
+the same change.
 
 ### 2.4 Ensure the configured browser provider (generation-time)
 

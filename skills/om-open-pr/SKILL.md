@@ -18,7 +18,7 @@ Your job: ship the work — commit, push, open (or reuse) the PR, label it, summ
 - `--plan <path>` (optional) — execution-plan path; adds the `Tracking plan:` / `Status:` lines and the `## Progress` section to the body so `om-auto-continue-pr` can resume
 - `--draft` (optional) — open as a draft. Only for explicitly incomplete work (spec-only design PRs, interrupted runs). Default is **ready for review**: a completed autonomous run leaves a ready PR.
 - `--summary-file <path>` (optional) — caller-provided run-summary body (the caller's own summary structure); when present, post it via **comment-pr** after labeling
-- `--handoff <next-skill>` (optional) — the caller's chain continues on this PR with `<next-skill>` (e.g. `om-auto-fix-issue` chaining into `om-auto-review-pr`). Step 8 then **transfers** the chain's `in-progress` lock onto the PR (assignee + label + hand-off comment) *before* the issue handback releases the issue lock, so the work is never observably unclaimed between chain steps. Without it, the PR is left unclaimed — correct only when this skill is the chain's last step.
+- `--handoff <next-skill>` (optional) — the caller's chain continues on this PR with `<next-skill>`; step 8 then transfers the chain's `in-progress` lock onto the PR before releasing the issue lock. Without it, the PR is left unclaimed — correct only when this skill is the chain's last step.
 
 ## Chaining
 
@@ -93,7 +93,7 @@ Issue: #<issue number> (link: <full issue URL>)
 PR: #<PR number> (link: <full PR URL>)
 ```
 
-The reference lines must be on their own lines, exact shape, no quoting or list markers; include `Issue:` only when an `{issueId}` was given. Downstream skills (e.g. `om-auto-review-pr`) reference them via `{{previousPullRequestUrl}}` / `{{previousPullRequestNumber}}`; if the lines are missing, the next step runs with empty arguments and produces useless output.
+The reference lines must be on their own lines, exact shape, no quoting or list markers; include `Issue:` only when an `{issueId}` was given. Downstream skills reference them via `{{previousPullRequestUrl}}` / `{{previousPullRequestNumber}}`.
 
 On the blocked paths (no changes / push failed / PR open failed), end with `Status: blocked` and a one-paragraph explanation — and omit the `PR:` / `Issue:` reference lines.
 
@@ -101,11 +101,11 @@ On the blocked paths (no changes / push failed / PR open failed), end with `Stat
 
 - Shared rules: `references/rules.md` — autonomous-run contract, label discipline, claim etiquette, secrets hygiene, marker contract, emoji glossary. They always apply.
 - Always release the issue's `in-progress` lock at the end of an issue-driven run, even on failure — use a trap or finally pattern so a crash still clears it.
-- With `--handoff <next-skill>`, the PR must carry the chain's `in-progress` lock (assignee + label + hand-off comment) **before** the issue lock is released — the chain is never observably unclaimed between steps (`references/claim-pr.md`, chained hand-off).
+- With `--handoff <next-skill>`, the PR must carry the chain's `in-progress` lock **before** the issue lock is released (`references/claim-pr.md`, chained hand-off).
 - Open the PR against the configured base branch (`baseBranch` from `.ai/agentic.config.json`); never hard-code the target.
-- Open the PR **ready for review** by default; `--draft` is only for explicitly incomplete work (spec-only design PRs, interrupted runs). A completed autonomous run leaves a ready PR.
+- Open the PR **ready for review** by default; `--draft` is only for explicitly incomplete work.
 - Never open a duplicate PR — reuse an existing one for the branch/issue.
 - Do not introduce new code changes in this step; the previous step already validated what's on disk. Limit file edits to PR-prep artifacts only (for example, a required changelog entry).
 - Conventional-commit-style PR title scoped to the affected area.
-- Apply the full label set — `review` pipeline label, category, QA meta, exactly one priority, exactly one risk — with a single consolidated label-rationale comment covering the whole set (one comment, not one per label).
+- Apply the full label set (step 6) with a single consolidated label-rationale comment — one comment, not one per label.
 - Always emit the `PR:` reference line (and `Issue:` when issue-driven) on the success path so the next step has what it needs.

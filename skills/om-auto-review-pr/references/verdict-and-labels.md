@@ -6,7 +6,7 @@ Detailed procedure for step 10 of `om-auto-review-pr`. The authoritative label i
 
 Submit the review via the tracker operation **review-pr**: verdict approve when approved; verdict request changes on any blocker, or any major without a documented waiver.
 
-The review body must contain the full structured report from the code-review skill. For re-reviews, note that it is a re-review in the title or summary.
+The review body **is** the `om-code-review` report reproduced verbatim in the exact output structure that skill defines — the `# 🔍 Code Review` heading, 🎯 Summary, Verdict, the 🧪 Validation Gate table, Findings grouped by severity, the 💥 Breaking-Changes checklist, and 🧪 Test Coverage — emoji headings and all, in full sentences (Reporting style, `references/rules.md`). Post that report as the review body; do **not** condense it into a fresh short summary, and do not strip the emoji headings — the om-code-review pass is the deliverable posted to the PR, not an internal analysis you re-summarize. A clean approve legitimately omits empty severity sections, but the Summary, Verdict, and Validation Gate sections are always present and written as full sentences. For re-reviews, note that it is a re-review in the title or summary.
 
 ## Label mechanics
 

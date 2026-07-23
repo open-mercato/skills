@@ -74,7 +74,7 @@ Core sections (adapt when the feature genuinely needs a different structure, but
 
 ### 2. Architectural review
 
-When asked to review or audit a spec, produce (emojis decorate the headings; the section text itself never changes — parsers and humans key on the text):
+When asked to review or audit a spec, produce (same heading rule: emojis decorate, section text never changes):
 
 ```markdown
 # 🔍 Architectural Review: {Spec Title}

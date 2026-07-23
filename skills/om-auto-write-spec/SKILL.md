@@ -49,5 +49,5 @@ Companion skills (all optional, with fallbacks): `om-spec-writing` (required —
 - Every autonomous default is surfaced for override (assumptions comment + spec section); any `⚠ NEEDS HUMAN CONFIRMATION` keeps the PR a draft. Never `qa-approved` from this skill.
 - Spec PRs use `Refs #{issueId}`, never a closing keyword — merging a spec must not close the FR.
 - Mockups are illustrative statics — never commit them outside `${SPECS_DIR}/assets/`, never scaffold app code for a mockup.
-- Token discipline: do not re-read the whole repo — `om-spec-writing` step 1 already bounds context loading; reuse its findings instead of re-exploring.
-- All tracker interaction goes through named descriptor operations; the base branch always comes from the config, never hard-coded.
+- Token discipline: do not re-read the whole repo — `om-spec-writing` step 1 already bounds context loading; reuse its findings.
+- All tracker interaction goes through named descriptor operations; the base branch always comes from config.

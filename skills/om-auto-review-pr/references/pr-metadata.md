@@ -4,8 +4,6 @@ Detailed procedure for steps 2–3 of `om-auto-review-pr`.
 
 ## 2. Fetch PR metadata and reviewer context
 
-Use the tracker as the source of truth. Collect enough data to decide whether this is a first review or a re-review and whether the PR comes from a fork.
-
 Run the tracker operation **get-pr** for `{prNumber}`, requesting `number`, `title`, `url`, `author`, `baseRefName`, `baseRefOid`, `headRefName`, `headRefOid`, `headRepository`, `headRepositoryOwner`, `isCrossRepository`, `maintainerCanModify`, `mergeable`, `mergeStateStatus`, `reviewDecision`, `labels`, `latestReviews`, `reviews`, `commits`, and `files`. Run **current-user** for the reviewer's login if it was not already captured as `CURRENT_USER` in step 1.
 
 Capture at least: PR title, URL, base branch, head branch, head SHA; author login; whether the PR is cross-repository (`isCrossRepository`); whether maintainers can modify it (`maintainerCanModify`); existing labels; existing reviews by the current reviewer.

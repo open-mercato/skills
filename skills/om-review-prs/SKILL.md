@@ -9,7 +9,7 @@ Use this as a day-start review queue. It finds unreviewed open PRs, shows the qu
 
 ## Chaining
 
-This skill is a sweep, not a single-PR step: it finds every unreviewed open PR and dispatches the full `om-auto-review-pr` workflow at each one, newest first, so it consumes no chaining reference lines and emits none — each delegated review reports its own verdict and markers. It respects `in-progress` claim locks and never force-claims in batch mode, skipping any PR another actor owns. Companion skills: `om-auto-review-pr` (required — reused verbatim per PR rather than reinventing a lighter review path; the run stops if it is missing) and, optionally, `om-merge-buddy`, suggested after the session to show what is now merge-ready.
+This skill is a sweep, not a single-PR step: it finds every unreviewed open PR and dispatches the full `om-auto-review-pr` workflow at each one, newest first, so it consumes no chaining reference lines and emits none — each delegated review reports its own verdict and markers. It respects `in-progress` claim locks and never force-claims in batch mode, skipping any PR another actor owns. Companion skills: `om-auto-review-pr` (required — the run stops if it is missing) and, optionally, `om-merge-buddy`, suggested after the session to show what is now merge-ready.
 
 ## Workflow
 
@@ -49,7 +49,7 @@ This skill is a sweep, not a single-PR step: it finds every unreviewed open PR a
    3. Record the verdict and a one-sentence outcome for the step 6 summary — what drove the verdict, or why the review could not run
    4. Continue to the next PR
 
-   Between PRs, print only this one-line progress marker — the full story of each review belongs in the step 6 summary, where every PR gets its one-sentence outcome:
+   Between PRs, print only this one-line progress marker — the full story of each review belongs in the step 6 summary:
 
    ```text
    Reviewed {done}/{total}. Next: #{number}
@@ -75,4 +75,3 @@ This skill is a sweep, not a single-PR step: it finds every unreviewed open PR a
 - If a PR cannot be reviewed right now, include the reason in the session summary and move on.
 - Respect existing `in-progress` locks; never auto-force in batch mode (`references/claim-pr.md`).
 - Reuse the full `om-auto-review-pr` skill rather than inventing a lighter review path.
-- Optionally suggest `om-merge-buddy` after the session so the user can see what is now merge-ready.

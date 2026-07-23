@@ -19,7 +19,7 @@ Skip the issue (record the reason for the report, mutate nothing) when:
   hold label the repo's `SDLC.md` / labels config marks as agent-off-limits).
 
 This skill does **not** take its own `in-progress` lock — it is a fast, additive
-housekeeping pass, and taking a lock would fight the very automation it supports.
+housekeeping pass.
 
 ## 2. Apply missing SDLC labels
 
@@ -73,9 +73,9 @@ Record `SPEC_STATUS` = `covered` (spec path or spec-PR link) | `missing`. A
 
 Two branches on `SPEC_STATUS = missing`, chosen by the `--write-missing-specs` flag.
 
-**Default (flag OFF) — post the spec-required comment.** The skill authors nothing,
-but it does not stay silent either: post a comment on the issue, addressed to the
-issue author, saying the spec must be filled in before implementation starts. Use
+**Default (flag OFF) — post the spec-required comment.** Post a comment on the
+issue, addressed to the issue author, saying the spec must be filled in before
+implementation starts. Use
 the standard idempotent marker and update in place on re-runs (never duplicate);
 skip entirely when a spec-PR link from this skill is already on the issue (the gap
 is being closed) or when the marker comment already reflects the current state:

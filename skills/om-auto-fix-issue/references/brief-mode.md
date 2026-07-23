@@ -19,11 +19,10 @@ the resulting `{issueId}`.
 
 1. **Invoke the `om-prepare-issue` skill verbatim** with the description as its
    `{brief}`, passing through any user-provided images as `{images}` and the
-   `{repo}` context when given. It dedupes against existing issues and open PRs,
-   links or authors a covering spec when the task needs one (delegating to
-   `om-auto-write-spec` on a design-only PR), files one well-formed,
-   SDLC-labeled issue — or reuses a credible duplicate. When `om-prepare-issue`
-   is not installed, stop and name it as the missing chain skill.
+   `{repo}` context when given. It dedupes, links or authors a covering spec when
+   needed, and files one well-formed, SDLC-labeled issue — or reuses a credible
+   duplicate. When `om-prepare-issue` is not installed, stop and name it as the
+   missing chain skill.
 
 2. **Run it under this chain's autonomous contract.** `om-prepare-issue` is an
    interactive skill; this chain is not. Where it would ask the user, make the

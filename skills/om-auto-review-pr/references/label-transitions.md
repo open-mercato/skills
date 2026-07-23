@@ -1,9 +1,6 @@
 # Pipeline-label mechanics, priority/risk inference, and comment text (step 10)
 
-The detailed label machinery `om-auto-review-pr` uses in step 10 once the verdict
-is known. The body keeps the core verdict→label decisions and the QA safety
-rules; this file holds the `set_pipeline_label` helper's behavior, the
-priority/risk inference rules, and the suggested comment strings.
+The label machinery `om-auto-review-pr` uses in step 10: the `set_pipeline_label` helper's behavior, the priority/risk inference rules, and the suggested comment strings. The verdict→label decisions and QA safety rules live in the skill body.
 
 ## The `set_pipeline_label` helper
 

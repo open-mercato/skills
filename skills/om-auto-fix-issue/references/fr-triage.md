@@ -1,9 +1,8 @@
 # FR triage gate — is this an unbuilt feature?
 
 The read-only gate `om-auto-fix-issue`'s **feature route** runs (step F1) before
-touching a worktree. It is the feature-side analogue of the `om-verify-in-repo` bug
-gate: a bug gate asks "is this defect real and still unfixed?"; this gate asks "is
-this really a feature request, and is the feature not already implemented?" Operate
+touching a worktree. It asks: is this really a feature request, and is the feature
+not already implemented? Operate
 **read-only** — file reads, code search, and read-only tracker operations
 (**get-issue**, **search-prs**, **search-issues**, **repo-info**,
 **current-user**) only. No edits, commits, claims, or branch creation.
@@ -22,21 +21,12 @@ with no activity is not a stop on its own.)
 
 ### 2. Is it a feature request, or actually a bug?
 
-Classify conservatively, label-first then content:
-
-- **Feature / enhancement signal** → a category label such as `feature` (or the
-  repo's equivalent enhancement label); or a title/body describing a *new*
-  capability, endpoint, screen, option, or behavior that does not exist yet
-  ("add…", "support…", "allow…", "introduce…", "new…").
-- **Bug signal** → a `bug` label; or a title/body describing something that
-  *used to work / should work but is broken* (a regression, error, crash, wrong
-  output, "broken", "fails", "regressed", stack trace, steps-to-reproduce).
-
-If the issue is clearly a **bug**, stop this feature route with `NO_ACTION_NEEDED`
-and state that it belongs on `om-auto-fix-issue`'s bug chain, not the feature route.
-When an issue mixes a defect and a new capability, prefer stopping and recommend the
-user split it (the bug goes to the bug chain, the FR stays on the feature route)
-rather than guessing.
+Re-check the step-2 classification (label-first, then content — the same
+feature-vs-bug signals). If the issue is clearly a **bug**, stop this feature route
+with `NO_ACTION_NEEDED` and state that it belongs on `om-auto-fix-issue`'s bug
+chain. When an issue mixes a defect and a new capability, prefer stopping and
+recommend the user split it (the bug goes to the bug chain, the FR stays on the
+feature route) rather than guessing.
 
 ### 3. Is the feature already implemented, or already in flight?
 

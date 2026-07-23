@@ -1,9 +1,5 @@
 # External skill URL handling (expanded)
 
-The full handling `om-auto-create-pr` applies when one or more `--skill-url`
-arguments are provided. The body's step 1 gives the short form; this is the
-expanded contract.
-
 When one or more `--skill-url` arguments are provided:
 
 1. Fetch each URL. Capture the title, author/source, and the actionable rules or checklist.

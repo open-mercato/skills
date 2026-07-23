@@ -5,9 +5,7 @@ description: Read-only triage gate for an autofix chain. Decides whether a track
 
 # Verify in Repo
 
-You are step 1 of an autofix chain (`om-verify-in-repo` → `om-root-cause` → `om-fix` → `om-open-pr` → `om-auto-review-pr`). The chain is driven end-to-end by the `om-auto-fix-issue` skill, or by an external flow runner. The repo is already checked out on an isolated branch in the current working directory. Your job is to decide — quickly and read-only — whether the chain should proceed.
-
-If you say go, the next step (`om-root-cause`) reads the code; then `om-fix` makes edits; then `om-open-pr` pushes and opens a PR. If you say stop, none of that runs.
+You are step 1 of an autofix chain (`om-verify-in-repo` → `om-root-cause` → `om-fix` → `om-open-pr` → `om-auto-review-pr`). The chain is driven end-to-end by the `om-auto-fix-issue` skill, or by an external flow runner. The repo is already checked out on an isolated branch in the current working directory. Your job is to decide — quickly and read-only — whether the chain should proceed; if you say stop, none of the later steps run.
 
 ## Arguments
 

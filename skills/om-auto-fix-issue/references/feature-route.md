@@ -1,8 +1,10 @@
-# Feature route — spec-then-build on one PR
+# Feature route — spec, then build on one implementation PR
 
 The route `om-auto-fix-issue` takes (instead of the bug chain, steps 4–12) when
-step 2 classifies the issue as a feature request. It specs-then-builds the feature
-on a single PR, autonomous by default. The delegated skills own the worktree, the
+step 2 classifies the issue as a feature request. It specs-then-builds the feature —
+the spec (when one is authored) lands on its own design-only spec PR, and the
+implementation ships on exactly one implementation PR referencing it — autonomous
+by default. The delegated skills own the worktree, the
 claim, the review autofix loop, and UI verification — this route only triages,
 decides claim/resume, resolves the spec, and confirms the contract.
 
@@ -36,35 +38,38 @@ b. **Spec found** (a path, or the spec-only `SPEC_PR` from F2) → invoke
    Include `--loop` **only when the user passed it to `om-auto-fix-issue`** — never
    add it on your own; without it the plain engines are the default and the loop
    variants are selected solely by `om-auto-implement-spec`'s >20-Step rule
-   (its engine selection). It reuses the spec PR's branch when
-   one exists (never a second PR), runs the review autofix loop and UI verification
-   with screenshots, and leaves a ready PR. Ensure the implementing PR body carries
-   `Closes #{issueId}` so the merge auto-closes the issue.
+   (its engine selection). The spec PR stays design-only: it implements on a
+   **separate implementation PR** that references the spec (`Refs #{SPEC_PR}` +
+   `Source doc:`), resuming an existing implementation PR rather than opening a
+   second, runs the review autofix loop and UI verification with screenshots, and
+   leaves a ready PR. Ensure the implementing PR body carries `Closes #{issueId}`
+   so the merge auto-closes the issue.
 c. **No spec** → invoke **`om-auto-write-spec {issueId} [--slug …] [--force]`**
    verbatim (run its spec-writing step interactively when `--interactive` was
    passed). It claims the issue, writes the spec autonomously, attaches
    mockups/screenshots, opens the spec PR (`Refs #{issueId}`), posts the assumptions
    comment, and emits the `Spec:` and `PR:` reference lines. Then chain straight into
-   **`om-auto-implement-spec {SPEC_PATH}`**, which continues **on that same
-   PR/branch** (the linkage flips from `Refs` to `Closes #{issueId}` once
-   implementation lands). For a spec **without** implementation, users run
-   `om-auto-write-spec` directly.
+   **`om-auto-implement-spec {SPEC_PATH}`**, which opens the **implementation PR**
+   (`Refs` the spec PR, `Closes #{issueId}`) — the spec PR stays design-only. For a
+   spec **without** implementation, users run `om-auto-write-spec` directly.
 
 ## F4. Confirm the contract, report
 
 The delegated skills own the machinery; verify the contract held:
 
-- **Exactly one PR** references the issue (an existing PR means continue/resume,
-  never a duplicate).
-- The PR is **ready** (not draft) unless a `⚠ NEEDS HUMAN CONFIRMATION` assumptions
-  guard applies.
+- **Exactly one implementation PR** references the issue (a spec PR may
+  additionally `Refs` it; an existing implementation PR means resume, never a
+  duplicate).
+- The implementation PR is **ready** (not draft) unless a `⚠ NEEDS HUMAN
+  CONFIRMATION` assumptions guard applies.
 - The **full label set** is present — pipeline `review`/current state, `feature`
   category, QA meta, one priority, one risk — re-run the label normalization in
   `references/pr-finalize.md` (the `om-open-pr` step-6 contract) on anything
   missing.
-- **Linkage matches what ships**: `Closes #{issueId}` once implementing,
-  `Refs #{issueId}` for a spec-only design PR; the body carries `Source doc:` and
-  `Tracking plan:` so continuation can resume.
+- **Linkage matches what ships**: `Closes #{issueId}` on the implementation PR,
+  `Refs #{issueId}` on a spec-only design PR (and `Refs #{specPr}` on the
+  implementation PR when a spec PR exists); the implementation PR body carries
+  `Source doc:` and `Tracking plan:` so continuation can resume.
 - The summary comment and, for user-facing changes, the UI screenshots are on the
   PR.
 

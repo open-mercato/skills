@@ -53,11 +53,19 @@ Apply labels from the config's taxonomy after opening the PR, always through the
 - After applying the label set, post **one** consolidated rationale comment covering every applied label — never one comment per label (that spams the PR timeline and multiplies tracker API calls). Labels are still applied individually through the `apply_label` guard; only the commentary consolidates. The comment carries the standard idempotent marker, so a re-run updates it in place.
 - When `qaGate` is `true`, a `needs-qa` PR will not be mergeable until QA signs off with `qa-approved`. Do not add `qa-approved` from this skill — it is earned by manual QA or the self-QA exception. State in the PR summary that manual QA is still pending.
 
-Consolidated label-rationale comment — **one** comment listing only the labels you actually applied, each with a one-line reason (drop the segments for labels you did not apply):
+Consolidated label-rationale comment — exactly **one** marker-idempotent comment from this skill per PR, listing only the labels actually applied: **one label per line**, each with its emoji from the map below and a full-sentence reason (drop lines for labels not applied; never compress into a `·`-concatenated one-liner). On any later label change — a pipeline transition, a priority/risk adjustment — find the marker via **list-issue-comments** and rewrite this same comment via **update-comment** so it always describes the current label state; never post an additional per-change comment (when the descriptor lacks **update-comment**, post a replacement stating it supersedes the previous rationale):
 
+```markdown
+🤖 `om-auto-create-pr` — 🏷️ label rationale
+
+- 🔍 `review` — ready for code review.
+- ✨ `feature` — {why this category fits, one full sentence}.
+- 🧪 `needs-qa` — {why manual QA is needed}.
+- 🔺 `priority-high` — {why this priority}.
+- 🟡 `risk-medium` — {why this risk}.
 ```
-🤖 `om-auto-create-pr` — 🏷️ label rationale: `review` (ready for code review) · `<category>` ({why this category}) · `needs-qa`|`skip-qa` ({why it needs / can skip manual QA}) · `priority-{level}` ({why this priority}) · `risk-{level}` ({why this risk})
-```
+
+Label emoji map (decoration only — parsers key on the backticked label text): 🔍 `review` · ❌ `changes-requested` / `qa-failed` · 🧪 `qa` / `needs-qa` · 🚀 `merge-queue` · ⛔ `blocked` / `do-not-merge` · 🐛 `bug` · ✨ `feature` · ♻️ `refactor` · 🔒 `security` · 📦 `dependencies` · 📚 `documentation` · ⏭️ `skip-qa` · ✅ `qa-approved` · 📸 `qa-self-verified` · 🔥 `priority-extreme` · 🔺 `priority-high` · 🔹 `priority-medium` · 🔽 `priority-low` · ⚠️ `risk-high` · 🟡 `risk-medium` · 🟢 `risk-low` · 🤖 `in-progress`.
 
 ## Summary comment
 

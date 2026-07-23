@@ -52,10 +52,16 @@ Status: complete           <!-- draft/gated runs state the ⚠ merge gate here -
 
 Apply labels from the config's taxonomy after opening the PR, always through the `apply_label` guard from the tracker descriptor (missing labels degrade to a logged skip; `labels.enabled: false` skips everything — note that in the summary comment).
 
-For a spec PR the set is: `review` (pipeline), `documentation` (category), `skip-qa` (docs-only — a spec PR changes no runtime behavior), exactly one priority (inferred from the brief/issue), exactly one risk (typically `risk-low` for design-only changes). Never both `needs-qa` and `skip-qa`; never `qa-approved` from this skill. After applying the set, post **one** consolidated rationale comment covering every applied label — never one comment per label (that spams the PR timeline and multiplies tracker API calls). Labels are still applied individually through the `apply_label` guard; only the commentary consolidates. The comment carries the standard idempotent marker, so a re-run updates it in place:
+For a spec PR the set is: `review` (pipeline), `documentation` (category), `skip-qa` (docs-only — a spec PR changes no runtime behavior), exactly one priority (inferred from the brief/issue), exactly one risk (typically `risk-low` for design-only changes). Never both `needs-qa` and `skip-qa`; never `qa-approved` from this skill. After applying the set, post exactly **one** marker-idempotent consolidated rationale comment — never one comment per label (that spams the PR timeline and multiplies tracker API calls). Labels are still applied individually through the `apply_label` guard; only the commentary consolidates. **One label per line**, each with its emoji and a full-sentence reason; on any later label change, find the marker via **list-issue-comments** and rewrite this same comment via **update-comment** — never post an additional per-change comment:
 
-```
-🤖 `om-auto-write-spec` — 🏷️ label rationale: `review` (ready for code review) · `documentation` (lands a spec document) · `skip-qa` (docs/design-only, no runtime behavior) · `priority-{level}` ({why this priority}) · `risk-{level}` ({why this risk})
+```markdown
+🤖 `om-auto-write-spec` — 🏷️ label rationale
+
+- 🔍 `review` — ready for specification review.
+- 📚 `documentation` — lands a spec document, design-only.
+- ⏭️ `skip-qa` — docs/design-only, no runtime behavior to QA.
+- 🔹 `priority-medium` — {why this priority}.
+- 🟢 `risk-low` — {why this risk}.
 ```
 
 ## Evidence comment

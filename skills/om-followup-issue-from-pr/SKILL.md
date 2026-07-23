@@ -72,27 +72,13 @@ When a plain PR link is pasted, always run the design-doc check (step 3) in addi
 
 9. **Create the tracking issue (design-doc mode).** Only when step 3 found a qualifying document and step 4 found no existing tracking issue.
    - **Title:** `Implement: <feature title>` — derive the feature title from the document's H1 / `<slug>`, not a date.
-   - **Body:**
-     ```markdown
-     ## Design doc
-     - Document: `<path>`
-     - Design PR: <pr-url>
-
-     ## Summary
-     - 2–4 lines describing what the document proposes (from its overview/goal).
-
-     ## How to implement
-     - Once the design PR merges, pick this issue up — for example with `om-auto-create-pr`, using the document as the brief.
-     - Do not start implementation until the design PR is merged into the configured base branch (`$BASE_BRANCH`).
-
-     Related: #<num>
-     ```
+   - **Body:** the tracking-issue body template in `references/report-templates.md` (📝 Design doc, 🎯 Summary, 📋 How to implement, `Related:` footer).
    - **Labels:** `feature` (or `refactor`/`bug` if the document is clearly corrective). Optionally mirror priority/risk from the PR. **Never** apply pipeline labels (`review`, `qa`, `merge-queue`, …) — this is a tracking issue, not a PR. Only apply labels that already exist in the target repo; skip labels entirely when `labels.enabled` is `false`.
    - **Assignee:** the design PR author (`author.login`). A design PR author is the natural owner of the implementation tracking issue; if they decline, the user can reassign.
    - **Create:** **create-issue** on the target repo — title `Implement: <feature title>`, assignee the design PR author, label `feature`, and the body above.
    - **Cross-link:** after creation, leave a one-line comment on the design PR via **comment-pr** pointing at the tracking issue (e.g. `Tracking implementation in #<issue>`), so the document and its tracking issue reference each other.
 
-10. **Report** each issue created (URL, assignee, one-line summary). Make clear which were follow-up issues (comment mode) and which were tracking issues (design-doc mode), and note any tracking issue that already existed and was reused.
+10. **Report** per `references/report-templates.md` — full sentences per issue created: its URL, the assignee and why they were chosen, and what was extracted (the actionable ask for comment mode, the document and its feature for design-doc mode). Make clear which were follow-up issues (comment mode) and which were tracking issues (design-doc mode), note any tracking issue that already existed and was reused, and end with the `Issue:` chaining reference line(s) in their exact shape.
 
 ## Rules
 
@@ -108,7 +94,7 @@ When a plain PR link is pasted, always run the design-doc check (step 3) in addi
 - Design-doc mode is **additive** — it never replaces comment mode. A single PR can produce both a follow-up issue and a tracking issue in one run.
 - Only treat markdown files in the repo's design/proposal docs area as design documents. **Skip** completed/archived subdirectories (`implemented/`, `archive/`, `done/`) — those are finished work, not new tracking work.
 - **Always dedupe first.** Never create a tracking issue when an open `Implement: …` issue (or a `Tracking issue: #<n>` line in the PR body) already covers the document; report and reuse it instead.
-- Tracking issues follow the convention: title `Implement: <feature>`, body with `## Design doc` + `## How to implement`, labelled `feature`. **Never** put pipeline labels on an issue.
+- Tracking issues follow the convention: title `Implement: <feature>` (no emoji in the title), body per the template in `references/report-templates.md`, labelled `feature`. **Never** put pipeline labels on an issue.
 - Assign the tracking issue to the design PR author.
 - Cross-link the design PR and the new tracking issue so they reference each other.
 

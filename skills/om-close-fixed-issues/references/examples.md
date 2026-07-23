@@ -2,8 +2,9 @@
 
 Illustrative examples for `om-close-fixed-issues` — a dry-run preview and the
 three comment templates rendered with concrete values. The authoritative
-templates live inline in the workflow steps (4a/4b/4c) and the dry-run behavior
-in step 5; these are here to show the filled-in shape.
+templates live in `references/report-templates.md` (referenced from workflow
+steps 4a/4b/4c and 7) and the dry-run behavior in step 5; these are here to
+show the filled-in shape.
 
 ## Dry-run preview
 

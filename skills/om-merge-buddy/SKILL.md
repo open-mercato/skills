@@ -31,28 +31,28 @@ Use this skill to triage all open PRs and answer one question: what can merge ri
    - **Almost ready**: only 1-2 minor blockers remain
    - **Blocked**: conflicts, failing CI, blocking labels, missing approval, missing QA sign-off, or multiple blockers
 
-4. **Report.** Use this output shape:
+4. **Report.** The report is this skill's whole deliverable, so it stays inline — never a bare label dump. Every row carries a "why" / "what's missing" cell written in full sentences: name the concrete gates that pass or fail and what would move the PR forward, so a reader who did not run the scan understands each classification. Use this output shape:
 
    ```markdown
    ## Merge Buddy Report — {date}
 
-   ### Ready to Merge ({count})
+   ### 🚀 Ready to Merge ({count})
 
-   | # | Title | Author | Labels | Age |
-   |---|-------|--------|--------|-----|
-   | [#123](url) | Fix auth flow | @alice | `bug`, `merge-queue` | 2d |
+   | # | Title | Author | Labels | Age | Why it is ready |
+   |---|-------|--------|--------|-----|-----------------|
+   | [#123](url) | Fix auth flow | @alice | `bug`, `merge-queue` | 2d | The review is approved, every required CI check is green, QA signed off, and no blocking label is present — all gates pass. |
 
-   ### Almost Ready ({count})
+   ### ⚠️ Almost Ready ({count})
 
-   | # | Title | Author | Blocker | Action needed |
-   |---|-------|--------|---------|---------------|
-   | [#456](url) | Add search filters | @bob | CI pending | Wait for checks or rerun |
+   | # | Title | Author | Blocker | What's missing |
+   |---|-------|--------|---------|----------------|
+   | [#456](url) | Add search filters | @bob | CI pending | Only the CI run is still outstanding; wait for the checks or rerun them, and the PR merges. |
 
-   ### Blocked ({count})
+   ### ⛔ Blocked ({count})
 
-   | # | Title | Blocker(s) |
-   |---|-------|------------|
-   | [#789](url) | Refactor events | Merge conflicts, changes-requested |
+   | # | Title | Blocker(s) | Why it is blocked |
+   |---|-------|------------|-------------------|
+   | [#789](url) | Refactor events | Merge conflicts, changes-requested | The branch conflicts with the base branch and the reviewer requested changes; both must be resolved before this PR can merge. |
    ```
 
 ## Rules

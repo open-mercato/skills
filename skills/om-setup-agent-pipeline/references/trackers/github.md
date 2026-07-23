@@ -157,6 +157,12 @@ gh api repos/{owner}/{repo}/issues/comments/{commentId} --jq '{body,user:.user.l
 gh api repos/{owner}/{repo}/issues/{number}/comments --jq '.[] | {id,user:.user.login,body}'
 ```
 
+#### update-comment
+`{commentId}`, new body → rewrite an existing conversation comment in place (works for issue and PR conversation comments alike). This is how marker-idempotent comments (label rationale, verification, claim take-overs) are updated on re-runs: find your `🤖 …` marker via **list-issue-comments**, then update that comment instead of posting a new one. Use a body file so multi-line bodies survive.
+```bash
+gh api -X PATCH repos/{owner}/{repo}/issues/comments/{commentId} -F body=@<path>
+```
+
 ### Pull requests
 
 #### get-pr

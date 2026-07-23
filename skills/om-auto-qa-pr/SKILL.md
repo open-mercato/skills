@@ -74,7 +74,8 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
    - **Not reviewed** — no approve/changes-requested `reviewDecision` (null /
      `REVIEW_REQUIRED`) **and** no `review` / `changes-requested` pipeline label —
      invoke **`om-auto-review-pr {prNumber}`** verbatim first (it re-enters the
-     current user's claim, reviews, and in autofix mode may push fixes), then run
+     current user's claim and reviews; do not pass `--autofix` — QA needs a
+     review verdict, not fixes pushed to someone else's branch), then run
      the QA pass below. If it comes back `changes-requested` and unfixable, do not
      sign off QA — capture what UI evidence is meaningful or stop with that blocker.
    - **Already reviewed** — a verdict (`APPROVED` / `CHANGES_REQUESTED`) or a
@@ -229,16 +230,11 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
       the chain's driving skill releases at the end of its run
       (`references/claim-pr.md`, chained hand-off).
 
-14. **Report back.** Print a concise summary:
-
-    ```text
-    om-auto-qa-pr: {PR #<n> — <title> | local worktree}
-    Verdict: {PASS | FAIL | PARTIAL (env-limited)}
-    Env: {baseUrl} (started by this run: {yes|no})
-    Evidence: {PR comment url | artifacts dir path}
-    Follow-up test: {posted | skipped — a UI test already exists}
-    Labels: {unchanged | qa-approved+qa-self-verified | qa-failed | n/a (local)}
-    ```
+14. **Report back.** Build the final run report from the "Final run report"
+    template in `references/report-templates.md` — the verdict with a
+    full-sentence reason, the environment driven, where the 📸 evidence lives,
+    the 🧪 follow-up-test outcome, and the 🏷️ label outcome, each explained in
+    full sentences rather than compressed key:value pairs.
 
     In PR mode, end the report with the `PR: #<number> (link: <url>)` reference
     line — plus `Issue: #<number> (link: <url>)` when the run has a subject

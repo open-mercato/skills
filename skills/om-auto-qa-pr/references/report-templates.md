@@ -1,4 +1,6 @@
-# Verification report templates (step 10)
+# Report templates
+
+## Verification report artifacts (step 10)
 
 The machine- and human-readable report artifacts `om-auto-qa-pr` writes
 into `$ARTIFACTS_DIR` in every mode (step 10). These are the primary deliverable
@@ -66,4 +68,21 @@ with an automated test (run `/om-integration-tests`).
 2. Act: {the UI steps exercised above}
 3. Assert: {the expected outcomes verified above}
 4. Teardown: delete every fixture created.
+```
+
+## Final run report (step 14)
+
+The user-facing summary printed at the end of every run. Reporting style
+contract: `references/rules.md` (Reporting style) — full sentences, explain the
+why, never compress; emojis structure the sections, the text carries the
+meaning.
+
+```markdown
+## 📸 om-auto-qa-pr — {PR #{n}: {title} | local worktree}
+
+**Verdict:** {✅ PASS | ❌ FAIL | ⚠️ PARTIAL (environment-limited)} — {one full sentence: what was verified and which observation drove the verdict, or what limited the run}
+**Environment:** {one full sentence: the base URL and login role driven, the browser provider used, and whether this run started the environment or reused a running one}
+**📸 Evidence:** {one full sentence: the PR comment URL where the screenshots render inline, or the artifacts directory path in local mode}
+**🧪 Follow-up test:** {one full sentence: the follow-up UI-test scenario was posted because the change ships no browser-level test, or was skipped because one already exists}
+**🏷️ Labels:** {one full sentence: unchanged under the evidence-only default, qa-approved + qa-self-verified applied via the self-QA exception, qa-failed applied via --apply-failure, or n/a in local mode — and why}
 ```

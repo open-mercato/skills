@@ -98,24 +98,13 @@ A previous skill may already have opened a PR for this work (e.g. `om-auto-write
 
 9. **Reuse the draft PR and normalize labels.** The PR already exists as a draft from step 6. Follow `references/pr-finalize.md`: **reuse it** (never open a second PR for the branch); refresh its body from the template (`references/pr-body-template.md`) with the mandatory `Tracking plan:` line; then apply the full label set (pipeline `review`, QA meta, category, exactly one priority, exactly one risk) through the `apply_label` guard, followed by a single consolidated label-rationale comment covering the whole set (one comment, not one per label). Prefer the `om-open-pr` skill for the push + label mechanics when installed. The draft stays draft here — step 12 flips it to ready at completion.
 
-10. **Run `om-auto-review-pr` and apply fixes.** Run the PR's single authoritative code-review pass with `om-auto-review-pr` in autofix mode against `{prNumber}` before the final summary comment, last pushes, or report. Follow its workflow verbatim: it runs `om-code-review` with the breaking-change, compatibility, security, and scope checks; fixes land as new commits in the same worktree (never history rewrites); re-run targeted validation (the full step-8 gate when a fix reaches beyond a single module/test file); update the plan's Progress; loop until a clean verdict or only documented non-actionable findings remain. It claims and releases its own `in-progress` lock — do not second-guess that. If it cannot run, leave `Status: in-progress`, stop, and report the blocker. Full procedure and verdict handling: `references/review-report.md`.
+10. **Run `om-auto-review-pr` and apply fixes.** Run the PR's single authoritative code-review pass with `om-auto-review-pr {prNumber} --autofix` (this run owns the PR) before the final summary comment, last pushes, or report. Follow its workflow verbatim: it runs `om-code-review` with the breaking-change, compatibility, security, and scope checks; fixes land as new commits in the same worktree (never history rewrites); re-run targeted validation (the full step-8 gate when a fix reaches beyond a single module/test file); update the plan's Progress; loop until a clean verdict or only documented non-actionable findings remain. It claims and releases its own `in-progress` lock — do not second-guess that. If it cannot run, leave `Status: in-progress`, stop, and report the blocker. Full procedure and verdict handling: `references/review-report.md`.
 
 11. **Post the comprehensive summary comment.** End every run with a single summary comment on the PR that a human can read top-to-bottom without opening the diff, posted via the tracker operation **comment-pr** with a body file so formatting is preserved. Use the full structure — Summary of changes, External references honored, Verification phases completed, How to verify, What can go wrong — and its rules from `references/summary-comment-template.md`. Never post it before step 10 finishes, never claim a completion you did not reach, never paste secrets.
 
 12. **Flip to ready, cleanup, and lock release.** When `Status:` is `complete` (all Progress steps `- [x]`), **flip the draft PR to ready via mark-pr-ready** — a run that ended `in-progress` stays a draft so the user can resume it. Always run cleanup in a finally/trap so crashes do not leak worktrees (the `git worktree remove --force` + `git worktree prune` sequence in `references/worktree-setup.md`, only when `CREATED_WORKTREE` is `1`). If the PR was opened, add a `PR: #{n}` line directly under the plan's `## Progress` heading (not a checklist line, so parsing is unaffected), commit, and push. Release any claim you hold per `references/claim-pr.md`.
 
-13. **Report back.** Summarize to the user:
-
-    ```text
-    om-auto-create-pr: {brief}
-    Plan: {RUNS_DIR}/{DATE}-{SLUG}.md
-    Branch: {branch}
-    PR: #{number} (link: {url})
-    Status: {complete | partial — use om-auto-continue-pr <prNumber>}
-    Tests: {summary}
-    ```
-
-    If the run ends before the full gate passes (timeout, external blocker), leave the `Status: in-progress` line in the PR body and tell the user to resume with `om-auto-continue-pr {prNumber}`. The report's `PR:` line doubles as the chaining reference line — keep its exact shape, `PR: #<number> (link: <full PR URL>)`, and add `Issue: #<issue number> (link: <full issue URL>)` on its own line when the run has a subject issue.
+13. **Report back.** Build the final report from the template in `references/report-templates.md` — full sentences, explain the why behind each outcome, never a compressed key:value dump. If the run ends before the full gate passes (timeout, external blocker), leave the `Status: in-progress` line in the PR body and tell the user to resume with `om-auto-continue-pr {prNumber}`. End the report with the chaining reference lines on their own lines, exact undecorated shape — `PR: #<number> (link: <full PR URL>)`, plus `Issue: #<issue number> (link: <full issue URL>)` when the run has a subject issue — so the next skill in a chain can consume them.
 
 ## Rules
 

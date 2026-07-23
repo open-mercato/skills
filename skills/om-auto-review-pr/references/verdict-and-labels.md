@@ -16,7 +16,7 @@ Pipeline labels: `review`, `changes-requested`, `qa`, `qa-failed`, `merge-queue`
 
 Keep `in-progress` separate from the pipeline-state helper. It is a lock, not a workflow state.
 
-Pipeline-label transitions go through the `set_pipeline_label` helper (usage: `set_pipeline_label <prNumber> <newLabel>`), one of the label guards from the tracker descriptor — do not redefine it here. Its exact behavior (the `PIPELINE_LABELS` group, which labels it adds/removes, and which category/meta/priority/risk labels it preserves) is in `references/label-transitions.md`. After every pipeline-label change, post a one-sentence PR comment explaining why that label was chosen.
+Pipeline-label transitions go through the `set_pipeline_label` helper (usage: `set_pipeline_label <prNumber> <newLabel>`), one of the label guards from the tracker descriptor — do not redefine it here. Its exact behavior (the `PIPELINE_LABELS` group, which labels it adds/removes, and which category/meta/priority/risk labels it preserves) is in `references/label-transitions.md`. Every label change lands in the single consolidated `🏷️ label rationale` comment (one label per line with its emoji and a full-sentence reason), updated in place via **update-comment** — never a new comment per change (template: `references/label-transitions.md`).
 
 Label rules:
 

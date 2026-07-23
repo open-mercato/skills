@@ -65,10 +65,13 @@ Add any bundle/runtime evidence the author provided (or note its absence) to the
 ## Output Format
 
 Produce the review report using the exact structure in
-`references/output-format.md` — the `# Code Review` heading with Summary,
-Verdict, the Validation Gate table, Findings grouped by severity, the
-Breaking-Changes checklist, and Test Coverage. Omit empty severity sections; mark
-passing checklist items with `[x]` and failing with `[ ]` plus an explanation.
+`references/output-format.md` — the `# 🔍 Code Review` heading with 🎯 Summary,
+Verdict, the 🧪 Validation Gate table, Findings grouped by severity, the
+💥 Breaking-Changes checklist, and 🧪 Test Coverage. Omit empty severity sections;
+mark passing checklist items with `[x]` and failing with `[ ]` plus an explanation.
+The report is a human-facing deliverable: full sentences throughout, every finding
+with `file:line`, why it matters, and the fix — never a compressed list of bare
+verdicts (`references/rules.md`, Reporting style).
 
 ## Severity and Verdict
 

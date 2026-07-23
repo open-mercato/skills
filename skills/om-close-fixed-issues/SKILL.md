@@ -47,55 +47,17 @@ Maintenance skill. Walk a window of recent pull requests; where a PR authoritati
 
    Otherwise, branch by PR state:
 
-   **4a. Merged into the base branch.** Claim the issue first — assignee + guarded `in-progress` label + claim comment, exact sequence and comment template in `references/claim-pr.md`. Then close via **close-issue** (reason: `completed`) with this comment:
+   **4a. Merged into the base branch.** Claim the issue first — assignee + guarded `in-progress` label + claim comment, exact sequence and comment template in `references/claim-pr.md`. Then close via **close-issue** (reason: `completed`) with the ✅ close-comment template from `references/report-templates.md`. Finally release the lock: `remove_issue_label "in-progress" {issue}`.
 
-   ```markdown
-   ✅ Fixed by #{prNumber} ({prUrl}) — merged at ${mergedAt} (commit `${mergeCommitSha:0:7}`).
+   **4b. Merged into a non-base branch.** Post the ℹ️ non-base-branch informational comment from `references/report-templates.md` via **comment-issue**, but **do not** close.
 
-   Closed automatically by the `om-close-fixed-issues` skill. Credit to @${prAuthor} (or the original author when the PR is a carry-forward — see the PR body for credit details).
-
-   If this is incorrect, reopen the issue and add the `do-not-close` label so future runs leave it alone.
-   ```
-
-   Finally release the lock: `remove_issue_label "in-progress" {issue}`.
-
-   **4b. Merged into a non-base branch.** Post an informational comment via **comment-issue** but **do not** close:
-
-   ```markdown
-   ℹ️ #{prNumber} ({prUrl}) references this issue and was merged into `${baseRefName}`, which is not the configured base branch (`${BASE_BRANCH}`). Leaving this issue open until the change lands on `${BASE_BRANCH}`.
-
-   Posted automatically by the `om-close-fixed-issues` skill.
-   ```
-
-   **4c. Closed without merge.** Post an informational comment via **comment-issue**; do **not** close. When a different merged PR in the same window declares `Supersedes #{prNumber}`, link it:
-
-   ```markdown
-   ℹ️ #{prNumber} ({prUrl}) referenced this issue but was closed **without merging** on ${closedAt}.${supersededBySuffix}
-
-   This issue remains open. Posted automatically by the `om-close-fixed-issues` skill.
-   ```
-
-   Where `supersededBySuffix` expands to ` It was superseded by #{newPr} ({newPrUrl}).` when a replacement was detected, and empty otherwise.
+   **4c. Closed without merge.** Post the ℹ️ closed-without-merge informational comment from `references/report-templates.md` via **comment-issue**; do **not** close. When a different merged PR in the same window declares `Supersedes #{prNumber}`, link it via the template's `supersededBySuffix`.
 
 5. **Honor `--dry-run`.** When set: do **not** post comments, close issues, or add/remove labels or assignees. Print every mutation the real run *would* have made, one per line, prefixed with `DRY-RUN:`.
 
 6. **Release the claim.** Always remove `in-progress` (via the guarded helper) from issues the run added it to, even on error. Wrap the mutation block in a `trap`/finally so a crash or early stop still clears the lock. Full procedure: `references/claim-pr.md`.
 
-7. **Report.** Print a table when the run finishes:
-
-   ```markdown
-   ## om-close-fixed-issues — {since} → {today}
-
-   | PR | Issue | Action | Reason |
-   |----|-------|--------|--------|
-   | #1421 | #1350 | closed | merged into main at commit abc1234 |
-   | #1419 | #1288 | commented-not-closed | PR #1419 was merged into `release/0.5.0` (non-base branch) |
-   | #1412 | #1299 | commented-unmerged | PR #1412 closed without merging; superseded by #1415 |
-   | #1410 | #1270 | skipped | issue already carries `do-not-close` |
-   | #1408 | #1260 | skipped | issue already closed |
-   ```
-
-   Finish with counts: `closed N`, `commented M`, `skipped K`, `dry-run-would-have X`.
+7. **Report.** Print the final run report per `references/report-templates.md`: the per-pair table (every **Reason** cell a full sentence explaining why that action was taken), the counts (`closed N`, `commented M`, `skipped K`, `dry-run-would-have X`), and a closing paragraph in full sentences noting anything a human should look at.
 
 ## Rules
 

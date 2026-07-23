@@ -1,19 +1,19 @@
 # Choosing the implementation engine — plain vs loop, create vs continue
 
 How `om-auto-implement-spec` step 2 picks the engine. Two independent axes:
-**create vs continue** is decided by whether a spec PR already exists (continuation, never a second PR); **plain vs loop** is decided by the deterministic rule below — the same rule applies on both sides, so a qualifying spec gets the loop engine whether it starts fresh (`om-auto-create-pr-loop`) or continues a spec PR (`om-auto-continue-pr-loop`). This is also the path an issue takes through `om-auto-fix-issue`'s feature route, so the rule applies there automatically (that route forwards `--loop` only when the user passed it to `om-auto-fix-issue`; it never adds it on its own).
+**create vs continue** is decided by whether an **implementation PR** already exists for the spec (resume it, never a second one); **plain vs loop** is decided by the deterministic rule below — the same rule applies on both sides, so a qualifying spec gets the loop engine whether it starts fresh (`om-auto-create-pr-loop`) or resumes an implementation PR (`om-auto-continue-pr-loop`). This is also the path an issue takes through `om-auto-fix-issue`'s feature route, so the rule applies there automatically (that route forwards `--loop` only when the user passed it to `om-auto-fix-issue`; it never adds it on its own).
 
-## Why continuation, not a new create-pr run
+## Why a separate implementation PR, never the spec PR's branch
 
-`om-auto-create-pr` opens a **new** PR as part of its flow. When a spec PR already exists (from `om-auto-write-spec`), running a fresh `om-auto-create-pr` on top would open a **second** PR for the same work — the collision this design avoids. The continue skills (`om-auto-continue-pr`, `om-auto-continue-pr-loop`) resume from a tracking plan **on the existing PR** and reuse the identical implement → validate → `om-auto-review-pr` review/autofix loop → label → summary machinery, without opening anything new.
+PRs stay **atomic**: a spec PR is a design deliverable — reviewed as a specification, merged as documentation. Growing implementation code on its branch would retitle/rebrand a reviewed design PR mid-flight and mix two review lifecycles in one diff. So implementation always ships on its **own PR** (`Refs #{specPr}` + the `Source doc:` line), and "continue" means resuming that implementation PR — found via **search-prs** by the `Source doc:`/`Refs` linkage — never the spec PR.
 
-(The commit/push/label mechanics inside those skills follow the shared contract in `references/pr-finalize.md`: prefer `om-open-pr` when installed, inline otherwise, and never open a duplicate PR.)
+(The commit/push/label mechanics inside the engines follow the shared contract in `references/pr-finalize.md`: prefer `om-open-pr` when installed, inline otherwise, and never open a duplicate PR.)
 
 ## The choice: plain unless the loop is earned
 
-The **plain engine** (`om-auto-continue-pr` when a spec PR exists, `om-auto-create-pr` when not) is the default — always. The loop engine's run-folder ceremony (PLAN/HANDOFF/NOTIFY, per-step commits, checkpoints) costs several times the tokens of a plain run, so it must be earned, never assumed.
+The **plain engine** (`om-auto-continue-pr` when an implementation PR exists, `om-auto-create-pr` when not) is the default — always. The loop engine's run-folder ceremony (PLAN/HANDOFF/NOTIFY, per-step commits, checkpoints) costs several times the tokens of a plain run, so it must be earned, never assumed.
 
-Select the **loop engine** (`om-auto-continue-pr-loop` when a spec PR exists, `om-auto-create-pr-loop` when not) only when at least one holds:
+Select the **loop engine** (`om-auto-continue-pr-loop` when an implementation PR exists, `om-auto-create-pr-loop` when not) only when at least one holds:
 
 1. **`--loop` was passed** — by the user directly, or forwarded verbatim by a routing skill (e.g. `om-auto-fix-issue`) from the user's own invocation. The user explicitly bought the loop's resumability and checkpoint discipline; routing skills never add the flag on their own.
 2. **The plan exceeds 20 Steps.** Count the Steps (not Phases) in the spec's Implementation Plan — the same items that become the plan's checklist/Tasks rows. More than 20 → loop.

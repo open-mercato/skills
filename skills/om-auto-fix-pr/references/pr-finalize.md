@@ -11,6 +11,8 @@ This skill drives an **existing** PR to merge-ready; it never opens one, so ther
 Apply labels always through the descriptor guards (`set_pipeline_label` / `apply_label`); missing labels degrade to a logged skip; `LABELS_ENABLED=false` skips everything — note that in the summary comment. Bring the PR's labels to match its **real** state:
 
 - **Pipeline label**: `merge-queue` when the review is approving and every required check is green; otherwise the honest state (`changes-requested`, `blocked`).
+- **Draft → ready**: when the loop exit criteria are met (approvable review, green checks, UI verified or n/a) and the PR is still a draft — and not draft-by-intent (a spec-only design PR, or a `⚠ NEEDS HUMAN CONFIRMATION` guard) — promote it via **mark-pr-ready**; a merge-ready PR must not linger as a draft.
+- **Label commentary**: reflect every label change in the single idempotent `` 🤖 `om-auto-fix-pr` — 🏷️ label rationale `` comment (one label per line with its emoji and a full-sentence reason, updated in place via **update-comment**; format and emoji map: the shared contract in `om-open-pr`'s label normalization) — never one comment per change.
 - **QA meta**: keep `needs-qa` when user-facing behavior changed and `QA_GATE` is on. `om-auto-qa-pr` runs here in evidence-only mode, so it attaches screenshots but sets **no** QA labels; this skill **never** adds `qa-approved` or `qa-self-verified` — the QA gate and a QA reviewer own that (a human can opt into the self-QA sign-off separately). When the gate is on, a `needs-qa` PR stays unmergeable until signed off.
 
 ## Summary comment

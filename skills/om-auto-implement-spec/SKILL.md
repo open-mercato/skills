@@ -1,6 +1,6 @@
 ---
 name: om-auto-implement-spec
-description: Implement an existing spec and ship a verified, reviewed, ready PR. Resolves the spec by path, name, issue, or spec-PR number (clean stop with candidates when not found), reuses a spec PR branch when one exists, delegates to om-auto-create-pr / om-auto-continue-pr, then runs the review loop and UI verification with screenshots. Use for "implement the spec X", "build spec from issue 123".
+description: Implement an existing spec and ship a verified, reviewed, ready PR. Resolves the spec by path, name, issue, or spec-PR number (clean stop with candidates when not found). A spec PR stays design-only — implementation ships on its own PR referencing it. Delegates to om-auto-create-pr (om-auto-continue-pr for an existing implementation PR), then runs the review loop and UI verification with screenshots. Use for "implement the spec X", "build spec from issue 123".
 ---
 
 # Auto Implement Spec (spec → implemented, verified PR)
@@ -17,7 +17,7 @@ Run unattended: the user starts you with a spec reference and comes back to an *
 
 ## Chaining
 
-A previous skill (typically `om-auto-write-spec`) may already have opened the spec PR — this skill **continues on that branch and PR**, never opening a second one. Downstream, it ends with the `PR:` / `Spec:` reference lines. Companion skills: `om-auto-create-pr` (required engine for fresh runs), `om-auto-continue-pr` (engine when a PR exists; `-loop` only on `--loop` or a >20-Step plan), `om-auto-review-pr`, `om-auto-qa-pr`, `om-open-pr` — each optional pieces fall back per the shared open-or-reuse contract in `references/pr-finalize.md`.
+A previous skill (typically `om-auto-write-spec`) may already have opened the **spec PR** — that PR stays a design-only deliverable; this skill ships the implementation on its **own PR** that references it (`Refs #{specPr}` plus the `Source doc:` line), keeping both PRs atomic. An open implementation PR already referencing the spec is resumed, never duplicated. Downstream, it ends with the `PR:` / `Spec:` reference lines. Companion skills: `om-auto-create-pr` (required engine for fresh runs), `om-auto-continue-pr` (engine when a PR exists; `-loop` only on `--loop` or a >20-Step plan), `om-auto-review-pr`, `om-auto-qa-pr`, `om-open-pr` — each optional pieces fall back per the shared open-or-reuse contract in `references/pr-finalize.md`.
 
 ## Workflow
 
@@ -28,28 +28,22 @@ A previous skill (typically `om-auto-write-spec`) may already have opened the sp
    - `SPEC_PATH` (repo-relative) + optionally `SPEC_PR` (an open PR whose branch carries the spec) + optionally `ISSUE_ID`.
    - **Not found** → stop with the notification format in that file (closest candidates listed). Never guess, never write a spec yourself — that is `om-auto-write-spec`'s job. Report `Status: blocked`.
 
-2. **Choose the engine and implement.**
+2. **Choose the engine and implement — on an implementation PR, never on the spec PR.**
 
-   - **A spec PR exists** (`SPEC_PR` set — e.g. from `om-auto-write-spec`): implement as a **continuation of that PR**. Draft the execution plan from the spec's Implementation Plan (Phases → Steps) exactly as `om-auto-create-pr`'s plan-drafting step does, with `Source doc: ${SPEC_PATH}`, commit it to the PR branch, then invoke `om-auto-continue-pr {SPEC_PR}` verbatim — the default engine. Use `om-auto-continue-pr-loop` only when `--loop` was passed or the plan exceeds 20 Steps (`references/engine-selection.md`; match the plan format to the engine). Never open a second PR.
-   - **No PR yet**: `om-auto-create-pr` is the default engine; use **`om-auto-create-pr-loop` only when `--loop` was passed or the spec's Implementation Plan exceeds 20 Steps** (`references/engine-selection.md`). Invoke the chosen engine verbatim with the brief "Implement the spec at ${SPEC_PATH}" and `--spec ${SPEC_PATH}` — it resolves the plan from the spec's Implementation Plan, uses branch `feat/${SLUG}`, opens the PR ready-for-review via `om-open-pr`/inline with full labels, runs the validation gate and the single `om-auto-review-pr` review/autofix loop, and posts the summary comment (the loop engine additionally writes its run folder and checkpoints, resumable via `om-auto-continue-pr-loop`).
+   - **An implementation PR already exists** (**search-prs**: an open PR carrying `Source doc: ${SPEC_PATH}` or `Refs #{SPEC_PR}` with implementation commits): resume it — invoke `om-auto-continue-pr {implPrNumber}` verbatim (`om-auto-continue-pr-loop` only when `--loop` was passed or the plan exceeds 20 Steps, `references/engine-selection.md`). Never open a second implementation PR.
+   - **Otherwise — fresh implementation run**: `om-auto-create-pr` is the default engine; use **`om-auto-create-pr-loop` only when `--loop` was passed or the spec's Implementation Plan exceeds 20 Steps** (`references/engine-selection.md`). When `SPEC_PR` is set and the spec file is not on base yet, materialize it for the engine (fetch the spec PR head and check out `${SPEC_PATH}` from it into the worktree — the spec document still merges via its own spec PR; do not commit it to the implementation branch). Invoke the chosen engine verbatim with the brief "Implement the spec at ${SPEC_PATH}" and `--spec ${SPEC_PATH}` — it resolves the plan from the spec's Implementation Plan, uses branch `feat/${SLUG}`, opens the implementation PR ready-for-review via `om-open-pr`/inline with full labels, runs the validation gate and the single `om-auto-review-pr` review/autofix loop, and posts the summary comment (the loop engine additionally writes its run folder and checkpoints, resumable via `om-auto-continue-pr-loop`).
 
-   Either way the engine owns: worktree isolation, incremental commits, validation gate, labels, review loop, summary comment. Pass `--force` through when given. When `ISSUE_ID` is known, make sure the PR body carries `Closes #${ISSUE_ID}` (an implementing PR) and the plan the `Source doc:` line.
+   Either way the engine owns: worktree isolation, incremental commits, validation gate, labels, review loop, summary comment. Pass `--force` through when given. Ensure the implementation PR body carries `Refs #{SPEC_PR}` when a spec PR exists — and post one idempotent `` 🤖 `om-auto-implement-spec` — 🔁 implementation PR `` comment on the spec PR linking it — plus `Closes #${ISSUE_ID}` when an issue drives the run, and the plan the `Source doc:` line.
 
 3. **Verify the UI and attach screenshots.** After the engine reports the PR complete, when the change touches a user-facing surface (decide from the diff via **get-pr-diff** / **get-pr-files**: routes, components, templates, styles, user-visible copy) and `--no-ui` was not passed: run `om-auto-qa-pr {prNumber}` in its default evidence-only mode — it boots the app, drives the changed flows, and posts screenshots + a pass/fail report on the PR via **attach-image-evidence**. Ensure user-facing PRs carry `needs-qa`; never add `qa-approved` / `qa-self-verified`. For a purely backend/API/docs spec, note `UI: n/a`. A UI-verify that cannot run (no test env, checks not green) is noted on the PR and in your report — not fatal.
 
-4. **Finish and report.** Confirm the final state per `references/pr-finalize.md`: PR **ready** (the engine flips draft spec PRs to ready via **mark-pr-ready** once `Status: complete` — except under a `⚠ NEEDS HUMAN CONFIRMATION` assumptions guard), full label set present, engine summary comment posted (with the UI-verification outcome appended or posted as its own evidence comment). Report to the user: spec path, engine used, branch, PR URL, validation/review outcome, UI verification outcome. End with the chaining reference lines on their own lines (`Issue:` only when an issue drives the run):
-
-   ```
-   Issue: #<issue number> (link: <full issue URL>)
-   PR: #<PR number> (link: <full PR URL>)
-   Spec: <repo-relative spec path>
-   ```
+4. **Finish and report.** Confirm the final state per `references/pr-finalize.md`: implementation PR **ready** (the engine flips its draft PR to ready via **mark-pr-ready** once `Status: complete` — except under a `⚠ NEEDS HUMAN CONFIRMATION` assumptions guard), full label set present, engine summary comment posted (with the UI-verification outcome appended or posted as its own evidence comment). Build the final report from the template in `references/report-templates.md` — the outcome with its why, the 📝 spec resolution, branch, 🚀 PR state, the ⚙️ engine choice (including the exact `Engine: <name> (steps: <N>, --loop: <yes|no>)` line), the 🧪 validation and 🔍 review outcome, and the 📸 UI-verification outcome — in full sentences, never a compressed key:value dump. End with the chaining reference lines on their own lines, exact and undecorated: `PR:` and `Spec:` always, `Issue:` only when an issue drives the run.
 
 ## Rules
 
 - Shared rules: `references/rules.md` — autonomous-run contract, emoji glossary, label discipline, secrets, markers. They always apply.
 - Thin orchestrator: never re-implement planning, validation, labeling, or review — delegate to the engine skills and pass context through verbatim.
 - Spec not found is a clean stop with candidates listed, never a guess and never an improvised spec.
-- One PR per spec: reuse the spec PR when it exists; otherwise exactly one PR from the engine run (`references/pr-finalize.md`).
+- Atomic PRs: the spec PR stays design-only — implementation never lands on its branch. Exactly one implementation PR per spec, carrying `Refs #{specPr}` + `Source doc:`; resume an existing one, never open a second (`references/pr-finalize.md`).
 - The finished state is a ready (non-draft) PR with full SDLC labels, a run summary comment, and — for user-facing changes — screenshots from the working app on the PR.
 - All tracker interaction goes through named descriptor operations; the base branch always comes from config.

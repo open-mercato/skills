@@ -106,22 +106,10 @@ customization without asking.
      installed skills name (grep the installed skills' `SKILL.md` files for
      `**operation-name**` references when in doubt), the browser provider resolves
      to an existing descriptor, and the config still parses (`jq . "$CONFIG"`).
-   - Leave the changes uncommitted for review, then print a concise summary:
-
-   ```text
-   om-apply-upgrade-notes: <tracker> descriptor @ .ai/trackers/<tracker>.md
-   Added operations: attach-image-evidence, …            (or: none)
-   Replaced (stock) sections: …                          (or: none)
-   Kept local customizations: …                          (or: none)
-   Conflicts resolved by operator: …                     (or: none)
-   Config keys added: …                                  (or: none)
-   Custom-tracker gaps to implement: …                   (or: n/a)
-   Browser descriptor: <provider> @ .ai/browsers/<provider>.md
-   Browser operations added/replaced/kept: …             (or: none)
-   Custom-browser gaps to implement: …                   (or: n/a)
-   Notable-upgrade entries checked: N (M applied, K already current)
-   Next: review the diff and commit (e.g. /om-check-and-commit), then re-run the skill that degraded.
-   ```
+   - Leave the changes uncommitted for review, then print the final report per
+     `references/report-templates.md` — full sentences covering the synced
+     descriptors (✅), config changes (📋), custom-provider gaps (⚠️), and the
+     notable-upgrade entries checked, structured with the glossary emojis.
 
 ## Rules
 

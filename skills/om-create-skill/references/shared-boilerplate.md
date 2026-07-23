@@ -70,10 +70,16 @@ contract in this repo's AGENTS.md):
   updated in place on re-runs, never duplicated. The marker-parse pattern accepts
   both the backticked and the legacy bare `🤖 <skill> —` form, so detection on
   older comments never breaks. Standard set: claim,
-  consolidated label rationale (one comment for the whole applied set, not one
-  per label), assumptions (autonomous defaults), run summary
-  (`om-auto-create-pr` step-12 structure), evidence (**attach-image-evidence**),
-  release/handback. Post only the subset the skill's role needs.
+  consolidated label rationale (exactly one marker-idempotent comment for the
+  whole applied set — one label per line with its emoji and a full-sentence
+  reason, rewritten in place via **update-comment** on later changes; never one
+  comment per label, never a `·`-concatenated one-liner), assumptions
+  (autonomous defaults), run summary (`om-auto-create-pr` step-12 structure),
+  evidence (**attach-image-evidence**), release/handback. Post only the subset
+  the skill's role needs. User-facing reports and comments follow the
+  Reporting-style rule (`references/rules.md`): full sentences, the why behind
+  every outcome, templates in the skill's report-templates file under
+  `references/` — never improvised terser variants.
 - Labels only through the descriptor guards, per the canonical rules
   (`om-open-pr` step 6 / this skill's copy in `references/pr-finalize.md`);
   PRs open ready-for-review unless explicitly incomplete; never `qa-approved`.

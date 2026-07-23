@@ -173,4 +173,4 @@ On success, output the preview + the `om-auto-create-pr` URL (see step 10). On `
 
 - Runs well after `om-sync-merged-pr-issues` — the two skills consume the same window of merged PRs but mutate different surfaces (issue tracker vs `CHANGELOG.md`).
 - The generated entry is intentionally a *draft*. A human maintainer should still fill in the Highlights paragraph, possibly regroup subsections, and adjust the narrative. `om-auto-create-pr` opens the PR in `review` so a maintainer sees it before merge.
-- Because the work is delegated to `om-auto-create-pr`, this skill inherits all of its guarantees: isolated worktree, incremental commits, breaking-change self-review, `om-auto-review-pr` autofix pass, and the comprehensive summary comment.
+- Because the work is delegated to `om-auto-create-pr`, this skill inherits all of its guarantees: isolated worktree, incremental commits, single `om-auto-review-pr` review/autofix pass (including breaking-change checks), and the comprehensive summary comment.

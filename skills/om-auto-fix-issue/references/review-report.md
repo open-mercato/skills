@@ -1,6 +1,6 @@
 # Review and report — the automated review loop
 
-Detailed procedure for step 9 of `om-auto-fix-issue` (bug route): subject the fresh PR to the same scrutiny an incoming PR would get. (This skill performs no separate self-review step of its own — `om-fix` self-reviews the change before hand-off, and the feature route's delegated skills run their own review loops.)
+Detailed procedure for step 9 of `om-auto-fix-issue` (bug route): subject the fresh PR to the same scrutiny an incoming PR would get. (This skill performs no separate review step of its own; `om-auto-review-pr` is the bug route.s single authoritative review, and the feature route.s delegated engine owns its single review loop.)
 
 ## Automated pass with `om-auto-review-pr` (step 9)
 

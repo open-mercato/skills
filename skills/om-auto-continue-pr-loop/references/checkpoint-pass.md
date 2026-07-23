@@ -26,7 +26,7 @@ If the checkpoint fails, halt dispatch, rewrite `HANDOFF.md` naming the failure,
 
 ## Subagent parallelism (optional, capped at 2)
 
-- At your discretion, you MAY run up to **two** subagents concurrently — for example, one implementing the next Step while a second reviews the just-landed commit via the `om-code-review` skill. Never exceed two.
+- At your discretion, you MAY run up to **two** subagents concurrently — for example, one implementing the next Step while a second prepares targeted test evidence for the just-landed commit. Never exceed two.
 - **Conflict avoidance is the top priority.** Two agents MUST NOT edit the same files in the same window. If conflicts are likely, serialize.
 - Prefer serial execution whenever the gain is marginal. Parallelism is a tool, not a default.
 - Record any subagent delegation in `NOTIFY.md` with timestamps.

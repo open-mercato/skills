@@ -1,6 +1,6 @@
 ---
 name: om-code-review
-description: Review a diff, branch, or PR against correctness, security, breaking-change, and quality standards — runs the validation gate, applies the built-in checklist plus any repo-local one, and produces severity-ranked findings with an approve/request-changes verdict. The review engine behind om-auto-review-pr, om-review-prs, and the pipeline self-reviews.
+description: Review a diff, branch, or PR against correctness, security, breaking-change, and quality standards — runs the validation gate, applies the built-in checklist plus any repo-local one, and produces severity-ranked findings with an approve/request-changes verdict. The review engine behind om-auto-review-pr and om-review-prs.
 ---
 
 # Code Review
@@ -23,7 +23,7 @@ Review code changes against the repository's architecture, security, convention,
 - a breaking-change checklist,
 - a verdict: **approve** or **request changes** (see Severity and Verdict).
 
-Callers (`om-auto-review-pr`, `om-review-prs`, the self-review step of `om-auto-create-pr` and `om-auto-continue-pr`) consume the verdict and the blocker/major findings; keep both unambiguous.
+Callers (`om-auto-review-pr`, `om-review-prs`, the authoritative review pass inside `om-auto-review-pr`) consume the verdict and the blocker/major findings; keep both unambiguous.
 
 ## Review Workflow
 

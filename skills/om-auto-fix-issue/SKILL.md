@@ -63,7 +63,7 @@ This skill consumes an `{issueId}` and both opens and finishes a chain: it drive
    <the om-root-cause brief, verbatim>
    ```
 
-   `om-fix` claims the issue (assignee + `in-progress` + claim comment), implements the minimal change, adds mandatory regression tests, runs the configured validation gate, and self-reviews. Follow its workflow verbatim. If it ends with `Status: blocked`, go to the failure path (step 11) — the issue is claimed at this point, so the lock must be released with an explanation.
+   `om-fix` claims the issue (assignee + `in-progress` + claim comment), implements the minimal change, adds mandatory regression tests, runs the configured validation gate, then hands the change off for the single `om-auto-review-pr` pass. Follow its workflow verbatim. If it ends with `Status: blocked`, go to the failure path (step 11) — the issue is claimed at this point, so the lock must be released with an explanation.
 
 8. **Ship: run `om-open-pr --handoff om-auto-review-pr`.** Invoke the `om-open-pr` skill with `{issueId}` and `--handoff om-auto-review-pr`, providing the implementer's final summary in the block shape it expects:
 

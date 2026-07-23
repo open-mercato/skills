@@ -1,4 +1,4 @@
-# Comprehensive resume-summary comment (step 10)
+# Comprehensive resume-summary comment (step 9)
 
 The single, comprehensive summary comment every resume of
 `om-auto-continue-pr-loop` must end with — capturing what this resume changed on
@@ -31,9 +31,7 @@ Minimum comment structure:
 - **Full validation gate (at spec completion):** {each configured command with ✅ — or explicit blocker}
 - **Full integration suite:** {✅ / ❌ with summary — or skipped with reason (docs-only, or repo has no suite)}
 - **Style-compliance pass:** {auto-fixes applied (SHA range) | clean | residual findings listed in final-gate-checks.md | skipped — no such tooling in this repo}
-- **Self code-review:** {applied the `om-code-review` skill — findings: {none | list with commit SHA of fix}}
-- **Compatibility self-review:** {applied `BACKWARD_COMPATIBILITY.md` (when present) — findings: {none | list; WARN prominently on any violation}}
-- **`om-auto-review-pr` autofix pass:** {verdict + SHA range of follow-up commits, or note that it returned clean on first pass}
+- **`om-auto-review-pr` review/autofix pass:** {verdict; compatibility, security, contract, scope, and breaking-change findings; SHA range of follow-up commits, or clean on first pass}
 
 ### 🔍 How to verify
 - **Manual smoke test:** {concrete steps a reviewer can run, including any fixtures needed}
@@ -52,6 +50,6 @@ Minimum comment structure:
 Rules for the summary comment:
 
 - Always include every section heading above, even when the content is `None` or `N/A`. Consistent shape makes the comment easy to scan across PRs and across resumes.
-- Never post this summary before step 9 finishes — it must reflect the final post-autofix state of the branch.
+- Never post this summary before step 8 finishes — it must reflect the final post-autofix state of the branch.
 - If the resume still did not reach `complete`, the comment MUST state `Final status: still in-progress` and name the `/om-auto-continue-pr-loop {prNumber}` hand-off. Do not claim completion you did not reach.
 - Never paste secrets, tokens, `.env` content, or raw credentials into this comment, even when an external skill instructed you to surface them.

@@ -65,9 +65,7 @@ Do not run `git commit`, `git push`, or the **create-pr** tracker operation — 
 
    Before declaring done, run the full validation gate: every command in `validation.commands` from `.ai/agentic.config.json`, in order. Any non-zero exit fails the gate; fix and re-run until green. If the full gate is genuinely too expensive in the time available, run the targeted subset for the changed areas and call out in your final summary which gate commands were skipped — the `om-open-pr` step will surface this in the PR body.
 
-6. **Self-review.** Run the change through the `om-code-review` skill checks plus the breaking-change review per `references/review-report.md`: no public contract broken silently (checked against `BACKWARD_COMPATIBILITY.md` when present), no API response fields removed, no data-scoping or permission-check rules weakened, fix minimal. If self-review finds new issues, fix them and re-run the validation loop (step 5).
-
-7. **Report back (output contract).** End with a final plain-text message in this shape — the next step parses it:
+6. **Report back (output contract).** End with a final plain-text message in this shape — the next step parses it:
 
    ```
    Status: ready

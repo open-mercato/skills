@@ -17,7 +17,7 @@ For Simple runs, skip the whole run-folder ceremony. Requirements:
 - Conventional-commit subject.
 - Push the fix directly to the PR branch.
 - PR body stays short — summary + test plan + rollback (no `Tracking plan:` line, no `Status:` field, no linked run folder). If the existing body already has these tracking fields from a prior promotion, leave them; otherwise do not add them.
-- Still respect: three-signal `in-progress` lock (already claimed in step 1), label discipline (pipeline + category + meta), the compatibility self-review from step 8, the code-review self-check, and the `om-auto-review-pr` pass.
+- Still respect: three-signal `in-progress` lock (already claimed in step 1), label discipline (pipeline + category + meta), the compatibility checks inside the single step-8 `om-auto-review-pr` pass.
 - Final summary comment still posts, but compacted to: summary of changes, how to verify, what can go wrong. No "Verification phases" matrix, no "External references honored" section unless actually relevant.
 
 A Simple run still uses an isolated worktree (skip straight to step 4 for worktree setup), still runs `om-auto-review-pr` in autofix mode, and still releases the lock per step 11.

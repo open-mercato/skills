@@ -33,64 +33,64 @@ Design and review feature specifications against the project's architecture, nam
 
 ### 1. New specification
 
-Core sections (adapt when the feature genuinely needs a different structure, but address every concern):
+Core sections (adapt when the feature genuinely needs a different structure, but address every concern). The glossary emojis decorate the headings; the section text itself never changes — parsers and humans key on the text:
 
 ```markdown
 # {Title}
 
-## TLDR
+## 📝 TLDR
 {2-4 sentences: what, why, for whom}
 
-## Problem Statement
+## 📝 Problem Statement
 {What are we solving? Evidence it matters.}
 
-## Proposed Solution
+## 📝 Proposed Solution
 {High-level approach; alternatives considered and why they lost}
 
-## Architecture
+## 📝 Architecture
 {Components, boundaries, data flow; what changes vs. what is reused}
 
-## Data Model
+## 📝 Data Model
 {Entities, fields, relations, migrations; sensitive-data handling}
 
-## API Contracts
+## 📝 API Contracts
 {Endpoints/commands with request/response shapes and validation}
 
-## UI/UX
+## 📝 UI/UX
 {Flows, states, accessibility; only what is unique — not standard CRUD}
 
-## Edge Cases & Failure Scenarios
+## 📝 Edge Cases & Failure Scenarios
 {What breaks, and what the user sees when it does}
 
-## Risks & Impact Review
+## 📝 Risks & Impact Review
 {Blast radius, migration/compatibility concerns, rollback story}
 
-## Phasing
+## 📋 Phasing
 {Phase 1: … / Phase 2: … — each independently shippable}
 
-## Implementation Plan
+## 📋 Implementation Plan
 {Phases → numbered Steps; each step testable and leaves the app working}
 ```
 
 ### 2. Architectural review
 
-When asked to review or audit a spec, produce:
+When asked to review or audit a spec, produce (emojis decorate the headings; the section text itself never changes — parsers and humans key on the text):
 
 ```markdown
-# Architectural Review: {Spec Title}
+# 🔍 Architectural Review: {Spec Title}
 
 ## Summary
-{1-3 sentences: what the spec proposes and its overall architectural health}
+{a short paragraph in full sentences covering scope, approach, and overall assessment}
 
 ## Findings
 
-### Critical
+### ⛔ Critical
 {Violations of the project's hard rules: naming laws, boundary/coupling violations, data-isolation or security leaks}
 
-### High
+### ⚠️ High
 {Missing phasing strategy, missing rollback/undo story, wrong component placement}
 
-### Medium
+### 🔹 Medium
 {Missing failure scenarios, inconsistent terminology, spec bloat}
 
 ### Low

@@ -126,8 +126,9 @@ database — but that discovery happens once, and its result is the script.
    documentation of them), then verify it cold and warm like any generation.
 
    - **Script succeeds** → read `baseUrl` from `$ENV_DESCRIPTOR`, print the
-     summary (base URL, services, whether the env was reused or rebuilt,
-     descriptor path) and **stop — the skill is done**. Do not re-verify what
+     run report per `references/report-templates.md` (base URL, services,
+     whether the env was reused or rebuilt, descriptor path, timing) and
+     **stop — the skill is done**. Do not re-verify what
      the script already health-checked; trusting the verified script is the
      whole point. The descriptor is the deliverable other skills depend on:
      the script writes it on every successful run so consumers
@@ -181,7 +182,8 @@ database — but that discovery happens once, and its result is the script.
      descriptor `.ai/browsers/<provider>.md`.
    - **2.5 Verify the script — cold and warm** — the gate: the warm run must
      reuse, not rebuild.
-   - **2.6 Report** — script paths, descriptor, base URL, cold/warm timings.
+   - **2.6 Report** — script paths, descriptor, base URL, cold/warm timings,
+     in the run-report shape from `references/report-templates.md`.
 
    When the script cannot be made to pass cold+warm verification after two
    repair attempts, follow the fallback at the end of

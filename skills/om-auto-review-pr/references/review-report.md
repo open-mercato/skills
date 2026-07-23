@@ -20,7 +20,9 @@ Use the `om-code-review` skill against the PR diff. Explicitly verify:
 
 ## om-auto-review-pr specifics — autonomous autofix flow (step 11)
 
-After posting a `changes_requested` review, **immediately proceed to fix all actionable findings** without asking the user. The om-auto-review-pr skill must be fully autonomous — it reviews, fixes, re-reviews, and iterates until the PR is merge-ready or a real blocker remains.
+The loop below runs only on **autofix-eligible** runs: `--autofix` was passed, or the PR author is `$CURRENT_USER` (the automation finishing its own work). On another author's PR without `--autofix`, skip it — the run ends with the review, labels, and author handoff, noting `autofix: skipped (not my PR — re-run with --autofix to fix it here)` in the completion comment and report. Never modify someone else's branch uninstructed.
+
+When eligible: after posting a `changes_requested` review, **immediately proceed to fix all actionable findings** without asking the user. The om-auto-review-pr skill must be fully autonomous — it reviews, fixes, re-reviews, and iterates until the PR is merge-ready or a real blocker remains.
 
 Only stop and ask the user in these critical situations:
 

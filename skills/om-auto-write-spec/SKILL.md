@@ -17,7 +17,7 @@ Run unattended: the user starts you and comes back to a **published spec PR** �
 
 ## Chaining
 
-The spec PR this skill opens is the natural input of `om-auto-implement-spec` (or `om-auto-fix-issue`'s feature route), which reuses the same branch and PR instead of opening a new one. Always end with the `PR:` / `Spec:` (and `Issue:` when issue-driven) reference lines. If an open PR already carries a spec for this brief/issue (via **search-prs**), stop and report it — never open a duplicate.
+The spec PR this skill opens is the natural input of `om-auto-implement-spec` (or `om-auto-fix-issue`'s feature route), which keeps it design-only and ships the implementation on its own PR referencing it (`Refs #{specPr}`). Always end with the `PR:` / `Spec:` (and `Issue:` when issue-driven) reference lines. If an open PR already carries a spec for this brief/issue (via **search-prs**), stop and report it — never open a duplicate.
 
 Companion skills (all optional, with fallbacks): `om-spec-writing` (required — the document engine), `om-open-pr` (PR opening; inline **create-pr** fallback per `references/pr-finalize.md`), `om-prepare-test-env` + browser provider (mockups/screenshots; degrade to text-only), `om-auto-implement-spec` (the follow-on).
 
@@ -39,13 +39,7 @@ Companion skills (all optional, with fallbacks): `om-spec-writing` (required —
 
 7. **Post the assumptions and summary comments.** Post the resolved-assumptions table per `references/assumptions-comment.md` on the PR (and via **comment-issue** on the issue when issue-driven), marker `` 🤖 `om-auto-write-spec` — Open Questions ``; skip when the spec had no Open Questions. **High-stakes guard:** if any assumption carries `⚠ NEEDS HUMAN CONFIRMATION`, convert the PR to draft (or keep it draft) and state in the body that merge is gated on confirming those assumptions. Then post the run summary comment (`` ## 🤖 `om-auto-write-spec` — run summary ``: spec path, assumptions applied, mockup/screenshot inventory or why skipped, hand-off line) per `references/pr-finalize.md`.
 
-8. **Release, clean up, report.** Issue-driven: release the claim (handback to the issue author + `in-progress` removal + `🤖` release comment) — via `om-open-pr` when it ran, inline per `references/claim-pr.md` otherwise. Clean up the worktree. Report: spec path, branch, PR URL, assumptions count (and any `⚠`), visuals posted or skipped, then end with the chaining reference lines on their own lines (`Issue:` only when issue-driven):
-
-   ```
-   Issue: #<issue number> (link: <full issue URL>)
-   PR: #<PR number> (link: <full PR URL>)
-   Spec: <repo-relative spec path>
-   ```
+8. **Release, clean up, report.** Issue-driven: release the claim (handback to the issue author + `in-progress` removal + `🤖` release comment) — via `om-open-pr` when it ran, inline per `references/claim-pr.md` otherwise. Clean up the worktree. Build the final report from the template in `references/report-templates.md` — the outcome with its why, the 📝 spec path, branch, 🚀 PR state, the ⚠️ assumptions posted (including any `⚠ NEEDS HUMAN CONFIRMATION`), the 📸 evidence attached or why it was skipped, the 🏷️ label set with full-sentence reasons, and the 🔁 hand-off — in full sentences, never a compressed key:value dump. End with the chaining reference lines on their own lines, exact and undecorated: `PR:` and `Spec:` always, `Issue:` only when issue-driven.
 
 ## Rules
 

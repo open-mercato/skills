@@ -36,7 +36,7 @@ This skill only **creates** issues. To bring an issue that **already exists** up
    - **No spec, and the task does not need one** (a bug, or a small feature whose change surface is obvious) → step 4 produces the inline guidance.
    - **No spec, and the task is a feature that needs one** (a substantial new capability where guessing the architecture would be irresponsible) → go to step 3: author the spec and land it on a PR, then link it. Do not file a vague placeholder issue.
 
-3. **Author a spec and land it on a PR** (feature needs a spec, none exists) — follow `references/spec-when-missing.md`: create the tracking issue first (step 5, so there is a number to link), then delegate to **`om-auto-write-spec {issueId}`** — the dedicated spec-authoring skill. It claims the issue, writes the spec via `om-spec-writing --autonomous` (Open Questions resolved with conservative documented defaults, posted for override; when a human filing the issue wants to make the design calls, run its spec-writing step interactively instead), attaches UI mockups and current-app screenshots when a browser provider exists, opens a **ready spec PR** against the base branch with `Refs #{issueId}`, and emits the `Spec:` and `PR:` reference lines. Then comment the spec path and PR link back onto the issue via **comment-issue**. The issue now links a real, reviewable design; implementation resumes later with `om-auto-implement-spec {SPEC_PATH}` or `om-auto-fix-issue {issueId}` (both continue that same PR). This is the one path on which `om-prepare-issue` produces a PR — it is a **design** (a spec), never implementation.
+3. **Author a spec and land it on a PR** (feature needs a spec, none exists) — follow `references/spec-when-missing.md`: create the tracking issue first (step 5, so there is a number to link), then delegate to **`om-auto-write-spec {issueId}`** — the dedicated spec-authoring skill. It claims the issue, writes the spec via `om-spec-writing --autonomous` (Open Questions resolved with conservative documented defaults, posted for override; when a human filing the issue wants to make the design calls, run its spec-writing step interactively instead), attaches UI mockups and current-app screenshots when a browser provider exists, opens a **ready spec PR** against the base branch with `Refs #{issueId}`, and emits the `Spec:` and `PR:` reference lines. Then comment the spec path and PR link back onto the issue via **comment-issue**. The issue now links a real, reviewable design; implementation happens later via `om-auto-implement-spec {SPEC_PATH}` or `om-auto-fix-issue {issueId}` (both keep the spec PR design-only and ship the implementation on its own PR referencing it). This is the one path on which `om-prepare-issue` produces a PR — it is a **design** (a spec), never implementation.
 
 4. **Analyze the task (no spec found).** Read enough of the codebase to write credible guidance — not to build it:
 
@@ -70,7 +70,7 @@ This skill only **creates** issues. To bring an issue that **already exists** up
    - {None | protected surfaces touched and the required migration path per BACKWARD_COMPATIBILITY.md}
 
    ## How to pick this up
-   - Run `om-auto-fix-issue {thisIssueNumber}` (it handles both bugs and features), or hand the spec/analysis to `om-auto-create-pr` as the brief. When step 3 authored a spec PR, resume with `om-auto-continue-pr {specPrNumber}` or `om-auto-fix-issue {thisIssueNumber}`.
+   - Run `om-auto-fix-issue {thisIssueNumber}` (it handles both bugs and features), or hand the spec/analysis to `om-auto-create-pr` as the brief. When step 3 authored a spec PR, implement with `om-auto-implement-spec {specPrNumber}` or `om-auto-fix-issue {thisIssueNumber}` — the spec PR stays design-only; implementation ships on its own PR referencing it.
 
    ## Out of scope
    - {non-goals, so the implementer does not gold-plate}
@@ -81,22 +81,11 @@ This skill only **creates** issues. To bring an issue that **already exists** up
    - One category label the brief clearly is: `feature`, `bug`, `refactor`, `security`, `dependencies`, or `documentation`.
    - Exactly one **priority** label and exactly one **risk** label, inferred from the brief per the inference rules in `SDLC.md` (its "When no priority label is set" / "When no risk label is set" lists) — `--priority` / `--risk` override the inference when passed.
    - Never pipeline labels (`review`, `qa`, `merge-queue`, …) — those are PR-only. Never `in-progress` — nothing is being worked on.
-   - After applying the priority/risk labels, add them to the issue with a one-line rationale (in the body's context or a brief comment) so the classification is auditable, per `SDLC.md`.
+   - After applying the label set, make the classification auditable per `SDLC.md` with **one** consolidated `` 🤖 `om-prepare-issue` — 🏷️ label rationale `` comment (or an equivalent section in the body): one label per line with its emoji (🐛 `bug` · ✨ `feature` · 🔥/🔺/🔹/🔽 `priority-*` · ⚠️/🟡/🟢 `risk-*`) and a full-sentence reason — never one comment per label.
 
    **Attach image evidence.** When the user provided images with the brief (pasted screenshots or file paths), upload them via the tracker operation **attach-image-evidence** when the installed descriptor defines it, and embed the returned URLs in a `## 📸 Evidence` section of the issue body (or a follow-up **comment-issue** with a one-line caption per image when the issue was already created). Save pasted images to a temp file first so the operation has a path. When the descriptor lacks the operation or the upload fails, degrade gracefully: reference the local paths/filenames in the body and note that inline upload was unavailable — never fail the issue creation over evidence.
 
-6. **Report.**
-
-   ```text
-   prepare-issue: {brief}
-   Issue: #{n} (link: {url})
-   Issue mode: {new | reused — comment added}
-   Labels: {category}, {priority-*}, {risk-*}
-   Spec: {path | none — analysis embedded}
-   Spec PR: {#{n} (link: {url}) — authored | linked existing | —}
-   Evidence: {n images attached | local paths referenced — upload unavailable | none}
-   Duplicates checked: {queries run, top candidates considered}
-   ```
+6. **Report.** Build the final report from the template in `references/report-templates.md` — the issue mode with its why, the 🏷️ label set one per line with a full-sentence reason each, the 📝 spec outcome, the 📸 evidence outcome, and the 🔍 duplicate search in full sentences — never a compressed key:value dump. End with the chaining reference lines on their own lines, exact and undecorated: `Issue: #<number> (link: <full issue URL>)` always (it is machine-parsed by `om-auto-fix-issue`'s brief mode), plus `Spec:` when a spec was linked or authored and `PR:` when step 3 produced a spec PR.
 
 ## Rules
 

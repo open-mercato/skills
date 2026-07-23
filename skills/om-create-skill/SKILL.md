@@ -114,8 +114,8 @@ before generating, and it **will not hand back a result that fails the gate** �
   (use a named tracker operation resolved via the descriptor instead). This
   skill itself never reproduces those literal forbidden tokens.
 - **Reuse, don't reinvent**: prefer the shared preamble blocks and existing
-  reference shapes (summary-comment, label-normalization, PR-body templates)
-  over writing parallel ones — and give each generated skill its own copy of a
+  reference shapes (summary-comment, label-normalization, PR-body,
+  report-templates) over writing parallel ones — and give each generated skill its own copy of a
   shared contract (e.g. `references/pr-finalize.md`) instead of a pointer into
   another skill's `references/`.
 - **Restraint**: do not split a skill under ~150 lines or extract a fragment that

@@ -33,7 +33,7 @@ This skill is a sweep, not a single-PR step: it finds every unreviewed open PR a
 4. **Present the queue.**
 
    ```markdown
-   ## Review Queue — {date}
+   ## 🔍 Review Queue — {date}
 
    Found {count} unreviewed PRs (newest first):
 
@@ -45,25 +45,25 @@ This skill is a sweep, not a single-PR step: it finds every unreviewed open PR a
 5. **Review sequentially.** For each PR:
 
    1. Print `Reviewing PR #{number}: {title} ({index} of {total})`
-   2. Run the full `om-auto-review-pr` workflow
-   3. Record the verdict
+   2. Run the full `om-auto-review-pr` workflow — without `--autofix`: a sweep reviews other authors' PRs, so each run ends with the verdict and author handoff, never pushed fixes (pass `--autofix` per PR only when the user asked the sweep to fix what it finds)
+   3. Record the verdict and a one-sentence outcome for the step 6 summary — what drove the verdict, or why the review could not run
    4. Continue to the next PR
 
-   Between PRs, report progress briefly:
+   Between PRs, print only this one-line progress marker — the full story of each review belongs in the step 6 summary, where every PR gets its one-sentence outcome:
 
    ```text
    Reviewed {done}/{total}. Next: #{number}
    ```
 
-6. **Post the final summary.**
+6. **Post the final summary.** Every row carries a one-sentence outcome in full sentences — what drove the verdict, or why the PR was skipped — so a reader who did not watch the sweep understands each result:
 
    ```markdown
-   ## Review Session Complete
+   ## ✅ Review Session Complete — {date}
 
-   | # | Title | Verdict | Label |
-   |---|-------|---------|-------|
-   | #456 | Add catalog search | APPROVED | merge-queue |
-   | #445 | Fix auth redirect | CHANGES REQUESTED | changes-requested |
+   | # | Title | Verdict | Label | Outcome |
+   |---|-------|---------|-------|---------|
+   | #456 | Add catalog search | ✅ APPROVED | `merge-queue` | Clean implementation with tests covering the new filters; queued for merge. |
+   | #445 | Fix auth redirect | ❌ CHANGES REQUESTED | `changes-requested` | The redirect drops the return-URL parameter; handed back to the author with two blockers. |
    ```
 
    If the queue is empty, say so and suggest running `om-merge-buddy` instead.

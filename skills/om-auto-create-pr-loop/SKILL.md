@@ -61,24 +61,13 @@ Every run is a folder (never a flat file): `PLAN.md` (Tasks table + plan), `HAND
 
 10. **Reuse the draft PR and normalize labels.** The PR already exists as a draft, opened and claimed at step 7 (reuse guard — never open a second PR; confirm via **search-prs**/**get-pr**). Refresh the body from `references/pr-body-template.md` — it **MUST** include the `Tracking plan:` line so `om-auto-continue-pr-loop` can resume — and flip `Status:` to `complete` once every Tasks row is `done`. Then apply the full label set (pipeline `review`, QA meta, category, exactly one priority, exactly one risk) through the `apply_label` guard, followed by a single consolidated label-rationale comment covering the whole set (one comment, not one per label) — full taxonomy and inference rules: `references/pr-finalize.md`.
 
-11. **Run `om-auto-review-pr` and apply fixes.** Subject the PR to a single authoritative code-review pass with `om-auto-review-pr` in autofix mode before posting the summary. **Release the `in-progress` lock first, reclaim it when it returns** (exact comment strings: `references/claim-pr.md`) to cover the summary + cleanup window. Apply fixes as new lean `X.Y-review-fix` Steps (never history rewrites), checkpoint/re-gate as needed, and loop until the verdict is clean or only non-actionable findings remain. If it cannot run, leave `Status: in-progress` and report the blocker. Full procedure: `references/review-report.md`.
+11. **Run `om-auto-review-pr` and apply fixes.** Subject the PR to a single authoritative code-review pass with `om-auto-review-pr {prNumber} --autofix` (this run owns the PR) before posting the summary. **Release the `in-progress` lock first, reclaim it when it returns** (exact comment strings: `references/claim-pr.md`) to cover the summary + cleanup window. Apply fixes as new lean `X.Y-review-fix` Steps (never history rewrites), checkpoint/re-gate as needed, and loop until the verdict is clean or only non-actionable findings remain. If it cannot run, leave `Status: in-progress` and report the blocker. Full procedure: `references/review-report.md`.
 
 12. **Post the comprehensive summary comment.** End every run with a single comprehensive summary comment via **comment-pr** with a body file — full structure (Summary of changes, External references honored, Verification phases completed, How to verify, What can go wrong) and rules in `references/summary-comment-template.md`. Never post before step 11 finishes, never claim an unreached completion, never paste secrets.
 
 13. **Flip to ready, cleanup, and lock release.** When `Status:` is `complete` (every Tasks row `done`), **flip the draft PR to ready via mark-pr-ready** — a run that ends `in-progress` stays a draft so the user can resume it. Run worktree cleanup in a finally/trap so crashes don't leak worktrees or locks (bash: `references/worktree-setup.md`). Write a final `HANDOFF.md` + `NOTIFY.md` entry (closing timestamp + PR URL), commit, and push **before** releasing the `in-progress` label so the final update lands under the same lock. Then release the lock — always, even on failure: **unlabel-pr** through the guard (tolerate failure) + the **comment-pr** release comment (`references/claim-pr.md`, PR lock lifecycle).
 
-14. **Report back.** Summarize to the user:
-
-    ```text
-    om-auto-create-pr-loop: {brief}
-    Run folder: {RUNS_DIR}/{DATE}-{SLUG}/  (PLAN.md, HANDOFF.md, NOTIFY.md)
-    Branch: {branch}
-    PR: #{number} (link: {url})
-    Status: {complete | partial — use om-auto-continue-pr-loop <prNumber>}
-    Tests: {summary}
-    ```
-
-    If the run ends before the full gate passes, leave `Status: in-progress`, point `HANDOFF.md` at the first `todo` Step, and resume with `om-auto-continue-pr-loop {prNumber}`. End the report with the chaining reference lines — `PR: #<number> (link: <url>)`, plus `Issue: #<number> (link: <url>)` when the run has a subject issue — so the next skill in a chain can consume them.
+14. **Report back.** Build the final report from the template in `references/report-templates.md` — full sentences, explain the why behind each outcome, never a compressed key:value dump. If the run ends before the full gate passes, leave `Status: in-progress`, point `HANDOFF.md` at the first `todo` Step, and tell the user to resume with `om-auto-continue-pr-loop {prNumber}`. End the report with the chaining reference lines on their own lines, exact undecorated shape — `PR: #<number> (link: <full PR URL>)`, plus `Issue: #<number> (link: <full issue URL>)` when the run has a subject issue — so the next skill in a chain can consume them.
 
 ## Rules
 
@@ -94,7 +83,7 @@ Every run is a folder (never a flat file): `PLAN.md` (Tasks table + plan), `HAND
 - Always use an isolated worktree; reuse the current linked one; never nest; always clean up one you created. The base branch always comes from config (`baseBranch`); never hard-code it.
 - Every code change MUST include tests (docs-only runs are exempt from the unit-test rule but still run relevant lint/check). Run the full validation gate before completion (flipping the draft PR to ready) unless a real blocker prevents it; if blocked, document it in the PR body, `PLAN.md` Risks, and `NOTIFY.md`.
 - Run `om-auto-review-pr` as the single code-review pass; its `om-code-review` engine applies `BACKWARD_COMPATIBILITY.md`, security, scope, and breaking-change checks and WARNS on any violation or missing BC doc.
-- After the PR is open, run `om-auto-review-pr` in autofix mode and keep applying fixes (new commits, never history rewrites) until it returns a clean verdict or only non-actionable findings remain — before pushing final changes, posting the summary, and reporting back.
+- After the PR is open, run `om-auto-review-pr` with `--autofix` and keep applying fixes (new commits, never history rewrites) until it returns a clean verdict or only non-actionable findings remain — before pushing final changes, posting the summary, and reporting back.
 - End every run with a single comprehensive summary comment (via **comment-pr** with a body file), keeping section headings stable across runs.
 - **Always a PR (progress visibility).** Open the PR right after the run-folder commit (step 7) — as a **draft** carrying the committed plan/Tasks table and `Status: in-progress` — and flip it to **ready** via **mark-pr-ready** only at completion (step 13). An interrupted run always leaves a watchable draft PR, never a committed run folder with no PR. This only forbids the "no PR yet because unfinished" state.
 - **Verification is summarized on the PR.** Each checkpoint (step 8) and the final gate (step 9) post their verification outcome to the PR as an idempotent `` 🤖 `om-auto-create-pr-loop` — checkpoint <N> / final gate verification `` comment, with screenshots via **attach-image-evidence** whenever UI was touched. Verification proofs land on the PR, not only in the run folder.

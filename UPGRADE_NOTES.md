@@ -14,7 +14,13 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
-## 2026-07-18 — pipeline alignment: ready PRs, full labels, new spec skills
+## 2026-07-23 — review autofix opt-in, atomic spec PRs, templated reporting
+
+- **`om-auto-review-pr` no longer autofixes other authors' PRs by default.** The autofix loop runs only when the PR author is the automation identity or `--autofix` was passed; otherwise the run ends with the review, labels, and author handoff. Chains that exist to fix (`om-auto-fix-pr`, `om-auto-fix-issue`) now pass `--autofix` explicitly; `om-review-prs` sweeps review-only. If your flow relied on the old always-autofix behavior, add `--autofix`.
+- **Spec PRs stay design-only.** The spec→feature "reframe" is gone: implementing a spec that lives on a spec PR now opens a **separate implementation PR** carrying `Refs #{specPr}` + `Source doc:` (`om-auto-implement-spec`; the continue skills refuse to grow implementation on a spec-only branch and hand off instead).
+- **New tracker operation `update-comment`** (edit a conversation comment in place) powers marker-idempotent comments — re-sync your tracker descriptor; without it, skills degrade to posting superseding comments.
+- **Label rationale is one idempotent comment** per skill per PR/issue: one label per line with its emoji and a full-sentence reason, rewritten in place on every label change — the per-change one-liner comments and the `·`-concatenated rationale are gone.
+- **Reporting is template-based.** Every skill's user-facing report/comment shapes live in `references/report-templates.md` (or the template file its steps name), emoji-structured with full sentences — aligned so output quality no longer depends on the agent runtime (Claude vs Codex). `mark-pr-ready` is now also exercised by `om-auto-fix-pr` / `om-auto-review-pr` (draft promotion when a PR reaches merge-ready).
 
 - **PRs open ready-for-review by default.** `om-open-pr` (and every skill delegating to it) no longer opens drafts; draft is reserved for explicitly incomplete states (`--draft`: spec-only design PRs, interrupted hand-offs, `⚠ NEEDS HUMAN CONFIRMATION` autonomous defaults). If your process relied on agent PRs arriving as drafts, gate on the `review` pipeline label / QA gate instead.
 - **`om-open-pr` now applies the full SDLC label set** (pipeline `review` + category + QA meta + one priority + one risk) with rationale comments — previously it applied only a subset, so chains like issue → PR could end up missing the pipeline label.

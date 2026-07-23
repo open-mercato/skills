@@ -127,19 +127,9 @@ This skill drafts a `CHANGELOG.md` entry and delegates the PR mechanics to `om-a
 
    Let `om-auto-create-pr` handle branch creation, the isolated worktree, the commit, the docs-only validation gate, the PR body, label normalization, the `om-auto-review-pr` autofix pass, and the comprehensive summary comment. Important: this skill never runs the full validation gate itself. That is `om-auto-create-pr`'s job, and a changelog edit is docs-only by definition.
 
-9. **Honor `--dry-run`.** When `--dry-run` is set: compute the full entry in memory, print it to stdout together with the list of PRs consumed, the credited author for each, and any supersede detections. Do **not** edit `CHANGELOG.md`; do **not** call `om-auto-create-pr`.
+9. **Honor `--dry-run`.** When `--dry-run` is set: compute the full entry in memory, print the dry-run report per `references/report-templates.md` — the full drafted entry, the per-PR audit table (category, emoji, credited author, supersede notes), and a full-sentence closing paragraph. Do **not** edit `CHANGELOG.md`; do **not** call `om-auto-create-pr`.
 
-10. **Report.** After `om-auto-create-pr` finishes, print:
-
-    ```text
-    auto-update-changelog: {version} ({sinceDate} → {date})
-    PRs consumed: {count}
-    Supersede detections: {count}
-    Contributors: {count}
-    CHANGELOG entry preview:
-      <first 10 lines of the new block>
-    PR: #{number} (link: {url from om-auto-create-pr})
-    ```
+10. **Report.** After `om-auto-create-pr` finishes, print the final run report per `references/report-templates.md` — full sentences covering the window, the PRs consumed, supersede detections, contributors, the entry preview, and what happens next — ending with the `PR:` chaining reference line in its exact shape.
 
 ## Rules
 
@@ -159,15 +149,7 @@ This skill drafts a `CHANGELOG.md` entry and delegates the PR mechanics to `om-a
 
 ## Reporting
 
-On success, output the preview + the `om-auto-create-pr` URL (see step 10). On `--dry-run`, output the full drafted entry plus a per-PR table:
-
-```markdown
-| PR | Category | Line emoji | Primary author | Via | Notes |
-|----|----------|-----------|----------------|-----|-------|
-| #1555 | fix | 🐛 | @contributor-a | @reviewer-b | supersedes #1421 |
-| #1550 | fix | 🔧 | @reviewer-b | — | — |
-| #1546 | fix | 🐛 | @contributor-c | — | fixes #1290 |
-```
+Both report shapes — the final run report (step 10) and the dry-run report with its per-PR audit table (step 9) — live in `references/report-templates.md`; fill them exactly and expand with detail. The CHANGELOG entry and line formats in steps 5–6 are the product format, not run reporting, and stay authoritative where they are.
 
 ## Notes
 

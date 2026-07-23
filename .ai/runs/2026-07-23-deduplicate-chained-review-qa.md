@@ -43,10 +43,10 @@ Goal: ensure each autonomous pipeline chain performs one authoritative code-revi
 
 ### Phase 1: Consolidate review stages
 
-- [ ] 1.1 Remove redundant direct self-review steps from create, continuation, and fix-chain skills
-- [ ] 1.2 Consolidate the affected review-report references and summary wording around `om-auto-review-pr`
+- [x] 1.1 Remove redundant direct self-review steps from create, continuation, and fix-chain skills — a20bdb8
+- [x] 1.2 Consolidate the affected review-report references and summary wording around `om-auto-review-pr` — a20bdb8
 
 ### Phase 2: Verify orchestrator chains
 
-- [ ] 2.1 Align spec/issue orchestration wording with the single-review contract and document the QA audit result in the diff where stale wording exists
-- [ ] 2.2 Run the repository lint gate and review the full diff for contract, security, scope, and cross-skill consistency
+- [x] 2.1 Align spec/issue orchestration wording with the single-review contract and document the QA audit result in the diff where stale wording exists — a20bdb8
+- [x] 2.2 Run the repository lint gate and review the full diff for contract, security, scope, and cross-skill consistency — a20bdb8

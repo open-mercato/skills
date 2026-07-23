@@ -50,3 +50,4 @@ Goal: ensure each autonomous pipeline chain performs one authoritative code-revi
 
 - [x] 2.1 Align spec/issue orchestration wording with the single-review contract and document the QA audit result in the diff where stale wording exists — a20bdb8
 - [x] 2.2 Run the repository lint gate and review the full diff for contract, security, scope, and cross-skill consistency — a20bdb8
+- [x] Post-review fix: align the loop creator's draft-PR reuse step reference after renumbering — 11cea2b

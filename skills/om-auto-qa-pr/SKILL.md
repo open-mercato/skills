@@ -110,7 +110,11 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
      a temporary worktree at the PR head (`pull/{prNumber}/head`, or the tracker
      operation **checkout-pr** for fork PRs), restore the dependency install
      state, and record `CREATED_WORKTREE` for cleanup. Full commands and rules:
-     `references/worktree-setup.md`.
+     `references/worktree-setup.md`. Skill files are **not** in this worktree
+     (it is a checkout of the target project) — pin the skills-install root (the
+     directory you read this skill's `references/agentic-setup.md` from)
+     **before** you `cd`, read every later reference by that absolute path, and
+     keep invoking sibling `om-*` skills by name.
    - **Local mode:** verify the current worktree as-is. Do not stash, reset, or
      switch branches — the user wants their in-progress changes tested. Stay
      read-only on source.

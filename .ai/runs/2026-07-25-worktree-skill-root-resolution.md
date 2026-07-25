@@ -49,6 +49,8 @@ Tested: from a foreign CWD (`/tmp/fake-worktree`) with the repo root passed as t
 
 ## Progress
 
+PR: #62
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Reference files

@@ -6,7 +6,7 @@ Date: 2026-07-25
 
 ## Goal
 
-Every worktree-owning `om-*` skill `cd`s into an isolated worktree that is a checkout of the **target project**. That worktree does not contain the `om-*` skills or their `references/` files, so any later relative `references/<file>.md` read breaks. Document — in the working-tree section of every affected skill — that the agent must pin the skills-install root it started from (before the `cd`) and read every later reference by that absolute path, while continuing to invoke sibling `om-*` skills by name (harness-resolved, CWD-independent). Provide a deterministic, tested way to resolve that root **without editing `.ai/agentic.config.json`** (per-project, not per-install), and evaluate the "symlink the skills into the worktree" idea (rejected — documented).
+Every worktree-owning `om-*` skill enters an isolated checkout of the target project, which may not contain the installed skill. Document that the agent must retain the absolute directory of the `SKILL.md` the runner loaded before changing directories, resolve that skill's later references from it, and keep invoking siblings by name. Do not edit `.ai/agentic.config.json` or copy/symlink skills into the worktree.
 
 ## Scope
 
@@ -22,28 +22,13 @@ Every worktree-owning `om-*` skill `cd`s into an isolated worktree that is a che
 
 ## Design (validated)
 
-Primary anchor — most reliable, works in every agent: the skills-install root is **the directory the agent already read this skill's `references/agentic-setup.md` from at the setup step**, while CWD was still the invoking checkout. That is authoritatively the copy the harness loaded. Pin it before the `cd`.
+Primary anchor: the absolute directory of the `SKILL.md` the runner already selected and loaded. Resolve supporting files relative to that directory. This uses the common skill-package contract and makes no assumptions about Claude, Codex, plugins, user installations, or project installations.
 
-Deterministic shell fallback (only when a shell value is needed, e.g. a probe): resolve the root by probing the harness's skill roots in precedence order, independent of CWD:
-
-```bash
-OM_SKILL_NAME="om-<this-skill>"
-_om_hint=$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD")
-OM_SKILL_ROOT=""
-for _r in \
-    "${CLAUDE_PROJECT_DIR:-$_om_hint}/.claude/skills" \
-    "$HOME/.claude/skills" \
-    "$HOME"/.claude/plugins/*/skills ; do
-  [ -f "$_r/$OM_SKILL_NAME/SKILL.md" ] || continue
-  OM_SKILL_ROOT="$_r"; break
-done
-```
-
-Tested: from a foreign CWD (`/tmp/fake-worktree`) with the repo root passed as the hint, the snippet resolved `OM_SKILL_ROOT=$HOME/.claude/skills` and a sibling `om-code-review/SKILL.md` resolved, while the worktree CWD had no `skills/` — proving CWD-independence.
+Rejected fallback: probing known installation roots. Claude and Codex document different discovery locations, runners can add more, and duplicate skill names can exist. A probe cannot prove that it found the executing copy.
 
 ## Risks (brief)
 
-- Duplicate skill copies on disk could let the probe hit a stale copy; mitigated by making the *primary* anchor "where you read this skill's references from" and using the probe only as a fallback, first-match-wins in harness precedence.
+- Duplicate skill copies make root probing ambiguous; using the already-loaded file avoids that ambiguity.
 - Shared-reference sync discipline (`AGENTS.md` §5) requires the change to land in all 9 copies in one PR — the brief authorizes "all skills", satisfying the ask-to-sync gate.
 - Lint reference-resolution gate: only use example reference filenames that exist in every skill (`agentic-setup.md`, `worktree-setup.md`).
 
@@ -67,4 +52,4 @@ PR: #62
 
 ### Phase 4: Validation
 
-- [x] 4.1 Run `bash scripts/lint.sh` green; re-run the resolution test; self code-review — verified: lint OK, snippet resolves from a foreign CWD (unset CLAUDE_PROJECT_DIR, no plugins dir), diff scoped and free of forbidden tokens
+- [x] 4.1 Run `bash scripts/lint.sh` green; verify the loaded-file anchor from a foreign CWD; self code-review

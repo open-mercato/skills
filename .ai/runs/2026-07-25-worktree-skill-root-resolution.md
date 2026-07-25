@@ -53,16 +53,16 @@ Tested: from a foreign CWD (`/tmp/fake-worktree`) with the repo root passed as t
 
 ### Phase 1: Reference files
 
-- [ ] 1.1 Add "Skill files are not in the worktree" section to all 9 `references/worktree-setup.md`
+- [x] 1.1 Add "Skill files are not in the worktree" section to all 9 `references/worktree-setup.md` — 2540243
 
 ### Phase 2: SKILL.md working-tree steps
 
-- [ ] 2.1 Add the pin-the-skills-root note to the worktree step of all 9 SKILL.md
+- [x] 2.1 Add the pin-the-skills-root note to the worktree step of all 9 SKILL.md — 6f1ae65
 
 ### Phase 3: Authoring docs
 
-- [ ] 3.1 Add the convention to `AGENTS.md` and a rationale entry to `DECISIONS.md`
+- [x] 3.1 Add the convention to `AGENTS.md` and a rationale entry to `DECISIONS.md` — c37e0cb
 
 ### Phase 4: Validation
 
-- [ ] 4.1 Run `bash scripts/lint.sh` green; re-run the resolution test; self code-review
+- [x] 4.1 Run `bash scripts/lint.sh` green; re-run the resolution test; self code-review — verified: lint OK, snippet resolves from a foreign CWD (unset CLAUDE_PROJECT_DIR, no plugins dir), diff scoped and free of forbidden tokens

@@ -10,7 +10,7 @@ A raw agent session is **sensitive untrusted evidence**. It can carry credential
 
 - **Never copy a saved session into the repository**, into a run folder, into a temporary file under the working tree, or anywhere a `git add` could reach. Verification reads in place.
 - **Never load a transcript into the agent context.** Do not read a session file with a file-reading tool, do not `cat` one, do not summarize one by eye. `references/verify-sessions.sh` opens the files and emits only derived data — counts, classes, basenames — precisely so the raw content never enters a context window and therefore can never reach a report.
-- **Never quote a session in anything you emit.** No line, no snippet, no error message, no "for example". The report carries the derived fields the verifier produced and nothing else.
+- **Never quote a session in anything you emit.** No line, no snippet, no error message, no "for example". The report carries the derived fields the verifier produced and nothing else. Those fields are bounded by construction: fixed strings, enumerated causes, numbers, timestamps, a basename, and length-capped skill names taken from marker lines — nothing in the verifier output can reproduce arbitrary text found in a transcript, and any change that would weaken that is a defect in the verifier, not a report style choice.
 - **Never export, sanitize, upload, or relocate a session.** That is the user's action to take, deliberately, and this skill is read-only in any case.
 - **Identity is the basename.** `session-2026-08-01.jsonl`, never the path it was found at.
 

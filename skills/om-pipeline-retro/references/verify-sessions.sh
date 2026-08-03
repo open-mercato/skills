@@ -36,7 +36,9 @@
 #      skills post and a declared `Outcome:` line. Prose elsewhere in a transcript
 #      is not evidence — an agent quoting an error it is investigating must not
 #      become a cause. The cause vocabulary is the one classify-runs.sh uses, so
-#      the two merge into a single ranking.
+#      the two merge into a single ranking. Skill names come from those lines too,
+#      and are length-bounded: `skills` is the one field printed verbatim, so it
+#      must not be able to reproduce arbitrary text found anywhere in the file.
 #   6. The pull request a session belongs to is the request number it names most
 #      often across `PR: #<n>`, a `/pull/<n>` URL, and the legacy `PR_NUMBER=<n>`
 #      line, ties broken toward the lowest. No confident match leaves it null and
@@ -193,15 +195,19 @@ def records:
 | ($times | max) as $end
 | {
     session: $name,
-    usable: (($recs | length) > 0 and (($text | test("om-[a-z0-9-]+")) or $opened)),
+    usable: (($recs | length) > 0 and (($ev | test("om-[a-z0-9-]{2,40}")) or $opened)),
     hygiene: { verdict: "safe", secretShaped: $secrets },
     findings: (
       [ (if ($secrets > 0) then "carries \($secrets) secret-shaped string\(if $secrets == 1 then "" else "s" end) — never export, quote, or copy this file" else empty end),
         (if (($recs | length) == 0) then "parsed to no records" else empty end),
-        (if ((($text | test("om-[a-z0-9-]+")) or $opened) | not) then "names no skill and opens no run, so it is not a saved run of this pipeline" else empty end),
+        (if ((($ev | test("om-[a-z0-9-]{2,40}")) or $opened) | not) then "names no skill on a marker line and opens no run, so it is not a saved run of this pipeline" else empty end),
         (if ($opened and ($completed | not)) then "opens a run and records no completion marker" else empty end),
         (if (($ev | length) == 0) then "carries no marker or Outcome line, so it states no cause" else empty end) ]),
-    skills: ([ $text | match("om-[a-z0-9-]+"; "g") | .string ] | unique),
+    # Skill names are taken from marker lines only, and bounded in length. The
+    # whole transcript is not a safe source for a field that is printed verbatim:
+    # any text of the shape om-<lowercase> anywhere in it would be reproduced in
+    # the report, which is the one way derived output could carry content.
+    skills: ([ $ev | match("om-[a-z0-9-]{2,40}"; "g") | .string ] | unique),
     pr: ($text | pr_number),
     outcome: ($ev | declared_outcome),
     causes: ($ev | causes($unfinished)),

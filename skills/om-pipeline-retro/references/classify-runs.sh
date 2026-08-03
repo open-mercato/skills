@@ -44,8 +44,19 @@
 #      is no baseline: excess is null and causes rank by request count.
 #   8. A request still carrying the in-progress label, and not yet merged, is not
 #      a finished run. It is reported separately and takes part in no count.
+#   9. With --sessions, the derived output of references/verify-sessions.sh joins
+#      the evidence, matched to a request by the number each session names. A
+#      session contributes only what the tracker cannot show — a cause or an
+#      Outcome the run never posted — so it can move a request from UNEXPLAINED
+#      to HARD RECOVERY, and can never move one out of a class the tracker
+#      established, nor change any run count: run counts stay single-sourced from
+#      rule 1, because one saved session is one run by definition. Each row
+#      records which sources explained it in `evidence`. A usable session that
+#      matches no request in the window is reported under `sessionsOnly`: it is a
+#      run that left no readable trace on any request.
 #
-# Usage:  cat tracker-data.json | sh references/classify-runs.sh [--gap-minutes 60] [--in-progress-label in-progress]
+# Usage:  cat tracker-data.json | sh references/classify-runs.sh [--gap-minutes 60] \
+#           [--in-progress-label in-progress] [--sessions verified-sessions.json]
 # Exit:   0 classified · 2 unusable input · 3 jq missing
 
 set -u
@@ -62,6 +73,10 @@ while [ $# -gt 0 ]; do
       [ $# -ge 2 ] || { echo "classify-runs: --in-progress-label needs a value" >&2; exit 2; }
       IN_PROGRESS_LABEL="$2"; shift 2 ;;
     --in-progress-label=*) IN_PROGRESS_LABEL="${1#*=}"; shift ;;
+    --sessions)
+      [ $# -ge 2 ] || { echo "classify-runs: --sessions needs a value" >&2; exit 2; }
+      SESSIONS_FILE="$2"; shift 2 ;;
+    --sessions=*) SESSIONS_FILE="${1#*=}"; shift ;;
     -h|--help) sed -n '2,/^$/p' "$0"; exit 0 ;;
     *) echo "classify-runs: unknown argument '$1'" >&2; exit 2 ;;
   esac
@@ -69,6 +84,12 @@ done
 case "$GAP_MINUTES" in
   ''|*[!0-9]*) echo "classify-runs: --gap-minutes must be a whole number of minutes" >&2; exit 2 ;;
 esac
+# No --sessions is the ordinary tracker-only run: slurping /dev/null yields an
+# empty array, which the program below reads as "no session evidence".
+if [ -n "${SESSIONS_FILE:-}" ] && [ ! -r "$SESSIONS_FILE" ]; then
+  echo "classify-runs: --sessions file '$SESSIONS_FILE' is not readable" >&2
+  exit 2
+fi
 
 command -v jq >/dev/null 2>&1 || {
   echo "classify-runs: jq is required (the tracker descriptor already depends on it)" >&2
@@ -80,7 +101,8 @@ case "$input" in
   '') echo "classify-runs: stdin was empty; expected a JSON array of pull requests" >&2; exit 2 ;;
 esac
 
-printf '%s' "$input" | jq --arg gapminutes "$GAP_MINUTES" --arg inprogress "$IN_PROGRESS_LABEL" '
+printf '%s' "$input" | jq --arg gapminutes "$GAP_MINUTES" --arg inprogress "$IN_PROGRESS_LABEL" \
+  --slurpfile sessiondoc "${SESSIONS_FILE:-/dev/null}" '
 
 def astext: if type == "string" then . else "" end;
 def asarray: if type == "array" then . else [] end;
@@ -214,13 +236,54 @@ def classify($gap):
       labels: $labels
     };
 
+# Session evidence joins the row of a request without ever overriding the tracker.
+# It can add a cause the run never posted, and with one it can move a request out
+# of UNEXPLAINED — the bucket that exists precisely because the record says
+# nothing. It never moves a request out of a class the tracker established, and
+# it never touches a run count.
+def merge_session($bypr):
+  . as $row
+  | ($bypr[($row.number | tostring)] // []) as $ss
+  | if ($ss | length) == 0 then . + { evidence: ["tracker"], sessions: [], explainedBy: null }
+    else
+      ([ $ss[] | .causes[] ] | unique) as $scauses
+      | ([ $ss[] | .outcome | select(. != null) ] | unique) as $souts
+      | (($row.class == "unexplained")
+         and (($scauses | length) > 0 or ($souts | any(. == "recovered" or . == "blocked")))) as $rescued
+      | $row + {
+          class: (if $rescued then "hard recovery" else $row.class end),
+          causes: (($row.causes + $scauses) | unique),
+          evidence: ["tracker", "session"],
+          explainedBy: (if $rescued then "session" else null end),
+          sessions: ($ss | map({ session: .session, outcome: .outcome, causes: .causes,
+                                 hours: .hours, findings: .findings }))
+        }
+    end;
+
 def bucket($rows; $label; $low; $high):
   ($rows | map(select(.additions != null and .additions >= $low and .additions < $high))) as $in
   | ($in | map(select(.class == "hard recovery")) | length) as $hard
   | { addedLines: $label, prs: ($in | length), hardRecovery: $hard,
       hardRecoveryPct: (if ($in | length) == 0 then null else (($hard * 100) / ($in | length) | round) end) };
 
-def summarize($rows; $inflight; $timestamped; $total_marker_comments):
+def session_coverage($rows; $sdoc; $sessions_only):
+  if $sdoc == null then null
+  else ($sdoc.verification // {}) as $v
+    | { verification: $v,
+        explainedByASession: ($rows | map(select(.explainedBy == "session")) | length),
+        requestsWithSessionEvidence: ($rows | map(select((.sessions // []) | length > 0)) | length),
+        sessionsOnly: { count: ($sessions_only | length),
+                        sessions: ($sessions_only | map({ session: .session, skills: .skills,
+                                                          outcome: .outcome, causes: .causes,
+                                                          hours: .hours, findings: .findings })) },
+        note: (if (($v.unsafe // 0) > 0)
+               then "\($v.unsafe) saved session is committed or committable — say so before any figure below; its contents were not read"
+               elif ($rows | map(select(.explainedBy == "session")) | length) > 0
+               then "session evidence recovered a cause for \($rows | map(select(.explainedBy == "session")) | length) request(s) whose own record stated none"
+               else "session evidence matched the tracker and changed no classification" end) }
+  end;
+
+def summarize($rows; $inflight; $timestamped; $total_marker_comments; $sdoc; $sessions_only):
   ($rows | map(select(.class == "clean") | .hoursToMerge) | map(select(. != null))) as $clean_hours
   | (if ($clean_hours | length) == 0 then null else ($clean_hours | median) end) as $baseline
   | ($rows | map(select(.class != "clean"))) as $second
@@ -249,6 +312,7 @@ def summarize($rows; $inflight; $timestamped; $total_marker_comments):
       rankedCauses: $ranked,
       bySize: ([ bucket($rows; "0-200"; 0; 200), bucket($rows; "200-600"; 200; 600), bucket($rows; "600+"; 600; 1e12) ]
                + (if $unsized > 0 then [{ addedLines: "size unknown", prs: $unsized, hardRecovery: null, hardRecoveryPct: null }] else [] end)),
+      sessionCoverage: session_coverage($rows; $sdoc; $sessions_only),
       declaredOutcomeCoverage: {
         prs: ($rows | map(select((.declaredOutcomes | length) > 0)) | length),
         pct: (if ($rows | length) == 0 then 0 else (($rows | map(select((.declaredOutcomes | length) > 0)) | length) * 100 / ($rows | length) | round) end),
@@ -281,12 +345,26 @@ else
         | select(.body | is_agent_text) ] ) as $marker_comments
   | ($marker_comments | length) as $total_marker_comments
   | ($marker_comments | map(select(.t != null)) | length) as $timestamped
-  | ( [ $prs[] | select((agent_comments | length) > 0) | classify($gapminutes | tonumber * 60) ] ) as $classified
+  | ($sessiondoc[0] // null) as $sdoc
+  | ( [ (($sdoc.sessions // []) | if type == "array" then .[] else empty end)
+        | select(type == "object") | select(.usable == true) ] ) as $usable_sessions
+  | ( $usable_sessions | map(select(.pr != null)) | group_by(.pr)
+      | map({ key: (.[0].pr | tostring), value: . }) | from_entries ) as $bypr
+  | ( [ $prs[] | select((agent_comments | length) > 0)
+        | classify($gapminutes | tonumber * 60) | merge_session($bypr) ] ) as $classified
   | ($classified | map(select(.class == "in flight"))) as $inflight
   | ($classified | map(select(.class != "in flight"))) as $rows
+  | ($classified | map(.number)) as $known
+  | ( $usable_sessions
+      | map(select(.pr == null or ((.pr) as $p | ($known | any(. == $p)) | not))) ) as $sessions_only
   | if ($rows | length) == 0 and ($inflight | length) == 0
-    then { prsWithRunMarkers: 0, note: "no pull request carried an agent run marker" }
-    else { summary: summarize($rows; $inflight; $timestamped; $total_marker_comments), pullRequests: $rows }
+    then { prsWithRunMarkers: 0,
+           note: (if ($usable_sessions | length) > 0
+                  then "no pull request carried an agent run marker; \($sessions_only | length) saved session(s) verified and belong to no request in this window"
+                  else "no pull request carried an agent run marker" end),
+           sessionCoverage: session_coverage([]; $sdoc; $sessions_only) }
+    else { summary: summarize($rows; $inflight; $timestamped; $total_marker_comments; $sdoc; $sessions_only),
+           pullRequests: $rows }
     end
 end
 '

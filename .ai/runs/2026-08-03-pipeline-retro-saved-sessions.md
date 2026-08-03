@@ -60,4 +60,4 @@ This change teaches `om-pipeline-retro` to **verify** those saved sessions and f
 
 - [x] 3.1 Documentation card, upgrade note, decisions entry — 2705189
 - [x] 3.2 `bash scripts/lint.sh` green, and the verifier and classifier exercised against fixtures covering every documented degradation — 2705189
-- [ ] 3.3 Open the follow-up pull request against `feat/om-pipeline-retro`
+- [x] 3.3 Open the follow-up pull request against `feat/om-pipeline-retro` — PR #70

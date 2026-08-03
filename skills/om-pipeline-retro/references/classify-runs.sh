@@ -278,6 +278,8 @@ def session_coverage($rows; $sdoc; $sessions_only):
                                                           hours: .hours, findings: .findings })) },
         note: (if (($v.unsafe // 0) > 0)
                then "\($v.unsafe) saved session is committed or committable — say so before any figure below; its contents were not read"
+               elif (($v.usable // 0) == 0)
+               then "no listed file verified as a saved run of this pipeline, so the classification rests on tracker evidence alone"
                elif ($rows | map(select(.explainedBy == "session")) | length) > 0
                then "session evidence recovered a cause for \($rows | map(select(.explainedBy == "session")) | length) request(s) whose own record stated none"
                else "session evidence matched the tracker and changed no classification" end) }

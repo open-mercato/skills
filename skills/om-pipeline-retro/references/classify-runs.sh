@@ -86,15 +86,22 @@ case "$GAP_MINUTES" in
 esac
 # No --sessions is the ordinary tracker-only run: slurping /dev/null yields an
 # empty array, which the program below reads as "no session evidence".
-if [ -n "${SESSIONS_FILE:-}" ] && [ ! -r "$SESSIONS_FILE" ]; then
-  echo "classify-runs: --sessions file '$SESSIONS_FILE' is not readable" >&2
-  exit 2
+if [ -n "${SESSIONS_FILE:-}" ]; then
+  if [ ! -r "$SESSIONS_FILE" ]; then
+    echo "classify-runs: --sessions file '$SESSIONS_FILE' is not readable" >&2
+    exit 2
+  fi
 fi
 
 command -v jq >/dev/null 2>&1 || {
   echo "classify-runs: jq is required (the tracker descriptor already depends on it)" >&2
   exit 3
 }
+
+if [ -n "${SESSIONS_FILE:-}" ] && ! jq -e . "$SESSIONS_FILE" >/dev/null 2>&1; then
+  echo "classify-runs: --sessions file '$SESSIONS_FILE' is not valid JSON; it must be the output of references/verify-sessions.sh" >&2
+  exit 2
+fi
 
 input=$(cat)
 case "$input" in

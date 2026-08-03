@@ -48,16 +48,16 @@ This change teaches `om-pipeline-retro` to **verify** those saved sessions and f
 ### Phase 1: Verify saved sessions
 
 - [x] 1.1 `references/verify-sessions.sh` — hygiene gate, format tolerance, derived-only output — e93509e
-- [ ] 1.2 `references/sessions.md` — locations, sensitivity contract, discovery, merge semantics
+- [x] 1.2 `references/sessions.md` — locations, sensitivity contract, discovery, merge semantics — 2705189
 
 ### Phase 2: Fold session evidence into the classification
 
 - [x] 2.1 `references/classify-runs.sh --sessions <file>` — merge, session coverage, sessions-only runs — e93509e
-- [ ] 2.2 `SKILL.md` argument, workflow step, and rules
-- [ ] 2.3 `references/report-templates.md` — verification section, evidence column, sessions-only section
+- [x] 2.2 `SKILL.md` argument, workflow step, and rules — 2705189
+- [x] 2.3 `references/report-templates.md` — verification section, evidence column, sessions-only section — 2705189
 
 ### Phase 3: Document and land
 
-- [ ] 3.1 Documentation card, upgrade note, decisions entry
-- [ ] 3.2 `bash scripts/lint.sh` green, and the verifier and classifier exercised against fixtures covering every documented degradation
+- [x] 3.1 Documentation card, upgrade note, decisions entry — 2705189
+- [x] 3.2 `bash scripts/lint.sh` green, and the verifier and classifier exercised against fixtures covering every documented degradation — 2705189
 - [ ] 3.3 Open the follow-up pull request against `feat/om-pipeline-retro`

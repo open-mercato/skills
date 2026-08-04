@@ -212,6 +212,14 @@ Two consequences worth recording, because both look like defects until the reaso
 
 Two choices worth recording. The deterministic classifier ships as a shell script under `references/` rather than under a per-skill `scripts/` directory, because `scripts/lint.sh` resolves every `references/…` pointer and would catch a broken one in CI, where a `scripts/` path is unchecked; it is the collection's first shipped executable, and the skill body carries an inline fallback so a harness that cannot spawn a shell still reaches the same classes. Run counting keys on the claim boilerplate's opening comments ("started by", "taking over") rather than on marker density, because a single run posts several marker comments and time-clustering alone reported ordinary runs as rework.
 
+## 2026-08-03 — Saved sessions are read by a script, never by the agent
+
+`om-pipeline-retro --sessions` reads saved agent session exports so a second pass whose pull request recorded no reason can still be explained, and so a run that never reached a pull request is visible at all. The convention it reads — `.ai/session-exports/` and `.ai/sessions*.json`, git-ignored, treated as sensitive untrusted evidence — comes from Open Mercato PR [#4758](https://github.com/open-mercato/open-mercato/pull/4758), which established both the locations and the handling rule: raw transcripts carry credentials, private prompts, absolute paths and full tool output, so they are never copied into a repository and never exported except deliberately sanitized.
+
+The decision that follows from that rule is architectural, not stylistic: **the verifier script opens the files and the agent never does.** Summarizing a transcript by eye would pull exactly the content the rule protects into a context window, and from there into a report — a rule an agent must remember is a rule that leaks. `references/verify-sessions.sh` emits only derived data (hygiene verdict, skills named, request matched, declared outcome, causes, span, counts) and sessions appear in reports as basenames, because an absolute path names a machine and a user. Hygiene is verified before contents are read at all: a session the repository tracks, or one sitting inside it un-ignored, is reported ahead of every retro figure and never opened.
+
+Two limits keep the second source honest. Session evidence can move a run out of `unexplained` — the bucket that exists because the record says nothing — and never out of a class the tracker established. And it contributes no run counts: one saved session is one run by definition, so counts stay single-sourced from the opening comments on the tracker and the two sources cannot disagree about how many times the pipeline ran.
+
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.

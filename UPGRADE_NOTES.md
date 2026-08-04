@@ -14,6 +14,14 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-08-03 — om-pipeline-retro can verify saved agent sessions
+
+`om-pipeline-retro` gains an optional `--sessions [<dir|file>]` argument that reads saved agent session exports as a second evidence source, so a second pass whose pull request recorded no reason can still be explained, and a run that never reached a pull request becomes visible at all. **Nothing changes without the argument** — the default run reads tracker evidence exactly as before, and its output gains only additive fields (`evidence`, `sessions`, `explainedBy` per request; `sessionCoverage` in the summary, `null` when the argument was not used).
+
+**No descriptor re-sync.** Session evidence is local: no new tracker operation, no new field, no config key. Nothing to migrate.
+
+**If you keep saved sessions, check they are ignored.** The conventional locations are `.ai/session-exports/` and `.ai/sessions*.json`. The skill refuses to read a session file that your repository tracks, or that sits inside your repository without being ignored, and reports it ahead of every other figure — a raw agent transcript can carry credentials, private prompts, absolute paths, and full tool output, so a committed one is a live exposure. Add those paths to `.gitignore` before running with `--sessions`.
+
 ## 2026-08-01 — New skill: om-pipeline-retro, and four fields added to the tracker contract
 
 **New skill.** `om-pipeline-retro` classifies finished pipeline runs from the tracker and ranks what second passes cost in wall-clock hours. Read-only. Install it with:

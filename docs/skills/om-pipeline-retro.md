@@ -13,6 +13,17 @@ The count it reports of second passes with no recorded cause is a measurement of
 - `--since <YYYY-MM-DD>` — how far back to look. Default: 30 days ago.
 - `--limit <n>` — the most pull requests to examine per state, so a run examines up to twice this many and makes one tracker call for each. Default: 30.
 - `--gap-minutes <n>` — the fallback window for a skill that posts no opening comment: marker comments further apart than this count as separate runs. Default: 60.
+- `--sessions [<dir|file>]` — also read saved agent session exports. Omit the value to search the conventional locations (`.ai/session-exports/`, `.ai/sessions*.json`). Off by default.
+
+## Saved sessions
+
+The tracker only knows what a run chose to post, so a run that was interrupted before it could report — or that never opened a pull request at all — leaves nothing there. That is what the "cause not stated" bucket is made of. The evidence usually still exists on the machine that produced it, as a saved session export, and `--sessions` reads it.
+
+Those exports are sensitive: a raw agent transcript can carry credentials, private prompts, absolute paths, and the full output of every tool the run invoked. So the skill never reads one. A verifier script opens the files and emits only derived data — a hygiene verdict, the skills the session names, the request it belongs to, its declared outcome, its causes — and the transcript itself never enters a context window, a report, or the repository. Sessions appear in the report by filename alone.
+
+Verification comes before classification and has its own verdict. A session file that the repository *tracks*, or that sits inside the repository without being ignored, is reported ahead of every retro figure and its contents are not read at all — a committed transcript is a live exposure, and that matters more than any number in the report.
+
+What sessions add: a cause for a run whose pull request recorded none, and one signal the tracker cannot show at all — a run that opened and never recorded a completion, which is a run that did not finish. What they never add: a run count (one session is one run, so counts stay single-sourced from the tracker), a demotion out of a class the tracker established, or a guess. A verified session that belongs to no request in the window is reported as exactly that: a run that left no readable trace anywhere in the tracker.
 
 ## Works with
 

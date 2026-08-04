@@ -5,7 +5,7 @@
 # Input: one JSON array of pull requests on stdin, carrying the fields the skill
 # requests through the list-prs and get-pr tracker operations:
 #
-#   number, state, createdAt, mergedAt, closedAt, additions, changedFiles,
+#   number, state, createdAt, mergedAt, closedAt, additions,
 #   labels:   [{"name": ...}, ...]
 #   reviews:  [{"state": ..., "body": ...}, ...]
 #   comments: [{"body": ..., "createdAt": ...}, ...]
@@ -18,9 +18,13 @@
 #
 #   1. A run is counted from its OPENING comment: a marker comment whose line
 #      says a run started, took over, or was resumed ("started by", "starting
-#      <skill> run", "taking over"). Completion notes, label rationales, run
-#      summaries and evidence posts belong to the run already open and start
-#      nothing. A skill that posts marker comments but never an opener falls back
+#      <skill> run", "taking over"). One opener line opens exactly ONE run per
+#      skill it names, however many times it names it — the 🤖 marker prefix and
+#      the "starting `<skill>` run" phrase both carry the same name, and counting
+#      occurrences would report a single run as a second pass. Completion notes,
+#      label rationales, run summaries and evidence posts belong to the run
+#      already open and start nothing. A skill that posts marker comments but
+#      never an opener falls back
 #      to time clustering: comments more than --gap-minutes apart count as
 #      separate runs, and with no timestamps each counts as its own run, which is
 #      an upper bound that `timestampCoverage.reliable` reports as false.
@@ -128,8 +132,12 @@ def markers: [ match("(^|\n)[ \t#*]*🤖[^\n]*"; "g") | .string ];
 def marker_skills: [ markers[] | match("om-[a-z0-9-]+"; "g") | .string ] | unique;
 def is_agent_text: (markers | length) > 0;
 
-# A marker line that opens a run. The lifecycle verbs come from the collection is
-# own claim boilerplate; every other marker line continues a run already open.
+# A marker line that opens a run. The lifecycle verbs come from the claim
+# boilerplate of this collection; every other marker line continues a run
+# already open. (No apostrophe may appear anywhere below: this jq program is a
+# single-quoted shell string, so one would close it mid-script.)
+# One opener line opens ONE run for a skill however many times it names it: the
+# marker prefix and the "starting `<skill>` run" phrase both carry the name.
 def opener_lines:
   [ markers[] | select(test("started by|starting[^\n]*run|taking over|resum(ing|ed)[^\n]*run"; "i")) ];
 
@@ -148,7 +156,7 @@ def agent_comments:
     | select(.body | is_agent_text) ];
 
 def opener_runs($cs):
-  [ $cs[] | .body | opener_lines[] | match("om-[a-z0-9-]+"; "g").string ]
+  [ $cs[] | .body | opener_lines[] | [ match("om-[a-z0-9-]+"; "g").string ] | unique[] ]
   | group_by(.) | map({ key: .[0], value: length }) | from_entries;
 
 def cluster($events; $gap):

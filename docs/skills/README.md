@@ -18,6 +18,7 @@ One card per skill, with its parameters and the companion skills it works with. 
 | [om-auto-qa-pr](om-auto-qa-pr.md) | 🤖 | QAs a PR's UI in a real browser and posts screenshot evidence — no source touched. |
 | [om-auto-manage-issues](om-auto-manage-issues.md) | 🤖 | Brings existing issues up to standard: label sync, screenshot analysis, spec-coverage checks. |
 | [om-auto-update-changelog](om-auto-update-changelog.md) | 🤖 | Drafts a CHANGELOG release entry for merged PRs and ships it as a docs PR. |
+| [om-pr-autopilot](om-pr-autopilot.md) | 🤖 | Diagnoses what state one open PR is really in, then runs the matching chain of the skills above. Dispatch only. |
 | [om-review-prs](om-review-prs.md) | 🧑‍💻 | Sweeps every unreviewed open PR, newest first, through the review skill. |
 | [om-close-fixed-issues](om-close-fixed-issues.md) | 🧑‍💻 | Post-merge housekeeping: closes issues merged PRs fixed, comments on closed-unmerged PRs. |
 | [om-merge-buddy](om-merge-buddy.md) | 🧑‍💻 | Reports which open PRs can merge now and which are close but blocked. |

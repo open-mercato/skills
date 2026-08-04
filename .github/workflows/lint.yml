@@ -14,3 +14,5 @@ jobs:
         run: bash scripts/lint.sh
       - name: Browser provider contract and platform matrix
         run: node scripts/test-browser-providers.mjs
+      - name: Pipeline-retro classifier rules
+        run: node scripts/test-classify-runs.mjs

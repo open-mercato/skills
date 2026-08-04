@@ -10,6 +10,7 @@ The pipeline sweeps open PRs, tells you which can merge now and which are blocke
 |---|---|---|---|
 | [`om-merge-buddy`](../skills/om-merge-buddy.md) | Survey the merge queue | `/om-merge-buddy` | a report of which PRs can merge now and which are close but blocked |
 | [`om-review-prs`](../skills/om-review-prs.md) | Clear the review backlog | `/om-review-prs` | every unreviewed open PR reviewed, newest first, claim-lock aware |
+| [`om-pr-autopilot`](../skills/om-pr-autopilot.md) | Just finish this PR, whatever is left on it | `/om-pr-autopilot 123` | the PR's real state diagnosed, then the matching chain of the skills below run in order, with one summary comment covering every step |
 | [`om-auto-fix-pr`](../skills/om-auto-fix-pr.md) | Drive one PR to merge-ready | `/om-auto-fix-pr 123` | an approvable, green, QA-evidenced PR handed to [`om-approve-merge-pr`](../skills/om-approve-merge-pr.md) |
 | `om-auto-fix-pr --ci-only` | Get red CI to green | `/om-auto-fix-pr 123 --ci-only` | green CI from real fixes with tests, never faked |
 | [`om-approve-merge-pr`](../skills/om-approve-merge-pr.md) | Ship a ready PR | `/om-approve-merge-pr 123` | the PR approved and squash-merged, or refused if the QA gate/a label forbids it |

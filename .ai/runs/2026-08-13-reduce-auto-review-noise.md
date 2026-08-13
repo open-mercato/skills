@@ -59,8 +59,8 @@ The PR is a design deliverable that stays design-only. Its merge blocker is not 
 
 ### Phase 2: Resolve A3 and the decision record
 
-- [ ] 2.1 Clear the A3 confirmation gate in the spec — drop `⚠ NEEDS HUMAN CONFIRMATION`, the "Phase 2 must not merge until the team confirms A3" gate, and every dependent hedge in Risks, Phasing, and Rollout
-- [ ] 2.2 Record the 2026-08-13 decision in `DECISIONS.md`, superseding the 2026-07-23 reporting entry in place while leaving the original visible and annotated
+- [x] 2.1 Clear the A3 confirmation gate in the spec — drop `⚠ NEEDS HUMAN CONFIRMATION`, the "Phase 2 must not merge until the team confirms A3" gate, and every dependent hedge in Risks, Phasing, and Rollout  — a87bdae
+- [x] 2.2 Record the 2026-08-13 decision in `DECISIONS.md`, superseding the 2026-07-23 reporting entry in place while leaving the original visible and annotated  — a87bdae
 
 ### Phase 3: Resolve the three blockers
 

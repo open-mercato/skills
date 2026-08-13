@@ -83,4 +83,4 @@ consumers, and record the maintainer's reporting-policy decisions.
 ### Phase 3: Validate and hand back to review
 
 - [x] 3.1 Run `bash scripts/lint.sh`, commit, and push normally — eafb75b
-- [ ] 3.2 Re-review the final diff, submit the verdict, normalize labels, and release the lock
+- [x] 3.2 Re-review the final diff, submit the verdict, normalize labels, and release the lock — dbfed86

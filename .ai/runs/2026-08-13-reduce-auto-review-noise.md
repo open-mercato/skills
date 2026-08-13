@@ -73,14 +73,14 @@ consumers, and record the maintainer's reporting-policy decisions.
 
 ### Phase 2: Resolve review findings and decisions
 
-- [ ] 2.1 Split suppression and comment budgeting into cohesive specs
-- [ ] 2.2 Make fingerprinting whitespace-preserving and fail-open
-- [ ] 2.3 Keep executable/dependency/health changes on the normal review path
-- [ ] 2.4 Preserve claim markers and ground the compatibility inventory
-- [ ] 2.5 Define real budget overflow and complete acceptance fixtures
-- [ ] 2.6 Record D1/D2 in the budget spec and `DECISIONS.md`
+- [x] 2.1 Split suppression and comment budgeting into cohesive specs — 46ebe52
+- [x] 2.2 Make fingerprinting whitespace-preserving and fail-open — 46ebe52
+- [x] 2.3 Keep executable/dependency/health changes on the normal review path — 46ebe52
+- [x] 2.4 Preserve claim markers and ground the compatibility inventory — 46ebe52
+- [x] 2.5 Define real budget overflow and complete acceptance fixtures — 46ebe52
+- [x] 2.6 Record D1/D2 in the budget spec and `DECISIONS.md` — 46ebe52
 
 ### Phase 3: Validate and hand back to review
 
-- [ ] 3.1 Run `bash scripts/lint.sh`, commit, and push normally
+- [x] 3.1 Run `bash scripts/lint.sh`, commit, and push normally — eafb75b
 - [ ] 3.2 Re-review the final diff, submit the verdict, normalize labels, and release the lock

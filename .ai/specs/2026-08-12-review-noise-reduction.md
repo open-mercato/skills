@@ -18,7 +18,7 @@ It does not:
 
 - classify CI/workflow or dependency changes as review-free; those surfaces remain security- and supply-chain-sensitive;
 - classify whitespace-only code changes as review-free; whitespace is semantic in languages and formats such as Python, YAML, and Makefiles;
-- merge claim, take-over, completion, or release comments; their shapes and freshness semantics are shared concurrency signals;
+- merge claim, take-over, completion, or release comments; their shapes and freshness semantics are shared concurrency signals, and at least one consumer is executable rather than prose: `skills/om-pipeline-retro/references/classify-runs.sh` matches opener lines with the regex `started by|starting[^\n]*run|taking over|resum(ing|ed)[^\n]*run`, counting one run per opener, so folding these into a comment updated in place would silently change every figure it reports;
 - shorten the human-facing review body (see `.ai/specs/2026-08-13-review-comment-budget.md`);
 - replace repeated conflict/check reviews with a status-comment state machine or add a `do-not-review` policy; each is independently deployable and needs its own design;
 - implement incremental/delta-only review, which needs its own design after fingerprinting has soaked.
@@ -109,7 +109,7 @@ No sidecar repo file or new tracker operation is introduced. Existing **get-pr**
 |---|---|---|
 | A changed patch is treated as identical | High | Whitespace-preserving identity, binary/mode fixtures, strict marker validation, and fail-open fallback |
 | CI/conflict state is wrongly suppressed | High | Mergeability and required checks are evaluated first; unhealthy state fails open to the existing early-exit review |
-| Preflight weakens the claim protocol | Medium | The existing lock decision is its first branch; only an unclaimed PR reaches fingerprint reads, and any actionable state claims before mutation, validation, checkout, or findings |
+| Preflight weakens the claim protocol | Medium | The existing lock decision is its first branch; only an unclaimed PR reaches fingerprint reads, and any actionable state claims before mutation, validation, checkout, or findings. Claim-comment shapes are untouched, which also keeps `om-pipeline-retro`'s shipped run classifier working |
 | Partial upgrades behave inconsistently | Low | All added state is ignorable; unsupported comparisons perform the existing noisy review |
 
 Rollback removes the preflight and returns to head-SHA review selection. Existing HTML markers become inert; no data migration or cleanup is required.

@@ -178,7 +178,26 @@ Four related course-corrections from production use (open-mercato/cezar#621, #62
 - **Atomic spec PRs — implement-by-continuation reversed.** The earlier decision ("One PR opener, reused" above) had `om-auto-implement-spec` grow the implementation on the spec PR's branch and "reframe" the PR (title/body/label rewrite) once code landed. In practice that mixed two review lifecycles in one diff and broke the atomic-PR principle. Now the spec PR is a design deliverable that stays design-only; implementation always ships on its **own PR** carrying `Refs #{specPr}` + `Source doc:`, the continue skills refuse to land implementation on a spec-only branch (they hand off to `om-auto-implement-spec`), and the whole reframe machinery is deleted. "Never a second PR" still holds where it matters: one **implementation** PR per spec, resumed rather than duplicated.
 - **Review autofix is opt-in on foreign PRs.** `om-auto-review-pr` pushed fixes to any PR it reviewed — including other people's. Now one flag decides (`AUTOFIX_ELIGIBLE`, set in its step 2): the loop runs only when the PR author is the automation identity or `--autofix` was passed; otherwise the run ends with review + labels + author handoff. The fixing chains (`om-auto-fix-pr`, `om-auto-fix-issue`) pass `--autofix` explicitly; `om-review-prs` sweeps review-only.
 - **One label-rationale comment, updated in place.** Per-change one-sentence label comments plus a `·`-concatenated consolidated comment produced duplicate, hard-to-read timelines (and Codex runs dropped the emojis entirely). The contract is now a single marker-idempotent `🏷️ label rationale` comment per skill per PR/issue — one label per line with its emoji and a full-sentence reason — rewritten via the new **update-comment** tracker operation on every label change. `mark-pr-ready` is exercised wherever a run makes a draft PR merge-ready.
-- **Reporting is template-based and deliberately un-laconic.** Output quality diverged by runtime (rich on Claude, terse on Codex) because most report shapes were inline prose with "concise" wording. Every skill's user-facing report/comment shapes now live in `references/report-templates.md` (or the template file its steps name, e.g. `om-code-review`'s `output-format.md`), emoji-structured with full-sentence guidance, and every `rules.md` copy carries binding "Label commentary" and "Reporting style" rules. Machine-parsed chain contracts (`om-root-cause` brief, `om-fix`/`om-open-pr` output contracts, chaining reference lines) deliberately stay plain.
+- **Reporting is template-based and deliberately un-laconic.** Output quality diverged by runtime (rich on Claude, terse on Codex) because most report shapes were inline prose with "concise" wording. Every skill's user-facing report/comment shapes now live in `references/report-templates.md` (or the template file its steps name, e.g. `om-code-review`'s `output-format.md`), emoji-structured with full-sentence guidance, and every `rules.md` copy carries binding "Label commentary" and "Reporting style" rules. Machine-parsed chain contracts (`om-root-cause` brief, `om-fix`/`om-open-pr` output contracts, chaining reference lines) deliberately stay plain. **Amended on 2026-08-13 below:** completeness remains mandatory, but a human-facing channel may use a bounded projection of a fuller agent artifact.
+
+## 2026-08-13 — Review reports split the agent and PR audiences
+
+The 2026-07-23 decision correctly made templates, complete sentences, and the
+reason behind every verdict/finding mandatory, but it used output volume as a
+proxy for completeness. PR #80 approved a narrower rule: `om-code-review`
+keeps an exhaustive agent/chain artifact, while the PR review body is a bounded
+projection with mandatory title/mode, verdict and counts, validation outcome,
+every blocker and major with its fix, lower-severity counts, test gaps, and any
+compatibility marker. Mandatory safety content may exceed the limit; it is
+never omitted. Lower-severity detail renders only while budget remains, with an
+exact omitted count pointing to the full run report.
+
+This is a channel contract, not permission for terse improvisation. Templates,
+full sentences, concrete rationale, deterministic fallback to the full report,
+and machine-parsed chaining/CEZ markers remain binding. To avoid contradictory
+installed skills, the implementation updates all 34 `references/rules.md`
+copies and affected report-template preambles in one PR; the user explicitly
+selected the collection-wide sync during PR #80's review.
 
 ## 2026-07-24 — Executor placement is plan-time data; abstract model tiers per executor
 

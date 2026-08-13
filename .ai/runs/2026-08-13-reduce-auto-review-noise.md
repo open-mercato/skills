@@ -64,24 +64,24 @@ The PR is a design deliverable that stays design-only. Its merge blocker is not 
 
 ### Phase 3: Resolve the three blockers
 
-- [ ] 3.1 `:70` — restate the quiet-mode allowlist as a rule (non-executable, non-dependency prose only) instead of a path list, with executables, CI definitions, lockfiles, manifests, scripts, and mode changes named as never-quiet
-- [ ] 3.2 `:57` — move the fingerprint to a whitespace-preserving identity (`git patch-id --verbatim`), cite the verification, and delete the `:216` acceptance of false silence
-- [ ] 3.3 `:200` — keep the claim/take-over signal unchanged, and state why consolidating it needs its own spec
+- [x] 3.1 `:70` — restate the quiet-mode allowlist as a rule (non-executable, non-dependency prose only) instead of a path list, with executables, CI definitions, lockfiles, manifests, scripts, and mode changes named as never-quiet — 016e7cb
+- [x] 3.2 `:57` — move the fingerprint to a whitespace-preserving identity (`git patch-id --verbatim`), cite the verification, and delete the `:216` acceptance of false silence — 016e7cb
+- [x] 3.3 `:200` — keep the claim/take-over signal unchanged, and state why consolidating it needs its own spec — 016e7cb
 
 ### Phase 4: Resolve the three majors
 
-- [ ] 4.1 `:278` — reconcile mergeability and required-check state before the no-op gate, idempotently, so only the substantive review is suppressed
-- [ ] 4.2 `:168` — ground the contract inventory in the repository's actual consumers and enumerate every instruction file Phase 2 must change
-- [ ] 4.3 `:247` — move Phase 3 to a follow-up spec and give Phase 1 and Phase 2 their own executable acceptance criteria and separate implementation PRs
+- [x] 4.1 `:278` — reconcile mergeability and required-check state before the no-op gate, idempotently, so only the substantive review is suppressed — 016e7cb
+- [x] 4.2 `:168` — ground the contract inventory in the repository's actual consumers and enumerate every instruction file Phase 2 must change — 016e7cb
+- [x] 4.3 `:247` — move Phase 3 to a follow-up spec and give Phase 1 and Phase 2 their own executable acceptance criteria and separate implementation PRs — 016e7cb
 
 ### Phase 5: Expand the fixture matrix
 
-- [ ] 5.1 Add the reviewer's Test Coverage cases to the fixture plan — executable CI changes, dependency/lockfile changes, whitespace-semantic sources, CI red→green and green→red, conflict appearance and recovery on unchanged content, and old/new claim-comment interop
+- [x] 5.1 Add the reviewer's Test Coverage cases to the fixture plan — executable CI changes, dependency/lockfile changes, whitespace-semantic sources, CI red→green and green→red, conflict appearance and recovery on unchanged content, and old/new claim-comment interop — 016e7cb
 
 ### Phase 6: Land the PR
 
 - [ ] 6.1 Run the validation gate (`bash scripts/lint.sh`) and push
 - [ ] 6.2 Update the PR description — remove "Why this is a draft" and the A3 ask, keep the A1 and fail-open asks
-- [ ] 6.3 File the Phase 3 follow-up issue via `om-followup-issue-from-pr`, linked to #80
+- [x] 6.3 File the Phase 3 follow-up issue via `om-followup-issue-from-pr`, linked to #80 — issues #82 (Phase 3 spec) and #83 (implementation tracking)
 - [ ] 6.4 Answer @pkarw on the PR with the A3 decision and the repository evidence behind the `:168` correction
 - [ ] 6.5 Run `om-auto-review-pr 80 --autofix` to a clean verdict, then hand off to `om-approve-merge-pr 80`

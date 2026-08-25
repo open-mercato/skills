@@ -28,7 +28,9 @@ merge.
 2. **Stabilize CI — the CI procedure below.** Pull check status through the
    tracker, classify each failure (real bug / test bug / flake / infra), fix the
    real ones with tests, push, re-check. Never go green by weakening a test or
-   disabling a check. Honor `--max-iterations` for the inner fix→push→re-check loop.
+   disabling a check. Honor `--max-iterations` for the inner fix→push→re-check loop —
+   the same flag that bounds the outer loop, defined once with its default in
+   `SKILL.md` (Arguments); never restate a default here, where it can drift.
 3. **Verify UI — `om-auto-qa-pr {prNumber}`** — only when the diff touches a
    user-facing surface (inspect **get-pr-diff** / **get-pr-files** for UI paths)
    and `--no-ui` was not passed. It boots the app, drives the changed flow, and
@@ -58,7 +60,7 @@ Classify every check as passing, pending, or failing. Nothing failing and nothin
 pending → report "already green". Checks pending → **watch-run** (or poll) until they
 settle before diagnosing, under the wait budget below.
 
-### The fix → push → re-check loop (up to `--max-iterations`, default 5)
+### The fix → push → re-check loop (up to `--max-iterations`)
 
 Per iteration:
 

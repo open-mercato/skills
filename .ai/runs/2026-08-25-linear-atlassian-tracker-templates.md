@@ -11,11 +11,11 @@ Add shipped split-tracker descriptors for Linear through `schpet/linear-cli` and
 
 ## Goal
 
-Let `om-setup-agent-pipeline` install ready-to-customize `linear` and `atlassian` tracker descriptors with the same operation contract and safety guarantees as the shipped GitHub descriptor.
+Let `om-setup-agent-pipeline` install ready-to-customize `linear` and `jira` tracker descriptors with the same operation contract and safety guarantees as the shipped GitHub descriptor.
 
 ## Scope
 
-- Add `linear.md` and `atlassian.md` under the setup skill's shipped tracker descriptors.
+- Add `linear.md` and `jira.md` under the setup skill's shipped tracker descriptors.
 - Document authentication, identifier mapping, issue operations, label guards, claim signals, cross-project limits, and explicit delegation to GitHub for code-host operations.
 - Update setup guidance, user-facing documentation, and the repository decision record to advertise the two shipped providers.
 

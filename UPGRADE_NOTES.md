@@ -16,8 +16,8 @@ against them — not against the copies shipped in this repo:
 
 ## 2026-08-25 — Shipped Linear and Atlassian split tracker providers
 
-- **Two provider descriptors are now ready to install.** Select `linear` to run issue operations through `schpet/linear-cli`, or `atlassian` to run Jira Cloud work-item operations through Atlassian CLI (`acli`). Both keep repository, pull-request, review, CI, and PR-label operations on GitHub.
-- **Setup installs a companion descriptor.** Re-run `/om-setup-agent-pipeline` and choose the provider; it installs `.ai/trackers/linear.md` or `.ai/trackers/atlassian.md` plus the required `.ai/trackers/github.md`, while leaving the selected issue provider in the config's `tracker` field. Existing descriptor copies are never overwritten without a diff/refresh/merge/keep decision.
+- **Two provider descriptors are now ready to install.** Select `linear` to run issue operations through `schpet/linear-cli`, or `jira` to run Jira Cloud work-item operations through Atlassian CLI (`acli`). Both keep repository, pull-request, review, CI, and PR-label operations on GitHub.
+- **Setup installs a companion descriptor.** Re-run `/om-setup-agent-pipeline` and choose the provider; it installs `.ai/trackers/linear.md` or `.ai/trackers/jira.md` plus the required `.ai/trackers/github.md`, while leaving the selected issue provider in the config's `tracker` field. Existing descriptor copies are never overwritten without a diff/refresh/merge/keep decision.
 - **Provider prerequisites stay outside shared config.** Linear uses its authenticated workspace plus `LINEAR_TEAM` or `.linear.toml`. Atlassian uses authenticated `acli` plus `ATLASSIAN_SITE`, `ATLASSIAN_PROJECT`, and the non-secret `ATLASSIAN_ACCOUNT_ID`; optional environment values map issue type and terminal workflow statuses. Tokens remain in the CLIs' credential stores or CI secrets, never in `.ai/agentic.config.json`.
 - **No migration for GitHub-only repositories.** The config schema and tracker operation names are unchanged. Custom providers can continue from `TEMPLATE.md`; the shipped split descriptors are reference implementations for explicit code-host delegation and native issue-label semantics.
 
@@ -144,7 +144,7 @@ new behavior.
 ## Re-syncing the tracker descriptor
 
 The shipped descriptors live in `skills/om-setup-agent-pipeline/references/trackers/`
-(`github.md`, `linear.md`, `atlassian.md`, plus `TEMPLATE.md` for custom providers). Your installed copy is
+(`github.md`, `linear.md`, `jira.md`, plus `TEMPLATE.md` for custom providers). Your installed copy is
 `.ai/trackers/<tracker>.md` in the consuming repository.
 
 ```bash
@@ -164,7 +164,7 @@ cp <path-to-skills>/om-setup-agent-pipeline/references/trackers/github.md .ai/tr
 Re-running `/om-setup-agent-pipeline` also refreshes the descriptor, but plain-copies it —
 prefer the diff-and-merge route when you have customized operations.
 
-For the shipped `linear` or `atlassian` split provider, substitute its filename in the commands
+For the shipped `linear` or `jira` split provider, substitute its filename in the commands
 above and repeat the diff for the companion `.ai/trackers/github.md`. The primary descriptor owns
 issues; the companion owns repository, PR, review, CI, and PR-label operations, so both copies must
 stay current.

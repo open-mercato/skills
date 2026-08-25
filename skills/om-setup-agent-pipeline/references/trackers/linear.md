@@ -107,6 +107,8 @@ Execute **default-branch** from `.ai/trackers/github.md`.
 linear issue view "{issueId}" --json --no-download
 ```
 
+The view command's embedded comment connection is bounded. When the caller needs complete comment history (claim/stale-lock detection or marker idempotency), also run **list-issue-comments**.
+
 #### search-issues
 
 Text query, state, optional team → matching issues. Translate `open` to non-terminal state types and `closed` to terminal types; omit the state flags for all states.
@@ -114,14 +116,14 @@ Text query, state, optional team → matching issues. Translate `open` to non-te
 ```bash
 # open
 linear issue query --search "<query>" --all-teams \
-  --state triage --state backlog --state unstarted --state started --json
+  --state triage --state backlog --state unstarted --state started --limit 0 --json
 
 # closed
 linear issue query --search "<query>" --all-teams \
-  --state completed --state canceled --json
+  --state completed --state canceled --limit 0 --json
 
 # any state
-linear issue query --search "<query>" --all-teams --all-states --json
+linear issue query --search "<query>" --all-teams --all-states --limit 0 --json
 ```
 
 Use `--team "{repo}"` instead of `--all-teams` when a Linear team key was passed. Add `--search-comments` only when the caller explicitly asks to search comments.
@@ -177,7 +179,7 @@ Always use `apply_issue_label "<label>" "{issueId}"` / `remove_issue_label "<lab
 Comment id → body, author, URL. The dedicated CLI has list/update but no single-comment read, so use its documented GraphQL fallback:
 
 ```bash
-linear api --variable id="{commentId}" <<'GRAPHQL'
+linear api --variable id="{commentId}" <<'GRAPHQL' | jq '.data.comment'
 query($id: String!) {
   comment(id: $id) {
     id
@@ -194,11 +196,31 @@ GRAPHQL
 
 #### list-issue-comments
 
+The dedicated list command currently returns only its first connection page. Use the CLI's `api --paginate` fallback so lock and marker detection sees the whole history:
+
 ```bash
-linear issue comment list "{issueId}" --json
+linear api --variable id="{issueId}" --paginate <<'GRAPHQL'
+query($id: String!, $after: String) {
+  issue(id: $id) {
+    comments(first: 100, after: $after, orderBy: createdAt) {
+      nodes {
+        id
+        body
+        createdAt
+        updatedAt
+        url
+        user { name displayName email }
+        externalUser { name displayName }
+        parent { id }
+      }
+      pageInfo { hasNextPage endCursor }
+    }
+  }
+}
+GRAPHQL
 ```
 
-The JSON `nodes` carry `id`, `body`, `createdAt`, `updatedAt`, `url`, user/external-user identity, and parent id.
+The JSON array carries `id`, `body`, `createdAt`, `updatedAt`, `url`, user/external-user identity, and parent id for every page.
 
 #### update-comment
 

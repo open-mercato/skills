@@ -50,7 +50,7 @@ Every skill in this collection reads its repository-specific settings from `.ai/
 Field reference:
 
 - `baseBranch` — the branch PRs target. `"auto"` means resolve at runtime from the repository's default branch; set an explicit name only when PRs target something else.
-- `tracker` — selects `.ai/trackers/<tracker>.md`. Shipped values are `"github"`, `"linear"` (Linear issues + GitHub PRs/CI), and `"atlassian"` (Jira Cloud issues + GitHub PRs/CI); see Tracker providers below.
+- `tracker` — selects `.ai/trackers/<tracker>.md`. Shipped values are `"github"`, `"linear"` (Linear issues + GitHub PRs/CI), and `"jira"` (Jira Cloud issues + GitHub PRs/CI); see Tracker providers below.
 - `browser.provider` — the browser-automation provider used by QA and integration-test skills. Selects `.ai/browsers/<provider>.md`. Fresh setups default to `"agent-browser"`; configs without this key keep legacy Playwright behavior (see Browser providers).
 - `validation.commands` — ordered list of shell commands that constitute the full validation gate. Skills run them in order and treat any non-zero exit as a gate failure. Keep the list complete: typecheck, lint, tests, build — whatever proves the repo is healthy.
 - `labels.enabled` — when `false`, skills skip every label operation and note that in their PR summaries. Use this for repos that do not want the label workflow.
@@ -76,7 +76,7 @@ Field reference:
 
 Skills name the operations in `references/trackers/TEMPLATE.md`; the selected `.ai/trackers/<tracker>.md` says how to execute them and is the team's committed override point. This skill installs shipped descriptors from its own `references/trackers/` directory.
 
-The collection ships `github.md`, `linear.md`, and `atlassian.md`. Linear and Atlassian own issues but delegate repository/PR/review/CI/PR-label operations to a required `github.md` companion, so setup installs both. Scaffold any other provider from `TEMPLATE.md`.
+The collection ships `github.md`, `linear.md`, and `jira.md`. Linear and Jira own issues but delegate repository/PR/review/CI/PR-label operations to a required `github.md` companion, so setup installs both. Scaffold any other provider from `TEMPLATE.md`.
 
 ## Browser providers
 
@@ -104,12 +104,12 @@ Every skill in this collection checks, right after loading the config, for a rep
 
    Prefer commands mirroring what CI already runs (`.github/workflows/*.yml`).
 
-3. **Ask the user (skip with `--defaults`).** Confirm validation, tracker (`github`, `linear`, `atlassian`, or custom; default `github`), browser provider, label mode, QA gate, spec path, optional review checklist, and missing project docs. Full guidance: `references/interview-questions.md`.
+3. **Ask the user (skip with `--defaults`).** Confirm validation, tracker (`github`, `linear`, `jira`, or custom; default `github`), browser provider, label mode, QA gate, spec path, optional review checklist, and missing project docs. Full guidance: `references/interview-questions.md`.
 
 4. **Install the tracker descriptor.** Copy the shipped descriptor for the chosen tracker from this skill's `references/trackers/<tracker>.md` to `.ai/trackers/<tracker>.md` (create the directory). Rules:
 
    - When `.ai/trackers/<tracker>.md` already exists, never overwrite it silently — the team may have extended it. Show a diff against the shipped version and ask whether to refresh, merge, or keep.
-   - A split descriptor also installs its shipped code-host companion with the same protection. `linear` and `atlassian` require `.ai/trackers/github.md`; decide refresh/merge/keep separately for each file, and keep the selected issue provider in config.
+   - A split descriptor also installs its shipped code-host companion with the same protection. `linear` and `jira` require `.ai/trackers/github.md`; decide refresh/merge/keep separately for each file, and keep the selected issue provider in config.
    - When the chosen tracker has no shipped descriptor, scaffold `.ai/trackers/<tracker>.md` from `references/trackers/TEMPLATE.md` and tell the user which operations they must fill in before the other skills can run.
 
 5. **Install the browser descriptor.** Copy `references/browsers/<provider>.md` to `.ai/browsers/<provider>.md`. When the repo copy already exists, apply the same protection as tracker descriptors: show the operation-section diff and ask whether to refresh, merge, or keep. For an unshipped provider, scaffold from `references/browsers/TEMPLATE.md`, report the operations that must be implemented, and stop browser-capable work until the descriptor is filled. For configs without `browser.provider`, create a descriptor only when setup is re-run to upgrade the repo.

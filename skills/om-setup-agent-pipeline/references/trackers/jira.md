@@ -2,7 +2,7 @@
 
 This is the split-provider implementation of the tracker operations contract for teams that keep issues in Jira Cloud and source code on GitHub. Issue operations use Atlassian CLI (`acli`); repository, pull-request, review, CI, and PR-label operations delegate to the companion `.ai/trackers/github.md` descriptor.
 
-At runtime, `om-setup-agent-pipeline` installs both files and sets `"tracker": "atlassian"`. The repository's copies are authoritative: teams may add fields, Jira workflow mappings, or project conventions without editing installed skills.
+At runtime, `om-setup-agent-pipeline` installs both files and sets `"tracker": "jira"`. The repository's copies are authoritative: teams may add fields, Jira workflow mappings, or project conventions without editing installed skills.
 
 ## Prerequisites
 
@@ -72,6 +72,10 @@ atlassian_tracker_auth_check() {
   : "${ATLASSIAN_SITE:?Set ATLASSIAN_SITE to the Jira Cloud hostname}"
   : "${ATLASSIAN_PROJECT:?Set ATLASSIAN_PROJECT to the default Jira project key}"
   : "${ATLASSIAN_ACCOUNT_ID:?Set ATLASSIAN_ACCOUNT_ID to the automation user's Jira account id}"
+  printf '%s' "$ATLASSIAN_SITE" | grep -Eq '^[A-Za-z0-9.-]+$' || {
+    echo "ATLASSIAN_SITE must be a hostname without a scheme or path" >&2
+    return 1
+  }
   acli jira workitem edit --help | grep -Fq -- '--remove-labels' || {
     echo "Installed acli is too old for the documented Jira mutations; upgrade it." >&2
     return 1
@@ -126,6 +130,9 @@ jql_escape() {
 
 escaped_query=$(jql_escape "<query>")
 project_key=${JIRA_PROJECT_OVERRIDE:-$ATLASSIAN_PROJECT}
+case "$project_key" in
+  ''|*[!A-Za-z0-9_-]*) echo "Invalid Jira project key: $project_key" >&2; exit 1 ;;
+esac
 
 # open
 acli jira workitem search \
@@ -148,7 +155,7 @@ Title, description body file, assignee, labels, and optional project → created
 acli jira workitem create --project "${JIRA_PROJECT_OVERRIDE:-$ATLASSIAN_PROJECT}" \
   --type "${ATLASSIAN_ISSUE_TYPE:-Task}" --summary "<title>" \
   --description-file <body-file> --assignee "${ASSIGNEE:-$ATLASSIAN_ACCOUNT_ID}" \
-  --label "<comma-separated-labels>" --json
+  <optional: --label "<comma-separated-labels>"> --json
 ```
 
 Read the returned key and report `https://${ATLASSIAN_SITE}/browse/<key>`.
@@ -194,6 +201,10 @@ Always use `apply_issue_label "<label>" "{issueId}"` / `remove_issue_label "<lab
 Parse the opaque `{issueKey}:{commentId}` handle, list that issue's comments, and select the requested id:
 
 ```bash
+printf '%s' "$COMMENT_HANDLE" | grep -Eq '^[A-Z][A-Z0-9_]+-[0-9]+:[0-9]+$' || {
+  echo "Invalid Jira comment handle: $COMMENT_HANDLE" >&2
+  exit 1
+}
 issue_key=${COMMENT_HANDLE%%:*}
 comment_id=${COMMENT_HANDLE#*:}
 acli jira workitem comment list --key "$issue_key" --paginate --json \
@@ -219,6 +230,10 @@ acli jira workitem comment list --key "{issueId}" --paginate --json \
 #### update-comment
 
 ```bash
+printf '%s' "$COMMENT_HANDLE" | grep -Eq '^[A-Z][A-Z0-9_]+-[0-9]+:[0-9]+$' || {
+  echo "Invalid Jira comment handle: $COMMENT_HANDLE" >&2
+  exit 1
+}
 issue_key=${COMMENT_HANDLE%%:*}
 comment_id=${COMMENT_HANDLE#*:}
 acli jira workitem comment update --key "$issue_key" --id "$comment_id" --body-file <body-file>

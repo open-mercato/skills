@@ -6,26 +6,26 @@ Branch: feat/windows-compatibility-spec
 
 ## Goal
 
-Determine whether the collection needs changes to run from native Windows shells, then publish an implementation-ready specification for closing the verified gaps without changing the skills in this PR.
+Determine whether the collection needs changes to run on Windows, then publish an implementation-ready shell-neutral specification that avoids maintaining separate operating-system branches.
 
 ## Scope
 
 - Audit the current skill instructions, duplicated standard references, tracker and browser descriptors, repository tooling, and validation configuration for native Windows/PowerShell assumptions.
 - Distinguish existing Windows support from remaining blockers so the proposal does not repeat the cross-platform test-environment work already merged in PR #18.
-- Define a backward-compatible platform execution contract, affected-file matrix, validation strategy, rollout phases, and testable implementation steps.
+- Define one backward-compatible structured-operation contract, affected-file matrix, validation strategy, rollout phases, and testable implementation steps.
 - Produce a spec-only design PR under `.ai/specs/`; no runtime skill or tooling behavior changes in this run.
 
 ## Resolved assumptions (autonomous defaults)
 
-- **Windows target:** native Windows agents using PowerShell plus Git for Windows. This is the smallest useful target that removes the current Bash dependency. Git Bash remains a supported POSIX route; WSL remains covered by the Linux/POSIX route.
-- **PowerShell baseline:** prefer PowerShell 7 (`pwsh`) for maintained cross-platform recipes, while documenting a narrow Windows PowerShell 5.1 fallback only where the repository already promises it. Avoid designing every operation around 5.1 limitations.
-- **Compatibility:** preserve existing config keys, tracker/browser operation names, execution-plan formats, and POSIX recipes. New platform metadata or command variants must be additive with fallbacks for older committed consumer configuration.
+- **Execution model:** use agent structured file capabilities and direct program/argument invocation. Do not maintain Bash and PowerShell control-flow variants or introduce a shell selector.
+- **Prerequisites:** Git is required for Git workflows and each tracker descriptor declares its client (`gh` for GitHub). Node is allowed for this source repository's existing tooling but is not required by installed skills; Python is not added.
+- **Compatibility:** preserve existing config keys, tracker/browser operation names, execution-plan formats, and legacy command/entrypoint fields. New structured process forms are additive and old forms fail cleanly when no compatible runner exists.
 - **Deliverable:** analysis and specification only. Implementation, broad standard-file synchronization, and Windows CI changes are deferred to the follow-up implementation PR.
 
 ## Non-goals
 
 - Implementing PowerShell variants or changing any `skills/**` instructions in this PR.
-- Requiring WSL or Git Bash as the native-Windows solution.
+- Requiring PowerShell, WSL, Git Bash, Node, or Python as an installed-skill orchestration runtime.
 - Adding non-GitHub tracker providers or changing tracker semantics.
 - Guaranteeing that arbitrary target repositories' own validation commands are portable; the pipeline will define how platform-specific commands are selected and reported.
 - Replacing platform-native project tooling when a repository already supplies a working command for the current shell.
@@ -47,8 +47,8 @@ Determine whether the collection needs changes to run from native Windows shells
 
 - **Broad duplicated surface:** the standard setup and worktree references are copied into multiple skills. A later implementation that updates only one copy will drift; the follow-up must enumerate and synchronize every affected copy under the repository's standard-file rule.
 - **Protected consumer state:** tracker descriptors and `.ai/agentic.config.json` are committed in downstream repositories. The design must remain usable with older copies and cannot silently require regeneration.
-- **False portability from agent translation:** prose that merely tells an agent to “translate Bash” can still fail on quoting, paths, JSON, background processes, and cleanup. The spec must identify where semantic recipes or executable tests are required.
-- **PowerShell version split:** Windows PowerShell 5.1 and PowerShell 7 differ in encoding and native argument behavior. The proposal must state the baseline and keep any fallback explicit.
+- **Executor capability variance:** some agents expose only shell command strings rather than direct argv/process capabilities. The specification must make direct invocation a preflight capability and stop before mutation when unavailable.
+- **Legacy repositories:** opaque validation strings and `.sh`/`.ps1` entrypoints remain in committed consumer state. The additive structured form must preserve readable legacy state without guessing or translating it.
 - **Scope inflation:** native Windows support spans authoring instructions and this repository's developer tooling. The spec must phase the work and separate pipeline-runtime blockers from lower-priority contributor conveniences.
 
 ## Progress

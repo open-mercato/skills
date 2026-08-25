@@ -56,5 +56,5 @@ Let `om-setup-agent-pipeline` install ready-to-customize `linear` and `atlassian
 
 ### Phase 2: Setup and documentation integration
 
-- [ ] 2.1 Teach setup and its interview guidance that GitHub, Linear, and Atlassian are shipped provider choices
-- [ ] 2.2 Update repository documentation, decision history, and upgrade guidance for the new descriptors
+- [x] 2.1 Teach setup and its interview guidance that GitHub, Linear, and Atlassian are shipped provider choices — 04d225f
+- [x] 2.2 Update repository documentation, decision history, and upgrade guidance for the new descriptors — 38fd815

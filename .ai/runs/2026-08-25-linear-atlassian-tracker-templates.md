@@ -51,8 +51,8 @@ Let `om-setup-agent-pipeline` install ready-to-customize `linear` and `atlassian
 
 ### Phase 1: Provider descriptors
 
-- [ ] 1.1 Add the Linear split-tracker descriptor with complete issue operations and explicit code-host delegation
-- [ ] 1.2 Add the Atlassian split-tracker descriptor with complete Jira work-item operations and explicit code-host delegation
+- [x] 1.1 Add the Linear split-tracker descriptor with complete issue operations and explicit code-host delegation — 77b4199
+- [x] 1.2 Add the Atlassian split-tracker descriptor with complete Jira work-item operations and explicit code-host delegation — 77b4199
 
 ### Phase 2: Setup and documentation integration
 

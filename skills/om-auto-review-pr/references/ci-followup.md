@@ -72,6 +72,20 @@ Read `CI_MAX_WAIT_MINUTES` from `ci.maxWaitMinutes` (default `40`; `0` means do 
 wait at all — report and stop, applying no `ci-monitoring`). Then poll the required
 checks through **get-pr-checks** until they settle or the budget is spent.
 
+"Settled" is a claim about a complete reading, so make the reading complete before
+believing it: the check-run surface reports *jobs*, and a workflow run the tracker
+has created contributes no rows until its jobs register — so a head that was pushed
+moments ago can show a short, entirely-green list while the run that matters has not
+started. Alongside each poll, take **list-runs** on the PR head branch, keep the runs
+whose `headSha` is the PR head SHA, and treat any run whose `status` is not
+`completed` as a pending check. Only when both readings are quiet is CI settled;
+otherwise keep waiting under the same budget. A descriptor that exposes no run-level
+operation cannot support the cross-check — then say so in the CI-result comment
+("verdict rests on the check surface alone") rather than dropping the caveat. A CI-result comment states which
+reading it rests on (how many checks, how many workflow runs at that SHA), because a
+"green" that came from an empty list is the one failure this whole file exists to
+keep off a pull request.
+
 **Checks settled inside the budget** — post the outcome as an idempotent
 `` 🤖 `<skill-name>` — CI result `` comment (find the marker via
 **list-issue-comments** and rewrite via **update-comment** on a re-run): which

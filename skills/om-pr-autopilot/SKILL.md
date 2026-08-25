@@ -55,7 +55,8 @@ absence never stops a run.
    (the config's `paths.specs`), `LABELS_ENABLED`, `QA_GATE`,
    `CI_MAX_WAIT_MINUTES` (`ci.maxWaitMinutes`, default 40), and the operations
    **current-user**, **repo-info**, **get-pr**, **get-pr-files**,
-   **get-pr-diff**, **get-pr-checks**, **get-required-checks**, **list-prs**,
+   **get-pr-diff**, **get-pr-checks**, **get-required-checks**, **list-runs**
+   (the CI completeness guard in `references/ci-followup.md`), **list-prs**,
    **list-issue-comments**, **update-comment**,
    **assign-pr** / **unassign-pr**, **comment-pr**, plus the `apply_label` and
    `set_pipeline_label` guards. Confirm the active identity via **current-user**

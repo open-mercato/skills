@@ -53,6 +53,8 @@ Determine whether the collection needs changes to run on Windows, then publish a
 
 ## Progress
 
+PR: #87
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Compatibility audit
@@ -63,5 +65,5 @@ Determine whether the collection needs changes to run on Windows, then publish a
 ### Phase 2: Specification and verification
 
 - [x] 2.1 Author the implementation-ready Windows compatibility specification — 0b13530
-- [ ] 2.2 Complete fresh-context scope-cohesion review and incorporate findings
+- [x] 2.2 Complete fresh-context scope-cohesion review and incorporate findings — 8d2461b
 - [ ] 2.3 Pass validation and finalize the spec-only PR

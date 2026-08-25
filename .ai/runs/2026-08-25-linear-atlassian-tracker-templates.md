@@ -47,6 +47,8 @@ Let `om-setup-agent-pipeline` install ready-to-customize `linear` and `jira` tra
 
 ## Progress
 
+PR: #88
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Provider descriptors

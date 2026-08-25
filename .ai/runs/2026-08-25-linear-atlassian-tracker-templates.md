@@ -56,6 +56,7 @@ PR: #88
 - [x] 1.1 Add the Linear split-tracker descriptor with complete issue operations and explicit code-host delegation — 77b4199
 - [x] 1.2 Add the Atlassian split-tracker descriptor with complete Jira work-item operations and explicit code-host delegation — 77b4199
 - [x] Post-review fix: use the tracker-native `jira` provider name, paginate Linear comments/search, and validate Jira inputs — 312ac2b
+- [x] Post-review autofix: align Linear team/claim identity, enforce provider CLI compatibility, and add tracker contract tests — d9a9c8e
 
 ### Phase 2: Setup and documentation integration
 

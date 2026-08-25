@@ -10,6 +10,7 @@ At runtime, `om-setup-agent-pipeline` installs both files and sets `"tracker": "
 - Set `ATLASSIAN_SITE` to the Jira Cloud hostname (for example, `example.atlassian.net`), `ATLASSIAN_PROJECT` to the default project key, and `ATLASSIAN_ACCOUNT_ID` to the automation user's non-secret Jira account id. The account id makes claim comparison deterministic even when email visibility is restricted.
 - Optionally set `ATLASSIAN_ISSUE_TYPE` (default `Task`), `ATLASSIAN_DONE_STATUS` (default `Done`), and `ATLASSIAN_CANCELED_STATUS` (default `Canceled`) to match the project's workflow.
 - Install and authenticate the `gh` CLI, and keep the companion `.ai/trackers/github.md` descriptor. Pull-request and CI operations fail loudly when either is missing.
+- This descriptor requires Atlassian CLI 1.3.5-stable or newer because marker-idempotent comments use the comment list/update commands added in the 1.3.4/1.3.5 releases.
 - Atlassian Government Cloud is not supported by `acli` as documented in the official introduction.
 
 ## Conventions
@@ -76,8 +77,10 @@ atlassian_tracker_auth_check() {
     echo "ATLASSIAN_SITE must be a hostname without a scheme or path" >&2
     return 1
   }
-  acli jira workitem edit --help | grep -Fq -- '--remove-labels' || {
-    echo "Installed acli is too old for the documented Jira mutations; upgrade it." >&2
+  acli jira workitem edit --help | grep -Fq -- '--remove-labels' &&
+    acli jira workitem comment list --help | grep -Fq -- '--paginate' &&
+    acli jira workitem comment update --help | grep -Fq -- '--body-file' || {
+    echo "Installed acli lacks the required 1.3.5-stable+ command surface; upgrade it." >&2
     return 1
   }
   [ -f .ai/trackers/github.md ] || {

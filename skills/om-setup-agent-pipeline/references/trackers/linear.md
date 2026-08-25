@@ -7,14 +7,14 @@ At runtime, `om-setup-agent-pipeline` installs both files and sets `"tracker": "
 ## Prerequisites
 
 - Install the `linear` CLI from its upstream releases or package instructions, then authenticate with `linear auth login`. Prefer the native keyring; `LINEAR_API_KEY` is the CI fallback. Never commit an API key to `.linear.toml`.
-- Run `linear config` in the repository, or set `LINEAR_TEAM` to a Linear team key. Multi-team reads can use `--all-teams`, but mutations need an explicit issue identifier or team.
+- Run `linear config` in the repository, or set `LINEAR_TEAM_ID` to a Linear team key. Multi-team reads can use `--all-teams`, but mutations need an explicit issue identifier or team.
 - Install and authenticate the `gh` CLI, and keep the companion `.ai/trackers/github.md` descriptor. Pull-request and CI operations fail loudly when either is missing.
-- This descriptor targets the current `linear` command surface documented by `linear --help`. The **auth-check** operation verifies availability and authentication; when a documented flag is absent, upgrade the CLI before mutating tracker state.
+- This descriptor requires `linear` 2.4.0 or newer because guarded label mutations use `issue update --add-label` / `--remove-label`. The **auth-check** operation verifies availability, authentication, and the required command surface before mutating tracker state.
 
 ## Conventions
 
 - Linear issue identifiers are team keys plus numbers, such as `ENG-123`. Preserve that token in branch names and PR bodies. GitHub does not auto-close Linear issues from `Closes ENG-123`; after merge, explicitly run **close-issue** and include the merged PR URL in the closing comment.
-- `{repo}` means a Linear team key for issue creation/search and `owner/name` for delegated GitHub operations. When omitted, issue commands use `LINEAR_TEAM` or the team in `.linear.toml`; GitHub commands infer the repository from the checkout.
+- `{repo}` means a Linear team key for issue creation/search and `owner/name` for delegated GitHub operations. When omitted, issue commands use `LINEAR_TEAM_ID` or the team in `.linear.toml`; GitHub commands infer the repository from the checkout.
 - Linear has no pull-request object. Drafts, reviews, mergeability, CI status, and PR labels are GitHub concepts and always delegate to `.ai/trackers/github.md`.
 - The issue claim signals are: assignee = the Linear automation user, the `in-progress` issue label, and a `🤖`-prefixed timestamped comment. `linear issue view <id> --json --no-download` returns assignee, labels, state, and comments so all three signals are readable.
 - Use file flags for multi-line Markdown: `--description-file` for descriptions and `--body-file` for comments. Add `--no-interactive` to issue creation so autonomous runs never wait for a prompt.
@@ -67,8 +67,13 @@ linear_tracker_auth_check() {
   }
   linear --version
   linear auth status
-  linear issue create --help | grep -Fq -- '--no-interactive' || {
-    echo "Installed linear CLI is too old for autonomous issue creation; upgrade it." >&2
+  linear issue create --help | grep -Fq -- '--no-interactive' &&
+    linear issue update --help | grep -Fq -- '--add-label' &&
+    linear issue update --help | grep -Fq -- '--remove-label' &&
+    linear issue update --help | grep -Fq -- '--unassign' &&
+    linear issue comment update --help | grep -Fq -- '--body-file' &&
+    linear api --help | grep -Fq -- '--paginate' || {
+    echo "Installed linear CLI lacks the required 2.4.0+ command surface; upgrade it." >&2
     return 1
   }
   [ -f .ai/trackers/github.md ] || {
@@ -82,16 +87,16 @@ linear_tracker_auth_check
 
 #### current-user
 
-For an issue claim, use the authenticated Linear email; `self` remains the mutation alias. For a PR claim, execute **current-user** from `.ai/trackers/github.md` instead.
+For an issue claim, use the authenticated Linear username because `linear issue view --json` exposes that same value as `assignee.name`; `self` remains the mutation alias. For a PR claim, execute **current-user** from `.ai/trackers/github.md` instead.
 
 ```bash
-CURRENT_USER=$(linear auth whoami | sed -n 's/^[[:space:]]*Email:[[:space:]]*//p' | head -n 1)
-[ -n "$CURRENT_USER" ] || { echo "Could not resolve the Linear automation user" >&2; return 1; }
+CURRENT_USER=$(linear auth whoami | sed -n 's/^User:[[:space:]]*//p' | head -n 1)
+[ -n "$CURRENT_USER" ] || { echo "Could not resolve the Linear automation user" >&2; exit 1; }
 ```
 
 #### repo-info
 
-Repository identity comes from **repo-info** in `.ai/trackers/github.md`. For issue scope, resolve the Linear workspace with `linear auth whoami` and the configured team with `LINEAR_TEAM` or `.linear.toml`; never silently substitute a GitHub repository name for a Linear team key.
+Repository identity comes from **repo-info** in `.ai/trackers/github.md`. For issue scope, resolve the Linear workspace with `linear auth whoami` and the configured team with `LINEAR_TEAM_ID` or `.linear.toml`; never silently substitute a GitHub repository name for a Linear team key.
 
 #### default-branch
 
@@ -133,7 +138,7 @@ Use `--team "{repo}"` instead of `--all-teams` when a Linear team key was passed
 Title, description body file, assignee, labels, and optional team → created issue URL. Repeat `--label` once per guarded label. Capture the final URL line, then resolve the identifier from that URL or the command output.
 
 ```bash
-linear issue create <optional: --team "{repo-or-LINEAR_TEAM}"> --title "<title>" \
+linear issue create <optional: --team "{repo-or-LINEAR_TEAM_ID}"> --title "<title>" \
   --description-file <body-file> --assignee "${ASSIGNEE:-self}" \
   <repeat: --label "<label>"> --no-interactive
 ```

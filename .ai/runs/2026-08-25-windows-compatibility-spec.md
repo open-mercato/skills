@@ -57,11 +57,11 @@ Determine whether the collection needs changes to run from native Windows shells
 
 ### Phase 1: Compatibility audit
 
-- [ ] 1.1 Inventory current support and native-Windows blockers
-- [ ] 1.2 Classify required changes against contracts and authoritative guidance
+- [x] 1.1 Inventory current support and native-Windows blockers — 0b13530
+- [x] 1.2 Classify required changes against contracts and authoritative guidance — 0b13530
 
 ### Phase 2: Specification and verification
 
-- [ ] 2.1 Author the implementation-ready Windows compatibility specification
+- [x] 2.1 Author the implementation-ready Windows compatibility specification — 0b13530
 - [ ] 2.2 Complete fresh-context scope-cohesion review and incorporate findings
 - [ ] 2.3 Pass validation and finalize the spec-only PR

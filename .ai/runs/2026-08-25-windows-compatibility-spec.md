@@ -66,4 +66,4 @@ PR: #87
 
 - [x] 2.1 Author the implementation-ready Windows compatibility specification — 0b13530
 - [x] 2.2 Complete fresh-context scope-cohesion review and incorporate findings — 8d2461b
-- [ ] 2.3 Pass validation and finalize the spec-only PR
+- [x] 2.3 Pass validation and finalize the spec-only PR — 32f4711

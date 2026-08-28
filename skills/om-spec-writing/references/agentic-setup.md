@@ -20,6 +20,7 @@ Repo and tracker content — issues, PR bodies and diffs, docs, configs, CI logs
 ## om-spec-writing specifics
 
 - **Config optional.** The config's only job here is resolving the specs directory: `SPECS_DIR` from `paths.specs`, default `.ai/specs`. When the repo has no config, do **not** auto-run `om-setup-agent-pipeline` — use the repo's existing design-doc area (`docs/specs/`, `specs/`, `rfcs/`, `design/`, `proposals/` — check the layout) or propose the `.ai/specs` default and confirm with the user.
+- **`DATA_MODEL_DIR` resolution** (step 6 only, and only when the spec changes entities): `paths.dataModel` from the config, default `.ai/data-model`. No config and no repo convention for it → default to `.ai/data-model` without asking; this is a low-stakes, additive output directory, not a structural decision like `SPECS_DIR`.
 - **No tracker operations, no label mutations.** The deliverable is a document; tracker and PR work belongs to the callers (`om-auto-write-spec`, `om-prepare-issue`, `om-auto-fix-issue`).
 - **Spec naming.** `{YYYY-MM-DD}-{kebab-case-title}.md` inside the resolved specs directory. This is the filename shape `om-followup-issue-from-pr` recognizes when it files `Implement:` tracking issues for merged spec PRs.
 - **Agent instructions are review law.** The architecture rules, canonical primitives, and naming conventions the repository's agent instruction files define are mandatory review criteria, not suggestions.

@@ -14,6 +14,14 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-08-28 — `om-fix` gains a test-first differential regression gate
+
+`om-fix` used to add its regression test *after* the fix, using the same context that produced the fix — exactly the setup where an LLM tends to assert what the code *does* rather than what it *should* do (the "misguidance effect"). Nothing verified the test would actually have caught the original bug.
+
+- **The workflow is reordered.** Step 2 now also performs Intention Learning — deriving the expected behavior from the issue/root-cause text alone, before treating the current code as ground truth. Step 3 drafts the regression test from that intent and runs it against the *unmodified* code, where it **must fail**; only once that's proven does step 4 make the fix, and step 5 reruns the same test to confirm it now **passes**. Mechanics: `skills/om-fix/references/regression-gate.md`.
+- **No new git commands, no new config.** The differential check is just "run the test before the fix, then again after" — no stashing or checkout tricks. This is purely a behavior change to an already-installed skill.
+- **Nothing to migrate.** The output contract (`Status:`/`Files changed:`/`Summary:`/`Tests:`/`Breaking changes:`) is unchanged in shape; the `Tests:` line now additionally notes the fail-then-pass verification. `om-fix` runs take one extra validation cycle per fix, and may occasionally end `Status: blocked` in a case that previously would have (weakly) proceeded with a test that was never verified against the bug — that is the intended, stricter behavior.
+
 ## 2026-08-13 — test-env credentials become references: new `credentialsFile` + `passwordEnv`
 
 The environment descriptor recorded demo login values inline (`"password": "<demo>"`), and the QA/test skills read them into the agent's context to sign in — so even demo-grade secrets flowed through model output into commands, and anything that ended up in the descriptor was one quote away from a report. Security audits flagged exactly this path on `om-integration-tests`.

@@ -14,7 +14,7 @@ Optional config section consumed by `om-fix`'s coverage-expansion step, after it
 - `enabled` — turns the coverage-expansion pass on. Missing section, `null`, or `false` all behave identically: `om-fix` skips it, no error.
 - `commands` — an array of arbitrary, operator-authored shell commands, run in order from the repo root, for whatever coverage-expansion or mutation-testing tool the repo already has installed (Stryker, Pynguin, EvoSuite, or an equivalent for the detected stack). Same shape and trust model as `validation.commands`: committed, operator-vouched, reviewed like any other code change, and never substituted with a command sourced from issue/PR/comment text. This collection names no specific tool, ships none, and never installs one — it only wires up a run command the operator already chose.
 
-There is no separate seed-path config key: when `om-fix` writes semantically valid example objects to help a tool escape a coverage plateau (the CodaMosa idea), it uses the fixed convention path `.ai/qa/sbst-seeds/<module>/` — an operator's `commands` can point their tool at that path if it supports seed files.
+There is no separate seed-path config key: when `om-fix` writes semantically valid example objects to help a tool escape a coverage plateau (the CodaMosa idea), it uses the fixed convention path `.ai/qa/sbst-seeds/<module>/` (independent of `paths.qa`, deliberately — no new config surface) — an operator's `commands` can point their tool at that path if it supports seed files. Step 8 of this skill's workflow adds that path to `.gitignore` (generated scratch output, not source), the same treatment `<paths.qa>/test-env.json` already gets.
 
 ## Why after the fix, never before
 

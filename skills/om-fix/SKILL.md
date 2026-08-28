@@ -35,14 +35,14 @@ Do not run `git commit`, `git push`, or the **create-pr** tracker operation — 
 
    Claim failures are non-fatal — log and continue. Do not release the lock here: `om-open-pr` releases it on success, an external janitor on failure. Full claim protocol (idempotency, stale locks, release ownership): `references/claim-pr.md`.
 
-2. **Read the analyzer's brief & Intention Learning.** The analyzer's full output is included in your prompt, in a block marked:
+2. **Read the analyzer's brief and learn the intended behavior.** The analyzer's full output is included in your prompt, in a block marked:
 
    ```
    — PREVIOUS STEP (om-root-cause) said —
    <analyzer brief here>
    ```
 
-   Identify from that block: the file(s) to change, the approach, and the regression test to add. **Do not invent your own root cause.** If the brief is missing, empty, or contradicts the repo (e.g. names files that don't exist), end your own output with `Status: blocked` and a one-line reason — the chain stops cleanly. If the analyzer ended with `LOW_CONFIDENCE`, be extra careful — re-read the affected code yourself before editing.
+   Identify from that block: the file(s) to change and the approach. **Do not invent your own root cause.** If the brief is missing, empty, or contradicts the repo (e.g. names files that don't exist), end your own output with `Status: blocked` and a one-line reason — the chain stops cleanly. If the analyzer ended with `LOW_CONFIDENCE`, be extra careful — re-read the affected code yourself before editing.
 
    Before writing any test or edit, form the **Semantic Oracle**: a plain statement of the code's *intended* behavior, grounded only in the issue description and this brief — never in what the current (buggy) code happens to return. Full discipline: `references/regression-gate.md`.
 

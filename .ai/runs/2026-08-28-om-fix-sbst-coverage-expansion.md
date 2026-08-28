@@ -56,9 +56,9 @@ Add an entirely optional, config-gated `sbst` step to `om-fix` (runs the operato
 
 ### Phase 2: om-setup-agent-pipeline side
 
-- [ ] 2.1 Write `skills/om-setup-agent-pipeline/references/sbst.md`
-- [ ] 2.2 Add the conditional `sbst` question to `skills/om-setup-agent-pipeline/references/interview-questions.md`
-- [ ] 2.3 Minimal `skills/om-setup-agent-pipeline/SKILL.md` body edits
+- [x] 2.1 Write `skills/om-setup-agent-pipeline/references/sbst.md` — 63320e7
+- [x] 2.2 Add the conditional `sbst` question to `skills/om-setup-agent-pipeline/references/interview-questions.md` — 9306e02
+- [x] 2.3 Minimal `skills/om-setup-agent-pipeline/SKILL.md` body edits — 9306e02 (body now 19,990/20,000 chars — lint passes but headroom is nearly gone; flagged in the PR)
 
 ### Phase 3: Docs and gate
 

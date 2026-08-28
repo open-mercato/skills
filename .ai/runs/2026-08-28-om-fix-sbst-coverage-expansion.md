@@ -50,9 +50,9 @@ Add an entirely optional, config-gated `sbst` step to `om-fix` (runs the operato
 
 ### Phase 1: om-fix side
 
-- [ ] 1.1 Create/extend `skills/om-fix/references/regression-gate.md` with an "SBST expansion" section
-- [ ] 1.2 Add the new optional step to `skills/om-fix/SKILL.md` + step-0 this-skill-uses line
-- [ ] 1.3 Update `skills/om-fix/references/agentic-setup.md`'s this-skill-uses list
+- [x] 1.1 Create/extend `skills/om-fix/references/regression-gate.md` with an "SBST expansion" section — a8f1a04
+- [x] 1.2 Add the new optional step to `skills/om-fix/SKILL.md` + step-0 this-skill-uses line — b3bec77
+- [x] 1.3 Update `skills/om-fix/references/agentic-setup.md`'s this-skill-uses list — b935fb7
 
 ### Phase 2: om-setup-agent-pipeline side
 

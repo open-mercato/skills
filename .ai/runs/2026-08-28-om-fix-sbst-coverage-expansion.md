@@ -21,7 +21,7 @@ Add an entirely optional, config-gated `sbst` step to `om-fix` (runs the operato
 - A `seedsDir` config key or singular `command` field — this spec deliberately keeps `commands` (array, mirrors `validation.commands`) and a fixed seed-path convention, per its Revision note.
 
 ## Risks
-- `skills/om-setup-agent-pipeline/SKILL.md`'s body is ~19,630 of the ~20,000-char lint budget — very little headroom. Every body addition there must be a bare pointer into the new `references/sbst.md`; if `bash scripts/lint.sh` fails on budget, compress existing prose in that file rather than cutting the addition.
+- `skills/om-setup-agent-pipeline/SKILL.md`'s body was already 19,759/20,000 chars before this PR (not ~19,630 as originally estimated) — very little headroom. Every body addition there must be a bare pointer into the new `references/sbst.md`; if `bash scripts/lint.sh` fails on budget, compress existing prose in that file rather than cutting the addition. Post-review-fix: 19,983/20,000 — still critically tight; a follow-up to decompose this file's body into `references/` is recommended but out of scope for this PR.
 - This run's worktree is fresh off `origin/main`, which does not yet contain PR #94's `regression-gate.md` (not merged) — Implementation Plan step 1 below creates the file fresh rather than assuming it exists.
 
 ## Implementation Plan

@@ -31,6 +31,8 @@ Reorder `om-fix`'s workflow into a test-first Intention-Learning + Red/Green dif
 
 ## Progress
 
+PR: #94
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Differential regression gate

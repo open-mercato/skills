@@ -1,6 +1,6 @@
 ---
 name: om-fix
-description: Implements the minimal code change identified by the om-root-cause step, adds regression tests, and runs the configured validation gate. Claims the tracker issue at start (assignee + in-progress label + claim comment) so concurrent automation backs off. Does not commit, push, or open a PR — that is the om-open-pr step's job.
+description: Implements the minimal code change identified by the om-root-cause step, proving the regression test fails without it and passes with it, then runs the configured validation gate. Claims the tracker issue at start (assignee + in-progress label + claim comment) so concurrent automation backs off. Does not commit, push, or open a PR — that is the om-open-pr step's job.
 ---
 
 # Apply Fix
@@ -35,7 +35,7 @@ Do not run `git commit`, `git push`, or the **create-pr** tracker operation — 
 
    Claim failures are non-fatal — log and continue. Do not release the lock here: `om-open-pr` releases it on success, an external janitor on failure. Full claim protocol (idempotency, stale locks, release ownership): `references/claim-pr.md`.
 
-2. **Read the analyzer's brief.** The analyzer's full output is included in your prompt, in a block marked:
+2. **Read the analyzer's brief & Intention Learning.** The analyzer's full output is included in your prompt, in a block marked:
 
    ```
    — PREVIOUS STEP (om-root-cause) said —
@@ -44,19 +44,26 @@ Do not run `git commit`, `git push`, or the **create-pr** tracker operation — 
 
    Identify from that block: the file(s) to change, the approach, and the regression test to add. **Do not invent your own root cause.** If the brief is missing, empty, or contradicts the repo (e.g. names files that don't exist), end your own output with `Status: blocked` and a one-line reason — the chain stops cleanly. If the analyzer ended with `LOW_CONFIDENCE`, be extra careful — re-read the affected code yourself before editing.
 
-3. **Make the minimal change.** Edit only the files the analyzer named (plus the test file). Do not refactor unrelated code. Do not broaden scope. Project-convention rules (apply to every fix):
+   Before writing any test or edit, form the **Semantic Oracle**: a plain statement of the code's *intended* behavior, grounded only in the issue description and this brief — never in what the current (buggy) code happens to return. Full discipline: `references/regression-gate.md`.
+
+3. **Draft the "Red" regression test — verify it fails.** Every fix MUST include test coverage — never skip tests, never ask whether to add them. Write the test from the Semantic Oracle, before touching production code, then run it now against the unmodified code:
+
+   - Add or update a unit test that must **fail** on the current, unfixed code — if it passes, it isn't exercising the bug; discard and rewrite it. Add integration tests when the change touches risky flows (permission checks, data scoping, behavior that crosses component boundaries).
+   - Tests must be self-contained and target the smallest meaningful scope.
+   - A flaky "fail" (inconsistent across repeated runs with no code change) counts as unreliable, not verified — rewrite it.
+   - No fixed retry limit — use judgment. If the test genuinely cannot be made to fail on the described bug after real effort, end with `Status: blocked` and a one-line reason instead of looping forever.
+
+   Full protocol (including the can't-reproduce and flaky-test handling): `references/regression-gate.md`.
+
+4. **Make the minimal change.** Edit only the files the analyzer named (plus the test file). Do not refactor unrelated code. Do not broaden scope. Project-convention rules (apply to every fix):
 
    - Follow the project's data-access conventions in production code — when the surrounding code routes through a helper or wrapper, use it; do not bypass it.
    - Preserve public contracts unless the issue explicitly requires a contract change: exported APIs, HTTP routes and response shapes, event names, CLI flags, DB schema, config formats. If the project documents its own compatibility rules, honor them.
    - Respect the project's data-scoping and permission-check rules.
 
-4. **Add regression tests (mandatory, autonomous).** Every fix MUST include test coverage — never skip tests, never ask whether to add them.
+5. **Verify Green, then the validation loop.** Rerun the exact test from step 3, unmodified, against the fixed code — it **must pass**. A failure here means the fix is incomplete, not the test; iterate on the fix and rerun, never rewrite the assertions to make it pass.
 
-   - Add or update a unit test that fails without your fix and passes with it
-   - Add integration tests when the change touches risky flows (permission checks, data scoping, behavior that crosses component boundaries)
-   - Tests must be self-contained and target the smallest meaningful scope
-
-5. **Validation loop.** Iterate until clean. Per iteration:
+   Once green, iterate the full validation loop until clean. Per iteration:
 
    1. Run targeted unit tests for every changed package/area
    2. Run the typecheck/lint commands from `validation.commands`, scoped to what changed when the toolchain supports scoping
@@ -76,7 +83,7 @@ Do not run `git commit`, `git push`, or the **create-pr** tracker operation — 
 
    Summary: <one paragraph — what changed and why it fixes the issue>
 
-   Tests: <which tests/checks were added and that the full validation gate passed (or which commands were skipped and why)>
+   Tests: <which tests/checks were added, confirmation the regression test was verified to fail on the unmodified code and pass on the fixed code, and that the full validation gate passed (or which commands were skipped and why)>
 
    Breaking changes: <"none" OR a short statement of the contract change and the migration/deprecation path>
    ```
@@ -86,7 +93,7 @@ Do not run `git commit`, `git push`, or the **create-pr** tracker operation — 
 ## Rules
 
 - Shared rules: `references/rules.md` — autonomous-run contract, label discipline, claim etiquette, secrets, markers, emoji glossary. They always apply.
-- Tests are mandatory and added autonomously — never hand off without them.
+- Tests are mandatory and added autonomously — never hand off without them. They are also proven, not assumed: the regression test in step 3 must fail on the unmodified code before step 4 touches anything — see `references/regression-gate.md`.
 - No commit, no push, no PR — leave that to `om-open-pr`.
 - Stay inside the worktree the engine prepared; do not create nested worktrees.
 - Keep scope minimal; refactors belong in their own PR.

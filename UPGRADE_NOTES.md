@@ -14,6 +14,14 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-08-28 — Optional `sbst` coverage-expansion pass for `om-fix`
+
+Once `om-fix` verifies a fix is correct, nothing sweeps the surrounding code for extra test coverage — that's whatever the analyzer named plus whatever occurred to the fixing agent. Repos that already run a coverage-expansion or mutation-testing tool (Stryker, Pynguin, EvoSuite, or an equivalent) had no way to have `om-fix` trigger it.
+
+- **New optional config block `sbst`** (default absent/`null`). `sbst.enabled` gates the step; `sbst.commands` is an array of operator-authored shell commands, run from the repo root after the fix's own regression test is green — same trust model and non-zero-exit-fails-nothing (this step never blocks the run, unlike `validation.commands`) as documented in `skills/om-setup-agent-pipeline/references/sbst.md`. Add the key to `.ai/agentic.config.json` by hand, or re-run `/om-setup-agent-pipeline`, which now asks about it.
+- **`om-setup-agent-pipeline` asks a new, conditional question** during its interview: only when it detects a coverage-expansion/mutation-testing dependency already installed (or you name one), it offers to wire the run command into `sbst.commands`. It never proposes installing a new tool, and it's skipped entirely under `--defaults`.
+- **Nothing to migrate.** The key is additive; a config without it behaves exactly as before. `om-fix`'s output contract shape is unchanged; its `Tests:` line now additionally notes which `sbst` commands ran, if any.
+
 ## 2026-08-13 — test-env credentials become references: new `credentialsFile` + `passwordEnv`
 
 The environment descriptor recorded demo login values inline (`"password": "<demo>"`), and the QA/test skills read them into the agent's context to sign in — so even demo-grade secrets flowed through model output into commands, and anything that ended up in the descriptor was one quote away from a report. Security audits flagged exactly this path on `om-integration-tests`.

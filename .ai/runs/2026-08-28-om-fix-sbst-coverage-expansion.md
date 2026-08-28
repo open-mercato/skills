@@ -46,6 +46,8 @@ Add an entirely optional, config-gated `sbst` step to `om-fix` (runs the operato
 
 ## Progress
 
+PR: #95
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: om-fix side

@@ -34,8 +34,11 @@ if [ ! -f "$TRACKER_FILE" ]; then
   exit 1
 fi
 LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
-# validation.commands is read directly from $CONFIG in the validation loop.
+SBST_ENABLED=$(jq -r '.sbst.enabled // false' "$CONFIG")
+# validation.commands and sbst.command/sbst.seedsDir are read directly from $CONFIG where used.
 ```
+
+`sbst` is optional and absent from most configs — treat a missing section the same as `sbst.enabled: false` (skip the coverage-expansion pass in step 5, no error). When present, `sbst.command` is an arbitrary, operator-authored shell command (any language/toolchain — mutation testing, property-based test generation, whatever the repo's stack uses); this skill never assumes or names a specific tool.
 
 Read `$TRACKER_FILE`; every tracker operation named in this skill executes as that descriptor defines, and the label guards come from it.
 

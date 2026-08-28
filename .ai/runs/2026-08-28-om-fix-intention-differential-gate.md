@@ -35,8 +35,8 @@ Reorder `om-fix`'s workflow into a test-first Intention-Learning + Red/Green dif
 
 ### Phase 1: Differential regression gate
 
-- [ ] 1.1 Write `skills/om-fix/references/regression-gate.md`
-- [ ] 1.2 Reorder `skills/om-fix/SKILL.md` Steps 2–5 into the Intention-Learning + Red/Green gate
-- [ ] 1.3 Re-read the full `SKILL.md` end to end for numbering/prose consistency
+- [x] 1.1 Write `skills/om-fix/references/regression-gate.md` — 3de39f2
+- [x] 1.2 Reorder `skills/om-fix/SKILL.md` Steps 2–5 into the Intention-Learning + Red/Green gate — d4d9f5b
+- [x] 1.3 Re-read the full `SKILL.md` end to end for numbering/prose consistency — d4d9f5b (no separate diff; verified as part of the step 1.2 edit — no dangling step-number references, output contract unchanged except the `Tests:` line)
 - [ ] 1.4 Add an `UPGRADE_NOTES.md` entry for the behavior change
 - [ ] 1.5 Full validation gate (`bash scripts/lint.sh`)

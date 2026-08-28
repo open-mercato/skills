@@ -289,11 +289,12 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
     "qa": ".ai/qa"
   },
   "reviewChecklist": null,
-  "closeKeywords": []
+  "closeKeywords": [],
+  "sbst": null
 }
 ```
 
-A Rust repo puts `cargo test` and `cargo clippy` in `validation.commands`; a Go repo puts `go test ./...`. Skills run whatever you configure and treat any non-zero exit as a gate failure. A skill invoked in a repo without the config runs [`om-setup-agent-pipeline`](docs/skills/om-setup-agent-pipeline.md) first — interactively when you're there to answer its questions, with `--defaults` when running unattended — then continues with the freshly written config.
+A Rust repo puts `cargo test` and `cargo clippy` in `validation.commands`; a Go repo puts `go test ./...`. Skills run whatever you configure and treat any non-zero exit as a gate failure. The optional `sbst` block works the same way for a narrower job: once `om-fix` has verified a fix is correct, it can run your own configured coverage-expansion or mutation-testing command (Stryker, Pynguin, EvoSuite, or anything else) for extra test coverage around the change — `["...", "..."]` under `sbst.commands`, gated by `sbst.enabled`, absent by default. A non-zero exit here is logged and skipped rather than failing the gate, since this is exploratory coverage, not correctness. Details: `skills/om-setup-agent-pipeline/references/sbst.md`. A skill invoked in a repo without the config runs [`om-setup-agent-pipeline`](docs/skills/om-setup-agent-pipeline.md) first — interactively when you're there to answer its questions, with `--defaults` when running unattended — then continues with the freshly written config.
 
 GitHub is the default tracker, but nothing in the skills is hard-wired to it — see the tracker providers section below.
 

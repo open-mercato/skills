@@ -62,6 +62,6 @@ Add an entirely optional, config-gated `sbst` step to `om-fix` (runs the operato
 
 ### Phase 3: Docs and gate
 
-- [ ] 3.1 Document the `sbst` config block in `README.md`
-- [ ] 3.2 Add the `UPGRADE_NOTES.md` entry
-- [ ] 3.3 Full validation gate (`bash scripts/lint.sh`)
+- [x] 3.1 Document the `sbst` config block in `README.md` — 04ceeb2
+- [x] 3.2 Add the `UPGRADE_NOTES.md` entry — de4263f
+- [x] 3.3 Full validation gate (`bash scripts/lint.sh`) — PASS (Lint OK.)

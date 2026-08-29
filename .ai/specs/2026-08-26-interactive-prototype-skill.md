@@ -2,7 +2,7 @@
 
 ## 📝 TLDR
 
-The designer role in this collection can produce a spec with static mockups attached, walk a pull request's UI in a real browser, extract the repository's design contract, and decide a direction before anything is drawn. What it cannot do is hand a reviewer a screen they can click through and comment on *before* implementation starts, which is the cheapest moment to discover that a flow is wrong. An interactive prototype skill with an anchored-comment engine exists upstream but is bound to one design system and stranded on a branch whose pull requests were closed without merging. This spec generalizes it in three layers and adds it as `om-mockup-prototype`. Token values come from a committed snapshot rather than a parser for one stylesheet; branding sits behind a `theme.css` carrying eight identity tokens, so a prototype directory is self-contained and rebranding is one file; the hand-written component layer stays but stops claiming to mirror any specific component library.
+The designer role in this collection can produce a spec with static mockups attached, walk a pull request's UI in a real browser, extract the repository's design contract, and decide a direction before anything is drawn. What it cannot do is hand a reviewer a screen they can click through and comment on *before* implementation starts, which is the cheapest moment to discover that a flow is wrong. An interactive prototype skill with an anchored-comment engine exists upstream, merged and stable on the default branch, but its couplings bind it to that one repository's design system, so no other installation can use it. This spec generalizes it in three layers and adds it as `om-mockup-prototype`. Token values come from a committed snapshot rather than a parser for one stylesheet; branding sits behind a `theme.css` carrying eight identity tokens, so a prototype directory is self-contained and rebranding is one file; the hand-written component layer stays but stops claiming to mirror any specific component library.
 
 ## 📝 Resolved decisions
 
@@ -24,7 +24,7 @@ That gap matters most for the reviewers who are not developers. A static PNG can
 
 An interactive prototype skill exists in the upstream monorepo with a working engine: click-through navigation with visited-screen history, presentation mode, comment pins anchored to elements, persistence in `localStorage`, an append-only operation log with tombstones for deletions, re-anchoring for orphaned comments, and export back into the repository. That engine is 27 KB of product-agnostic JavaScript and is the part with no equivalent anywhere in this collection.
 
-It is stranded. It lives on a branch whose two pull requests were closed without merging, 50 commits ahead of and 50 behind the upstream default branch. Every improvement made to it is stuck there.
+The skill is not stranded: it merged upstream on 2026-08-02 and has sat unchanged on the default branch since, with no branch carrying post-merge changes, so the import source for Phase 1 is unambiguous and needs no rescue step (exact pointers in the appendix). What keeps it from traveling is not where it lives but what it is coupled to.
 
 ### Three couplings block extraction
 
@@ -44,7 +44,7 @@ This is not an oversight to correct once. It is the steady state of a hand-maint
 
 **In scope.** Generalizing the three couplings; the `theme.css` convention; adding the skill with the collection's standard reference files and section structure; the roster entry; documentation across the skill page, README, designer role page, decisions log, and changelog.
 
-**Not in scope.** Any change to the existing UX skills or their contracts. Pixel-fidelity rendering of a specific component library. A hosted or collaborative comment backend. Design-file review, which no skill in this collection covers. A second shipped design system.
+**Not in scope.** Any change to the existing UX skills or their contracts. Pixel-fidelity rendering of a specific component library. A hosted or collaborative comment backend. Design-file review, which no skill in this collection covers. A second shipped design system. Mobile-first journeys: the bundled screen patterns are desktop backoffice anatomy with a fixed sidebar shell and no mobile variant, so prototypes review desktop flows; the engine itself is viewport-agnostic, and mobile screen patterns are a contribution seam, not a redesign.
 
 **Deliberately deferred.** A sibling upstream skill covering design-tool briefs has the same coupling problems and is left for a separate change: one decision to review at a time.
 
@@ -59,7 +59,7 @@ Surfaces this change touches, each verified against the current tree:
 | Reference-resolution gate | Every `references/...` pointer must resolve | Three standard files added, one dangling cross-skill pointer removed |
 | Roster-sync gate | `ROSTER=` in `om-setup-agent-pipeline/references/skill-coverage.md` must equal the contents of `skills/` | One name added |
 | Tracker-abstraction gate | No direct tracker CLI outside `references/trackers/` | Not applicable; the skill performs no tracker operations |
-| Layout convention (`DECISIONS.md`) | `skills/<name>/` with optional `references/` and `scripts/`; all 36 skills carry only `references/` | Imported `assets/` folded under `references/assets/`, following the nested-directory precedent |
+| Layout convention (`DECISIONS.md`) | `skills/<name>/` with optional `references/` and `scripts/`; 35 of 36 skills carry only `references/`, `om-ux-shape` also ships `agents/` | Imported `assets/` folded under `references/assets/`, following the nested-directory precedent |
 | Cross-skill contract §5 | Standard step files per skill, own copy each | `agentic-setup.md`, `rules.md`, `report-templates.md` added |
 | Cross-skill contract §1 | Chaining reference lines for PR-producing skills | Not applicable; this skill produces a directory, not a pull request |
 | `DECISIONS.md` → Deferred | Defers skills beyond the pull-request pipeline that are product-specific upstream | Dated entry, framed as extending the UX layer added in #57 |
@@ -133,6 +133,8 @@ Every `var(--token)` in the bundled stylesheets gains a fallback. The existing r
 
 Backend screen anatomy and any routing pointer to a product-specific composer live in the consuming repository's `.ai/skills/om-mockup-prototype/` override, per the standard repo-local extension contract. This follows the established path: `om-spec-writing`, `om-integration-tests`, and `om-prepare-test-env` all generalized by stripping specifics into an override, and the UX judgment layer moved wholesale in #57.
 
+The screen-anatomy reference is where half of the review value sits: the real shell, table, and form anatomy plus the short list of mistakes that make a prototype read as fake. A repository without one still gets a working prototype from the neutral skeleton, which answers "does this flow make sense" but loses the looks-like-our-product fidelity that makes stakeholders engage. The skill therefore does not leave that file to chance: it ships a screen-anatomy template in `references/`, and when initialization finds no repo-local override it scaffolds the template into the override path — pre-filled from the `om-ux-setup` extracted contract when the repository has run it, left as guided prompts otherwise. The hand-off states which anatomy source the prototype was built against.
+
 ## 📝 Compatibility and instruction surface
 
 No existing skill changes behavior. The additions are one skill directory, one roster line, and documentation. `om-setup-agent-pipeline` gains a roster entry only; its workflow is untouched, since the token path is an optional config key the new skill reads for itself.
@@ -153,6 +155,7 @@ Script signatures are preserved, so upstream users of the skill see no interface
 | Upstream theming change lands later | Existing files keep working; the convention is identical. New prototypes scaffold from the template. |
 | A static component renderer appears later | Layer 3 is replaceable without touching layers 1 and 2. |
 | Two prototypes on one origin | Comment storage is namespaced per prototype; isolation is part of the verification checklist. |
+| No repo-local screen anatomy | Initialization scaffolds the shipped template into the override path, pre-filled from the `om-ux-setup` contract when present; the hand-off names the anatomy source. |
 
 ## 📝 Risks & Impact Review
 
@@ -195,11 +198,12 @@ Proven against a real design system before anything lands here (D5).
 10. Add `references/agentic-setup.md`, `references/rules.md`, and `references/report-templates.md` from the canonical copies. → verify: the reference-resolution gate resolves every pointer.
 11. Restructure `SKILL.md` into `## Arguments`, `## Workflow`, `## Rules`. → verify: the body still states what the skill does, in what order, and where detail lives; body stays inside the character budget.
 12. Ship the default token snapshot in `references/` with its provenance documented in product-agnostic terms. → verify: initialization in a repository with no design system produces a rendering prototype.
-13. Documentation: `docs/skills/om-mockup-prototype.md`; README under interactive skills and in the designer table; a row and a tip in `docs/roles/designer.md`; a dated `DECISIONS.md` entry framed as extending the UX layer from #57; a `CHANGELOG.md` entry. → verify: lint passes and every cross-reference resolves.
+13. Ship the screen-anatomy template and its scaffolding: a `references/` template derived from the upstream anatomy reference with product specifics stripped, plus the initialization step that copies it into a missing repo-local override, pre-filling from the `om-ux-setup` contract when present. → verify: initialization in a repository with no override creates the override file, and the hand-off names the anatomy source used.
+14. Documentation: `docs/skills/om-mockup-prototype.md`; README under interactive skills and in the designer table; a row and a tip in `docs/roles/designer.md`; a dated `DECISIONS.md` entry framed as extending the UX layer from #57; a `CHANGELOG.md` entry. → verify: lint passes and every cross-reference resolves.
 
 ### Phase 3 — Consume from here (separate repository, follow-up)
 
-14. Upstream replaces its local copy with the installed skill plus a repo-local override carrying the backend anatomy and composer routing. → verify: a prototype generated through the installed skill and override is equivalent to one generated before the change.
+15. Upstream replaces its local copy with the installed skill plus a repo-local override carrying the backend anatomy and composer routing. → verify: a prototype generated through the installed skill and override is equivalent to one generated before the change.
 
 ## 📋 Acceptance Criteria
 
@@ -207,7 +211,7 @@ Proven against a real design system before anything lands here (D5).
 - A prototype initializes and renders in both themes in a repository with no design system, no network access, and no build step.
 - Editing the eight identity tokens in `theme.css` re-tints and re-rounds every screen in both themes; the semantic tokens are documented as out of contract in the file header.
 - No file in the added skill asserts fidelity to a named component of any specific library.
-- The comment engine passes its checklist: creation, reply, survival across reload, pins on inputs and buttons, re-anchoring, deletion tombstones, export, and storage isolation between two prototypes on one origin.
+- The comment engine passes its checklist: creation, reply, survival across reload, pins on inputs and buttons, re-anchoring, deletion tombstones, export, and storage isolation between two prototypes on one origin. The re-anchoring check includes a restructured screen, because a positional selector can silently match a replacement element: the checklist verifies each surviving pin still points at the element its thread discusses, not merely that no orphan state was raised.
 - The added skill performs no tracker operations and emits no chaining markers, consistent with producing a directory rather than a pull request.
 
 ## 📋 Rollout
@@ -222,6 +226,23 @@ Inside the upstream monorepo that routing resolves. In this collection it does n
 
 Proposal, offered for the track owner's decision rather than assumed here: restate the boundary in terms of the question rather than the surface. This skill answers "does this flow make sense"; a design-system composer answers "is this screen faithful to the system". That formulation holds in both contexts, needs no notion of backoffice, and preserves the original intent, because a generic "mock this screen" request still routes to the composer. The storage split and the division of labour are unaffected either way.
 
+## Appendix — concrete pointers
+
+The body above is written product-agnostically because the imported files must clear this collection's content lint. `.ai/specs/**` is outside that lint's scope, so this appendix names what the body deliberately does not. The implementer starts here.
+
+| Pointer in the body | Concrete referent |
+|---|---|
+| Upstream monorepo | `open-mercato/open-mercato` |
+| Import source (Phase 1 works here; Phase 3 replaces it) | `.ai/skills/om-mockup-prototype` on upstream `main`, merged via #4353 on 2026-08-02 (commit `f9b7fbae4`), unchanged since; no branch carries post-merge changes (verified 2026-08-29) |
+| The committed token snapshot (Layer 1) | `.ai/ds/ds-tokens.json`, documented in `.ai/ds/README.md` |
+| The open theming change (Layer 2 seam) | #4306 — `mercato theme init` (DS DX item 3); spec `.ai/specs/2026-07-05-ds-theming-and-brand-customization.md` |
+| The composer draft carrying requested changes (Layer 3 seam) | #4319 — live mockup composer (DS DX item 8, stacked on #4301); spec `.ai/specs/2026-07-05-ds-live-mockup-composer.md`, whose 2026-08-02 changelog entry holds the boundary decision |
+| The coupled scripts (Phase 1 steps 1–3) | `scripts/sync-tokens.mjs` (parses `apps/mercato/src/app/globals.css`; `REPO_ROOT = resolve(SKILL_DIR, '../../..')`, duplicated in `scripts/init-mockup.mjs`) |
+| The screen-anatomy reference (Phase 2 step 13 source) | `.ai/skills/om-mockup-prototype/references/screen-patterns.md` |
+| The deferred sibling skill | `.ai/skills/om-figma-design-with-ds` (upstream) |
+| The UX-layer precedent | open-mercato/skills #57 |
+
 ## Changelog
 
 - **2026-08-26** — Initial spec. Three-layer decoupling (base tokens from a committed snapshot, theming contract as a substituted primitive with a file-swap seam, visual primitives kept without a fidelity claim), three-phase rollout across two repositories, and one boundary question referred to the upstream design-system track owner.
+- **2026-08-29** — Review revision. Corrected the origin story: the skill is merged and stable upstream, not stranded, so the coupling argument carries the problem statement and no rescue phase exists. Added the concrete-pointers appendix, the screen-anatomy template with override scaffolding (new Phase 2 step 13), the desktop-only viewport scope, the re-anchoring mismatch check in the engine checklist, and the `om-ux-shape` `agents/` correction in the contract inventory.

@@ -2,8 +2,14 @@
   "version": 1,
   "baseBranch": "auto",
   "tracker": "github",
+  "browser": { "provider": "agent-browser" },
   "validation": {
-    "commands": ["bash scripts/lint.sh"]
+    "commands": [
+      "bash scripts/lint.sh",
+      "node scripts/test-browser-providers.mjs",
+      "node scripts/test-classify-runs.mjs",
+      "node scripts/test-close-keywords.mjs"
+    ]
   },
   "labels": {
     "enabled": true,
@@ -15,6 +21,7 @@
   },
   "qaGate": true,
   "ci": { "maxWaitMinutes": 40 },
+  "engine": { "loopStepThreshold": 20, "executorTier": "standard", "stepReview": "final" },
   "paths": {
     "runs": ".ai/runs",
     "analysis": ".ai/analysis",
@@ -22,5 +29,6 @@
     "scripts": ".ai/scripts",
     "qa": ".ai/qa"
   },
-  "reviewChecklist": null
+  "reviewChecklist": null,
+  "closeKeywords": []
 }

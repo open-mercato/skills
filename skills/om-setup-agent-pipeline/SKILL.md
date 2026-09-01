@@ -43,7 +43,8 @@ Every skill in this collection reads its repository-specific settings from `.ai/
     "qa": ".ai/qa"
   },
   "reviewChecklist": null,
-  "closeKeywords": []
+  "closeKeywords": [],
+  "sbst": null
 }
 ```
 
@@ -71,6 +72,7 @@ Field reference:
 - `paths.qa` — where QA working state and artifacts live (default `.ai/qa`): the shared `test-env.json` descriptor, and QA reports/screenshots under `<paths.qa>/artifacts_<runId>/`.
 - `reviewChecklist` — optional path to a repo-local review checklist file. When set, the `om-code-review` skill reads it in addition to its built-in checklist. A root `CODE_REVIEW.md` (see Project docs) is always picked up regardless.
 - `closeKeywords` — optional list of extra words that mark a PR as closing an issue, for repositories whose PR bodies are not written in English. `om-close-fixed-issues` matches the built-in English keywords (`fix`/`fixes`/`fixed`, `close`/`closes`/`closed`, `resolve`/`resolves`/`resolved`) plus everything listed here, case-insensitively and only immediately before a `#N` token; configured words extend the built-ins and never replace them. The tracker's own `closingIssuesReferences` parse is English-only too, so a Polish repo writing `Zamyka #88` gets no closing signal from either source until it sets, for example, `["zamyka", "naprawia", "rozwiązuje"]`. Leave it empty on an English repository. Whatever the setting, a run that finds issue mentions without a recognized keyword reports them rather than passing over them silently.
+- `sbst` — optional post-fix coverage pass; see `references/sbst.md`.
 
 ## Tracker providers
 
@@ -104,7 +106,7 @@ Every skill in this collection checks, right after loading the config, for a rep
    2. A `Makefile` — look for `test`, `lint`, `build` targets.
    3. Language conventions — `Cargo.toml` → `cargo test` / `cargo clippy`; `go.mod` → `go test ./...` / `go vet ./...`; `pyproject.toml` → `pytest` and the configured linter.
 
-   Prefer commands mirroring what CI already runs (`.github/workflows/*.yml`).
+   Prefer commands mirroring what CI already runs (`.github/workflows/*.yml`). Also flag an installed coverage tool for question 9 (`references/sbst.md`).
 
 3. **Ask the user (skip with `--defaults`).** Confirm the detected validation commands, then ask which tracker provider (default `github`) and browser provider (default `agent-browser`) to install, the label mode (full taxonomy / subset / disabled), whether the QA gate is on, where specs live (`paths.specs`), an optional repo-local review checklist path, and which project docs to generate (each only when missing). Full question list with defaults and guidance: `references/interview-questions.md`.
 
@@ -126,7 +128,7 @@ Every skill in this collection checks, right after loading the config, for a rep
 
    Show each generated document to the user before writing. Never overwrite an existing process doc or agent instruction file — when one exists, skip it and note that the skills will use the existing file as-is.
 
-8. **Write and commit the config.** Write `.ai/agentic.config.json`, create the `paths.runs`, `paths.analysis`, `paths.specs`, `paths.scripts`, and `paths.qa` directories with a `.gitkeep` each, show the final file to the user, and offer to commit. Add `<paths.qa>/artifacts_*/`, the running-state descriptor `<paths.qa>/test-env.json`, and the credentials env file `<paths.qa>/test-env.env` to `.gitignore` (generated per run, not source), while keeping the generated `<paths.scripts>/` launchers committed so the environment is reproducible:
+8. **Write and commit the config.** Write `.ai/agentic.config.json`, create the `paths.runs`, `paths.analysis`, `paths.specs`, `paths.scripts`, and `paths.qa` directories with a `.gitkeep` each, show the final file to the user, and offer to commit. Add `<paths.qa>/artifacts_*/`, the running-state descriptor `<paths.qa>/test-env.json`, the credentials env file `<paths.qa>/test-env.env`, and the sbst seed-fixture scratch dir `.ai/qa/sbst-seeds/` to `.gitignore` (generated per run, not source), while keeping the generated `<paths.scripts>/` launchers committed so the environment is reproducible:
 
    ```bash
    git add .ai/agentic.config.json .ai/trackers/ .ai/browsers/ .ai/runs/.gitkeep .ai/analysis/.gitkeep .ai/specs/.gitkeep .ai/scripts/.gitkeep .ai/qa/.gitkeep SDLC.md

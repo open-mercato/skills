@@ -50,9 +50,9 @@ Non-goals: no changes to any other skill's content; no tracker operations added 
 
 ### Phase 2: Contract shape
 
-- [ ] 2.1 SKILL.md restructured into Arguments/Workflow/Rules
-- [ ] 2.2 Default token snapshot with product-agnostic provenance
-- [ ] 2.3 Screen-anatomy template and override scaffolding
+- [x] 2.1 SKILL.md restructured into Arguments/Workflow/Rules — 0618e89
+- [x] 2.2 Default token snapshot with product-agnostic provenance — 0618e89
+- [x] 2.3 Screen-anatomy template and override scaffolding — 0618e89
 
 ### Phase 3: Documentation
 

@@ -7,10 +7,11 @@ The walkthrough report written to `${research}/walkthroughs/{YYYY-MM-DD}-{slug}.
 ```markdown
 # Walkthrough — {flow}, {subject}, {YYYY-MM-DD}
 
-Stance: {validate | simulate | adversary} · Runs: {n} × panel of {m} · Personas: {ids per run} · Basis: {brief sections, spec, files} · Panel composition: {from data | assumed} · Every finding below is [SYNTHETIC].
+Stance: {validate | simulate | adversary} · Panel: {n} runs × {m} personas — {ids per run} · Basis: {brief sections, spec, files} · Composition: {from data | assumed} · Every finding below is [SYNTHETIC].
 Saturation: {reached after {k} interviews | not reached — {t} new topics in the last run}
 Parity: {overlap with held-out real interviews, which notes, exclusive themes | skipped — no held-out note for this flow (the only note built the personas) | no real interviews to compare}
 Elapsed: {minutes per phase — personas, interviews, walks, consolidation, parity}
+Not askable of this panel: {brief assumptions about other segments or about provenance, by id}
 
 ## 🎯 What was walked
 

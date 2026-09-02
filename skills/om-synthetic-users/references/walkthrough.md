@@ -10,7 +10,7 @@ How the personas walk the subject, one persona per fresh-context subagent. The s
 
 ## The step record
 
-For every step of the flow, for every persona:
+For every step of the flow, for every persona, these fields (kept as a list per step in the transcript; the table below is the field list, not a layout):
 
 | Step | First three things noticed | Persona expects | Persona gets | Fast reaction and feeling | Friction | Missing case | Contradiction with the brief | 📸 |
 |---|---|---|---|---|---|---|---|---|

@@ -11,6 +11,7 @@ Coverage: {n} persona lines — {a} sourced, {u} assumed
 
 ## P01 — {role} {in a situation, e.g. "developer blocked the day before a release"}
 
+Runs: {run numbers this persona appeared in}
 - Segment and share of the panel: … `[DATA]` {source} | assumed
 - Situation the problem shows up in: … `[tag]` {source}
 - State of mind at entry — {anxious and rushed | curious and unhurried | indifferent | resentful of the current tool …}, because {the situation}: … `[tag]` {source}
@@ -30,7 +31,9 @@ Coverage: {n} persona lines — {a} sourced, {u} assumed
 
 Rules:
 
-- A line with no source is written as `[ASSUMPTION]` and listed under *No basis for*; a persona with more assumed lines than sourced ones is labeled "assumption persona" in its heading.
+- A line with no source is written as `[ASSUMPTION]` and listed under *No basis for*; a persona with more assumed lines than sourced ones is labeled "assumption persona" in its heading. For the coverage count a line is sourced when its main claim carries a real tier, even if a clause inside it is assumed; a line whose main claim is assumed counts as assumed.
+- The indifferent seat's salience line may be an `[ASSUMPTION]` when the material holds no one who barely cares; the line says so. Everything else about that persona follows the same sourcing rules as the rest.
+- Before a persona block is handed to its subagent, the tags and source keys are stripped: the persona knows its situation, not its bibliography.
 - A persona comes from a segment the brief's Target group names or the data shows; never add a segment the material does not contain. The panel includes at least one persona whose topic salience is *barely*.
 - The state of mind at entry is derived from the situation, not invented: "blocked the day before a release" implies rushed and anxious; "browsing on a Sunday" implies unhurried. It changes what the persona notices (a typo reads as sloppy to the unhurried and as a scam signal to the anxious).
 - Traits are written only when a source shows them; no trait profile is generated to make a persona feel rounder.

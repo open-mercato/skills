@@ -11,7 +11,7 @@ A persona written from good material reads as a real person. Five of them writte
 
 ## Fresh panels, separate contexts
 
-Each run samples new personas from the same segment definitions — the same roles and situations, new instances — so that a finding that repeats is repeating across people, not across a memory. When a segment has only one interview note, only one persona per run is built from it; a second persona in the same segment is an assumption persona drawn from data lines and the brief, labeled as such, never a retelling of the same note in other words. Each persona runs in its own fresh-context subagent with only its persona block, the retrieved passages for the current question, and the subject; personas never see each other's answers, and the interviewer never carries one persona's specifics into the next. A panel whose answers cluster (same objections in the same words, the same tool proposed by everyone) is flagged as homogeneous and resampled from different corners of the segments before the run counts.
+Each run samples new personas from the same segment definitions — the same roles and situations, new instances — so that a finding that repeats is repeating across people, not across a memory. When a segment has only one interview note, only one persona per run is built from it; a second persona in the same segment is an assumption persona drawn from data lines and the brief, labeled as such, never a retelling of the same note in other words. Each persona runs in its own fresh-context subagent with only its persona block, the retrieved passages for the current question, and the subject; personas never see each other's answers, and the interviewer never carries one persona's specifics into the next. A panel whose answers cluster (same objections in the same words, the same tool proposed by everyone) is flagged as homogeneous and resampled from different corners of the segments before the run counts; when the material has no other corner (one interview note for the segment), the run counts with the flag in the report and the personas file, and the flag is itself a finding about the material.
 
 ## Runs
 
@@ -20,13 +20,13 @@ Each run samples new personas from the same segment definitions — the same rol
 ## Consolidation across runs
 
 - A finding — barrier, missing case, contradiction — is reported only when it appeared in **every** run. Its **weight** is the count of personas across runs that hit it; its **spread** is how much that count varied between runs.
-- Two findings are ranked apart only when the gap between their weights is larger than the spread; otherwise they are reported as tied. A ranking is a chain of comparisons, and a comparison inside the error bar is noise.
+- Two findings are ranked apart only when the gap between their weights is larger than the larger of their two spreads; otherwise they are reported as tied. A ranking is a chain of comparisons, and a comparison inside the error bar is noise.
 - What appeared in one run only goes to *Seen once*, with the persona and the run, so a human can decide whether to chase it.
 - The outlier paragraph: the one persona in fifteen who refused, quit, or misread the product is reported on its own, with the reason, because averages hide exactly the case that changes a decision.
 
 ## Saturation
 
-Across the interviews of all runs, track the topics each interview raises (a topic is a distinct theme the persona brought up, in the persona's words, normalised by the interviewer). When fewer than one topic in twenty is new over the last several interviews, the panel has saturated: more runs would confirm, not add. When it has not, the report says how many topics were still new in the last run, so the user can decide to run more or to stop and go to real people. Saturation of a synthetic panel says nothing about real users; it says the material has been exhausted.
+Across the interviews of all runs, track the topics each interview raises. A topic is a distinct concern, need, or behaviour in the persona's words; the interviewer normalises wording once (two phrasings of the same concern are one topic) and keeps the list in the report. The window is the last three interviews, or the last twenty topics raised when three interviews hold fewer; when fewer than one topic in twenty in that window is new, the panel has saturated: more runs would confirm, not add. When it has not, the report says how many of the window's topics were new, so the user can decide to run more or to stop and go to real people. Saturation of a synthetic panel says nothing about real users; it says the material has been exhausted.
 
 ## What this does not do
 

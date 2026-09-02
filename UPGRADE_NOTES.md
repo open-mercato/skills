@@ -14,6 +14,16 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-09-02 — QA gate hardening: QA head, self-QA below risk-high, states in pass/fail, risk-high evidence
+
+Four changes to the QA and merge gates, each a small behavior change in one or two skills and a matching paragraph in the generated `SDLC.md`:
+
+- **`qa-approved` is pinned to a commit.** The comment that grants it carries `QA head: <sha>`; `om-auto-qa-pr --self-qa-signoff` writes it, QA reviewers are asked to. `om-approve-merge-pr` reads it back (**list-issue-comments** added to its operations) and asks for confirmation when the head moved; `om-merge-buddy` (which now requests `headRefOid` from **list-prs**) reports "QA evidence older than head". A sign-off without the line is treated as pre-dating the rule. Custom tracker descriptors must return `headRefOid` from **list-prs** for the merge-buddy check to work.
+- **Self-QA only below `risk-high`.** `om-auto-qa-pr --self-qa-signoff` withholds the sign-off on a `risk-high` PR (labeled, or inferred from the diff) and posts the evidence only. The generated `SDLC.md` now states the one truth: automation applies `qa-approved` only through this exception, always with `qa-self-verified`, never on `risk-high`. The self-QA evidence list is spelled out (scenario, environment, test data, result, negative cases, head).
+- **The state matrix and contract conformance are part of QA pass/fail.** For UI surfaces `om-auto-qa-pr`'s scenario carries one required step per state (default, empty, loading, error, no-permission, long content, narrow viewport) and, when `.uxproof/` exists, a contract-conformance step. Expect more FAIL verdicts on UI PRs that skip states; that is the point.
+- **`risk-high` triggers gates.** `om-code-review` blocks a `risk-high` change without integration-level evidence for its area (denied path and wrong-scope read; failure, retry, idempotency; migration up and down; the consuming side of a contract) unless a maintainer waives it on the PR. The generated `SDLC.md` carries the area-to-evidence table; `om-auto-review-pr`'s label rules say the rating is not advisory.
+- **Migration:** an existing `SDLC.md` is never regenerated — copy the four paragraphs (QA head, self-QA exception, UI QA, the risk table) from the template by hand. No label or marker changed.
+
 ## 2026-09-02 — New skill: om-backlog, epics and stories from a brief or a spec
 
 **New skill.** `om-backlog` drafts a tree of epics, stories with acceptance criteria, and tasks from `product-brief.md` (Scope, Key flows, Goals, Business rules) or a spec's Phasing, shows it, and files it through `om-prepare-issue` after the user's yes. Install it with:

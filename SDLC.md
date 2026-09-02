@@ -97,7 +97,16 @@ When no risk label is set, infer one:
 - `risk-medium` — an ordinary single-area change that ships with tests (also the default reading of unset).
 - `risk-low` — docs-only, test-only, typo, or isolated cosmetic changes.
 
-When signals conflict, pick the higher label and say why in the label comment. A `risk-high` PR strengthens the case for `needs-qa` and deeper review even when it would otherwise look routine.
+When signals conflict, pick the higher label and say why in the label comment. A `risk-high` PR is not merely advised to get more scrutiny; it triggers gates:
+
+| Area behind `risk-high` | What the PR must carry |
+|---|---|
+| Auth, sessions, permissions | an integration test for the denied path and the wrong-scope read; a second person's review |
+| Data scoping | an isolation test proving one scope cannot read another |
+| Money | tests for the failure, retry, and idempotency paths; a second person's review |
+| Schema migrations | a migration test up and down, and a rollback plan in the PR body |
+| Shared contract surfaces | the consuming side exercised, per `BACKWARD_COMPATIBILITY.md` |
+| Any `risk-high` | `needs-qa` when user-facing; no self-QA; `om-code-review` blocks without the evidence above unless a maintainer waives it on the PR |
 
 One label lives outside this taxonomy: `do-not-close`, applied by humans to issues that housekeeping skills must never auto-close. Skills only ever read it.
 

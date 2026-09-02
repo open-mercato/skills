@@ -33,6 +33,7 @@ One card per skill, with its parameters and the companion skills it works with. 
 | [om-prepare-issue](om-prepare-issue.md) | 🧑‍💻 | Files one well-formed, labeled tracker issue from a brief without implementing it. |
 | [om-spec-writing](om-spec-writing.md) | 🧑‍💻 | Writes and reviews feature specs to staff-engineer standards. |
 | [om-ux-review-pr](om-ux-review-pr.md) | 🧑‍💻 | Design-judgment review of a PR's UI: walks screens in a real browser, posts evidence-tagged findings with done-when criteria. |
+| [om-ux-style](om-ux-style.md) | 🧑‍💻 | Builds a declared design contract from scratch — moodboard, principles, tokens for both themes, components with states — into `.uxproof/` plus a theme.css for prototypes. |
 | [om-ux-setup](om-ux-setup.md) | 🧑‍💻 | Extracts the repo's design contract (tokens, components, archetypes, conventions) into committed files. Once per repo. |
 | [om-ux-shape](om-ux-shape.md) | 🧑‍💻 | Turns a vague feature idea into a decided direction: scope, interaction contract, validation plan; AI-necessity gate included. |
 | [om-followup-issue-from-pr](om-followup-issue-from-pr.md) | 🧑‍💻 | Turns a PR or PR comment into a tracked follow-up issue. |

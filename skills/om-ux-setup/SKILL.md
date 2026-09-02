@@ -25,7 +25,10 @@ contract is fresh. When the user wants judgment, name the skill that owns it
 and stop: `om-ux-review-pr` for a pull request's running UI, `om-ux-shape` in
 Review mode for a whole module or flow. Reviewing design files against the
 contract is not covered by any skill in this collection yet; say so plainly
-rather than improvising it here.
+rather than improvising it here. When the repository has no design system to
+extract — the proposed palette is all this skill can offer — name `om-ux-style`,
+which builds a declared contract from references the team chooses and writes it
+into the same files.
 
 ## What the contract holds
 

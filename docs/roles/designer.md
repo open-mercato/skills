@@ -14,6 +14,7 @@ The pipeline gives you a written spec with visuals attached: UI mockups of the p
 | [`om-auto-qa-pr`](../skills/om-auto-qa-pr.md) | Check the UI on an open PR | `/om-auto-qa-pr 123` | screenshots of the changed flow + a pass/fail report on the PR |
 | [`om-synthetic-users`](../skills/om-synthetic-users.md) | Walk a prototype as the personas before showing it | `/om-synthetic-users .ai/specs/assets/onboarding/mockup-01.html --stance validate` | friction on real screens with screenshots, each tagged synthetic and paired with the usability test that would confirm it |
 | [`om-ux-shape`](../skills/om-ux-shape.md) | Decide before drawing | `/om-ux-shape "Quick-add flow for the people list"` | a decided direction: smallest coherent scope, interaction contract, riskiest-assumption test |
+| [`om-ux-style`](../skills/om-ux-style.md) | Start a design system where there is none | `/om-ux-style "Benefits portal"` | a declared contract in `.uxproof/` — moodboard, principles, tokens for both themes, components with states — and a `theme.css` a prototype takes as a drop-in |
 | [`om-ux-setup`](../skills/om-ux-setup.md) | Make the design system executable | `/om-ux-setup` | the repo's design contract in `.uxproof/` — tokens, components, screen archetypes, team rules |
 | [`om-ux-review-pr`](../skills/om-ux-review-pr.md) | Judge a PR's UI, not just see it | `/om-ux-review-pr 123` | a design review: findings ranked by user impact, each with evidence, a pattern, a trade-off and a done-when |
 

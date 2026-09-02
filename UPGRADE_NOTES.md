@@ -14,6 +14,19 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-09-02 — New skill: om-ux-style, a declared design contract for repositories with no design system
+
+**New skill.** `om-ux-style` builds a design contract from references the team chooses — moodboard, five principles, five anti-patterns, tokens by role for both themes, the components the flows need with all six states, three recipes — and writes it into the files `om-ux-setup` extracts from code. Install it with:
+
+```bash
+npx skills add open-mercato/skills --skill om-ux-style
+```
+
+- **Two additive fields in `.uxproof/tokens.json`.** Declared tokens carry `"source": "design"` and `"theme": "light" | "dark" | "both"`. Readers that ignore the fields see a valid flat list; `om-ux-setup --refresh` keeps declared entries and regenerates the rest from code.
+- **The manual section of `.uxproof/conventions.md`** gains a `Design contract — written by om-ux-style` block, appended inside the markers so it survives regeneration; `om-ux-review-pr` and `om-ux-shape` apply it as `[PRODUCT]` rules with no change on their side.
+- **`${SPECS_DIR}/design/theme.css`** carries the eight identity tokens in the plain `:root {}` / `.dark {}` convention a prototype directory loads after its base tokens. `om-ux-setup` now names `om-ux-style` when a repository has only a proposed palette to offer.
+- **New output-contract lines** — `Design contract:`, `Theme:`, `Moodboard:`, `Next:`. The roster gains `om-ux-style`. Nothing to migrate in a repository with a real design system: the skill stops and routes to `om-ux-setup`.
+
 ## 2026-09-02 — Product decisions become a protected contract, like BACKWARD_COMPATIBILITY.md
 
 When `product-brief.md` exists, its Non-goals, Business rules, and Decisions tables (stable ids, owner, status, review-by date, required path to change) are now enforced the way `BACKWARD_COMPATIBILITY.md` surfaces are:

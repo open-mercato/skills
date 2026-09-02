@@ -14,6 +14,18 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-09-02 — New skill: om-synthetic-users, and personas that om-ux-review-pr walks with
+
+**New skill.** `om-synthetic-users` builds personas from the material the repository already holds, runs simulated interviews, and walks a flow through their eyes — on the brief or spec as a narrative, on a static prototype through the browser provider, or on the running app through `om-prepare-test-env`. Install it with:
+
+```bash
+npx skills add open-mercato/skills --skill om-synthetic-users
+```
+
+- **Two new research files.** `${SPECS_DIR}/research/personas.md` (stable `P0n` ids, every line tagged with its source) and walkthrough reports under `${SPECS_DIR}/research/walkthroughs/`. `om-ux-review-pr` now enters screens as those personas when the file exists and cites the persona id in findings; `om-spec-writing` reads the walkthrough reports as `[SYNTHETIC]` hypotheses for its Edge Cases; `om-discover --refresh` pulls them into the brief's Hypotheses section. Repositories without the files behave exactly as before.
+- **A strict label.** Everything the skill produces is `[SYNTHETIC]` and never satisfies the Definition of Ready; the report says "would", never "validated". Three stances (`validate`, `simulate`, `adversary`) default from the brief's mode.
+- **New output-contract lines** — `Personas:`, `Walkthrough:`, `Hypotheses:`, `Next:` — follow the line-anchored marker rules. The roster in `om-setup-agent-pipeline`'s coverage check gains `om-synthetic-users`.
+
 ## 2026-09-02 — New skill: om-discover, and a product-brief.md the other skills read
 
 **New skill.** `om-discover` runs the product-level discovery and define session before `om-brainstorm` has anything to route, in three modes (existing product, client idea, own idea), and leaves `${SPECS_DIR}/product-brief.md`. Install it with:

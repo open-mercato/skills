@@ -5,7 +5,7 @@ description: Product-level discovery and define session that leaves a product-br
 
 # Discover (product-level discovery and define)
 
-The step before `om-brainstorm` has anything to route. `om-brainstorm` decides about one idea; this skill establishes the context every later decision reads: who the users are, what hurts, what the product is and is not, how success is measured, which rules and decisions bind the work. It leaves exactly one artifact, `${SPECS_DIR}/product-brief.md`, and the collection's other skills read it when it exists (`om-brainstorm` in its Frame step, `om-spec-writing` for the Problem Statement, `om-prepare-issue` for the ticket-level tier of the Definition of Ready in `SDLC.md`).
+The step before `om-brainstorm` has anything to route. `om-brainstorm` decides about one idea; this skill establishes the context every later decision reads: who the users are, what hurts, what the product is and is not, how success is measured, which rules and decisions bind the work. It leaves exactly one artifact, `${SPECS_DIR}/product-brief.md`, and the collection's other skills read it when it exists (`om-brainstorm` in its Frame step, `om-spec-writing` for the Problem Statement, `om-prepare-issue` for the ticket-level tier of the Definition of Ready in `SDLC.md`, `om-synthetic-users` for the personas it walks with).
 
 It is interactive and evidence-first. The agent asks, looks facts up, and synthesizes what people said and what the data shows; the human supplies the facts only they have and makes every decision.
 
@@ -58,7 +58,7 @@ The final report ends with these machine-parsed lines, one per line, exact and u
 Product brief: <repo-relative path>                       ← always when the file was written
 Coverage: <n> claims — <a> sourced, <b> synthetic, <c> assumed
 Collection plan: <k> sections waiting for material         ← only when the gate held sections back
-Next: om-brainstorm "<topic>" | om-prepare-issue "<goal>" | om-spec-writing "<goal>" | none
+Next: om-synthetic-users <brief> | om-brainstorm "<topic>" | om-prepare-issue "<goal>" | om-spec-writing "<goal>" | none
 ```
 
 Consumers parse `^Product brief: (\S+)$` and `^Next: (none|om-[a-z-]+.*)$`.

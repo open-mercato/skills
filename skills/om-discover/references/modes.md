@@ -10,7 +10,7 @@ How `om-discover` differs by situation (workflow step 1, and the ladders in step
 - **Who signs the Definition of Ready:** the product owner, plus a compatibility check by the maintainer of the touched surface.
 - **DoR addendum:** migration and rollback path, list of affected screens and user groups.
 - **Skeptic attacks first:** "what breaks", hidden dependencies, users the change forgets.
-- **Persona walkthroughs:** on the running product through the browser provider when one is configured; personas come from real segments in the data, never invented.
+- **`om-synthetic-users` stance:** `validate` — walks the running product through the browser provider; personas come from real segments in the data, never invented.
 
 ## `client` — a client brings an idea
 
@@ -20,7 +20,7 @@ How `om-discover` differs by situation (workflow step 1, and the ladders in step
 - **Who signs the Definition of Ready:** the client's named decider. Autonomous assumptions later surfaced at merge (the assumptions comment) are confirmed by that person, and the brief records who that is.
 - **DoR addendum:** the decider's sign-off on scope and on the anti-goals (what must not get worse).
 - **Skeptic attacks first:** solution-shaped problem statements, stakeholders who were not in the room, constraints nobody priced.
-- **Persona walkthroughs:** simulate users and stakeholders only as hypotheses; every output is tagged `[SYNTHETIC]` and paired with an entry on the interview plan (who, how many, who books them).
+- **`om-synthetic-users` stance:** `simulate` — users and stakeholders as hypotheses only; every output is tagged `[SYNTHETIC]` and paired with an entry on the interview plan (who, how many, who books them).
 
 ## `own` — our own idea
 
@@ -30,7 +30,7 @@ How `om-discover` differs by situation (workflow step 1, and the ladders in step
 - **Who signs the Definition of Ready:** the team, with the riskiest assumption either tested or explicitly accepted untested — the brief records which.
 - **DoR addendum:** the test result, or the recorded decision to build without it.
 - **Skeptic attacks first:** confirmation, the "we are the user" fallacy, benchmarks read as validation, synthetic personas that agree.
-- **Persona walkthroughs:** adversarial only — the persona looks for reasons not to buy, not to switch, not to trust. A walkthrough that agrees with the team is discarded as uninformative.
+- **`om-synthetic-users` stance:** `adversary` — the persona looks for reasons not to buy, not to switch, not to trust. A walkthrough that agrees with the team is discarded as uninformative.
 
 ## Choosing when it is unclear
 

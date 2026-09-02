@@ -45,7 +45,11 @@ mutates nothing.
    workflow.
 
 3. **Walk, do not glance.** For each screen, enter as its user: entry point,
-   primary task, exit. Walking means **performing** the primary tasks (create,
+   primary task, exit. When `${SPECS_DIR}/research/personas.md` exists (written
+   by `om-synthetic-users`), the users are those personas — walk the primary
+   task as each of them, in their situation and with their constraints, and
+   cite the persona id in the finding; without it, say once whose shoes you
+   walked in. Walking means **performing** the primary tasks (create,
    edit, link, delete), not viewing screens. An empty dataset is not a
    blocker: creating the data through the UI is itself the test of the create
    flow and it unlocks every screen behind it. Stop only at real walls

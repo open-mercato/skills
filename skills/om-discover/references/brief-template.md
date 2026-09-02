@@ -80,7 +80,7 @@ The one file `om-discover` writes: `${SPECS_DIR}/product-brief.md`. Every sectio
 
 ## Hypotheses to test
 
-{Everything tagged `[SYNTHETIC]`: persona walkthrough outcomes, simulated interviews. Each paired with the interview or data request that would confirm or refute it.}
+{Everything tagged `[SYNTHETIC]`: the barriers, missing cases, and contradictions `om-synthetic-users` reported, each paired with the interview or data request that would confirm or refute it. Pulled in on `--refresh` from the walkthrough reports under the research directory.}
 
 ## Open questions
 

@@ -30,9 +30,12 @@ and shares one instance with integration tests.
 - `--evidence-only` (default) — produce evidence only; do not touch pipeline/meta
   labels. Stated explicitly so the default is obvious.
 - `--self-qa-signoff` (optional, PR mode) — when verification is fully green AND
-  screenshots were attached AND the PR carries `needs-qa` without `skip-qa`,
+  screenshots were attached AND the PR carries `needs-qa` without `skip-qa` AND
+  the PR is not `risk-high` (labeled, or inferred per `SDLC.md` when unlabeled:
+  auth, sessions, data scoping, money, schema migrations, shared contracts),
   additionally apply `qa-approved` + `qa-self-verified` via the self-QA exception
-  documented in the repo's agent instructions. Off by default.
+  documented in `SDLC.md`. On a `risk-high` PR the flag posts the evidence and
+  withholds the sign-off, saying a QA reviewer is required. Off by default.
 - `--apply-failure` (optional, PR mode) — on failure, apply `qa-failed`. Off by
   default (automated UI checks can be flaky; default to reporting, not blocking).
 - `--keep-env` (optional) — leave the environment running on exit even if this run
@@ -198,7 +201,11 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
       carries `needs-qa` without `skip-qa`: apply `qa-approved` +
       `qa-self-verified` via the descriptor's label guards, and comment linking
       the evidence as the proof, with the line `QA head: <headRefOid>` on its own
-      line — the commit this run checked out and tested. `om-approve-merge-pr`
+      line — the commit this run checked out and tested — and the self-QA
+      evidence list `SDLC.md` requires (scenario, environment, test data,
+      result, negative cases, head). On a `risk-high` PR (label, or the `SDLC.md`
+      inference on the diff) the sign-off is withheld: post the evidence, say
+      why, and leave `needs-qa` for a QA reviewer. `om-approve-merge-pr`
       and `om-merge-buddy` compare it with the PR head; a later push stales the
       sign-off. Never sign off a partial/environment-limited run.
     - `--apply-failure` AND verdict FAIL: apply `qa-failed` and comment why.
@@ -256,7 +263,7 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
   PR mode posts them via **attach-image-evidence**, never on the change's branch.
 - Default behavior changes no labels. `qa-approved`/`qa-self-verified` only via
   `--self-qa-signoff` on a fully-green run with screenshots and `needs-qa` (no
-  `skip-qa`); `qa-failed` only via `--apply-failure`. Every label mutation goes
+  `skip-qa`), never on a `risk-high` PR; `qa-failed` only via `--apply-failure`. Every label mutation goes
   through the descriptor's guards, with a comment.
 - Redact sensitive values from screenshots or omit them; never let evidence leak
   tokens, `.env` content, or non-demo credentials.

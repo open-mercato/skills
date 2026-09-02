@@ -44,9 +44,9 @@ Non-goals: no changes to any other skill's content; no tracker operations added 
 
 ### Phase 1: Import and gates
 
-- [ ] 1.1 Import decoupled skill and clear the content gate
-- [ ] 1.2 Roster entry
-- [ ] 1.3 Standard reference files tailored from canonical copies
+- [x] 1.1 Import decoupled skill and clear the content gate — cd8b54d
+- [x] 1.2 Roster entry — cd8b54d
+- [x] 1.3 Standard reference files tailored from canonical copies — cd8b54d
 
 ### Phase 2: Contract shape
 

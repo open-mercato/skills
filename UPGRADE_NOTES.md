@@ -14,6 +14,18 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-09-02 — New skill: om-discover, and a product-brief.md the other skills read
+
+**New skill.** `om-discover` runs the product-level discovery and define session before `om-brainstorm` has anything to route, in three modes (existing product, client idea, own idea), and leaves `${SPECS_DIR}/product-brief.md`. Install it with:
+
+```bash
+npx skills add open-mercato/skills --skill om-discover
+```
+
+- **A new file other skills read.** When `product-brief.md` exists, `om-brainstorm` treats its Vision, Scope, Non-goals, and Decisions as settled context in its Frame step; `om-spec-writing` seeds its Problem Statement from it and turns the brief's blocking open questions and assumption-only problems into spec Open Questions; `om-prepare-issue` fills the ticket-level tier of the Definition of Ready from it and cites decision and non-goal ids. Repositories without the file behave exactly as before.
+- **Evidence rules that are new to the collection.** The brief tags every claim with a discovery evidence tier (`[INTERVIEW]`, `[DATA]`, `[DOCUMENT]`, `[PRODUCT]`, `[BENCHMARK]`, `[SYNTHETIC]`, `[ASSUMPTION]`) and carries a coverage line; a section with no material behind it becomes a collection plan with capture templates under the research directory (`${SPECS_DIR}/research/` by default) rather than prose. Nothing to migrate: the tags live only in the brief.
+- **New output-contract lines** — `Product brief:`, `Coverage:`, `Collection plan:`, and this skill's `Next:` — follow the same line-anchored rules as `PR:`/`Issue:`/`Spec:`. The roster in `om-setup-agent-pipeline`'s coverage check gains `om-discover`; re-run `/om-setup-agent-pipeline` or the coverage check to pick it up.
+
 ## 2026-09-02 — Definition of Ready: the generated SDLC.md gains a Discovery row, a readiness gate, and its own scope
 
 The generated `SDLC.md` started at Intake with a ticket that had "enough detail to act on" — a phrase nothing checked. Three additive changes to `skills/om-setup-agent-pipeline/references/sdlc-template.md`, and to the skills that act on tickets:

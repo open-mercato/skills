@@ -82,7 +82,7 @@ This skill only **creates** issues. To bring an issue that **already exists** up
    - {question} — blocking | non-blocking      <!-- or: none -->
    ```
 
-   The Summary, Out of scope, and Open questions sections are the ticket-level tier of the Definition of Ready in `SDLC.md`; fill them from the brief and never invent a problem or a user the brief does not name — write "unknown" and mark the question blocking instead.
+   The Summary, Out of scope, and Open questions sections are the ticket-level tier of the Definition of Ready in `SDLC.md`; fill them from the brief and, when `${SPECS_DIR}/product-brief.md` exists (written by `om-discover`), from its Problems, Target group, Goals, Non-goals, and Open questions — cite the brief's ids (`D03`, `N01`) where a decision or non-goal bounds the ticket. Never invent a problem or a user that neither names — write "unknown" and mark the question blocking instead.
 
    Create it via **create-issue** with title, body, `--assignee` when passed, and the **SDLC labels** through the guards (a missing label degrades to a logged skip; `labels.enabled: false` skips all):
 

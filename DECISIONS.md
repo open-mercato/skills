@@ -231,6 +231,14 @@ Two consequences worth recording, because both look like defects until the reaso
 
 Two choices worth recording. The deterministic classifier ships as a shell script under `references/` rather than under a per-skill `scripts/` directory, because `scripts/lint.sh` resolves every `references/…` pointer and would catch a broken one in CI, where a `scripts/` path is unchecked; it is the collection's first shipped executable, and the skill body carries an inline fallback so a harness that cannot spawn a shell still reaches the same classes. Run counting keys on the claim boilerplate's opening comments ("started by", "taking over") rather than on marker density, because a single run posts several marker comments and time-clustering alone reported ordinary runs as rework.
 
+## 2026-09-02 — The UX layer gains an operable pre-implementation artifact
+
+#57 established the UX layer: decide a direction (`om-ux-shape`), extract the design contract (`om-ux-setup`), judge a running UI (`om-ux-review-pr`). What none of those produce is something a non-developer can operate before implementation starts. `om-mockup-prototype` (#106, spec #91) fills that gap with a clickable, commentable prototype directory — and three decisions shape how it entered the collection:
+
+- **Decoupled at the source, then imported.** The skill's engine matured inside a product monorepo, bound to one design system. Per the spec's D5, the decoupling (token snapshot instead of a stylesheet parser, git-based root resolution, neutral fallbacks, a `theme.css` identity seam, no fidelity claims) was implemented and verified in that repository — the only place that can run the equivalence proof — and this collection imports the result rather than forking and re-generalizing blind.
+- **Question-based scope boundary.** The upstream rule "backoffice only; portal/storefront route elsewhere" has no referent in an arbitrary repository. Adopted formulation (decided by the design-system track owner on #91): this skill answers "does this flow make sense"; "is this screen faithful to the design system" belongs to a design-system composer where one exists. The upstream surface-based rule survives as that repo's repo-local override.
+- **Anatomy is a repo-local override, not shipped truth.** Half the review value sits in screens that look like *your* product. The shipped anatomy reference is a neutral template; initialization scaffolds it into `.ai/skills/om-mockup-prototype/references/screen-patterns.md`, pre-filled from the `om-ux-setup` contract when present, and the hand-off names which source was used.
+
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.

@@ -1,3 +1,8 @@
+# Unreleased
+
+## ✨ Features
+- ✨ `om-mockup-prototype` — clickable, commentable pre-implementation prototypes with an anchored-comment engine, imported from upstream after design-system decoupling. (#106) *(@matgren)*
+
 # 1.1.0 (2026-08-13)
 
 ## Highlights

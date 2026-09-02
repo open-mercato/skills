@@ -14,11 +14,11 @@ An array of token entries in the format `om-ux-setup` documents, with two additi
 ]
 ```
 
-`source: "design"` marks a declared token (as opposed to one extracted from code or proposed from a palette); `theme` is `light`, `dark`, or `both`. Readers that do not know the field still see a valid flat list. When the file already holds *declared* tokens, this skill stops (workflow step 1); when it holds a *proposed* palette, the proposed entries are kept under `"source": "proposed"` for the record and the declared ones are added.
+`source: "design"` marks a declared token (as opposed to one extracted from code, where `source` is a file path, or proposed from a palette, `"proposed"`); `theme` is `light`, `dark`, or `both`. Both sentinels are documented in `om-ux-setup`'s contract format. Readers that do not know the fields still see a valid flat list. When the file already holds *declared* tokens, this skill stops (workflow step 1); when it holds a *proposed* palette, the proposed entries are kept under `"source": "proposed"` for the record and the declared ones are added.
 
 ## `.uxproof/conventions.md`
 
-Append inside the manual markers, never outside them, never replacing what is there:
+When the file does not exist, create it with one title line (`# Conventions — {product}`), one sentence saying the generated sections will be added by `om-ux-setup`, and the manual markers. Then append inside the manual markers, never outside them, never replacing what is there:
 
 ```markdown
 <!-- uxproof:manual-start -->
@@ -42,7 +42,7 @@ Append inside the manual markers, never outside them, never replacing what is th
 
 ## `.uxproof/contract.json`
 
-Only when absent. The minimal shape `om-ux-setup` documents, with `"framework": "unknown"`, the styling system the repo uses or `"css"`, `tokenSources` pointing at `tokens.json`, empty component roots, and `counts` — so `om-ux-review-pr` finds a contract and cites `[PRODUCT]` rules. When `om-ux-setup` later runs, it regenerates everything outside the manual section from code and the two converge.
+Only when absent. The minimal shape `om-ux-setup` documents, with `"framework": "unknown"`, the styling system the repo uses or `"css"`, `tokenSources` pointing at `tokens.json`, empty component roots, and `counts` where `tokens` is the number of entries in `tokens.json`, `colorTokens` the number of distinct color role names, and `components` is `0` until code exists — so `om-ux-review-pr` finds a contract and cites `[PRODUCT]` rules. When `om-ux-setup` later runs, it regenerates everything outside the manual section from code and the two converge.
 
 ## `${design}/theme.css`
 
@@ -50,8 +50,10 @@ The eight identity tokens in the convention a prototype directory loads after it
 
 ```css
 /* theme.css — identity tokens for {product}. Written by om-ux-style on {date}.
-   Edit these eight values to rebrand. Everything else (status roles, focus ring,
-   layering, semantic colors) is a contract, not identity — do not re-purpose it here. */
+   Edit these eight values to rebrand. The .dark block overrides the five color knobs;
+   radius and the two font stacks are theme-invariant and inherit from :root.
+   Everything else (status roles, focus ring, layering, semantic colors) is a
+   contract, not identity — do not re-purpose it here. */
 :root {
   --primary: {value};
   --primary-hover: {value};

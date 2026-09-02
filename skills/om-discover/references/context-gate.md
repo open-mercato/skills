@@ -25,7 +25,7 @@ For every section of `references/brief-template.md`, record one of:
 - **thin** — one source, or a source that supports part of the section; written, with the coverage line naming it thin;
 - **none** — no source at all; the section goes on the collection plan and is **not written**.
 
-The ticket-level items of the Definition of Ready (`SDLC.md`) — the problem and who has it, the expected outcome and its check, what is out of scope, blocking questions, confirmed assumptions — must reach *has material* with a source that is not `[SYNTHETIC]` or `[ASSUMPTION]` before `om-prepare-issue` or a backlog can start from the brief. Say this in the report when it is not yet the case.
+The ticket-level items of the Definition of Ready (`SDLC.md`) — the problem and who has it, the expected outcome and its check, what is out of scope — must reach *has material* with a source that is not `[SYNTHETIC]` or `[ASSUMPTION]`; every blocking question must be answered by the person who can answer it; and where spec PRs exist, their autonomous assumptions must be confirmed. Only then can `om-prepare-issue` or `om-backlog` start from the brief. Say this in the report when it is not yet the case.
 
 ## 3. The collection plan
 
@@ -38,10 +38,10 @@ For every *none* section, and for every *thin* one the user wants stronger, writ
 - **Who can answer it:** {role, not name — e.g. "two developers who tried the current workflow this month", "the client's operations lead"}
 - **How:** {interview | workshop block | data request | benchmark check} — {the specific ask, e.g. "export of support tickets tagged billing, last 90 days"}
 - **Owner and by when:** {the human who books or requests it; a date}
-- **Template:** `{research}/templates/{interview-note|workshop-export|data-request|decision-record}.md`
+- **Template:** `{research}/templates/{interview-note|workshop-export|data-request|benchmark-check|decision-record}.md`
 ```
 
-Hand out the capture templates below by writing them into `{research}/templates/` when they do not exist yet — the material has to land in the repository, because the agent cannot read chat threads or whiteboard tools. Then stop for those sections: the run's report lists them under `Collection plan:` and the brief header's coverage line counts them as missing.
+Hand out the capture templates below by writing them into `{research}/templates/` when they do not exist yet — the material has to land in the repository, because the agent cannot read chat threads or whiteboard tools. Templates are the one write that happens before the confirmation in step 7, because they carry no content. Then stop for those sections: the run's report lists them under `Collection plan:` and the brief header counts the entries. Decisions the user makes during the rounds are written with `decision-record.md` into `{research}/decisions/`, one file per decision, with the name the user gives; the brief cites them as `[DOCUMENT]`.
 
 ## 4. When the user chooses to continue without material
 
@@ -88,6 +88,18 @@ The user may say "write it anyway from what we believe". Then the section is wri
 - Filter and period:
 - Format and where to drop it (this directory):
 - Personal data present? How it is reduced before it lands here:
+```
+
+`benchmark-check.md`:
+
+```markdown
+# Benchmark — {reference product}, checked {date} by {role}
+- Link:
+- What it does for our users' job, in one paragraph:
+- What it does well:
+- Where it falls short for our users:
+- Pricing or model, as shown on the date checked:
+- Screens worth keeping as references (paths beside this file):
 ```
 
 `decision-record.md`:

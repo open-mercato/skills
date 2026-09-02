@@ -11,6 +11,10 @@ The token families, their naming, and the checks before a value is accepted. Val
 - **Shadow and elevation:** `shadow-1`, `shadow-2`, and whether elevation exists at all in this product.
 - **Motion:** durations and easings when the moodboard's motion family says the product moves; otherwise "reduced motion by default" as the contract.
 
+## Values the agent proposes
+
+A reference decides a family's character, rarely a value: "one accent" names no hue. The agent proposes the value, marks it *proposed* in the moodboard and the report, and the user confirms or replaces it; a confirmed proposal is a team decision, not an invention. What the agent may never do is add a reference, a brand asset, or a "house style" the team did not bring.
+
 ## Naming
 
 By role, never by value: `primary`, not `blue-600`; `text-2`, not `gray-700`. A token whose name says its value cannot change value without lying.
@@ -28,4 +32,4 @@ By role, never by value: `primary`, not `blue-600`; `text-2`, not `gray-700`. A 
 
 ## Where they are written
 
-`.uxproof/tokens.json` as `{ "name", "value", "kind", "source": "design", "theme": "light" | "dark" | "both" }` entries (the `theme` field is additive to the format `om-ux-setup` writes; readers that ignore it see a flat list), and `${design}/theme.css` for the eight identity tokens. Full shapes in `references/contract-writes.md`.
+`.uxproof/tokens.json` as `{ "name", "value", "kind", "source": "design", "theme": "light" | "dark" | "both" }` entries (the `theme` field is additive to the format `om-ux-setup` writes; readers that ignore it see a flat list), and `${design}/theme.css` for the eight identity tokens. `kind` values: `color` for every color role, `font` for stacks, `size` for the type scale (value shape `"14px/20px"`, size over line height), spacing, and radii, `shadow` for elevation, `other` for motion and numeral settings. Full shapes in `references/contract-writes.md`.

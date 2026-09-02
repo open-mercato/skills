@@ -26,7 +26,7 @@ How `om-discover` differs by situation (workflow step 1, and the ladders in step
 
 - **Truth lives in:** nowhere yet. The team's beliefs, tagged `[ASSUMPTION]` until tested.
 - **Start from:** the vision in one sentence; the riskiest assumptions ranked by "if this is false, the product is pointless"; the smallest test for each; the kill criteria (what result makes us stop); the one metric that matters with a threshold and a date.
-- **Mandatory sections beyond the common ones:** *Assumption map* (importance × evidence, with a test, an owner, and a date for every entry in the important-and-unproven corner), *Kill criteria*, *Primary metric with threshold*.
+- **Mandatory sections beyond the common ones:** the *Riskiest assumptions* table's Importance and Evidence columns filled (they are the assumption map; every entry in the important-and-unproven corner needs a test, an owner, and a date), *Kill criteria*, and the *Primary metric* line under Goals with a threshold and a date. All three headings exist in every brief; in other modes they read "not applicable".
 - **Who signs the Definition of Ready:** the team, with the riskiest assumption either tested or explicitly accepted untested — the brief records which.
 - **DoR addendum:** the test result, or the recorded decision to build without it.
 - **Skeptic attacks first:** confirmation, the "we are the user" fallacy, benchmarks read as validation, synthetic personas that agree.

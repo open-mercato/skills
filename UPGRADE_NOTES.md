@@ -49,7 +49,8 @@ npx skills add open-mercato/skills --skill om-backlog
 
 - **Tree conventions in plain issues.** Ids open titles (`E01`, `E01-S02`, `E01-S02-T01`), stories carry an `Epic: #<n>` line, tasks a `Story: #<n>` line, epics a `## 📋 Stories` checklist rewritten on every run. No tracker feature beyond issues, bodies, comments, and labels is assumed, so any descriptor works. Existing issues that cover a story are adopted with a comment, never recreated.
 - **Readiness is enforced here too.** A brief whose Problems or Target group rest on `[SYNTHETIC]` or `[ASSUMPTION]` claims is not filed; the skill offers the research backlog (the collection plan's interviews and data requests as tasks) instead.
-- **A new local record**, `${SPECS_DIR}/backlog.md`, maps ids to issue numbers; the ids in titles are the durable link on re-runs. New output-contract lines: `Backlog:`, `Issues:`, `Next:`. The roster gains `om-backlog`. Nothing to migrate.
+- **A new local record**, `${SPECS_DIR}/backlog.md`, maps ids to issue numbers; the ids in titles are the durable link on re-runs. New output-contract lines: `Backlog:`, `Issues:`, `Next:` (a dry run or a readiness stop emits `Next:` only). The roster gains `om-backlog`. Nothing to migrate.
+- **Three new optional arguments on `om-prepare-issue`**, additive and off by default: `--title "<exact title>"` (verbatim title instead of the `Implement:` / `Fix:` convention), `--no-spec` (never author a spec; link the document the brief names as the authority), `--skip-dedupe` (the caller already deduplicated; reuse only an exact-title match). `om-backlog` passes all three. `om-prepare-issue` also gains a greenfield exception to its "real paths" rule: in a repository with no product code, guidance references the brief's ids and the acceptance criteria and says so. Existing invocations behave exactly as before.
 
 ## 2026-09-02 — New skill: om-ux-style, a declared design contract for repositories with no design system
 

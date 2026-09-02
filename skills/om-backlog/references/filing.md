@@ -1,22 +1,22 @@
 # Filing the tree (step 5)
 
-Every issue is created by `om-prepare-issue`; this skill adds the tree on top through **update-issue** and **comment-issue**. Order: epics, then stories, then tasks, then the epic checklists. Every write is idempotent.
+Every issue is created by `om-prepare-issue`, invoked verbatim with `--title "<id> — <title>"`, `--no-spec`, `--skip-dedupe`, the inferred `--priority` / `--risk`, and `--assignee` when given. The brief handed over already carries the body sections, which `om-prepare-issue` embeds verbatim under matching headings; this skill adds only the epic checklists afterwards through **update-issue**, and comments through **comment-issue**. Order: epics, then stories, then tasks, then the epic checklists. Every write is idempotent. Parse `Issue: #<n> (link: <url>)` from each report; the link goes into `backlog.md`.
 
 ## Epic
 
-Invoke `om-prepare-issue` verbatim with a brief of this shape (the skill embeds it in its Summary / Out of scope / Open questions sections and applies labels):
+Brief handed to `om-prepare-issue`:
 
 ```
-{prefix}{nn} — {epic title}
-Problem: {from the brief's Problems, with its tag and source}
+Problem: {from the brief's Problems, with its tag, the role and date of any quote, and the source file}
 Who has it: {roles from the Target group}
 Expected outcome: {from Goals — what is true afterwards and how it is checked}
 Out of scope: {the N0n non-goals that bound this epic, quoted}
 Open questions: {Q0n entries that touch this epic, blocking or not}
-Decisions in play: {D0n, R0n ids, one line each}
+Decisions in play: {D0n, R0n ids, one line each, with the owner}
+Design authority: {SPECS_DIR}/product-brief.md   (or the spec path)
 ```
 
-Pass `--priority` / `--risk` from the draft and `--assignee` when given. Parse the `Issue: #<n>` line from its report. Then **update-issue** to append:
+Then **update-issue** to append:
 
 ```markdown
 ## 📋 Stories
@@ -26,7 +26,7 @@ Pass `--priority` / `--risk` from the draft and `--assignee` when given. Parse t
 
 ## Story
 
-Same invocation, with the story's outcome as the title after its id, the epic's problem and role, the story's own expected outcome, and its acceptance criteria in the brief. After creation, **update-issue** to prepend the tree line and append the criteria section when `om-prepare-issue` did not carry them verbatim:
+Same invocation, `--title "{id} — {outcome}"`. The brief carries the epic's problem and role, the story's own expected outcome, and these sections verbatim, which `om-prepare-issue` embeds as they are:
 
 ```markdown
 Epic: #{epicNumber}
@@ -41,6 +41,8 @@ Depends on: {ids and numbers, or none}
 - R01 — {rule in one line}
 ```
 
+No post-creation edit is needed for a story; the ids cited inline in Summary and Out of scope by `om-prepare-issue`'s own rule and the *Decisions in play* section list the same ids, and that is intended.
+
 ## Task
 
 As a story, with `Story: #{storyNumber}` instead of `Epic:` and no acceptance criteria beyond a done-when line.
@@ -51,11 +53,11 @@ After the children exist, **update-issue** on the epic replaces the block betwee
 
 ## Adopted issues
 
-An existing issue adopted in step 3 is not recreated: **update-issue** adds the `Epic: #{n}` line (and the id prefix in the title only with the user's yes, since a title is the owner's), and one **comment-issue** with the marker `` 🤖 `om-backlog` — adopted into {epic id} `` explains why. An issue another actor is actively working on (three-signal check) gets the comment only; the body is left alone.
+An existing issue adopted in step 3 is not recreated: **update-issue** adds the `Epic: #{n}` line (and the id prefix in the title only with the user's yes, since a title is the owner's), and one **comment-issue** with the marker `` 🤖 `om-backlog` — adopted into {epic id} `` explains why. An issue another actor is actively working on (three-signal check) gets the comment only; the body is left alone. An adopted issue without the id in its title is found on re-runs through `backlog.md`, which is why the file records it.
 
 ## Idempotency
 
-Before creating anything, **search-issues** by the id prefix in the title. Found → update; not found → create. The checklist marker comment and the adopted marker are found via **list-issue-comments** and updated in place. Running the skill twice on the same source changes nothing the second time.
+Before creating anything, **search-issues** by the id prefix in the title (and `backlog.md` for adopted issues without one). Found → **update-issue** with the regenerated body sections; not found → create through `om-prepare-issue`. The checklist block is rewritten between its markers; the adopted marker comment is found via **list-issue-comments** and updated in place. Running the skill twice on the same source changes nothing the second time.
 
 ## `backlog.md`
 

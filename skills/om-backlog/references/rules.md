@@ -15,4 +15,5 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 - **Interactive — user in the loop.** The tree is shown and confirmed before any write; this skill has no autonomous mode and must never be driven by an `om-auto-*` skill.
 - **Additional markers.** `Backlog:`, `Issues:`, and `Next:` (exact shapes in the skill body's Output contract) — same exactness rules as `PR:`/`Issue:`/`Spec:`.
 - **Adopt, never duplicate.** An existing issue that covers a story is linked into the tree with its own number; a re-run finds tree issues by the id in the title and updates them.
-- **Outcomes, not tasks.** A story states what a user can do afterwards and how to check it; work with no user-facing outcome is a task under a story.
+- **Outcomes, not tasks.** A story states what a user can do afterwards and how to check it; work with no user-facing outcome is a task under a story. The research variant's entries are tasks, not stories, for exactly this reason.
+- **Quotes travel as roles.** Interview quotes from the brief may appear in issue bodies attributed to a role and a date; never a name, never contact details, never anything the note marked private.

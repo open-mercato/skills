@@ -29,9 +29,9 @@ Built {date} with {roles}. Character words (confirmed): {three to five words}. A
 
 ## References
 
-| # | Reference | Source | Chosen by | Teaches | Family |
-|---|---|---|---|---|---|
-| M01 | … | {link or file} | {role} | {the one thing it shows} | color / type / composition / motion / tone |
+| # | Reference | Source | Chosen by | Why | Teaches | Family |
+|---|---|---|---|---|---|---|
+| M01 | … | {link or file; "link, not opened" when the agent could not or may not fetch it} | {role, or "user" when no role was given} | {why the chooser brought it} | {the one thing it shows, in the chooser's words when the link was not opened} | color / type / composition and density / motion / tone |
 
 ## Anti-references
 
@@ -41,11 +41,11 @@ Built {date} with {roles}. Character words (confirmed): {three to five words}. A
 
 ## Images
 
-{files beside this document, named `M01-….png`}
+{files beside this document, named `M01-….png`; "none provided" when the user brought no images — the moodboard still stands on descriptions and links}
 ```
 
 ## Rules
 
 - No reference without a source and a chooser; no image the user did not provide or approve.
-- Anti-references are as important as references: the principles' *avoid* half comes from them.
+- Anti-references are as important as references: the principles' *avoid* half comes from them. The anti-character words are proposed by the agent from the anti-references and confirmed by the user, and the file says so.
 - The moodboard is not the contract — nothing in it is a rule until step 4 turns it into one and the user confirms.

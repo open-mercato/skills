@@ -9,11 +9,11 @@ Apply before writing the contract. Score each item 0 (absent or contradicted), 1
 5. The neutral was chosen (a hue bias, or an explicit decision for pure gray), and the identity hues are three at most.
 6. Every component lists all six states, with n/a justified, and its accessibility requirements.
 7. The three recipes write the empty, loading, error, and no-permission sentences the user reads.
-8. `theme.css` carries exactly the eight identity tokens and states the semantic contract in its header.
+8. `theme.css` declares exactly eight identity token names in `:root` (the `.dark` block re-declares the five color knobs only) and states the semantic contract in its header.
 9. The manual section of `conventions.md` was appended, not rewritten; superseded rules are marked.
 10. Nothing in the contract names a framework, a component library, or a product other than this one.
 
-Critical gates: items 1, 3, 4, 8, 9. A zero means the contract is not ready.
+Critical gates: items 1, 3, 4, 8, 9. A zero means the contract is not ready. The gate runs before the files are written; item 9 is checked on the content about to be written.
 
 ## Signatures of the generic look
 

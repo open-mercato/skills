@@ -13,11 +13,13 @@ Map the brief as a tree of questions: every settled answer opens the questions t
 Format a round like so:
 
 ```
-❓ **Q1** — **{question title}**: {the question, with the options when it is a choice}
-➡️ {recommended answer} · would carry `[{tier}]` because {the source, or "no source: this would be an assumption"}
----
-❓ **Q2** — …
+**Q1 — {question title}.** {the question, with the options when it is a choice}
+Recommended: {answer} — would carry `[{tier}]` because {the source, or "no source: this would be an assumption"}
+
+**Q2 — …**
 ```
+
+A question that carries a skeptic CRITICAL finding is asked without a recommendation — recommending an answer to it is resolving it.
 
 When a frontier question needs a fact from the material or the repository, look it up before the round (a sub-agent may do it while the round runs); do not block the rest of the frontier on it, and never ask the user for a fact you could read. When the recommended answer would be an assumption, say so in the round — the user may still choose it, and the brief will carry the tag.
 
@@ -26,7 +28,7 @@ In `own` mode, every recommended answer gets a one-line counter-argument next to
 ## The round ends when
 
 - every brief section either has content with a tag, or sits on the collection plan;
-- every decision the brief will carry has a named human owner;
+- every decision the brief will carry has a named human owner, or the user has declined to name one and the decision is written as a `proposal` with a blocking question;
 - no blocking open question is left unanswered by the person who can answer it;
 - the user signals enough — depth is their call, not the skill's.
 

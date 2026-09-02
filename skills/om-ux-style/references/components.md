@@ -12,7 +12,7 @@ Start from the brief's Key flows (`product-brief.md`) or, without a brief, from 
 ### Button
 - Purpose: {the one job}
 - Variants: {primary, secondary, quiet, destructive — only the ones the flows need}
-- Required states: hover, focus (visible ring, `focus` token), disabled (not just faded: unreachable by keyboard when appropriate), loading (label stays, spinner replaces icon), empty n/a, error n/a
+- Required states: hover, focus (visible ring, `focus` token), disabled (not just faded: unreachable by keyboard when appropriate), loading (label stays, spinner replaces icon), empty n/a (a button holds no data), error n/a (errors belong to the form it sits in)
 - Accessibility: {role, name, keyboard, minimum target size}
 - Copy rule: {verb first, what happens when pressed}
 - Do not use for: {navigation — that is a link}

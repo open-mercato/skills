@@ -14,7 +14,7 @@ Apply before showing the draft (step 6) and again before writing the file (step 
 
 ## Decisions and scope
 
-8. Every decision, non-goal, and business rule has a stable id, an owner, a status, and a required path to change it.
+8. Every decision, non-goal, and business rule has a stable id, a status, and a required path to change it, and either an owner (`active`) or the `proposal` status with a blocking open question naming who signs it.
 9. Now completes one real job end to end; Later and Not doing are explicit.
 10. Every open question is marked blocking or not and names who can answer it.
 11. The Definition of Ready addendum for the mode is filled, or says what is missing.

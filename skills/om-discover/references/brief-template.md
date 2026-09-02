@@ -56,9 +56,9 @@ The one file `om-discover` writes: `${SPECS_DIR}/product-brief.md`. Every sectio
 
 ## Business rules
 
-| Id | Rule | Applies to | Source | Status | Required path to change |
-|---|---|---|---|---|---|
-| R01 | … | … | `[tag]` {source} | active | {who approves; a superseding row} |
+| Id | Rule | Applies to | Source | Status | Review by | Required path to change |
+|---|---|---|---|---|---|---|
+| R01 | … | … | `[tag]` {source} | active | {date} | {who approves; a superseding row} |
 
 ## Non-goals
 
@@ -68,9 +68,9 @@ The one file `om-discover` writes: `${SPECS_DIR}/product-brief.md`. Every sectio
 
 ## Decisions
 
-| Id | Date | Decision | Why | Owner | Status | Required path to change |
-|---|---|---|---|---|---|---|
-| D01 | … | … | … | {name} | active | {who approves; a superseding row with the old id in "supersedes"} |
+| Id | Date | Decision | Why | Owner | Status | Review by | Required path to change |
+|---|---|---|---|---|---|---|---|
+| D01 | … | … | … | {name} | active | {date} | {who approves; a superseding row with the old id in "supersedes"} |
 
 ## Riskiest assumptions
 
@@ -102,4 +102,4 @@ The one file `om-discover` writes: `${SPECS_DIR}/product-brief.md`. Every sectio
 - `om-brainstorm` reads Vision, Problems, Scope, Non-goals, and Decisions in its Frame step, so a brainstorm never re-litigates a decision that has an owner.
 - `om-spec-writing` reads Problems, Goals, Business rules, Domain glossary, Key flows, Assumptions, and Open questions; blocking open questions and `[ASSUMPTION]`-only problems become spec Open Questions.
 - `om-prepare-issue` reads Problems, Target group, Goals, Non-goals, and Open questions to fill the ticket-level tier of the Definition of Ready.
-- Review skills that check protected surfaces treat Non-goals, Business rules, and Decisions as a contract when the repository says so in `SDLC.md`.
+- `om-code-review` and `om-ux-review-pr` treat Non-goals, Business rules, and Decisions as a protected contract (per `SDLC.md`): a change that contradicts an active entry without a superseding row in the same PR is a blocker. Supersede, never delete; the old row stays with status `superseded` and the new row names it.

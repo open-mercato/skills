@@ -14,6 +14,15 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-09-02 — Product decisions become a protected contract, like BACKWARD_COMPATIBILITY.md
+
+When `product-brief.md` exists, its Non-goals, Business rules, and Decisions tables (stable ids, owner, status, review-by date, required path to change) are now enforced the way `BACKWARD_COMPATIBILITY.md` surfaces are:
+
+- **`om-code-review` gains a product-decision gate** next to its breaking-change gate: a change that builds what a non-goal excludes or contradicts an active rule or decision, without a superseding entry for that id in the same diff, is a blocker quoting the id; an entry past its review-by date is a minor "due for review". `om-ux-review-pr` applies the same to screens. The anti-pattern table gains the matching row.
+- **Decisions are surfaced where people work.** `om-auto-manage-issues` ends its implementation-notes comment with *Decisions in play*; `om-spec-writing`'s core sections gain `## 📝 Decisions in play` and its autonomous defaults may not weaken an active entry; the unified PR body template (all three synced copies: `om-open-pr`, `om-auto-create-pr`, `om-auto-create-pr-loop`) gains a conditional `## 📋 Decisions touched` section.
+- **Confirmed assumptions become decisions.** `om-discover --refresh` reads the resolved-assumptions comments on spec PRs (read-only, via **search-prs** and **list-issue-comments**) and records each human-confirmed row as a Decision with the confirmer as owner.
+- **Migration:** nothing to do in a repository without `product-brief.md`. A generated `SDLC.md` gains the section *Product decisions as a protected contract*; add it by hand to an existing one. Briefs written before this change: add the `Review by` column to the Business rules and Decisions tables.
+
 ## 2026-09-02 — New skill: om-synthetic-users, and personas that om-ux-review-pr walks with
 
 **New skill.** `om-synthetic-users` builds personas from the material the repository already holds, runs simulated interviews, and walks a flow through their eyes — on the brief or spec as a narrative, on a static prototype through the browser provider, or on the running app through `om-prepare-test-env`. Install it with:

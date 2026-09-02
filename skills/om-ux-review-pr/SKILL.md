@@ -66,7 +66,12 @@ mutates nothing.
 5. **Check contract conformance.** Hardcoded colors where tokens exist, raw
    elements where the registry has a house component, screens that ignore the
    repo's own archetype for that shape. These are `[PRODUCT]` findings citing
-   the contract.
+   the contract. When `${SPECS_DIR}/product-brief.md` exists, its Non-goals,
+   Business rules, and Decisions are part of the contract too: a screen that
+   ships what a non-goal excludes, or that lets a user do what a business rule
+   forbids, is a `[PRODUCT]` finding quoting the entry's id, and its
+   acceptance criterion is a superseding entry approved by the owner or a
+   changed screen — never a quiet exception.
 
 6. **Run the humane gate.** For every persuasive element, ask who benefits
    from the design choice, following `references/humane-patterns.md`.

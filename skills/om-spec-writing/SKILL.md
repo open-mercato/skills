@@ -65,6 +65,9 @@ Core sections (adapt when the feature genuinely needs a different structure, but
 ## 📝 Risks & Impact Review
 {Blast radius, migration/compatibility concerns, rollback story}
 
+## 📝 Decisions in play
+{Only when product-brief.md exists: the Non-goal, Business rule, and Decision ids this spec relies on, and any it proposes to supersede — with the owner who must approve}
+
 ## 📋 Phasing
 {Phase 1: … / Phase 2: … — each independently shippable}
 
@@ -105,7 +108,7 @@ When asked to review or audit a spec, produce (same heading rule: emojis decorat
 The interactive rule "never answer your own gate questions" is inverted here **only** because a stalled unattended run is worse than a documented, reversible assumption a human can override before merge. It is not licence to invent scope:
 
 - For each numbered Open Question, pick the **most reversible, lowest-blast-radius** answer, biased toward the smallest scope that still ships something working: least new surface (no new public contract, dependency, or schema change), reuse of the project's existing primitives over inventions, and "no / defer X" for any "should this also do X?" question.
-- Never default in a way that weakens security, data scoping, or a documented compatibility contract (`BACKWARD_COMPATIBILITY.md` surfaces). When a question cannot be defaulted without that risk or a likely large rewrite, still pick the most reversible option but mark it `⚠ NEEDS HUMAN CONFIRMATION`.
+- Never default in a way that weakens security, data scoping, a documented compatibility contract (`BACKWARD_COMPATIBILITY.md` surfaces), or an active product decision, business rule, or non-goal in `product-brief.md`. When a question cannot be defaulted without that risk or a likely large rewrite, still pick the most reversible option but mark it `⚠ NEEDS HUMAN CONFIRMATION`.
 - Replace the spec's `Open Questions` block with a `## Resolved assumptions (autonomous defaults)` section listing, per question: the chosen answer, a one-line rationale, and the `⚠ NEEDS HUMAN CONFIRMATION` marker where it applies. The spec must read as a coherent design under those assumptions — no dangling references to unanswered questions.
 - Report the resolved table to the caller — the calling skill posts it as an issue/PR comment for override and applies the high-stakes guard (draft PR / `needs-qa`, never `qa-approved`) when any `⚠` marker exists.
 
@@ -114,7 +117,7 @@ The interactive rule "never answer your own gate questions" is inverted here **o
 1. **The architectural diff** — is the spec wasting space documenting standard CRUD and boilerplate? Cut the noise; a spec earns its length only with what is unique to this feature.
 2. **Scope cohesion** — one independently deployable capability per spec. Bundles get split.
 3. **Canonical mechanisms** — does the spec reach for the project's established primitives (its CRUD factories, form/table components, HTTP clients, cache, event bus — whatever the agent instructions name) or invent parallel substitutes? Inventions need a stated reason.
-4. **Contracts and compatibility** — which public surfaces change (APIs, events, schemas, config formats)? Is every breaking change flagged with a migration or deprecation path? When `BACKWARD_COMPATIBILITY.md` exists at the repo root, its protected-surface list is the authority.
+4. **Contracts and compatibility** — which public surfaces change (APIs, events, schemas, config formats)? Is every breaking change flagged with a migration or deprecation path? When `BACKWARD_COMPATIBILITY.md` exists at the repo root, its protected-surface list is the authority. When `product-brief.md` exists, its Non-goals, Business rules, and Decisions are the second authority: a spec that contradicts an active entry without proposing a superseding one, named and owner-approved, fails this item.
 5. **Reversibility** — how is each state change undone? The rollback/undo logic deserves the same detail as the execute path.
 6. **Boundaries and coupling** — are cross-module effects routed through the project's decoupling mechanism (events, interfaces) or through direct imports? Are optional integrations degraded gracefully when the peer is absent?
 7. **Sensitive data** — for every PII / credential / free-text-about-people field the spec proposes: does it follow the project's data-protection conventions (encryption, scoping, access rules)? No hand-rolled crypto, no "TODO encrypt later".

@@ -6,6 +6,10 @@ How the agent interviews a persona. The questions come from the brief's Problems
 
 Before each question, find the passages in the research directory that bear on it — the persona's own segment's interview notes, data lines, documents — and give them to the persona's subagent for that answer only. The transcript records, per answer, which passages informed it, or that retrieval found nothing relevant. The persona speaks from lived situation and never mentions notes, documents, files, or research. Retrieved passages do not accumulate: what informed one answer disappears before the next, so a detail cannot resurface later as an established fact the persona never had.
 
+## What the persona never sees
+
+The persona's context holds its own persona block, the passages retrieved for the current question, and the subject being walked. It never holds the brief's assumptions (`A0n`), the team's hypotheses, the interviewer's expected answer, or another persona's transcript. A model that is handed the answer someone hopes for uses it worse than it would be used by simply averaging afterwards, and a persona that has seen the assumption confirms it. The assumptions shape the *questions* in the script and the pressures applied; they do not enter the persona.
+
 ## Ask about the past, not the future
 
 - "Tell me about the last time {the problem} happened. What did you do, step by step?"

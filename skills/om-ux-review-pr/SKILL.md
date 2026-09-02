@@ -37,7 +37,10 @@ mutates nothing.
    branch takes it too when an open PR exists for that branch; otherwise, and
    when no argument was given, take the local path and diff against
    `BASE_BRANCH`. Say which path you are on before continuing, then read the
-   diff and list the screens it touches, naming the ones you cannot reach.
+   diff and list the screens it touches, naming the ones you cannot reach. When
+   the PR body names a spec (`Source doc:`) whose UI/UX section carries a
+   `Prototype:` line, that prototype is the accepted design for these screens:
+   note its path now, so step 5 can open it beside the app.
 
 2. **Bring the app up.** Start the PR in a runnable state and open it in the
    configured browser, composing with the pipeline's test-env and browser
@@ -71,7 +74,12 @@ mutates nothing.
    ships what a non-goal excludes, or that lets a user do what a business rule
    forbids, is a `[PRODUCT]` finding quoting the entry's id, and its
    acceptance criterion is a superseding entry approved by the owner or a
-   changed screen — never a quiet exception.
+   changed screen — never a quiet exception. When the spec links a prototype,
+   open it through the browser provider beside the running screen and compare
+   flow, states, and copy: a deviation the spec does not explain is a
+   `[PRODUCT]` finding citing the prototype screen, with 📸 evidence of both;
+   a deliberate improvement is reported as a deviation for the author to
+   confirm, never silently accepted or silently rejected.
 
 6. **Run the humane gate.** For every persuasive element, ask who benefits
    from the design choice, following `references/humane-patterns.md`.

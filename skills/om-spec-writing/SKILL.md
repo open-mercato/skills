@@ -58,6 +58,7 @@ Core sections (adapt when the feature genuinely needs a different structure, but
 
 ## 📝 UI/UX
 {Flows, states, accessibility; only what is unique — not standard CRUD}
+Prototype: {repo-relative path, when one exists — the mockups om-auto-write-spec renders under assets, or an interactive prototype directory; once accepted it is the artifact the review skills compare the implementation with. Omit the line when there is none.}
 
 ## 📝 Edge Cases & Failure Scenarios
 {What breaks, and what the user sees when it does}

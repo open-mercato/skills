@@ -14,6 +14,10 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-09-02 — The accepted prototype is an acceptance artifact
+
+A spec's `## 📝 UI/UX` section may carry a `Prototype: <path>` line — the mockups `om-auto-write-spec` renders under the specs assets directory today, or an interactive prototype directory. `om-ux-review-pr` reads the PR's `Source doc:` spec, opens the linked prototype through the browser provider beside the running screens, and reports a deviation the spec does not explain as a `[PRODUCT]` finding with evidence of both, and a deliberate improvement as a deviation for the author to confirm. Its review comment gains a `Prototype:` line. `om-synthetic-users` already walks prototypes. Nothing to migrate: specs without the line behave as before; add it to existing specs whose mockups were accepted.
+
 ## 2026-09-02 — QA gate hardening: QA head, self-QA below risk-high, states in pass/fail, risk-high evidence
 
 Four changes to the QA and merge gates, each a small behavior change in one or two skills and a matching paragraph in the generated `SDLC.md`:

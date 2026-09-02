@@ -40,6 +40,8 @@ Non-goals: no changes to any other skill's content; no tracker operations added 
 
 ## Progress
 
+PR: #106
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Import and gates
@@ -56,4 +58,4 @@ Non-goals: no changes to any other skill's content; no tracker operations added 
 
 ### Phase 3: Documentation
 
-- [ ] 3.1 Docs, roster tables, DECISIONS and CHANGELOG entries
+- [x] 3.1 Docs, roster tables, DECISIONS and CHANGELOG entries — 760b685

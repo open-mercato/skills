@@ -11,7 +11,8 @@ Builds a panel of personas from the material the repository already holds (`prod
 | `{subject}` | Yes | Path to `product-brief.md`, a spec, or a static prototype; or `--app` for the running application. |
 | `--flow "<name>"` | No | The flow to walk when the subject has several. |
 | `--stance validate\|simulate\|adversary` | No | Persona behaviour; defaults from the brief's mode (`existing`, `client`, `own`). |
-| `--panel <n>` | No | Personas per run, sampled fresh each run. Default `5`. |
+| `--panel <n>` | No | Personas per run, sampled fresh each run. Default `3`; each persona is a subagent run, so panel × runs is the cost. |
+| `--hold-out <files>` | No | Real interview notes kept out of the persona material so the parity check scores the panel against notes it never saw. |
 | `--runs <n>` | No | Independent runs with fresh panels. Default `2`; `3` for consequential decisions. |
 | `--open` | No | Exploratory interviews with no flow: topics and saturation instead of barriers. |
 | `--research <dir>` | No | Where personas, transcripts, calibration, and walkthrough reports are written. Default `${SPECS_DIR}/research`. |

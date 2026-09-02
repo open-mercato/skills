@@ -24,11 +24,12 @@ Apply before writing the report. Score each item 0 (absent or contradicted), 1 (
 12. The report uses "would", never "validated", "confirmed", "users said", or "users want".
 13. Under `adversary`, no run that merely agrees survives; under any stance, a zero-barrier result explains why with the screens.
 14. The known persona biases were checked and, where present, named: over-positivity, the same technology proposed by everyone, every persona from the same place or kind of company, every persona equally engaged, idealism the material does not support.
-15. **Acquiescence was measured.** Language models say yes more often than the world does: on balanced binary questions their mean answer sits above one half. For every yes/no question in the transcripts, count the panel's yes share across all runs; a share clearly above one half that the persona lines and passages do not support is reported as acquiescence, and those answers are excluded from the findings rather than counted as agreement.
-16. When real interview notes exist, the parity check ran and `calibration.md` was written; the report treats deviation as questions and material, never as a defect to smooth over.
-17. Nothing in the report edits or pretends to edit the brief, a spec, or a tracker item.
+15. **The parity check used held-out notes only**, or was skipped with the reason stated; no leaked overlap was recorded as a calibration row.
+16. **Acquiescence was measured.** Language models say yes more often than the world does: on balanced binary questions their mean answer sits above one half. For every yes/no question in the transcripts, count the panel's yes share across all runs; a share clearly above one half that the persona lines and passages do not support is reported as acquiescence, and those answers are excluded from the findings rather than counted as agreement.
+17. When real interview notes exist, the parity check ran and `calibration.md` was written; the report treats deviation as questions and material, never as a defect to smooth over.
+18. Nothing in the report edits or pretends to edit the brief, a spec, or a tracker item.
 
-Critical gates: items 1, 2, 5, 9, 10, 11, 12, 15. A zero means the report is not ready; fix it or drop the finding.
+Critical gates: items 1, 2, 5, 9, 10, 11, 12, 15, 16. A zero means the report is not ready; fix it or drop the finding.
 
 ## Slop signals to remove on sight
 

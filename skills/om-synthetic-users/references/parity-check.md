@@ -4,14 +4,14 @@ When the research directory holds real interview notes on the same questions, th
 
 ## When it runs
 
-Automatically, whenever notes tagged `[INTERVIEW]` exist for the same problem or flow. It never runs on assumption-only material; there is nothing to compare.
+Automatically, whenever **held-out** notes tagged `[INTERVIEW]` exist for the same problem or flow — notes the panel was not built from (`--hold-out`, or the newest note per flow when two or more exist). A note that fed a persona's lines is excluded: scoring the panel against it measures recall of its own source, and the leaked overlap would be recorded as calibration. With only one note for a flow, the personas use it and the check is skipped for that flow, with the reason stated. It never runs on assumption-only material; there is nothing to compare.
 
 ## Method
 
 1. From the real notes, extract the themes each interviewee raised (a theme is a distinct concern, need, or behaviour, in the interviewee's words, normalised once). Do the same for the panel transcripts of this run.
 2. Build three lists: themes in both, themes only real people raised, themes only the panel raised.
 3. For the themes in both, compare the sentiment and the concreteness: do real people and the panel feel the same way about it, and does the panel reach the specific (a named workaround, a number they mentioned) or stay generic?
-4. Compute the overlap as the share of real themes the panel also raised, and record it in `${research}/calibration.md` with the date, the run, the panel size, and the two exclusive lists.
+4. Compute the overlap as the share of held-out real themes the panel also raised, and record it in `${research}/calibration.md` with the date, the run, the panel size, which notes were held out, and the two exclusive lists. A row is written only for a genuine hold-out; a skipped check is one line saying why.
 
 ## Reading the result
 
@@ -25,7 +25,7 @@ Automatically, whenever notes tagged `[INTERVIEW]` exist for the same problem or
 ```markdown
 # Calibration — {product}
 
-| Date | Run | Panel | Real notes | Overlap | Real-only themes | Panel-only themes |
+| Date | Run | Panel | Held-out notes | Overlap | Real-only themes | Panel-only themes |
 |---|---|---|---|---|---|---|
-| … | … | 5 | 6 notes | 7 of 10 | {list} | {list} |
+| … | … | 3 | 2 notes (which) | 7 of 10 | {list} | {list} |
 ```

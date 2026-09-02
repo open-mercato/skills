@@ -42,6 +42,10 @@ For every `A0n` in the brief's Riskiest assumptions, one question that could ref
 
 Without a flow and without the assumption list, the interview opens with the persona's situation and follows what they bring up. The output is the list of topics raised, in the persona's words, with the passage that grounded each, and the saturation trend across the panel. Ambiguity is kept; nothing is ranked. Use it when the question is "what is going on here", and the guided script when it is "what do we need to decide".
 
+## Budget
+
+One transcript is the five past-tense questions, one question per brief assumption the flow touches, and one pressure per decision the flow contains — nothing more. Each answer is a fast reaction of one or two sentences plus a considered answer of a short paragraph. A persona that elaborates beyond that is cut at the budget; length is not depth, and six long transcripts are what makes a run slow.
+
 ## Recording
 
 Per persona, per question: the question, the fast reaction, the considered answer, the feeling, the passages used (or none), the persona lines it rests on, the pressure applied and its effect, and the real check. Kept in the transcript beside the walkthrough report, never in the brief.

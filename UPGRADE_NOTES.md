@@ -14,6 +14,18 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-09-02 — New skill: om-backlog, epics and stories from a brief or a spec
+
+**New skill.** `om-backlog` drafts a tree of epics, stories with acceptance criteria, and tasks from `product-brief.md` (Scope, Key flows, Goals, Business rules) or a spec's Phasing, shows it, and files it through `om-prepare-issue` after the user's yes. Install it with:
+
+```bash
+npx skills add open-mercato/skills --skill om-backlog
+```
+
+- **Tree conventions in plain issues.** Ids open titles (`E01`, `E01-S02`, `E01-S02-T01`), stories carry an `Epic: #<n>` line, tasks a `Story: #<n>` line, epics a `## 📋 Stories` checklist rewritten on every run. No tracker feature beyond issues, bodies, comments, and labels is assumed, so any descriptor works. Existing issues that cover a story are adopted with a comment, never recreated.
+- **Readiness is enforced here too.** A brief whose Problems or Target group rest on `[SYNTHETIC]` or `[ASSUMPTION]` claims is not filed; the skill offers the research backlog (the collection plan's interviews and data requests as tasks) instead.
+- **A new local record**, `${SPECS_DIR}/backlog.md`, maps ids to issue numbers; the ids in titles are the durable link on re-runs. New output-contract lines: `Backlog:`, `Issues:`, `Next:`. The roster gains `om-backlog`. Nothing to migrate.
+
 ## 2026-09-02 — New skill: om-ux-style, a declared design contract for repositories with no design system
 
 **New skill.** `om-ux-style` builds a design contract from references the team chooses — moodboard, five principles, five anti-patterns, tokens by role for both themes, the components the flows need with all six states, three recipes — and writes it into the files `om-ux-setup` extracts from code. Install it with:

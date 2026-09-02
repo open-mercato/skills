@@ -58,7 +58,7 @@ The final report ends with these machine-parsed lines, one per line, exact and u
 Product brief: <repo-relative path>                       ← always when the file was written
 Coverage: <n> claims — <a> sourced, <b> synthetic, <c> assumed
 Collection plan: <k> sections waiting for material         ← only when the gate held sections back
-Next: om-synthetic-users <brief> | om-brainstorm "<topic>" | om-prepare-issue "<goal>" | om-spec-writing "<goal>" | none
+Next: om-synthetic-users <brief> | om-backlog <brief> | om-brainstorm "<topic>" | om-prepare-issue "<goal>" | om-spec-writing "<goal>" | none
 ```
 
 Consumers parse `^Product brief: (\S+)$` and `^Next: (none|om-[a-z-]+.*)$`.
@@ -68,7 +68,7 @@ Consumers parse `^Product brief: (\S+)$` and `^Next: (none|om-[a-z-]+.*)$`.
 - The HARD-GATE holds: no section from nothing, no evidence invented, no decision without a human owner. The collection plan is a legitimate outcome — a brief that says "we do not know yet, here is how to find out" beats one that reads well.
 - Interactive only — this skill has no autonomous mode and must never be driven by an `om-auto-*` skill. Invoked unattended with no user available → stop and report instead of inventing answers.
 - The agent finds facts, the human makes decisions. Never ask the user for something the repository, the research directory, or the tracker can answer; never decide scope, non-goals, success criteria, or priorities yourself — propose with evidence, then ask.
-- Tracker access is read-only, through the named operations only; the skill never comments, labels, claims, or files anything. Filing the backlog is another skill's job.
+- Tracker access is read-only, through the named operations only; the skill never comments, labels, claims, or files anything. Filing the backlog is `om-backlog`'s job.
 - The brief is the contract other skills read, so its structure is fixed: repo-local overrides may add sections and mode ladders, never remove a section, a tag, the coverage line, or the confirmation gate.
 - Product-agnostic: paths come from config; nothing in this skill assumes a stack or a domain.
 - Shared rules: `references/rules.md` — secrets hygiene, marker contract (plus this skill's `Product brief:`, `Coverage:`, `Collection plan:`, `Next:` lines), emoji glossary, reporting style. They always apply.

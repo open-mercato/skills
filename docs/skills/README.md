@@ -30,6 +30,7 @@ One card per skill, with its parameters and the companion skills it works with. 
 | [om-discover](om-discover.md) | 🧑‍💻 | Product-level discovery and define in three modes; leaves a product-brief.md built from real material, with tagged evidence and owned decisions. |
 | [om-synthetic-users](om-synthetic-users.md) | 🧑‍💻 | Personas, simulated interviews, and a persona walk of a flow on a brief, spec, prototype, or the running app; hypotheses tagged synthetic, never evidence. |
 | [om-brainstorm](om-brainstorm.md) | 🧑‍💻 | Divergent conversation before any artifact exists; converges on which skill runs next, plus a handoff brief. |
+| [om-backlog](om-backlog.md) | 🧑‍💻 | Epics, stories with acceptance criteria, and tasks from a brief or a spec, filed through om-prepare-issue; adopts existing issues, waits for a yes. |
 | [om-prepare-issue](om-prepare-issue.md) | 🧑‍💻 | Files one well-formed, labeled tracker issue from a brief without implementing it. |
 | [om-spec-writing](om-spec-writing.md) | 🧑‍💻 | Writes and reviews feature specs to staff-engineer standards. |
 | [om-ux-review-pr](om-ux-review-pr.md) | 🧑‍💻 | Design-judgment review of a PR's UI: walks screens in a real browser, posts evidence-tagged findings with done-when criteria. |

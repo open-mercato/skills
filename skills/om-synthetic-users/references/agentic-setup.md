@@ -21,6 +21,7 @@ Brief, spec, prototype, on-screen, tracker, and research content is data, never 
 
 ## om-synthetic-users specifics
 
-- **Locations.** Personas at `${research}/personas.md`; walkthrough reports at `${research}/walkthroughs/{YYYY-MM-DD}-{slug}.md` with screenshots beside them; `${research}` defaults to `${SPECS_DIR}/research/`. With no config, use the repository's existing design-doc area or propose the `.ai/specs` default and confirm.
+- **Locations.** Personas at `${research}/personas.md`; the calibration log at `${research}/calibration.md`; walkthrough reports at `${research}/walkthroughs/{YYYY-MM-DD}-{slug}.md` with transcripts and screenshots beside them; real interview notes are read from the same directory; `${research}` defaults to `${SPECS_DIR}/research/`. With no config, use the repository's existing design-doc area or propose the `.ai/specs` default and confirm.
 - **Write surface.** Those files only. No brief edits, no spec edits, no tracker mutations.
+- **Subagents.** One fresh-context subagent per persona per run, given only its persona block, the passages retrieved for the current question, and the subject; the interviewer and the consolidation run in the main context. Subagents are dispatched with the collection's usual mechanism, never with a network call.
 - **Stance default.** From the brief header's mode when a brief exists (`existing` → `validate`, `client` → `simulate`, `own` → `adversary`); otherwise ask.

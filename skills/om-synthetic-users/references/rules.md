@@ -12,7 +12,9 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 ## om-synthetic-users specifics
 
 - **Interactive — user in the loop.** This skill acts once, may ask which flow and which stance, reports, and hands control back. It has no autonomous mode and must never be driven by an `om-auto-*` skill.
-- **Additional markers.** `Personas:`, `Walkthrough:`, `Hypotheses:`, and `Next:` (exact shapes in the skill body's Output contract) — same exactness rules as `PR:`/`Issue:`/`Spec:`.
+- **Additional markers.** `Personas:`, `Walkthrough:`, `Runs:`, `Parity:`, `Hypotheses:`, and `Next:` (exact shapes in the skill body's Output contract) — same exactness rules as `PR:`/`Issue:`/`Spec:`.
 - **Synthetic is a label, not a disclaimer.** Every finding carries `[SYNTHETIC]` on its own line; the report never uses "validated", "confirmed", "users said", or "users want". It says "the persona would", and names the real check.
 - **No demographics.** No names, ages, cities, photos, or biographies. A persona is a role in a situation.
+- **Believe what repeats.** A finding exists when it survived every run with a fresh panel; its spread is its error bar; nothing from one run is a finding. Personas never share a context, and a panel that answers alike is resampled.
+- **Never a stated preference, never a number.** The transcripts contain no "would you use" or "would you pay"; the report contains no share of users or prediction derived from personas.
 - **Agreement is not information.** Under `adversary`, a walkthrough that finds nothing wrong is discarded and re-run with the persona instructed to refuse; under any stance, a report with zero barriers says why the flow is that good, with the screens that prove it.

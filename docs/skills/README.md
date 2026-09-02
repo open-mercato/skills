@@ -28,7 +28,7 @@ One card per skill, with its parameters and the companion skills it works with. 
 | [om-apply-upgrade-notes](om-apply-upgrade-notes.md) | 🧑‍💻 | Applies UPGRADE_NOTES.md after an upgrade, preserving local edits. |
 | [om-check-and-commit](om-check-and-commit.md) | 🧑‍💻 | Runs the validation gate on the branch, fixes obvious drift, commits and pushes when green. |
 | [om-discover](om-discover.md) | 🧑‍💻 | Product-level discovery and define in three modes; leaves a product-brief.md built from real material, with tagged evidence and owned decisions. |
-| [om-synthetic-users](om-synthetic-users.md) | 🧑‍💻 | Personas, simulated interviews, and a persona walk of a flow on a brief, spec, prototype, or the running app; hypotheses tagged synthetic, never evidence. |
+| [om-synthetic-users](om-synthetic-users.md) | 🧑‍💻 | A fresh persona panel per run, interviews under decision pressure, a persona walk of a flow on a brief, spec, prototype, or the running app; only what repeats is a finding; parity check against real interviews; hypotheses tagged synthetic, never evidence. |
 | [om-brainstorm](om-brainstorm.md) | 🧑‍💻 | Divergent conversation before any artifact exists; converges on which skill runs next, plus a handoff brief. |
 | [om-backlog](om-backlog.md) | 🧑‍💻 | Epics, stories with acceptance criteria, and tasks from a brief or a spec, filed through om-prepare-issue; adopts existing issues, waits for a yes. |
 | [om-prepare-issue](om-prepare-issue.md) | 🧑‍💻 | Files one well-formed, labeled tracker issue from a brief without implementing it. |

@@ -6,19 +6,23 @@ What `om-synthetic-users` writes to `${research}/personas.md` (step 2). One bloc
 # Personas — {product}
 
 Basis: {product-brief.md sections used, spec, research files} · Built {YYYY-MM-DD} · Stance default: {validate | simulate | adversary}
+Panel composition: {segments and proportions, and whether they come from data or are assumed}
 Coverage: {n} persona lines — {a} sourced, {u} assumed
 
 ## P01 — {role} {in a situation, e.g. "developer blocked the day before a release"}
 
+- Segment and share of the panel: … `[DATA]` {source} | assumed
 - Situation the problem shows up in: … `[tag]` {source}
+- State of mind at entry — {anxious and rushed | curious and unhurried | indifferent | resentful of the current tool …}, because {the situation}: … `[tag]` {source}
+- How much this topic matters to them (central | occasional | barely): … `[tag]` {source}
 - Goal, in their words: … `[tag]` {source}
 - Success, as they would recognise it: … `[tag]` {source}
-- Constraints — time, budget, who pays, who decides: … `[tag]` {source}
-- Tools they already use for this: … `[tag]` {source}
+- Constraints — time, budget, who pays, who decides, switching cost: … `[tag]` {source}
+- Tools they already use for this, and what they look at all day: … `[tag]` {source}
 - Words they use (and words they never use): … `[tag]` {source}
 - Objections they will raise: … `[tag]` {source}
 - What they will not do, whatever the product offers: … `[tag]` {source}
-- Segment size or frequency, when the data says: … `[DATA]` {source}
+- Traits the material supports (e.g. risk-averse, impatient with setup): … `[tag]` {source}      <!-- only when a source shows it; never a personality profile from nothing -->
 - No basis for: {fields left empty on purpose, and the interview or data request that would fill them}
 
 ## P02 — …
@@ -27,6 +31,8 @@ Coverage: {n} persona lines — {a} sourced, {u} assumed
 Rules:
 
 - A line with no source is written as `[ASSUMPTION]` and listed under *No basis for*; a persona with more assumed lines than sourced ones is labeled "assumption persona" in its heading.
-- A persona comes from a segment the brief's Target group names or the data shows; never add a segment the material does not contain.
+- A persona comes from a segment the brief's Target group names or the data shows; never add a segment the material does not contain. The panel includes at least one persona whose topic salience is *barely*.
+- The state of mind at entry is derived from the situation, not invented: "blocked the day before a release" implies rushed and anxious; "browsing on a Sunday" implies unhurried. It changes what the persona notices (a typo reads as sloppy to the unhurried and as a scam signal to the anxious).
+- Traits are written only when a source shows them; no trait profile is generated to make a persona feel rounder.
 - Under `adversary`, add one line: *The reason this person would not switch:* — it must come from an objection in the material or be marked assumption.
-- A refresh keeps ids, updates lines, and appends `Superseded: …` under a line whose source changed; it never deletes a persona, it marks it `retired` with the reason.
+- A refresh keeps ids, updates lines, and appends `Superseded: …` under a line whose source changed; it never deletes a persona, it marks it `retired` with the reason. Personas sampled fresh for a run get new ids; the file keeps every persona ever used, with the runs it appeared in.

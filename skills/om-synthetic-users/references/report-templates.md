@@ -1,42 +1,56 @@
 # Report templates
 
-The walkthrough report written to `${research}/walkthroughs/{YYYY-MM-DD}-{slug}.md` (step 7) and the final report. Fill them exactly and expand with detail. End the final report with the Output contract lines from the skill body, one per line, exact and undecorated.
+The walkthrough report written to `${research}/walkthroughs/{YYYY-MM-DD}-{slug}.md` (step 9) and the final report. Fill them exactly and expand with detail. End the final report with the Output contract lines from the skill body, one per line, exact and undecorated.
 
 ## Walkthrough report
 
 ```markdown
 # Walkthrough — {flow}, {subject}, {YYYY-MM-DD}
 
-Stance: {validate | simulate | adversary} · Personas: {P01, P02, P03} · Basis: {brief sections, spec, files} · Every finding below is [SYNTHETIC].
+Stance: {validate | simulate | adversary} · Runs: {n} × panel of {m} · Personas: {ids per run} · Basis: {brief sections, spec, files} · Panel composition: {from data | assumed} · Every finding below is [SYNTHETIC].
+Saturation: {reached after {k} interviews | not reached — {t} new topics in the last run}
+Parity: {overlap with real interviews, exclusive themes | no real interviews to compare}
 
 ## 🎯 What was walked
 
 {the flow, the medium (narrative, prototype, running app), the role logged in as, and what was not walked and why}
 
-## 🔍 Barriers (worst first)
+## 🔍 Barriers that repeated (worst first, ties marked)
 
-### 1. {one-line barrier} `[SYNTHETIC]` — P01, P03
+### 1. {one-line barrier} `[SYNTHETIC]` — weight {w} (spread ±{s}) — P01, P03 (run 1); P07 (run 2)
 - **Where**: {step, screen, 📸 file}
-- **What the persona would do**: {in the persona's words, from lines …}
+- **What the persona would do**: {fast reaction and feeling, then the considered one, from lines …, grounded in {passages}}
 - **Why it matters**: {the job it stops, the brief claim it touches — R0n, N0n, D0n, A0n}
 - **To confirm with real users**: {role to recruit, the question or the task, the data that would settle it}
 
-## 📋 Missing cases
+## 📋 Missing cases that repeated
 
-{one per line, persona ids, the persona line it comes from, the real check}
+{one per line, weight and spread, persona ids and runs, the persona line or pressure it comes from, the real check}
 
 ## ⚠️ Contradictions with the brief
 
-{one per line: the flow promise, the brief claim it conflicts with, the persona ids, the real check}
+{one per line: the flow promise, the brief claim it conflicts with, persona ids and runs, the real check}
+
+## 👤 The outliers
+
+{the one persona in fifteen who refused, quit, or misread, with the reason and the pressure that did it — reported on its own, never averaged away}
+
+## 🔁 Seen once, not reported as a finding
+
+{items that appeared in one run only, with persona and run, for a human to decide whether to chase}
 
 ## 🧪 To confirm with real users
 
-| # | Hypothesis | Persona ids | Settles | Who to recruit | How |
+| # | Hypothesis | Persona ids / runs | Settles | Who to recruit | How |
 |---|---|---|---|---|---|
 
-## 📝 Simulated interviews
+## 📝 Interviews
 
-{per persona: question, answer as the persona, persona lines used, real check}
+{per persona and run: question, fast reaction and feeling, considered answer, passages used, pressure applied and its effect, real check — or a pointer to the transcript file beside this report}
+
+## 🔍 Parity with real interviews
+
+{themes in both with sentiment alignment; real-only themes and the material each one calls for; panel-only themes as questions for the next interview; the overlap recorded in calibration.md — or "no real interviews to compare"}
 
 ## 📸 Evidence
 
@@ -48,18 +62,24 @@ Stance: {validate | simulate | adversary} · Personas: {P01, P02, P03} · Basis:
 ```markdown
 ## 🎯 om-synthetic-users — walkthrough
 
-📋 **Basis and stance.** {which brief or spec, which tiers the personas rest on, how many persona lines are assumed, the stance and why}
+📋 **Basis, panel, and stance.** {which brief or spec, which tiers the personas rest on, how the panel was composed and whether from data, how many runs, the stance and why}
 
-🔍 **What the personas would trip over.** {the top barriers in full sentences, with the persona ids and the brief claims they touch}
+🔍 **What repeated.** {the top barriers in full sentences, with weight and spread, the persona ids and runs, and the brief claims they touch; which findings are tied}
 
-⚠️ **What the material does not cover.** {missing cases and contradictions, and what that says about the brief or the spec}
+👤 **The outliers.** {the refusals and misreads worth a paragraph each}
+
+⚠️ **What the material does not cover.** {missing cases and contradictions, and what that says about the brief or the spec; whether the panel saturated}
+
+🔍 **Where the panel and real people diverge.** {the parity check in words: blind spots and their material, panel-only themes as questions — or that no real notes exist yet}
 
 🧪 **What to confirm with real users.** {the interview plan or usability test: roles, counts, questions; which brief assumptions each settles}
 
-📸 **Evidence.** {where the report and screenshots are; what was not walked}
+📸 **Evidence.** {where the report, transcripts, and screenshots are; what was not walked}
 
 Personas: {…}
 Walkthrough: {…}
+Runs: {…}
+Parity: {…}
 Hypotheses: {…}
 Next: {…}
 ```

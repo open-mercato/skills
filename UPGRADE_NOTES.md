@@ -14,6 +14,16 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-09-02 — om-synthetic-users: panels, repeats, pressure, and a parity check
+
+`om-synthetic-users` shipped earlier today as three personas and one walkthrough. It now runs the way the research on synthetic respondents says it must to mean anything:
+
+- **A panel, resampled every run, one persona per fresh-context subagent.** New arguments `--panel <n>` (default 5) and `--runs <n>` (default 2, 3 for consequential decisions). Composition follows known proportions from the data and always includes a persona who barely cares. A panel that answers alike is flagged as homogeneous and resampled.
+- **Only what repeats is a finding.** A barrier, missing case, or contradiction is reported when it survived every run; its weight and spread are in the report, ties are marked, single-run items sit under *Seen once*. Saturation (fewer than one new topic in twenty) is reported.
+- **Interviews under pressure, never stated preference.** Questions ask about the last time; the decision is then simulated under the brief's pressures (deadline, budget, switching cost, who decides) and the record shows where the story collapses. Each answer carries the fast reaction with its feeling, then the considered one, and records the research passages that grounded it or that none did. A `--open` flag runs exploratory interviews that track topics instead of a flow.
+- **A parity check against real interviews.** When notes tagged `[INTERVIEW]` exist for the same questions, the panel runs the same script and the report lists themes in both, real-only (the panel's blind spots, and the material to gather), and panel-only (questions for the next interview). The overlap is logged in `${research}/calibration.md` as a trend, never published as a score.
+- **New output-contract lines** `Runs:` and `Parity:`; the persona template gains state of mind at entry, salience, and sourced traits only. `references/research-basis.md` lists what the design rests on and what was left out (survey prediction, eye-tracking, personality inventories, model routing). Nothing to migrate: existing `personas.md` files are read and extended.
+
 ## 2026-09-02 — The accepted prototype is an acceptance artifact
 
 A spec's `## 📝 UI/UX` section may carry a `Prototype: <path>` line — the mockups `om-auto-write-spec` renders under the specs assets directory today, or an interactive prototype directory. `om-ux-review-pr` reads the PR's `Source doc:` spec, opens the linked prototype through the browser provider beside the running screens, and reports a deviation the spec does not explain as a `[PRODUCT]` finding with evidence of both, and a deliberate improvement as a deviation for the author to confirm. Its review comment gains a `Prototype:` line. `om-synthetic-users` already walks prototypes. Nothing to migrate: specs without the line behave as before; add it to existing specs whose mockups were accepted.

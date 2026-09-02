@@ -1,130 +1,150 @@
-# Backend screen anatomy for prototypes
+# Screen anatomy for prototypes
 
-These structures come from the real backend components under `packages/ui/src/backend/`, using `customers` as the reference module. Copy them instead of guessing. A prototype that differs from production layout misleads reviewers.
+This is the neutral anatomy the bundled stylesheets implement: a desktop
+backoffice shell with a sidebar, a sticky top bar, list pages built around a
+data-table card, a two-column form layout, and a Kanban board. Copy these
+structures instead of guessing — a prototype whose layout contradicts itself
+misleads reviewers.
 
-The template implements these structures in `components.css` and `screens.css`. This reference explains the important details and common mistakes.
+**This file is a template.** A repository's own screen anatomy belongs in the
+repo-local override (`.ai/skills/om-mockup-prototype/references/screen-patterns.md`),
+which initialization scaffolds from this template when it is missing and which
+wins over this file. Replace the structures below with the ones your product's
+real screens use — measured from the running application or the component
+sources, not from memory — and keep the "easy mistakes" list alive with the
+ones your reviewers actually hit. The `om-ux-setup` contract (`.uxproof/`),
+when present, is the natural source for tokens, component names, and screen
+archetypes.
 
-## Application shell — `AppShell.tsx`
+## Application shell
 
 ```text
-grid lg:grid-cols-[240px_1fr]   (collapsed: [80px_1fr])
-├── aside   border-r py-4 px-3
-└── div     flex min-h-svh flex-col
-    ├── header  61px sticky border-b bg-background/95 backdrop-blur px-3 sm:px-4 lg:px-6 py-3
-    ├── main    flex-1 p-4 lg:p-6 mx-auto w-full max-w-screen-2xl
-    └── footer  border-t px-4 py-3 flex justify-end gap-4
+grid [240px_1fr]   (collapsed: [80px_1fr])
+├── aside   border-right, py-4 px-3
+└── column  min-height 100svh
+    ├── header  61px sticky, bottom border, translucent blurred background, px-3…6 py-3
+    ├── main    flex-1, p-4…6, centered, max-width ~96rem
+    └── footer  top border, px-4 py-3, right-aligned actions
 ```
 
 Four easy mistakes:
 
-1. Breadcrumbs belong in the top bar, not the page body. `PageHeader` does not contain them; `ApplyBreadcrumb` or the route manifest supplies them. The first item is a home icon linking to `/backend`.
-2. The active-navigation rail extends outside the padding. Its span uses `absolute left-[-12px] top-2 w-1 h-5 rounded-r bg-foreground`, while the container uses `-ml-3 pl-3`.
-3. A navigation-group heading uses `text-xs font-medium uppercase tracking-wider text-muted-foreground/70`, not `text-overline`.
-4. The sidebar has its own `h-9` SearchInput below the logo, independent of global search in the top bar.
+1. Breadcrumbs belong in the top bar, not the page body; the first item is a
+   home icon linking to the application root.
+2. The active-navigation rail extends outside the padding: a 4px rounded-right
+   bar absolutely positioned at the container's left edge, with the container
+   compensating via negative margin plus matching padding.
+3. A navigation-group heading uses extra-small, medium-weight, uppercase,
+   wide-tracked, muted text — not an overline text style.
+4. The sidebar has its own 36px search input below the logo, independent of
+   global search in the top bar.
 
-The logo is a 40×40 `rounded-full` mark plus the name inside `p-3 rounded-xl hover:bg-muted`.
+The logo is a 40×40 round mark plus the name inside a padded, rounded,
+hover-highlighted block.
 
-Top-bar right-side order: status badges → injected actions → AI dot → global search → organization switcher → integrations → settings → messages → bell → profile.
-
-## Page scaffolding — `Page.tsx`
+## Page scaffolding
 
 ```text
-Page       → div.space-y-6
-PageHeader → flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between
-             h1.text-xl.sm:text-2xl.font-semibold.leading-tight
-             p.text-sm.text-muted-foreground.mt-1
-             div.flex.flex-wrap.items-center.gap-2
-PageBody   → div.space-y-4
+Page        → vertical stack, 1.5rem gaps
+Page header → column on small screens, row with space-between from sm up
+              h1: 1.25→1.5rem, semibold, tight leading
+              subtitle: small, muted, slight top margin
+              action row: wrapping flex, 0.5rem gaps
+Page body   → vertical stack, 1rem gaps
 ```
 
-The page title uses `font-semibold`, not `font-bold`.
+The page title is semibold, not bold.
 
-## DataTable list layout
+## Data-table list layout
 
-On list pages, the title and primary action belong in the table-card header rather than `PageHeader`.
+On list pages, the title and primary action belong in the table-card header
+rather than the page header.
 
 ```text
-div.rounded-lg.border.bg-card
-├── div.px-4.py-3.border-b
-│   ├── flex sm:items-center sm:justify-between
-│   │   ├── h2.text-base.font-semibold
-│   │   └── flex.gap-2
-│   └── div.mt-3.pt-3.border-t
-│       ├── SearchInput (w-72 / w-80) + filters + view switcher
+card (rounded-lg, border, card background)
+├── header px-4 py-3, bottom border
+│   ├── row: h2 (base size, semibold) ↔ action buttons
+│   └── toolbar row (top border, mt-3 pt-3)
+│       ├── search input (18–20rem) + filters + view switcher
 │       └── selection count + bulk actions
-├── div.px-4.py-2.border-b
+├── optional info strip px-4 py-2, bottom border
 ├── table
-└── div.px-4.py-3.border-t
+└── pagination footer px-4 py-3, top border
 ```
 
-Table details from `primitives/table.tsx`:
+Table details:
 
-- `thead` uses `bg-muted/40`.
-- `th` uses `px-4 py-2 text-left font-medium text-muted-foreground whitespace-nowrap`.
-- `td` uses `px-4 py-2`.
-- Rows use `border-b last:border-b-0` and `bg-muted/30` on hover.
-- The selection column is `w-8`; the action column is `w-0 text-right`.
-- Checkboxes use `--accent-indigo`, not `--primary`.
+- The header band uses the muted color at low opacity.
+- Header cells: comfortable padding, left-aligned, medium weight, muted
+  color, no wrapping.
+- Body cells match the header padding; rows separate with bottom borders that
+  stop after the last row; row hover is a subtle muted wash.
+- The selection column is narrow and fixed; the action column hugs the right.
+- Selection controls use the selection accent token, not the primary color.
 
-Pagination copy follows “Showing 1 to 25 of 312 results” with `tabular-nums`. Page buttons use `size-8 rounded-lg`, the active page uses `bg-muted`, and the page-size select sits on the right.
+Pagination copy follows "Showing 1 to 25 of 312 results" with tabular
+numerals. Page buttons are 32px squares with rounded corners, the active page
+gets the muted background, and the page-size select sits on the right. Bulk
+actions stay inline in the toolbar; a floating action bar belongs to the
+Kanban pattern only.
 
-DataTable bulk actions stay inline in the toolbar. The floating dark action bar belongs to the pipeline pattern, not DataTable.
-
-## CrudForm
+## Form layout
 
 ```text
 form
-└── div.grid.grid-cols-1.lg:grid-cols-[7fr_3fr].gap-4
-    ├── div.space-y-3
-    └── div.space-y-3
+└── grid: single column, from lg two columns at roughly 7:3
+    ├── main column   (vertical stack, 0.75rem gaps)
+    └── side column   (vertical stack, 0.75rem gaps)
 ```
 
-A group card uses `rounded-lg border bg-card px-4 py-3 space-y-3`; its title uses `text-sm font-medium`.
+A group card uses the card surface with comfortable padding; its title is
+small and medium-weight. In edit mode the form header puts Back and the title
+on the left, actions on the right. Footer order is fixed: additional actions →
+Delete → Cancel → Save. Save is a submit button with a save icon and a
+spinner plus "Saving…" while in flight. Delete uses the outlined destructive
+variant, not the filled one.
 
-In edit mode, `FormHeader` puts Back and the title on the left and actions on the right.
-
-Footer order is fixed: additional actions → Delete → Cancel → Save. Save is a submit button with a Save icon; while saving, use `Loader2 animate-spin` and “Saving…”. Delete uses `destructive-outline`, not full `destructive`.
-
-## Kanban — deals-pipeline pattern
-
-Source: `customers/backend/customers/deals/pipeline/components/`.
+## Kanban board
 
 ```text
-div.flex.flex-none.flex-col.gap-3
-├── div.rounded-lg.bg-muted/40.px-4.py-3.5
-│   ├── div.h-1.5.w-full.rounded-sm
-│   └── flex.justify-between
-│       ├── NAME (text-sm font-bold uppercase) + count badge
-│       └── stage total (text-sm font-bold)
-├── button
-└── div.min-h-[40vh].rounded-lg.p-1.5
+column (flex-none, vertical, 0.75rem gaps)
+├── column header card (muted wash, px-4 py-3.5)
+│   ├── thin full-width color bar
+│   └── row: NAME (small, bold, uppercase) + count badge ↔ column total
+├── add button
+└── drop area (min-height ~40vh, rounded, slight padding)
 ```
 
-A card uses `rounded-lg border bg-card px-4 py-3.5 shadow-xs`; its title uses `text-base font-semibold line-clamp-2`. Chips use `rounded-md px-2.5 py-1 text-xs font-semibold` with `status-*` tokens. Quick actions may reveal on hover, but must remain visible for touch and keyboard focus.
-
-The pipeline bulk-action bar uses `fixed bottom-6 left-1/2 -translate-x-1/2 bg-foreground text-background rounded-lg shadow-xl`.
+A card uses the card surface with a subtle shadow; its title is base-size
+semibold clamped to two lines. Chips are rounded, extra-small, semibold, and
+colored with the semantic status tokens. Quick actions may reveal on hover
+but must remain visible for touch and keyboard focus. The board's bulk-action
+bar floats bottom-center in inverted colors with a strong shadow.
 
 ## Tokens and scale
 
 | Control | Height |
 |---|---|
-| Default button | `h-9 px-4 py-2` (`px-3` with an icon) |
-| Small button | `h-8 px-3` |
-| Icon button | `size-9` |
-| Input / SearchInput | `h-9 px-3` |
+| Default button | 36px, 1rem horizontal padding (0.75rem with an icon) |
+| Small button | 32px, 0.75rem padding |
+| Icon button | 36px square |
+| Input / search input | 36px, 0.75rem padding |
 | Top bar | 61px |
 
-Radius base: `--radius: 0.625rem`, producing 6px small, 8px medium, 10px large, and 16px extra-large radii.
+The radius scale cascades from `--radius` (default 0.625rem → 6px small, 8px
+medium, 10px large, 16px extra-large).
 
-Use semantic colors only. Express statuses with `status-{error|success|warning|info|neutral|pink}-{bg|text|border|icon}`, never hardcoded Tailwind shades. Use `chart-*` tokens for charts. Do not add `dark:` overrides because the semantic tokens already switch themes.
-
-Full rules: `.ai/ds-rules.md`; component reference: `.ai/ui-components.md`.
+Use semantic tokens only. Express statuses with
+`status-{error|success|warning|info|neutral|pink}-{bg|text|border|icon}`,
+never hardcoded shades; use `chart-*` tokens for charts; add no theme-specific
+overrides — the semantic tokens already switch themes.
 
 ## Deliberate prototype differences
 
-Static HTML has two deliberate differences from production:
+Static HTML has two deliberate differences from production code:
 
-- Icons use an embedded Lucide SVG sprite rather than `lucide-react` imports.
-- Text is hardcoded rather than passed through `useT()`.
+- Icons use an embedded SVG sprite rather than an icon-library import.
+- Text is hardcoded rather than passed through the product's i18n layer.
 
-Both patterns are forbidden in production code. Record the differences in the generated README so nobody treats prototype markup as implementation guidance.
+Both patterns are forbidden in production. Record the differences in the
+generated README so nobody treats prototype markup as implementation guidance.

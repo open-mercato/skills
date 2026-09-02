@@ -18,6 +18,8 @@ This file documents how work flows from ticket to merged PR in this repository. 
 
 Work enters through two paths: a free-form task brief handed to an agent, or a filed ticket. Both converge on the same review loop, the same validation gate, and the same merge gates.
 
+Before intake, the work is shaped: `om-brainstorm` turns an idea or a question into a routing decision and a brief, and the spec skills (`om-spec-writing`, `om-auto-write-spec`) turn a feature into a design document before anything is built. Those steps feed the table below; they are not the ticket flow itself, and the Definition of Ready is the contract between them and Intake.
+
 ## Roles
 
 - **Author** — the human or agent who writes the change. Owns the ticket from claim to a merge-ready PR.
@@ -31,7 +33,8 @@ Work enters through two paths: a free-form task brief handed to an agent, or a f
 
 | Stage | What happens | Driven by | Done when |
 |---|---|---|---|
-| Intake | A ticket or task brief is filed in {{tracker}} with enough detail to act on. | Anyone | Ticket exists |
+| Discovery | An idea, question, or itch is talked through before any artifact exists: the problem is questioned, alternatives (including building nothing) are weighed, and the conversation ends in a routing decision — an answer, a filed ticket, a brief for a spec, or a direct change. | `om-brainstorm` or a human | Conversation routed; a brief written when the work continues |
+| Intake | A ticket or task brief is filed in {{tracker}} and meets the Definition of Ready below. `om-prepare-issue` files it with SDLC labels and the ready sections; `om-auto-manage-issues` reports what an existing ticket still lacks. | Anyone, `om-prepare-issue`, `om-auto-manage-issues` | Ticket exists and is ready, or its gaps are named on the ticket |
 | Triage | Confirm the issue is real, still unfixed on `{{baseBranch}}`, and not already claimed or covered by an open PR. Read-only; stops the chain cleanly when there is nothing to do. | `om-verify-in-repo` or a human | Confirmed actionable, or closed as no-action |
 | Claim | The author claims the ticket so concurrent agents back off. See the claim protocol below. | `om-fix` / `om-auto-create-pr`, or a human | Claim visible on the ticket |
 | Implement | Locate the minimal change surface (`om-root-cause`, read-only), then implement the change with regression tests and run the validation gate. Task briefs without a ticket go through `om-auto-create-pr`, which plans, implements phase by phase in an isolated worktree, and runs the same gate. | `om-root-cause` + `om-fix`, `om-auto-create-pr`, or a human author | Change complete, validation gate green |
@@ -42,6 +45,31 @@ Work enters through two paths: a free-form task brief handed to an agent, or a f
 <!-- END IF -->
 | Merge | `om-merge-buddy` reports, read-only, which PRs can merge now and which are close but blocked. `om-approve-merge-pr` re-checks every gate, approves, and squash-merges. | `om-merge-buddy` + `om-approve-merge-pr`, or a human | PR squash-merged into `{{baseBranch}}` |
 | Post-merge housekeeping | Close issues the merged PR fixes; comment on issues whose PRs were closed without merging; turn leftover asks or review comments into tracked follow-up issues. | `om-close-fixed-issues`, `om-followup-issue-from-pr` | Tracker reconciled, follow-ups filed |
+
+After merge, this process stops. Deployment, smoke tests, monitoring, and rollback belong to the repository's release process, not to this document: the Release Manager role drafts the changelog with `om-auto-update-changelog` and reconciles the tracker with `om-close-fixed-issues`, and `om-pipeline-retro` reads finished runs to rank what second passes cost. Merge is where this document ends; delivering the change to users is a separate process the team owns.
+
+## Definition of Ready
+
+A ticket is ready for implementation when the answers below are on the ticket or in a spec it links. They come in two tiers, because a spec can supply the second but never the first.
+
+**Ticket-level — only a human can supply these:**
+
+- the problem or need, and who has it (a user or a role);
+- the expected outcome, and how it will be checked;
+- what is out of scope;
+- open questions, each marked blocking or non-blocking — no blocking question left unanswered;
+- any autonomous assumption confirmed by a human (the resolved-assumptions comment on a spec PR).
+
+**Spec-level — a covering spec supplies these, and `om-auto-write-spec` writes them when they are missing:**
+
+- acceptance criteria;
+- business rules;
+- the happy path and the main unhappy paths;
+- impact on data and permissions;
+- dependencies;
+- a link to the prototype or mockups when the change is user-facing.
+
+For a bug, ready means reproducible: `om-verify-in-repo` is that gate, and the list above applies only to its ticket-level items. Enforcement: `om-prepare-issue` files tickets with these sections; `om-auto-manage-issues` records `READY_STATUS` per issue and posts a not-ready comment naming what is missing; `om-auto-fix-issue`'s feature route stops on a ticket that fails the ticket-level tier instead of speccing around the gap, the way `om-verify-in-repo` stops on a bug that is not real. Spec-level gaps are not a stop — the spec is authored. A maintainer may waive an item by saying so on the ticket.
 
 <!-- IF labels.enabled -->
 ## Label state machine

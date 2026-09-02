@@ -53,6 +53,9 @@ This skill only **creates** issues. To bring an issue that **already exists** up
    ```markdown
    ## Summary
    - {one-line goal from the brief}
+   - Problem: {what hurts, or what is missing}
+   - Who has it: {user or role}
+   - Expected outcome: {what is true afterwards, and how it will be checked}
 
    ## Spec
    - Implementation spec: `{spec path}` ({link})      <!-- when step 2 found one, or step 3 authored one (also note the spec PR #) -->
@@ -74,7 +77,12 @@ This skill only **creates** issues. To bring an issue that **already exists** up
 
    ## Out of scope
    - {non-goals, so the implementer does not gold-plate}
+
+   ## Open questions
+   - {question} — blocking | non-blocking      <!-- or: none -->
    ```
+
+   The Summary, Out of scope, and Open questions sections are the ticket-level tier of the Definition of Ready in `SDLC.md`; fill them from the brief and never invent a problem or a user the brief does not name — write "unknown" and mark the question blocking instead.
 
    Create it via **create-issue** with title, body, `--assignee` when passed, and the **SDLC labels** through the guards (a missing label degrades to a logged skip; `labels.enabled: false` skips all):
 

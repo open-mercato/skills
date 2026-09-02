@@ -231,6 +231,12 @@ Two consequences worth recording, because both look like defects until the reaso
 
 Two choices worth recording. The deterministic classifier ships as a shell script under `references/` rather than under a per-skill `scripts/` directory, because `scripts/lint.sh` resolves every `references/…` pointer and would catch a broken one in CI, where a `scripts/` path is unchecked; it is the collection's first shipped executable, and the skill body carries an inline fallback so a harness that cannot spawn a shell still reaches the same classes. Run counting keys on the claim boilerplate's opening comments ("started by", "taking over") rather than on marker density, because a single run posts several marker comments and time-clustering alone reported ordinary runs as rework.
 
+## 2026-09-02 — Definition of Ready is a gate at Intake, in two tiers
+
+The lifecycle started at a ticket with "enough detail to act on", which nothing checked, so an autonomous feature run could spec and implement around a ticket that never said who has the problem or what outcome is expected — the assumptions comment (#64) surfaces such defaults at merge, but by then the code exists. The generated `SDLC.md` now carries a Definition of Ready, and two skills enforce it: `om-auto-manage-issues` reports `READY_STATUS`, and `om-auto-fix-issue`'s feature route stops with `NOT_READY`.
+
+The list is split in two tiers on purpose. *Ticket-level* items (problem, user or role, expected outcome and its check, out of scope, blocking questions, confirmed assumptions) are the ones a spec cannot supply without inventing them, so a gap there is a clean stop that names the gap on the ticket. *Spec-level* items (acceptance criteria, business rules, paths, data and permissions, dependencies, prototype link) are exactly what `om-auto-write-spec` produces, so a gap there authors the spec as before. A single flat checklist was rejected: it would either stop every feature that lacks a spec (undoing the autonomous feature route) or let a guessed problem statement through (undoing the gate). A new label (`needs-definition`) was rejected for the same reason as in #64 — a cleared-state that blocks other automation; the idempotent not-ready comment carries the same information with no schema change. The Discovery row (#59) and the before-intake / after-merge paragraphs landed in the same change so the document's scope matches what the collection does.
+
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.

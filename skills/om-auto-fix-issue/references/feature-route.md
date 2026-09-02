@@ -9,10 +9,13 @@ loop, and UI verification.
 
 ## F1. FR triage gate
 
-Run the read-only FR triage per `references/fr-triage.md`: confirm the feature is
-**not already implemented** (code search) and not already specced + in flight.
-Already built / already in flight → stop with `NO_ACTION_NEEDED` and cited evidence.
-Nothing is claimed yet, so a stop leaves no lock behind.
+Run the FR triage per `references/fr-triage.md`: confirm the feature is
+**not already implemented** (code search), not already specced + in flight, and
+that the ticket meets the ticket-level tier of the Definition of Ready in
+`SDLC.md`. Already built / already in flight → stop with `NO_ACTION_NEEDED` and
+cited evidence. Ticket not ready → the not-ready comment names the gaps and the
+run stops with `NOT_READY`; the spec-level tier is F3c's job, never a stop.
+Nothing is claimed yet, so either stop leaves no lock behind.
 
 ## F2. Claim / resume decision
 

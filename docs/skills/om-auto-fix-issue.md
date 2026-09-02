@@ -2,7 +2,7 @@
 
 > 🤖 Autonomous — runs end-to-end without supervision
 
-Takes a tracker issue (a GitHub issue by default) from a single command all the way to a labeled, reviewed PR — without disturbing your active worktree. It first classifies the issue: a bug is driven through the autofix chain (verify → root-cause → fix → open PR → review loop), while a feature request takes the spec-then-build route instead. Everything happens in an isolated worktree under the in-progress claim protocol, and the run stops cleanly when the issue is already solved or already claimed by someone else. Use it for "fix issue 123" or "implement issue 123".
+Takes a tracker issue (a GitHub issue by default) from a single command all the way to a labeled, reviewed PR — without disturbing your active worktree. It first classifies the issue: a bug is driven through the autofix chain (verify → root-cause → fix → open PR → review loop), while a feature request takes the spec-then-build route instead. Everything happens in an isolated worktree under the in-progress claim protocol, and the run stops cleanly when the issue is already solved, already claimed by someone else, or (feature route) not yet ready per `SDLC.md`'s Definition of Ready, in which case a not-ready comment names the gaps for the author. Use it for "fix issue 123" or "implement issue 123".
 
 ## Parameters
 

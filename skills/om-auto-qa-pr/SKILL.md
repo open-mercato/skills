@@ -197,7 +197,10 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
     - `--self-qa-signoff` AND verdict PASS AND screenshots attached AND the PR
       carries `needs-qa` without `skip-qa`: apply `qa-approved` +
       `qa-self-verified` via the descriptor's label guards, and comment linking
-      the evidence as the proof. Never sign off a partial/environment-limited run.
+      the evidence as the proof, with the line `QA head: <headRefOid>` on its own
+      line — the commit this run checked out and tested. `om-approve-merge-pr`
+      and `om-merge-buddy` compare it with the PR head; a later push stales the
+      sign-off. Never sign off a partial/environment-limited run.
     - `--apply-failure` AND verdict FAIL: apply `qa-failed` and comment why.
       Never combine with `qa-approved`.
     - Route every label mutation through the descriptor's guards; skip all label

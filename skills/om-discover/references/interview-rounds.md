@@ -25,6 +25,14 @@ When a frontier question needs a fact from the material or the repository, look 
 
 In `own` mode, every recommended answer gets a one-line counter-argument next to it. Recommendations anchor; the counter-argument is the cheapest defence against the team confirming its own idea.
 
+## Housekeeping before the round
+
+Three things are settled in one plain line each, before Q1, and never take a seat among the eight:
+
+- where the brief lands: `SPECS_DIR` from the config, `.ai/specs` without one (never a question);
+- who owns the brief: the person running the session, confirmed with the final yes in step 7;
+- a missing name: when the material says "both founders" or "the team" and only one name is known, ask "Who is the second founder?" without a recommendation or a counter-argument.
+
 ## The round ends when
 
 - every brief section either has content with a tag, or sits on the collection plan;

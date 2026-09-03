@@ -1,6 +1,6 @@
 # Report templates
 
-Final-report shapes for `om-discover` (workflow step 8). Fill them exactly and expand with detail — the reader did not sit in the session. End with the Output contract lines from the skill body, one per line, exact and undecorated.
+Final-report shapes for `om-discover` (workflow step 9). Fill them exactly and expand with detail — the reader did not sit in the session. End with the Output contract lines from the skill body, one per line, exact and undecorated.
 
 ## Brief written
 
@@ -18,6 +18,8 @@ Final-report shapes for `om-discover` (workflow step 8). Fill them exactly and e
 🔍 **What the skeptic changed.** {claims that lost a tag or moved to the collection plan; questions that went back to the user; what held}
 
 🧪 **Ready for what.** {whether the ticket-level tier of the Definition of Ready is satisfied on tiers 1 to 5; what the next skill can start from and what it cannot yet}
+
+🧭 **Next step.** {what the hand-off offered (the synthetic panel on which flow, the backlog dry run, one more decision round), what the user chose, and what ran as a result, with its own contract lines quoted when a skill ran}
 
 Product brief: {…}
 Coverage: {…}

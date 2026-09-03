@@ -19,7 +19,7 @@ generates. Shapes below are the minimum; extra fields are allowed.
 
 ## tokens.json
 
-Array of `{ "name": "primary", "value": "#111827", "kind": "color | size | shadow | font | alias | other", "source": "src/app/globals.css" }`.
+Array of `{ "name": "primary", "value": "#111827", "kind": "color | size | shadow | font | alias | other", "source": "src/app/globals.css" }`. Two additive conventions written by `om-ux-style`: `source` may be the sentinel `"design"` (a declared token with no code behind it yet) or `"proposed"` (a palette derived from colors already in the code), and an optional `"theme": "light" | "dark" | "both"` field carries the theme of the value. Readers that ignore both see a flat list.
 
 ## components.json
 

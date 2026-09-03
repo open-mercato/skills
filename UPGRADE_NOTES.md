@@ -14,6 +14,104 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-09-02 — om-synthetic-users: panels, repeats, pressure, and a parity check
+
+`om-synthetic-users` shipped earlier today as three personas and one walkthrough. It now runs the way the research on synthetic respondents says it must to mean anything:
+
+- **A panel, resampled every run, one persona per fresh-context subagent.** New arguments `--panel <n>` (default 5) and `--runs <n>` (default 2, 3 for consequential decisions). Composition follows known proportions from the data and always includes a persona who barely cares. A panel that answers alike is flagged as homogeneous and resampled.
+- **Only what repeats is a finding.** A barrier, missing case, or contradiction is reported when it survived every run; its weight and spread are in the report, ties are marked, single-run items sit under *Seen once*. Saturation (fewer than one new topic in twenty) is reported.
+- **Interviews under pressure, never stated preference.** Questions ask about the last time; the decision is then simulated under the brief's pressures (deadline, budget, switching cost, who decides) and the record shows where the story collapses. Each answer carries the fast reaction with its feeling, then the considered one, and records the research passages that grounded it or that none did. A `--open` flag runs exploratory interviews that track topics instead of a flow.
+- **A parity check against real interviews.** When notes tagged `[INTERVIEW]` exist for the same questions, the panel runs the same script and the report lists themes in both, real-only (the panel's blind spots, and the material to gather), and panel-only (questions for the next interview). The overlap is logged in `${research}/calibration.md` as a trend, never published as a score.
+- **Acquiescence is measured and assumptions stay out of the persona.** The quality gate counts the panel's yes share on yes/no questions and excludes unsupported agreement; the brief's `A0n` assumptions and expected answers shape the script and the pressures but never enter a persona's context.
+- **The parity check scores only held-out notes.** A note that built a persona never scores the panel (the overlap would be the persona reading its own source); `--hold-out` names the notes to keep aside, the newest note per flow is held out by default when two or more exist, and with a single note the check is skipped with the reason stated. Defaults are `--panel 3` and `--runs 2` — six subagent runs — and transcripts are budgeted, because an unbounded run took over half an hour on a narrative subject.
+- **One confirmation stop, a defined subagent hand-off, and an operational acquiescence measure.** The panel composition, flow mapping, and stance are confirmed once before any subagent runs; each persona subagent receives its persona block with tags stripped, a subject excerpt that excludes the brief's assumptions and goals, and the script with passages attached per question; four balanced past-behaviour yes/no questions feed the acquiescence count; saturation is measured over the last three interviews; tie rule uses the larger spread; transcript files are named `{date}-{slug}-transcripts/run-{n}-P{nn}.md`.
+- **New output-contract lines** `Runs:` and `Parity:`; the persona template gains state of mind at entry, salience, and sourced traits only. `references/research-basis.md` lists what the design rests on and what was left out (survey prediction, eye-tracking, personality inventories, model routing). Nothing to migrate: existing `personas.md` files are read and extended.
+
+## 2026-09-02 — The accepted prototype is an acceptance artifact
+
+A spec's `## 📝 UI/UX` section may carry a `Prototype: <path>` line — the mockups `om-auto-write-spec` renders under the specs assets directory today, or an interactive prototype directory. `om-ux-review-pr` reads the PR's `Source doc:` spec, opens the linked prototype through the browser provider beside the running screens, and reports a deviation the spec does not explain as a `[PRODUCT]` finding with evidence of both, and a deliberate improvement as a deviation for the author to confirm. Its review comment gains a `Prototype:` line. `om-synthetic-users` already walks prototypes. Nothing to migrate: specs without the line behave as before; add it to existing specs whose mockups were accepted.
+
+## 2026-09-02 — QA gate hardening: QA head, self-QA below risk-high, states in pass/fail, risk-high evidence
+
+Four changes to the QA and merge gates, each a small behavior change in one or two skills and a matching paragraph in the generated `SDLC.md`:
+
+- **`qa-approved` is pinned to a commit.** The comment that grants it carries `QA head: <sha>`; `om-auto-qa-pr --self-qa-signoff` writes it, QA reviewers are asked to. `om-approve-merge-pr` reads it back (**list-issue-comments** added to its operations) and asks for confirmation when the head moved; `om-merge-buddy` (which now requests `headRefOid` from **list-prs**) reports "QA evidence older than head". A sign-off without the line is treated as pre-dating the rule. Custom tracker descriptors must return `headRefOid` from **list-prs** for the merge-buddy check to work.
+- **Self-QA only below `risk-high`.** `om-auto-qa-pr --self-qa-signoff` withholds the sign-off on a `risk-high` PR (labeled, or inferred from the diff) and posts the evidence only. The generated `SDLC.md` now states the one truth: automation applies `qa-approved` only through this exception, always with `qa-self-verified`, never on `risk-high`. The self-QA evidence list is spelled out (scenario, environment, test data, result, negative cases, head).
+- **The state matrix and contract conformance are part of QA pass/fail.** For UI surfaces `om-auto-qa-pr`'s scenario carries one required step per state (default, empty, loading, error, no-permission, long content, narrow viewport) and, when `.uxproof/` exists, a contract-conformance step. Expect more FAIL verdicts on UI PRs that skip states; that is the point.
+- **`risk-high` triggers gates.** `om-code-review` blocks a `risk-high` change without integration-level evidence for its area (denied path and wrong-scope read; failure, retry, idempotency; migration up and down; the consuming side of a contract) unless a maintainer waives it on the PR. The generated `SDLC.md` carries the area-to-evidence table; `om-auto-review-pr`'s label rules say the rating is not advisory.
+- **Migration:** an existing `SDLC.md` is never regenerated — copy the four paragraphs (QA head, self-QA exception, UI QA, the risk table) from the template by hand. No label or marker changed.
+
+## 2026-09-02 — New skill: om-backlog, epics and stories from a brief or a spec
+
+**New skill.** `om-backlog` drafts a tree of epics, stories with acceptance criteria, and tasks from `product-brief.md` (Scope, Key flows, Goals, Business rules) or a spec's Phasing, shows it, and files it through `om-prepare-issue` after the user's yes. Install it with:
+
+```bash
+npx skills add open-mercato/skills --skill om-backlog
+```
+
+- **Tree conventions in plain issues.** Ids open titles (`E01`, `E01-S02`, `E01-S02-T01`), stories carry an `Epic: #<n>` line, tasks a `Story: #<n>` line, epics a `## 📋 Stories` checklist rewritten on every run. No tracker feature beyond issues, bodies, comments, and labels is assumed, so any descriptor works. Existing issues that cover a story are adopted with a comment, never recreated.
+- **Readiness is enforced here too.** A brief whose Problems or Target group rest on `[SYNTHETIC]` or `[ASSUMPTION]` claims is not filed; the skill offers the research backlog (the collection plan's interviews and data requests as tasks) instead.
+- **A new local record**, `${SPECS_DIR}/backlog.md`, maps ids to issue numbers; the ids in titles are the durable link on re-runs. New output-contract lines: `Backlog:`, `Issues:`, `Next:` (a dry run or a readiness stop emits `Next:` only). The roster gains `om-backlog`. Nothing to migrate.
+- **Three new optional arguments on `om-prepare-issue`**, additive and off by default: `--title "<exact title>"` (verbatim title instead of the `Implement:` / `Fix:` convention), `--no-spec` (never author a spec; link the document the brief names as the authority), `--skip-dedupe` (the caller already deduplicated; reuse only an exact-title match). `om-backlog` passes all three. `om-prepare-issue` also gains a greenfield exception to its "real paths" rule: in a repository with no product code, guidance references the brief's ids and the acceptance criteria and says so. Existing invocations behave exactly as before.
+
+## 2026-09-02 — New skill: om-ux-style, a declared design contract for repositories with no design system
+
+**New skill.** `om-ux-style` builds a design contract from references the team chooses — moodboard, five principles, five anti-patterns, tokens by role for both themes, the components the flows need with all six states, three recipes — and writes it into the files `om-ux-setup` extracts from code. Install it with:
+
+```bash
+npx skills add open-mercato/skills --skill om-ux-style
+```
+
+- **Two additive fields in `.uxproof/tokens.json`.** Declared tokens carry `"source": "design"` and `"theme": "light" | "dark" | "both"`. Readers that ignore the fields see a valid flat list; `om-ux-setup --refresh` keeps declared entries and regenerates the rest from code.
+- **The manual section of `.uxproof/conventions.md`** gains a `Design contract — written by om-ux-style` block, appended inside the markers so it survives regeneration; `om-ux-review-pr` and `om-ux-shape` apply it as `[PRODUCT]` rules with no change on their side.
+- **`${SPECS_DIR}/design/theme.css`** carries the eight identity tokens in the plain `:root {}` / `.dark {}` convention a prototype directory loads after its base tokens. `om-ux-setup` now names `om-ux-style` when a repository has only a proposed palette to offer.
+- **New output-contract lines** — `Design contract:`, `Theme:`, `Moodboard:`, `Next:`. The roster gains `om-ux-style`. Nothing to migrate in a repository with a real design system: the skill stops and routes to `om-ux-setup`.
+
+## 2026-09-02 — Product decisions become a protected contract, like BACKWARD_COMPATIBILITY.md
+
+When `product-brief.md` exists, its Non-goals, Business rules, and Decisions tables (stable ids, owner, status, review-by date, required path to change) are now enforced the way `BACKWARD_COMPATIBILITY.md` surfaces are:
+
+- **`om-code-review` gains a product-decision gate** next to its breaking-change gate: a change that builds what a non-goal excludes or contradicts an active rule or decision, without a superseding entry for that id in the same diff, is a blocker quoting the id; an entry past its review-by date is a minor "due for review". `om-ux-review-pr` applies the same to screens. The anti-pattern table gains the matching row.
+- **Decisions are surfaced where people work.** `om-auto-manage-issues` ends its implementation-notes comment with *Decisions in play*; `om-spec-writing`'s core sections gain `## 📝 Decisions in play` and its autonomous defaults may not weaken an active entry; the unified PR body template (all three synced copies: `om-open-pr`, `om-auto-create-pr`, `om-auto-create-pr-loop`) gains a conditional `## 📋 Decisions touched` section.
+- **Discovery asks in plain words.** `om-discover`'s rounds and its skeptic now follow one voice (`references/voice.md`): the user's language, no skill vocabulary in a question, one concrete thing per question with an example answer, the reason it is asked, and what happens on "we don't know". Skeptic findings return as questions in that shape; severity labels stay internal.
+- **Discovery hands off.** After writing the brief, `om-discover` offers the next step one yes/no at a time — an optional synthetic panel on the first key flow (then its own `--refresh`), and the backlog dry run when the ticket-level Definition of Ready is met, or one more decision round when it is not. Nothing runs without a yes. Housekeeping (the brief's path, its owner, a missing founder name) is settled in one line before the round; with no config the brief lands in `.ai/specs` without a question. Reports gain a **🧭 Next step** paragraph.
+- **Confirmed assumptions become decisions.** `om-discover --refresh` reads the resolved-assumptions comments on spec PRs (read-only, via **search-prs** and **list-issue-comments**) and records each human-confirmed row as a Decision with the confirmer as owner.
+- **Migration:** nothing to do in a repository without `product-brief.md`. A generated `SDLC.md` gains the section *Product decisions as a protected contract*; add it by hand to an existing one. Briefs written before this change: add the `Review by` column to the Business rules and Decisions tables.
+
+## 2026-09-02 — New skill: om-synthetic-users, and personas that om-ux-review-pr walks with
+
+**New skill.** `om-synthetic-users` builds personas from the material the repository already holds, runs simulated interviews, and walks a flow through their eyes — on the brief or spec as a narrative, on a static prototype through the browser provider, or on the running app through `om-prepare-test-env`. Install it with:
+
+```bash
+npx skills add open-mercato/skills --skill om-synthetic-users
+```
+
+- **Two new research files.** `${SPECS_DIR}/research/personas.md` (stable `P0n` ids, every line tagged with its source) and walkthrough reports under `${SPECS_DIR}/research/walkthroughs/`. `om-ux-review-pr` now enters screens as those personas when the file exists and cites the persona id in findings; `om-spec-writing` reads the walkthrough reports as `[SYNTHETIC]` hypotheses for its Edge Cases; `om-discover --refresh` pulls them into the brief's Hypotheses section. Repositories without the files behave exactly as before.
+- **A strict label.** Everything the skill produces is `[SYNTHETIC]` and never satisfies the Definition of Ready; the report says "would", never "validated". Three stances (`validate`, `simulate`, `adversary`) default from the brief's mode.
+- **New output-contract lines** — `Personas:`, `Walkthrough:`, `Hypotheses:`, `Next:` — follow the line-anchored marker rules. The roster in `om-setup-agent-pipeline`'s coverage check gains `om-synthetic-users`.
+
+## 2026-09-02 — New skill: om-discover, and a product-brief.md the other skills read
+
+**New skill.** `om-discover` runs the product-level discovery and define session before `om-brainstorm` has anything to route, in three modes (existing product, client idea, own idea), and leaves `${SPECS_DIR}/product-brief.md`. Install it with:
+
+```bash
+npx skills add open-mercato/skills --skill om-discover
+```
+
+- **A new file other skills read.** When `product-brief.md` exists, `om-brainstorm` treats its Vision, Scope, Non-goals, and Decisions as settled context in its Frame step; `om-spec-writing` seeds its Problem Statement from it and turns the brief's blocking open questions and assumption-only problems into spec Open Questions; `om-prepare-issue` fills the ticket-level tier of the Definition of Ready from it and cites decision and non-goal ids. Repositories without the file behave exactly as before.
+- **Evidence rules that are new to the collection.** The brief tags every claim with a discovery evidence tier (`[INTERVIEW]`, `[DATA]`, `[DOCUMENT]`, `[PRODUCT]`, `[BENCHMARK]`, `[SYNTHETIC]`, `[ASSUMPTION]`) and carries a coverage line; a section with no material behind it becomes a collection plan with capture templates under the research directory (`${SPECS_DIR}/research/` by default) rather than prose. Nothing to migrate: the tags live only in the brief.
+- **A `--quick` pass and bounded rounds.** A full run asks at most eight questions per round and two rounds as the norm; `--quick` runs one round, an inline skeptic, the critical gate items only, and writes the ticket-level sections with the rest on the collection plan — for first passes, lessons, and tests. Reports carry `Elapsed:` per step.
+- **New output-contract lines** — `Product brief:`, `Coverage:`, `Collection plan:`, and this skill's `Next:` — follow the same line-anchored rules as `PR:`/`Issue:`/`Spec:`. The roster in `om-setup-agent-pipeline`'s coverage check gains `om-discover`; re-run `/om-setup-agent-pipeline` or the coverage check to pick it up.
+
+## 2026-09-02 — Definition of Ready: the generated SDLC.md gains a Discovery row, a readiness gate, and its own scope
+
+The generated `SDLC.md` started at Intake with a ticket that had "enough detail to act on" — a phrase nothing checked. Three additive changes to `skills/om-setup-agent-pipeline/references/sdlc-template.md`, and to the skills that act on tickets:
+
+- **A Discovery row above Intake** (closes the gap #59 describes): `om-brainstorm` runs before any artifact exists and ends in a routing decision. A "before intake" paragraph names the spec skills as the other pre-ticket step, and an "after merge" paragraph says where the collection stops — deployment, smoke tests, monitoring, and rollback are the repository's release process, not this document.
+- **A Definition of Ready section** with two tiers. *Ticket-level* items only a human can supply (the problem and who has it, the expected outcome and how it is checked, what is out of scope, blocking questions answered, autonomous assumptions confirmed). *Spec-level* items a covering spec supplies (acceptance criteria, business rules, paths, data and permissions, dependencies, prototype link). A maintainer may waive an item on the ticket.
+- **Two skills enforce it.** `om-auto-manage-issues` records `READY_STATUS` per issue and posts one idempotent `` 🤖 `om-auto-manage-issues` — not ready `` comment naming the missing ticket-level items (its report gains a `ready:` field and a not-ready list). `om-auto-fix-issue`'s feature route stops with a new `NOT_READY` token, after posting the same comment shape, when the ticket fails the ticket-level tier — a spec-level gap is still no stop, the spec is authored as before. `om-prepare-issue` files tickets with the matching sections (Problem, Who has it, Expected outcome, Open questions).
+- **Migration:** an existing `SDLC.md` is never regenerated, so add the Discovery row and the Definition of Ready section by hand (copy them from the template) — the skills read the section from the repo's own `SDLC.md` and fall back to the collection's default list when it is absent. No tracker operation, label, or parsed marker changed; `NOT_READY` is a new stop token on `om-auto-fix-issue`'s feature route only, so an orchestrator that keys on `NO_ACTION_NEEDED` should treat it the same way (clean stop, nothing claimed).
+
 ## 2026-08-13 — test-env credentials become references: new `credentialsFile` + `passwordEnv`
 
 The environment descriptor recorded demo login values inline (`"password": "<demo>"`), and the QA/test skills read them into the agent's context to sign in — so even demo-grade secrets flowed through model output into commands, and anything that ended up in the descriptor was one quote away from a report. Security audits flagged exactly this path on `om-integration-tests`.

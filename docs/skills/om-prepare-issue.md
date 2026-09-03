@@ -12,6 +12,9 @@ Creates a single, well-formed tracker issue from a brief without implementing an
 | `--priority <low\|medium\|high\|extreme>` | Optional | Override the inferred priority label. |
 | `--risk <low\|medium\|high>` | Optional | Override the inferred risk label for the eventual change's blast radius. |
 | `--assignee <login>` | Optional | Assign the issue; default is unassigned. |
+| `--title "<exact title>"` | Optional | Use this title verbatim instead of the `Implement:` / `Fix:` convention (om-backlog passes tree ids this way). |
+| `--no-spec` | Optional | Never author a spec; link the document the brief names as the design authority. |
+| `--skip-dedupe` | Optional | The caller already deduplicated; reuse only an exact-title match, no semantic search. |
 | `images` | Optional | Screenshots or mockups (pasted or file paths) attached to the issue as evidence. |
 
 ## Works with

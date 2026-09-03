@@ -15,6 +15,9 @@ This skill only **creates** issues. To bring an issue that **already exists** up
 - `--priority <low|medium|high|extreme>` (optional) — override the inferred priority label.
 - `--risk <low|medium|high>` (optional) — override the inferred risk label for the eventual change's blast radius.
 - `--assignee <login>` (optional) — assign the issue. Default: unassigned.
+- `--title "<exact title>"` (optional) — use this title verbatim instead of the `Implement:` / `Fix:` convention. `om-backlog` passes it so tree ids open every title.
+- `--no-spec` (optional) — never author a spec (step 3 is skipped even for a substantial feature); link the covering document the brief names instead, such as `${SPECS_DIR}/product-brief.md`. `om-backlog` passes it because the brief, not a per-story spec, is the design authority at that stage.
+- `--skip-dedupe` (optional) — the caller has already deduplicated (`om-backlog` searches per story before filing); step 1 then checks only for an existing issue with the exact same title and reuses it, and runs no semantic search.
 - `{images}` (optional) — screenshots or mockups the user pasted with the brief or gave as file paths; attached to the issue as 📸 evidence (see step 5).
 
 ## Workflow
@@ -48,11 +51,14 @@ This skill only **creates** issues. To bring an issue that **already exists** up
 
    Reduce the analysis to numbered, testable steps a future implementer can follow without re-exploring the repo. Reference real file paths and function names.
 
-5. **Compose and create the issue.** Title: action-oriented and specific — `Implement: <feature>` for features, `Fix: <symptom>` for bugs. When the brief names a handoff file (a `— brief: <path>` suffix from `om-brainstorm`), embed its content — problem, agreed direction, resolved unknowns, non-goals — in the body sections below: the tracker copy is the durable one, and the issue must never depend on the local file. Body:
+5. **Compose and create the issue.** Title: `--title` verbatim when given; otherwise action-oriented and specific — `Implement: <feature>` for features, `Fix: <symptom>` for bugs. When the brief names a handoff file (a `— brief: <path>` suffix from `om-brainstorm`), embed its content — problem, agreed direction, resolved unknowns, non-goals — in the body sections below: the tracker copy is the durable one, and the issue must never depend on the local file. When the brief itself already carries body sections (a caller such as `om-backlog` hands over Problem, Who has it, Expected outcome, Out of scope, Open questions, Acceptance criteria, Decisions in play, and tree lines such as `Epic: #n`), embed them verbatim under the matching headings, keep the extra sections the template lacks, and derive only what the brief leaves out. Body:
 
    ```markdown
    ## Summary
    - {one-line goal from the brief}
+   - Problem: {what hurts, or what is missing}
+   - Who has it: {user or role}
+   - Expected outcome: {what is true afterwards, and how it will be checked}
 
    ## Spec
    - Implementation spec: `{spec path}` ({link})      <!-- when step 2 found one, or step 3 authored one (also note the spec PR #) -->
@@ -74,7 +80,12 @@ This skill only **creates** issues. To bring an issue that **already exists** up
 
    ## Out of scope
    - {non-goals, so the implementer does not gold-plate}
+
+   ## Open questions
+   - {question} — blocking | non-blocking      <!-- or: none -->
    ```
+
+   The Summary, Out of scope, and Open questions sections are the ticket-level tier of the Definition of Ready in `SDLC.md`; fill them from the brief and, when `${SPECS_DIR}/product-brief.md` exists (written by `om-discover`), from its Problems, Target group, Goals, Non-goals, and Open questions — cite the brief's ids (`D03`, `N01`) where a decision or non-goal bounds the ticket. Never invent a problem or a user that neither names — write "unknown" and mark the question blocking instead.
 
    Create it via **create-issue** with title, body, `--assignee` when passed, and the **SDLC labels** through the guards (a missing label degrades to a logged skip; `labels.enabled: false` skips all):
 
@@ -93,9 +104,10 @@ This skill only **creates** issues. To bring an issue that **already exists** up
 - Tracker-only by default: never edit, commit, or push repository files. The one exception is step 3 — a feature that needs a spec and has none — where this skill produces a **spec PR** (a design document only, never implementation) by delegating to `om-auto-write-spec`, then links it on the issue.
 - Always run the duplicate search (step 1, including in-flight spec PRs) before creating; reuse a credible duplicate via a link/comment instead of filing a copy.
 - Link a covering spec instead of restating it; embed step-level analysis only when no spec covers the task and the task does not warrant one.
-- Implementation steps must reference real paths and names from the codebase — an issue that says "add the feature" is a failed run.
+- Implementation steps must reference real paths and names from the codebase — an issue that says "add the feature" is a failed run. The one exception is a repository with no product code yet: then the guidance references the brief's ids (`D0n`, `R0n`, `N0n`) and the acceptance criteria, says the repository is greenfield, and names the spec or the brief as the design authority.
 - When the task touches surfaces protected by `BACKWARD_COMPATIBILITY.md`, the issue must flag it and name the migration/deprecation expectation.
-- For a substantial feature with no covering spec, author one and land it on a PR (step 3) — never file a vague placeholder issue or invent answers to the spec's Open Questions gate.
+- For a substantial feature with no covering spec, author one and land it on a PR (step 3) — never file a vague placeholder issue or invent answers to the spec's Open Questions gate. Under `--no-spec` step 3 never runs: the issue links the document the brief names as its authority, and the report says a spec is still owed before implementation.
+- Under `--skip-dedupe`, step 1 reuses only an issue whose title matches exactly; the caller owns the semantic search and its adoption decisions, and this skill never judges a sibling tree item (an epic created a moment earlier) to be a duplicate of the story it is filing.
 - Apply the SDLC labels on creation (step 5): one category plus exactly one priority and one risk (`--priority`/`--risk` override); never pipeline labels or `in-progress` on the issue.
 - This skill only creates new issues. Enriching or relabeling an issue that already exists — single or in bulk — belongs to `om-auto-manage-issues`; hand off rather than duplicating that behavior here.
 

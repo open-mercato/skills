@@ -29,7 +29,7 @@ Every label change is reflected in the **single consolidated `🏷️ label rati
 ## Risk label (always ensure exactly one, when labels are enabled)
 
 - If the PR carries no risk label, infer one from the diff and the linked issue, apply it through the guard, and record the choice and reason in the label-rationale comment. Inference rule: auth/session/data scoping/money, migrations or schema, encryption, event reliability, shared contract surfaces, or broad cross-cutting edits → `risk-high`; ordinary single-area change with tests → `risk-medium`; docs, dependency bumps, test-only, typo, or isolated cleanup → `risk-low`.
-- If the PR already has a risk label, keep it unless the review reveals the scope is clearly mis-rated (e.g. a "docs" PR that actually changes a migration) — then adjust it and explain why in the comment. A `risk-high` rating reinforces the case for `needs-qa` and deeper review even when the PR would otherwise look routine.
+- If the PR already has a risk label, keep it unless the review reveals the scope is clearly mis-rated (e.g. a "docs" PR that actually changes a migration) — then adjust it and explain why in the comment. A `risk-high` rating is not advisory: it requires `needs-qa` when the change is user-facing, rules out the self-QA exception (`SDLC.md`), and requires integration-level evidence for the touched area, which `om-code-review`'s risk-high evidence gate blocks without.
 - Risk is mutually exclusive: when changing it, remove the other two risk labels.
 
 ## The consolidated label-rationale comment

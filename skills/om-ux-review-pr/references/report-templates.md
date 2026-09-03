@@ -16,6 +16,7 @@ never adds a second review comment to the same PR.
 ## 🔍 Design review — <PR title>
 
 **Contract**: <.uxproof/ found: framework, N tokens, N components | no contract — reviewed against tiers 2-6, no [PRODUCT] findings possible>
+**Prototype**: <path compared, from the spec's Prototype line | none linked>
 **Screens walked**: <list, with viewport(s) and the tasks performed>
 **Not walked**: <screens skipped and why — missing data, no permissions, broken env; never omit this line when coverage is partial>
 

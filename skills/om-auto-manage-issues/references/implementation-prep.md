@@ -35,6 +35,13 @@ Pick the analyzer by issue kind:
 Reference real file paths and symbols. Mark anything uncertain as a hypothesis, not
 a fact — you are preparing the ground, not committing to a fix.
 
+When `${SPECS_DIR}/product-brief.md` exists (written by `om-discover`), end the
+analysis with a **Decisions in play** list: every Non-goal, Business rule, and
+Decision id the issue touches, quoted in one line each with its owner, and a note
+when the issue as written would contradict one (then the fix starts with a
+superseding entry, not code). This is how a newcomer sees the team's settled
+calls at the issue instead of in a chat history.
+
 ## Posting it (idempotent)
 
 Post one comment via **comment-issue**, opened with a stable marker so re-runs

@@ -25,7 +25,7 @@ Collection plan: {…}
 Next: {…}
 ```
 
-Include `Collection plan:` only when the gate held sections back. Always end with `Elapsed: <minutes per step>` before the contract lines, so the next run can be sized.
+Include `Collection plan:` only when the gate held anything back; `{k}` counts entries, in the same shape as the brief header. Always end with `Elapsed: <minutes per step>` before the contract lines, so the next run can be sized.
 
 ## Quick pass
 
@@ -36,7 +36,7 @@ Under `--quick`, the report is the *Brief written* shape with the header line `Q
 When the gate found no material for the ticket-level sections and the user did not choose to continue on assumptions, the report is the plan itself: the sections waiting, who can answer them, how, the owner and the date, and the capture templates written under the research directory. Close with why nothing was written (the sections that would have been fiction) and the contract lines:
 
 ```
-Collection plan: {k} sections waiting for material
+Collection plan: {k} entries waiting for material
 Next: none
 ```
 

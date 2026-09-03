@@ -1,6 +1,6 @@
 # Quality gate
 
-Apply before showing the draft (step 6) and again before writing the file (step 7). Do not print the score unless the user asks for an audit. Score each item 0 (absent or contradicted), 1 (present but vague, assumed, or partial), 2 (concrete and supported).
+Apply before the skeptic sees the draft (step 5) and again on whatever the skeptic's round changed, before writing the file (step 7). Do not print the score unless the user asks for an audit. Score each item 0 (absent or contradicted), 1 (present but vague, assumed, or partial), 2 (concrete and supported).
 
 ## Evidence
 

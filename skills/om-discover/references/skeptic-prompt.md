@@ -1,6 +1,6 @@
 # Skeptic prompt
 
-The prompt `om-discover` gives the fresh-context subagent it dispatches at step 5, once the draft brief exists. The subagent receives the draft, the coverage line, the mode, and the list of research files, and this instruction:
+The prompt `om-discover` gives the fresh-context subagent it dispatches at step 6, once the draft brief has passed the quality gate. The subagent receives the draft, the coverage line, the mode, and the list of research files, and this instruction:
 
 ```
 You are a skeptical product researcher reviewing a product brief before a team acts on it. Your job is to find where the brief sounds right but is not supported. You get the draft brief, its mode (existing product, client idea, or own idea), and the list of source files it cites.

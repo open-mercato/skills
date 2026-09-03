@@ -6,7 +6,7 @@ The one file `om-discover` writes: `${SPECS_DIR}/product-brief.md`. Every sectio
 # {Product name} — product brief
 
 - Date: {YYYY-MM-DD} · Mode: {existing | client | own} · Owner: {role or name}
-- Coverage: {n} claims — {a} sourced (interview {i}, data {d}, document {c}, product {p}), {s} synthetic, {u} assumed; {k} sections on the collection plan
+- Coverage: {n} claims — {a} sourced (interview {i}, data {d}, document {c}, product {p}, benchmark {b}), {s} synthetic, {u} assumed; {k} entries on the collection plan
 - Definition of Ready signed by: {product owner (name) | client decider (name) | team, riskiest assumption tested/accepted | not yet signed — {what is missing}}
 - Sources: {list of research files and repository paths this brief rests on}
 

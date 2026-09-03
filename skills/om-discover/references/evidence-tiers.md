@@ -20,11 +20,10 @@ Rules:
 
 ## The coverage line
 
-The brief header carries one line, recomputed on every write:
+The brief header carries one line, recomputed on every write, with the collection-plan count appended:
 
 ```
-Coverage: 37 claims — 29 sourced (interview 12, data 9, document 3, product 5, benchmark 0), 4 synthetic, 4 assumed
-Collection plan: 2 entries waiting for material
+Coverage: 37 claims — 29 sourced (interview 12, data 9, document 3, product 5, benchmark 0), 4 synthetic, 4 assumed; 2 entries on the collection plan
 ```
 
-The same two lines, in the same shape, end the final report as output-contract lines. An entry is one item of the collection plan — a whole section, a sub-section such as the benchmark, or a thin section the user wants stronger. A reader who sees "0 sourced" knows what they are holding.
+The final report carries the same numbers as two output-contract lines, `Coverage:` without the suffix and `Collection plan: 2 entries waiting for material`, because consumers parse them separately. An entry is one item of the collection plan — a whole section, a sub-section such as the benchmark, or a thin section the user wants stronger. A reader who sees "0 sourced" knows what they are holding.

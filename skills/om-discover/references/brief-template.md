@@ -76,7 +76,7 @@ The one file `om-discover` writes: `${SPECS_DIR}/product-brief.md`. Every sectio
 
 | Id | Assumption | Importance | Evidence today | If false | Smallest test | Owner | By when | Result |
 |---|---|---|---|---|---|---|---|---|
-| A01 | … | high / medium / low | none / weak / some, with the tag | … | … | … | … | untested |
+| A01 | … | high / medium / low | none / weak / some, with the tag | … | … | … | … | untested / accepted untested (D{nn}, checked by …) / held / refuted |
 
 Importance and Evidence together are the assumption map: the important-and-unproven corner is tested first, and in `own` mode every entry there needs a test, an owner, and a date or a recorded decision to build without it.
 

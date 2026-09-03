@@ -20,6 +20,12 @@ The tree shown for confirmation (step 4) and the final report (step 6). Fill the
 - {item} · {item}
 
 Reply with edits, or "yes" to file. Nothing has been written.
+
+---
+
+## Issue bodies as they would be handed to om-prepare-issue
+
+{one block per epic and story: the body sections and every acceptance criterion in full, so the confirmation covers what will be filed, not a count}
 ```
 
 On `--dry-run` the header line is `Dry run — nothing was written.`, the closing line is replaced by `Re-run without --dry-run to file this tree.`, and the report ends with `Next: om-backlog <source>` and no `Backlog:` or `Issues:` line.

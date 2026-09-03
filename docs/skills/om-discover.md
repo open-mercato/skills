@@ -12,6 +12,7 @@ Runs the product-level discovery and define session that comes before `om-brains
 | `--mode existing\|client\|own` | No | The discovery mode; auto-detected from the repository and confirmed when omitted. |
 | `--refresh` | No | Update an existing `product-brief.md`; decisions are superseded, never deleted. |
 | `--research <dir>` | No | Where the raw material lives. Default `${SPECS_DIR}/research`. |
+| `--quick` | No | A bounded first pass: one round of at most eight questions, inline skeptic, critical gate items only, ticket-level sections written and the rest on the collection plan. |
 
 ## Works with
 

@@ -25,7 +25,11 @@ Collection plan: {…}
 Next: {…}
 ```
 
-Include `Collection plan:` only when the gate held sections back.
+Include `Collection plan:` only when the gate held sections back. Always end with `Elapsed: <minutes per step>` before the contract lines, so the next run can be sized.
+
+## Quick pass
+
+Under `--quick`, the report is the *Brief written* shape with the header line `Quick pass — one round, inline skeptic, critical gate items only.` and one more paragraph, **🔁 What a full run would add**: the sections left on the collection plan by the mode rather than by missing material, the skeptic checks that needed a fresh pair of eyes, and the gate items not scored.
 
 ## Nothing written — collection plan only
 

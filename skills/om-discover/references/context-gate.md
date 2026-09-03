@@ -41,7 +41,7 @@ For every *none* section, and for every *thin* one the user wants stronger, writ
 - **Template:** `{research}/templates/{interview-note|workshop-export|data-request|benchmark-check|decision-record}.md`
 ```
 
-Hand out the capture templates below by writing them into `{research}/templates/` when they do not exist yet — the material has to land in the repository, because the agent cannot read chat threads or whiteboard tools. Templates are the one write that happens before the confirmation in step 7, because they carry no content. Then stop for those sections: the run's report lists them under `Collection plan:` and the brief header counts the entries. Decisions the user makes during the rounds are written with `decision-record.md` into `{research}/decisions/`, one file per decision, with the name the user gives; the brief cites them as `[DOCUMENT]`.
+Hand out the capture templates below by writing into `{research}/templates/` only the templates that a collection-plan entry names, when they do not exist yet — the material has to land in the repository, because the agent cannot read chat threads or whiteboard tools. Templates are the one write that happens before the confirmation in step 7, because they carry no content. Then stop for those sections: the run's report lists them under `Collection plan:` and the brief header counts the entries. Decisions the user makes during the rounds are written with `decision-record.md` into `{research}/decisions/`, one file per decision, with the name the user gives; the brief cites them as `[DOCUMENT]`.
 
 ## 4. When the user chooses to continue without material
 

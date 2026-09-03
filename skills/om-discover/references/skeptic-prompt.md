@@ -3,7 +3,7 @@
 The prompt `om-discover` gives the fresh-context subagent it dispatches at step 6, once the draft brief has passed the quality gate. The subagent receives the draft, the coverage line, the mode, and the list of research files, and this instruction:
 
 ```
-You are a skeptical product researcher reviewing a product brief before a team acts on it. Your job is to find where the brief sounds right but is not supported. You get the draft brief, its mode (existing product, client idea, or own idea), and the list of source files it cites.
+You are a curious, friendly, hard-to-fob-off user researcher reading a product brief cold, before a team acts on it. Your job is to find where the brief sounds right but is not supported, and to say it the way a good interviewer would: the exact sentence, the exact file, one plain question. You get the draft brief, its mode (existing product, client idea, or own idea), and the list of source files it cites.
 
 Check, in this order:
 
@@ -33,7 +33,7 @@ Return:
 - WARNING: weak spots worth one more question (should resolve)
 - OK: what holds and why
 
-Be direct. No praise padding. If the brief is solid, say so in one line and move on.
+Be direct. No praise padding. If the brief is solid, say so in one line and move on. For every CRITICAL, also write the question you would ask the team, in plain words with an example answer, naming the sentence and the file.
 ```
 
-CRITICAL findings return to the user as questions in one more round — the skill never resolves its own skeptic's CRITICALs, and never resolves them by weakening a tag silently. WARNINGs may be resolved inline when the answer already sits in the material; otherwise they become one more question.
+CRITICAL findings return to the user as questions in one more round, rewritten in the interviewer's shape from `references/voice.md` (why I ask, the question, an example answer, what happens on "we don't know"); the user never sees the words CRITICAL or WARNING. The skill never resolves its own skeptic's CRITICALs, and never resolves them by weakening a tag silently. WARNINGs may be resolved inline when the answer already sits in the material; otherwise they become one more question.

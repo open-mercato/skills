@@ -10,20 +10,25 @@ The ladder, in order: the research directory → the repository → the tracker 
 
 Map the brief as a tree of questions: every settled answer opens the questions that depended on it. The **frontier** is every question that can be asked now without guessing at an answer not yet heard. Ask the frontier in one round, numbered, at most eight questions — when the frontier is larger, ask the eight that unblock the most brief sections and carry the rest to the next round; give the recommended answer for each, and the evidence tier that answer would carry if accepted. Wait for the user. Recompute the frontier and ask the next round. A question whose answer depends on another still open in this round belongs to a later round. Two rounds are the norm, three the ceiling unless the user asks for more; what is still open after that goes to the collection plan or the open questions, not to a fourth round.
 
-Format a round like so:
+Format a round like so, in the interviewer's voice from `references/voice.md` (plain words, the user's language, one concrete thing per question):
 
 ```
-**Q1 — {question title}.** {the question, with the options when it is a choice}
-Recommended: {answer} — would carry `[{tier}]` because {the source, or "no source: this would be an assumption"}
+**Q1 — {plain title, six words or fewer}.**
+Why I ask: {one line pointing at what in the material raised it}
+Question: {the question, with two or three named options when it is a choice, and an example of a good answer}
+My suggestion: {the answer, in plain words} ({what it rests on: "your interview of 20 August", "the board", or "a guess, nothing in the material"})
+If you don't know yet: {what goes on the collection plan, and who could answer}
 
 **Q2 — …**
 ```
+
+The evidence tier the answer would carry is recorded by the agent when the answer comes back; it is not vocabulary for the question. Before the round goes out, run the self-check in `references/voice.md`.
 
 A question that carries a skeptic CRITICAL finding is asked without a recommendation — recommending an answer to it is resolving it.
 
 When a frontier question needs a fact from the material or the repository, look it up before the round (a sub-agent may do it while the round runs); do not block the rest of the frontier on it, and never ask the user for a fact you could read. When the recommended answer would be an assumption, say so in the round — the user may still choose it, and the brief will carry the tag.
 
-In `own` mode, every recommended answer gets a one-line counter-argument next to it. Recommendations anchor; the counter-argument is the cheapest defence against the team confirming its own idea.
+In `own` mode, every suggestion gets a one-line counter-argument next to it (`Against: …`), in the same plain words. Recommendations anchor; the counter-argument is the cheapest defence against the team confirming its own idea.
 
 ## Housekeeping before the round
 

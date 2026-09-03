@@ -27,8 +27,9 @@ In `own` mode, every recommended answer gets a one-line counter-argument next to
 
 ## Housekeeping before the round
 
-Three things are settled in one plain line each, before Q1, and never take a seat among the eight:
+Four things are settled in one plain line each, before Q1, and never take a seat among the eight:
 
+- the mode: detected and confirmed in workflow step 1, before the context gate;
 - where the brief lands: `SPECS_DIR` from the config, `.ai/specs` without one (never a question);
 - who owns the brief: the person running the session, confirmed with the final yes in step 7;
 - a missing name: when the material says "both founders" or "the team" and only one name is known, ask "Who is the second founder?" without a recommendation or a counter-argument.

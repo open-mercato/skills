@@ -13,13 +13,13 @@ For Simple runs, skip the whole run-folder ceremony. Requirements:
 - Targeted validation for the touched area(s) only — the relevant subset of `validation.commands`, scoped when the toolchain supports it.
 - Conventional-commit subject.
 - Push.
-- Open the PR directly with a short body — summary + test plan + rollback (no `Tracking plan:` line, no `Status:` field, no linked run folder).
+- Open the PR directly with a short body — behavioral change + validation result/limits + rollback only when material (no `Tracking plan:` line, no `Status:` field, no linked run folder).
 - Still respect: an isolated worktree on a `fix/` or `feat/` branch; the three-signal `in-progress` lock once the PR opens; label discipline (pipeline + category + meta + priority + risk); the single `om-auto-review-pr` pass in autofix mode (breaking-change contract surfaces inside it).
-- Final summary comment still posts, but compacted to: summary of changes, how to verify, what can go wrong. No "Verification phases" matrix, no "External references honored" section unless actually relevant.
+- Final summary comment still posts using `references/summary-comment-template.md`: the run’s delta, verification evidence and next action, without repeating the PR body.
 
 ## Spec-implementation-run contract
 
-Keep the full contract documented in the rest of the `SKILL.md` file: run folder, Tasks table, HANDOFF/NOTIFY, checkpoint-based verification, 1:1 step-to-commit discipline, full validation gate before flipping to `complete`, `om-auto-review-pr` autofix pass, comprehensive summary comment with all headings.
+Keep the full contract documented in the rest of the `SKILL.md` file: run folder, Tasks table, HANDOFF/NOTIFY, checkpoint-based verification, 1:1 step-to-commit discipline, full validation gate before flipping to `complete`, `om-auto-review-pr` autofix pass, outcome and handoff comment using `references/summary-comment-template.md`.
 
 ## Promotion path (Simple → Spec-implementation)
 

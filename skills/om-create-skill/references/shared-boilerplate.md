@@ -77,9 +77,11 @@ contract in this repo's AGENTS.md):
   (autonomous defaults), run summary (`om-auto-create-pr` step-12 structure),
   evidence (**attach-image-evidence**), release/handback. Post only the subset
   the skill's role needs. User-facing reports and comments follow the
-  Reporting-style rule (`references/rules.md`): full sentences, the why behind
-  every outcome, templates in the skill's report-templates file under
-  `references/` — never improvised terser variants.
+  Reporting-style rules (`references/rules.md`): lead with the outcome and why;
+  keep the PR/issue body as the explanation and comments as updates. Use the
+  skill's own report templates, omit empty optional sections, and preserve
+  evidence, blockers, and exact machine fields. Copy the communication bullets
+  from this skill's rules into the generated skill's own rules.
 - Labels only through the descriptor guards, per the canonical rules
   (`om-open-pr` step 6 / this skill's copy in `references/pr-finalize.md`);
   PRs open ready-for-review unless explicitly incomplete; never `qa-approved`.

@@ -1,48 +1,82 @@
-# Report templates — user-facing output (step 6)
+# Issue body and final report
 
-How `om-prepare-issue` reports back to the user. Reporting style contract:
-`references/rules.md` (Reporting style) — full sentences, explain the why,
-never compress; emojis structure the sections, the text carries the meaning.
+The issue is the durable explanation. Aim for 150–300 words for substantive
+work, less for a small fix; retain necessary evidence and acceptance criteria
+when they need more. Omit unused optional sections and do not repeat a linked
+spec. The ticket-level Definition of Ready in `SDLC.md` is required: problem,
+user, checked outcome, explicit non-goals, classified open questions, and human
+confirmation of any autonomous assumptions. A spec cannot supply missing human
+input.
 
-## Final run report
+## Issue body (step 5)
 
 ```markdown
-## 🎯 om-prepare-issue — {one-line restatement of the brief}
+## 🎯 Change
 
-**Issue mode:** {new issue filed | reused existing issue — comment added | filed fresh with a link to the closed duplicate} — {one full sentence: why this was the right call, e.g. which duplicate was credible or why nothing matched}
+{Who encounters what problem, and what should become possible. For a bug,
+describe reported behavior → expected behavior and say what you verified.}
 
-### 🏷️ Labels
-{One label per line with its emoji and a full-sentence reason — mirror the
-rationale comment posted on the issue; when labels are disabled in config, say
-so here instead of listing labels:}
-- 🐛/✨ `{category}` — {why the brief clearly is this category, full sentence}
-- 🔥/🔺/🔹/🔽 `{priority-*}` — {why this priority was inferred or overridden, full sentence}
-- ⚠️/🟡/🟢 `{risk-*}` — {why the eventual change carries this blast radius, full sentence}
+## 📋 Scope
 
-### 📝 Spec
-{One short paragraph: which spec covers the task and where it lives (repo path,
-plus the spec PR number when one was authored in step 3 or found in flight), or
-that no spec covers it and step-level analysis was embedded in the issue body
-instead — and why that was the appropriate depth for this task.}
+{Affected area and smallest proposed change. State explicit non-goals from the
+user or product brief. Mention shared components, permissions, stored data, or
+public contracts only when material.}
 
-### 📸 Evidence
-{One or two full sentences: how many images were attached and where they render
-on the issue, that local paths were referenced because inline upload was
-unavailable, or that the brief came with no images.}
+## ✅ Done when
 
-### 🔍 Duplicates checked
-{Full sentences: which search queries ran (issues and open PRs), which top
-candidates were read and considered, and why each was rejected — or which one
-was reused and what new detail the comment added.}
+- {Observable outcome proving the request is met.}
+- {Relevant regression, permission, or failure case.}
+
+## 📝 Spec
+
+{Covering spec and PR link, or the gap that the new spec must resolve.}
+
+## 🔍 Implementation notes
+
+{Only without a covering spec: real entry points, likely mechanism marked as
+a hypothesis when unverified, and a few testable implementation steps. For a
+repository with no product code, say so; cite brief ids and acceptance criteria,
+and name the brief or spec as design authority instead of inventing paths.}
+
+## ⚠️ Open questions
+
+{Each unresolved question — blocking / non-blocking. If none remain, state that
+only when the human input confirms it. Include any autonomous assumption and
+its human-confirmation status; an unconfirmed one prevents readiness.}
+
+{Material protected contract and required migration/deprecation path, when any.
+Do not call a hypothesis a confirmed defect.}
 ```
 
-End the report with the chaining reference lines on their own lines, exact
-shape — the one part never decorated, reworded, or wrapped in extra formatting.
-The `Issue:` line is machine-parsed by `om-auto-fix-issue`'s brief mode, so it
-must appear exactly like this:
+Use the user brief and, when present, `${SPECS_DIR}/product-brief.md` from
+`om-discover`: Problems, Target group, Goals, Non-goals, and Open questions.
+Cite ids such as `D03` or `N01` when they bound the ticket. For a missing problem,
+user, outcome, or scope decision, write "unknown" and mark the question blocking;
+do not invent an answer or omit the field to make the ticket appear ready.
+
+A handoff brief's problem, direction, resolved unknowns, and non-goals must all
+survive in the issue, in collapsed detail when substantial. Use a small Mermaid flow only
+when it explains reach or behavior better than prose; distinguish observed from
+proposed connections. Attach supplied images with captions under `## 📸 Evidence`.
+
+## Final report (step 6)
+
+Usually 3–6 lines plus the contract lines:
+
+```markdown
+✅ `om-prepare-issue` filed {title}: {the requested outcome in one sentence}.
+{When reused: existing issue and new detail added or awaiting confirmation.}
+{When relevant: missing ticket-level input or unconfirmed assumption, spec status, or evidence-upload failure.}
+Next: {useful next action and matching skill invocation when helpful}.
+```
+
+Link the issue for its explanation and label rationale. Report duplicate-search
+details only when ambiguity affects what was filed. Do not repeat queries,
+labels, or absent images. End with exact, undecorated lines; include `Spec:` only
+when linked/authored and `PR:` only when step 3 produced a spec PR:
 
 ```text
 Issue: #<number> (link: <full issue URL>)
-Spec: <repo-relative spec path>            <- only when a spec was linked or authored
-PR: #<number> (link: <full PR URL>)        <- only when step 3 authored a spec PR
+Spec: <repo-relative spec path>
+PR: #<number> (link: <full PR URL>)
 ```

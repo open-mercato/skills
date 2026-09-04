@@ -1,60 +1,38 @@
 # Manual-QA instructions comment (step 10)
 
-The additive comment `om-auto-review-pr` posts when the verdict is approved AND
-the PR carries `needs-qa` without `skip-qa` — i.e. it was just routed to
-`merge-queue` with `needs-qa` retained. It tells the QA reviewer exactly what to
-exercise. It does not replace the pipeline-label, claim, or completion comments
-— keep all of them. Do not set the `qa` label yourself; the QA reviewer applies
-it when they start testing. Skip this step entirely when `labels.enabled` is
-`false`.
+Post only after approval when `needs-qa` is present without `skip-qa`, routed to
+`merge-queue`. Skip when `labels.enabled` is false. This skill requests testing;
+it never sets the human-owned `qa` label or grants `qa-approved` from a review.
+Keep claim/completion protocol comments, but link the review instead of
+repeating its verdict or findings here.
 
-Build the instructions from the actual diff, not from generic boilerplate:
+Derive tests from the actual diff and user-visible behavior. Use P0 for
+permissions/sessions/data-scoping/money/reliability, P1 for primary UI/features,
+and P2 for docs/tooling. Give each distinct check once: setup/route, action,
+expected result, and the relevant failure or boundary. Include web cold-load,
+loading state, responsiveness, and mobile checks when applicable. Omit empty
+priorities. Preserve sufficient detail to execute every required QA check.
 
-- Scope the changed surfaces with the changed-file list from **get-pr-diff** for `{prNumber}` and the PR title/body.
-- Translate each user-facing change into concrete click paths (routes or screens), the exact actions to take, and the expected outcome to verify.
-- Group areas by priority tag: **P0** auth/sessions/data scoping/money/event reliability, **P1** primary user-facing features and UI, **P2** docs/tooling/DX. Use the three-block layout **Where QA should click** / **What human QA should verify** / **What can go wrong** per area.
-- For PRs touching web UI surfaces, add perceived-performance checks: cold-load the changed route (screenshot evidence where possible), first useful shell/loading state, interaction responsiveness, mobile viewport.
-- Call out edge cases and data-scoping/permission boundaries explicitly (cross-account isolation, permission-gated actions, empty/error states).
-
-Post it as a single comment via the tracker operation **comment-pr** (preserving multi-line formatting):
+Update the same instructions comment on re-runs via **update-comment**; accept
+an older comment with the `Manual QA instructions` heading when locating it.
 
 ```markdown
 ## 🧪 Manual QA instructions (`needs-qa`)
 
-This PR is approved and requires manual QA (`needs-qa`, no `skip-qa`). It is queued in `merge-queue` but the QA-approval gate holds it until `qa-approved` is added. QA reviewer: when you pick it up, move it to `qa` by swapping the labels (remove `merge-queue`, add `qa`), then run the routes below.
+Exercise {changed behavior}. {Link to approved review and evidence, if available}.
 
-### P0 — {area}
-**Where to click**
-- {route or screen}
-- {route or screen}
+| Priority | Setup and action | Expected result / boundary |
+|----------|------------------|----------------------------|
+| P0 | {role, fixture, route, concrete action} | {expected result; permission or isolation check} |
+| P1 | {route and concrete action} | {observable outcome and relevant empty/error case} |
 
-**What to verify**
-- {concrete action → expected outcome}
-- {concrete action → expected outcome}
-
-**What can go wrong**
-- {concrete regression symptom}
-- {data-scoping/permission/edge-case to probe}
-
-### P1 — {area}
-**Where to click**
-- {route or screen}
-
-**What to verify**
-- {concrete action → expected outcome}
-
-**What can go wrong**
-- {concrete regression symptom}
-
-### Pass/fail
-- All routes pass → remove the `qa` label and add `merge-queue` plus `qa-approved` (this clears the QA-approval gate)
-- Any route fails → remove the `qa` label, add `qa-failed`, and leave a comment describing the failure.
+QA reviewer: move `merge-queue` → `qa` when starting. All checks pass → replace
+`qa` with `merge-queue` and `qa-approved`. A failure → replace `qa` with
+`qa-failed` and report the failed action, expected result, and observation.
+{When qaGate is true: Required QA approval still gates merge. When false:
+needs-qa is advisory in this repository.}
 ```
 
-Rules for this comment:
-
-- Only post it when approving a `needs-qa` PR (approved + `needs-qa` + no `skip-qa`, routed to `merge-queue`). Never post it for a PR with no QA requirement, or one routed to `changes-requested` or any other state.
-- When `qaGate` is `false`, keep the routes but replace the gate sentence with a note that `needs-qa` is advisory in this repository.
-- Never invent routes, fields, or behavior that the diff does not contain. If a change is hard to exercise manually, say so and give the closest observable check.
-- Keep it scoped to THIS PR's changes; do not turn it into a full-app regression script.
-- Never paste secrets, tokens, `.env` content, or real credentials into the instructions.
+Never invent routes, fields, or behavior. For a change that cannot be exercised
+manually, state the limitation and the closest observable check. Never include
+secrets, tokens, `.env` content, or real credentials.

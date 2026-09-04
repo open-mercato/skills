@@ -1,61 +1,55 @@
 # Report templates
 
-The review comment is the deliverable, not a log. Fill this template exactly
-and expand with detail; never improvise a terser variant. Complete sentences,
-the why behind every finding, sections structured with the glossary emojis.
+Use one marker-idempotent review comment as the authoritative finding record.
+Aim for 150–300 words plus evidence; expand when actionable findings need more
+room. Preserve the evidence/pattern/trade-off/acceptance quad for every finding.
 
 ## Review comment
 
-Posted as ONE marker-idempotent comment: find the marker via
-**list-issue-comments** and update in place via **update-comment**; a re-run
-never adds a second review comment to the same PR.
+Find the marker via **list-issue-comments** and update it with **update-comment**;
+attach cited screenshots via **attach-image-evidence**. Re-runs replace the
+existing review rather than posting another copy.
 
 ```markdown
 🤖 `om-ux-review-pr` — evidence-first design review
 
-## 🔍 Design review — <PR title>
+🔍 {Recommended action and the concrete user-task consequence}.
 
-**Contract**: <.uxproof/ found: framework, N tokens, N components | no contract — reviewed against tiers 2-6, no [PRODUCT] findings possible>
-**Screens walked**: <list, with viewport(s) and the tasks performed>
-**Not walked**: <screens skipped and why — missing data, no permissions, broken env; never omit this line when coverage is partial>
+**Contract**: {applicable design-contract path | no contract; no [PRODUCT] claims}.
+**Screens walked**: {screens, tasks performed, viewport(s)}.
+**Not walked**: {only skipped required coverage and the reason}.
 
-### 🔍 Findings (worst first)
+### 🔍 Findings
 
-#### 1. <one-line finding title> `<EVIDENCE-TAG>`
-- **Where**: <screen and element, with the 📸 evidence reference>
-- **Evidence**: <the tagged claim — cite the contract rule, name the standard, or name the heuristic; an assumption is labeled as an assumption>
-- **Pattern**: <what the fix looks like — point at an existing screen in this repo that already does it right when one exists>
-- **Trade-off**: <what the fix costs; "none" is almost never true>
-- **Accept when**: <criterion someone else can verify>
-
-#### 2. …
+1. **{Consequence-first title}** `<EVIDENCE-TAG>`
+   - **Evidence**: {screen/element, observation, screenshot link, applicable rule or source}.
+   - **Pattern**: {specific change; an existing repository pattern when available}.
+   - **Trade-off**: {cost or deliberate choice needed}.
+   - **Accept when**: {observable criterion}.
 
 ### 📸 Evidence
+{Referenced screenshots, each captioned with the screen and state it proves}.
 
-<screenshots attached via the attach-image-evidence operation, each captioned with the screen and state it shows>
-
-### ✅ Summary
-
-- **Strong**: <one sentence on what already works and should stay the reference>
-- **Must change**: <one sentence naming the findings that clear the impact bar>
-- **Opinion**: <one sentence naming what is assumption-tier and safe to overrule>
-
-### 📋 Applied
-
-<One line naming the checks that ran and the ones that did not apply: design
-contract, state matrix, humane gate, repo-local rules. It lets the author tell
-a check that passed from a check that never ran.>
-
-_Advisory review: findings are input for the author, not a merge gate. This skill applies no labels and blocks no merge._
+{Only when consequential: checks not run or findings mostly based on assumptions}.
+_Advisory review; the author decides how to address these findings._
 ```
+
+Omit empty findings, a routine “Strong” section, and lists of checks that passed.
+Keep partial-coverage limitations visible. A clean review states the task that
+worked and the evidence supporting it; do not manufacture criticism or praise.
+In local mode return this report with artifact paths and state on the Contract
+line that nothing was posted. In PR mode the final reply links this review with
+its recommendation and next action in 3–6 lines.
 
 ## Rules for filling it
 
-- Rank by impact × frequency × reach, never by ease of fix.
-- At most about seven findings; fold the tail into one "minor notes" line.
-- Attach every screenshot a finding references; a finding pointing at an
-  invisible screen cannot be verified by the author.
-- ⚠️ marks a finding that needs a human decision rather than a fix (policy,
-  legal, or a deliberate trade-off the team must own).
-- When the walk ran without a contract, say so on the Contract line and emit
-  no `[PRODUCT]` findings.
+- Rank by impact × frequency × reach. Usually five to seven findings suffice;
+  group optional minor notes without hiding actionable user-impact findings.
+- Attach every referenced screenshot; never claim a task was performed from
+  static inspection alone. Label inferred recommendations honestly.
+- Keep verified conformance defects distinct from policy or product choices.
+  Use ⚠️ for a decision the team must own, with the recommended choice and cost.
+- Without a design contract, say so once on the Contract line; no `[PRODUCT]`
+  findings. Cite the exact applicable rule for every conformance finding.
+- Preserve all four finding parts without repeating the consequence in a second
+  summary. Evidence tiers remain governed by `references/evidence-tiers.md`.

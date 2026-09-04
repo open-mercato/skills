@@ -39,14 +39,11 @@ disclosure as its own short paragraph, so the PR is self-documenting and nobody
 mistakes the approval for a green run:
 
 ```markdown
-**CI is still running on this head at the time of approval.** Branch protection plus
-the QA-approval gate hold the actual merge; this approval covers the code, not a
-green run. Checks still pending: {names}. A follow-up comment will report the CI
-outcome.
+**CI pending:** {check names and links} on this head. Required CI and QA approval
+still gate merge. A follow-up will report the CI result.
 ```
 
-Adjust the first clause to the verdict (`at the time of this review` for
-changes-requested). Drop the last sentence when the run will not follow up — never
+Drop the last sentence when the run will not follow up — never
 promise a follow-up the run does not intend to make. When no required check was
 pending, omit the paragraph entirely rather than writing a "CI was green" variant;
 the review's own validation section already covers that.

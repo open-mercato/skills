@@ -1,39 +1,28 @@
-# Report templates — user-facing output (step 11)
+# Final report
 
-How `om-auto-continue-pr-loop` reports back to the user at the end of a resume.
-Reporting style contract: `references/rules.md` (Reporting style) — full
-sentences, explain the why, never compress; emojis structure the sections, the
-text carries the meaning. The PR summary comment has its own template:
-`references/summary-comment-template.md`.
-
-## Final run report
+Report the result in 3–6 short lines, excluding machine fields. Lead with what
+changed and the PR's actual state. Do not repeat the PR body, label rationale,
+branch naming choice or run history. See `references/rules.md` for shared style.
 
 ```markdown
-## 🔁 om-auto-continue-pr-loop — PR #{prNumber}: {title}
-
-**Status:** {✅ complete | 🔁 still in-progress — re-run `/om-auto-continue-pr-loop {prNumber}`} — {one full sentence: every Tasks row now `done` and the final gate green, or which Step, blocker, or timeout stopped this resume}
-**Resume point:** {phase.step} — {one sentence: how it was found (first non-`done` Tasks row, HANDOFF.md, or the `--from` override) and how far this resume got from there}
-**PR:** #{prNumber} ({url}) — {flipped from draft to ready via mark-pr-ready | still a draft because the run remains in-progress}.
-**Branch:** `{branch}` — {one sentence: resumed at the PR head, history untouched}
-**Run folder:** `{run folder path}` — {one sentence: which Tasks rows this resume flipped to `done`; PLAN.md, HANDOFF.md, and NOTIFY.md were updated and pushed so the next resume can re-enter}
-
-### 🎯 What this resume changed
-{Short paragraph: the Steps landed on top of the previous state (one lean commit per Step), the notable autonomous decisions made, and anything deliberately left for a later resume.}
-
-### 🧪 Tests, checkpoints & final gate
-{Full sentences: which tests were added or updated per Step, which checkpoints fired and what their `checkpoint-<N>-checks.md` recorded, the final-gate results when reached (`validation.commands`, the integration suite via `om-integration-tests`, the style pass), the `om-auto-review-pr` verdict and what fixes it landed, and any failure with what was done about it. 📸 Mention the checkpoint/final-gate screenshot evidence posted to the PR when UI was touched, or the logged reason it was skipped.}
-
-### 🏷️ Labels
-{One or two sentences: which labels were preserved, added, or raised and the reasoning (resume semantics: preserve the pipeline state, `needs-qa`/`skip-qa` never both, preserve priority/risk) — or that labels are disabled in config.}
-
-### {✅ Done | 🔁 Re-enter | ⛔ Handed off}
-{Complete: what happens next — review, the QA gate when `needs-qa`, merge hand-off. In-progress: the first remaining `todo` Step that HANDOFF.md names, why the resume stopped there, and the exact re-entry command `/om-auto-continue-pr-loop {prNumber}`. Spec-only guard: explain that implementation ships on its own PR and the hand-off to `om-auto-implement-spec {SPEC_PATH}`.}
+{✅ or 🔁 or ⛔} `om-auto-continue-pr-loop`: {what changed; ready, incomplete or blocked, and why.}
+🧪 {Validation and review result; evidence link and material limits and pending required-check names.}
+{Only when relevant: 📸 UI evidence link, or why required verification did not run.}
+{Next review/QA decision, or first remaining Step and `om-auto-continue-pr-loop {prNumber}`.}
 ```
 
-End the report with the chaining reference lines on their own lines, exact
-shape (the one part never decorated or reworded):
+For a spec-only handoff, name `om-auto-implement-spec {SPEC_PATH}`. Keep an
+incomplete PR's `Status: in-progress` and link the plan or HANDOFF.md when needed
+to resume. Include a material unresolved risk or high-stakes assumption explicitly;
+do not hide it behind the short-report target. Pending required checks still
+gate merge; name any approval also required by the configured QA gate. When CI
+is pending, state whether this run will follow up; do not promise monitoring
+that will not happen or infer required-check status from an unknown check.
+
+End with the exact undecorated chaining lines; include `Issue:` only for a subject
+issue and never emit a nonexistent PR:
 
 ```text
 PR: #<number> (link: <full PR URL>)
-Issue: #<number> (link: <full issue URL>)   <- only when the run has a subject issue
+Issue: #<number> (link: <full issue URL>)
 ```

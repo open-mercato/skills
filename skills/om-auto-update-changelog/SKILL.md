@@ -26,7 +26,7 @@ When the repo already has a `CHANGELOG.md`, match its existing format exactly �
 
 ## Chaining
 
-This skill drafts a `CHANGELOG.md` entry and delegates the PR mechanics to `om-auto-create-pr` — branch, worktree, commit, docs-only gate, labels, the `om-auto-review-pr` autofix pass, and the summary comment. `om-auto-create-pr` opens the PR (checking for an existing changelog PR first) and emits the `PR:` chaining reference line; this skill surfaces that PR URL in its own report. Companion skills: `om-auto-create-pr` (required — the run stops if it is missing) and, optionally, `om-sync-merged-pr-issues`, which consumes the same window of merged PRs.
+This skill drafts a `CHANGELOG.md` entry and delegates the PR mechanics to `om-auto-create-pr` — branch, worktree, commit, docs-only gate, labels, the `om-auto-review-pr` autofix pass, and the summary comment. `om-auto-create-pr` opens the PR (checking for an existing changelog PR first) and emits the `PR:` chaining reference line; this skill surfaces that PR URL in its own report. Companion skills: `om-auto-create-pr` (required — the run stops if it is missing) and, optionally, `om-close-fixed-issues`, which consumes the same window of merged PRs.
 
 ## Workflow
 
@@ -162,7 +162,7 @@ Both report shapes (steps 9–10) live in `references/report-templates.md`; fill
 
 ## Notes
 
-- Runs well after `om-sync-merged-pr-issues` — the two skills consume the same window of merged PRs but mutate different surfaces (issue tracker vs `CHANGELOG.md`).
+- Runs well after `om-close-fixed-issues` — the two skills consume the same window of merged PRs but mutate different surfaces (issue tracker vs `CHANGELOG.md`).
 - The generated entry is intentionally a *draft*: a maintainer fills in Highlights and adjusts the narrative; `om-auto-create-pr` opens the PR in `review` so they see it before merge.
 
 ## Security boundaries

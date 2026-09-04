@@ -33,6 +33,7 @@ One card per skill, with its parameters and the companion skills it works with. 
 | [om-ux-review-pr](om-ux-review-pr.md) | 🧑‍💻 | Design-judgment review of a PR's UI: walks screens in a real browser, posts evidence-tagged findings with done-when criteria. |
 | [om-ux-setup](om-ux-setup.md) | 🧑‍💻 | Extracts the repo's design contract (tokens, components, archetypes, conventions) into committed files. Once per repo. |
 | [om-ux-shape](om-ux-shape.md) | 🧑‍💻 | Turns a vague feature idea into a decided direction: scope, interaction contract, validation plan; AI-necessity gate included. |
+| [om-mockup-prototype](om-mockup-prototype.md) | 🧑‍💻 | Builds a clickable, commentable prototype from storied requirements — anchored review comments, both themes, no build step. |
 | [om-followup-issue-from-pr](om-followup-issue-from-pr.md) | 🧑‍💻 | Turns a PR or PR comment into a tracked follow-up issue. |
 | [om-prepare-test-env](om-prepare-test-env.md) | 🧑‍💻 | Boots the app for QA and tests on any stack and provisions the browser provider. |
 | [om-integration-tests](om-integration-tests.md) | 🧑‍💻 | Creates and runs integration/E2E tests by exploring the running app first. |

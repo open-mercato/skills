@@ -119,7 +119,8 @@ fi
 # file pointers `om-<skill>/references/<file>` (the reference-resolution gate above
 # owns those); and filename forms like `om-filozofia.md` that name a repo doc.
 # Everything else must be a shipped skill or listed here with a reason.
-name_allow=" om-skill om-skills "   # prose: "new om-skill", "the om-skills collection"
+name_allow=" om-skill om-skills om-prototype-comments om-prototype-author "
+# Prose collection terms plus localStorage keys used by om-mockup-prototype's comment engine.
 shipped_names=" $(ls skills | tr '\n' ' ')"
 name_hits=$(grep -rnoE '(^|[^A-Za-z0-9_-])om-[a-z0-9]+(-[a-z0-9]+)*(-?\*|/|\.[a-z0-9]+)?' skills/ 2>/dev/null | sort -u || true)
 while IFS= read -r line; do

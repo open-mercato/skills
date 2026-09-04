@@ -2,19 +2,19 @@
 
 ## 📝 TLDR
 
-Specs in this collection are flat files with no relation between them, while the skill that writes them mandates splitting a bundle into several specs. The split therefore destroys the root at the moment it creates the children. The upstream Open Mercato monorepo re-invented the missing half by hand under five different field spellings, and it has already decayed: ten of the eleven `SPEC-041` children point at a parent path that no longer exists. This spec defines the relation as a contract — `Parent spec:` and `## Sub-specs` in the spec header, a stable id per node in the coordinate space `PLAN.md` already uses, and a shipped resolver that fails a dangling link instead of describing one.
+Specs in this collection are flat files with no relation between them, while the skill that writes them mandates splitting a bundle into several specs. The split therefore destroys the root at the moment it creates the children. The upstream Open Mercato monorepo re-invented the missing half by hand under five different field spellings, and it has already decayed: ten of the eleven `SPEC-041` children point at a parent path that no longer exists. This spec defines the relation as a contract — `Parent spec:` and `## 📝 Sub-specs` in the spec header, a stable id per node in the coordinate space `PLAN.md` already uses, and a shipped resolver that fails a dangling link instead of describing one.
 
 ## 📝 Resolved assumptions (autonomous defaults)
 
 This spec was written by `om-spec-writing --autonomous`; every question below was resolved by the most reversible option and is listed for override before merge.
 
-- **Q1 — Where does the gate execute?** Resolved: the resolver ships as an executable under `skills/om-spec-writing/references/`, invoked by the skill and addable to any consuming repo's `validation.commands`; this repository's own `scripts/lint.sh` additionally calls it against `.ai/specs` as dogfooding. Rationale: `scripts/lint.sh` is scoped to `skills/**` and runs only in this repository's CI, so a gate living there alone would check the collection's own specs and nothing in the repos that install the collection — which is where the contract has to hold. The `om-pipeline-retro` precedent already puts a shipped executable under `references/` so the reference-resolution gate catches a broken pointer in CI.
+- **Q1 — Where does the gate execute?** Resolved: the resolver ships as an executable under `skills/om-spec-writing/references/` and `om-spec-writing` invokes it from its own resolved installation directory during every spec review. This repository's `scripts/lint.sh` additionally invokes that source-tree copy against `.ai/specs` as dogfooding. Rationale: a consuming repository's committed `validation.commands` must run in a clean CI checkout, while an installed skill may live under an agent-specific global directory that CI does not have. This spec therefore makes no generic CI-portability claim: a separate design is required before consumer repositories can provision a repo-owned copy or launcher safely. The `om-pipeline-retro` precedent still supports keeping deterministic logic in a shipped executable instead of prose.
 
 - **Q2 — What shape is the id?** Resolved: derived, not registered. A root spec's id is its own slug; a child's id is `<parent-id>.<n>`, assigned once and never renumbered. Rationale: the alternatives both add surface. A `SPEC-NNN` counter needs a registry file that two branches will increment to the same number, and the upstream letter suffix (`SPEC-041a`) encodes the relation in the filename, which is what this spec is deliberately keeping out of the filename. A derived id needs no central state and no allocation step.
 
 - **Q3 — Does the filename change?** Resolved: no. `{YYYY-MM-DD}-{kebab-case-title}.md` is unchanged, so spec discovery, the `Spec: <path>` chaining line, and `om-followup-issue-from-pr`'s filename recognition all keep working untouched.
 
-- **Q4 — Scope cohesion (the mandatory split check).** Resolved: **split**, and the split has landed. Issue #99 also asked to restore the bundle-detection signals lost when `om-spec-writing` migrated into this collection. That is an independently deployable change to a different part of the skill — the tree contract functions without it and it functions without the tree contract — so per review heuristic 2 it left this spec and is now issue #102. The check that produced this verdict is the one PR #3785 added; applying it to the spec that cites it seemed the least this document could do.
+- **Q4 — Scope cohesion (the mandatory split check).** Resolved: **split**, and the split has landed. Issue #99 also asked to restore the bundle-detection signals lost when `om-spec-writing` migrated into this collection. That independently deployable change left this spec and is now issue #102. A fresh-context review then found that the tree-aware issue lookup and leaf-targeting consumers were also independently deployable integrations. They are now out of scope here and require their own follow-up specs; this document owns only the format, authoring behavior, resolver, and collection-local gate. The check that produced the original verdict is the one PR #3785 added; applying it to the spec that cites it seemed the least this document could do.
 
 ## 📝 Problem Statement
 
@@ -28,7 +28,7 @@ The tree survived that move in exactly one place: the filenames, because those c
 
 Three pieces, in dependency order.
 
-**A relation in the header.** A child declares `Parent spec:` with its parent's id and repo-relative path; a parent lists its children in a `## Sub-specs` section. Both are optional, both are text-anchored the way every other cross-skill marker is, and a spec that uses neither parses exactly as it does today.
+**A relation in the header.** A child declares `Parent spec:` with its parent's id and repo-relative path; a parent lists its children in a `## 📝 Sub-specs` section. Legacy specs may use neither and continue to parse exactly as they do today. Once a spec opts into the contract, its applicable fields follow the required combinations below.
 
 **An id per node.** The root's id is its slug; a child's is `<parent-id>.<n>`, assigned at split time and never reassigned. This is the same two-level coordinate the execution layer already runs on — `PLAN.md`'s `## Tasks` table is keyed `Phase | Step` and `om-auto-create-pr-loop` addresses steps as `X.Y`, including its derived `X.Y-review-fix` and `X.Y-ds-fix` steps — so a capability and the steps that implement it can share one coordinate instead of two unrelated naming schemes.
 
@@ -38,19 +38,17 @@ Alternatives considered. **Filename-encoded ids** (`SPEC-041a`, the upstream sch
 
 ## 📝 Architecture
 
-Three components, one of them new.
+Two components, one of them new.
 
 `skills/om-spec-writing` owns the contract: the header fields in its output format, the id-assignment rule at split time, and the invocation of the resolver during its review step. It gains one `references/` file for the contract detail and one shipped executable.
 
-`skills/om-spec-writing/references/check-spec-tree.sh` is the resolver. It takes a specs directory as its argument, reads every `*.md` below it, and prints one diagnostic per violation before exiting non-zero. It contacts nothing, matching the constraints already met by `references/classify-runs.sh`: POSIX-ish bash, no network, portable between macOS and CI ubuntu, and placed under `references/` so the lint gate's reference-resolution pass proves the skill's pointer to it resolves.
-
-The consumers read the tree rather than owning it. `om-prepare-issue` step 2 treats a parent as covering when one of its children covers the ask and links the child. `om-followup-issue-from-pr` files its `Implement:` issue against the child that changed, not the root. The PR body templates keep `Source doc:` pointing at the leaf that drives the run — a run implements a capability, never a whole tree.
+`skills/om-spec-writing/references/check-spec-tree.sh` is the resolver. It takes a specs directory as its argument, reads every `*.md` below it, and prints one diagnostic per violation before exiting non-zero. It contacts nothing, matching the constraints already met by `references/classify-runs.sh`: POSIX-ish bash, no network, portable between macOS and CI ubuntu, and placed under `references/` so the lint gate's reference-resolution pass proves the skill's pointer to it resolves. `om-spec-writing` resolves the executable relative to its own installed directory; it never assumes a fixed `~/.claude`, `~/.codex`, or repository-local skill path.
 
 This repository's `scripts/lint.sh` calls the resolver against `.ai/specs`. That makes the collection the first consumer of its own contract, and it is the first thing in that script to look outside `skills/**`, which is stated here because a reviewer will notice the scope comment at the top of the file and should see that the widening was intended.
 
 ## 📝 Data Model
 
-The spec header gains three optional fields, written immediately below the title, before `## 📝 TLDR`:
+The spec header gains three contract fields, written immediately below the title, before `## 📝 TLDR`:
 
 ```markdown
 # {Title}
@@ -68,7 +66,13 @@ A parent additionally carries:
 - `{child-id}` — `{repo-relative path}` — {one-line scope}
 ```
 
-Field semantics. `Spec id` is a stable string, `[a-z0-9-]+` for a root and `<parent-id>.<n>` for a child, unique across the specs directory. `Parent spec` appears at most once. `Depends on` expresses ordering between specs that are not parent and child, which is a real relation upstream already writes and which the resolver must therefore not reject. Both link fields carry the id and the path: the id is the identity and survives a move, the path is what a reader clicks and what the resolver checks.
+Activation and field semantics. Header fields are recognized only as unformatted, line-start fields in the contiguous metadata block between the document's first level-one title and its first level-two heading. `## 📝 Sub-specs` is recognized only as an actual line-start heading. The parser ignores fenced code blocks, inline code, quoted examples, and prose that merely names an anchor.
+
+A document opts into this contract only when its header block contains `Spec id:`. It MUST then declare exactly one valid `Spec id:`. A document without `Spec id:` remains a legacy document and is ignored even if it uses a pre-contract `Parent spec:`, `Depends on:`, or `## 📝 Sub-specs` spelling. This single activation marker preserves existing bare-line and table-based conventions without making a partial migration ambiguous; their presence beside opted-in specs is valid.
+
+`Spec id` is unique across the specs directory. A root id is `[a-z0-9-]+`; at creation it defaults to the filename slug after removing the leading `{YYYY-MM-DD}-`, then is stored in the header and never recomputed after a file rename or move. A child id is `<parent-id>.<n>` and requires exactly one `Parent spec`; a root must not declare `Parent spec`. `Parent spec` and `Depends on` targets MUST be opted-in documents whose declared ids and repo-relative paths match the reference. A `## 📝 Sub-specs` entry likewise targets an opted-in child, and the child must carry the reciprocal `Parent spec`. An unrecognized legacy table row such as `| **Parent spec** | path |` does not activate the contract, but an opted-in document cannot point at that legacy document until it gains a `Spec id`.
+
+`Depends on` expresses ordering between specs that are not parent and child. Dependency edges must be acyclic, including no self-dependency, because every target is required to ship first. Both link fields carry the id and the path: the id is the stable identity, while the repo-relative path is what a reader follows and what the resolver checks.
 
 The `Supersedes` relation upstream also uses is deliberately not modeled. It describes a spec's lifecycle rather than the tree, and adding it here would invite the resolver to reason about archived documents.
 
@@ -76,19 +80,21 @@ The `Supersedes` relation upstream also uses is deliberately not modeled. It des
 
 The resolver is the only new interface.
 
-```
-sh references/check-spec-tree.sh <specs-dir>
+```text
+sh {resolved-om-spec-writing-dir}/references/check-spec-tree.sh <specs-dir>
 ```
 
-Exit `0` when every relation resolves, `1` on any violation, `2` on a usage error such as a missing directory. Each violation prints one line of the form `<file>: <what is wrong>`, so a caller can surface the list without parsing structure. The checks:
+The executing skill resolves `{resolved-om-spec-writing-dir}` from its own installation and runs the command from the repository root; this collection's lint uses the source path `skills/om-spec-writing/references/check-spec-tree.sh`. Exit `0` when every relation resolves, `1` on any violation, and `2` on a usage error such as a missing directory. Each violation prints one line of the form `<file>: <what is wrong>`, so a caller can surface the list without parsing structure. The checks:
 
 - a `Parent spec` path that does not exist, or whose id does not match the id declared at that path;
 - a `Parent spec` with no matching `## 📝 Sub-specs` entry in the parent, and the reverse;
 - a `Depends on` pointing at a missing file or an unknown id;
+- a direct or transitive `Depends on` cycle;
 - two specs declaring the same `Spec id`;
-- a child id that is not `<parent-id>.<n>`.
+- a child id that is not `<parent-id>.<n>`;
+- an opted-in document with more than one `Spec id` or an invalid field combination.
 
-A specs directory with no ids at all is not a violation. The contract is opt-in per document, which is what keeps the change additive.
+A specs directory with no `Spec id:` activation markers is not a violation. Unrelated legacy documents may coexist with opted-in documents, but a contract relation may target only another opted-in document. This per-document activation rule makes migration explicit and keeps the change additive.
 
 ## 📝 UI/UX
 
@@ -104,37 +110,48 @@ None. The deliverable is a markdown contract, a shell script, and edits to skill
 
 **A repo has no specs directory, or the config names a different path.** The resolver exits `2` and the caller reports the misconfiguration; it never treats an absent directory as a clean tree, which would make the gate pass vacuously — the failure mode issue #63 is separately filed about for `validation.commands`.
 
-**A consuming repo installs the collection but never adds the resolver to its gate.** The contract degrades to advisory for that repo, exactly as today. `om-spec-writing` still runs the resolver during its own review step, so the specs it writes stay consistent; what is lost is enforcement over specs written by hand.
+**A consuming repo runs CI without installed agent skills.** No generic CI gate is promised by this spec. `om-spec-writing` runs the resolver from its own installed directory during authoring and review, while this collection's source repository runs its copy from `scripts/lint.sh`. A repo-owned distribution mechanism for other consumers is a separate capability; until that exists, specs written by hand outside `om-spec-writing` do not receive automatic CI enforcement.
+
+**Legacy and contract documents coexist.** A legacy document without `Spec id:` is ignored even when it contains an older relationship spelling. Adding one valid `Spec id` opts the whole document in, after which every relation from it must resolve to another opted-in document. This makes migration deliberate while preserving old specs byte-for-byte.
 
 ## 📝 Risks & Impact Review
 
-The blast radius is small and the format change is additive under `BACKWARD_COMPATIBILITY.md` §5: every field is optional, no existing marker text changes, and the `Spec: <path>` chaining line is untouched. A spec written before this contract validates unchanged.
+The blast radius is small and the format change is additive under `BACKWARD_COMPATIBILITY.md` §5: legacy documents without `Spec id:` are ignored, no existing marker text changes, and the `Spec: <path>` chaining line is untouched. A spec written before this contract remains valid unchanged; it gains enforcement only after it opts in with a `Spec id`.
 
-The real risk is a false gate. A resolver that rejects a legitimate document teaches its users to bypass the gate, and a gate that is routinely bypassed is worse than none. Two design choices bound that: the checks are structural rather than semantic — path resolves, ids agree, links are symmetric — and a specs directory using none of the fields passes. Nothing in the resolver judges content.
+The real risk is a false gate. A resolver that rejects a legitimate document teaches its users to bypass the gate, and a gate that is routinely bypassed is worse than none. Two design choices bound that: the checks are structural rather than semantic — path resolves, ids agree, links are symmetric — and a specs directory with no `Spec id:` activation marker passes. Nothing in the resolver judges content.
 
-Adopting upstream's field spellings rather than inventing new ones bounds the second risk. The repo-local `.ai/skills/om-spec-writing` override in the monorepo keeps working, and the specs already written against the convention validate without a migration.
+Adopting upstream's field spellings rather than inventing new ones bounds the second risk. Existing table-based spellings are deliberately not parsed as the new exact anchors, so the repo-local `.ai/skills/om-spec-writing` override and its existing documents keep working without migration. Migrating one of those documents is explicit: add `Spec id` and convert all of its participating relations together.
 
-Rollback is a revert. The skill edits are text, the resolver is one file, and the `scripts/lint.sh` call site is one line; removing them leaves specs that carry three harmless optional fields.
+Rollback is a revert. The skill edits are text, the resolver is one file, and the `scripts/lint.sh` call site is one line; removing them leaves any authored metadata as harmless prose.
 
 ## 📋 Phasing
 
-**Phase 1 — the contract and its gate.** The header fields, the id rule, the resolver, and this repository's own gate wiring. Independently shippable: after it, specs can declare a tree and CI proves the declarations resolve.
-
-**Phase 2 — the consumers.** `om-prepare-issue`, `om-followup-issue-from-pr`, and the PR body templates learn to read the tree. Independently shippable, and deliberately second: there is no value in teaching consumers to read a relation that no spec yet declares.
+**Phase 1 — the contract and its gate.** The header fields, activation rule, id rule, authoring behavior, resolver, and this repository's own gate wiring. This is the complete delivery owned by this spec: afterward, `om-spec-writing` can author and verify trees, and the collection's CI proves its own declarations resolve.
 
 ## 📋 Implementation Plan
 
-**Phase 1**
-
 1. Write `skills/om-spec-writing/references/spec-tree.md`: the field definitions, the id rule, the split procedure, and the resolver's contract. Verify: `bash scripts/lint.sh` resolves the new pointer.
 2. Add the fields to the spec output format in `skills/om-spec-writing/SKILL.md` and the id-assignment rule to step 3's split branch, keeping the body within its 20000-char budget by holding detail in the reference. Verify: lint passes, including the body-size check.
-3. Ship `skills/om-spec-writing/references/check-spec-tree.sh` implementing the five checks. Verify: it exits 0 on this repository's `.ai/specs` and non-zero on each fixture below.
-4. Add fixtures under the skill's references and assert each failure mode: a dangling parent path, a one-way link, a duplicate id, a malformed child id, and a child whose parent moved to a subdirectory. Verify: each fixture fails with its own diagnostic line.
+3. Ship `skills/om-spec-writing/references/check-spec-tree.sh` implementing the contract checks. Verify: it exits `0` on this repository's `.ai/specs` and non-zero on each failing fixture below.
+4. Add fixtures under the skill's references and assert each failure mode: a dangling parent path, a one-way link, a duplicate id, a malformed child id, a direct dependency cycle, a transitive dependency cycle, a contract document pointing at a legacy document, and a child whose parent moved to a subdirectory. Add passing fixtures for an all-legacy directory (including legacy relation spellings) and unrelated legacy/contract documents coexisting. Verify: each failing fixture emits its own diagnostic line and both compatibility fixtures exit `0`.
 5. Call the resolver from `scripts/lint.sh` against `.ai/specs`, and update the script's scope comment to record that the gate now covers the specs directory. Verify: `bash scripts/lint.sh` prints `Lint OK` on this branch.
 6. Record the field names and the id rule in `BACKWARD_COMPATIBILITY.md` §5 as a protected cross-skill format. Verify: the section names the fields and the additive-only rule.
 
-**Phase 2**
+## 📝 Out of Scope
 
-7. `om-prepare-issue` step 2: treat a parent as covering when a child covers the ask, and link the child. Verify: the step names the tree walk and the link target.
-8. `om-followup-issue-from-pr` step 3: file the `Implement:` issue against the changed child. Verify: the step states which node it targets.
-9. Update the `Source doc:` guidance in both PR body templates to say the leaf, and sync the change across the standard-file copies per the cross-skill contract §5, listing the skills that change. Verify: lint passes and the copies agree.
+The following consumers are independently deployable and require separate follow-up specs after the core contract exists:
+
+- tree-aware covering-spec discovery in `om-prepare-issue`;
+- leaf-targeted `Implement:` issue creation in `om-followup-issue-from-pr`;
+- leaf-specific `Source doc:` guidance across PR body templates, including the standard-file sync audit required by Cross-skill contract §5;
+- a repo-owned resolver provisioning or launcher mechanism that makes the gate portable to arbitrary consuming-repository CI checkouts.
+
+## 📋 Acceptance Criteria
+
+- An all-legacy specs directory exits `0`, including documents with pre-contract relationship spellings, and unrelated legacy documents can coexist with an opted-in tree.
+- Adding exactly one valid `Spec id` in the header opts a document in; the same text in prose or a fenced example does not. Duplicate or malformed activation fields exit `1` with a file-specific diagnostic.
+- Every parent/child relation resolves by both id and repo-relative path in both directions; dangling, one-way, duplicate, and malformed relations exit `1`.
+- Every dependency resolves by id and path, and direct or transitive dependency cycles exit `1`.
+- Moving a parent within the specs directory produces a diagnostic that identifies the stable id and stale path; updating only the stored path restores a clean result without changing the id.
+- `om-spec-writing` resolves and runs the shipped executable from its own installed directory without assuming an agent-specific global path.
+- This collection's `bash scripts/lint.sh` invokes the source-tree resolver against `.ai/specs` and still prints `Lint OK` on a clean tree.

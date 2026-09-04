@@ -135,9 +135,10 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
    - Assign a priority tag: **P0** auth/sessions/data-scoping/money/reliability;
      **P1** primary user-facing features and UI; **P2** docs/tooling/DX. Prefer
      the PR's existing `priority-*` label when present.
-   - For each affected surface write three blocks: **Where to click** (routes),
-     **What to verify** (concrete action → expected outcome), **What can go
-     wrong** (regression symptom, permission/empty/error edge case).
+   - For each affected surface record the route/setup, concrete action, expected
+     outcome, and relevant regression/permission/empty/error boundary once. Use
+     the scenario table in `references/report-templates.md`; do not repeat it
+     as separate click, verify, and failure lists.
    - For web UI surfaces include perceived-performance checks: cold-load the
      changed route, confirm a useful shell/loading state appears, check
      interaction responsiveness, and smoke the mobile viewport.
@@ -221,9 +222,9 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
 
 14. **Report back.** Build the final run report from the "Final run report"
     template in `references/report-templates.md` — the verdict with a
-    full-sentence reason, the environment driven, where the 📸 evidence lives,
-    the 🧪 follow-up-test outcome, and the 🏷️ label outcome, each explained in
-    full sentences rather than compressed key:value pairs.
+    concrete reason, evidence link/path, meaningful coverage limits, and next
+    action. Keep the scenario and environment details in the evidence report;
+    mention labels only when a requested sign-off or failure changed them.
 
     In PR mode, end the report with the `PR: #<number> (link: <url>)` reference
     line — plus `Issue: #<number> (link: <url>)` when the run has a subject

@@ -1,6 +1,6 @@
 # Brief template
 
-The payload `om-brainstorm` writes in workflow step 6 (ramps 2–5), consumed cold by the routed skill. Fill every section; write "none" rather than deleting a heading — humans and downstream skills key on the structure.
+The payload `om-brainstorm` writes in workflow step 6 (ramps 2–5), consumed cold by the routed skill. Preserve the Problem, Agreed direction, Resolved unknowns, and Non-goals headings used by the routed skills. Keep answers concrete and remove repetition; omit optional affected-area detail when unknown. A necessary empty section gets one short statement, not a placeholder table.
 
 ```markdown
 # {one-line goal}

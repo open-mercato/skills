@@ -38,7 +38,7 @@ Labels come from the config's taxonomy, always through the `apply_label` guard f
 
 ## Summary comment
 
-Every run ends with a single comprehensive summary comment the human reviewer can read top-to-bottom without clicking into the diff, posted via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. The structure is the engine's summary-comment template; it is never posted before the automated review loop finishes, never claims a completion that was not reached, and never contains secrets.
+Every run ends with one outcome and handoff comment (delta, verification result or evidence link, and next action; no repeated PR-body or label narrative), posted via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. The structure is the engine's summary-comment template; it is never posted before the automated review loop finishes, never claims a completion that was not reached, and never contains secrets.
 
 ## Marker emission
 
@@ -58,4 +58,4 @@ This skill never opens a PR itself; it enforces the contract at two points:
 
 - **Before invoking an engine (step 2)** — the reuse guard decides the route: an open **implementation PR** already referencing the spec (`Source doc:` / `Refs #{SPEC_PR}`) is resumed via `om-auto-continue-pr` / `-loop`; otherwise `om-auto-create-pr` opens the one implementation PR. The **spec PR is never the implementation PR** — it stays design-only, and the implementation PR links it with `Refs #{SPEC_PR}`. One implementation PR per spec, always.
 - **Finish-state confirmation (step 4)** — after the engine reports the PR complete, confirm: implementation PR **ready** (the engine flips its draft PR to ready via **mark-pr-ready** once `Status: complete` — except under a `⚠ NEEDS HUMAN CONFIRMATION` assumptions guard, which keeps the PR draft for the user); the full label set above present, with user-facing PRs carrying `needs-qa` and never `qa-approved` / `qa-self-verified`; the engine's summary comment posted, with the UI-verification outcome appended to it or posted as its own evidence comment; when `ISSUE_ID` is known, the PR body carries `Closes #${ISSUE_ID}` and the plan the `Source doc:` line. Anything missing that this skill can add through the descriptor operations (a label via the guard, the UI outcome via **comment-pr**), add; anything engine-owned that is wrong, report as a defect rather than papering over.
-- Then report spec path, engine used, branch, PR URL, validation/review outcome, UI verification outcome — and emit the chaining reference lines exactly as above.
+- Report once using `references/report-templates.md`: outcome, material verification limits and next action, with exact engine/chaining fields. Keep detailed scope and label reasoning in the existing PR body/comments.

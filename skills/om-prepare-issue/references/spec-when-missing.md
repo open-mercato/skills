@@ -24,7 +24,7 @@ If any fails, do not open a spec PR — fall back to step 4's inline guidance.
 
 1. **Create the tracking issue first** (step 5) so there is a stable number to
    link the spec and PR to. Use the normal `Implement: <feature>` title and body;
-   in the `## Spec` section, leave a placeholder noting a spec PR is being authored.
+   in the Spec section, state that the design is being authored; replace that status with the completed link.
 2. **Delegate spec authoring to `om-auto-write-spec {issueId}`** — the dedicated
    spec-authoring skill. Follow its workflow verbatim: it claims the issue, checks
    no spec PR is already in flight (**search-prs** — it never opens a duplicate),
@@ -45,7 +45,7 @@ If any fails, do not open a spec PR — fall back to step 4's inline guidance.
    recommendation. The run ends with the `Spec:` and `PR:` reference lines — use them
    in procedure item 3 below.
 3. **Link the spec back onto the issue** via **comment-issue**: post the spec path
-   and the spec PR link, and update the issue body's `## Spec` section to reference
+   and the spec PR link, and update the issue body's Spec section (with or without the glossary emoji) to reference
    them. The issue now points at a real, reviewable design.
 
 ## After this branch

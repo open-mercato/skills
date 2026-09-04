@@ -52,7 +52,7 @@ Label emoji map (decoration only — parsers key on the backticked label text): 
 
 ## Summary comment
 
-Every run ends with a single comprehensive summary comment the human reviewer can read top-to-bottom without clicking into the diff. Post it via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. Full structure and rules: `references/summary-comment-template.md`. Never post it before the automated review loop (step 12) finishes, never claim a completion you did not reach, and never paste secrets into it.
+Every run ends with one outcome and handoff comment: the run’s delta, verification result or evidence link, and next action. Keep the enduring explanation in the PR body; do not repeat its scope or label rationale. Post it via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. Full structure and rules: `references/summary-comment-template.md`. Never post it before the automated review loop (step 12) finishes, never claim a completion you did not reach, and never paste secrets into it.
 
 ## Marker emission
 

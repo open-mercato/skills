@@ -29,7 +29,7 @@ The classification is deterministic. Evidence comes from the tracker, the verdic
 
 5. **Read the ranking.** The classifier ranks causes by the wall-clock hours they cost beyond the median clean run, ties broken by how many requests carry each cause. Do not re-order it by intuition. Two numbers deserve a sentence each in the report: the share of runs that needed no second pass, and the count of second passes whose cause the record does not state.
 
-6. **Report.** Fill the templates in `references/report-templates.md` exactly and expand them with detail. Every row carries a full-sentence "why" cell; the header states the window, the number of requests examined, and any degradation the classifier flagged (missing comment timestamps, labels disabled).
+6. **Report.** Use `references/report-templates.md`: lead with the largest recorded delay, show the classifier's counts and ranking, and keep per-request evidence in collapsible detail. State the window, coverage, and every material data limitation; do not infer causation from the timing totals.
 
 7. **Offer the handoff.** Name the top-ranked cause and offer to file it with `om-prepare-issue`, passing the cause, the requests carrying it, and the hours it cost as the brief. Invoke it by name and let it re-derive its own deduplication and labels. Stop and wait — filing is the user's call, and this skill takes no tracker action of its own.
 

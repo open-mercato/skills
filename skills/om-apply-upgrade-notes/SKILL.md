@@ -107,9 +107,9 @@ customization without asking.
      `**operation-name**` references when in doubt), the browser provider resolves
      to an existing descriptor, and the config still parses (`jq . "$CONFIG"`).
    - Leave the changes uncommitted for review, then print the final report per
-     `references/report-templates.md` — full sentences covering the synced
-     descriptors (✅), config changes (📋), custom-provider gaps (⚠️), and the
-     notable-upgrade entries checked, structured with the glossary emojis.
+     `references/report-templates.md` — effect of changed operations/config,
+     verification outcome, and actionable conflicts or provider gaps. Link the
+     diff; omit no-change sections and routine upgrade-log narration.
 
 ## Rules
 

@@ -15,7 +15,7 @@ Before opening anything, check whether a PR already exists for this branch (or o
 `om-open-pr` is an **optional** enhancement — a repo may install this skill without it, and it must still work. When `om-open-pr` is absent, perform the mechanics inline:
 
 1. Commit the worktree changes with a conventional-commit subject; push the branch.
-2. Open the PR via the tracker operation **create-pr** against `$BASE_BRANCH`, with a conventional-commit-prefixed title scoped to the primary area and a body that carries the linkage line (`Fixes #{issueId}`), the fix summary, tests added, and the breaking-changes statement.
+2. Open the PR via the tracker operation **create-pr** against `$BASE_BRANCH`, with a conventional-commit-prefixed title scoped to the primary area. Lead the body with the trigger and corrected behavior, then the relevant mechanism, test evidence, and any material compatibility/rollout risk; omit empty sections. Keep the linkage line (`Fixes #{issueId}`), any `LOW_CONFIDENCE` flag, and all existing parsed `Tracking plan:` / `Status:` fields. Aim for 150–300 words; keep detailed findings and QA in their linked reports.
 3. Normalize labels per the section below.
 4. Transfer the chain lock onto the PR — **assign-pr** `$CURRENT_USER`, `apply_label "in-progress" {prNumber}`, and the 🤖 hand-off comment naming `om-auto-review-pr` — exactly as `om-open-pr --handoff` would (`references/claim-pr.md`, chained hand-off).
 5. Then hand the issue back and release the issue's `in-progress` lock per `references/claim-pr.md`.

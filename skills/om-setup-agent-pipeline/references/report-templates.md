@@ -1,27 +1,18 @@
-# Report templates — final report (step 10)
+# Setup report
 
-How `om-setup-agent-pipeline` reports back to the user after a setup or
-re-run. Reporting style contract: `references/rules.md` (Reporting style) —
-full sentences, explain the why, never compress; emojis structure the
-sections, the text carries the meaning. This skill defines no chaining
-reference lines.
-
-## Final run report
+Use after setup or refresh. Follow `references/rules.md`; report the result and
+any remaining action, usually in 3–6 lines. This skill emits no chaining fields.
 
 ```markdown
-## 🎯 om-setup-agent-pipeline — {repo}
-
-**Result:** {✅ pipeline configured | ✅ config refreshed | ⚠️ configured with gaps} — {one full sentence on the outcome and what changed this run}
-
-### 📋 What was written
-{One bullet per artifact, in full sentences: `.ai/agentic.config.json` (which values were detected vs answered), the tracker descriptor installed at `.ai/trackers/{tracker}.md`, any companion code-host descriptor installed beside a split tracker, the browser descriptor at `.ai/browsers/{provider}.md`, labels created via the taxonomy (and which already existed), and each project doc generated (SDLC.md, AGENTS.md, CODE_REVIEW.md, BACKWARD_COMPATIBILITY.md). Say explicitly what already existed and was left untouched, and why — existing files are never overwritten.}
-
-### {✅ Cross-skill coverage complete | ⚠️ Missing skills}
-{When complete: one sentence saying every skill the installed skills reference is present. When not: list each missing skill with the paste-ready `npx skills add` command, and one sentence explaining which installed skill needs it and what degrades until it is installed.}
-
-### 🚀 What is unlocked
-{Full sentences: the collection's entry points are `om-auto-create-pr` (ship a task as a PR), `om-auto-review-pr` (review a PR), and `om-merge-buddy` (what can merge now). Point at `SDLC.md` as the process reference for humans; at `.ai/skills/<skill-name>/` for repo-local per-skill customization; at `.ai/trackers/{tracker}.md` for tracker-operation overrides; and at `.ai/browsers/{provider}.md` for the browser automation contract.}
-
-### ⚠️ Follow-ups
-{Only when something needs the user: an unshipped tracker/browser descriptor scaffolded from TEMPLATE.md with the operations still to fill in, docs the user opted out of, or the pending config commit. Omit when there is nothing left to do.}
+✅ `om-setup-agent-pipeline` — {configured | refreshed | configured with gaps}.
+{Files written and the consequential settings: tracker/browser and any companion code-host descriptor, QA gate, validation. Link the config.}
+{Coverage passed, or missing skills with their install command and affected capability.}
+{Next entry point for the user's task, or the unresolved operation/commit needed to use it.}
 ```
+
+Use ⚠️ for gaps. Include detected-versus-chosen values when they need review;
+the config holds the full settings. Report existing files left in place only
+when that leaves a gap or explains why a requested change was not made. A custom
+provider scaffold must name unfinished operations. For a split tracker, identify
+the companion code-host descriptor and any missing dependency. Do not repeat a catalog of
+all skills, docs, labels, and customization paths after successful setup.

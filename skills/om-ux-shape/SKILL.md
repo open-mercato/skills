@@ -134,9 +134,9 @@ only when adapting the process or evolving this skill.
    shape in `references/report-templates.md`, and apply
    `references/quality-rubric.md` before delivering: a zero in diagnosis, user
    outcome, coherent scope, AI necessity, or AI control and recovery means the
-   result is not ready. Close with the one-line **Applied** note the template
-   defines, so the reader can see which checks ran and which did not apply
-   instead of guessing what was considered.
+   result is not ready. Disclose material evidence limits: distinguish inspected or tested behavior
+   from proposals and assumptions. Keep routine framework checks internal;
+   retain the concrete states and recovery paths needed for implementation.
 
 ## Response behavior
 

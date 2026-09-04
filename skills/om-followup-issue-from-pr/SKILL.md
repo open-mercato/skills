@@ -51,7 +51,7 @@ When a plain PR link is pasted, always run the design-doc check (step 3) in addi
 
 5. **Gather PR context** for a useful issue body: **get-pr** on the target repo with the fields `number,title,url,author,body,headRefName,labels`.
    - The PR author's login is the fallback assignee (the original PR author).
-   - Pull the Problem / Root Cause / What Changed summary from the PR body to give the follow-up context. Note any `Fixes #NNNN` the PR references so the issue can link back to it.
+   - Read the PR body for current behavior, proposed behavior, and scope. Accept `What changes` / `Scope` sections as well as legacy `Problem` / `Root Cause` / `What Changed` headings; do not depend on a heading match or copy the source summary. Note any `Fixes #NNNN` the PR references so the issue can link back to it.
 
 6. **Decide the assignee.**
    - If the actionable comment **@-mentions a specific person** (e.g. "@alice can you…"), assign to that mentioned login — the reviewer is directing the work at them.
@@ -59,7 +59,7 @@ When a plain PR link is pasted, always run the design-doc check (step 3) in addi
 
 7. **Compose the issue.**
    - **Title:** a concise, action-oriented restatement of the ask (not a copy of the comment).
-   - **Body:** include
+   - **Body:** follow `references/report-templates.md` and include
      - a `## Follow-up from #<num>` header linking the PR,
      - 2–4 lines of context (what the PR did, why this follow-up exists),
      - the reviewer's request, **quoting the actionable excerpt of the original comment** (credential-looking material redacted per step 2) and linking it,
@@ -72,13 +72,13 @@ When a plain PR link is pasted, always run the design-doc check (step 3) in addi
 
 9. **Create the tracking issue (design-doc mode).** Only when step 3 found a qualifying document and step 4 found no existing tracking issue.
    - **Title:** `Implement: <feature title>` — derive the feature title from the document's H1 / `<slug>`, not a date.
-   - **Body:** the tracking-issue body template in `references/report-templates.md` (📝 Design doc, 🎯 Summary, 📋 How to implement, `Related:` footer).
+   - **Body:** the tracking-issue template in `references/report-templates.md` (user outcome, scope/completion, linked design, merge prerequisite, and `Related:` footer).
    - **Labels:** `feature` (or `refactor`/`bug` if the document is clearly corrective). Optionally mirror priority/risk from the PR. **Never** apply pipeline labels (`review`, `qa`, `merge-queue`, …) — this is a tracking issue, not a PR. Only apply labels that already exist in the target repo; skip labels entirely when `labels.enabled` is `false`.
    - **Assignee:** the design PR author (`author.login`) — the natural owner; the user can reassign.
    - **Create:** **create-issue** on the target repo with the title, assignee, labels, and body above.
-   - **Cross-link:** after creation, leave a one-line comment on the design PR via **comment-pr** pointing at the tracking issue (e.g. `Tracking implementation in #<issue>`), so the document and its tracking issue reference each other.
+   - **Cross-link:** after creation, leave the marker-idempotent cross-link comment from `references/report-templates.md` on the design PR via **comment-pr**, pointing at the tracking issue, so the document and its tracking issue reference each other.
 
-10. **Report** per `references/report-templates.md` — full sentences per issue created: its URL, the assignee and why they were chosen, and what was extracted (the actionable ask for comment mode, the document and its feature for design-doc mode). Make clear which were follow-up issues (comment mode) and which were tracking issues (design-doc mode), note any tracking issue that already existed and was reused, and end with the `Issue:` chaining reference line(s) in their exact shape.
+10. **Report** per `references/report-templates.md`: what each created or reused issue tracks, its assignee, and any unresolved assignment or design-merge prerequisite. Link the issue rather than repeating its source context or labels. End with the exact `Issue:` chaining reference line for each issue created.
 
 ## Rules
 

@@ -48,52 +48,20 @@ This skill only **creates** issues. To bring an issue that **already exists** up
 
    Reduce the analysis to numbered, testable steps a future implementer can follow without re-exploring the repo. Reference real file paths and function names.
 
-5. **Compose and create the issue.** Title: action-oriented and specific — `Implement: <feature>` for features, `Fix: <symptom>` for bugs. When the brief names a handoff file (a `— brief: <path>` suffix from `om-brainstorm`), embed its content — problem, agreed direction, resolved unknowns, non-goals — in the body sections below: the tracker copy is the durable one, and the issue must never depend on the local file. Body:
+5. **Compose and create the issue.** Title: action-oriented and specific — `Implement: <feature>` for features, `Fix: <symptom>` for bugs. When the brief names a handoff file (a `— brief: <path>` suffix from `om-brainstorm`), embed its content — problem, agreed direction, resolved unknowns, non-goals — in the issue body: the tracker copy is durable and must not depend on the local file. Use the issue-body template in `references/report-templates.md`: explain what changes for whom and why, name the affected area, and define observable completion. Separate the reporter's claims from behavior you verified. Link the spec for detailed design; include concrete implementation notes only when there is no covering spec. Omit empty optional sections; the ticket-level readiness information below is required. Add the relevant pickup command (`om-auto-fix-issue {thisIssueNumber}` or, after step 3, `om-auto-implement-spec {specPrNumber}`) once; the spec PR remains design-only.
 
-   ```markdown
-   ## Summary
-   - {one-line goal from the brief}
-   - Problem: {what hurts, or what is missing}
-   - Who has it: {user or role}
-   - Expected outcome: {what is true afterwards, and how it will be checked}
-
-   ## Spec
-   - Implementation spec: `{spec path}` ({link})      <!-- when step 2 found one, or step 3 authored one (also note the spec PR #) -->
-
-   ## Analysis                                         <!-- only when no spec covers it -->
-   - Affected areas: {modules/files}
-   - {expected vs actual, root-cause hypothesis for bugs}
-
-   ## How to implement
-   1. {concrete step — file/function level}
-   2. {concrete step}
-   3. {tests to add and where}
-
-   ## Compatibility notes
-   - {None | protected surfaces touched and the required migration path per BACKWARD_COMPATIBILITY.md}
-
-   ## How to pick this up
-   - Run `om-auto-fix-issue {thisIssueNumber}` (it handles both bugs and features), or hand the spec/analysis to `om-auto-create-pr` as the brief. When step 3 authored a spec PR, implement with `om-auto-implement-spec {specPrNumber}` or `om-auto-fix-issue {thisIssueNumber}` — the spec PR stays design-only; implementation ships on its own PR referencing it.
-
-   ## Out of scope
-   - {non-goals, so the implementer does not gold-plate}
-
-   ## Open questions
-   - {question} — blocking | non-blocking      <!-- or: none -->
-   ```
-
-   The Summary, Out of scope, and Open questions sections are the ticket-level tier of the Definition of Ready in `SDLC.md`; fill them from the brief and, when `${SPECS_DIR}/product-brief.md` exists (written by `om-discover`), from its Problems, Target group, Goals, Non-goals, and Open questions — cite the brief's ids (`D03`, `N01`) where a decision or non-goal bounds the ticket. Never invent a problem or a user that neither names — write "unknown" and mark the question blocking instead.
+   Meet the ticket-level Definition of Ready in `SDLC.md`: state the problem and who has it, expected outcome and how it is checked, explicit non-goals, and open questions marked blocking or non-blocking (or confirmed none). Fill these from the user brief and, when `${SPECS_DIR}/product-brief.md` exists (written by `om-discover`), its Problems, Target group, Goals, Non-goals, and Open questions. Cite ids such as `D03` or `N01` where a decision or non-goal bounds the ticket. Never invent a problem or user that neither source names: write "unknown" and mark the question blocking. Any autonomous assumption needs human confirmation before the ticket is ready; a spec cannot supply missing ticket-level decisions.
 
    Create it via **create-issue** with title, body, `--assignee` when passed, and the **SDLC labels** through the guards (a missing label degrades to a logged skip; `labels.enabled: false` skips all):
 
    - One category label the brief clearly is: `feature`, `bug`, `refactor`, `security`, `dependencies`, or `documentation`.
    - Exactly one **priority** label and exactly one **risk** label, inferred from the brief per the inference rules in `SDLC.md` (its "When no priority label is set" / "When no risk label is set" lists) — `--priority` / `--risk` override the inference when passed.
    - Never pipeline labels (`review`, `qa`, `merge-queue`, …) — those are PR-only. Never `in-progress` — nothing is being worked on.
-   - After applying the label set, make the classification auditable per `SDLC.md` with **one** consolidated `` 🤖 `om-prepare-issue` — 🏷️ label rationale `` comment (or an equivalent section in the body): one label per line with its emoji (🐛 `bug` · ✨ `feature` · 🔥/🔺/🔹/🔽 `priority-*` · ⚠️/🟡/🟢 `risk-*`) and a full-sentence reason — never one comment per label.
+   - Record the classification once under `` 🤖 `om-prepare-issue` — 🏷️ label rationale `` (comment or body section): one label per line with a concrete reason, using `references/rules.md`. Update that rationale in place; do not repeat it in the final report.
 
    **Attach image evidence.** When the user provided images with the brief (pasted screenshots or file paths), upload them via the tracker operation **attach-image-evidence** when the installed descriptor defines it, and embed the returned URLs in a `## 📸 Evidence` section of the issue body (or a follow-up **comment-issue** with a one-line caption per image when the issue was already created). Save pasted images to a temp file first so the operation has a path. When the descriptor lacks the operation or the upload fails, degrade gracefully: reference the local paths/filenames in the body and note that inline upload was unavailable — never fail the issue creation over evidence.
 
-6. **Report.** Build the final report from the template in `references/report-templates.md` — the issue mode with its why, the 🏷️ label set one per line with a full-sentence reason each, the 📝 spec outcome, the 📸 evidence outcome, and the 🔍 duplicate search in full sentences — never a compressed key:value dump. End with the chaining reference lines on their own lines, exact and undecorated: `Issue: #<number> (link: <full issue URL>)` always (it is machine-parsed by `om-auto-fix-issue`'s brief mode), plus `Spec:` when a spec was linked or authored and `PR:` when step 3 produced a spec PR.
+6. **Report.** Use `references/report-templates.md`: issue outcome, material decision or evidence limit, and the next action. Link the issue instead of repeating its body or labels. End with exact, undecorated chaining lines: `Issue: #<number> (link: <full issue URL>)` always (parsed by `om-auto-fix-issue`), `Spec:` when a spec was linked or authored, and `PR:` when step 3 produced a spec PR.
 
 ## Rules
 

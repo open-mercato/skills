@@ -33,7 +33,7 @@ The run **always** leaves a PR the user can watch, even when it never finishes:
 
 ## Verification comments on the PR
 
-Verification proofs land on the PR, not only in the plan. The end-of-run summary comment carries the "Verification phases completed" section; when a verification (validation gate, integration or UI check) runs mid-flight and is worth surfacing before the summary, post it as its own idempotent comment with the marker `` 🤖 `om-auto-create-pr` — verification `` (re-run updates it in place). Attach screenshots via **attach-image-evidence** whenever UI was touched.
+Verification proofs land on the PR, not only in the plan. Keep the validation outcome and material limits in the PR body; the end-of-run comment links its evidence; when a verification (validation gate, integration or UI check) runs mid-flight and is worth surfacing before the summary, post it as its own idempotent comment with the marker `` 🤖 `om-auto-create-pr` — verification `` (re-run updates it in place). Attach screenshots via **attach-image-evidence** whenever UI was touched.
 
 ## PR body
 
@@ -69,7 +69,7 @@ Label emoji map (decoration only — parsers key on the backticked label text): 
 
 ## Summary comment
 
-Every run ends with a single comprehensive summary comment the human reviewer can read top-to-bottom without clicking into the diff. Post it via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. Full structure and rules: `references/summary-comment-template.md`. Never post it before the automated review loop (step 11) finishes, never claim a completion you did not reach, and never paste secrets into it.
+Every run ends with one outcome and handoff comment: the run’s delta, verification result or evidence link, and next action. Keep the enduring explanation in the PR body; do not repeat its scope or label rationale. Post it via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. Full structure and rules: `references/summary-comment-template.md`. Never post it before the automated review loop (step 11) finishes, never claim a completion you did not reach, and never paste secrets into it.
 
 ## Marker emission
 

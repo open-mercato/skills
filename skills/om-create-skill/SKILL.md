@@ -95,6 +95,10 @@ before generating, and it **will not hand back a result that fails the gate** â€
    `--dry-run`, print the planned files and the checks that would run, and
    write nothing.
 
+5. **Report.** Name the skill and the behavior it supports, link the changed
+   files, and state the gate results. Include unresolved choices or a next action
+   only when needed; do not repeat the generated instructions.
+
 ## Rules
 
 - **Behavior-preserving in split mode**: move text 1:1, never re-word instruction

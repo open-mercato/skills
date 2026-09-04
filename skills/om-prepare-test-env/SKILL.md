@@ -123,8 +123,8 @@ happens once, and its result is the script.
    documentation of them), then verify it cold and warm like any generation.
 
    - **Script succeeds** → read `baseUrl` from `$ENV_DESCRIPTOR`, print the
-     run report per `references/report-templates.md` (base URL, services,
-     reused or rebuilt, descriptor path, timing) and **stop — the skill is
+     run report per `references/report-templates.md` (readiness, base URL,
+     reused or rebuilt, descriptor path, timing, and material limits) and **stop — the skill is
      done**. Do not re-verify what the script already health-checked. The
      descriptor is the deliverable: the script writes it on every successful
      run so consumers (`om-auto-qa-pr`, `om-integration-tests`) attach to the

@@ -266,3 +266,26 @@ A first test with the team showed the seam at the end of discovery: `om-discover
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.
 - Skills beyond the PR pipeline that are product-specific upstream (module scaffolding, design-system review). Two former members of this list were later generalized and extracted: `om-spec-writing` (upstream architecture laws replaced by the repo's own agent-instruction rules; specs live in the repo's design-doc area) and `om-integration-tests` (the upstream ephemeral-environment machinery was first stripped, then re-introduced in agnostic form as the standalone `om-prepare-test-env` skill — see Test environment above; a repo-local `.ai/skills/om-integration-tests` override remains the place for environment specifics). A third pair was later migrated and generalized: `om-prepare-test-env` (new, no upstream counterpart) and `om-auto-verify-pr-ui` (migrated from upstream, made stack-agnostic and tracker-optional).
 - Automated sync from the upstream monorepo. Curation is manual.
+
+## 2026-09-04 — Decision-oriented output across the collection
+
+PR bodies, issue descriptions, and reports had become difficult to use for a
+maintainer deciding whether a change belongs in the codebase. Mandatory empty
+sections, repeated summaries, and instructions to expand every report caused
+that noise. This supersedes the July requirement to fill and expand every human
+output template; the August complete-agent/shorter-human review contract remains.
+
+The PR or issue body now owns the explanation: what changes for whom, why, where
+it reaches, and any consequential decision or commitment. Reviews distinguish
+product direction from verified defects and cite evidence. Comments report new
+findings, state changes, or handoffs; they link existing detail. Simple changes
+get short prose, and cross-system changes may use a small Mermaid diagram. No
+extra intake document or publishing layer is introduced.
+
+All thirty-seven skills receive the shared writing rules in their own copies;
+role-specific templates, their workflow callers, and the authoring/review
+standards are updated together. Length guidance is a target, never a reason to
+drop actionable findings, evidence limits, or recovery instructions. Tracker
+markers, full label rationales, chaining fields, execution plans, review
+artifacts, and QA/merge gates retain their contracts. The user's collection-wide
+rewrite request authorizes this shared-file sync.

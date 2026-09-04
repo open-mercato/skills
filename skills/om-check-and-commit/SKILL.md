@@ -31,7 +31,7 @@ Verify a branch end to end against the configured validation gate, fix straightf
 
    Push the current branch after the commit succeeds. Never force-push.
 
-6. **Report** per `references/report-templates.md` — the ✅ gates table (one row per configured command, full-sentence notes), the fixes applied and why each was minimal, whether locale files were updated, and the commit SHA and branch name if a push happened. If any required gate still fails, stop and report the exact blocker instead of committing.
+6. **Report** per `references/report-templates.md`: validation outcome and coverage, meaningful fixes (including locale changes when relevant), and publication state with commit SHA/branch when pushed. Use a table only when checks need different outcomes or caveats. If any required gate still fails, report its exact blocker instead of committing.
 
 ## Locale Repair Rules
 

@@ -79,7 +79,7 @@ The literal token `NO_ACTION_NEEDED` on its own line triggers the flow runner's 
 <one short paragraph confirming this is a real, still-unfixed defect — with the file/area you expect the root cause to live in>
 ```
 
-Keep it tight (≤200 words). The next agent reads code; do not duplicate that work here.
+Aim for 40–100 words. Lead with the action and cite the decisive evidence. Distinguish observed behavior, code-based inference, and a reproduction not run. Scope “no fix found” to the PR/commit searches and revision inspected; do not turn uncertainty into a claim that the report is false. Preserve the exact `NO_ACTION_NEEDED` stop token.
 
 ## Rules
 

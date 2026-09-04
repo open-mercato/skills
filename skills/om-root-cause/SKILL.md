@@ -40,19 +40,22 @@ Do not edit, commit, or push.
    ```
    Summary: <one-sentence description of the bug>
 
-   Root cause: <one paragraph — where in the code, why it produces the wrong behavior>
+   Root cause: <the trigger → code path → wrong result, with file:line evidence; say if inferred rather than reproduced>
 
    Files to change:
    - <path/to/file-a.ts> — <what changes here>
    - <path/to/file-b.ts> — <what changes here>
    - <path/to/file-a.test.ts> — <regression test to add>
 
-   Approach: <2–4 sentences describing the minimal edit. Reference function names, conditions, and the specific behavior change. Mention any constraint from the project's agent instructions or design docs the fix must respect.>
+   Approach: <1–3 sentences naming the minimal edit, corrected behavior, and regression case. Cite any repository rule that constrains the fix.>
 
    Risks: <one short paragraph — what could go wrong, what to validate, breaking-change concerns>
    ```
 
-   Keep it under ~400 words. The `om-fix` agent reads this verbatim and acts on it.
+   Aim for 150–250 words; keep these exact field names because `om-fix` reads the
+   brief verbatim. Retain every necessary file, regression case, uncertainty, and
+   contract risk. Do not add a second summary or turn an inferred cause into an
+   observed fact. Preserve the `LOW_CONFIDENCE` token when confidence is low.
 
 ## Rules
 

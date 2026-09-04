@@ -17,7 +17,17 @@ Apply labels always through the descriptor guards (`set_pipeline_label` / `apply
 
 ## Summary comment
 
-Every run ends with a single comprehensive summary comment the human reviewer can read top-to-bottom without clicking into the diff. Post it via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. Cover: base merged in, loop outcome (review verdict, CI status, UI evidence), how each reviewer comment already on the PR was handled (fixed, deferred to a follow-up, or declined with a reason), follow-ups filed, and the merge-readiness verdict with the exact next command (`om-approve-merge-pr {prNumber}` when ready, or the blocker when not). Never post it before the loop finishes, never claim a completion you did not reach, and never paste secrets into it.
+Post one marker-idempotent result comment after the loop settles, preserving
+multi-line formatting. Aim for 40–100 words: concrete fixes, current review/CI/UI
+result, unresolved blocker or next action. Link the authoritative review's
+per-item dispositions (including inherited feedback), QA evidence, and follow-up
+issues. Do not repeat the PR explanation, finding lists, routine base-merge
+metadata, or label inventory. Preserve the existing summary marker and update it
+in place. Never claim completion before reaching it or expose secrets.
+
+When ready, give `om-approve-merge-pr {prNumber}` as the next command and state
+any required QA sign-off still outstanding. When blocked or checks are pending,
+state the actual limit and required action; a local pass does not replace CI.
 
 ## Marker emission
 

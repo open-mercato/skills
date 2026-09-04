@@ -16,7 +16,7 @@ against them — not against the copies shipped in this repo:
 
 ## 2026-09-04 — New skill: om-discover, and a product-brief.md the other skills read
 
-**New skill.** `om-discover` runs the product-level discovery and define session before `om-brainstorm` has anything to route, in three modes (existing product, client idea, own idea), and leaves `${SPECS_DIR}/product-brief.md`: the problem and who has it, stakeholders, business rules, key flows, a benchmark, success criteria, scope (now, later, not doing), non-goals, decisions with owners, the riskiest assumptions with their tests, and open questions marked blocking or not.
+**New skill.** `om-discover` runs the product-level discovery and define session before `om-brainstorm` has anything to route, in three modes (existing product, client idea, own idea). Its primary artifact is `${SPECS_DIR}/product-brief.md`: the problem and who has it, stakeholders, business rules, key flows, a benchmark, success criteria, scope (now, later, not doing), non-goals, decisions with owners, the riskiest assumptions with their tests, and open questions marked blocking or not.
 
 ```bash
 npx skills add open-mercato/skills --skill om-discover
@@ -45,6 +45,13 @@ When `product-brief.md` exists, its Non-goals, Business rules, and Decisions tab
 - **Decisions are surfaced where people work.** `om-auto-manage-issues` ends its implementation-notes comment with *Decisions in play*; `om-spec-writing`'s core sections gain `## 📝 Decisions in play`; the PR body templates gain a conditional *Decisions touched* section.
 - **Confirmed assumptions become decisions.** `om-discover --refresh` reads the resolved-assumptions comments on spec PRs (read-only, via **search-prs** and **list-issue-comments**) and records each human-confirmed assumption as a Decision row with the confirmer as owner.
 - **Migration:** nothing to do in a repository without `product-brief.md`. A generated `SDLC.md` gains the section *Product decisions as a protected contract*; add it by hand to an existing one.
+
+## 2026-08-25 — Shipped Linear and Atlassian split tracker providers
+
+- **Two provider descriptors are now ready to install.** Select `linear` to run issue operations through `schpet/linear-cli`, or `jira` to run Jira Cloud work-item operations through Atlassian CLI (`acli`). Both keep repository, pull-request, review, CI, and PR-label operations on GitHub.
+- **Setup installs a companion descriptor.** Re-run `/om-setup-agent-pipeline` and choose the provider; it installs `.ai/trackers/linear.md` or `.ai/trackers/jira.md` plus the required `.ai/trackers/github.md`, while leaving the selected issue provider in the config's `tracker` field. Existing descriptor copies are never overwritten without a diff/refresh/merge/keep decision.
+- **Provider prerequisites stay outside shared config.** Linear uses its authenticated workspace plus `LINEAR_TEAM_ID` or `.linear.toml`. Atlassian uses authenticated `acli` plus `ATLASSIAN_SITE`, `ATLASSIAN_PROJECT`, and the non-secret `ATLASSIAN_ACCOUNT_ID`; optional environment values map issue type and terminal workflow statuses. Tokens remain in the CLIs' credential stores or CI secrets, never in `.ai/agentic.config.json`.
+- **No migration for GitHub-only repositories.** The config schema and tracker operation names are unchanged. Custom providers can continue from `TEMPLATE.md`; the shipped split descriptors are reference implementations for explicit code-host delegation and native issue-label semantics.
 
 ## 2026-08-13 — test-env credentials become references: new `credentialsFile` + `passwordEnv`
 
@@ -169,7 +176,7 @@ new behavior.
 ## Re-syncing the tracker descriptor
 
 The shipped descriptors live in `skills/om-setup-agent-pipeline/references/trackers/`
-(`github.md`, plus `TEMPLATE.md` for custom providers). Your installed copy is
+(`github.md`, `linear.md`, `jira.md`, plus `TEMPLATE.md` for custom providers). Your installed copy is
 `.ai/trackers/<tracker>.md` in the consuming repository.
 
 ```bash
@@ -188,6 +195,11 @@ cp <path-to-skills>/om-setup-agent-pipeline/references/trackers/github.md .ai/tr
 `~/.claude/skills`, `~/.codex/skills`, or a vendored checkout inside your repo.
 Re-running `/om-setup-agent-pipeline` also refreshes the descriptor, but plain-copies it —
 prefer the diff-and-merge route when you have customized operations.
+
+For the shipped `linear` or `jira` split provider, substitute its filename in the commands
+above and repeat the diff for the companion `.ai/trackers/github.md`. The primary descriptor owns
+issues; the companion owns repository, PR, review, CI, and PR-label operations, so both copies must
+stay current.
 
 For a **custom tracker** (`.ai/trackers/<name>.md` written from `TEMPLATE.md`): diff the new
 `TEMPLATE.md` against the version you built from, and implement any newly added operations for

@@ -57,11 +57,11 @@ Keep the count fields. Mark dry-run actions as proposed, and retain the required
 
 ## Unmatched issue mentions (print when any were recorded)
 
-Only include numbers resolved to open issues, per step 3. Do not close or comment
-on them; show this diagnosis in dry runs too.
+Only numbers step 3 resolved to **open issues** appear here. Do not close or
+comment on them; show this diagnosis in dry runs too.
 
 ```markdown
-### ⚠️ No recognized closing link
+### ⚠️ Issue mentions without a recognized closing keyword
 
 | PR | Open issues mentioned | Evidence |
 |---|---|---|

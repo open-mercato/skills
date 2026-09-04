@@ -94,7 +94,7 @@ bash scripts/lint.sh
 - Skill names keep the upstream `om-` prefix deliberately (see `DECISIONS.md` → Naming).
 - **The `om-auto-*` prefix is a behavioral contract, not decoration:** an `om-auto-*` skill is autonomous and non-interactive — it runs end-to-end without a user in the loop, makes the recommended most-reversible call itself (documented for override) instead of stopping to ask, and is safe for schedules/CI (full contract: Cross-skill contract §1). A skill **without** the `auto` prefix is interactive: it acts once, may ask the user questions, reports, and hands control back. Name new skills accordingly, and never add mid-run questions to an `om-auto-*` skill.
 - Shell snippets inside skills must be POSIX-ish bash and platform-portable; they run on whatever machine the installing user has.
-- Cross-references between skills use the skill name (e.g. "the `om-code-review` skill"). Paths into another skill's `references/` directory are not allowed (Cross-skill contract §4–5); the sole exception is `om-apply-upgrade-notes` reading `om-setup-agent-pipeline`'s shipped descriptor templates.
+- Cross-references between skills use the skill name (e.g. "the `om-code-review` skill"), and the name must be one this collection actually ships — `scripts/lint.sh` fails on an `om-` name left behind by a rename or a merge, since a stale name reads as an optional dependency and simply never fires at run time. Paths into another skill's `references/` directory are not allowed (Cross-skill contract §4–5); the sole exception is `om-apply-upgrade-notes` reading `om-setup-agent-pipeline`'s shipped descriptor templates.
 
 ## Process documents
 

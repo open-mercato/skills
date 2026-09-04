@@ -7,7 +7,7 @@ flow is ready to review and what the prototype can and cannot tell them.
 ## Prototype hand-off
 
 ```markdown
-## 📝 Prototype ready: .ai/prototypes/<slug>/
+## 📝 Prototype ready: <paths.prototypes>/<slug>/
 
 **Requirements**: <path, and whether a story map was added or gaps were found>
 **Screens**: <N>, covering <happy path + the empty/permission/error/undo states included>

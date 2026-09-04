@@ -9,32 +9,44 @@ import {
   realpathSync,
   renameSync,
   rmSync,
+  statSync,
   writeFileSync,
 } from 'node:fs'
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { REPO_ROOT, buildTokens } from './sync-tokens.mjs'
+import { REPO_ROOT, buildTokens, resolvePrototypesRoot } from './sync-tokens.mjs'
 
 const SCRIPT_DIR = dirname(fileURLToPath(import.meta.url))
 const SKILL_DIR = resolve(SCRIPT_DIR, '..')
 const ASSETS_DIR = join(SKILL_DIR, 'references/assets')
-const PROTOTYPES_ROOT = join(REPO_ROOT, '.ai/prototypes')
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
 const OVERRIDE_RELATIVE = '.ai/skills/om-mockup-prototype/references/screen-patterns.md'
 const ANATOMY_TEMPLATE_PATH = join(SKILL_DIR, 'references/screen-patterns.md')
-const UXPROOF_DIR = join(REPO_ROOT, '.uxproof')
 
-export function ensureAnatomyOverride() {
-  const overridePath = join(REPO_ROOT, OVERRIDE_RELATIVE)
+export function ensureAnatomyOverride(options = {}) {
+  const repoRoot = options.repoRoot || REPO_ROOT
+  const uxproofDir = join(repoRoot, '.uxproof')
+  const overridePath = join(repoRoot, OVERRIDE_RELATIVE)
   if (existsSync(overridePath)) {
+    const resolved = realpathSync(overridePath)
+    const resolvedRelative = relative(realpathSync(repoRoot), resolved)
+    if (!resolvedRelative || resolvedRelative.startsWith('..') || isAbsolute(resolvedRelative)) {
+      throw new Error('The screen-anatomy override must resolve inside the repository.')
+    }
+    if (!statSync(resolved).isFile()) throw new Error('The screen-anatomy override must be a file.')
     return { source: `repo-local override (${OVERRIDE_RELATIVE})`, created: false }
   }
   mkdirSync(dirname(overridePath), { recursive: true })
+  const resolvedParent = realpathSync(dirname(overridePath))
+  const parentRelative = relative(realpathSync(repoRoot), resolvedParent)
+  if (!parentRelative || parentRelative.startsWith('..') || isAbsolute(parentRelative)) {
+    throw new Error('The screen-anatomy override must resolve inside the repository.')
+  }
   let content = readFileSync(ANATOMY_TEMPLATE_PATH, 'utf8')
   let prefilled = false
-  if (existsSync(UXPROOF_DIR)) {
-    const contractFiles = readdirSync(UXPROOF_DIR).filter((name) => !name.startsWith('.')).sort()
+  if (existsSync(uxproofDir)) {
+    const contractFiles = readdirSync(uxproofDir).filter((name) => !name.startsWith('.')).sort()
     if (contractFiles.length) {
       prefilled = true
       content = content.replace(
@@ -84,16 +96,16 @@ export function escapeHtml(value) {
   })[character])
 }
 
-function assertContainedPath(target) {
+function assertContainedPath(prototypesRoot, target) {
   const repositoryRoot = realpathSync(REPO_ROOT)
-  const prototypesRoot = realpathSync(PROTOTYPES_ROOT)
-  const rootRelative = relative(repositoryRoot, prototypesRoot)
+  const resolvedPrototypesRoot = realpathSync(prototypesRoot)
+  const rootRelative = relative(repositoryRoot, resolvedPrototypesRoot)
   if (!rootRelative || rootRelative.startsWith('..') || isAbsolute(rootRelative)) {
-    throw new Error('.ai/prototypes must resolve inside the repository.')
+    throw new Error('paths.prototypes must resolve inside the repository.')
   }
-  const targetRelative = relative(PROTOTYPES_ROOT, target)
+  const targetRelative = relative(prototypesRoot, target)
   if (!targetRelative || targetRelative.startsWith('..') || isAbsolute(targetRelative)) {
-    throw new Error('Prototype target must be a direct child of .ai/prototypes.')
+    throw new Error('Prototype target must be a direct child of paths.prototypes.')
   }
 }
 
@@ -107,15 +119,16 @@ function renderTemplate(filename, replacements) {
 
 export function initializePrototype({ slug, requirements }, options = {}) {
   const tokenBuilder = options.buildTokens || buildTokens
-  mkdirSync(PROTOTYPES_ROOT, { recursive: true })
-  const target = resolve(PROTOTYPES_ROOT, slug)
-  assertContainedPath(target)
+  const prototypesRoot = options.prototypesRoot || resolvePrototypesRoot()
+  mkdirSync(prototypesRoot, { recursive: true })
+  const target = resolve(prototypesRoot, slug)
+  assertContainedPath(prototypesRoot, target)
 
   if (existsSync(target)) {
     throw new Error(`Prototype already exists: ${relative(REPO_ROOT, target)}`)
   }
 
-  const staging = mkdtempSync(join(PROTOTYPES_ROOT, `.${slug}-staging-`))
+  const staging = mkdtempSync(join(prototypesRoot, `.${slug}-staging-`))
   const title = slug.replace(/-/g, ' ').replace(/\b\w/g, (character) => character.toUpperCase())
   const replacements = {
     MODULE: escapeHtml(title),
@@ -140,11 +153,22 @@ export function initializePrototype({ slug, requirements }, options = {}) {
   return relative(REPO_ROOT, target)
 }
 
+export function initializePrototypeWithAnatomy(arguments_, options = {}) {
+  let output
+  try {
+    output = initializePrototype(arguments_, options)
+    const anatomy = (options.ensureAnatomyOverride || ensureAnatomyOverride)()
+    return { output, anatomy }
+  } catch (error) {
+    if (output) rmSync(resolve(REPO_ROOT, output), { recursive: true, force: true })
+    throw error
+  }
+}
+
 function main() {
   try {
-    const result = initializePrototype(parseInitArguments(process.argv.slice(2)))
-    const anatomy = ensureAnatomyOverride()
-    console.log(`Prototype ready: ${result}/`)
+    const { output, anatomy } = initializePrototypeWithAnatomy(parseInitArguments(process.argv.slice(2)))
+    console.log(`Prototype ready: ${output}/`)
     console.log(`Screen anatomy: ${anatomy.source}`)
     console.log('Next: build stable .screen sections using the anatomy reference above.')
   } catch (error) {

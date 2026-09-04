@@ -11,5 +11,7 @@ The questions step 3 of `om-setup-agent-pipeline` asks the user (skipped with `-
 4. Labels: install the full taxonomy above (recommended), keep a subset, or disable labels entirely.
 5. QA gate on or off. Recommend on when the repo ships user-facing changes.
 6. Where specs live (`paths.specs`, default `.ai/specs`) — confirm or point at an existing design-doc directory.
-7. Optional repo-local review checklist path.
-8. Project docs to generate (each only when missing): `SDLC.md` (recommended), `AGENTS.md` with the task-routing table (when no agent instruction file exists), `CODE_REVIEW.md`, and `BACKWARD_COMPATIBILITY.md`.
+7. Where prototypes live (`paths.prototypes`, default `.ai/prototypes`) — confirm or choose another committed workspace directory.
+8. Optional committed design-token snapshot (`designTokens`, default `.ai/ds/ds-tokens.json`). A missing default is valid because consumers may carry a bundled fallback.
+9. Optional repo-local review checklist path.
+10. Project docs to generate (each only when missing): `SDLC.md` (recommended), `AGENTS.md` with the task-routing table (when no agent instruction file exists), `CODE_REVIEW.md`, and `BACKWARD_COMPATIBILITY.md`.

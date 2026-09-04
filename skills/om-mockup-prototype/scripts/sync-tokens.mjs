@@ -9,6 +9,7 @@ const SKILL_DIR = resolve(SCRIPT_DIR, '..')
 const ASSETS_DIR = join(SKILL_DIR, 'references/assets')
 const BUNDLED_SNAPSHOT_PATH = join(SKILL_DIR, 'references/ds-tokens.default.json')
 const REPO_SNAPSHOT_RELATIVE = '.ai/ds/ds-tokens.json'
+const PROTOTYPES_ROOT_RELATIVE = '.ai/prototypes'
 const BUNDLED_STYLESHEETS = ['components.css', 'screens.css', 'prototype.css']
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
 
@@ -29,10 +30,57 @@ export function resolveRepoRoot(workingDirectory = process.cwd()) {
 }
 
 export const REPO_ROOT = resolveRepoRoot()
-const PROTOTYPES_ROOT = join(REPO_ROOT, '.ai/prototypes')
 
-export function resolveSnapshot(repoRoot = REPO_ROOT) {
-  const repoSnapshot = join(repoRoot, REPO_SNAPSHOT_RELATIVE)
+export function readAgenticConfig(repoRoot = REPO_ROOT) {
+  const configPath = join(repoRoot, '.ai/agentic.config.json')
+  if (!existsSync(configPath)) return {}
+  try {
+    const parsed = JSON.parse(readFileSync(configPath, 'utf8'))
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      throw new Error('the root value must be an object')
+    }
+    return parsed
+  } catch (error) {
+    throw new Error(
+      `Could not read the pipeline config at ${configPath}: ${error instanceof Error ? error.message : String(error)}`,
+    )
+  }
+}
+
+export function resolveConfiguredPath(repoRoot, configuredPath, fallback, fieldName) {
+  const value = configuredPath === undefined || configuredPath === null ? fallback : configuredPath
+  if (typeof value !== 'string' || !/^[A-Za-z0-9._/-]+$/.test(value) || isAbsolute(value)) {
+    throw new Error(`${fieldName} must be a non-empty repository-relative path.`)
+  }
+  const target = resolve(repoRoot, value)
+  const targetRelative = relative(repoRoot, target)
+  if (!targetRelative || targetRelative.startsWith('..') || isAbsolute(targetRelative)) {
+    throw new Error(`${fieldName} must resolve inside the repository.`)
+  }
+  let existingAncestor = target
+  while (!existsSync(existingAncestor)) {
+    const parent = dirname(existingAncestor)
+    if (parent === existingAncestor) break
+    existingAncestor = parent
+  }
+  const resolvedAncestor = realpathSync(existingAncestor)
+  const resolvedRelative = relative(realpathSync(repoRoot), resolvedAncestor)
+  if (resolvedRelative.startsWith('..') || isAbsolute(resolvedRelative)) {
+    throw new Error(`${fieldName} must not resolve through a symbolic link outside the repository.`)
+  }
+  return target
+}
+
+export function resolvePrototypesRoot(repoRoot = REPO_ROOT, config = readAgenticConfig(repoRoot)) {
+  return resolveConfiguredPath(repoRoot, config.paths?.prototypes, PROTOTYPES_ROOT_RELATIVE, 'paths.prototypes')
+}
+
+export function resolveSnapshot(repoRoot = REPO_ROOT, config = readAgenticConfig(repoRoot)) {
+  if (config.designTokens !== undefined && config.designTokens !== null) {
+    const configuredSnapshot = resolveConfiguredPath(repoRoot, config.designTokens, REPO_SNAPSHOT_RELATIVE, 'designTokens')
+    if (existsSync(configuredSnapshot)) return { path: configuredSnapshot, source: config.designTokens }
+  }
+  const repoSnapshot = resolveConfiguredPath(repoRoot, REPO_SNAPSHOT_RELATIVE, REPO_SNAPSHOT_RELATIVE, 'designTokens')
   if (existsSync(repoSnapshot)) return { path: repoSnapshot, source: REPO_SNAPSHOT_RELATIVE }
   return { path: BUNDLED_SNAPSHOT_PATH, source: 'bundled default snapshot (references/ds-tokens.default.json)' }
 }
@@ -56,14 +104,28 @@ function tokenDeclarations(tokens) {
   const root = []
   const dark = []
   for (const [name, token] of Object.entries(tokens)) {
+    if (!/^[A-Za-z_][A-Za-z0-9_-]*$/.test(name)) {
+      throw new Error(`Token name "${name}" is not safe for a CSS custom property.`)
+    }
+    if (!token || typeof token !== 'object' || Array.isArray(token)) {
+      throw new Error(`Token "${name}" must be an object.`)
+    }
     const property = `--${name}`
     const lightValue = token.value !== undefined ? token.value : token.light
     if (lightValue === undefined || lightValue === null) {
       throw new Error(`Token "${name}" in the snapshot carries neither "value" nor "light".`)
     }
-    root.push({ name: property, value: String(lightValue) })
+    const safeLightValue = String(lightValue)
+    if (/[;{}]|url\s*\(/i.test(safeLightValue)) {
+      throw new Error(`Token "${name}" contains an unsafe CSS value.`)
+    }
+    root.push({ name: property, value: safeLightValue })
     if (!token.themeInvariant && token.dark !== undefined && token.dark !== null) {
-      dark.push({ name: property, value: String(token.dark) })
+      const safeDarkValue = String(token.dark)
+      if (/[;{}]|url\s*\(/i.test(safeDarkValue)) {
+        throw new Error(`Token "${name}" contains an unsafe CSS value.`)
+      }
+      dark.push({ name: property, value: safeDarkValue })
     }
   }
   return { root, dark }
@@ -159,10 +221,10 @@ export function parseSyncArguments(args) {
   if (args.length === 2 && args[0] === '--check' && !args[1].startsWith('--')) {
     return { checkOnly: true, target: args[1] }
   }
-  throw new Error('Usage: sync-tokens.mjs [--check] .ai/prototypes/<prototype-slug>')
+  throw new Error('Usage: sync-tokens.mjs [--check] <paths.prototypes>/<prototype-slug>')
 }
 
-export function resolvePrototypeTarget(targetArgument, prototypesRoot = PROTOTYPES_ROOT) {
+export function resolvePrototypeTarget(targetArgument, prototypesRoot = resolvePrototypesRoot()) {
   const target = resolve(targetArgument)
   const targetRelative = relative(prototypesRoot, target)
   if (
@@ -173,7 +235,7 @@ export function resolvePrototypeTarget(targetArgument, prototypesRoot = PROTOTYP
     targetRelative.includes('\\') ||
     !SLUG_PATTERN.test(targetRelative)
   ) {
-    throw new Error('Target must be an immediate .ai/prototypes/<prototype-slug> directory.')
+    throw new Error('Target must be an immediate <paths.prototypes>/<prototype-slug> directory.')
   }
   if (!existsSync(target) || !statSync(target).isDirectory()) {
     throw new Error(`Prototype directory does not exist: ${targetArgument}`)
@@ -185,7 +247,7 @@ export function resolvePrototypeTarget(targetArgument, prototypesRoot = PROTOTYP
   const resolvedTarget = realpathSync(target)
   const resolvedRelative = relative(resolvedRoot, resolvedTarget)
   if (!resolvedRelative || resolvedRelative.startsWith('..') || isAbsolute(resolvedRelative)) {
-    throw new Error('Prototype target resolves outside .ai/prototypes.')
+    throw new Error('Prototype target resolves outside paths.prototypes.')
   }
   return resolvedTarget
 }

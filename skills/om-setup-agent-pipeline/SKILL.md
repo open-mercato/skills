@@ -21,6 +21,7 @@ Every skill in this collection reads its repository-specific settings from `.ai/
   "baseBranch": "auto",
   "tracker": "github",
   "browser": { "provider": "agent-browser" },
+  "designTokens": ".ai/ds/ds-tokens.json",
   "validation": {
     "commands": ["pnpm typecheck", "pnpm test", "pnpm build"]
   },
@@ -39,6 +40,7 @@ Every skill in this collection reads its repository-specific settings from `.ai/
     "runs": ".ai/runs",
     "analysis": ".ai/analysis",
     "specs": ".ai/specs",
+    "prototypes": ".ai/prototypes",
     "scripts": ".ai/scripts",
     "qa": ".ai/qa"
   },
@@ -52,6 +54,7 @@ Field reference:
 - `baseBranch` — the branch PRs target. `"auto"` means resolve at runtime from the repository's default branch; set an explicit name only when PRs target something else.
 - `tracker` — the issue/PR tracker provider. Selects the tracker descriptor at `.ai/trackers/<tracker>.md`, which defines how every tracker operation the skills name is executed. The collection ships `"github"` (the `gh` CLI); other trackers are added by writing one descriptor file — see Tracker providers below.
 - `browser.provider` — the browser-automation provider used by QA and integration-test skills. Selects `.ai/browsers/<provider>.md`. Fresh setups default to `"agent-browser"`; configs without this key keep legacy Playwright behavior (see Browser providers).
+- `designTokens` — optional committed token-snapshot path (default `.ai/ds/ds-tokens.json`); consumers may fall back when it is absent.
 - `validation.commands` — ordered list of shell commands that constitute the full validation gate. Skills run them in order and treat any non-zero exit as a gate failure. Keep the list complete: typecheck, lint, tests, build — whatever proves the repo is healthy.
 - `labels.enabled` — when `false`, skills skip every label operation and note that in their PR summaries. Use this for repos that do not want the label workflow.
 - `labels.pipeline` — mutually exclusive workflow states. A PR carries at most one.
@@ -67,6 +70,7 @@ Field reference:
 - `paths.runs` — where execution plans of autonomous runs are stored.
 - `paths.analysis` — where generated reports are stored.
 - `paths.specs` — where feature specifications live (default `.ai/specs`). Spec filenames follow `{YYYY-MM-DD}-{kebab-case-title}.md`. `om-spec-writing` writes here, `om-prepare-issue` links from here, `om-followup-issue-from-pr` checks here first in design-doc mode, and `om-brainstorm` writes handoff briefs under `<paths.specs>/briefs/`.
+- `paths.prototypes` — committed prototype directory (default `.ai/prototypes`).
 - `paths.scripts` — where reusable environment scripts are generated (default `.ai/scripts`); `om-prepare-test-env` writes the env bring-up/teardown scripts here.
 - `paths.qa` — where QA working state and artifacts live (default `.ai/qa`): the shared `test-env.json` descriptor, and QA reports/screenshots under `<paths.qa>/artifacts_<runId>/`.
 - `reviewChecklist` — optional path to a repo-local review checklist file. When set, the `om-code-review` skill reads it in addition to its built-in checklist. A root `CODE_REVIEW.md` (see Project docs) is always picked up regardless.
@@ -106,7 +110,7 @@ Every skill in this collection checks, right after loading the config, for a rep
 
    Prefer commands mirroring what CI already runs (`.github/workflows/*.yml`).
 
-3. **Ask the user (skip with `--defaults`).** Confirm the detected validation commands, then ask which tracker provider (default `github`) and browser provider (default `agent-browser`) to install, the label mode (full taxonomy / subset / disabled), whether the QA gate is on, where specs live (`paths.specs`), an optional repo-local review checklist path, and which project docs to generate (each only when missing). Full question list with defaults and guidance: `references/interview-questions.md`.
+3. **Ask the user (skip with `--defaults`).** Confirm validation, tracker/browser providers, label mode, QA gate, spec/prototype/token paths, optional review checklist, and project docs. Full questions and defaults: `references/interview-questions.md`.
 
 4. **Install the tracker descriptor.** Copy the shipped descriptor for the chosen tracker from this skill's `references/trackers/<tracker>.md` to `.ai/trackers/<tracker>.md` (create the directory). Rules:
 

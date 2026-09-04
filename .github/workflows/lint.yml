@@ -18,3 +18,5 @@ jobs:
         run: node scripts/test-classify-runs.mjs
       - name: Close-keyword configurability contract
         run: node scripts/test-close-keywords.mjs
+      - name: Interactive prototype initialization and token contracts
+        run: node --test scripts/test-mockup-prototype.mjs

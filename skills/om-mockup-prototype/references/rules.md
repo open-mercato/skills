@@ -27,7 +27,7 @@ stricter rule wins.
 - **Comments are not live collaboration.** They live in the reviewer's
   browser until exported into `comments.js` and committed; say so in every
   hand-off.
-- **Never overwrite an existing prototype directory** — it may carry
+- **Never overwrite an existing prototype directory under `paths.prototypes`** — it may carry
   reviewer feedback. Initialization refuses; respect that.
 - **Tokens only.** Screens use design tokens (with their neutral fallbacks);
   no hardcoded status colors, no arbitrary values. Rebranding happens in

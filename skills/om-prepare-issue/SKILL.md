@@ -53,6 +53,9 @@ This skill only **creates** issues. To bring an issue that **already exists** up
    ```markdown
    ## Summary
    - {one-line goal from the brief}
+   - Problem: {what hurts, or what is missing}
+   - Who has it: {user or role}
+   - Expected outcome: {what is true afterwards, and how it will be checked}
 
    ## Spec
    - Implementation spec: `{spec path}` ({link})      <!-- when step 2 found one, or step 3 authored one (also note the spec PR #) -->
@@ -74,7 +77,12 @@ This skill only **creates** issues. To bring an issue that **already exists** up
 
    ## Out of scope
    - {non-goals, so the implementer does not gold-plate}
+
+   ## Open questions
+   - {question} — blocking | non-blocking      <!-- or: none -->
    ```
+
+   The Summary, Out of scope, and Open questions sections are the ticket-level tier of the Definition of Ready in `SDLC.md`; fill them from the brief and, when `${SPECS_DIR}/product-brief.md` exists (written by `om-discover`), from its Problems, Target group, Goals, Non-goals, and Open questions — cite the brief's ids (`D03`, `N01`) where a decision or non-goal bounds the ticket. Never invent a problem or a user that neither names — write "unknown" and mark the question blocking instead.
 
    Create it via **create-issue** with title, body, `--assignee` when passed, and the **SDLC labels** through the guards (a missing label degrades to a logged skip; `labels.enabled: false` skips all):
 
@@ -93,7 +101,7 @@ This skill only **creates** issues. To bring an issue that **already exists** up
 - Tracker-only by default: never edit, commit, or push repository files. The one exception is step 3 — a feature that needs a spec and has none — where this skill produces a **spec PR** (a design document only, never implementation) by delegating to `om-auto-write-spec`, then links it on the issue.
 - Always run the duplicate search (step 1, including in-flight spec PRs) before creating; reuse a credible duplicate via a link/comment instead of filing a copy.
 - Link a covering spec instead of restating it; embed step-level analysis only when no spec covers the task and the task does not warrant one.
-- Implementation steps must reference real paths and names from the codebase — an issue that says "add the feature" is a failed run.
+- Implementation steps must reference real paths and names from the codebase — an issue that says "add the feature" is a failed run. The one exception is a repository with no product code yet: then the guidance references the brief's ids (`D0n`, `R0n`, `N0n`) and the acceptance criteria, says the repository is greenfield, and names the spec or the brief as the design authority.
 - When the task touches surfaces protected by `BACKWARD_COMPATIBILITY.md`, the issue must flag it and name the migration/deprecation expectation.
 - For a substantial feature with no covering spec, author one and land it on a PR (step 3) — never file a vague placeholder issue or invent answers to the spec's Open Questions gate.
 - Apply the SDLC labels on creation (step 5): one category plus exactly one priority and one risk (`--priority`/`--risk` override); never pipeline labels or `in-progress` on the issue.

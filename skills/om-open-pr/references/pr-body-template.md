@@ -42,6 +42,9 @@ Status: in-progress                          <!-- flip to `complete` when every
 ## 💥 Breaking Changes
 - {None | describe affected contracts and migration notes}
 
+## 📋 Decisions touched                      <!-- conditional: product-brief.md exists -->
+- {None | one line per Non-goal, Business rule, or Decision id this change relies on or supersedes, e.g. `R03 — 24h SLA on async answers: honoured` or `D07 — superseded by D12 in this PR, approved by <owner>`}
+
 ## 📋 Progress                               <!-- conditional: --plan -->
 See the Progress section in the tracking plan.
 ```

@@ -167,4 +167,7 @@ if [ "$fail" -ne 0 ]; then
   echo "Lint failed." >&2
   exit 1
 fi
+
+node scripts/test-discovery-contracts.mjs || exit 1
+
 echo "Lint OK."

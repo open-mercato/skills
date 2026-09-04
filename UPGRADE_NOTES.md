@@ -14,6 +14,38 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-09-04 — New skill: om-discover, and a product-brief.md the other skills read
+
+**New skill.** `om-discover` runs the product-level discovery and define session before `om-brainstorm` has anything to route, in three modes (existing product, client idea, own idea). Its primary artifact is `${SPECS_DIR}/product-brief.md`: the problem and who has it, stakeholders, business rules, key flows, a benchmark, success criteria, scope (now, later, not doing), non-goals, decisions with owners, the riskiest assumptions with their tests, and open questions marked blocking or not.
+
+```bash
+npx skills add open-mercato/skills --skill om-discover
+```
+
+- **A new file other skills read.** When `product-brief.md` exists, `om-brainstorm` treats its Vision, Scope, Non-goals, and Decisions as settled context in its Frame step; `om-spec-writing` seeds its Problem Statement and Edge Cases from the brief and turns its blocking open questions into spec Open Questions; `om-prepare-issue` fills the ticket-level tier of the Definition of Ready from it and cites the brief's ids. A repository without the file behaves exactly as before.
+- **Evidence rules that are new to the collection.** Every claim in the brief carries a tier (`[INTERVIEW]`, `[DATA]`, `[DOCUMENT]`, `[PRODUCT]`, `[BENCHMARK]`, `[SYNTHETIC]`, `[ASSUMPTION]`) and points at its source file; a coverage line at the top counts how many claims rest on each. A section with no material behind it is handed back as a collection plan with capture templates, never written as prose.
+- **New output-contract lines** — `Product brief:`, `Coverage:`, `Collection plan:`, and this skill's `Next:` — follow the same line-anchored rules as `PR:`/`Issue:`/`Spec:`. The roster in `om-setup-agent-pipeline`'s coverage check gains `om-discover`.
+- **Migration:** nothing to do. The skill is interactive, writes only the brief, its decision records, and the capture templates, and reads the tracker read-only.
+
+## 2026-09-04 — Definition of Ready: the generated SDLC.md gains a Discovery row, a readiness gate, and two enforcing skills
+
+The generated `SDLC.md` started at Intake with a ticket that had "enough detail to act on" — a phrase nothing checked. Three additive changes to `skills/om-setup-agent-pipeline/references/sdlc-template.md` and to this repository's own `SDLC.md`:
+
+- **A Discovery row above Intake.** `om-discover` establishes the product context and `om-brainstorm` routes a single idea, both before any artifact exists. A "before intake" paragraph names them and the spec skills as the steps that feed the table.
+- **A Definition of Ready section** with two tiers. *Ticket-level* items only a human can supply (the problem and who has it, the expected outcome and how it is checked, what is out of scope, blocking questions answered, confirmed assumptions); *spec-level* items a covering spec supplies, which `om-auto-write-spec` authors when they are missing.
+- **Two skills enforce it.** `om-auto-manage-issues` records `READY_STATUS` per issue and posts one idempotent `` 🤖 `om-auto-manage-issues` — not ready `` comment naming the missing ticket-level items; `om-auto-fix-issue`'s feature route stops with `NOT_READY` instead of speccing around the gap. A spec-level gap is never a stop.
+- **Migration:** an existing `SDLC.md` is never regenerated, so add the Discovery row and the Definition of Ready section by hand (copy them from the template) — the skills read the section from the repository's own file, and default to the two-tier list above when it has none.
+
+## 2026-09-04 — Product decisions become a protected contract, like BACKWARD_COMPATIBILITY.md
+
+When `product-brief.md` exists, its Non-goals, Business rules, and Decisions tables (stable ids, owner, status, review-by date, required path to change) are enforced the way `BACKWARD_COMPATIBILITY.md` protects contract surfaces.
+
+- **`om-code-review` gains a product-decision gate** next to its breaking-change gate: a change that builds what a non-goal excludes, or contradicts an active rule or decision, without a superseding entry for that id in the same diff, is a blocker quoting the id. An entry past its review-by date that the change touches is a minor finding, never a blocker.
+- **`om-ux-review-pr` applies the same tables** as part of the design contract it already checks: a screen that ships what a non-goal excludes, or lets a user do what a business rule forbids, is a `[PRODUCT]` finding.
+- **Decisions are surfaced where people work.** `om-auto-manage-issues` ends its implementation-notes comment with *Decisions in play*; `om-spec-writing`'s core sections gain `## 📝 Decisions in play`; the PR body templates gain a conditional *Decisions touched* section.
+- **Confirmed assumptions become decisions.** `om-discover --refresh` reads the resolved-assumptions comments on spec PRs (read-only, via **search-prs** and **list-issue-comments**) and records each human-confirmed assumption as a Decision row with the confirmer as owner.
+- **Migration:** nothing to do in a repository without `product-brief.md`. A generated `SDLC.md` gains the section *Product decisions as a protected contract*; add it by hand to an existing one.
+
 ## 2026-08-25 — Shipped Linear and Atlassian split tracker providers
 
 - **Two provider descriptors are now ready to install.** Select `linear` to run issue operations through `schpet/linear-cli`, or `jira` to run Jira Cloud work-item operations through Atlassian CLI (`acli`). Both keep repository, pull-request, review, CI, and PR-label operations on GitHub.

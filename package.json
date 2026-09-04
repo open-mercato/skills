@@ -16,6 +16,7 @@
     "test:tracker-providers": "node scripts/test-tracker-providers.mjs",
     "test:classify-runs": "node scripts/test-classify-runs.mjs",
     "test:close-keywords": "node scripts/test-close-keywords.mjs",
+    "test:discovery-contracts": "node scripts/test-discovery-contracts.mjs",
     "test:agent-browser-codex": "bash scripts/test-agent-browser-codex.sh"
   }
 }

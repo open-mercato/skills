@@ -19,7 +19,7 @@ Final-report shapes for `om-discover` (workflow step 9). Fill them exactly and e
 
 🧪 **Ready for what.** {whether the ticket-level tier of the Definition of Ready is satisfied on tiers 1 to 5; what the next skill can start from and what it cannot yet}
 
-🧭 **Next step.** {what the hand-off offered (one more decision round, or the first *now* slice routed to a skill), what the user chose, and what ran as a result, with its own contract lines quoted when a skill ran}
+🔁 **Next step.** {what the hand-off offered (one more decision round, or the first *now* slice routed to a skill), what the user chose, and what ran as a result, with its own contract lines quoted when a skill ran}
 
 Product brief: {…}
 Coverage: {…}

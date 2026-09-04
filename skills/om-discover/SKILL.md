@@ -5,7 +5,7 @@ description: Product-level discovery and define session that leaves a product-br
 
 # Discover (product-level discovery and define)
 
-The step before `om-brainstorm` has anything to route. `om-brainstorm` decides about one idea; this skill establishes the context every later decision reads: who the users are, what hurts, what the product is and is not, how success is measured, which rules and decisions bind the work. It leaves exactly one artifact, `${SPECS_DIR}/product-brief.md`, and the collection's other skills read it when it exists (`om-brainstorm` in its Frame step, `om-spec-writing` for the Problem Statement, `om-prepare-issue` for the ticket-level tier of the Definition of Ready in `SDLC.md`, `om-code-review` and `om-ux-review-pr` for the decisions it protects).
+The step before `om-brainstorm` has anything to route. `om-brainstorm` decides about one idea; this skill establishes the context every later decision reads: who the users are, what hurts, what the product is and is not, how success is measured, which rules and decisions bind the work. Its primary artifact is `${SPECS_DIR}/product-brief.md`, and the collection's other skills read it when it exists (`om-brainstorm` in its Frame step, `om-spec-writing` for the Problem Statement, `om-prepare-issue` for the ticket-level tier of the Definition of Ready in `SDLC.md`, `om-code-review` and `om-ux-review-pr` for the decisions it protects).
 
 It is interactive and evidence-first. The agent asks, looks facts up, and synthesizes what people said and what the data shows; the human supplies the facts only they have and makes every decision.
 

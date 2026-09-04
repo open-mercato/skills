@@ -56,15 +56,15 @@ The one file `om-discover` writes: `${SPECS_DIR}/product-brief.md`. Every sectio
 
 ## Business rules
 
-| Id | Rule | Applies to | Source | Status | Review by | Required path to change |
-|---|---|---|---|---|---|---|
-| R01 | … | … | `[tag]` {source} | active | {date} | {who approves; a superseding row} |
+| Id | Rule | Applies to | Source | Owner | Status | Review by | Required path to change |
+|---|---|---|---|---|---|---|---|
+| R01 | … | … | `[tag]` {source} | {name} | active | {date} | {who approves; a superseding row} |
 
 ## Non-goals
 
-| Id | We are not building | Why | Owner | Status |
-|---|---|---|---|---|
-| N01 | … | … | {name} | active |
+| Id | We are not building | Why | Owner | Status | Review by | Required path to change |
+|---|---|---|---|---|---|---|
+| N01 | … | … | {name} | active | {date} | {who approves; a superseding row} |
 
 ## Decisions
 

@@ -100,6 +100,7 @@ The skills chain: every PR-producing skill ends with a `PR: #<number> (link: <ur
 
 ```mermaid
 flowchart LR
+    discover["om-discover<br/>(product context)"] --> brainstorm
     brainstorm["om-brainstorm<br/>(conversation)"] -. "small task" .-> createPR
     brainstorm -. "feature" .-> writeSpec
     subgraph brief ["From a task brief"]

@@ -6,8 +6,9 @@ not already implemented, and is the ticket ready to be built from? Operate
 **read-only** — file reads, code search, and read-only tracker operations
 (**get-issue**, **search-prs**, **search-issues**, **repo-info**,
 **current-user**) only. No edits, commits, claims, or branch creation. The single
-exception is the idempotent not-ready comment in section 4, posted via
-**comment-issue** so the author sees why the run stopped.
+exception is the idempotent not-ready comment in section 4: find its marker via
+**list-issue-comments**, post it via **comment-issue** on the first run, and rewrite
+it via **update-comment** when its missing-items list changes.
 
 ## Decision procedure
 
@@ -61,11 +62,13 @@ permissions, dependencies, prototype link — are **not** checked here: a coveri
 spec supplies them, and step F3c authors one when it is missing.
 
 When a ticket-level item is missing, post one idempotent comment (marker
-`` 🤖 `om-auto-fix-issue` — not ready ``, updated in place on re-runs, the same
-shape `om-auto-manage-issues` uses: the missing items as a list, addressed to the
-author, with the waiver sentence) and stop with `NOT_READY`. Never fill the gap
-yourself — a guessed problem statement is the failure this gate exists to
-prevent.
+`` 🤖 `om-auto-fix-issue` — not ready ``, the same shape
+`om-auto-manage-issues` uses: the missing items as a list, addressed to the
+author, with the waiver sentence). Find it via **list-issue-comments**, update it
+in place via **update-comment** when the missing-items list changes, and skip the
+mutation when it already reflects the current state. Then stop with `NOT_READY`.
+Never fill the gap yourself — a guessed problem statement is the failure this
+gate exists to prevent.
 
 ## Output contract
 

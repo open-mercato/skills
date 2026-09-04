@@ -14,7 +14,7 @@ reference lines.
 **Result:** {✅ pipeline configured | ✅ config refreshed | ⚠️ configured with gaps} — {one full sentence on the outcome and what changed this run}
 
 ### 📋 What was written
-{One bullet per artifact, in full sentences: `.ai/agentic.config.json` (which values were detected vs answered), the tracker descriptor installed at `.ai/trackers/{tracker}.md`, the browser descriptor at `.ai/browsers/{provider}.md`, labels created via the taxonomy (and which already existed), and each project doc generated (SDLC.md, AGENTS.md, CODE_REVIEW.md, BACKWARD_COMPATIBILITY.md). Say explicitly what already existed and was left untouched, and why — existing files are never overwritten.}
+{One bullet per artifact, in full sentences: `.ai/agentic.config.json` (which values were detected vs answered), the tracker descriptor installed at `.ai/trackers/{tracker}.md`, any companion code-host descriptor installed beside a split tracker, the browser descriptor at `.ai/browsers/{provider}.md`, labels created via the taxonomy (and which already existed), and each project doc generated (SDLC.md, AGENTS.md, CODE_REVIEW.md, BACKWARD_COMPATIBILITY.md). Say explicitly what already existed and was left untouched, and why — existing files are never overwritten.}
 
 ### {✅ Cross-skill coverage complete | ⚠️ Missing skills}
 {When complete: one sentence saying every skill the installed skills reference is present. When not: list each missing skill with the paste-ready `npx skills add` command, and one sentence explaining which installed skill needs it and what degrades until it is installed.}

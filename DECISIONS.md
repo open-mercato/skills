@@ -289,6 +289,12 @@ The same review found three hand-off ambiguities and a missing read field. `om-d
 
 Only the affected skills' specific instructions and templates change; shared reference boilerplate and unrelated skills keep their existing behavior. Companion references and docs for each corrected workflow are updated together.
 
+## 2026-09-07 — Discovery recommends decisions only when their premises are known
+
+A session using `om-discover` grouped factual corrections, terminology, acceptance policy, and review responsibilities into yes/no questions with a preferred answer and one blanket confirmation. The wording was readable, but the required recommendation on every question encouraged the agent to fill missing context and anchor the answer. The rule now follows the information needed: verify accessible facts, ask neutrally about experience, and offer alternatives with consequences for decisions. Recommendations remain useful when their premises are known, so they are optional and conditional, with a meaningful trade-off in every mode. A dependency is asked first, and approval of a policy records that choice without upgrading its unsupported premises into evidence.
+
+The entrypoint, interviewer and skeptic instructions, evidence gate, and skill card use the same distinction. Batch confirmation still works for explicit independent choices with their consequences shown; it does not resolve missing facts or dependent questions. This changes interview behavior only; opting repositories into the Definition of Ready is a separate process decision.
+
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.

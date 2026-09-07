@@ -5,7 +5,7 @@ Apply before the skeptic sees the draft (step 5) and again on whatever the skept
 ## Evidence
 
 1. Every claim carries a tag and a source pointer that exists.
-2. No claim tagged above its support: no assumption dressed as an interview, no walkthrough dressed as data.
+2. No claim tagged above its support: no assumption dressed as an interview, no walkthrough dressed as data. Approving a recommendation documents the user's choice; it does not confirm unsupported claims about users or the current process used to justify it.
 3. Every number has provenance on the same line.
 4. Every benchmark has a link and a date checked.
 5. Every quote appears verbatim in a cited note.

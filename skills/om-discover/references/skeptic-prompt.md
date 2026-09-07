@@ -33,7 +33,7 @@ Return:
 - WARNING: weak spots worth one more question (should resolve)
 - OK: what holds and why
 
-Be direct. No praise padding. If the brief is solid, say so in one line and move on. For every CRITICAL, also write the question you would ask the team, in plain words with an example answer, naming the sentence and the file.
+Be direct. No praise padding. If the brief is solid, say so in one line and move on. For every CRITICAL, also write the question you would ask the team, in plain words with a neutral answer shape when useful, naming the sentence and the file.
 ```
 
-CRITICAL findings return to the user as questions in one more round, rewritten in the interviewer's shape from `references/voice.md` (why I ask, the question, an example answer, what happens on "we don't know"); the user never sees the words CRITICAL or WARNING. The skill never resolves its own skeptic's CRITICALs, and never resolves them by weakening a tag silently. WARNINGs may be resolved inline when the answer already sits in the material; otherwise they become one more question.
+CRITICAL findings return to the user as questions in one more round, rewritten in the interviewer's shape from `references/voice.md` (why I ask, the question, a neutral answer shape when useful, what happens on "we don't know"); the user never sees the words CRITICAL or WARNING. The skill never resolves its own skeptic's CRITICALs, and never resolves them by weakening a tag silently. WARNINGs may be resolved inline when the answer already sits in the material; otherwise they become one more question.

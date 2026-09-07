@@ -14,6 +14,12 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-09-07 — Discovery questions follow the kind of answer needed
+
+`om-discover` no longer attaches a recommended answer to every question. It checks available facts against the current sources, asks about experiences without suggesting the result, and frames decisions as options with consequences. Recommendations are optional, state their basis and conditions, and carry a meaningful trade-off in every mode. Missing prerequisites remain questions; an example shows how to answer without inventing numbers, dates, or experiences. A batch confirmation covers stated choices, not the facts used to argue for them.
+
+No marker or brief schema changes. Review local overrides that require `My suggestion` for every question or turn blanket agreement into sourced factual claims. Existing readiness gates are unchanged by this interview update.
+
 ## 2026-09-07 — Pre-intake review fixes: identity, routing, refresh, and browser hand-offs
 
 - **Backlog identity.** Issues created by `om-backlog` now carry additive `Backlog source:` and `Backlog id:` body lines. A title prefix alone never authorizes an update. Existing ids survive reordering, new ids follow those already used (including closed issues), and `backlog.md` keeps one section per source. For legacy issues, the next filing run shows the source-to-issue mapping for confirmation before adding the lines; ambiguous mappings remain untouched. Existing `E00` research epics retain their ids, while new research epics use normal allocation. No manual renumbering is needed.

@@ -18,7 +18,7 @@ A generated `SDLC.md` whose config already had `discovery.enabled` when `om-setu
 | Role lines (Product owner; Domain expert and Designer when declared) | Before the `- **Maintainer**` bullet in *Roles* | At the end of the *Roles* list |
 | The Discovery and Intake rows | **Replace** the delivery-only Discovery and Intake rows of the lifecycle table (the pair the template renders under `IF NOT discovery`); wrap the replacement pair | Insert the pair above the first `| Triage |` row and leave the existing rows in place; report that the old Intake row is still there for the team to remove |
 | *Definition of Ready* and *Product decisions as a protected contract* | After the after-merge paragraph ("After merge, this process stops…"), before the first of `## Label state machine`, `## The QA gate`, `## The claim protocol` that exists | Before `## Validation gate` |
-| The amending paragraph (blocks owned by `om-discovery-setup`) | After the first paragraph of *Amending this process* | Skipped, and reported |
+| The amending paragraph (blocks owned by `om-setup-discovery-pipeline`) | After the first paragraph of *Amending this process* | Skipped, and reported |
 
 The replaced Discovery and Intake rows are the one place this skill removes text, and only text the template itself generated. When the rows in the file do not match the template's delivery-only rows (the team edited them), do not replace: fall back to the insert-above-Triage path and say so.
 

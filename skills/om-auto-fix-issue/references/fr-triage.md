@@ -52,7 +52,7 @@ Before writing any spec, prove the feature does not already exist:
 
 Read the **Definition of Ready** section of the repo's `SDLC.md`. When
 `SDLC.md` has no such section, the product layer is not set up
-(`om-discovery-setup` adds it): skip this step, treat the ticket as ready, and
+(`om-setup-discovery-pipeline` adds it): skip this step, treat the ticket as ready, and
 continue. Otherwise check the issue against its **ticket-level** tier only: the problem and who has it, the expected outcome
 and how it is checked, what is out of scope, no blocking open question left
 unanswered, and any autonomous assumption already confirmed by a human. A

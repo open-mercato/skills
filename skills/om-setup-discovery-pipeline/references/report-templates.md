@@ -1,11 +1,11 @@
 # Report templates — final report (step 9)
 
-How `om-discovery-setup` reports back after a run. Reporting style contract: `references/rules.md` — full sentences, explain the why, never compress. This skill defines no chaining reference lines.
+How `om-setup-discovery-pipeline` reports back after a run. Reporting style contract: `references/rules.md` — full sentences, explain the why, never compress. This skill defines no chaining reference lines.
 
 ## Final run report
 
 ```markdown
-## 🎯 om-discovery-setup — {repo}
+## 🎯 om-setup-discovery-pipeline — {repo}
 
 **Result:** {✅ product layer added | ✅ product layer refreshed | ✅ already current | ⚠️ added with gaps} — {one full sentence on the outcome}
 

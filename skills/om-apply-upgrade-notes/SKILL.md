@@ -100,7 +100,7 @@ customization without asking.
      operator confirms.
    - Product-layer blocks in `SDLC.md` (between `<!-- discovery:start -->` and
      `<!-- discovery:end -->`, present when the config has `discovery.enabled`): never splice
-     them here. Report `om-discovery-setup --refresh` as the fix and let the operator run it;
+     them here. Report `om-setup-discovery-pipeline --refresh` as the fix and let the operator run it;
      it re-renders exactly those blocks from the current template and shows the diff.
 
 5. **Apply, verify, report.**

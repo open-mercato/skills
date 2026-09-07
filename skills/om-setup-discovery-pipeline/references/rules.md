@@ -8,7 +8,7 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 - **Reporting style.** User-facing output is a deliverable, not a log: write complete sentences and explain the why behind every change you report. Never compress reporting to save tokens. Fill the shape in `references/report-templates.md` exactly and expand with detail.
 - **Marker contract.** This skill emits no chaining reference lines (`PR:` / `Issue:` / `Spec:`); the markers it owns are `<!-- discovery:start -->` / `<!-- discovery:end -->` in `SDLC.md` and `<!-- discovery:routing-start -->` / `<!-- discovery:routing-end -->` in the agent instruction file, and nothing else in the collection writes between them.
 
-## om-discovery-setup specifics
+## om-setup-discovery-pipeline specifics
 
 - **Additive, marked, reversible.** Everything this skill writes into an existing file sits between its markers, so removing the layer is deleting the marked blocks and the `discovery` key. Say so in the report the first time.
 - **No tracker, no claims, no labels.** This skill touches files only; it names no tracker operation and applies no label.

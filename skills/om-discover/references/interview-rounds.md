@@ -4,31 +4,44 @@ How `om-discover` asks. The body's rules are the contract; this file is techniqu
 
 ## Sources before questions
 
-The ladder, in order: the research directory → the repository → the tracker (read-only, when available) → benchmarks the user points at → the user. Ask the user directly only what has no other source: motivation, appetite, constraints, priorities, taste, and every decision. A question whose answer sits in a file is homework the agent does first.
+The ladder, in order: the research directory → the repository → the tracker (read-only, when available) → benchmarks the user points at → the user. Check which revision the material describes before treating a discrepancy as current. Ask the user directly for unavailable facts, their experiences, motivation, appetite, constraints, priorities, taste, and decisions. A factual inconsistency with a clear authority is a finding to report, not a policy choice for the user to approve; when sources conflict and neither is authoritative, ask who can settle the fact. Report corrections for the implementation hand-off; discovery's write surface stays unchanged.
+
+Choose the question's form from what is missing:
+
+| What is missing | How to handle it |
+|---|---|
+| A fact available in the material, repository, or tracker | Read and cite it. Do not spend a round question asking the user to repeat it. |
+| An unavailable fact or a person's experience | Ask neutrally, about a concrete situation or the last occurrence. Do not suggest an answer, a cause, or a preferred outcome. |
+| A preference or decision | Present viable options and their consequences. Recommend only when the known goals and constraints support a choice; state that basis, its trade-off, and when another option would fit better. |
+| A decision whose recommendation depends on an unknown fact | Ask for that fact first. Keep the decision for a later round, or label any alternatives as conditional; do not present one as the settled default. |
+
+Separate the current situation from the desired policy. Naming a role is not deciding its responsibilities; assigning a reviewer is not deciding when review is required. Split a question when its parts can have different answers.
 
 ## Frontier rounds
 
-Map the brief as a tree of questions: every settled answer opens the questions that depended on it. The **frontier** is every question that can be asked now without guessing at an answer not yet heard. Ask the frontier in one round, numbered, at most eight questions — when the frontier is larger, ask the eight that unblock the most brief sections and carry the rest to the next round; give the recommended answer for each, and the evidence tier that answer would carry if accepted. Wait for the user. Recompute the frontier and ask the next round. A question whose answer depends on another still open in this round belongs to a later round. Two rounds are the norm, three the ceiling unless the user asks for more; what is still open after that goes to the collection plan or the open questions, not to a fourth round.
+Map the brief as a tree of questions: every settled answer opens the questions that depended on it. The **frontier** is every question that can be asked now without guessing at an answer not yet heard. Ask the frontier in one round, numbered, at most eight questions — when the frontier is larger, ask the eight that unblock the most brief sections and carry the rest to the next round. Use the appropriate form above; recommendations are not a required field. Wait for the user. Recompute the frontier and ask the next round. A question whose answer depends on another still open in this round belongs to a later round. Two rounds are the norm, three the ceiling unless the user asks for more; what is still open after that goes to the collection plan or the open questions, not to a fourth round.
 
 Format a round like so, in the interviewer's voice from `references/voice.md` (plain words, the user's language, one concrete thing per question):
 
 ```
 **Q1 — {plain title, six words or fewer}.**
 Why I ask: {one line pointing at what in the material raised it}
-Question: {the question, with two or three named options when it is a choice, and an example of a good answer}
-My suggestion: {the answer, in plain words} ({what it rests on: "your interview of 20 August", "the board", or "a guess, nothing in the material"})
+Question: {an open question for an experience, or two or three named options with consequences for a decision; show a neutral answer shape only when helpful}
+My suggestion: {optional, decisions only: the choice, its basis, the condition under which it fits, and the trade-off or condition favoring another option}
 If you don't know yet: {what goes on the collection plan, and who could answer}
 
 **Q2 — …**
 ```
 
-The evidence tier the answer would carry is recorded by the agent when the answer comes back; it is not vocabulary for the question. Before the round goes out, run the self-check in `references/voice.md`.
+Omit `My suggestion` for factual and experience questions, unsupported choices, and skeptic CRITICALs. The evidence tier the answer carries is recorded by the agent when the answer comes back; it is not vocabulary for the question. A user's approval is evidence of their decision, not proof of the recommendation's claims about users or the current process. Before the round goes out, run the self-check in `references/voice.md`.
 
 A question that carries a skeptic CRITICAL finding is asked without a recommendation — recommending an answer to it is resolving it.
 
-When a frontier question needs a fact from the material or the repository, look it up before the round (a sub-agent may do it while the round runs); do not block the rest of the frontier on it, and never ask the user for a fact you could read. When the recommended answer would be an assumption, say so in the round — the user may still choose it, and the brief will carry the tag.
+When a frontier question needs a fact from the material or the repository, look it up before the round (a sub-agent may do it while the round runs); do not block the rest of the frontier on it, and never ask the user for a fact you could read. When a proposed choice rests on an assumption, name the assumption and how a different answer would change the choice; the user may explicitly accept that uncertainty, but the assumption keeps its tag.
 
-In `own` mode, every suggestion gets a one-line counter-argument next to it (`Against: …`), in the same plain words. Recommendations anchor; the counter-argument is the cheapest defence against the team confirming its own idea.
+Every recommendation carries a meaningful trade-off or counter-argument, in every mode. In `own` mode, also check whether the question presumes the team's idea is needed; ask about the problem and what would disprove it without suggesting the desired result.
+
+Keep factual corrections, terminology choices, and changes to acceptance or responsibilities distinct in the decision summary. A batch confirmation is valid for explicit independent choices with their consequences shown; it cannot close unanswered prerequisites or turn the agent's entire analysis into confirmed facts. An unanswered decision stays open or `proposal` under the existing ownership rules.
 
 ## Housekeeping before the round
 

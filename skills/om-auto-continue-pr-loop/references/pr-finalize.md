@@ -17,7 +17,7 @@ A PR whose branch changes only spec/design files (`$SPECS_DIR`, docs areas, the 
 ## Update the PR body
 
 - If every row in the Tasks table now has `Status: done`, flip the PR body's `Status: in-progress` to `Status: complete` **and flip the PR from draft to ready via mark-pr-ready** — `om-auto-create-pr-loop` leaves the PR a draft while unfinished, so completing the resume is what promotes it. A resume that stays `in-progress` leaves the PR a draft the user can watch and re-enter.
-- Extend the `What Changed` / `Tests` sections with the new work from this resume.
+- Refresh agent-owned prose using `references/pr-body-template.md`: describe the full current change and validation, replacing stale text instead of appending a run history. Preserve adopted human-authored prose. The summary comment carries only this resume’s delta and next action.
 
 ## Label normalization (resume state machine)
 

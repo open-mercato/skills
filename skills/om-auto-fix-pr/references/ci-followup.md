@@ -38,14 +38,12 @@ summary comment MUST carry the disclosure as its own short paragraph, so the PR 
 self-documenting and nobody mistakes "merge-ready" for a green run:
 
 ```markdown
-**CI is still running on this head.** Branch protection plus the QA-approval gate
-hold the actual merge; this run's verdict covers the work, not a green run. Checks
-still pending: {names}. A follow-up comment will report the CI outcome.
+**CI pending:** {check names and links} on this head. Required CI and QA approval
+still gate merge. A follow-up will report the CI result.
 ```
 
-Adjust the first clause to what the run actually concluded. Drop the last sentence
-when the run will not follow up — never promise a follow-up the run does not intend
-to make. When no required check was pending, omit the paragraph entirely rather than
+Drop the last sentence when the run will not follow up — never promise a
+follow-up the run does not intend to make. When no required check was pending, omit the paragraph entirely rather than
 writing a "CI was green" variant; the summary's own validation section covers that.
 
 ## Swapping the lock to `ci-monitoring`

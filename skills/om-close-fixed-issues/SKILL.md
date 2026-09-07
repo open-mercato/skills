@@ -50,15 +50,15 @@ Maintenance skill. Walk a window of recent pull requests; where a PR authoritati
 
    **4a. Merged into the base branch.** Claim the issue first — assignee + guarded `in-progress` label + claim comment, exact sequence and comment template in `references/claim-pr.md`. Then close via **close-issue** (reason: `completed`) with the ✅ close-comment template from `references/report-templates.md`. Finally release the lock: `remove_issue_label "in-progress" {issue}`.
 
-   **4b. Merged into a non-base branch.** Post the ℹ️ non-base-branch informational comment from `references/report-templates.md` via **comment-issue**, but **do not** close.
+   **4b. Merged into a non-base branch.** Post the non-base-branch informational comment from `references/report-templates.md` via **comment-issue**, but **do not** close.
 
-   **4c. Closed without merge.** Post the ℹ️ closed-without-merge informational comment from `references/report-templates.md` via **comment-issue**; do **not** close. When a different merged PR in the same window declares `Supersedes #{prNumber}`, link it via the template's `supersededBySuffix`.
+   **4c. Closed without merge.** Post the closed-without-merge informational comment from `references/report-templates.md` via **comment-issue**; do **not** close. When a different merged PR in the same window declares `Supersedes #{prNumber}`, link it via the template's `supersededBySuffix`.
 
 5. **Honor `--dry-run`.** When set: do **not** post comments, close issues, or add/remove labels or assignees. Print every mutation the real run *would* have made, one per line, prefixed with `DRY-RUN:`. The unmatched-mentions section from step 3 is diagnosis rather than a mutation, so it is printed unchanged and without the prefix — a dry run is exactly when a team checks whether its `closeKeywords` are complete.
 
 6. **Release the claim.** Always remove `in-progress` (via the guarded helper) from issues the run added it to, even on error. Wrap the mutation block in a `trap`/finally so a crash or early stop still clears the lock. Full procedure: `references/claim-pr.md`.
 
-7. **Report.** Print the final run report per `references/report-templates.md`: the per-pair table (every **Reason** cell a full sentence explaining why that action was taken), the ⚠️ unmatched-mentions section whenever step 3 recorded any (the table of PRs that mention issues without a recognized close keyword, plus the sentence naming `closeKeywords` as the fix), the counts (`closed N`, `commented M`, `skipped K`, `unmatched-mentions U`, `dry-run-would-have X`), and a closing paragraph in full sentences noting anything a human should look at. A run that closed nothing while unmatched mentions exist must say so explicitly — the silent `closed 0` is the failure this section exists to prevent.
+7. **Report.** Use `references/report-templates.md`: window and counts (`closed N`, `commented M`, `skipped K`, `unmatched-mentions U`, `dry-run-would-have X`), one evidence-backed outcome per PR/issue pair, and unmatched open-issue mentions with the relevant `closeKeywords` remedy. Do not repeat totals or routine rules in a closing paragraph. If no issues closed but unmatched mentions exist, state that gap explicitly. A merge proves the closure link landed in the base branch, not that the fix was deployed or independently reproduced.
 
 ## Rules
 

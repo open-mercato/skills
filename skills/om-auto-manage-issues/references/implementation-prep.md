@@ -23,8 +23,9 @@ re-exploring the repo. It never edits source and never stops to ask — this is 
 Pick the analyzer by issue kind:
 
 - **Bug / defect** — when `om-root-cause` is installed, invoke it verbatim
-  (`om-root-cause {issueId}`); it is read-only and returns a Summary / Root cause /
-  Files to change / Approach / Risks brief. Use its output directly.
+  (`om-root-cause {issueId}`); it is read-only and returns evidence, likely cause,
+  affected files, approach, and risks. Distill its findings into the template
+  below; do not paste the full analysis into a comment.
 - **Feature, or `om-root-cause` not installed** — do a lighter inline analysis
   yourself, read-only: locate the affected modules/entry points/contracts, name the
   smallest safe change surface and the conventions that apply, list the tests that
@@ -48,20 +49,22 @@ Post one comment via **comment-issue**, opened with a stable marker so re-runs
 detect and skip it:
 
 ```markdown
-🤖 `om-auto-manage-issues` implementation notes — read-only analysis to help fix this
+🤖 `om-auto-manage-issues` — implementation notes
 
-**Likely area:** {files / modules / symbols}
-**Root cause / mechanism:** {for a bug: where and why it breaks; for a feature: where it plugs in}
-**Suggested approach:** {smallest safe change surface}
-**Tests to add:** {unit; integration when flows cross boundaries}
-**Compatibility:** {None | protected surfaces touched + required migration per BACKWARD_COMPATIBILITY.md}
-**Confidence:** {high / medium / low — what a human should double-check}
+{Concrete likely mechanism and affected file/symbol, supported by linked
+code evidence; say hypothesis when not reproduced.}
+Suggested change: {smallest safe behavior change, without repeating the issue}.
+Check: {test or reproduction that could confirm the fix}.
+{Material compatibility obligation or missing proof, only when present.}
 
-Pick this up with `om-auto-fix-issue {issueId}` (it handles both bugs and features).
+Next: `om-auto-fix-issue {issueId}`.
 ```
 
-Optionally fold a one-line "Likely area" pointer into the clarified description when
-the wording-clarify step (2.3) also ran, but keep the full analysis in the comment.
+Recognize the legacy `` 🤖 `om-auto-manage-issues` implementation notes — ``
+marker, including bare skill names, when checking for existing notes. Keep the
+comment near 40–100 words unless necessary findings require more. Put substantial
+analysis in collapsed detail, and optionally add a one-line area pointer to the
+clarified body. Do not repeat existing spec guidance or the issue's summary.
 Under `--dry-run`, produce the analysis text for the report but post nothing.
 
 Never let the prep analysis mutate code, run a build/test that writes state, or

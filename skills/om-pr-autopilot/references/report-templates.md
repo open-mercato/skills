@@ -1,49 +1,29 @@
-# Report templates — publishing the complete information
+# PR driver reports
 
-Two outputs carrying the same content: one **summary comment on the PR**, so the
-state is readable on the tracker without the session, and the **session report**.
-Both are deliverables, not logs — full sentences that explain the why behind
-every outcome, never a compressed key:value dump.
+Follow `references/rules.md`. The PR body explains the change; this skill reports
+what remains after the chain. Keep diagnosis and per-step logs out of the summary
+unless they explain a blocker. A dry run prints the proposed chain and reasons
+without posting anything.
 
 ## 1. Summary comment on the PR
 
-Post once per run via **comment-pr**. When a previous `om-pr-autopilot` comment
-exists, find its marker via **list-issue-comments** and rewrite that comment via
-**update-comment** instead of stacking duplicates. When the tracker descriptor
-defines no **update-comment** operation, post a replacement that states it
-supersedes the previous `om-pr-autopilot` report.
+Find the existing marker via **list-issue-comments** and update it through
+**update-comment**. Match the stable `om-pr-autopilot` / `run at` prefix rather
+than the timestamp; accept the legacy bare skill name. If editing is unsupported,
+post a replacement identifying the earlier report it supersedes.
 
 ```markdown
 🤖 `om-pr-autopilot` — run at {UTC timestamp}
 
-**Diagnosis on entry**
-
-{the PR State Report from references/diagnose.md}
-
-**Chain executed**
-
-| Step | Skill | Outcome |
-|---|---|---|
-| 1 | `om-auto-continue-pr` | Finished plan steps 2.3–2.5; 3 commits pushed |
-| 2 | `om-auto-fix-pr` | Review approvable after 1 autofix cycle; CI green |
-| 3 | `om-auto-qa-pr` | 4 screenshots attached; the order flow was verified |
-
-**State now**
-
-- 🔍 Review: {verdict, and by whom}
-- 🧪 CI: {green, or which checks are red and why}
-- 🚀 Mergeability: {status}
-- 📸 QA: {evidence, or what is still missing}
-- 📋 Follow-ups filed: {issue links, or none}
-
-**Labels this PR should carry**
-
-{One label per line, each with its glossary emoji and a full-sentence reason.}
-
-{Applied automatically | ⚠️ This account has no triage rights — the set above could not be applied; maintainer, please apply it.}
-
-**Verdict:** {merge-ready | blocked on X | waiting for QA sign-off | needs a human decision on Y}
+**{Merge-ready | waiting for QA | blocked | needs a decision}:** {reason and current behavior changed, in one sentence}.
+{Only consequential changes from this chain, with links to review, QA evidence, or follow-up issues.}
+🧪 {Required CI status at this head; QA result or missing sign-off.}
+🔁 {Next action and who owns it; state when --allow-merge was absent or a requested merge actually happened.}
 ```
+
+Aim for 40–100 words; keep all remaining blockers and pending check names.
+Include a short chain table only when several step outcomes explain the result.
+Do not paste the ten-signal diagnosis, file inventory, or all prior findings.
 
 ## 2. Label set
 
@@ -70,32 +50,32 @@ its own vocabulary:
   or broad cross-module edits → high; an ordinary single-module change shipping
   with tests → medium; docs, dependencies, test-only, typo, or cosmetic → low.
 
-Every label the run adds or changes needs its one-line reason in the comment —
-that is the collection's label-commentary rule (`references/rules.md`).
+Keep the full applied set in one marker-idempotent
+`` 🤖 `om-pr-autopilot` — 🏷️ label rationale `` comment, updated through
+**update-comment**. Use one concise reason per label; link this comment from the
+run summary only when a label issue affects the next action.
 
 **No triage rights:** an account without them cannot apply labels, and the guard
 reports a permission error. Do not retry or work around it — list the intended
-set in the summary comment, address the maintainer, and carry it in the session
-report as an open item.
+set in the label-rationale comment, distinguish it from applied labels, and name
+the maintainer action in the summary and session handoff.
 
 ## 3. Session report
 
-The same content, plus what the comment cannot carry: the operations run, the
-files touched per step, and every judgment call the run made autonomously. End
-with the chaining reference lines so a following skill can consume them:
+Return the outcome and next action in 3–6 lines, linking the PR summary and any
+material evidence. Include a permissions gap or unresolved decision if it remains.
+Do not repeat the tracker report. For `--dry-run`, show the diagnosis needed to
+understand the proposed chain and a one-line reason per step; say it was not run.
+End with exact chaining fields (issue only when the run has one):
 
 ```text
 PR: #{number} (link: {url})
 Issue: #{number} (link: {url})
 ```
 
-The issue line appears only when the run has a subject issue.
+## 4. Evidence limits
 
-## 4. What the report must never claim
-
-- Never report a gate as passed that was not actually run — name every skipped
-  step and why it was skipped.
-- Never claim QA passed without attached evidence.
-- Never report a merge unless `--allow-merge` was passed **and** the merge
-  really happened.
-- Never report a label as applied when the guard reported a permission error.
+- Name any required gate not run and why; never infer a pass.
+- QA pass requires attached evidence; link it rather than repeating it.
+- Report a merge only when `--allow-merge` was passed and it actually happened.
+- A requested label is not an applied label; report guard permission failures.

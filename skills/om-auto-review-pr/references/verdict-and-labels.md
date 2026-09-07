@@ -6,7 +6,12 @@ Detailed procedure for step 10 of `om-auto-review-pr`. The authoritative label i
 
 Submit the review via the tracker operation **review-pr**: verdict approve when approved; verdict request changes on any blocker, or any major without a documented waiver.
 
-The review body **is** the `om-code-review` report reproduced verbatim in the exact output structure that skill defines — the `# 🔍 Code Review` heading, 🎯 Summary, Verdict, the 🧪 Validation Gate table, Findings grouped by severity, the 💥 Breaking-Changes checklist, and 🧪 Test Coverage — emoji headings and all, in full sentences (Reporting style, `references/rules.md`). Post that report as the review body; do **not** condense it into a fresh short summary, and do not strip the emoji headings — the om-code-review pass is the deliverable posted to the PR, not an internal analysis you re-summarize. A clean approve legitimately omits empty severity sections, but the Summary, Verdict, and Validation Gate sections are always present and written as full sentences. For re-reviews, note that it is a re-review in the title or summary.
+Post the concise `om-code-review` report as the authoritative review body.
+Keep Verdict, Summary, severity fields, every actionable finding, and the
+per-command Validation Gate table. Direction/scope questions remain separate
+from verified defects. Omit empty sections and passing checklists. A re-review
+leads with the delta and the disposition of earlier findings; later comments
+link the review rather than reproducing it.
 
 ## Label mechanics
 
@@ -16,7 +21,7 @@ Pipeline labels: `review`, `changes-requested`, `qa`, `qa-failed`, `merge-queue`
 
 Keep `in-progress` separate from the pipeline-state helper. It is a lock, not a workflow state.
 
-Pipeline-label transitions go through the `set_pipeline_label` helper (usage: `set_pipeline_label <prNumber> <newLabel>`), one of the label guards from the tracker descriptor — do not redefine it here; its exact behavior is in `references/label-transitions.md`. Every label change lands in the single consolidated `🏷️ label rationale` comment, updated in place via **update-comment** — never a new comment per change (template: `references/label-transitions.md`).
+Pipeline-label transitions go through the `set_pipeline_label` helper (usage: `set_pipeline_label <prNumber> <newLabel>`), one of the label guards from the tracker descriptor — do not redefine it here; its exact behavior is in `references/label-transitions.md`. Every applied label has one concise sentence in the single consolidated `🏷️ label rationale` comment, updated in place via **update-comment** — never repeat the label set in other reports or add a comment per change (template: `references/label-transitions.md`).
 
 Label rules:
 
@@ -40,11 +45,11 @@ Flow — `PR_AUTHOR` is the author login already captured by the step 2 **get-pr
 3. Post the handoff comment via **comment-pr** (preserving multi-line formatting):
 
 ```markdown
-Thanks @{PR_AUTHOR} — review found actionable items, so I'm handing this PR back to you for the next pass. When the updates are pushed, re-request review and the automation can pick it up from the latest head.
+@{PR_AUTHOR}, {concrete change needed; link the review}. Push the update and re-request review.
 ```
 
 Rules:
 
 - Do this for every `changes-requested` outcome, including verdicts driven by merge conflicts or failing required checks and the duplicate/already-merged early exit.
 - If the author cannot be assigned (bot/deleted account/permission issue), keep the current assignee and leave the same handoff comment without the reassignment claim.
-- The handoff comment is separate from the short pipeline-label comment; keep both.
+- Keep the handoff separate from a label-rationale comment when both are needed; link the findings rather than repeating them.

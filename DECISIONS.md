@@ -275,6 +275,14 @@ The first team session produced rounds nobody in the room could answer: "the pri
 
 A first test with the team showed the seam between the pre-Intake skills: after `om-discover` wrote the brief, the user had to know that the panel comes next, that its result only enters the brief through `--refresh`, and that the backlog refuses until the Definition of Ready is met. Run one by one, the skills made no sense to someone who had not written them. `om-discover` now ends with a hand-off: one yes/no at a time, the synthetic panel optional, the backlog only when the brief is ready, one more decision round when it is not. Each step still runs the named skill verbatim with its own confirmation stop, so nothing became autonomous. A separate orchestrator skill was rejected: it would duplicate the readiness logic that already lives in `om-backlog` and the refresh logic in `om-discover`, and it would be one more name to learn. In the same change, housekeeping questions (where the brief lands, who owns it, a missing founder's name) left the eight-question round: the first run in a repository without a config spent a round seat proposing a path from a neighbouring folder, and another asking the person running the session who owns the brief.
 
+## 2026-09-07 — Backlog ids identify a source's items; routing describes work still to run
+
+PR #107's review found that title-only backlog ids collide when two specs start at `E01`. Issues now carry an explicit source path and full item id, and updates require both. New numbers follow used numbers while existing mappings survive insertion, reordering, and moves; the local record retains every source. A global renumbering was rejected because it would break references to issues already filed. Legacy mappings instead pass through the existing adoption confirmation.
+
+The same review found three hand-off ambiguities and a missing read field. `om-discover` keeps executing accepted follow-ups, but its `Next:` line returns to the collection's existing meaning: a chosen action still to execute, never one completed or declined. `om-ux-style --refresh` revises declared design values before implementation and keeps history in the manual section, instead of treating its own output as code to extract. For screen walks, the main agent operates the browser and feeds observations to isolated persona subagents; expanding the personas' tool access was unnecessary. `om-approve-merge-pr` explicitly fetches the SHA it compares and the commit history it reports on a mismatch.
+
+Only the affected skills' specific instructions and templates change; shared reference boilerplate and unrelated skills keep their existing behavior. Companion references and docs for each corrected workflow are updated together.
+
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.

@@ -14,6 +14,14 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-09-07 — Pre-intake review fixes: identity, routing, refresh, and browser hand-offs
+
+- **Backlog identity.** Issues created by `om-backlog` now carry additive `Backlog source:` and `Backlog id:` body lines. A title prefix alone never authorizes an update. Existing ids survive reordering, new ids follow those already used (including closed issues), and `backlog.md` keeps one section per source. For legacy issues, the next filing run shows the source-to-issue mapping for confirmation before adding the lines; ambiguous mappings remain untouched. Existing `E00` research epics retain their ids, while new research epics use normal allocation. No manual renumbering is needed.
+- **Discovery routing.** `om-discover` emits `Next: none` for completed or declined steps. An executable `Next:` names only an explicitly chosen, unexecuted invocation with all its arguments; child routing lines are not forwarded automatically. The existing parser shape is unchanged. Review local overrides that treated this line as a history field.
+- **QA head lookup.** `om-approve-merge-pr` requests `headRefOid` explicitly, stops when it cannot obtain it, and requests `commits` when explaining a stale signature. These fields already belong to the tracker contract; no new operation or descriptor migration is required.
+- **Declared design refresh.** `om-ux-style --refresh` can revise its own declared contract before an implemented design system exists. It updates the current value by token name and theme and retains the old value in a manual supersession note. Its own generated theme file does not trigger extraction.
+- **Browser ownership.** In `om-synthetic-users`, the main agent operates the browser and relays observations to each isolated persona context. Persona subagents retain their read-only file access and gain no browser or network permissions. Local overrides should preserve this division of work.
+
 ## 2026-09-02 — om-synthetic-users: panels, repeats, pressure, and a parity check
 
 `om-synthetic-users` shipped earlier today as three personas and one walkthrough. It now runs the way the research on synthetic respondents says it must to mean anything:

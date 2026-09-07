@@ -1,4 +1,4 @@
-# Writing the contract (step 7)
+# Writing the contract (step 8)
 
 Exactly what this skill writes, where, and how it stays compatible with what `om-ux-setup` writes and every UX skill reads. Show the user the diff of each file before writing.
 
@@ -14,7 +14,16 @@ An array of token entries in the format `om-ux-setup` documents, with two additi
 ]
 ```
 
-`source: "design"` marks a declared token (as opposed to one extracted from code, where `source` is a file path, or proposed from a palette, `"proposed"`); `theme` is `light`, `dark`, or `both`. Both sentinels are documented in `om-ux-setup`'s contract format. Readers that do not know the fields still see a valid flat list. When the file already holds *declared* tokens, this skill stops (workflow step 1); when it holds a *proposed* palette, the proposed entries are kept under `"source": "proposed"` for the record and the declared ones are added.
+`source: "design"` marks a declared token (as opposed to one extracted from code, where `source` is a file path, or proposed from a palette, `"proposed"`); `theme` is `light`, `dark`, or `both`. Both sentinels are documented in `om-ux-setup`'s contract format. Readers that do not know the fields still see a valid flat list. Existing declared tokens are editable through `--refresh` when workflow step 1 found no implemented design system; their presence alone is not a stop. A proposed palette is preserved with `"source": "proposed"` while the confirmed declared entries are added.
+
+On `--refresh`, match declared entries by `(name, theme)` and replace only the
+confirmed values, keeping one current declared entry per pair. Preserve
+unrelated entries and themes. If older entries omit `theme` or duplicate a pair,
+resolve that mapping in the shown diff before changing it; do not guess which
+value to replace. Append the old value, new value, theme, reason, and date to
+the manual section's supersession note, and update the matching identity token
+in `theme.css`. Historical values belong in that note, not as competing current
+tokens. An unchanged re-run adds no duplicate tokens or supersession notes.
 
 ## `.uxproof/conventions.md`
 

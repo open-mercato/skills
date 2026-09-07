@@ -1,4 +1,4 @@
-# Quality gate (step 8)
+# Quality gate (step 7)
 
 Apply before writing the contract. Score each item 0 (absent or contradicted), 1 (present but vague or partial), 2 (concrete and confirmed).
 
@@ -12,8 +12,9 @@ Apply before writing the contract. Score each item 0 (absent or contradicted), 1
 8. `theme.css` declares exactly eight identity token names in `:root` (the `.dark` block re-declares the five color knobs only) and states the semantic contract in its header.
 9. The manual section of `conventions.md` was appended, not rewritten; superseded rules are marked.
 10. Nothing in the contract names a framework, a component library, or a product other than this one.
+11. On `--refresh`, each changed declared `(name, theme)` pair has one current value matching `theme.css` when applicable, its old value is in a supersession note, and unrelated entries and manual rules remain intact.
 
-Critical gates: items 1, 3, 4, 8, 9. A zero means the contract is not ready. The gate runs before the files are written; item 9 is checked on the content about to be written.
+Critical gates: items 1, 3, 4, 8, 9, and 11 when refreshing. A zero means the contract is not ready. The gate runs before the files are written; item 9 is checked on the content about to be written.
 
 ## Signatures of the generic look
 

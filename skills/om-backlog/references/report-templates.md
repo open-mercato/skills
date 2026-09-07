@@ -10,6 +10,7 @@ The tree shown for confirmation (step 4) and the final report (step 6). Fill the
 **Readiness**: {met — every ticket-level item present on tiers 1–5, blocking questions answered, decisions owned | not met: sections … rest on synthetic or assumed claims → research variant offered | not met: blocking questions {ids} open, decisions {ids} still proposals → answer them and re-run om-discover --refresh}
 **Size**: {n} epics, {m} stories, {k} tasks; {a} existing issues adopted (or "dedupe skipped — no tracker")
 **Labels**: {enabled — applied by om-prepare-issue | disabled in config — shown for the record only}
+**Identity**: {source path; existing ids retained; new ids allocated after used ids, or provisional on a dry run; external references and legacy adoptions needing confirmation}
 **Held back**: {stories whose only role rests on an assumption, with the A0n id; or none}
 
 ### E01 — {title} · {priority}, {risk} (highest of its stories)
@@ -43,7 +44,7 @@ On `--dry-run` the header line is `Dry run — nothing was written.`, the closin
 
 ⚠️ **What is still open.** {blocking open questions carried into issue bodies with who can answer; stories that depend on decisions not yet owned; the Later epic's contents}
 
-📝 **Record.** {where backlog.md is, and that ids in titles are the durable link on re-runs}
+📝 **Record.** {where this source's section in backlog.md is; the source/id pairs recorded on issues; other sources and retired mappings preserved}
 
 Backlog: {…}
 Issues: {…}
@@ -52,4 +53,4 @@ Next: {…}
 
 ## Readiness stop
 
-When step 1 stops the run, the report is the readiness block above with the missing items, who can supply each, and — for the research variant — the E00 tree offered; it ends with `Next: om-discover --refresh` (questions or owners missing) or `Next: none` (research backlog offered and declined). No `Backlog:` or `Issues:` line.
+When step 1 stops the run, the report is the readiness block above with the missing items, who can supply each, and — for the research variant — the Discovery tree offered with its allocated or existing id; it ends with `Next: om-discover --refresh` (questions or owners missing) or `Next: none` (research backlog offered and declined). No `Backlog:` or `Issues:` line.

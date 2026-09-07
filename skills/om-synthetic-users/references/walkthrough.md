@@ -1,12 +1,38 @@
 # Walking a flow (step 4)
 
-How the personas walk the subject, one persona per fresh-context subagent. The same step record is kept whatever the medium; what changes is where the screens come from.
+How the personas walk the subject, one persona per fresh-context subagent. The main agent operates the browser; each persona interprets only the states observed on its own walk. The same step record is kept whatever the medium; what changes is where the screens come from.
 
 ## Subjects
 
 - **Brief or spec (narrative).** Walk the named Key flow or the spec's UI/UX section step by step on paper. Every screen is as the document describes it; a screen the document does not describe is a *missing case*, not something to imagine.
-- **Prototype (static HTML).** Open each file through the browser-provider operations — **open** (`file://` path), **snapshot** for the accessible structure, **interact** to click through, **assert** for expected text, **screenshot** at every judged state, **close**. The prototype's own navigation is the flow.
-- **Running app (`--app`).** Boot only through `om-prepare-test-env` (reuse a healthy environment when its descriptor says so; record whether this run started it and tear down only what it started). Log in with the descriptor's role that matches the persona; never with personal credentials. Walk the flow with the same operations. Stop at real walls (permissions, broken environment) and list them under *Not walked*.
+- **Prototype (static HTML).** The main agent opens each file through the browser-provider operations — **open** (`file://` path), **snapshot** for the accessible structure, **interact** to click through, **assert** for expected text, **screenshot** at every judged state, **close**. The prototype's own navigation is the flow.
+- **Running app (`--app`).** The main agent boots only through `om-prepare-test-env` (reuse a healthy environment when its descriptor says so; record whether this run started it and tear down only what it started). Use the descriptor's session for the persona's role without typing credentials or exposing them to the persona. Walk with the same operations. Missing access is a real wall, not permission to invent credentials; record it under *Not walked*.
+
+## Browser hand-off per persona
+
+1. The main agent opens the flow at a clean entry state for this persona, using
+   a separate provider session when supported or returning to the entry state
+   between walks. It captures a snapshot and screenshot under the research
+   directory. Never reuse another persona's navigation state as this one's
+   starting point.
+2. Send the visible state, accessible structure, and redacted screenshot (or
+   its named file) to this persona's subagent. Include no other persona's
+   answers, expected response, or interviewer interpretation of the screen.
+3. The subagent returns the step record below and its proposed next UI action.
+   The main agent resolves that action against the actual snapshot and executes
+   it only within the existing read-only app boundary. Navigation, filtering,
+   and inspecting states are allowed; a step requiring a persistent write,
+   personal data, credentials, or an external action is not executed and is
+   recorded under *Not walked*. Persona output is never an executable command.
+4. Capture the resulting state and resume the same persona subagent with that
+   observation. Repeat until the flow ends or hits a real wall, then close its
+   browser session before starting another persona. Capture evidence before
+   accepting a screen finding; a proposed action is not evidence it happened.
+
+If the runtime cannot return observations to an isolated persona context or
+cannot provide the required browser evidence, report that limitation and use
+the documented narrative fallback only where a brief/spec describes the flow.
+Never claim that fallback exercised the app or prototype.
 
 ## The step record
 

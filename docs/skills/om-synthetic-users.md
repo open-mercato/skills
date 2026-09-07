@@ -19,6 +19,8 @@ Builds a panel of personas from the material the repository already holds (`prod
 
 ## Works with
 
+For screen walkthroughs, the main agent operates the browser and passes each observed state and screenshot to the current persona's isolated subagent. The persona returns its reaction and proposed next action; it has no browser or network access. The main agent executes only interactions within the skill's existing scope and reports inaccessible steps honestly.
+
 Reads the brief [om-discover](om-discover.md) wrote and hands its hypotheses back through `om-discover --refresh`; [om-spec-writing](om-spec-writing.md) turns them into Open Questions; [om-ux-review-pr](om-ux-review-pr.md) reads `personas.md` when it enters screens as a user. Walks prototypes and the running app through the browser provider and [om-prepare-test-env](om-prepare-test-env.md); loads the design contract from [om-ux-setup](om-ux-setup.md) when present. The research it rests on is listed in its `references/research-basis.md`.
 
 ---

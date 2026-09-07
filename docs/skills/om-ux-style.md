@@ -15,6 +15,8 @@ Creates a design contract for a repository that has no design system yet. It gat
 
 ## Works with
 
+Before components exist in product code, `--refresh` updates this skill's declared tokens by name and theme, keeps unrelated values, and records old values in the manual section. Its own generated `theme.css` does not count as an implemented design system. Once a real system exists in code, extraction belongs to `om-ux-setup`.
+
 Reads the brief [om-discover](om-discover.md) wrote for the product's character and flows. Writes the files [om-ux-setup](om-ux-setup.md) extracts from code, so a later `om-ux-setup --refresh` converges the two; [om-ux-review-pr](om-ux-review-pr.md) and [om-ux-shape](om-ux-shape.md) apply its principles as `[PRODUCT]` rules; the `theme.css` is a drop-in for a prototype directory.
 
 ---

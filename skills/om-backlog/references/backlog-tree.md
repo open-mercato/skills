@@ -16,7 +16,7 @@ How the source becomes epics, stories, and tasks. The tree is shown to the user 
 
 ## Ids
 
-`{prefix}{nn}` for epics, `{prefix}{nn}-S{nn}` for stories, `{prefix}{nn}-S{nn}-T{nn}` for tasks, zero-padded, assigned in tree order, never reused. The id opens the title: `E01-S02 — A member can submit a claim and sees its status`.
+`{prefix}{nn}` for epics, `{prefix}{nn}-S{nn}` for stories, `{prefix}{nn}-S{nn}-T{nn}` for story tasks, and `{prefix}{nn}-T{nn}` for research tasks directly under an epic, zero-padded to at least two digits. Resolve existing mappings and allocate unused ids per `references/identity.md`; assign only new ids in tree order, never renumber or reuse existing ones. The id opens the title: `E01-S02 — A member can submit a claim and sees its status`. Every item also carries its source path and full id in the body.
 
 ## Order, dependencies, labels
 
@@ -26,7 +26,7 @@ How the source becomes epics, stories, and tasks. The tree is shown to the user 
 
 ## The research variant
 
-When step 1 finds Problems or Target group resting on assumptions, or the user asks for it, the tree has one epic `E00 — Discovery` (the id is fixed; `--prefix` replaces only the letter) whose children are **tasks**, one per collection-plan entry plus one per failing brief section the plan does not yet cover: "find out {question} from {role}", done when material for it lands under `${SPECS_DIR}/research/` with the tag the entry's method produces (`[INTERVIEW]`, `[DATA]`, `[DOCUMENT]`, or `[BENCHMARK]`), the owner as assignee when given, and the by-when date in the body. This is the only backlog a not-ready brief produces, and the report says which brief sections it repairs and which still need `om-discover --refresh`.
+When step 1 finds Problems or Target group resting on assumptions, or the user asks for it, the tree has one epic titled `{epic id} — Discovery`, allocated by the same source-aware rules as other epics (keep a legacy `E00` already mapped to this source). Its children are **tasks**, one per collection-plan entry plus one per failing brief section the plan does not yet cover: "find out {question} from {role}", done when material for it lands under `${SPECS_DIR}/research/` with the tag the entry's method produces (`[INTERVIEW]`, `[DATA]`, `[DOCUMENT]`, or `[BENCHMARK]`), the owner as assignee when given, and the by-when date in the body. This is the only backlog a not-ready brief produces, and the report says which brief sections it repairs and which still need `om-discover --refresh`.
 
 ## Size
 

@@ -19,7 +19,7 @@ Final-report shapes for `om-discover` (workflow step 9). Fill them exactly and e
 
 🧪 **Ready for what.** {whether the ticket-level tier of the Definition of Ready is satisfied on tiers 1 to 5; what the next skill can start from and what it cannot yet}
 
-🧭 **Next step.** {what the hand-off offered (the synthetic panel on which flow, the backlog dry run, one more decision round), what the user chose, and what ran as a result, with its own contract lines quoted when a skill ran}
+📋 **Next step.** {what the hand-off offered, what the user declined or chose, and what ran with its artifact paths; describe completed work in prose, without copying child routing lines. Name an outstanding hand-off only if the user explicitly chose it for later execution.}
 
 Product brief: {…}
 Coverage: {…}
@@ -27,7 +27,7 @@ Collection plan: {…}
 Next: {…}
 ```
 
-Include `Collection plan:` only when the gate held anything back; `{k}` counts entries, in the same shape as the brief header. Always end with `Elapsed: <minutes per step>` before the contract lines, so the next run can be sized.
+Include `Collection plan:` only when the gate held anything back; `{k}` counts entries, in the same shape as the brief header. Always end with `Elapsed: <minutes per step>` before the contract lines, so the next run can be sized. There is exactly one final `Next:`: an explicitly chosen, unexecuted invocation with its exact arguments, otherwise `none`. A completed panel, a completed backlog dry run, and a declined offer each yield `Next: none` unless the user chose a separate outstanding hand-off.
 
 ## Quick pass
 

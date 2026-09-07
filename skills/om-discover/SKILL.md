@@ -52,7 +52,7 @@ The three situations differ in where the truth lives and what the riskiest belie
 8. **Offer the next step (hand-off).** The brief is written; do not leave the user with a list of commands. Ask one yes/no question at a time, in this order, and run nothing without a yes:
    1. *Synthetic panel, optional.* "Walk `<first Key flow>` with a synthetic panel now? Stance `<by mode: existing → validate, client → simulate, own → adversary>`; default 3 personas × 2 runs, about twenty to thirty minutes; under `--quick` suggest `--runs 1 --panel 2`." On yes, invoke the `om-synthetic-users` skill verbatim with those arguments, wait for its report, then run this skill's own `--refresh` path (steps 2, 4, 5, 7) so the hypotheses land in the brief's Hypotheses section; the confirmation in step 7 stays. On no, continue.
    2. *Readiness.* When the ticket-level tier of the Definition of Ready is met: "Draft the backlog now? (`om-backlog <brief> --dry-run`)"; on yes, invoke the `om-backlog` skill verbatim. When it is not met: name what is missing (collection-plan entries, blocking questions, `proposal` decisions) and ask "Answer the blocking questions now?"; on yes, one more round (step 3) and back to step 7; on no, stop.
-   A run that entered through this hand-off's own `--refresh` does not offer the panel a second time. Every offer may be declined; the report's `Next:` line names the step that ran, or the one offered and declined.
+   A run that entered through this hand-off's own `--refresh` does not offer the panel a second time. Every offer may be declined. Track each offer as declined, executed, or explicitly handed off for later execution. Executed and declined steps stay in the report's prose, never in `Next:`. Completing a backlog dry run does not authorize filing its issues: do not forward the child's `Next:` line without the user's separate choice to file.
 
 9. **Report** per `references/report-templates.md` and end with the Output contract lines.
 
@@ -64,10 +64,10 @@ The final report ends with these machine-parsed lines, one per line, exact and u
 Product brief: <repo-relative path>                       ← always when the file was written
 Coverage: <n> claims — <a> sourced (interview <i>, data <d>, document <c>, product <p>, benchmark <b>), <s> synthetic, <u> assumed
 Collection plan: <k> entries waiting for material          ← only when the gate held anything back
-Next: om-synthetic-users <brief> | om-backlog <brief> | om-brainstorm "<topic>" | om-prepare-issue "<goal>" | om-spec-writing "<goal>" | none
+Next: none | om-<skill> <exact user-approved arguments>
 ```
 
-Consumers parse `^Product brief: (\S+)$`, `^Coverage: (\d+) claims`, `^Collection plan: (\d+) entries`, and `^Next: (none|om-[a-z-]+.*)$`. The report also carries `Elapsed: <minutes per step>` so a slow run can be sized next time. `Next: none` is the right line when a blocking question or a ticket-level section is still on the collection plan: the next step is collecting, and the report's *Ready for what* paragraph says what to collect and from whom. After the hand-off (step 8), `Next:` names the skill that ran from it, or the one offered and declined, so a reader of the report knows what already happened.
+Consumers parse `^Product brief: (\S+)$`, `^Coverage: (\d+) claims`, `^Collection plan: (\d+) entries`, and `^Next: (none|om-[a-z-]+.*)$`. The report also carries `Elapsed: <minutes per step>`. `Next:` is an executable hand-off, not history: emit a skill only when the user explicitly chose that exact invocation for the user or orchestrator to execute and this run has not already invoked it. Preserve every argument, including `--dry-run`, `--research`, panel size, stance, and flow when applicable. After executing the agreed work, on refusal, or when material is still needed, emit `Next: none` and explain the outcome or collection task in prose. Emit only one final `Next:` line; summarize child reports without copying their routing lines into this report.
 
 ## Rules
 

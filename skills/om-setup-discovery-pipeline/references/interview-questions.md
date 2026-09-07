@@ -1,10 +1,10 @@
 # Setup interview questions
 
-The questions step 2 of `om-setup-discovery-pipeline` asks (skipped with `--defaults`, which answers no to both roles and accepts `paths.specs` as is). Ask in the user's words, one at a time, with the default shown.
+The questions step 2 of `om-setup-discovery-pipeline` asks (skipped with `--defaults`, which answers no to both roles and accepts `paths.specs` as is). Ask in the user's language, one at a time, with the default shown and one line on what the answer changes, per `references/voice.md`. The wording below is the content, not the script: rephrase it for the person in front of you.
 
-1. **Is there a domain expert who is not the product owner?** Someone who owns business rules, non-goals, and decisions in their area and signs a superseding entry when one of theirs changes — a lawyer, an accountant, a client-side subject-matter lead. Default: no. Yes sets `discovery.roles.domainExpert` and adds the Domain expert role to `SDLC.md`.
-2. **Is there a designer?** Someone who owns the design contract in `.uxproof/` and is consulted on key flows and user-facing specs. Default: no. Yes sets `discovery.roles.designer` and adds the Designer role; the contract itself comes from `om-ux-setup` (extracted from code) or `om-ux-style` (declared from references).
-3. **Confirm where the brief lands.** `om-discover` writes `product-brief.md`, `research/`, and `backlog.md` under `paths.specs` (default `.ai/specs`). Changing it is a delivery-layer answer: point at `om-setup-agent-pipeline` rather than editing it here.
+1. **Is there someone besides the product owner who owns the business rules?** A lawyer, an accountant, the client's subject-matter lead: the person who decides what the product must and must not do in their area, and who has to agree before one of those rules changes. Default: no. Yes adds a Domain expert line to the roles in `SDLC.md` (and sets `discovery.roles.domainExpert`); no means the product owner signs those rules.
+2. **Is there a designer?** Someone who owns how the product looks and behaves on screen and should be asked before a flow or a user-facing spec is settled. Default: no. Yes adds a Designer line to the roles (and sets `discovery.roles.designer`); their design rules come later from `om-ux-setup` or `om-ux-style`, not from this run.
+3. **Say where the brief will land**, as a statement, not a question: `om-discover` writes `product-brief.md`, the research folder, and `backlog.md` under `paths.specs` (default `.ai/specs`). If the user wants it elsewhere, that is `om-setup-agent-pipeline`'s setting; say so in one line and move on.
 
 Not asked, on purpose:
 

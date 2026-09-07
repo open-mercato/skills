@@ -105,16 +105,18 @@ spec PR, never implementation.
 
 ## 6. Readiness check (Definition of Ready)
 
-Read the **Definition of Ready** section of the repo's `SDLC.md` (when the file has
-none, use the two-tier list in this collection's own `SDLC.md` as the default) and
-check the issue's body and linked spec against its **ticket-level** tier: the
+Read the **Definition of Ready** section of the repo's `SDLC.md`. When the file
+has no such section, the product layer is not set up: record `READY_STATUS` =
+`n/a`, post nothing, and let the report name `om-discovery-setup` once as the way
+to get the gate. Otherwise check the issue's body and linked spec against its
+**ticket-level** tier: the
 problem and who has it, the expected outcome and how it is checked, what is out of
 scope, open questions each marked blocking or non-blocking with no blocking one
 unanswered, and any autonomous assumption a human has confirmed. The spec-level
 tier is step 4's job — a feature issue with `SPEC_STATUS = covered` satisfies it,
 one with `missing` gets the spec-required comment, and neither is repeated here.
 
-Record `READY_STATUS` = `ready` | `not-ready` (with the missing items). A
+Record `READY_STATUS` = `ready` | `not-ready` (with the missing items) | `n/a`. A
 maintainer's explicit waiver on the ticket ("ready as is", or an equivalent
 statement) counts as satisfied — never override a human's call. Read-only on its
 own; the comment below is the only mutation.

@@ -21,6 +21,10 @@ const manageEnrichment = read("skills/om-auto-manage-issues/references/enrich-ex
 const roster = read("skills/om-setup-agent-pipeline/references/skill-coverage.md");
 const readme = read("README.md");
 const skillDocs = read("docs/skills/README.md");
+const discoverySetup = read("skills/om-discovery-setup/SKILL.md");
+const discoverySections = read("skills/om-discovery-setup/references/sdlc-sections.md");
+const backlog = read("skills/om-backlog/SKILL.md");
+const upgradeNotes = read("skills/om-apply-upgrade-notes/SKILL.md");
 
 // The SDLC generator must resolve the configured specs directory just like its
 // other config-backed placeholders; a shell variable in rendered prose is a leak.
@@ -64,5 +68,47 @@ assert.match(readme, /discover.*--> brainstorm/);
 assert.match(reportTemplates, /🔁 \*\*Next step\.\*\*/);
 assert.doesNotMatch(reportTemplates, /🧭/);
 assert.doesNotMatch(discover, /leaves exactly one artifact/);
+
+// The product layer is opt-in: its SDLC blocks sit behind `IF discovery`, the
+// delivery-only variant of the Intake row exists, and the rendered blocks carry
+// the markers om-discovery-setup refreshes.
+assert.match(sdlcTemplate, /<!-- IF discovery -->/);
+assert.match(sdlcTemplate, /<!-- IF NOT discovery -->/);
+assert.match(sdlcTemplate, /<!-- IF discovery\.roles\.domainExpert -->/);
+assert.match(sdlcTemplate, /<!-- IF discovery\.roles\.designer -->/);
+assert.match(sdlcTemplate, /discovery:start/);
+assert.equal(
+  (sdlcTemplate.match(/<!-- IF /g) ?? []).length,
+  (sdlcTemplate.match(/<!-- END IF -->/g) ?? []).length,
+  "every IF block is closed",
+);
+const ifDiscovery = sdlcTemplate.indexOf("<!-- IF discovery -->\n## Definition of Ready");
+assert.ok(ifDiscovery > 0, "Definition of Ready is behind IF discovery");
+assert.ok(sdlcTemplate.indexOf("## Product decisions as a protected contract") > ifDiscovery);
+
+// No intake skill falls back to a built-in Definition of Ready: without the
+// section in SDLC.md there is no readiness check.
+for (const [name, text] of [
+  ["om-auto-fix-issue triage", autoFixTriage],
+  ["om-auto-manage-issues enrichment", manageEnrichment],
+  ["om-backlog", backlog],
+]) {
+  assert.doesNotMatch(text, /two-tier list/, `${name}: no built-in DoR fallback`);
+}
+assert.match(manageEnrichment, /`READY_STATUS` =\s*`ready` \| `not-ready`[^\n]*`n\/a`/);
+assert.match(autoFixTriage, /skip this step, treat the ticket as ready/);
+
+// om-discovery-setup: registration, the single template source, markers, and
+// the rule that only it pulls in the delivery setup.
+assert.match(roster, /\bom-discovery-setup\b/);
+assert.match(readme, /docs\/skills\/om-discovery-setup\.md/);
+assert.match(skillDocs, /\[om-discovery-setup\]\(om-discovery-setup\.md\)/);
+assert.match(discoverySetup, /om-setup-agent-pipeline\/references\/sdlc-template\.md/);
+assert.match(discoverySetup, /discovery:start/);
+assert.match(discoverySetup, /run `om-setup-agent-pipeline` now/);
+assert.doesNotMatch(discoverySetup, /\bnpx uxproof\b/);
+assert.match(discoverySections, /## Adopting unmarked sections/);
+assert.match(upgradeNotes, /om-discovery-setup --refresh/);
+assert.doesNotMatch(discover, /om-discovery-setup/, "om-discover never invokes the setup from its workflow");
 
 console.log("Discovery contract OK (SDLC rendering, protected tables, readiness comments, registration).");

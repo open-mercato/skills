@@ -77,6 +77,10 @@ assert.match(sdlcTemplate, /<!-- IF NOT discovery -->/);
 assert.match(sdlcTemplate, /<!-- IF discovery\.roles\.domainExpert -->/);
 assert.match(sdlcTemplate, /<!-- IF discovery\.roles\.designer -->/);
 assert.match(sdlcTemplate, /discovery:start/);
+// Rows and bullets behind the flag carry the inline marker: a comment line inside
+// a GFM table would break it.
+assert.ok((sdlcTemplate.match(/<!-- discovery --> \|$/gm) ?? []).length >= 2, "discovery rows carry the inline marker");
+assert.match(sdlcTemplate, /\*\*Product owner\*\* — .* <!-- discovery -->$/m);
 assert.equal(
   (sdlcTemplate.match(/<!-- IF /g) ?? []).length,
   (sdlcTemplate.match(/<!-- END IF -->/g) ?? []).length,

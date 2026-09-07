@@ -124,9 +124,10 @@ statement) counts as satisfied — never override a human's call. Read-only on i
 own; the comment below is the only mutation.
 
 On `not-ready`, post one idempotent comment addressed to the issue author. Find
-the marker via **list-issue-comments** and update it in place when the missing
-list changed; skip when it already reflects the current state; leave it alone once
-the ticket is complete (the report notes that it is now ready):
+the marker via **list-issue-comments** and update it in place via
+**update-comment** when the missing list changed; skip when it already reflects
+the current state; leave it alone once the ticket is complete (the report notes
+that it is now ready):
 
 ```markdown
 🤖 `om-auto-manage-issues` — not ready

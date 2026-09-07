@@ -56,15 +56,15 @@ The one file `om-discover` writes: `${SPECS_DIR}/product-brief.md`. Every sectio
 
 ## Business rules
 
-| Id | Rule | Applies to | Source | Status | Review by | Required path to change |
-|---|---|---|---|---|---|---|
-| R01 | … | … | `[tag]` {source} | active | {date} | {who approves; a superseding row} |
+| Id | Rule | Applies to | Source | Owner | Status | Review by | Required path to change |
+|---|---|---|---|---|---|---|---|
+| R01 | … | … | `[tag]` {source} | {name} | active | {date} | {who approves; a superseding row} |
 
 ## Non-goals
 
-| Id | We are not building | Why | Owner | Status |
-|---|---|---|---|---|
-| N01 | … | … | {name} | active |
+| Id | We are not building | Why | Owner | Status | Review by | Required path to change |
+|---|---|---|---|---|---|---|
+| N01 | … | … | {name} | active | {date} | {who approves; a superseding row} |
 
 ## Decisions
 
@@ -107,5 +107,5 @@ Importance and Evidence together are the assumption map: the important-and-unpro
 
 - `om-brainstorm` reads Vision, Problems, Scope, Non-goals, and Decisions in its Frame step, so a brainstorm never re-litigates a decision that has an owner.
 - `om-spec-writing` reads Problems, Goals, Business rules, Domain glossary, Key flows, Assumptions, and Open questions; blocking open questions and `[ASSUMPTION]`-only problems become spec Open Questions.
-- `om-prepare-issue` reads Problems, Target group, Goals, Non-goals, and Open questions to fill the ticket-level tier of the Definition of Ready; `om-backlog` reads Scope, Key flows, Goals, Business rules, and Non-goals to draft epics and stories, and refuses to file when the coverage line says the problem and users rest on synthetic or assumed claims.
+- `om-prepare-issue` reads Problems, Target group, Goals, Non-goals, and Open questions to fill the ticket-level tier of the Definition of Ready, and cites the brief's ids where a decision or a non-goal bounds the ticket; `om-backlog` reads Scope, Key flows, Goals, Business rules, and Non-goals to draft epics and stories, and refuses to file when the coverage line says the problem and users rest on synthetic or assumed claims.
 - `om-code-review` and `om-ux-review-pr` treat Non-goals, Business rules, and Decisions as a protected contract (per `SDLC.md`): a change that contradicts an active entry without a superseding row in the same PR is a blocker. Supersede, never delete; the old row stays with status `superseded` and the new row names it.

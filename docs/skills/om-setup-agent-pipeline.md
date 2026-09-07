@@ -12,7 +12,7 @@ The one-time configurator for the whole agent PR pipeline, and the first skill t
 
 ## Works with
 
-Produces the shared `.ai/agentic.config.json` (base branch, validation gate, label taxonomy, paths, QA gate) plus the tracker descriptor at `.ai/trackers/<tracker>.md` and browser descriptor at `.ai/browsers/<provider>.md` that every other skill in the collection reads. Other skills' setup steps auto-run this one when the config is missing; its report points users at entry points such as [om-auto-create-pr](om-auto-create-pr.md), [om-auto-review-pr](om-auto-review-pr.md), and [om-merge-buddy](om-merge-buddy.md).
+Produces the shared `.ai/agentic.config.json` (base branch, validation gate, label taxonomy, paths, QA gate) plus the tracker descriptor at `.ai/trackers/<tracker>.md` and browser descriptor at `.ai/browsers/<provider>.md` that every other skill in the collection reads. Tracker choices include GitHub end-to-end, Linear issues through `schpet/linear-cli`, and Jira Cloud work items through Atlassian CLI; the two split providers install GitHub beside them for PRs, reviews, CI, and PR labels. Other skills' setup steps auto-run this one when the config is missing; its report points users at entry points such as [om-auto-create-pr](om-auto-create-pr.md), [om-auto-review-pr](om-auto-review-pr.md), and [om-merge-buddy](om-merge-buddy.md).
 
 ---
 *Source: [`skills/om-setup-agent-pipeline/SKILL.md`](../../skills/om-setup-agent-pipeline/SKILL.md)*

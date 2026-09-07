@@ -19,7 +19,7 @@ Final-report shapes for `om-discover` (workflow step 9). Fill them exactly and e
 
 🧪 **Ready for what.** {whether the ticket-level tier of the Definition of Ready is satisfied on tiers 1 to 5; what the next skill can start from and what it cannot yet}
 
-📋 **Next step.** {what the hand-off offered, what the user declined or chose, and what ran with its artifact paths; describe completed work in prose, without copying child routing lines. Name an outstanding hand-off only if the user explicitly chose it for later execution.}
+🔁 **Next step.** {what the hand-off offered, what the user declined or chose, and what ran with its artifact paths; describe completed work in prose, without copying child routing lines. Name an outstanding hand-off only if the user explicitly chose it for later execution.}
 
 Product brief: {…}
 Coverage: {…}

@@ -15,6 +15,10 @@
     outer pair of markers with `<!-- discovery:start -->` and
     `<!-- discovery:end -->` instead of stripping them, so om-setup-discovery-pipeline
     can find and refresh exactly those blocks in a file it did not generate.
+    Exception: a block made of table rows or list items gets no marker lines
+    (an HTML comment line breaks a GFM table); its lines carry an inline
+    `<!-- discovery -->` at the end of the last cell or the bullet instead,
+    already present in the template — strip the IF markers as usual.
     Nested blocks inside them ("IF discovery.roles.<role>") resolve as usual.
   - Delete this instruction comment from the generated file.
 -->
@@ -41,12 +45,12 @@ Before any of that, `om-discover` establishes the product context every later de
 - **QA reviewer** — manually exercises user-facing changes before they merge. Always referenced by role, never by name or handle: assignments change.
 <!-- END IF -->
 <!-- IF discovery -->
-- **Product owner** — owns the why and the value: the product brief, the scope split (now, later, not doing), the success criteria, and the ticket-level tier of the Definition of Ready. Confirms the brief before it is written and the backlog tree before it is filed; owns every product decision in the brief that names no other owner. Referenced by role, never by name.
+- **Product owner** — owns the why and the value: the product brief, the scope split (now, later, not doing), the success criteria, and the ticket-level tier of the Definition of Ready. Confirms the brief before it is written and the backlog tree before it is filed; owns every product decision in the brief that names no other owner. Referenced by role, never by name. <!-- discovery -->
 <!-- IF discovery.roles.domainExpert -->
-- **Domain expert** — the named owner of the business rules, non-goals, and decisions in the brief that fall in their domain; only they sign a superseding entry for one of theirs.
+- **Domain expert** — the named owner of the business rules, non-goals, and decisions in the brief that fall in their domain; only they sign a superseding entry for one of theirs. <!-- discovery -->
 <!-- END IF -->
 <!-- IF discovery.roles.designer -->
-- **Designer** — owns the design contract in `.uxproof/` (written by `om-ux-setup` or `om-ux-style`); consulted on key flows in discovery and on user-facing specs. `om-ux-review-pr` is their advisory review; QA checks conformance to their contract.
+- **Designer** — owns the design contract in `.uxproof/` (written by `om-ux-setup` or `om-ux-style`); consulted on key flows in discovery and on user-facing specs. `om-ux-review-pr` is their advisory review; QA checks conformance to their contract. <!-- discovery -->
 <!-- END IF -->
 <!-- END IF -->
 - **Maintainer** — owns branch protection, the label taxonomy, the config, this document, and the installed skills with their repo-local overrides under `.ai/skills/`; arbitrates when gates conflict. Acts as the release manager unless the team names one.
@@ -56,8 +60,8 @@ Before any of that, `om-discover` establishes the product context every later de
 | Stage | What happens | Driven by | Done when |
 |---|---|---|---|
 <!-- IF discovery -->
-| Discovery | The product context is established before any idea is weighed — problem and who has it, stakeholders, rules, flows, success criteria, scope — from material that exists, with every claim tagged by its evidence and every decision owned by a person; the product owner confirms the brief before it is written. Then an idea, question, or itch is talked through: the problem is questioned, alternatives (including building nothing) are weighed, and the conversation ends in a routing decision. | `om-discover` (product level, with the product owner), `om-synthetic-users` (optional), `om-backlog --dry-run`, and `om-brainstorm` (one idea), or a human | A product brief, or a routed conversation with a brief when the work continues |
-| Intake | A ticket or task brief is filed in {{tracker}} and meets the Definition of Ready below. `om-prepare-issue` and `om-backlog` file it with SDLC labels and the ready sections; `om-auto-manage-issues` reports what an existing ticket still lacks. | Anyone, `om-prepare-issue`, `om-backlog`, `om-auto-manage-issues` | Ticket exists and is ready, or its gaps are named on the ticket |
+| Discovery | The product context is established before any idea is weighed — problem and who has it, stakeholders, rules, flows, success criteria, scope — from material that exists, with every claim tagged by its evidence and every decision owned by a person; the product owner confirms the brief before it is written. Then an idea, question, or itch is talked through: the problem is questioned, alternatives (including building nothing) are weighed, and the conversation ends in a routing decision. | `om-discover` (product level, with the product owner), `om-synthetic-users` (optional), `om-backlog --dry-run`, and `om-brainstorm` (one idea), or a human | A product brief, or a routed conversation with a brief when the work continues <!-- discovery --> |
+| Intake | A ticket or task brief is filed in {{tracker}} and meets the Definition of Ready below. `om-prepare-issue` and `om-backlog` file it with SDLC labels and the ready sections; `om-auto-manage-issues` reports what an existing ticket still lacks. | Anyone, `om-prepare-issue`, `om-backlog`, `om-auto-manage-issues` | Ticket exists and is ready, or its gaps are named on the ticket <!-- discovery --> |
 <!-- END IF -->
 <!-- IF NOT discovery -->
 | Discovery | An idea, question, or itch is talked through before any artifact exists: the problem is questioned, alternatives (including building nothing) are weighed, and the conversation ends in a routing decision — an answer, a filed ticket, a brief for a spec, or a direct change. | `om-brainstorm` or a human | Conversation routed; a brief written when the work continues |

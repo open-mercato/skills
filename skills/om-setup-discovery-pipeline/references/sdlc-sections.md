@@ -1,33 +1,37 @@
 # Inserting the product-layer blocks into SDLC.md (step 4)
 
-The blocks are the `IF discovery` blocks of `om-setup-agent-pipeline/references/sdlc-template.md`, rendered with the repository's config (`{{tracker}}`, `{{specsDir}}`, `{{baseBranch}}`) and the answers from step 2 (`discovery.roles.*` resolve the nested conditionals). Every rendered block is wrapped:
+The blocks are the `IF discovery` blocks of `om-setup-agent-pipeline/references/sdlc-template.md`, rendered with the repository's config (`{{tracker}}`, `{{specsDir}}`, `{{baseBranch}}`) and the answers from step 2 (`discovery.roles.*` resolve the nested conditionals). Two kinds of marker, because an HTML comment on its own line breaks a GFM table and splits a list:
 
-```markdown
-<!-- discovery:start -->
-…rendered block…
-<!-- discovery:end -->
-```
+- **Paragraphs and sections** are wrapped:
+
+  ```markdown
+  <!-- discovery:start -->
+  …rendered block…
+  <!-- discovery:end -->
+  ```
+
+- **Table rows and list items** carry an inline `<!-- discovery -->` at the end of the last cell or the bullet, already present in the template's text. No marker lines go inside a table or a list.
 
 A generated `SDLC.md` whose config already had `discovery.enabled` when `om-setup-agent-pipeline` ran carries the same markers, so both paths produce one file shape.
 
 ## Anchors, in document order
 
-| Block | Where it goes | When the anchor is missing |
-|---|---|---|
-| The before-intake paragraph (`om-discover` establishes the product context…) | After the paragraph that starts "Before intake, the work is shaped" | After the *Purpose* section's last paragraph |
-| Role lines (Product owner; Domain expert and Designer when declared) | Before the `- **Maintainer**` bullet in *Roles* | At the end of the *Roles* list |
-| The Discovery and Intake rows | **Replace** the delivery-only Discovery and Intake rows of the lifecycle table (the pair the template renders under `IF NOT discovery`); wrap the replacement pair | Insert the pair above the first `| Triage |` row and leave the existing rows in place; report that the old Intake row is still there for the team to remove |
-| *Definition of Ready* and *Product decisions as a protected contract* | After the after-merge paragraph ("After merge, this process stops…"), before the first of `## Label state machine`, `## The QA gate`, `## The claim protocol` that exists | Before `## Validation gate` |
-| The amending paragraph (blocks owned by `om-setup-discovery-pipeline`) | After the first paragraph of *Amending this process* | Skipped, and reported |
+| Block | Kind | Where it goes | When the anchor is missing |
+|---|---|---|---|
+| The before-intake paragraph (`om-discover` establishes the product context…) | wrapped | After the paragraph that starts "Before intake, the work is shaped" | After the last paragraph of *Purpose* |
+| Role lines (Product owner; Domain expert and Designer when declared) | inline | Before the `- **Maintainer**` bullet in *Roles* | At the end of the *Roles* list |
+| The Discovery and Intake rows | inline | In the lifecycle table: the existing Discovery row, when there is one, and the existing Intake row are **replaced** by the rendered pair, matched by the stage name in the first cell. An Intake row that does not mention the Definition of Ready is the delivery-only row, whatever its exact wording (the pre-2026-09 template wrote "with enough detail to act on"). The replaced text is shown in the diff. | Insert the pair above the first Triage row |
+| *Definition of Ready* and *Product decisions as a protected contract* | wrapped | Immediately before the first of these headings that exists: `## Label state machine`, `## The QA gate`, `## The claim protocol`, `## The automation contract`, `## Validation gate` — after the lifecycle table and its after-merge paragraph when the file has one, never inside another section | Before `## Amending this process` |
+| The amending paragraph (blocks owned by `om-setup-discovery-pipeline`) | wrapped | After the first paragraph of *Amending this process* | Skipped, and reported |
 
-The replaced Discovery and Intake rows are the one place this skill removes text, and only text the template itself generated. When the rows in the file do not match the template's delivery-only rows (the team edited them), do not replace: fall back to the insert-above-Triage path and say so.
+Replacing the Discovery and Intake rows is the one place this skill removes text, and only rows the template generated. When the existing Intake row already mentions the Definition of Ready and carries no inline marker, treat it as an unmarked block (below). When a row's first cell matches but the team clearly rewrote the table (extra columns, a different shape), do not replace: insert the pair above Triage, leave the row, and say so.
 
 ## Idempotency and refresh
 
-- Before inserting, look for existing markers. When every block is present and its content equals the freshly rendered block, report "already current" and write nothing.
+- Before inserting, look for existing markers (wrapped blocks and inline-marked lines). When every block is present and its content equals the freshly rendered block, report "already current" and write nothing.
 - Without `--refresh`, an existing block whose content differs from the render is the team's: leave it and list it in the report.
-- With `--refresh`, replace the content between each marker pair with the render and show the diff; text outside the markers is never touched.
-- An `SDLC.md` without markers and without the delivery-only rows (hand-written, or generated before this layer existed) gets the missing-anchor treatment above, block by block.
+- With `--refresh`, replace the content between each marker pair, and each inline-marked line, with the render and show the diff; text outside the markers is never touched.
+- An `SDLC.md` without markers (hand-written, or generated before this layer existed) gets the anchor treatment above, block by block.
 
 ## Adopting unmarked sections
 

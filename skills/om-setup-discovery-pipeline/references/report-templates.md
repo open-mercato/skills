@@ -1,6 +1,6 @@
 # Report templates — final report (step 9)
 
-How `om-setup-discovery-pipeline` reports back after a run. Reporting style contract: `references/rules.md` — full sentences, explain the why, never compress. This skill defines no chaining reference lines.
+How `om-setup-discovery-pipeline` reports back after a run. Reporting style contract: `references/rules.md` — full sentences, explain the why, never compress. Voice: `references/voice.md` — the report says what changed for the team in their repository, in their language; the skill's own terms (markers, anchors, blocks) appear at most once, explained. This skill defines no chaining reference lines.
 
 ## Final run report
 

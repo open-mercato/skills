@@ -1,9 +1,9 @@
 ---
-name: om-discovery-setup
+name: om-setup-discovery-pipeline
 description: Adds the product layer to a repository that om-setup-agent-pipeline already configured — one yes per product role, a discovery block in .ai/agentic.config.json, the Discovery stage, Definition of Ready, product roles, and protected product decisions appended to SDLC.md between markers, the research directory, and a routing row in AGENTS.md. Run once; re-run with --refresh. No product skill requires it.
 ---
 
-# Discovery Setup
+# Setup Discovery Pipeline
 
 `om-setup-agent-pipeline` configures the delivery pipeline: ticket to merged PR. This skill adds the **product layer** on top of it — the part of the process that decides what gets built and why, before any ticket exists. A team that only wants the delivery pipeline never runs this skill and never sees the sections it writes.
 

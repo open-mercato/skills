@@ -10,10 +10,10 @@
     keeps the content when the condition is false. A missing config key is
     false.
   - The "IF discovery" blocks are the product layer, switched by
-    `discovery.enabled` (written by om-discovery-setup, never asked for by
+    `discovery.enabled` (written by om-setup-discovery-pipeline, never asked for by
     om-setup-agent-pipeline). When it is true, keep them and replace each
     outer pair of markers with `<!-- discovery:start -->` and
-    `<!-- discovery:end -->` instead of stripping them, so om-discovery-setup
+    `<!-- discovery:end -->` instead of stripping them, so om-setup-discovery-pipeline
     can find and refresh exactly those blocks in a file it did not generate.
     Nested blocks inside them ("IF discovery.roles.<role>") resolve as usual.
   - Delete this instruction comment from the generated file.
@@ -209,7 +209,7 @@ Any non-zero exit fails the gate and blocks the PR. The implementing skills run 
 This document and `.ai/agentic.config.json` describe the same process: change them together, and re-run the `om-setup-agent-pipeline` skill when the toolchain or label taxonomy changes.
 
 <!-- IF discovery -->
-The product-layer blocks between `<!-- discovery:start -->` and `<!-- discovery:end -->` are owned by `om-discovery-setup`: re-run it to add or refresh them, and edit everything else by hand.
+The product-layer blocks between `<!-- discovery:start -->` and `<!-- discovery:end -->` are owned by `om-setup-discovery-pipeline`: re-run it to add or refresh them, and edit everything else by hand.
 <!-- END IF -->
 
 Per-skill deviations — extra review rules, a different PR body template, an added gate step — belong in a repo-local skill of the same name at `.ai/skills/<skill-name>/SKILL.md`, which takes precedence over the installed skill (and can `@`-import or reference it to extend rather than replace it); local rules win, but a repo-local skill cannot grant what the installed skill's safety rules forbid.

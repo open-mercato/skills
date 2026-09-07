@@ -111,7 +111,7 @@ spec PR, never implementation.
 
 Read the **Definition of Ready** section of the repo's `SDLC.md`. When the file
 has no such section, the product layer is not set up: record `READY_STATUS` =
-`n/a`, post nothing, and let the report name `om-discovery-setup` once as the way
+`n/a`, post nothing, and let the report name `om-setup-discovery-pipeline` once as the way
 to get the gate. Otherwise check the issue's body and linked spec against its
 **ticket-level** tier: the
 problem and who has it, the expected outcome and how it is checked, what is out of

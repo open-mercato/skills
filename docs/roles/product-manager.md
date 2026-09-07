@@ -8,7 +8,7 @@ The pipeline turns your ideas into tracked, well-formed work and — when you wa
 
 | Skill | When | Example call | What you get |
 |---|---|---|---|
-| [`om-discovery-setup`](../skills/om-discovery-setup.md) | Switch the product layer on, once | `/om-discovery-setup` | product roles, the Discovery stage, the Definition of Ready, and protected decisions in `SDLC.md`; the readiness gate every intake skill then enforces |
+| [`om-setup-discovery-pipeline`](../skills/om-setup-discovery-pipeline.md) | Switch the product layer on, once | `/om-setup-discovery-pipeline` | product roles, the Discovery stage, the Definition of Ready, and protected decisions in `SDLC.md`; the readiness gate every intake skill then enforces |
 | [`om-discover`](../skills/om-discover.md) | Establish the product context before any idea is weighed | `/om-discover --mode client "Benefits portal"` | a `product-brief.md` built from your research folder, with every claim tagged by its evidence and every decision owned by a person — or a collection plan naming what to gather first |
 | [`om-synthetic-users`](../skills/om-synthetic-users.md) | Test the brief before anyone is interviewed | `/om-synthetic-users .ai/specs/product-brief.md --flow "onboarding"` | barriers, missing cases, and contradictions as hypotheses, plus the interview plan that would settle them |
 | [`om-brainstorm`](../skills/om-brainstorm.md) | Think it through before any artifact exists | `/om-brainstorm "should we build bulk-archive?"` | a routing decision with its reasoning, and a brief file the pipeline can run with |

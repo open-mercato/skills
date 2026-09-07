@@ -1,6 +1,6 @@
 # Report templates — final report (step 9)
 
-How `om-setup-discovery-pipeline` reports back after a run. Reporting style contract: `references/rules.md` — full sentences, explain the why, never compress. Voice: `references/voice.md` — the report says what changed for the team in their repository, in their language; the skill's own terms (markers, anchors, blocks) appear at most once, explained. This skill defines no chaining reference lines.
+How `om-setup-discovery-pipeline` reports back after a run. Target length: 150–300 words for a run that wrote something, 40–80 for "already current"; a section with nothing to say is omitted, not filled. Reporting style contract: `references/rules.md` — full sentences, explain the why, never compress. Voice: `references/voice.md` — the report says what changed for the team in their repository, in their language; the skill's own terms (markers, anchors, blocks) appear at most once, explained. This skill defines no chaining reference lines.
 
 ## Final run report
 
@@ -22,7 +22,7 @@ How `om-setup-discovery-pipeline` reports back after a run. Reporting style cont
 {Full sentences: tickets are checked against the Definition of Ready by `om-auto-manage-issues` and `om-auto-fix-issue`; `om-backlog` files only from a ready brief; `om-code-review` blocks a change that contradicts a non-goal, rule, or decision in the brief without a superseding entry. Then the one next command: `/om-discover` when there is no brief, `/om-discover --refresh` when there is.}
 
 ### ⚠️ Follow-ups
-{Only when something needs the user: the pending commit, a block the team must place by hand, an edited block left as is. Omit when there is nothing left to do.}
+{Only when something needs the user: the pending commit, a block the team must place by hand, an edited block left as is. When the delivery half of `SDLC.md` predates the current template (no risk-high table, no `QA head` line, no after-merge paragraph), say so in one sentence and point at the template file to copy from — never advise re-running `om-setup-agent-pipeline` for it, which regenerates nothing that already exists. Omit when there is nothing left to do.}
 ```
 
 ## Dry run

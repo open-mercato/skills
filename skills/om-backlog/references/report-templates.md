@@ -7,7 +7,7 @@ The tree shown for confirmation (step 4) and the final report (step 6). Fill the
 ```markdown
 ## 📋 om-backlog — proposed tree from {source}
 
-**Readiness**: {met — every ticket-level item present on tiers 1–5, blocking questions answered, decisions owned | not met: sections … rest on synthetic or assumed claims → research variant offered | not met: blocking questions {ids} open, decisions {ids} still proposals → answer them and re-run om-discover --refresh}
+**Readiness**: {met — every ticket-level item present on tiers 1–5, blocking questions answered, decisions owned | skipped — SDLC.md has no Definition of Ready; run om-discovery-setup to add the gate | not met: sections … rest on synthetic or assumed claims → research variant offered | not met: blocking questions {ids} open, decisions {ids} still proposals → answer them and re-run om-discover --refresh}
 **Size**: {n} epics, {m} stories, {k} tasks; {a} existing issues adopted (or "dedupe skipped — no tracker")
 **Labels**: {enabled — applied by om-prepare-issue | disabled in config — shown for the record only}
 **Identity**: {source path; existing ids retained; new ids allocated after used ids, or provisional on a dry run; external references and legacy adoptions needing confirmation}

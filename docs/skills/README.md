@@ -25,6 +25,7 @@ One card per skill, with its parameters and the companion skills it works with. 
 | [om-pipeline-retro](om-pipeline-retro.md) | 🧑‍💻 | Classifies finished runs and ranks what second passes cost, in wall-clock hours. |
 | [om-approve-merge-pr](om-approve-merge-pr.md) | 🧑‍💻 | Approves and squash-merges a PR by number, honoring the QA gate. |
 | [om-setup-agent-pipeline](om-setup-agent-pipeline.md) | 🧑‍💻 | One-per-repo configurator: writes the config, installs descriptors, generates project docs. |
+| [om-discovery-setup](om-discovery-setup.md) | 🧑‍💻 | Adds the product layer on top: product roles, the Discovery stage, the Definition of Ready, and protected decisions into SDLC.md between markers; optional, additive, idempotent. |
 | [om-apply-upgrade-notes](om-apply-upgrade-notes.md) | 🧑‍💻 | Applies UPGRADE_NOTES.md after an upgrade, preserving local edits. |
 | [om-check-and-commit](om-check-and-commit.md) | 🧑‍💻 | Runs the validation gate on the branch, fixes obvious drift, commits and pushes when green. |
 | [om-discover](om-discover.md) | 🧑‍💻 | Product-level discovery and define in three modes; leaves a product-brief.md built from real material, with tagged evidence and owned decisions. |

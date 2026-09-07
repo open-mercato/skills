@@ -50,9 +50,10 @@ Before writing any spec, prove the feature does not already exist:
 
 ### 4. Is the ticket ready to be built from?
 
-Read the **Definition of Ready** in the repo's `SDLC.md` (default to this
-collection's own two-tier list when the file has none) and check the issue against
-its **ticket-level** tier only: the problem and who has it, the expected outcome
+Read the **Definition of Ready** section of the repo's `SDLC.md`. When
+`SDLC.md` has no such section, the product layer is not set up
+(`om-discovery-setup` adds it): skip this step, treat the ticket as ready, and
+continue. Otherwise check the issue against its **ticket-level** tier only: the problem and who has it, the expected outcome
 and how it is checked, what is out of scope, no blocking open question left
 unanswered, and any autonomous assumption already confirmed by a human. A
 maintainer's explicit waiver on the ticket ("ready as is") satisfies the tier.

@@ -82,8 +82,9 @@ Full shapes, and the by-hand fallback, live in
    bad judge, and the fix (delete or exclude, then re-run the sync) belongs in
    the handover, not in a later review.
 
-6. **Hand over.** Fill `references/report-templates.md`, recommend committing
-   the contract, and name the single most useful next command. Stop there.
+6. **Hand over.** Use `references/report-templates.md` to report what was extracted or changed,
+   evidence limits, and the single most useful next command. Recommend committing
+   the contract when it was written or refreshed. Stop there.
 
 ## Security boundaries
 

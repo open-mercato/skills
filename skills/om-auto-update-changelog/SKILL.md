@@ -89,7 +89,7 @@ This skill drafts a `CHANGELOG.md` entry and delegates the PR mechanics to `om-a
 
    When the credit resolves only to never-credited identities, drop the `*(@...)*` suffix entirely rather than crediting a bot or the merger.
 
-   `normalizedSummary` comes from the PR title with the conventional-commit prefix and scope stripped (`^([a-z][a-z0-9_]*)(\([^)]*\))?!?:` — the digits matter, or a scope like `i18n(area):` survives into the line), first letter capitalized, no trailing period before the `(#...)` token. Keep it under 140 chars — truncate with an ellipsis only if absolutely necessary. Issue references carry through — append ` (fixes #N)` before the PR number when the PR authoritatively closes an issue (`closingIssuesReferences` non-empty).
+   Write `normalizedSummary` as the concrete behavior delivered: who can now do what, or which failure is fixed. Verify it against the PR body and diff when the title is vague; never publish titles such as "CR fixes" as the explanation. Use the title when it already names the outcome, with the conventional-commit prefix and scope stripped (`^([a-z][a-z0-9_]*)(\([^)]*\))?!?:` — the digits matter, or a scope like `i18n(area):` survives into the line), first letter capitalized, no trailing period before the `(#...)` token. Keep it under 140 chars — truncate with an ellipsis only if absolutely necessary. Issue references carry through — append ` (fixes #N)` before the PR number when the PR authoritatively closes an issue (`closingIssuesReferences` non-empty).
 
 6. **Assemble the release entry.** Prepend a new block to `CHANGELOG.md` above the topmost `# X.Y.Z (YYYY-MM-DD)` heading, preserving the `---` separator:
 
@@ -133,9 +133,9 @@ This skill drafts a `CHANGELOG.md` entry and delegates the PR mechanics to `om-a
 
    Let `om-auto-create-pr` handle branch creation, the isolated worktree, the commit, the docs-only validation gate, the PR body, label normalization, the `om-auto-review-pr` autofix pass, and the summary comment. This skill never runs the full validation gate itself — that is `om-auto-create-pr`'s job.
 
-9. **Honor `--dry-run`.** When `--dry-run` is set: compute the full entry in memory, print the dry-run report per `references/report-templates.md` — the full drafted entry, the per-PR audit table (category, emoji, credited author, supersede notes), and a full-sentence closing paragraph. Do **not** edit `CHANGELOG.md`; do **not** call `om-auto-create-pr`.
+9. **Honor `--dry-run`.** When `--dry-run` is set: compute the full entry in memory, print the dry-run report per `references/report-templates.md` — the full drafted entry, the per-PR audit table (category, emoji, credited author, supersede notes), and one sentence confirming preview-only mode. Do **not** edit `CHANGELOG.md`; do **not** call `om-auto-create-pr`.
 
-10. **Report.** After `om-auto-create-pr` finishes, print the final run report per `references/report-templates.md` — full sentences covering the window, the PRs consumed, supersede detections, contributors, the entry preview, and what happens next — ending with the `PR:` chaining reference line in its exact shape.
+10. **Report.** After `om-auto-create-pr` finishes, print the final run report per `references/report-templates.md` — the window, shipped-PR/contributor counts, credit-verification outcome, material attribution exceptions, the entry link, and the remaining editorial action — ending with the `PR:` chaining reference line in its exact shape.
 
 ## Rules
 
@@ -158,7 +158,7 @@ This skill drafts a `CHANGELOG.md` entry and delegates the PR mechanics to `om-a
 
 ## Reporting
 
-Both report shapes (steps 9–10) live in `references/report-templates.md`; fill them exactly and expand with detail. The CHANGELOG entry and line formats in steps 5–6 are the product format, not run reporting, and stay authoritative where they are.
+Both report shapes (steps 9–10) live in `references/report-templates.md`; use their concise summary and keep the full credit audit available for inspection. The CHANGELOG entry and line formats in steps 5–6 are the product format, not run reporting, and stay authoritative where they are.
 
 ## Notes
 

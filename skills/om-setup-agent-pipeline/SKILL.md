@@ -136,7 +136,9 @@ Every skill in this collection checks, right after loading the config, for a rep
 
 9. **Verify cross-skill coverage.** Run the check in `references/skill-coverage.md` (roster, detection script, source resolution): every skill referenced by an installed skill — by name or `om-<skill>/references/<file>` pointer — must be installed or repo-local under `.ai/skills/`. Print the paste-ready `npx skills add` command for anything missing and re-check after the user installs; unattended runs report the command and continue.
 
-10. **Report** per `references/report-templates.md` — full sentences covering what was written this run (📋 config, descriptors, labels, project docs — and what already existed and was left untouched), the cross-skill coverage result (✅ when complete, otherwise ⚠️ with the missing skills and their install command), what is now unlocked (🚀 the entry points `om-auto-create-pr`, `om-auto-review-pr`, `om-merge-buddy`, plus where to customize: `SDLC.md`, repo-local skills under `.ai/skills/<skill-name>/`, `.ai/trackers/<tracker>.md`, `.ai/browsers/<provider>.md`), and any follow-ups the user still owes.
+10. **Report** per `references/report-templates.md`: what is ready to use,
+    consequential settings or gaps, coverage results, and any required next
+    action. Link the config instead of repeating every generated artifact.
 
 ## The standard config-loading snippet
 

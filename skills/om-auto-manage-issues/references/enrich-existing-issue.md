@@ -35,9 +35,11 @@ category group) from the title, body, and any screenshot analysis from step 3:
 Add each through the `apply_issue_label` guard (a missing label degrades to a
 logged skip; `LABELS_ENABLED=false` skips all). **Only add what is missing** —
 never remove or swap a label a human already set (a present label is treated as
-the human's decision). After adding, post one short rationale comment covering the
-labels applied (per `SDLC.md`'s "leaves a short comment explaining why"). If the
-issue already carries a full category+priority+risk set, add nothing and note it.
+the human's decision). After adding, update one comment under
+`` 🤖 `om-auto-manage-issues` — 🏷️ label rationale `` covering the applied set,
+with one concrete reason per label per `references/rules.md`. Do not post separate
+comments per group or repeat the rationale in the report. A full existing set
+requires no mutation.
 
 ## 3. Enrich a laconic issue (skip when `--relabel-only`)
 
@@ -83,15 +85,9 @@ is being closed) or when the marker comment already reflects the current state:
 ```markdown
 🤖 `om-auto-manage-issues` — spec required
 
-@{author} 📝 this feature issue has no covering specification (checked `$SPECS_DIR`
-and open spec PRs). Please fill up the spec before implementation starts:
-
-- write it following the repo's spec conventions (the `om-spec-writing` skill), and
-  link it here, **or**
-- have it authored autonomously: run `om-auto-write-spec {issueId}` (or re-run
-  triage with `--write-missing-specs`).
-
-⛔ Implementation skills will treat this issue as not ready until a spec is linked.
+📝 @{author}, {the unresolved behavior or scope decision} needs a covering spec
+before implementation. None was found in `$SPECS_DIR` or open spec PRs.
+Link a design here, or run `om-auto-write-spec {issueId}` to draft one.
 ```
 
 The `missing` status plus the comment outcome (posted / updated / skipped) is

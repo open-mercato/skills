@@ -41,23 +41,28 @@ Rewrite the issue body via the **update-issue** tracker operation so a future
 implementer can act on it, **without discarding the reporter's words**:
 
 ```markdown
-## Summary (clarified by om-auto-manage-issues)
-- {one-line restatement of the actual ask/defect}
+## 🎯 Clarified report — `om-auto-manage-issues`
 
-## Understood report
-- **What the screenshot shows:** {transcribed error / UI state}
-- **Expected vs actual:** {reconstructed, marked as inferred where uncertain}
-- **Likely area:** {route/screen/component named from the screenshot, if identifiable}
-- **Open questions:** {what a human still needs to confirm}
+{Actor and location; reported current behavior → expected behavior. Label any
+inferred expectation or sequence. Do not invent reproduction steps.}
+
+## 🔍 Evidence
+
+{What the screenshot/text directly shows, with its source. Distinguish an
+observed screenshot from behavior independently reproduced in the application.}
+
+## ⚠️ Still unconfirmed
+
+{Only missing facts that change scope or prevent a reliable reproduction.}
 
 <details><summary>Original report (verbatim)</summary>
 
-{the reporter's original title/body, unchanged}
+{The reporter's original title/body, unchanged.}
 
 </details>
 ```
 
-Keep every inference clearly marked as inferred — you are proposing an
+Omit an empty Still unconfirmed section. Preserve the legacy `Summary (clarified by om-auto-manage-issues)` heading as a recognized existing clarification when detecting reruns. Keep every inference clearly marked as inferred — you are proposing an
 interpretation, not asserting facts. Do not invent repro steps you cannot support
 from the screenshot or text.
 
@@ -67,16 +72,18 @@ Post one comment via **comment-issue** capturing the agent's understanding, open
 with a stable marker so re-runs detect it and do not repost:
 
 ```markdown
-🤖 `om-auto-manage-issues` understanding — please confirm or correct
+🤖 `om-auto-manage-issues` — understanding
 
-I read this issue as: {2-3 sentence plain-English restatement}.
-From the screenshot: {key transcribed evidence}.
-Assumptions I made: {list}.
-If any of this is wrong, reply and I'll re-run; otherwise it's ready for `om-auto-fix-issue`.
+Clarified the [issue description]({issueUrl}) to distinguish {reported symptom}
+from {inference or missing fact}. {One material uncertainty, if any.}
+Please correct the description if that interpretation is wrong.
 ```
 
 Before posting, scan **list-issue-comments** for an existing comment beginning with
-that `` 🤖 `om-auto-manage-issues` understanding `` marker; if one exists, update the
-body's clarified section if needed but do **not** post a second understanding
-comment. Under `--dry-run`, produce the clarified body and understanding text for
+the new marker or legacy `` 🤖 `om-auto-manage-issues` understanding — ``
+marker (also accept bare skill names). If one exists, update the body's clarified
+section and matching comment only when new evidence changes them; never duplicate.
+The comment describes the delta and links the body instead of repeating its
+summary, screenshot transcription, or full assumptions. Do not assert readiness
+while reproduction or scope remains uncertain. Under `--dry-run`, produce the clarified body and understanding text for
 the report but post/edit nothing.

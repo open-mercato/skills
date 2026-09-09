@@ -1,47 +1,55 @@
-# Report templates
+# Discovery report
 
-Final-report shapes for `om-discover` (workflow step 9). Fill them exactly and expand with detail — the reader did not sit in the session. End with the Output contract lines from the skill body, one per line, exact and undecorated.
+Use after the confirmed brief is written. Follow `references/rules.md`: link the
+brief's explanation, decisions and sources rather than retelling the session.
+Aim for 3–6 lines before the exact output fields; keep every blocking question,
+owner and next action even when more space is needed.
 
 ## Brief written
 
 ```markdown
-## 🎯 om-discover — product brief
-
-📋 **Mode and why.** {the mode chosen, what in the repository or the material decided it, and who signs the Definition of Ready in this mode}
-
-📝 **What the brief establishes.** {the vision in one sentence; the users and the problem; the scope split; the decisions taken this session, each with its owner}
-
-📸 **What it rests on.** {the sources used, and the coverage line in words: how much is interviews and data, how much is synthetic or assumed, and which sections are thinnest}
-
-⚠️ **What is still missing.** {every section on the collection plan with who, how, and by when; every blocking open question and who can answer it; the riskiest assumption and its test}
-
-🔍 **What the skeptic changed.** {claims that lost a tag or moved to the collection plan; questions that went back to the user; what held}
-
-🧪 **Ready for what.** {whether the ticket-level tier of the Definition of Ready is satisfied on tiers 1 to 5; what the next skill can start from and what it cannot yet}
-
-🔁 **Next step.** {what the hand-off offered (one more decision round, or the first *now* slice routed to a skill), what the user chose, and what ran as a result, with its own contract lines quoted when a skill ran}
-
-Product brief: {…}
-Coverage: {…}
-Collection plan: {…}
-Next: {…}
+🎯 `om-discover` — {product}: {ready for the first slice | more evidence needed}.
+{Users, problem and agreed scope in one sentence; link the brief.}
+🧪 **Ready for what.** {Whether the ticket-level Definition of Ready is met; unresolved blockers with owners and the riskiest assumption/test.}
+🔁 **Next step.** {What was offered, what the user chose, and which skill actually ran or was declined.}
+Elapsed: <minutes per step>
+Product brief: <repo-relative path>
+Coverage: <n> claims — <a> sourced (interview <i>, data <d>, document <c>, product <p>, benchmark <b>), <s> synthetic, <u> assumed
+Collection plan: <k> entries waiting for material
+Next: om-brainstorm "<topic>" | om-spec-writing "<goal>" | om-prepare-issue "<goal>" | none
 ```
 
-Include `Collection plan:` only when the gate held anything back; `{k}` counts entries, in the same shape as the brief header. Always end with `Elapsed: <minutes per step>` before the contract lines, so the next run can be sized.
+Preserve the Output contract from the skill body. Include `Collection plan:`
+only when material was held back. `Next: none` applies when readiness is blocked.
+When another skill ran, relay its output fields without claiming that an offered
+or declined step ran. Include the chosen mode and signer when they explain the
+readiness decision. Coverage counts stay in their field; do not repeat them in
+prose. If a skeptic finding changed scope or an evidence claim, state the change
+and its source once. Never replace missing evidence with a confident summary.
 
 ## Quick pass
 
-Under `--quick`, the report is the *Brief written* shape with the header line `Quick pass — one round, inline skeptic, critical gate items only.` and one more paragraph, **🔁 What a full run would add**: the sections left on the collection plan by the mode rather than by missing material, the skeptic checks that needed a fresh pair of eyes, and the gate items not scored.
+Keep the header `Quick pass — one round, inline skeptic, critical gate items only.`
+State what remains unexamined: deferred brief sections, checks needing a fresh
+reviewer, and unscored gate items. Link the collection plan for those sections;
+a quick pass does not satisfy missing readiness evidence.
 
 ## Nothing written — collection plan only
 
-When the gate found no material for the ticket-level sections and the user did not choose to continue on assumptions, the report is the plan itself: the sections waiting, who can answer them, how, the owner and the date, and the capture templates written under the research directory. Close with why nothing was written (the sections that would have been fiction) and the contract lines:
+Explain which ticket-level sections lack material. Give a compact table of each
+waiting section, who can supply it, how to collect it, the owner/date, and the
+capture-template path. The collection plan is the deliverable; do not invent a
+brief or an owner/date that was not supplied. End with:
 
-```
-Collection plan: {k} entries waiting for material
+```text
+Elapsed: <minutes per step>
+Collection plan: <k> entries waiting for material
 Next: none
 ```
 
 ## Refresh
 
-On `--refresh`, the report adds a **🔁 What changed** section: sections rewritten and why, decisions superseded (old id → new id, owner), coverage before and after, and collection-plan entries closed.
+Lead with what changed and why. Include superseded decision ids (old → new) and
+their owners, coverage before/after, and collection-plan entries closed. Keep
+prior decisions in the brief's history; report unchanged material only when it
+explains a remaining blocker.

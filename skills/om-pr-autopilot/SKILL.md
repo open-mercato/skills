@@ -99,21 +99,16 @@ absence never stops a run.
    or when a step hits one of the gated human-decision cases; never paper over a
    failing step to reach the next one.
 
-6. **Publish the complete information — the moment the chain returns, never
-   after a CI wait.** A `--dry-run` never reaches this step as a tracker
-   mutation: it prints the session report — diagnosis plus the chain it would
-   have run — and posts nothing, applies no label, and files no follow-up.
-   Otherwise follow `references/report-templates.md`: one summary comment on the
-   PR covering every chain step and its outcome, the label set the PR should
-   carry (applied when permitted, listed as a request to the maintainer when
-   triage rights are missing), the QA and merge verdict, and the follow-ups
-   filed. Disclose any required check still pending, so nobody reads the verdict
-   as a green run. Print the same report in the session, end with the chaining
-   reference lines, and release the outer lock in the `trap` — swapping
-   `in-progress` for the `ci-monitoring` meta label when a CI-result follow-up is
-   still owed, and dropping `ci-monitoring` once it lands or the
-   `CI_MAX_WAIT_MINUTES` budget expires. Why this order, and the bounded-wait
-   bail-out: `references/ci-followup.md`.
+6. **Report the outcome before waiting on CI.** Under `--dry-run`, print the
+   proposed chain and its reasons; mutate nothing. Otherwise use
+   `references/report-templates.md` for one updated summary comment: consequential
+   changes, review/CI/QA state, all remaining blockers, and the next action.
+   Keep the applied label set in its consolidated rationale comment; permission
+   failures name the requested maintainer action. Disclose pending required checks.
+   Return a short session handoff with links and the exact chaining fields.
+   Release the outer lock in the `trap`, swapping `in-progress` for `ci-monitoring`
+   only when a CI-result follow-up is owed. Follow `references/ci-followup.md` for
+   the bounded wait and removal of `ci-monitoring` when it ends.
 
 ## Rules
 
@@ -152,8 +147,8 @@ absence never stops a run.
   a fork is not that test: your own fork PR is pushable and is driven like a
   same-repo one (`PUSHABLE` in `references/state-matrix.md`).
 - **Permission failures are reported, not swallowed.** When the account lacks
-  triage rights, list the intended labels in the summary comment and ask the
-  maintainer to apply them.
+  triage rights, list the intended labels in the label-rationale comment and ask the
+  maintainer to apply them in the handoff.
 - Read the base branch, paths, label taxonomy, and every tracker behavior from
   the config and the descriptor; never hard-code them.
 

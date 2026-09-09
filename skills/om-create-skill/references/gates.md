@@ -66,6 +66,15 @@ Read the body alone. It passes only if you can still tell **what** the skill doe
 list of links with no flow, pull some content back up (per
 `references/philosophy.md`).
 
+## Gate 4 — output usefulness (author mode)
+
+For new output templates, check a realistic small change and a change with a
+verified defect plus an unresolved direction question. The opening must explain
+the behavior and next action; findings need evidence and consequences. Reject
+empty-section rituals, repeated body/comment summaries, or brevity that drops a
+gate, evidence limitation, or parsed field. Skip this check for a pure split,
+which preserves the original wording.
+
 ## On failure
 
 Fix and re-run — never hand back a skill with a failing gate. Report the final

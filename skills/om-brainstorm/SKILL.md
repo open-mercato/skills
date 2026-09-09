@@ -31,7 +31,7 @@ Do not edit repository files, write code, create specs or issues, or invoke any 
 
 6. **Write the brief** (ramps 2–5 only) — `${SPECS_DIR}/briefs/{YYYY-MM-DD}-{slug}.md` from `references/brief-template.md`; kebab-case slug, no spaces. This is the only file the skill writes, and it stays uncommitted — the routed skill makes it durable (commits it into its worktree, or embeds it in the issue) per the brief lifecycle in `references/exit-ramps.md`.
 
-7. **Report.** Fill `references/report-templates.md` and end with the Output contract lines. On ramp 1 the answer itself is the report body.
+7. **Report.** Use `references/report-templates.md` for the decision, decisive reason, and material caveat; link the brief instead of replaying the conversation. End with the Output contract lines. On ramp 1 the answer itself is the report body.
 
 ## Exit ramps
 

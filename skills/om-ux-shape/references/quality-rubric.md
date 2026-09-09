@@ -26,7 +26,8 @@ Score each item:
 11. The result is concrete: screens and components are named, and the copy the
     user reads is written rather than described. A reader who was not in the
     conversation could build or draw it.
-12. The Applied line states which checks ran and which did not apply.
+12. The result discloses evidence limits that could change the decision;
+    untested proposals are not described as validated behavior.
 
 ## AI quality, when applicable
 

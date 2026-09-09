@@ -74,12 +74,16 @@ Do not run `git commit`, `git push`, or the **create-pr** tracker operation — 
    - <path/to/file-b.ts>
    - <path/to/file-a.test.ts>
 
-   Summary: <one paragraph — what changed and why it fixes the issue>
+   Summary: <one or two sentences — trigger, corrected behavior, and why the edit fixes it>
 
    Tests: <which tests/checks were added and that the full validation gate passed (or which commands were skipped and why)>
 
    Breaking changes: <"none" OR a short statement of the contract change and the migration/deprecation path>
    ```
+
+   Keep these field names and the complete changed-file list; the next step parses
+   them. Use compact evidence in Tests, retaining every failed or skipped command
+   and its reason. Do not add a duplicate narrative report.
 
    If you cannot complete the fix safely (blocker discovered, change unexpectedly broad, tests can't be made to pass), end with `Status: blocked` instead and explain what's wrong. The lock will remain set so a human can pick it up.
 

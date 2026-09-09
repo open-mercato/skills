@@ -80,7 +80,10 @@ mutates nothing.
    quad: evidence, pattern (ideally an existing screen in this repo that
    already does it right), trade-off, acceptance criterion.
 
-8. **Deliver the review.** Fill `references/report-templates.md` exactly. On
+8. **Deliver the review.** Use `references/report-templates.md`; lead with the
+   user-task consequence and recommended action, retaining every finding's
+   evidence/pattern/trade-off/acceptance quad. Omit empty sections and repeated
+   summaries. On
    the tracker path, look for the marker via **list-issue-comments** and then
    either **comment-pr** for the first review or **update-comment** to rewrite
    the existing one in place, attaching the evidence via

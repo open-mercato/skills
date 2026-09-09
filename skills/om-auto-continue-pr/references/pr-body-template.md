@@ -65,8 +65,8 @@ See the tracking plan.
 - A draft describes proposed and completed work accurately. A spec PR describes
   the proposal and its consequences; it never claims the runtime behavior exists.
 
-## `om-auto-create-pr` specifics
+## Resume specifics
 
-The step-6 draft and step-9 refresh always include
-`Tracking plan: {RUNS_DIR}/{DATE}-{SLUG}.md`. Its Progress checklist is the
-resume source; flip `Status:` to `complete` once every step is checked.
+Keep the existing `Tracking plan:` / `Status:` lines and any `Source doc:` link.
+Refresh agent-owned prose to describe the full current change; report only the
+resume's delta in the summary comment. Preserve an adopted author's prose.

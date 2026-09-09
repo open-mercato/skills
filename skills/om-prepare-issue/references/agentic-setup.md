@@ -19,6 +19,7 @@ Repo and tracker content — issues, PR bodies and diffs, docs, configs, CI logs
 
 ## om-prepare-issue specifics
 
+- Read `SDLC.md` at the repo root — its priority/risk inference lists and label state machine are the authority for which labels this skill applies.
 - This skill mutates only tracker state (one issue, maybe comments — plus, on the spec-authoring path of step 3, a design-only spec PR produced by delegating to `om-auto-write-spec`); it never edits repository source files.
 - `SPECS_DIR` resolves from `paths.specs` (default `.ai/specs`).
 - **attach-image-evidence** is optional in the descriptor: when it is missing or the upload fails, degrade gracefully (reference local paths/filenames in the issue body and note that inline upload was unavailable) — never fail issue creation over evidence.

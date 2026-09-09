@@ -9,7 +9,8 @@
       "node scripts/test-browser-providers.mjs",
       "node scripts/test-tracker-providers.mjs",
       "node scripts/test-classify-runs.mjs",
-      "node scripts/test-close-keywords.mjs"
+      "node scripts/test-close-keywords.mjs",
+      "node --test scripts/test-mockup-prototype.mjs"
     ]
   },
   "labels": {

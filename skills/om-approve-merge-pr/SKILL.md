@@ -48,7 +48,9 @@ Given a single PR number, submit an approving review and then squash-merge it. O
 
 5. **Optional follow-up** (only if one was provided — see below).
 
-6. **Report** the outcome. Build the final report from the template in `references/report-templates.md` — full sentences, explain the why behind each outcome, never a compressed key:value dump. It covers the PR title, number, and url, whether it merged now or is queued for auto-merge, any label gates that were checked (or skipped), and the follow-up issue URL if one was created. End the report with the chaining reference lines — `PR: #<number> (link: <full PR URL>)` on its own line, plus `Issue: #<number> (link: <full issue URL>)` when the run has a subject issue — so the next skill in a chain can consume them.
+6. **Report** per `references/report-templates.md`: outcome, decisive gate or
+   reason, and next action. End with the exact `PR:` chaining line and an
+   `Issue:` line when the run has a subject issue.
 
 ## Optional follow-up
 

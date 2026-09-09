@@ -236,6 +236,7 @@ Flag any of these on sight:
 | Anti-pattern | Severity | Fix |
 |---|---|---|
 | Public contract surface removed/renamed without a deprecation bridge | blocker | Keep the old surface working, add the new one, deprecate with a removal target |
+| Change contradicts a product non-goal, business rule, or decision in `product-brief.md` without a superseding entry | blocker | Add a superseding row (old id, owner, why) approved by the entry's owner, or drop the change; never silently drift |
 | Missing owning-scope filter on a query over scoped data | blocker | Add the scope filter; add a test proving isolation |
 | Permission check only in the UI | blocker | Enforce server-side; the UI merely reflects it |
 | Untrusted input concatenated into a query, command, or path | blocker | Parameterize; canonicalize paths against a base directory |

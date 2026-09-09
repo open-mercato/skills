@@ -38,13 +38,11 @@ summary comment MUST carry the disclosure as its own short paragraph, so the PR 
 self-documenting and nobody mistakes "merge-ready" for a green run:
 
 ```markdown
-**CI is still running on this head.** Branch protection plus the QA-approval gate
-hold the actual merge; this run's verdict covers the work, not a green run. Checks
-still pending: {names}. A follow-up comment will report the CI outcome.
+**CI pending:** {check names and links} on this head. Required CI and QA approval
+still gate merge. A follow-up will report the CI result.
 ```
 
-Adjust the first clause to what the run actually concluded. Drop the last sentence
-when the run will not follow up — never promise a follow-up the run does not intend
+Drop the last sentence when the run will not follow up — never promise a follow-up the run does not intend
 to make. When no required check was pending, omit the paragraph entirely rather than
 writing a "CI was green" variant; the summary's own validation section covers that.
 
@@ -111,8 +109,8 @@ lets a pipeline label stop being mutually exclusive.
 
 ## Where this fires in the chain
 
-The chain's own steps do the work; this skill only sequences them. Publish step 6 in
-full — the summary comment, the label set, the QA and merge verdict, the follow-ups —
+The chain's own steps do the work; this skill only sequences them. Publish step 6 —
+the summary comment, consolidated label rationale, QA/merge state, and follow-up links —
 the moment the last chain step returns, then swap the outer lock to `ci-monitoring`
 and wait. A dispatcher that dies holding `in-progress` while a delegated CI wait runs
 is exactly the stranded state this file exists to prevent.

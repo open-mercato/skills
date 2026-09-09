@@ -39,15 +39,15 @@ nit** scale so step 9's verdict rule applies verbatim.
    per `BACKWARD_COMPATIBILITY.md` when present). A breaking change without a
    named migration/deprecation path is a **blocker**; an undeclared touch of a
    protected surface is at least a **major**.
-3. **🧩 What's missing** — unresolved Open Questions, absent acceptance
+3. **📋 What's missing** — unresolved Open Questions, absent acceptance
    criteria, missing non-functional requirements (performance, permissions,
    i18n, observability), no testing or rollout plan, affected areas the spec
    does not mention, undefined failure-handling.
-4. **📈 How can this specification be improved** — clarity and structure (does
+4. **📝 How can this specification be improved** — clarity and structure (does
    it follow the repo's spec skeleton), measurable acceptance criteria instead
    of vague goals, tighter scoping, explicit non-goals, testability of each
    requirement.
-5. **✂️ Is this the simplest possible solution — or should something be
+5. **🎯 Is this the simplest possible solution — or should something be
    rethought?** Could a smaller design deliver the same outcome? Does the repo
    already have primitives the spec proposes to rebuild (search before
    claiming)? Which parts could be deferred (YAGNI)? When you claim a simpler
@@ -56,9 +56,13 @@ nit** scale so step 9's verdict rule applies verbatim.
 
 ## Report, verdict, and autofix
 
-- Use the same structured review-report body as the code path, with one section
-  per lens (keep the lens emojis as section markers); each finding carries its
-  severity tag. Title the report `Specification review:`.
+- Title the report `Specification review:` and lead with the recommended action
+  and concrete behavior being proposed. Evaluate every lens, but report only
+  decision-relevant findings with severity and evidence; omit empty lens sections.
+  Separate direction/scope choices from verified contradictions or rule violations.
+  State which consumers exist now, which are planned, and the scope of any absence
+  search. A future payoff alone is not a defect. Use a small Mermaid diagram only
+  when the relationships clarify a decision, marking existing/new/planned nodes.
 - Verdict mapping is identical to step 9: any blocker → request changes; major
   without documented waiver → request changes; only minors/nits → approve.
 - **Validation gate:** run only the `validation.commands` that apply to

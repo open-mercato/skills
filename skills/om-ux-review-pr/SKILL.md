@@ -62,7 +62,12 @@ mutates nothing.
 5. **Check contract conformance.** Hardcoded colors where tokens exist, raw
    elements where the registry has a house component, screens that ignore the
    repo's own archetype for that shape. These are `[PRODUCT]` findings citing
-   the contract.
+   the contract. When `${SPECS_DIR}/product-brief.md` exists, its Non-goals,
+   Business rules, and Decisions are part of the contract too: a screen that
+   ships what a non-goal excludes, or that lets a user do what a business rule
+   forbids, is a `[PRODUCT]` finding quoting the entry's id, and its
+   acceptance criterion is a superseding entry approved by the owner or a
+   changed screen — never a quiet exception.
 
 6. **Run the humane gate.** For every persuasive element, ask who benefits
    from the design choice, following `references/humane-patterns.md`.
@@ -75,7 +80,10 @@ mutates nothing.
    quad: evidence, pattern (ideally an existing screen in this repo that
    already does it right), trade-off, acceptance criterion.
 
-8. **Deliver the review.** Fill `references/report-templates.md` exactly. On
+8. **Deliver the review.** Use `references/report-templates.md`; lead with the
+   user-task consequence and recommended action, retaining every finding's
+   evidence/pattern/trade-off/acceptance quad. Omit empty sections and repeated
+   summaries. On
    the tracker path, look for the marker via **list-issue-comments** and then
    either **comment-pr** for the first review or **update-comment** to rewrite
    the existing one in place, attaching the evidence via

@@ -27,6 +27,7 @@ One card per skill, with its parameters and the companion skills it works with. 
 | [om-setup-agent-pipeline](om-setup-agent-pipeline.md) | 🧑‍💻 | One-per-repo configurator: writes the config, installs descriptors, generates project docs. |
 | [om-apply-upgrade-notes](om-apply-upgrade-notes.md) | 🧑‍💻 | Applies UPGRADE_NOTES.md after an upgrade, preserving local edits. |
 | [om-check-and-commit](om-check-and-commit.md) | 🧑‍💻 | Runs the validation gate on the branch, fixes obvious drift, commits and pushes when green. |
+| [om-discover](om-discover.md) | 🧑‍💻 | Product-level discovery and define in three modes; leaves a product-brief.md built from real material, with tagged evidence and owned decisions. |
 | [om-brainstorm](om-brainstorm.md) | 🧑‍💻 | Divergent conversation before any artifact exists; converges on which skill runs next, plus a handoff brief. |
 | [om-prepare-issue](om-prepare-issue.md) | 🧑‍💻 | Files one well-formed, labeled tracker issue from a brief without implementing it. |
 | [om-spec-writing](om-spec-writing.md) | 🧑‍💻 | Writes and reviews feature specs to staff-engineer standards. |

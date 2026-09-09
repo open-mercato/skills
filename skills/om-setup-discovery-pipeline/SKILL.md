@@ -15,7 +15,7 @@ The layer is switched by one config key, `discovery.enabled`, and lives in the s
 
 What the layer unlocks once it is on: `om-auto-manage-issues` and `om-auto-fix-issue` check tickets against the Definition of Ready and stop cleanly on a gap instead of guessing; `om-backlog` refuses to file from assumptions; `om-code-review` treats the brief's non-goals, rules, and decisions as a protected contract; and the process document names who owns the why.
 
-**The product skills do not require this skill.** `om-discover`, `om-synthetic-users`, `om-backlog --dry-run`, and `om-ux-style` run in a repository without it (and, for `om-discover`, without any pipeline at all); they only mention this skill once in their reports as the way to get the gates. This is the single entry point of the product layer, and it pulls in what it needs: a missing delivery setup is run first, and missing product skills are named with their install command.
+**The product skills do not require this skill.** `om-discover`, `om-synthetic-users`, `om-backlog --dry-run`, and `om-mockup-prototype` run in a repository without it (and, for `om-discover`, without any pipeline at all); they only mention this skill once in their reports as the way to get the gates. This is the single entry point of the product layer, and it pulls in what it needs: a missing delivery setup is run first, and missing product skills are named with their install command.
 
 ## Arguments
 
@@ -38,7 +38,7 @@ Written into the existing `.ai/agentic.config.json`, next to the delivery keys:
 
 - `discovery.enabled` — switches the product-layer blocks of the SDLC template and tells every skill that the layer is on. A config without the key is a delivery-only repository.
 - `discovery.roles.domainExpert` — the team has a named owner of business rules and non-goals who is not the product owner. Adds the Domain expert role to `SDLC.md`.
-- `discovery.roles.designer` — the team has someone who owns the design contract in `.uxproof/`. Adds the Designer role to `SDLC.md`; the contract itself is written by `om-ux-setup` or `om-ux-style`.
+- `discovery.roles.designer` — the team has someone who owns the design contract in `.uxproof/`. Adds the Discovery design responsibility to `SDLC.md`; the contract is extracted by `om-ux-setup` or maintained by the design owner. `om-mockup-prototype` supplies neutral discovery flows and leaves that contract unchanged.
 
 Roles are flags, never names: `SDLC.md` refers to people by role, and assignments change.
 
@@ -58,7 +58,7 @@ Roles are flags, never names: `SDLC.md` refers to people by role, and assignment
 
 6. **Add the routing row to `AGENTS.md`.** When `AGENTS.md` (or `CLAUDE.md`) carries the task-routing table `om-setup-agent-pipeline` generates (`| When the task involves… | Read first | Key rules |`), append one row between `<!-- discovery:routing-start -->` / `<!-- discovery:routing-end -->` markers: product discovery, a brief, or a backlog → read `<paths.specs>/product-brief.md`, `research/`, `backlog.md`, and the Definition of Ready and protected decisions in `SDLC.md`; the rules are that decisions in the brief are a protected contract and synthetic personas are hypotheses. When there is no such table, add nothing and say so; never create an agent instruction file here.
 
-7. **Verify coverage of the product skills.** Run the check in `om-setup-agent-pipeline/references/skill-coverage.md` and report only the product-layer skills it finds missing — `om-discover`, `om-synthetic-users`, `om-backlog`, `om-ux-style` — with the paste-ready `npx skills add` command. Unattended runs report the command and continue.
+7. **Verify coverage of the product skills.** Run the check in `om-setup-agent-pipeline/references/skill-coverage.md` and report only the product-layer skills it finds missing — `om-discover`, `om-synthetic-users`, `om-backlog`, `om-mockup-prototype` — with the paste-ready `npx skills add` command. Unattended runs report the command and continue.
 
 8. **Offer to commit.**
 

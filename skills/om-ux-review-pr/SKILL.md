@@ -40,7 +40,10 @@ mutates nothing.
    diff and list the screens it touches, naming the ones you cannot reach. When
    the PR body names a spec (`Source doc:`) whose UI/UX section carries a
    `Prototype:` line, that prototype is the accepted design for these screens:
-   note its path now, so step 5 can open it beside the app.
+   note its path now, so step 5 can open it beside the app. Read its context
+   and compare only the scope the spec accepts. A neutral discovery prototype
+   establishes no visual-fidelity target; its unconfirmed assumptions remain
+   questions rather than product rules.
 
 2. **Bring the app up.** Start the PR in a runnable state and open it in the
    configured browser, composing with the pipeline's test-env and browser

@@ -14,11 +14,36 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-09-09 — New skill: om-mockup-prototype, neutral discovery flows
+
+`om-mockup-prototype` creates a neutral clickable prototype after the first
+synthetic panel, before `om-discover --refresh` and the backlog. Install it with:
+
+```bash
+npx skills add open-mercato/skills --skill om-mockup-prototype
+```
+
+It uses `paths.prototypes` (default `.ai/prototypes`) without setup questions and
+writes a new revision under `discovery/<slug>/`. The output fields are
+`Prototype:`, `Prototype context:`, `Verification:`, and `Next:`. Existing
+`.uxproof/` files and application code stay unchanged. Moodboards and final
+visual decisions belong to the later detailed design stage.
+
+The former branch-local name was never released, so there is no migration or
+compatibility alias. Existing prototype revisions are preserved on refresh.
+Synthetic panel invocations now keep report, transcripts, screenshots and a
+persona snapshot in separate session directories. Consumers follow the returned
+`Walkthrough:` path; older flat reports remain readable.
+
+Update local discovery overrides to offer the prototype before refreshing the
+brief; a synthetic walkthrough or prototype approval does not satisfy readiness.
+
+
 ## 2026-09-08 — The generated SDLC.md names the QA and design skills it always had
 
 The lifecycle table drove every stage with a skill except one: QA read `QA reviewer (manual)`, and no QA or design skill appeared anywhere in the document. `om-prepare-test-env`, `om-auto-qa-pr`, and `om-integration-tests` have shipped for months and are documented on the QA role page; a reader of `SDLC.md` alone would conclude QA is the stage the collection does not help with, and a role matrix drawn from this file says so in as many words. Four additive changes to `skills/om-setup-agent-pipeline/references/sdlc-template.md` and to this repository's own `SDLC.md`:
 
-- **The QA row names its tools.** Boot the app once with `om-prepare-test-env`, walk the change with `om-auto-qa-pr` (screenshots and a pass/fail report, no labels touched by default), keep the flow worth keeping as `om-integration-tests` coverage. The gate itself is unchanged: `qa-approved` is applied by a person, and the "Done when" column now says so explicitly.
+- **The QA row names its tools.** Boot the app once with `om-prepare-test-env`, walk the change with `om-auto-qa-pr` (screenshots and a pass/fail report, no labels touched by default), keep the flow worth keeping as `om-integration-tests` coverage. The "Done when" column follows the QA gate: a reviewer grants `qa-approved`, or the documented self-QA exception applies below `risk-high` with evidence pinned to the current head.
 - **A Design row between Claim and Implement**, driven by `om-ux-shape` or a human designer, scoped to user-facing changes and skipped by every other ticket. Its "Done when" is the flow and its states being decided, not an artifact.
 - **The Review loop row gains the design pass.** `om-ux-review-pr` walks a user-facing PR's screens; the row states that it is advisory and does not hold the merge, which is the behavior the skill already had.
 - **A Designer role and a rewritten QA reviewer role.** "Manually exercises" became "manual means a person judges the result and owns `qa-approved`; it does not mean the work is unassisted" — the distinction the previous phrasing lost. `om-ux-setup` is named in *Amending this process* as one-time setup, next to `om-setup-agent-pipeline`, because a design contract is not a per-ticket stage.
@@ -34,7 +59,7 @@ npx skills add open-mercato/skills --skill om-setup-discovery-pipeline
 
 - **The product layer is opt-in.** `om-setup-agent-pipeline` no longer renders the Discovery stage, the Definition of Ready, or the protected-decisions section: those blocks sit under `IF discovery` in the template and render only when the config carries `discovery.enabled`. A fresh delivery-only setup gets an `SDLC.md` that starts at a ticket that exists, with `om-brainstorm` as the pre-ticket step. Nothing changes for repositories generated before the blocks existed.
 - **Readiness is checked only when `SDLC.md` carries a Definition of Ready.** `om-auto-manage-issues` records `READY_STATUS = n/a` and posts nothing, `om-auto-fix-issue`'s feature route skips the gate instead of stopping with `NOT_READY`, and `om-backlog` skips the readiness check and says so in the tree header. The previous fallback to the collection's own two-tier list is gone: a team that did not opt into the layer is not gated by it.
-- **The product skills do not require the setup.** `om-discover`, `om-synthetic-users`, `om-backlog --dry-run`, and `om-ux-style` run as before in a repository without the block; `om-discover`'s report and `om-backlog`'s tree header mention `om-setup-discovery-pipeline` once as the way to get the gates. `om-setup-discovery-pipeline` is the only product-layer skill that runs the delivery setup when it is missing.
+- **The product skills do not require the setup.** `om-discover`, `om-synthetic-users`, `om-backlog --dry-run`, and `om-mockup-prototype` run without discovery setup in a repository without the block; `om-discover`'s report and `om-backlog`'s tree header mention `om-setup-discovery-pipeline` once as the way to get the gates. `om-setup-discovery-pipeline` is the only product-layer skill that runs the delivery setup when it is missing.
 - **Roles.** The generated Roles list gains, behind the flag, Product owner (always with the layer), Domain expert, and Designer — flags in the config, never names. The Reviewer line now says the reviewer is the second person a `risk-high` change needs and signs off specs (a tech lead or architect goes here); the Maintainer line owns the installed skills and their repo-local overrides and acts as release manager unless the team names one.
 - **Migration:** a repository with an `SDLC.md` that already carries the three sections (generated from this branch before this change) keeps them as is — the skills read the section, not the markers. To bring it under `om-setup-discovery-pipeline`'s management, run `/om-setup-discovery-pipeline`: it detects the unmarked sections at their anchors, offers to wrap them, and writes the `discovery` block. `om-apply-upgrade-notes` reports `om-setup-discovery-pipeline --refresh` for the marked blocks instead of splicing them. The roster in `om-setup-agent-pipeline`'s coverage check gains `om-setup-discovery-pipeline`.
 ## 2026-09-07 — Discovery questions follow the kind of answer needed
@@ -49,7 +74,6 @@ No marker or brief schema changes. Review local overrides that require `My sugge
 - **Protected brief fields.** Existing briefs need `Owner` on Business rules and `Review by` plus `Required path to change` on Non-goals, matching the protected-contract tables now shipped on the base branch. Add the fields from the template and confirm their values with the decision owner; do not invent them.
 - **Discovery routing.** `om-discover` emits `Next: none` for completed or declined steps. An executable `Next:` names only an explicitly chosen, unexecuted invocation with all its arguments; child routing lines are not forwarded automatically. The existing parser shape is unchanged. Review local overrides that treated this line as a history field.
 - **QA head lookup.** `om-approve-merge-pr` requests `headRefOid` explicitly, stops when it cannot obtain it, and requests `commits` when explaining a stale signature. These fields already belong to the tracker contract; no new operation or descriptor migration is required.
-- **Declared design refresh.** `om-ux-style --refresh` can revise its own declared contract before an implemented design system exists. It updates the current value by token name and theme and retains the old value in a manual supersession note. Its own generated theme file does not trigger extraction.
 - **Browser ownership.** In `om-synthetic-users`, the main agent operates the browser and relays observations to each isolated persona context. Persona subagents retain their read-only file access and gain no browser or network permissions. Local overrides should preserve this division of work.
 
 ## 2026-09-02 — om-synthetic-users: panels, repeats, pressure, and a parity check
@@ -92,18 +116,6 @@ npx skills add open-mercato/skills --skill om-backlog
 - **A new local record**, `${SPECS_DIR}/backlog.md`, maps ids to issue numbers; the ids in titles are the durable link on re-runs. New output-contract lines: `Backlog:`, `Issues:`, `Next:` (a dry run or a readiness stop emits `Next:` only). The roster gains `om-backlog`. Nothing to migrate.
 - **Three new optional arguments on `om-prepare-issue`**, additive and off by default: `--title "<exact title>"` (verbatim title instead of the `Implement:` / `Fix:` convention), `--no-spec` (never author a spec; link the document the brief names as the authority), `--skip-dedupe` (the caller already deduplicated; reuse only an exact-title match). `om-backlog` passes all three. `om-prepare-issue` also gains a greenfield exception to its "real paths" rule: in a repository with no product code, guidance references the brief's ids and the acceptance criteria and says so. Existing invocations behave exactly as before.
 
-## 2026-09-02 — New skill: om-ux-style, a declared design contract for repositories with no design system
-
-**New skill.** `om-ux-style` builds a design contract from references the team chooses — moodboard, five principles, five anti-patterns, tokens by role for both themes, the components the flows need with all six states, three recipes — and writes it into the files `om-ux-setup` extracts from code. Install it with:
-
-```bash
-npx skills add open-mercato/skills --skill om-ux-style
-```
-
-- **Two additive fields in `.uxproof/tokens.json`.** Declared tokens carry `"source": "design"` and `"theme": "light" | "dark" | "both"`. Readers that ignore the fields see a valid flat list; `om-ux-setup --refresh` keeps declared entries and regenerates the rest from code.
-- **The manual section of `.uxproof/conventions.md`** gains a `Design contract — written by om-ux-style` block, appended inside the markers so it survives regeneration; `om-ux-review-pr` and `om-ux-shape` apply it as `[PRODUCT]` rules with no change on their side.
-- **`${SPECS_DIR}/design/theme.css`** carries the eight identity tokens in the plain `:root {}` / `.dark {}` convention a prototype directory loads after its base tokens. `om-ux-setup` now names `om-ux-style` when a repository has only a proposed palette to offer.
-- **New output-contract lines** — `Design contract:`, `Theme:`, `Moodboard:`, `Next:`. The roster gains `om-ux-style`. Nothing to migrate in a repository with a real design system: the skill stops and routes to `om-ux-setup`.
 
 ## 2026-09-02 — Discovery voice and hand-offs
 

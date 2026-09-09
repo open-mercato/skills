@@ -249,9 +249,19 @@ Four gaps between what `SDLC.md` promised and what the skills enforced, closed i
 
 Between a brief and Intake somebody typed epics and stories into the tracker by hand, and the dedupe, the labels, and the rationale comment that `om-prepare-issue` guarantees for one issue were skipped for thirty. `om-backlog` drafts the tree and files it through `om-prepare-issue` one issue at a time, adding only what a tree needs — ids in titles, `Epic:` and `Story:` lines, acceptance criteria, an epic checklist — through **update-issue**. A second creation path was rejected outright (it would fork the label and dedupe logic), and so was any tracker-specific hierarchy object: an epic is an issue with a checklist, which every descriptor can express. Two more choices. **Readiness gates the backlog, not just the ticket**: a brief that rests on synthetic or assumed problems produces only the research backlog, because thirty well-formed stories about an unverified problem are the most expensive form of slop. **Ids are stable and live in titles**, because a tracker's own numbering says nothing about structure and a local file can be lost; the title is the one field every tracker keeps and every human reads.
 
-## 2026-09-02 — om-ux-style: a declared contract, in om-ux-setup's files, never a second format
+## 2026-09-09 — Separate discovery prototypes from detailed design
 
-`om-ux-setup` extracts a design contract from code; a greenfield repository has no code to extract from, and the proposed palette it derives from whatever colors exist is documentation of an accident, not a decision. Without a declared contract the first screens take the generic look, and `om-ux-review-pr` has nothing to cite. `om-ux-style` creates the contract from references the team chooses. Two choices worth recording. **It writes the same files** — declared tokens into `tokens.json` with two additive fields, rules into the manual section of `conventions.md`, a minimal `contract.json` — rather than a second design-system format, so every UX skill reads it unchanged and a later extraction converges with it instead of competing. A separate "style skill" file or a fourth descriptor was rejected for the reason the prototype spec rejected a design-system descriptor: eight tokens in one file and one manual section already solve it. **It creates and does not judge**, the mirror of `om-ux-setup`'s "extract, do not judge": findings belong to `om-ux-review-pr`, direction to `om-ux-shape`, code and Storybook to Implement. The generic look's signatures are written down as anti-patterns the quality gate checks, because "avoid the AI look" is an instruction nobody can apply and a list of nine signatures is.
+The discovery stage needs a flow that people can click before the brief refresh
+and backlog. The unreleased `om-ux-style` name becomes `om-mockup-prototype`, and
+its output is a neutral low-fi prototype with source context, visible assumptions
+and browser checks. It does not author a design contract or tokens. Each refresh
+writes a new revision so previous decisions and manual changes remain available.
+
+Detailed design belongs to the specification stage on the repository's design
+system. PR #106 will provide that stage under `om-ux-design`; #107 introduces no
+invocation of that unshipped skill. A prototype approval chooses a flow; it does
+not validate demand or satisfy the Definition of Ready. The old branch-local
+name never reached a release, so no alias or migration is needed.
 
 ## 2026-09-02 — Product decisions are a protected contract; drift is superseded, never silent
 
@@ -285,7 +295,7 @@ A first test with the team showed the seam between the pre-Intake skills: after 
 
 PR #107's review found that title-only backlog ids collide when two specs start at `E01`. Issues now carry an explicit source path and full item id, and updates require both. New numbers follow used numbers while existing mappings survive insertion, reordering, and moves; the local record retains every source. A global renumbering was rejected because it would break references to issues already filed. Legacy mappings instead pass through the existing adoption confirmation.
 
-The same review found three hand-off ambiguities and a missing read field. `om-discover` keeps executing accepted follow-ups, but its `Next:` line returns to the collection's existing meaning: a chosen action still to execute, never one completed or declined. `om-ux-style --refresh` revises declared design values before implementation and keeps history in the manual section, instead of treating its own output as code to extract. For screen walks, the main agent operates the browser and feeds observations to isolated persona subagents; expanding the personas' tool access was unnecessary. `om-approve-merge-pr` explicitly fetches the SHA it compares and the commit history it reports on a mismatch.
+The same review found three hand-off ambiguities and a missing read field. `om-discover` keeps executing accepted follow-ups, but its `Next:` line returns to the collection's existing meaning: a chosen action still to execute, never one completed or declined. `om-mockup-prototype --refresh` preserves earlier prototype revisions and their decisions. For screen walks, the main agent operates the browser and feeds observations to isolated persona subagents; expanding the personas' tool access was unnecessary. `om-approve-merge-pr` explicitly fetches the SHA it compares and the commit history it reports on a mismatch.
 
 Only the affected skills' specific instructions and templates change; shared reference boilerplate and unrelated skills keep their existing behavior. Companion references and docs for each corrected workflow are updated together.
 

@@ -16,11 +16,11 @@ Elapsed: <minutes per step>
 Product brief: <repo-relative path>
 Coverage: <n> claims — <a> sourced (interview <i>, data <d>, document <c>, product <p>, benchmark <b>), <s> synthetic, <u> assumed
 Collection plan: <k> entries waiting for material
-Next: om-brainstorm "<topic>" | om-spec-writing "<goal>" | om-prepare-issue "<goal>" | none
+Next: none | om-<skill> <exact user-approved arguments>
 ```
 
 Preserve the Output contract from the skill body. Include `Collection plan:`
-only when material was held back. There is exactly one final `Next:`: an explicitly chosen, unexecuted invocation with its exact arguments, otherwise `none`. A completed panel, a completed backlog dry run, and a declined offer each yield `Next: none` unless the user chose a separate outstanding hand-off. Readiness blockers prevent a backlog hand-off.
+only when material was held back. There is exactly one final `Next:`: an explicitly chosen, unexecuted invocation with its exact arguments, otherwise `none`. A completed panel, a completed prototype or screen walkthrough, a completed backlog dry run, and a declined offer each yield `Next: none` unless the user chose a separate outstanding hand-off. Readiness blockers prevent a backlog hand-off.
 When another skill ran, relay its artifact output fields, never its routing lines, without claiming that an offered
 or declined step ran. Include the chosen mode and signer when they explain the
 readiness decision. Coverage counts stay in their field; do not repeat them in

@@ -19,7 +19,7 @@ A generated `SDLC.md` whose config already had `discovery.enabled` when `om-setu
 | Block | Kind | Where it goes | When the anchor is missing |
 |---|---|---|---|
 | The before-intake paragraph (`om-discover` establishes the product context…) | wrapped | After the paragraph that starts "Before intake, the work is shaped" | After the last paragraph of *Purpose* |
-| Role lines (Product owner; Domain expert and Designer when declared) | inline | Before the `- **Maintainer**` bullet in *Roles* | At the end of the *Roles* list |
+| Role lines (Product owner; Domain expert and Discovery design when declared) | inline | Before the `- **Maintainer**` bullet in *Roles* | At the end of the *Roles* list |
 | The Discovery and Intake rows | inline | In the lifecycle table: the existing Discovery row, when there is one, and the existing Intake row are **replaced** by the rendered pair, matched by the stage name in the first cell. An Intake row that does not mention the Definition of Ready is the delivery-only row, whatever its exact wording (the pre-2026-09 template wrote "with enough detail to act on"). The replaced text is shown in the diff. | Insert the pair above the first Triage row |
 | *Definition of Ready* and *Product decisions as a protected contract* | wrapped | Immediately before the first of these headings that exists: `## Label state machine`, `## The QA gate`, `## The claim protocol`, `## The automation contract`, `## Validation gate` — after the lifecycle table and its after-merge paragraph when the file has one, never inside another section | Before `## Amending this process` |
 | The amending paragraph (blocks owned by `om-setup-discovery-pipeline`) | wrapped | After the first paragraph of *Amending this process* | Skipped, and reported |
@@ -40,3 +40,30 @@ An `SDLC.md` generated from an earlier template may already carry a block's text
 ## When SDLC.md does not exist
 
 Render the whole template with `discovery.enabled` on, under the rules `om-setup-agent-pipeline/references/project-docs.md` sets for a generated `SDLC.md` (derived from this repository, shown before writing). Say in the report that the delivery half of the document was generated here because the delivery setup had skipped it.
+
+## Preserve the delivery Designer
+
+The generic **Designer** bullet from delivery setup is not a discovery-owned
+block. Never adopt it into discovery markers or remove it when discovery is
+disabled. The optional **Discovery design** bullet adds product-layer
+responsibilities only when `discovery.roles.designer` is true. Match that exact
+bold label when inserting or refreshing it; a pre-existing delivery Designer
+bullet is not its adoption target.
+
+## Removing the product layer
+
+Removing inline-marked rows without replacements would erase delivery stages.
+Before deleting any discovery-owned content, prepare the delivery-only Discovery
+and Intake rows. Restore their exact pre-install text from the recorded setup
+diff or version history when available. Otherwise render the `IF NOT discovery`
+pair from the delivery template with the repository's current configuration.
+Show the proposed removal diff, including that fallback when used, before
+applying it. Preserve custom or ambiguous rows for manual resolution.
+
+Replace the discovery-owned Discovery and Intake rows with that pair, then
+remove the remaining discovery-marked blocks, inline items, routing entry and
+`discovery` config key. Leave the generic Designer and every other delivery stage
+untouched. After an install followed by removal, the lifecycle must still have
+exactly one Discovery row, one Intake row and one delivery Designer bullet;
+existing custom content must remain. Do not delete the brief, research or
+prototype artifacts when disabling this layer.

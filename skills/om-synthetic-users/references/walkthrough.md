@@ -48,8 +48,14 @@ For every step of the flow, for every persona, these fields (kept as a list per 
 - *Contradiction*: the flow promises something a brief claim (cite `R0n`, `N0n`, `D0n`) forbids or the persona's material says they would not accept.
 - *📸*: the screenshot file for prototype and app walks; "narrative" otherwise.
 
-Judge the state matrix when screens exist — default, empty, loading, error, no-permission — and record a missing state as a missing case; the design contract in `.uxproof/`, when present, is the reference for what a house screen should look like.
+Judge the state matrix when screens exist — default, empty, loading, error, no-permission — and record a missing state as a missing case; the design contract in `.uxproof/`, when present, is the reference for detailed designs and running product screens. A neutral discovery prototype is reviewed for its declared flow and states, not production visual fidelity; the brief's business rules and non-goals still apply.
 
 ## Consolidation within a run
 
 Group the step records into **barriers** (friction that stops the job), **missing cases**, and **contradictions**, with the personas that hit each and how early in the flow. This is one run's input to `references/panels-and-repeats.md`, where only what repeats across runs becomes a finding. Each surviving item becomes one hypothesis with the `[SYNTHETIC]` tag, the persona ids and runs that produced it, and the real-user check that would confirm or refute it. Under `adversary`, each item also names the brief assumption it attacks.
+
+For a neutral discovery prototype from `om-mockup-prototype`, use its exact
+`Prototype:` entry (for example `.ai/prototypes/discovery/onboarding/revision-001/index.html`)
+and read its context before walking. Keep its assumptions visible; successful
+clicks are observations of a simulation, not evidence of user demand. The brief
+refresh ingests this report only after the user confirms the proposed changes.

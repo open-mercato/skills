@@ -15,7 +15,7 @@ existing review rather than posting another copy.
 
 🔍 {Recommended action and the concrete user-task consequence}.
 
-**Contract**: {applicable design-contract path | no contract; no [PRODUCT] claims}.
+**Contract**: {applicable visual-contract path | no visual contract}; {confirmed brief/spec/prototype decisions cited | no applicable product decisions}.
 **Prototype**: {path compared, from the spec's Prototype line | none linked}.
 **Screens walked**: {screens, tasks performed, viewport(s)}.
 **Not walked**: {only skipped required coverage and the reason}.
@@ -50,7 +50,9 @@ its recommendation and next action in 3–6 lines.
   static inspection alone. Label inferred recommendations honestly.
 - Keep verified conformance defects distinct from policy or product choices.
   Use ⚠️ for a decision the team must own, with the recommended choice and cost.
-- Without a design contract, say so once on the Contract line; no `[PRODUCT]`
-  findings. Cite the exact applicable rule for every conformance finding.
+- Without a visual contract, say so once on the Contract line. `[PRODUCT]`
+  findings may still cite confirmed brief/spec/prototype decisions about
+  accepted behavior; neutral styling and unconfirmed assumptions do not qualify.
+  Cite the exact applicable rule or accepted decision for every such finding.
 - Preserve all four finding parts without repeating the consequence in a second
   summary. Evidence tiers remain governed by `references/evidence-tiers.md`.

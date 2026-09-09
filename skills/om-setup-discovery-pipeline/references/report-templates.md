@@ -1,30 +1,41 @@
-# Report templates — final report (step 9)
+# Report templates
 
-How `om-setup-discovery-pipeline` reports back after a run. Target length: 150–300 words for a run that wrote something, 40–80 for "already current"; a section with nothing to say is omitted, not filled. Reporting style contract: `references/rules.md` — full sentences, explain the why, never compress. Voice: `references/voice.md` — the report says what changed for the team in their repository, in their language; the skill's own terms (markers, anchors, blocks) appear at most once, explained. This skill defines no chaining reference lines.
+Use after step 9. Follow `references/rules.md` and the user's language in
+`references/voice.md`. Aim for 3–6 lines for a final handoff; allow more for gaps
+or recovery instructions. Say what changes for the team, link the diff for the
+artifact inventory, and omit empty optional sections. Explain terms such as
+markers or anchors only when they locate a required action. This skill defines
+no chaining reference lines.
 
 ## Final run report
 
 ```markdown
-## 🎯 om-setup-discovery-pipeline — {repo}
+🎯 `om-setup-discovery-pipeline`: {repo}
 
-**Result:** {✅ product layer added | ✅ product layer refreshed | ✅ already current | ⚠️ added with gaps} — {one full sentence on the outcome}
+**Result:** {✅ product layer added | ✅ product layer refreshed | ✅ already current | ⚠️ added with gaps}. {Explain what the team can now do, or the limitation that still prevents it.}
 
-### 📋 What was written
-{One bullet per artifact, in full sentences: the `discovery` block in `.ai/agentic.config.json` (which roles were declared and why); each block placed in `SDLC.md` with its anchor, and the delivery-only Discovery and Intake rows it replaced; the research directory; the routing row in `AGENTS.md`, or that no routing table exists. Say what already existed and was left untouched, and name any block that could not be placed at its anchor.}
-
-### 🏷️ Roles now in the process
-{Full sentences: Product owner (always), Domain expert and Designer when declared, and that the maintainer plays the product owner when nobody else does. One sentence on what each role is now accountable for in `SDLC.md`.}
-
-### {✅ Product skills installed | ⚠️ Missing product skills}
-{When complete: one sentence. When not: each missing skill with the paste-ready `npx skills add` command and what stays unavailable until it is installed.}
-
-### 🚀 What is unlocked
-{Full sentences: tickets are checked against the Definition of Ready by `om-auto-manage-issues` and `om-auto-fix-issue`; `om-backlog` files only from a ready brief; `om-code-review` blocks a change that contradicts a non-goal, rule, or decision in the brief without a superseding entry. Then the one next command: `/om-discover` when there is no brief, `/om-discover --refresh` when there is.}
-
-### ⚠️ Follow-ups
-{Only when something needs the user: the pending commit, a block the team must place by hand, an edited block left as is. When the delivery half of `SDLC.md` predates the current template (no risk-high table, no `QA head` line, no after-merge paragraph), say so in one sentence and point at the template file to copy from — never advise re-running `om-setup-agent-pipeline` for it, which regenerates nothing that already exists. Omit when there is nothing left to do.}
+📋 {Explain that tickets now face the Definition of Ready in `om-auto-manage-issues` and `om-auto-fix-issue`, `om-backlog` files only from a ready brief, and `om-code-review` blocks contradictions of the brief's non-goals, rules, or decisions without a superseding entry. State only the gates actually installed.}
+{Name the declared roles and why: the Product owner is always accountable, with the maintainer filling in when needed; include the Domain expert and Designer only when declared, and explain their responsibilities in `SDLC.md`.}
+📝 {Link the diff for the config, each SDLC section and its placement, the replaced Discovery and Intake rows, the research directory, and the agent routing row. State what already existed and was preserved; note an absent routing table or any section that could not be placed.}
+{✅ All required product skills are installed. | ⚠️ Name each missing skill, give its paste-ready `npx skills add` command, and explain what remains unavailable.}
+🔁 {Give one next command: `/om-discover` when no brief exists, or `/om-discover --refresh` when it does.}
+⚠️ {Name any pending commit, section requiring manual placement, or edited section preserved for the team to resolve. If the delivery process lacks the current risk-high table, `QA head` line, or after-merge paragraph, say which are missing and point to the template to copy from.}
 ```
+
+On the first successful setup, explain how to remove the layer using
+`references/sdlc-sections.md` → *Removing the product layer*: first restore the
+delivery-only Discovery and Intake rows, then remove the remaining
+discovery-marked sections, routing entry, and `discovery` config key. Preserve
+the delivery Designer. Show the removal diff before applying it.
+Do not recommend rerunning `om-setup-agent-pipeline` to update an existing delivery
+process; it does not regenerate existing files. Keep missing-skill commands and
+manual recovery instructions even when the report exceeds its length target.
+
+For an already-current run, give the result and next command, plus any remaining
+limitation. Do not repeat the earlier artifact inventory or role explanations.
 
 ## Dry run
 
-Replace the *Result* line with `**Result:** 📋 dry run — nothing was written`, keep the same sections describing what would change, and omit the commit offer.
+Replace the result with `**Result:** 📋 dry run — nothing was written.` Describe
+the proposed outcomes and gaps in conditional language, link the proposed diff,
+and omit the commit offer. Retain every change the user would need to review.

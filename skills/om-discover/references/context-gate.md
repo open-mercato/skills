@@ -13,7 +13,7 @@ Read, in this order, and record what each source can support:
 | The repository | agent instruction files, README, specs, `.uxproof/`, `BACKWARD_COMPATIBILITY.md`, schema and routes | what exists, constraints, current flows, glossary | `[PRODUCT]` |
 | The tracker (read-only, when a descriptor exists) | **search-issues**, **search-prs**, **get-issue** | tickets already filed, specs in flight, support history | `[DOCUMENT]` |
 | Benchmarks | links the user provides or the agent finds, with the date checked | competitor behaviour, patterns, gaps | `[BENCHMARK]` |
-| Persona walkthroughs, simulated interviews | `om-synthetic-users` reports under `{research}/walkthroughs/` | hypotheses only | `[SYNTHETIC]` |
+| Persona walkthroughs, simulated interviews | `om-synthetic-users` reports under `{research}/walkthroughs/`, including nested sessions and older flat reports | hypotheses only | `[SYNTHETIC]` |
 
 Recognise material by content, not by filename: a file named `interview.md` with two bullet points is not an interview; a `notes.txt` with a dated conversation is.
 
@@ -112,3 +112,12 @@ The user may say "write it anyway from what we believe". Then the section is wri
 - Consequences, and what would make us revisit it:
 - Status: active | superseded by D{nn}
 ```
+
+## Completed discovery prototypes
+
+During a hand-off refresh, read the explicitly returned `Prototype context:`
+file and any completed screen-walk report. Preserve their original sources,
+assumption labels, decision owners and scope limits. Synthetic reactions remain
+`[SYNTHETIC]`; unverified flow details remain `[ASSUMPTION]`. Browser evidence
+shows how the prototype behaves, not whether people need the product. Never
+count prototype approval as satisfying the ticket-level Definition of Ready.

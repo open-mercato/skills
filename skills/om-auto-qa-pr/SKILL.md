@@ -149,8 +149,7 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
      required step per state the change can show: default, empty, loading,
      error, no-permission, long content, and the narrow viewport. A state the
      change should have and does not show, or shows broken, is a FAIL step,
-     not a note. When `.uxproof/` exists (written by `om-ux-setup` or
-     `om-ux-style`), add one required step for **contract conformance** on the
+     not a note. When `.uxproof/` exists (extracted by `om-ux-setup` or maintained by the design owner), add one required step for **contract conformance** on the
      changed screens: hardcoded colors where tokens exist, raw elements where
      the registry has a house component, a screen ignoring the archetype for
      its shape — each a FAIL step citing the contract. `om-ux-review-pr` stays

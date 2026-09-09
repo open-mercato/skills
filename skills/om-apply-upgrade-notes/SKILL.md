@@ -98,6 +98,10 @@ customization without asking.
    - Artifact-related entries (new generated docs, new descriptor files): report whether the
      artifact exists; create it only when the entry says the skills expect it to exist and the
      operator confirms.
+   - Product-layer blocks in `SDLC.md` (between `<!-- discovery:start -->` and
+     `<!-- discovery:end -->`, present when the config has `discovery.enabled`): never splice
+     them here. Report `om-setup-discovery-pipeline --refresh` as the fix and let the operator run it;
+     it re-renders exactly those blocks from the current template and shows the diff.
 
 5. **Apply, verify, report.**
 

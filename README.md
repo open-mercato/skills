@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>🧠 plan · 🔨 implement · 🔍 review · ✅ QA gate · 🚢 merge</b><br/>
-  Forty agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
+  Forty-one agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 npx skills add open-mercato/skills --skill '*'
 ```
 
-Install all forty — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all forty-one — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
@@ -157,6 +157,7 @@ Interactive helpers (no `auto` in the name — the other half of the naming conv
 | Skill | What it does |
 |---|---|
 | [`om-setup-agent-pipeline`](docs/skills/om-setup-agent-pipeline.md) | One-per-repo configurator. Inspects the repository, asks a few questions, writes `.ai/agentic.config.json`, installs tracker and browser-provider descriptors, generates `SDLC.md` and an `AGENTS.md` starter when missing. Verifies cross-skill coverage: if an installed skill references one that isn't installed, it prints the exact `npx skills add` command to fix it. |
+| [`om-setup-discovery-pipeline`](docs/skills/om-setup-discovery-pipeline.md) | Adds the optional product layer to a configured repo: one yes per product role, a `discovery` block in the config, and the Discovery stage, Definition of Ready, product roles, and protected product decisions inserted into the existing `SDLC.md` between markers. Turns on the readiness checks in [`om-auto-manage-issues`](docs/skills/om-auto-manage-issues.md), [`om-auto-fix-issue`](docs/skills/om-auto-fix-issue.md), and [`om-backlog`](docs/skills/om-backlog.md); nothing in [`om-discover`](docs/skills/om-discover.md) requires it. |
 | [`om-apply-upgrade-notes`](docs/skills/om-apply-upgrade-notes.md) | Post-upgrade migrator. Applies `UPGRADE_NOTES.md` to the repo: re-syncs installed tracker/browser descriptors while preserving local edits, reports custom-provider gaps, and checks the config against notable upgrades. |
 | [`om-merge-buddy`](docs/skills/om-merge-buddy.md) | Scans open PRs and reports which can merge now and which are close but blocked, based on labels, reviews, CI, and mergeability. |
 | [`om-pipeline-retro`](docs/skills/om-pipeline-retro.md) | Classifies runs the pipeline already finished — clean single pass, hard recovery, loop checkpoints, or a second pass with no recorded cause — and ranks the causes by the wall-clock hours they cost. Read-only; hands the top cause to `om-prepare-issue`. |
@@ -198,6 +199,7 @@ Turn ideas into well-formed, labeled work — and review the plan before any cod
 
 | ▶️ You run | ⚙️ Runs automatically inside | 🎁 You get |
 |---|---|---|
+| `/om-setup-discovery-pipeline` once | [`om-setup-agent-pipeline`](docs/skills/om-setup-agent-pipeline.md) when the delivery layer is missing; the SDLC template's product-layer blocks | the product layer switched on: product roles, the Discovery stage, the Definition of Ready, and protected decisions in `SDLC.md`, and the readiness gate the skills below enforce |
 | `/om-discover --mode client "Benefits portal for SMB clients"` | context gate over your research folder, interview rounds, a skeptic subagent, a quality gate against invented evidence | `product-brief.md` with tagged evidence and owned decisions, or a collection plan naming what still has to be gathered |
 | `/om-synthetic-users .ai/specs/product-brief.md --flow "first claim"` | personas built from the brief's evidence, simulated interviews, a narrative or browser walk, a quality gate against invented detail | barriers, missing cases, and contradictions as `[SYNTHETIC]` hypotheses, each with the real-user check that would settle it |
 | `/om-backlog .ai/specs/product-brief.md` | readiness check against the Definition of Ready, dedupe per story, [`om-prepare-issue`](docs/skills/om-prepare-issue.md) per issue | epics, stories with acceptance criteria, and tasks in the tracker, ids in titles, a `backlog.md` map — after you have seen the tree and said yes |

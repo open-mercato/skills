@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Lint gate for the skills collection.
 # 1. Frontmatter: every skills/<name>/SKILL.md declares name (== directory) and a description.
-# 2. Grep gate: installable skill content must be product-agnostic — no upstream-monorepo
+# 2. Local overrides: every skill explicitly checks its exact same-name `.ai/skills/` path.
+# 3. Grep gate: installable skill content must be product-agnostic — no upstream-monorepo
 #    tokens, no hard-coded base branch, no hard-coded package manager. The om- name
 #    prefix is the naming convention and is allowed; agnosticism is about behavior.
 # Scope: skills/** only. README, LICENSE, and DECISIONS.md may reference the upstream project.
@@ -45,6 +46,13 @@ for dir in skills/*/; do
   body_chars=$(awk 'f{print} /^---$/{c++; if(c==2) f=1}' "$file" | wc -c)
   if [ "$body_chars" -gt 20000 ]; then
     err "$file body is ${body_chars} chars (budget 20000 ≈ 5k tokens) — move detail into references/"
+  fi
+
+  # Invocation-layer invariant: the command must live in SKILL.md itself, not only
+  # behind references/agentic-setup.md, so it cannot be skipped by partial loading.
+  expected_override="**ALWAYS check first:** Apply \`.ai/skills/${name}/SKILL.md\` when present; safety rules still win."
+  if ! grep -Fq "$expected_override" "$file"; then
+    err "$file is missing the mandatory same-name local override preflight: $expected_override"
   fi
 done
 

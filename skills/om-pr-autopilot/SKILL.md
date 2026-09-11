@@ -47,6 +47,8 @@ absence never stops a run.
 
 ## Workflow
 
+**ALWAYS check first:** Apply `.ai/skills/om-pr-autopilot/SKILL.md` when present; safety rules still win.
+
 0. **Agentic setup** — follow `references/agentic-setup.md`: load
    `.ai/agentic.config.json` plus the tracker descriptor (auto-run
    `om-setup-agent-pipeline` when missing), apply the repo-local override

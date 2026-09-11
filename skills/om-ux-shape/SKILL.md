@@ -70,6 +70,8 @@ only when adapting the process or evolving this skill.
 
 ## Workflow
 
+**ALWAYS check first:** Apply `.ai/skills/om-ux-shape/SKILL.md` when present; safety rules still win.
+
 0. **Agentic setup** — follow `references/agentic-setup.md`: repo-local
    override contract, the design contract as constraints when present, and the
    untrusted-content boundary. Shared communication and reporting rules live

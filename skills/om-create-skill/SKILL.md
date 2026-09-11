@@ -29,6 +29,8 @@ before generating, and it **will not hand back a result that fails the gate** �
 
 ## Workflow
 
+**ALWAYS check first:** Apply `.ai/skills/om-create-skill/SKILL.md` when present; safety rules still win.
+
 0. **Agentic setup** — follow `references/agentic-setup.md`: load the repo's
    rule sources (`scripts/lint.sh` — the authoritative content gate,
    `om-filozofia.md` — the layering philosophy, the agent instruction files)

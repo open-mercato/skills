@@ -38,6 +38,8 @@ Make every shipped skill explicitly check for and apply its same-name repo-local
 
 ## Progress
 
+PR: #114
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Make the preflight explicit

@@ -47,5 +47,5 @@ Make every shipped skill explicitly check for and apply its same-name repo-local
 
 ### Phase 2: Validate and review
 
-- [ ] 2.1 Run the full configured lint gate and inspect the complete diff for wording consistency and scope
-- [ ] 2.2 Perform the code-review and backward-compatibility checks, then prepare the PR
+- [x] 2.1 Run the full configured lint gate and inspect the complete diff for wording consistency and scope — 8e164b0
+- [x] 2.2 Perform the code-review and backward-compatibility checks, then prepare the PR — 8e164b0

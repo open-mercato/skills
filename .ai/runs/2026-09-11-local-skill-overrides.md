@@ -42,8 +42,8 @@ Make every shipped skill explicitly check for and apply its same-name repo-local
 
 ### Phase 1: Make the preflight explicit
 
-- [ ] 1.1 Add the mandatory same-name `.ai/skills/<skill-name>/SKILL.md` lookup command to every shipped skill body
-- [ ] 1.2 Add a lint assertion that validates the exact override path for every skill
+- [x] 1.1 Add the mandatory same-name `.ai/skills/<skill-name>/SKILL.md` lookup command to every shipped skill body — 8e164b0
+- [x] 1.2 Add a lint assertion that validates the exact override path for every skill — 8e164b0
 
 ### Phase 2: Validate and review
 

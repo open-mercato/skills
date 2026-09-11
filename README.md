@@ -165,6 +165,7 @@ Interactive helpers (no `auto` in the name — the other half of the naming conv
 | [`om-followup-issue-from-pr`](docs/skills/om-followup-issue-from-pr.md) | Turns a PR or a PR comment into a tracked follow-up issue, assigned to the right person. |
 | [`om-discover`](docs/skills/om-discover.md) | Product-level discovery and define, before there is anything to brainstorm about. Runs in three modes — existing product, client idea, own idea — and leaves one `product-brief.md`: problem and who has it, stakeholders, rules, flows, benchmark, success criteria, scope (now, later, not doing), non-goals, decisions with owners, riskiest assumptions with tests, open questions. Gathers real material first: a section with nothing behind it becomes a collection plan with capture templates, never prose; synthetic personas and assumptions are tagged and never count as evidence. [`om-brainstorm`](docs/skills/om-brainstorm.md), [`om-spec-writing`](docs/skills/om-spec-writing.md), and [`om-prepare-issue`](docs/skills/om-prepare-issue.md) read the brief when it exists, and its non-goals, business rules, and decisions become a contract the review skills enforce. |
 | [`om-brainstorm`](docs/skills/om-brainstorm.md) | The conversation before any artifact exists: open questions one at a time, alternatives weighed (including building nothing), a challenger subagent attacks the conclusion, then the user confirms a routing decision — a machine-parsed `Next:` line plus a handoff brief that feeds [`om-prepare-issue`](docs/skills/om-prepare-issue.md), [`om-auto-write-spec`](docs/skills/om-auto-write-spec.md), [`om-spec-writing`](docs/skills/om-spec-writing.md), or [`om-auto-create-pr`](docs/skills/om-auto-create-pr.md). |
+| [`om-mockup-prototype`](docs/skills/om-mockup-prototype.md) | Builds a clickable, commentable prototype from requirements with user stories, before implementation starts: click-through navigation, presentation mode, and review comments pinned to elements with export back into the repository. Renders with no build step from the configured token snapshot (or a bundled default), rebrandable through one `theme.css`. |
 | [`om-spec-writing`](docs/skills/om-spec-writing.md) | Writes and reviews feature specs to staff-engineer standards: skeleton-first with a hard Open Questions gate, phased implementation breakdown that feeds [`om-auto-create-pr`](docs/skills/om-auto-create-pr.md), severity-ranked architectural reviews. |
 | [`om-prepare-issue`](docs/skills/om-prepare-issue.md) | Files a single well-formed tracker issue for deferred work: dedupes against existing issues and PRs, links (or authors) a covering spec, otherwise embeds step-by-step guidance, and applies the SDLC labels on creation. |
 | [`om-auto-manage-issues`](docs/skills/om-auto-manage-issues.md) | Brings existing issues up to standard, single or in bulk: applies missing SDLC labels, and for a laconic issue (one line + a screenshot) analyzes the screenshot with the terse text, clarifies the wording non-destructively, and posts the agent's understanding as a comment. Checks spec coverage for feature issues: when one lacks a covering spec it posts a spec-required comment to the issue author (fill up the spec before implementation), or authors the spec itself via [`om-auto-write-spec`](docs/skills/om-auto-write-spec.md) with `--write-missing-specs` (default off). Batch defaults to the last ~25 open, worst-described first, narrowable by state/label/author/limit. Idempotent and claim-aware. |
@@ -214,6 +215,7 @@ Get a written spec with visuals attached — mockups of the new layout next to s
 | `/om-auto-qa-pr 123` | [`om-prepare-test-env`](docs/skills/om-prepare-test-env.md), browser provider | fresh screenshots of a PR's UI to design-review, no source touched |
 | `/om-ux-setup` once, then `/om-ux-review-pr 123` | [`om-ux-setup`](docs/skills/om-ux-setup.md) extracts the repo's design contract; [`om-ux-review-pr`](docs/skills/om-ux-review-pr.md) walks the PR in a real browser | a design review judged against your own design system: evidence-tagged findings with done-when criteria |
 | `/om-ux-shape "Quick-add flow for the people list"` | [`om-ux-shape`](docs/skills/om-ux-shape.md) | a decided direction before anything is drawn: scope, states, riskiest-assumption test |
+| `/om-mockup-prototype quick-add --requirements docs/quick-add.md` | [`om-mockup-prototype`](docs/skills/om-mockup-prototype.md) | a clickable prototype reviewers comment on before implementation — pins anchored to elements, both themes, exportable feedback |
 
 💡 Tip — ask for visuals explicitly to force mockups: `/om-auto-write-spec "Redesign the checkout summary panel — include mockups of the new layout and screenshots of the current one"`.
 
@@ -272,6 +274,7 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
   "baseBranch": "auto",
   "tracker": "github",
   "browser": { "provider": "agent-browser" },
+  "designTokens": ".ai/ds/ds-tokens.json",
   "validation": {
     "commands": ["pnpm typecheck", "pnpm test", "pnpm build"]
   },
@@ -288,6 +291,7 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
     "runs": ".ai/runs",
     "analysis": ".ai/analysis",
     "specs": ".ai/specs",
+    "prototypes": ".ai/prototypes",
     "scripts": ".ai/scripts",
     "qa": ".ai/qa"
   },

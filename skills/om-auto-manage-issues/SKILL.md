@@ -12,8 +12,9 @@ the SDLC labels it is missing (one category, one priority, one risk — inferred
 and a screenshot), analyzes the attached screenshot with the terse text, clarifies
 the wording in the body while preserving the reporter's original text, and posts
 the agent's understanding as a comment so a human can confirm or correct it. It
-also checks every issue against the Definition of Ready in `SDLC.md` and names
-what is still missing, so implementation skills never guess around a gap.
+also checks every issue against the Definition of Ready in `SDLC.md`, when the
+repository carries one, and names what is still missing, so implementation
+skills never guess around a gap.
 
 It is the read-write counterpart to `om-prepare-issue` (which files new issues):
 this skill never creates issues and never edits repository files — it mutates only
@@ -52,7 +53,7 @@ This skill works on tracker **issues**, not PRs, so it consumes and emits no `PR
    3. **Enriches a laconic issue** (unless `--relabel-only`): detects a thin body / screenshot-only issue and follows `references/screenshot-analysis.md` to analyze the screenshot(s) plus the terse text, rewrite the body with a clarified description (preserving the reporter's original verbatim in a collapsed section), and post the agent's **understanding** as a single comment — only if an equivalent understanding comment from this skill is not already present (idempotency).
    4. **Prepares the issue for implementation** (when prep is on — see `--prep-impl`, and not `--relabel-only`): runs a **read-only** root-cause / impact analysis and posts it as an "implementation notes" comment so the next agent or human can fix it without re-exploring the repo. This is autonomous — it never stops to ask. Full procedure in `references/implementation-prep.md` (delegates to `om-root-cause` for a bug when installed; otherwise a lighter inline analysis; idempotent).
    5. **Checks spec coverage for a feature issue** and records `SPEC_STATUS` (`covered` with a path/PR link, `missing`, or `n/a` for non-features) — a read-only check against `$SPECS_DIR` and open spec PRs. **Only with `--write-missing-specs`** and a `missing` status, delegates to `om-auto-write-spec {issueId}` (which claims, writes the spec, opens a design-only spec PR) and links the result on the issue. Off by default it authors nothing — instead it posts an idempotent `🤖` **spec-required comment** addressed to the issue author (template in the reference).
-   6. **Checks readiness** against the Definition of Ready in `SDLC.md` and records `READY_STATUS` (`ready`, or `not-ready` with the missing ticket-level items). A spec-level gap on a feature issue is covered by step 5, not repeated here. On `not-ready`, posts one idempotent `🤖` **not-ready comment** naming the missing items, addressed to the issue author, updated in place on re-runs and removed from consideration once the ticket is complete. Steps 4–6 detail in `references/enrich-existing-issue.md`.
+   6. **Checks readiness** against the Definition of Ready in `SDLC.md` and records `READY_STATUS` (`ready`, or `not-ready` with the missing ticket-level items; `n/a` when `SDLC.md` has no such section, in which case nothing is posted). A spec-level gap on a feature issue is covered by step 5, not repeated here. On `not-ready`, posts one idempotent `🤖` **not-ready comment** naming the missing items, addressed to the issue author, updated in place on re-runs and removed from consideration once the ticket is complete. Steps 4–6 detail in `references/enrich-existing-issue.md`.
 
    Under `--dry-run`, compute all of the above but mutate nothing — record the planned labels, the proposed clarified wording, the understanding text, the implementation notes, each feature issue's spec status (and any spec that `--write-missing-specs` would author), and each issue's readiness status for the report.
 

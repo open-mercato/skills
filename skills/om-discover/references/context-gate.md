@@ -1,51 +1,59 @@
-# The context gate (step 2)
+# Check the material
 
-What `om-discover` checks before it writes anything, and what it hands back when material is missing. The gate exists because before Intake there is no repository to verify claims against: without it the agent fills the brief with plausible fiction.
+Read before drafting. The goal is to learn what supports the current decision, what could change it, and what still needs to be collected.
 
-## 1. Inventory the material
-
-Read, in this order, and record what each source can support:
+## 1. Inventory relevant sources
 
 | Source | Where | What it can support | Tag |
 |---|---|---|---|
-| Interview notes, workshop exports, decision records | the research directory (`--research`, default `${SPECS_DIR}/research/`) | problems, users, stakeholders, rules, decisions, quotes | `[INTERVIEW]`, `[DOCUMENT]` |
-| Data extracts (support tickets, analytics, sales notes, CSV/JSON exports) | the research directory | frequency, cost, baselines, segments | `[DATA]` |
-| The repository | agent instruction files, README, specs, `.uxproof/`, `BACKWARD_COMPATIBILITY.md`, schema and routes | what exists, constraints, current flows, glossary | `[PRODUCT]` |
-| The tracker (read-only, when a descriptor exists) | **search-issues**, **search-prs**, **get-issue** | tickets already filed, specs in flight, support history | `[DOCUMENT]` |
-| Benchmarks | links the user provides or the agent finds, with the date checked | competitor behaviour, patterns, gaps | `[BENCHMARK]` |
-| Persona walkthroughs, simulated interviews | walkthrough reports under `{research}/walkthroughs/` | hypotheses only | `[SYNTHETIC]` |
+| Interview notes and direct accounts | research directory; a participant's account captured during this session | the person's experience or stated preference, within that account's limits | `[INTERVIEW]` |
+| Data extracts | support, analytics, sales or other research exports | measured frequency, cost, baselines and segments, with source, period and filter | `[DATA]` |
+| Workshop and decision records | research directory | choices, constraints and their owners; separate observations from beliefs | `[DOCUMENT]` |
+| Repository | README, specs, design contract, compatibility surfaces, relevant schema and routes | what exists or was specified; never demand by itself | `[PRODUCT]` |
+| Tracker | read-only **search-issues**, **search-prs**, **get-issue**, **list-issue-comments** when configured | existing work, support accounts and recorded decisions | `[DOCUMENT]` |
+| Benchmarks | provided or discovered links checked on a date | reference behaviour relevant to this decision | `[BENCHMARK]` |
+| Synthetic walkthroughs | research walkthrough reports, including nested session directories and older flat reports | hypotheses and missing cases only | `[SYNTHETIC]` |
 
-Recognise material by content, not by filename: a file named `interview.md` with two bullet points is not an interview; a `notes.txt` with a dated conversation is.
+Read enough of each source to assess what it actually supports. A filename or source tag is not proof. Identify copies of the same source and state where provenance or independence is unknown. Follow `references/evidence-tiers.md` for the distinction between observations, decisions and hypotheses.
 
-## 2. Map material onto the brief
+## 2. Map support and consequential gaps
 
-For every section of `references/brief-template.md`, record one of:
+Keep existing brief headings. For each, choose:
 
-- **has material** — name the files; the section is written in step 4 with tags and source pointers;
-- **thin** — one source, or a source that supports part of the section; written, with the coverage line naming it thin;
-- **none** — no source at all; the section goes on the collection plan and is **not written**.
+- **Supported:** write the relevant claim and source, within the source's actual scope.
+- **Partial:** write only what is supported and identify the unresolved part. A single account can support that person's experience without proving a segment-wide pattern.
+- **Needed but missing:** put the specific material request on the collection plan. State which decision or work it blocks.
+- **Deferred:** the missing detail does not affect the current decision. Keep a short reason under the heading; do not create a research task merely to fill it. An explicit user request for deeper research may make it relevant.
 
-The ticket-level items of the Definition of Ready (`SDLC.md`) — the problem and who has it, the expected outcome and its check, what is out of scope — must reach *has material* with a source that is not `[SYNTHETIC]` or `[ASSUMPTION]`; every blocking question must be answered by the person who can answer it; and where spec PRs exist, their autonomous assumptions must be confirmed. Only then can `om-prepare-issue` start filing from the brief. Say this in the report when it is not yet the case.
+For ticket-level readiness, Problems and Target group need relevant support from tiers 1 to 5, not simply a file containing the team's choice or an assumption. Expected outcome and its check, owned scope exclusions, and confirmed decisions required by Now must be present. Blocking questions remain blockers until the right person answers. Name what the brief is ready for: collecting evidence, deciding an experiment, or implementation planning. Acceptance of an untested risk cannot substitute for evidence of the problem and users.
 
-## 3. The collection plan
+## 3. Record what the session actually provides
 
-For every *none* section, and for every *thin* one the user wants stronger, write one entry:
+Use existing material before asking. When the participant describes a personal experience that is absent from the sources, you may save a concise dated account under `${research}/interviews/`, using the interview-note shape below. Keep their words separate from your interpretation, attribute the role, and state the limits of the account. A belief about other people is an assumption, not an interview finding about those people. Quote only words actually supplied. Reflect back any consequential ambiguity before using it.
+
+Record an agreed vision, scope, target, rule or non-goal under `${research}/decisions/`, naming the human who confirmed it. Preserve whether it began as the agent's recommendation. A statement of belief can accompany that decision without becoming an observed fact. Unconfirmed choices stay proposals in the draft; do not invent an active decision record for them. A single captured choice may be referenced by multiple rows without repeating its full prose.
+
+These accounts and confirmed decision records may be written before the final brief confirmation because they preserve supplied material. They contain only what the user supplied or agreed, with interpretation clearly separated. They do not authorize writing or publishing a complete product brief before step 7.
+
+## 4. Collection plan
+
+Create one entry per consequential missing piece of material, combining requests when the same interview or export answers them. Do not invent interview quotas, deadlines or owners to complete this shape.
 
 ```markdown
-### {brief section}
+### {question the material must answer}
 
-- **What we need to know:** {the question the section answers}
-- **Who can answer it:** {role, not name — e.g. "two developers who tried the current workflow this month", "the client's operations lead"}
-- **How:** {interview | workshop block | data request | benchmark check} — {the specific ask, e.g. "export of support tickets tagged billing, last 90 days"}
-- **Owner and by when:** {the human who books or requests it; a date}
-- **Template:** `{research}/templates/{interview-note|workshop-export|data-request|benchmark-check|decision-record}.md`
+- What decision or work needs it: {specific choice or blocker}
+- Who can answer it: {role, with relevant experience}
+- How: {specific interview, workshop, data request or benchmark check}
+- Owner and by when: {confirmed person and date or review point; otherwise unknown}
+- Template: `{research}/templates/{interview-note|workshop-export|data-request|benchmark-check|decision-record}.md`
 ```
 
-Hand out the capture templates below by writing into `{research}/templates/` only the templates that a collection-plan entry names, when they do not exist yet — the material has to land in the repository, because the agent cannot read chat threads or whiteboard tools. Templates and the decision records from the rounds are the only writes that happen before the confirmation in step 7: templates carry no content, and a decision record carries only what the user said with the name they gave. Then stop for those sections: the run's report lists them under `Collection plan:` and the brief header counts the entries. Decisions the user makes during the rounds are written with `decision-record.md` into `{research}/decisions/`, one file per decision, with the name the user gives; the brief cites them as `[DOCUMENT]`.
+Write only the referenced capture templates that do not already exist. Reuse supplied files, accessible exports or material captured in this conversation; do not ask the user to transcribe facts the agent can read. The plan and final report state which requests block which next steps. A collection plan is a useful outcome even when no brief can yet be written.
 
-## 4. When the user chooses to continue without material
+## 5. Continuing with assumptions
 
-The user may say "write it anyway from what we believe". Then the section is written from `[ASSUMPTION]` claims only, each with a test in the assumption map, the coverage line says how many sections rest on assumptions alone, and the brief's Definition of Ready addendum states that those sections do not satisfy the ticket-level tier until material replaces them. The choice is the user's; the honesty about it is not optional.
+If the user explicitly chooses to proceed from beliefs, draft those as `[ASSUMPTION]`, with the consequential ones in Riskiest assumptions. Say what would test them, or leave the test decision open. A user's acceptance is a decision about risk, not evidence. The summary and readiness addendum preserve that limit. Do not extend the interview merely to turn every unknown into a formal decision.
 
 ## Capture templates
 
@@ -53,11 +61,11 @@ The user may say "write it anyway from what we believe". Then the section is wri
 
 ```markdown
 # Interview — {role}, {date}
-- Situation the person was in when the problem showed up:
-- What they did about it, step by step:
-- What it cost them (time, money, risk), in their words:
-- What they tried before, and why it was not enough:
-- What would make them say the problem is gone:
+- Recent situation or task the person described:
+- What they did, step by step:
+- What worked, what did not, and any consequences they described:
+- Other approaches they tried and how those worked:
+- The outcome they were trying to achieve and what happened:
 - Verbatim quotes worth keeping (mark each as quote):
 - What they explicitly did not care about:
 - Interviewer's own remarks (kept separate from what was said):
@@ -112,3 +120,18 @@ The user may say "write it anyway from what we believe". Then the section is wri
 - Consequences, and what would make us revisit it:
 - Status: active | superseded by D{nn}
 ```
+
+## Completed discovery prototypes
+
+During a handoff refresh, read the explicitly returned `Prototype context:`
+file and both the completed first-panel and optional screen-walk reports. Use
+their exact `Walkthrough:` paths and immutable session persona snapshots;
+never reconstruct a filename or substitute the shared latest personas. Preserve
+their original sources, assumption labels, decision owners and scope limits. Synthetic reactions remain
+`[SYNTHETIC]`; unverified flow details remain `[ASSUMPTION]`. Browser evidence
+shows how the prototype behaves, not whether people need the product. Never
+count prototype approval as satisfying the ticket-level Definition of Ready.
+Keep `Verification: incomplete` or `not-run` and any partial-session limitations
+visible; a generated file or proposed browser action is not evidence of a
+completed screen check. Review changed brief content through steps 4–6 before
+its step-7 confirmation and write.

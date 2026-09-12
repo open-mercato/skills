@@ -10,7 +10,7 @@ Accepts a PR number, a branch name, or nothing (the current branch).
 
 ## Works with
 
-Judges against the contract written by [om-ux-setup](om-ux-setup.md) when present (standards-only otherwise, stated in the report). Composes with [om-prepare-test-env](om-prepare-test-env.md) and the browser provider to bring the PR up; complements [om-auto-qa-pr](om-auto-qa-pr.md), which captures evidence without judging it. For module- or flow-level analysis, it defers to [om-ux-shape](om-ux-shape.md) in Review mode and serves as its evidence-gathering procedure.
+Judges against the contract written by [om-ux-setup](om-ux-setup.md) when present (its absence is stated in the report). Confirmed brief/spec/prototype decisions can support findings about accepted behavior even without a visual contract; neutral low-fi styling and unconfirmed assumptions cannot. Composes with [om-prepare-test-env](om-prepare-test-env.md) and the browser provider to bring the PR up; complements [om-auto-qa-pr](om-auto-qa-pr.md), which captures evidence without judging it. For module- or flow-level analysis, it defers to [om-ux-shape](om-ux-shape.md) in Review mode and serves as its evidence-gathering procedure.
 
 ---
 *Source: [`skills/om-ux-review-pr/SKILL.md`](../../skills/om-ux-review-pr/SKILL.md)*

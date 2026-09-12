@@ -2,7 +2,7 @@
 
 > 🤖 Autonomous — runs end-to-end without supervision
 
-Raises the quality of tracker issues that already exist — in bulk or one at a time — without touching repository source. For each issue in scope it applies the missing SDLC labels (one category, one priority, one risk), clarifies laconic issues by analyzing attached screenshots and terse text while preserving the reporter's original wording, posts a read-only implementation-prep analysis, and flags feature issues that lack a covering spec (optionally authoring one with `--write-missing-specs`). It is idempotent and claim-aware, skipping issues another actor is actively working. Use it for "triage the backlog" or "clean up issue 123".
+Raises the quality of tracker issues that already exist — in bulk or one at a time — without touching repository source. For each issue in scope it applies the missing SDLC labels (one category, one priority, one risk), clarifies laconic issues by analyzing attached screenshots and terse text while preserving the reporter's original wording, posts a read-only implementation-prep analysis, checks every issue against the Definition of Ready in `SDLC.md` (recording `READY_STATUS` and posting a not-ready comment that names what is missing), and flags feature issues that lack a covering spec (optionally authoring one with `--write-missing-specs`). It is idempotent and claim-aware, skipping issues another actor is actively working. Use it for "triage the backlog" or "clean up issue 123".
 
 ## Parameters
 

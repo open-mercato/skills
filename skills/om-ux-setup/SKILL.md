@@ -25,7 +25,10 @@ contract is fresh. When the user wants judgment, name the skill that owns it
 and stop: `om-ux-review-pr` for a pull request's running UI, `om-ux-shape` in
 Review mode for a whole module or flow. Reviewing design files against the
 contract is not covered by any skill in this collection yet; say so plainly
-rather than improvising it here.
+rather than improvising it here. When the repository has no design system to
+extract, report that limit and leave final visual decisions to the design stage.
+For an early flow experiment, name `om-mockup-prototype`: it creates neutral
+clickable screens and keeps `.uxproof/` unchanged.
 
 ## What the contract holds
 

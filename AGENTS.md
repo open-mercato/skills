@@ -1,6 +1,6 @@
 # Agent instructions
 
-This repository is the source of the **Open Mercato Skills** collection: thirty-seven agent skills (`skills/<name>/SKILL.md`) that run a full PR pipeline — plan, implement, review, QA gate, merge — installable into any repo via [skills.sh](https://skills.sh). The deliverables here are markdown skill documents plus a small amount of shell/Node tooling; there is no application code.
+This repository is the source of the **Open Mercato Skills** collection: forty-one agent skills (`skills/<name>/SKILL.md`) that run a full PR pipeline — plan, implement, review, QA gate, merge — installable into any repo via [skills.sh](https://skills.sh). The deliverables here are markdown skill documents plus a small amount of shell/Node tooling; there is no application code.
 
 ## Task routing
 
@@ -58,6 +58,11 @@ points there; **never re-explain the detail here**, or the copy drifts.
    standalone. Canonical writing rules and length guidance:
    `skills/om-auto-create-pr/references/rules.md`; role-specific shapes:
    each skill's report templates. Sync shared edits under Cross-skill contract §5.
+
+   Scoped exception: `om-discover` follows its skill-specific reporting rules
+   and content guide. Paragraph structure and decorative emojis are optional;
+   required content and machine markers remain mandatory. Other skills retain
+   the shared reporting standard.
 
 3. **Consistent emoji usage.** All user-facing output draws from **one shared
    glossary**, reproduced verbatim in every skill's `references/rules.md`:

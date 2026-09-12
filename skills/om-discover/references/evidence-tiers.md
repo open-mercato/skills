@@ -1,29 +1,47 @@
-# Evidence tiers for discovery
+# Evidence and claim meaning
 
-Every claim in the brief carries a tag naming the strongest tier it honestly supports, and a pointer to its source. The tag is part of the contract with the reader — and with `om-spec-writing`, which turns untagged or weakly tagged claims into Open Questions.
+Each substantive claim has a source tag and a pointer in its canonical section. The tags describe provenance. They do not rank how well a source answers every possible question.
 
-1. `[INTERVIEW]` — a real user, stakeholder, or expert said it. Cite the note file and date; quote when the wording matters.
-2. `[DATA]` — an extract, a query, an export. Cite the file, the period, and the filter.
-3. `[DOCUMENT]` — a client document, a contract, a policy, a tracker item, a decision record, the decisions and constraints recorded in a workshop export. Cite it. (What a person *said* in a workshop or an interview is `[INTERVIEW]`; what the room *decided* is `[DOCUMENT]`.)
-4. `[PRODUCT]` — the repository itself: code, the design contract, compatibility surfaces, specs. Cite the file or the rule.
-5. `[BENCHMARK]` — a competitor or reference product, checked on a date. Cite the link and the date checked; a benchmark without both is an assumption.
-6. `[SYNTHETIC]` — a persona walkthrough or a simulated interview. Allowed only under *Hypotheses to test*, never as support for a problem, a user, or a success criterion.
-7. `[ASSUMPTION]` — the team's or the agent's belief. Allowed, labeled, and paired with a test in the assumption map.
+1. `[INTERVIEW]`: a real user, stakeholder or expert's account. Cite the note and date. Distinguish what happened from what the person predicts or says they would do.
+2. `[DATA]`: a measurement, query or export. Cite the source system, period and filter; name missing metadata. Test data cannot support a real usage claim.
+3. `[DOCUMENT]`: a contract, policy, decision record, tracker item or workshop decision. It supports what was specified or agreed. A document containing a guess remains a guess about users.
+4. `[PRODUCT]`: repository code, design contracts, compatibility surfaces or specs. It supports what exists or was specified, not whether users need it.
+5. `[BENCHMARK]`: a reference product checked at a cited link on a stated date. It supports that product's observed behaviour, not demand for ours.
+6. `[SYNTHETIC]`: simulated interviews or persona walkthroughs. Keep these claims under *Hypotheses to test*, each with a real-world check. They never support a problem, user or success criterion.
+7. `[ASSUMPTION]`: an unverified belief or prediction. Name its origin when known and link to its test in Riskiest assumptions. Never invent a source to complete the format.
 
-Rules:
+## Separate observations, decisions and hypotheses
 
-- Never dress an `[ASSUMPTION]` as an `[INTERVIEW]`, or a `[SYNTHETIC]` walkthrough as `[DATA]`. Inflating a tier to make a section read well destroys the value of every other tag.
-- A claim with no source is not a claim: tag it `[ASSUMPTION]` or move it to the collection plan.
-- The ticket-level items of the Definition of Ready (`SDLC.md`) must rest on tiers 1 to 5. A brief whose problem statement or users rest on tiers 6 and 7 says so in the coverage line and does not satisfy the tier, whatever else it contains.
-- Numbers carry their provenance in the same line ("about 40 tickets a month `[DATA]` support export, May to July"); a round number with no source is removed, not tagged. A data file whose source system, period, or filter is not recorded is still `[DATA]`, with the gap named on the line and a data request on the collection plan; it is not promoted to a fact by being a file.
-- Counting for the coverage line: one claim per body line that carries a tag; a line with two tags counts once, under its strongest tier; the header, the Hypotheses section, the Definition of Ready addendum, and the collection plan are not counted.
+Make the meaning clear in the sentence or table context; do not add another tag system.
 
-## The coverage line
+- **Observation:** report only what the source supports. “One interviewee described losing an afternoon” does not establish the frequency across a segment. “The interviewee said they would pay” is an account of a statement, not a purchase.
+- **Decision:** name what the human chose, who chose it, and why. An accepted recommendation becomes a decision record. Its origin remains visible; acceptance does not confirm the beliefs behind it.
+- **Hypothesis:** state what remains unverified, why it matters, and what would change the decision. An inferred need, emotion or cause remains a hypothesis unless the source supports it; name the observation behind it and keep a consequential interpretation separate from that observation. A human can accept the risk of building without a test. The factual claim keeps its assumption status.
 
-The brief header carries one line, recomputed on every write, with the collection-plan count appended:
+For example, “We will start with freelance accountants” may be a `[DOCUMENT]` decision. “Freelance accountants need this every week” remains `[ASSUMPTION]` unless evidence supports it. Separate those sentences even when they share a source.
 
+Goals and thresholds chosen by the owner are decisions, not observed baselines. Record their origin and rationale; if the user accepts a proposed threshold without empirical support, call it a provisional target. Never invent a measurement, numeric research answer or round number to fill a field. A missing baseline stays unknown.
+
+## Source basis and readiness
+
+Beside Coverage, summarize the independent basis in plain language: distinct interviewees when identifiable, datasets and periods, documented decisions, and important untested assumptions. Count repeated excerpts or exports from the same session once as a source. If independence cannot be established, say so rather than inventing a participant count. Do not make a validation percentage from tagged lines.
+
+For ticket-level readiness, Problems and Target group must have relevant support from tiers 1 to 5, checked against the source's actual content. A founder's approved choice of segment, a competitor page, or an implemented screen alone does not establish the user's problem. Scope, non-goals and targets may rest on human decisions. Answer blocking questions and apply the mode's readiness conditions. Accepting risk does not waive missing evidence of the problem and users; an honest brief may remain ready only for research.
+
+## Coverage compatibility
+
+Keep the existing output line and counting scope so old briefs remain comparable:
+
+- Count each tagged body line once. Exclude the header, Decision summary, Hypotheses to test, Definition of Ready addendum, and Collection plan.
+- New writing puts one claim on each line. For a legacy line with multiple tags, use the first applicable tag in the numbered list above, as the previous counting rule did. Split mixed observations and hypotheses when refreshing; do not apply the strongest tag to an entire mixed assertion.
+- Count canonical statements only in new briefs. Cross-references in other sections need no repeated tag. Preserve existing entries when refreshing, but remove repeated explanatory prose without deleting ids or changing decisions.
+- `sourced = interview + data + document + product + benchmark`; `claims = sourced + synthetic + assumed`. These are tagged-line totals, not independent evidence totals.
+
+Because synthetic claims are confined to the excluded Hypotheses section, the legacy synthetic count is zero in a conforming brief. Report that section separately in the header as `Synthetic hypotheses outside Coverage: {count}`; use the same explanation in the final report when any exist. Do not silently fold them into the old counter. A legacy brief lacking this note remains readable; inspect its Hypotheses section directly.
+
+```text
+Coverage: 33 claims — 29 sourced (interview 12, data 9, document 3, product 5, benchmark 0), 0 synthetic, 4 assumed; 2 entries on the collection plan
+Synthetic hypotheses outside Coverage: 4
 ```
-Coverage: 37 claims — 29 sourced (interview 12, data 9, document 3, product 5, benchmark 0), 4 synthetic, 4 assumed; 2 entries on the collection plan
-```
 
-The final report carries the same numbers as two output-contract lines, `Coverage:` without the suffix and `Collection plan: 2 entries waiting for material`, because consumers parse them separately. An entry is one item of the collection plan — a whole section, a sub-section such as the benchmark, or a thin section the user wants stronger. A reader who sees "0 sourced" knows what they are holding.
+The final report uses `Coverage:` without the collection-plan suffix and emits `Collection plan: 2 entries waiting for material` separately. Count actual material requests, not deferred headings or general open questions. Report independent source basis in words, and determine readiness from the relevant claims, never from this aggregate.

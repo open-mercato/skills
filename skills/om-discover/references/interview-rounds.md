@@ -1,59 +1,65 @@
 # Interview rounds (step 3)
 
-How `om-discover` asks. The body's rules are the contract; this file is technique.
+Use the material to identify the decision this session needs to support. Ask about the unknowns that could change that decision. The brief records the result; its headings do not set the interview agenda.
 
 ## Sources before questions
 
-The ladder, in order: the research directory → the repository → the tracker (read-only, when available) → benchmarks the user points at → the user. Ask the user directly only what has no other source: motivation, appetite, constraints, priorities, taste, and every decision. A question whose answer sits in a file is homework the agent does first.
+Read the research directory, the relevant repository files, the tracker when available (read-only), and benchmarks the user points at. Check which revision the material describes before calling a discrepancy current. Ask the user for facts and decisions only they can supply. Do not ask them to repeat what a source already says. An answer of “we do not know” settles that gap for this session; reopen it only when new material or a correction changes what can be answered. When sources disagree, cite the disagreement and ask only about what you cannot resolve by reading. A factual correction supported by an authoritative source is a finding to report, not a policy choice to approve; any implementation correction stays outside discovery's write surface.
 
-## Frontier rounds
+Establish the current decision from the request and material before choosing questions. If it is unclear, start with one question, such as "What do you need to decide after this conversation?" A decision might be whether to investigate a problem, test an idea, narrow a proposed scope, or proceed with a known change. Do not assume that every session must justify building a product.
 
-Map the brief as a tree of questions: every settled answer opens the questions that depended on it. The **frontier** is every question that can be asked now without guessing at an answer not yet heard. Ask the frontier in one round, numbered, at most eight questions — when the frontier is larger, ask the eight that unblock the most brief sections and carry the rest to the next round; give the recommended answer for each, and the evidence tier that answer would carry if accepted. Wait for the user. Recompute the frontier and ask the next round. A question whose answer depends on another still open in this round belongs to a later round. Two rounds are the norm, three the ceiling unless the user asks for more; what is still open after that goes to the collection plan or the open questions, not to a fourth round.
+## Choose each round by its effect on the decision
 
-Format a round like so, in the interviewer's voice from `references/voice.md` (plain words, the user's language, one concrete thing per question):
+Default to two or three independent questions. Ask one when its answer determines what to ask next. Use batches of up to eight only when the user explicitly prefers larger batches. A question whose answer depends on another unanswered question belongs in a later round.
 
-```
-**Q1 — {plain title, six words or fewer}.**
-Why I ask: {one line pointing at what in the material raised it}
-Question: {the question, with two or three named options when it is a choice, and an example of a good answer}
-My suggestion: {the answer, in plain words} ({what it rests on: "your interview of 20 August", "the board", or "a guess, nothing in the material"})
-If you don't know yet: {what goes on the collection plan, and who could answer}
+Choose the questions whose answers could most change the target users, the problem, the decision to proceed, or the cost of being wrong. A question that would fill several sections is not necessarily important. Look up any available facts first, then ask only the remaining questions.
 
-**Q2 — …**
-```
+Distinguish two kinds of question:
 
-The evidence tier the answer would carry is recorded by the agent when the answer comes back; it is not vocabulary for the question. Before the round goes out, run the self-check in `references/voice.md`.
+- **Research:** ask what happened, what someone did, what it cost, or what supports a claim. Do not suggest an answer, attach a recommendation, or supply a numeric example. Let the user describe one real experience in their own words. If the answer format is unclear, a prompt such as "Start with the last time it happened" is enough.
+- **Decision:** ask the authorized person to choose between known alternatives or set a constraint. When the evidence supports a recommendation, explain what it rests on and the actual tradeoff. Do not invent an option, a target, or a counterargument to complete a question format. Without a basis for recommending, present the choice plainly.
 
-A question that carries a skeptic CRITICAL finding is asked without a recommendation — recommending an answer to it is resolving it.
+Separate current facts from desired policy. Naming a role does not decide its responsibilities, and assigning a reviewer does not decide when review is required. Resolve a recommendation's unknown prerequisite first, or state the alternatives conditionally without treating one as the settled default.
 
-When a frontier question needs a fact from the material or the repository, look it up before the round (a sub-agent may do it while the round runs); do not block the rest of the frontier on it, and never ask the user for a fact you could read. When the recommended answer would be an assumption, say so in the round — the user may still choose it, and the brief will carry the tag.
+For example, a research question can be:
 
-In `own` mode, every suggestion gets a one-line counter-argument next to it (`Against: …`), in the same plain words. Recommendations anchor; the counter-argument is the cheapest defence against the team confirming its own idea.
+> The interview note describes a delay but not its effect. What happened the last time that person had to wait?
 
-## Housekeeping before the round
+A decision question can be:
 
-Four things are settled in one plain line each, before Q1, and never take a seat among the eight:
+> The support notes show missed handoffs; the proposed scope also includes reporting. I suggest testing the handoff first, which leaves reporting for later. Do you want to limit this pass to the handoff?
 
-- the mode: detected and confirmed in workflow step 1, before the context gate;
-- where the brief lands: `SPECS_DIR` from the config, `.ai/specs` without one (never a question);
-- who owns the brief: the person running the session, confirmed with the final yes in step 7;
-- a missing name: when the material says "both founders" or "the team" and only one name is known, ask "Who is the second founder?" without a recommendation or a counter-argument.
+Use a short context sentence only when it helps explain why you are asking. Add answer choices when there is a real choice. Add guidance about an unknown answer only when it changes the next step. Do not repeat labels such as "Why I ask", "Question", and "My suggestion" under every question. Number questions only when asking more than one.
 
-## The round ends when
+Record the answer's evidence tier in the brief, not in the question. Accepting an agent recommendation creates a human decision; it does not create research evidence. Keep its origin visible. A question carrying a skeptic CRITICAL finding has no recommendation. Run the self-check in `references/voice.md` before sending the round.
 
-- every brief section either has content with a tag, or sits on the collection plan;
-- every decision the brief will carry has a named human owner, or the user has declined to name one and the decision is written as a `proposal` with a blocking question;
-- no blocking open question is left unanswered by the person who can answer it;
-- the user signals enough — depth is their call, not the skill's.
+## Frame the need and compare directions
 
-Depth follows risk: a small, reversible product decision gets one short round; a client workshop or a new product gets as many as the material supports. The gate is the collection plan, not the number of rounds.
+When the need is unclear, use a recorded episode or ask for the last relevant case. Follow up only on the missing action, workaround or consequence that could change the decision. Read a supplied artifact or process trace when it helps. A teammate's account of someone else's experience keeps that attribution; inferred motives follow the evidence rules.
 
-## Question ladders per mode
+While the direction is open, frame the challenge around the person, situation and desired outcome. A question such as “How could we help this person achieve that outcome?” should leave room for different solutions. Use the user's words and actual constraints; do not require the phrase or a separate worksheet. Respect an explicitly chosen solution and assess its remaining risks instead of reopening the choice.
 
-**`existing`.** What is the goal and the metric with today's baseline? What must not change (flows, data, integrations, SLAs)? Which users and screens are touched, and which are not? Which compatibility surfaces from `BACKWARD_COMPATIBILITY.md` are in play, and what is the migration and rollback path? What does the data say about how the current flow is used, and what does support say about where it hurts?
+When choosing an approach matters, compare materially different ways to meet the need. Consider the current workaround or manual delivery when viable. Label agent ideas as proposals and check them against known constraints; do not invent supporting demand. Record the relevant alternative and the reason for the choice in the existing Decisions row. Do not impose an option quota, separate ideation workshop or extra round.
 
-**`client`.** What decision must this session produce? Who decides, who pays, who uses, who can block? What does each of them call success, and where do those definitions disagree? What are the appetite and the deadline, and where does the deadline come from? Which systems exist, what must we integrate with, who owns the data? How does the process run today — front stage, back stage, handoffs — and which pain points cost the most and happen most often? For every feature on the client's list: which problem, what evidence, which outcome? Which of the requested features survive that reframing? What must not get worse? What is the pilot group and what happens to the old process?
+## Session limits and stopping
 
-**`own`.** What is the vision in one sentence, and what change does it bring about? Who has the problem, and how do we know beyond ourselves? What are the three assumptions that, if false, make the product pointless — and what is the cheapest test for each? What result makes us stop? What is the one metric, the threshold, and the date? What are we deliberately not building?
+- `--quick` allows one substantive interview round. Use the material already available for the rest of the brief. Run the skeptic inline; fix your own drafting errors and record unresolved findings as open questions or collection work. Do not open another interview round unless the user asks to continue.
+- A full session allows up to three substantive rounds in total, including any follow-up questions from the skeptic. Use fewer when the decision is clear. At the limit, record what remains unknown and its effect on readiness; ask further questions only if the user requests more.
+- Final sign-off confirms the draft and the named owner. Do not use sign-off or "housekeeping" to hide another substantive round. Ask a missing identity only when needed to attribute a consequential decision; otherwise leave it a proposal.
+- Stop interviewing when the current decision has enough support, when the next useful evidence needs to come from elsewhere, or when the user says enough. Empty optional headings do not justify more questions.
 
-**Common to all modes.** The domain glossary (the nouns and their owners). The business rules the product enforces and where they come from. The current and future key flows. The non-goals. The open questions, each marked blocking or not, each with the person who can answer it.
+Depth follows the risk of the decision. A small reversible choice may need one question; a costly commitment may remain unready after three rounds. "We don't know" is a valid answer. Name the missing evidence, who can obtain it, and the decision it affects. Block dependent work only for a consequential missing decision or evidence required by the Definition of Ready. Correct your own wording, duplication, and source-link errors without asking the user to resolve them.
+
+Use `SPECS_DIR` from configuration, or `.ai/specs` when absent, without asking where to save the brief. Reuse the mode established in step 1. Confirm ownership at sign-off without repeating settled facts.
+
+## Question priorities by mode
+
+These are prompts to select from, not a checklist to ask in full.
+
+**`existing`.** Which decision is needed about the current product? Where does the current job fail, for whom, and what does the usage or support material show? Which unknown could make the proposed change ineffective or too costly? Once the direction is supported, inspect affected flows, users, data, and compatibility surfaces. Ask about migration, rollback, and service commitments only when the proposed change touches them.
+
+**`client`.** Which decision must the session produce, and who can make it? What happened in a recent case of the costly problem? What do the requested features each solve, and which has evidence behind it? Resolve conflicting expectations or binding constraints that could change the direction. Examine systems, rollout, and operational requirements when they affect the chosen scope.
+
+**`own`.** Who might have the problem, and what do we know about their actual experience? Which belief, if false, would change the decision to continue? What is the smallest useful test, or the provisional scope if the team chooses to proceed? Agree what observation would cause the team to stop or revise the idea. Use quantitative thresholds only when the material or the decision-maker supplies a reason for them; otherwise leave them open.
+
+**All modes.** Clarify domain terms, business rules, flows, and non-goals when their meaning changes the current decision or constrains the next step. Reuse existing definitions and decisions. Put unresolved questions in the brief with the person who can answer them and whether dependent work must wait.

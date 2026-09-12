@@ -1,55 +1,48 @@
 # Discovery report
 
-Use after the confirmed brief is written. Follow `references/rules.md`: link the
-brief's explanation, decisions and sources rather than retelling the session.
-Aim for 3–6 lines before the exact output fields; keep every blocking question,
-owner and next action even when more space is needed.
+Use this content guide for `om-discover`. The human-facing report should make the outcome understandable without repeating the brief. Adapt the wording to the user's language, combine related points and omit inapplicable commentary. Paragraph count and labels are flexible; output markers remain exact.
 
 ## Brief written
 
+A compact report can read:
+
 ```markdown
-🎯 `om-discover` — {product}: {ready for the first slice | more evidence needed}.
-{Users, problem and agreed scope in one sentence; link the brief.}
-🧪 **Ready for what.** {Whether the ticket-level Definition of Ready is met; unresolved blockers with owners and the riskiest assumption/test.}
-🔁 **Next step.** {What was offered, what the user chose, and which skill actually ran or was declined.}
-Elapsed: <minutes per step>
-Product brief: <repo-relative path>
-Coverage: <n> claims — <a> sourced (interview <i>, data <d>, document <c>, product <p>, benchmark <b>), <s> synthetic, <u> assumed
-Collection plan: <k> entries waiting for material
-Next: om-brainstorm "<topic>" | om-spec-writing "<goal>" | om-prepare-issue "<goal>" | none
+The brief is saved at {link}. {The decision, owner and agreed scope, with the reason it serves the current need.}
+
+{Independent source basis and its limits; the consequential unknown, what it blocks and who can resolve it. Include synthetic hypotheses separately when present.}
+
+{What the brief supports next and why; the next action and whether it is offered, authorized and pending, completed or declined.}
 ```
 
-Preserve the Output contract from the skill body. Include `Collection plan:`
-only when material was held back. `Next: none` applies when readiness is blocked.
-When another skill ran, relay its output fields without claiming that an offered
-or declined step ran. Include the chosen mode and signer when they explain the
-readiness decision. Coverage counts stay in their field; do not repeat them in
-prose. If a skeptic finding changed scope or an evidence claim, state the change
-and its source once. Never replace missing evidence with a confident summary.
+Add a short review note: material corrections and their consequence, or one sentence when no correction was needed. Disclose an inline-only review. Expand the explanation when a consequential disagreement or correction needs it; do not add a paragraph per tag or deferred section. Link completed companions' reports using their exact returned paths. Keep the first panel and optional screen walk distinct, with their session evidence and limitations. Relay a written prototype's `Prototype:`, `Prototype context:` and actual `Verification:` fields before this skill's final contract lines. Do not emit artifact paths for work that produced no files.
+
+No child `Next:` is executed or forwarded automatically. Check any suggested action against this skill's authorization and readiness rules. Preserve only an authorized, unstarted route that is ready to run, with all its supported arguments, in the single final `Next:`; describe completed actions and unaccepted suggestions only in prose. A completed panel, prototype, screen walk or backlog dry run yields `Next: none` unless a separate outstanding action was authorized. Readiness blockers prevent a backlog handoff, and an incomplete or unverified prototype prevents a screen-walk handoff. A backlog dry run does not authorize issue filing.
+
+End with the applicable contract lines from `SKILL.md`:
+
+```text
+Elapsed: {observed minutes per step, or timing not recorded}
+Product brief: {repo-relative path}
+Coverage: {legacy count from the brief, without the collection-plan suffix}
+Collection plan: {k} entries waiting for material
+Next: {authorized, unstarted skill action and supported args, or none}
+```
+
+Emit `Collection plan:` only when actual material requests remain. It does not count deferred optional sections. Coverage counts tagged lines, not independent evidence or product validation; its synthetic count excludes the Hypotheses section. State that section's separate count in prose when nonzero. Apply the `Next:` states in `SKILL.md`; an offer or a completed action is not an instruction to run it.
 
 ## Quick pass
 
-Keep the header `Quick pass — one round, inline skeptic, critical gate items only.`
-State what remains unexamined: deferred brief sections, checks needing a fresh
-reviewer, and unscored gate items. Link the collection plan for those sections;
-a quick pass does not satisfy missing readiness evidence.
+Use the same content guide, normally in two or three short paragraphs plus the contract lines. State that this was a quick pass with an inline review; give the actual number of question rounds only if useful. State the important undecided point and whether deeper work would help the current choice. Do not turn untouched sections into homework or imply that quick mode skipped source, coherence or compression checks.
 
-## Nothing written — collection plan only
+## Collection plan only
 
-Explain which ticket-level sections lack material. Give a compact table of each
-waiting section, who can supply it, how to collect it, the owner/date, and the
-capture-template path. The collection plan is the deliverable; do not invent a
-brief or an owner/date that was not supplied. End with:
+When the user has not chosen to draft assumptions and essential material is absent, report the specific requests, the decisions they block and the supplied capture templates. Name owners and timing only when known. Do not emit `Product brief:` or `Coverage:` when no brief was written.
 
 ```text
-Elapsed: <minutes per step>
-Collection plan: <k> entries waiting for material
+Collection plan: {k} entries waiting for material
 Next: none
 ```
 
 ## Refresh
 
-Lead with what changed and why. Include superseded decision ids (old → new) and
-their owners, coverage before/after, and collection-plan entries closed. Keep
-prior decisions in the brief's history; report unchanged material only when it
-explains a remaining blocker.
+Briefly state what changed: scope or evidence, superseded ids and their replacements, closed requests, and any changed readiness conclusion. Fold this into the outcome paragraph when it is short. Distinguish new independent material from edited or deduplicated prose; a changed count alone does not mean stronger evidence.

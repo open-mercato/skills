@@ -35,9 +35,11 @@ category group) from the title, body, and any screenshot analysis from step 3:
 Add each through the `apply_issue_label` guard (a missing label degrades to a
 logged skip; `LABELS_ENABLED=false` skips all). **Only add what is missing** —
 never remove or swap a label a human already set (a present label is treated as
-the human's decision). After adding, post one short rationale comment covering the
-labels applied (per `SDLC.md`'s "leaves a short comment explaining why"). If the
-issue already carries a full category+priority+risk set, add nothing and note it.
+the human's decision). After adding, update one comment under
+`` 🤖 `om-auto-manage-issues` — 🏷️ label rationale `` covering the applied set,
+with one concrete reason per label per `references/rules.md`. Do not post separate
+comments per group or repeat the rationale in the report. A full existing set
+requires no mutation.
 
 ## 3. Enrich a laconic issue (skip when `--relabel-only`)
 
@@ -83,15 +85,9 @@ is being closed) or when the marker comment already reflects the current state:
 ```markdown
 🤖 `om-auto-manage-issues` — spec required
 
-@{author} 📝 this feature issue has no covering specification (checked `$SPECS_DIR`
-and open spec PRs). Please fill up the spec before implementation starts:
-
-- write it following the repo's spec conventions (the `om-spec-writing` skill), and
-  link it here, **or**
-- have it authored autonomously: run `om-auto-write-spec {issueId}` (or re-run
-  triage with `--write-missing-specs`).
-
-⛔ Implementation skills will treat this issue as not ready until a spec is linked.
+📝 @{author}, {the unresolved behavior or scope decision} needs a covering spec
+before implementation. None was found in `$SPECS_DIR` or open spec PRs.
+Link a design here, or run `om-auto-write-spec {issueId}` to draft one.
 ```
 
 The `missing` status plus the comment outcome (posted / updated / skipped) is
@@ -109,24 +105,27 @@ spec PR, never implementation.
 
 ## 6. Readiness check (Definition of Ready)
 
-Read the **Definition of Ready** section of the repo's `SDLC.md` (when the file has
-none, use the two-tier list in this collection's own `SDLC.md` as the default) and
-check the issue's body and linked spec against its **ticket-level** tier: the
+Read the **Definition of Ready** section of the repo's `SDLC.md`. When the file
+has no such section, the product layer is not set up: record `READY_STATUS` =
+`n/a`, post nothing, and let the report name `om-setup-discovery-pipeline` once as the way
+to get the gate. Otherwise check the issue's body and linked spec against its
+**ticket-level** tier: the
 problem and who has it, the expected outcome and how it is checked, what is out of
 scope, open questions each marked blocking or non-blocking with no blocking one
 unanswered, and any autonomous assumption a human has confirmed. The spec-level
 tier is step 4's job — a feature issue with `SPEC_STATUS = covered` satisfies it,
 one with `missing` gets the spec-required comment, and neither is repeated here.
 
-Record `READY_STATUS` = `ready` | `not-ready` (with the missing items). A
+Record `READY_STATUS` = `ready` | `not-ready` (with the missing items) | `n/a`. A
 maintainer's explicit waiver on the ticket ("ready as is", or an equivalent
 statement) counts as satisfied — never override a human's call. Read-only on its
 own; the comment below is the only mutation.
 
 On `not-ready`, post one idempotent comment addressed to the issue author. Find
-the marker via **list-issue-comments** and update it in place when the missing
-list changed; skip when it already reflects the current state; leave it alone once
-the ticket is complete (the report notes that it is now ready):
+the marker via **list-issue-comments** and update it in place via
+**update-comment** when the missing list changed; skip when it already reflects
+the current state; leave it alone once the ticket is complete (the report notes
+that it is now ready):
 
 ```markdown
 🤖 `om-auto-manage-issues` — not ready

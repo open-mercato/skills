@@ -26,9 +26,9 @@ and stop: `om-ux-review-pr` for a pull request's running UI, `om-ux-shape` in
 Review mode for a whole module or flow. Reviewing design files against the
 contract is not covered by any skill in this collection yet; say so plainly
 rather than improvising it here. When the repository has no design system to
-extract — the proposed palette is all this skill can offer — name `om-ux-style`,
-which builds a declared contract from references the team chooses and writes it
-into the same files.
+extract, report that limit and leave final visual decisions to the design stage.
+For an early flow experiment, name `om-mockup-prototype`: it creates neutral
+clickable screens and keeps `.uxproof/` unchanged.
 
 ## What the contract holds
 
@@ -85,8 +85,9 @@ Full shapes, and the by-hand fallback, live in
    bad judge, and the fix (delete or exclude, then re-run the sync) belongs in
    the handover, not in a later review.
 
-6. **Hand over.** Fill `references/report-templates.md`, recommend committing
-   the contract, and name the single most useful next command. Stop there.
+6. **Hand over.** Use `references/report-templates.md` to report what was extracted or changed,
+   evidence limits, and the single most useful next command. Recommend committing
+   the contract when it was written or refreshed. Stop there.
 
 ## Security boundaries
 

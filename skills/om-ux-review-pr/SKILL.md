@@ -40,7 +40,10 @@ mutates nothing.
    diff and list the screens it touches, naming the ones you cannot reach. When
    the PR body names a spec (`Source doc:`) whose UI/UX section carries a
    `Prototype:` line, that prototype is the accepted design for these screens:
-   note its path now, so step 5 can open it beside the app.
+   note its path now, so step 5 can open it beside the app. Read its context
+   and compare only the scope the spec accepts. A neutral discovery prototype
+   establishes no visual-fidelity target; its unconfirmed assumptions remain
+   questions rather than product rules.
 
 2. **Bring the app up.** Start the PR in a runnable state and open it in the
    configured browser, composing with the pipeline's test-env and browser
@@ -92,7 +95,10 @@ mutates nothing.
    quad: evidence, pattern (ideally an existing screen in this repo that
    already does it right), trade-off, acceptance criterion.
 
-8. **Deliver the review.** Fill `references/report-templates.md` exactly. On
+8. **Deliver the review.** Use `references/report-templates.md`; lead with the
+   user-task consequence and recommended action, retaining every finding's
+   evidence/pattern/trade-off/acceptance quad. Omit empty sections and repeated
+   summaries. On
    the tracker path, look for the marker via **list-issue-comments** and then
    either **comment-pr** for the first review or **update-comment** to rewrite
    the existing one in place, attaching the evidence via

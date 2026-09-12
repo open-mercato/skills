@@ -98,6 +98,10 @@ customization without asking.
    - Artifact-related entries (new generated docs, new descriptor files): report whether the
      artifact exists; create it only when the entry says the skills expect it to exist and the
      operator confirms.
+   - Product-layer blocks in `SDLC.md` (between `<!-- discovery:start -->` and
+     `<!-- discovery:end -->`, present when the config has `discovery.enabled`): never splice
+     them here. Report `om-setup-discovery-pipeline --refresh` as the fix and let the operator run it;
+     it re-renders exactly those blocks from the current template and shows the diff.
 
 5. **Apply, verify, report.**
 
@@ -107,9 +111,9 @@ customization without asking.
      `**operation-name**` references when in doubt), the browser provider resolves
      to an existing descriptor, and the config still parses (`jq . "$CONFIG"`).
    - Leave the changes uncommitted for review, then print the final report per
-     `references/report-templates.md` — full sentences covering the synced
-     descriptors (✅), config changes (📋), custom-provider gaps (⚠️), and the
-     notable-upgrade entries checked, structured with the glossary emojis.
+     `references/report-templates.md` — effect of changed operations/config,
+     verification outcome, and actionable conflicts or provider gaps. Link the
+     diff; omit no-change sections and routine upgrade-log narration.
 
 ## Rules
 

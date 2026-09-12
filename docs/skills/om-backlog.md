@@ -16,6 +16,8 @@ Turns a product brief (its Scope and Key flows) or a spec's Phasing into a track
 
 ## Works with
 
+Every managed issue records `Backlog source:` and `Backlog id:`. Re-runs match both before updating, retain ids after reordering, and allocate new ids after those already used across sources. `${SPECS_DIR}/backlog.md` preserves a separate section for each source. Legacy title-only mappings require confirmed adoption; another source's issue is linked without being rewritten.
+
 Reads the brief [om-discover](om-discover.md) wrote or a spec from [om-spec-writing](om-spec-writing.md); creates every issue through [om-prepare-issue](om-prepare-issue.md); the result is what [om-auto-manage-issues](om-auto-manage-issues.md) triages and [om-auto-fix-issue](om-auto-fix-issue.md) implements, story by story.
 
 ---

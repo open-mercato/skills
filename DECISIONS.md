@@ -38,7 +38,7 @@ An earlier revision (see Deferred) removed the upstream ephemeral-environment ma
 
 ## Tracker abstraction
 
-No skill calls a tracker CLI or API directly. Skills name **tracker operations** (**get-issue**, **create-pr**, **comment-pr**, **merge-pr**, …) and a single committed descriptor file, `.ai/trackers/<tracker>.md` — selected by the config's `tracker` field and installed by `om-setup-agent-pipeline` — defines how each operation executes. The collection ships the GitHub descriptor (`gh` CLI) plus a `TEMPLATE.md` documenting the full contract; a new provider (Linear, Jira, …) is one descriptor file, no skill changes. The descriptor is a markdown instruction layer rather than code on purpose: it is read by the agent at runtime, so it works identically across coding agents, and the repo's committed copy is the override point — teams edit it to extend or replace any operation, the same "local file wins" model as repo-local skills. Split setups (issues in Linear, PRs on GitHub) implement issue operations against the issue tracker and delegate the PR sections to the GitHub descriptor. An earlier design kept `gh` calls inline in the skills and deferred extraction until a second provider existed; the extraction was pulled forward because inline calls made every skill GitHub-shaped and blocked the drop-in/override story. CI now enforces the layer: the lint gate rejects `gh` commands inside `skills/**` outside the shipped tracker descriptors.
+No skill calls a tracker CLI or API directly. Skills name **tracker operations** (**get-issue**, **create-pr**, **comment-pr**, **merge-pr**, …) and a single committed descriptor file, `.ai/trackers/<tracker>.md` — selected by the config's `tracker` field and installed by `om-setup-agent-pipeline` — defines how each operation executes. The collection ships GitHub end-to-end plus Linear/GitHub and Jira Cloud/GitHub split descriptors, alongside `TEMPLATE.md` for new providers. The descriptor is a markdown instruction layer rather than code on purpose: it is read by the agent at runtime, so it works identically across coding agents, and the repo's committed copy is the override point — teams edit it to extend or replace any operation, the same "local file wins" model as repo-local skills. Split setups implement issue operations against the issue tracker and delegate repository, PR, review, CI, and PR-label sections to the companion GitHub descriptor. An earlier design kept `gh` calls inline in the skills and deferred extraction until a second provider existed; the extraction was pulled forward because inline calls made every skill GitHub-shaped and blocked the drop-in/override story. CI now enforces the layer: the lint gate rejects `gh` commands inside `skills/**` outside the shipped tracker descriptors.
 
 ## Browser-provider abstraction
 
@@ -231,6 +231,12 @@ Two consequences worth recording, because both look like defects until the reaso
 
 Two choices worth recording. The deterministic classifier ships as a shell script under `references/` rather than under a per-skill `scripts/` directory, because `scripts/lint.sh` resolves every `references/…` pointer and would catch a broken one in CI, where a `scripts/` path is unchecked; it is the collection's first shipped executable, and the skill body carries an inline fallback so a harness that cannot spawn a shell still reaches the same classes. Run counting keys on the claim boilerplate's opening comments ("started by", "taking over") rather than on marker density, because a single run posts several marker comments and time-clustering alone reported ordinary runs as rework.
 
+## 2026-08-25 — Linear and Atlassian ship as split tracker providers
+
+The provider seam now has its first non-GitHub implementations: `linear.md` uses the community-maintained `schpet/linear-cli` for Linear issues, and `jira.md` uses Atlassian's official `acli` for Jira Cloud work items. Neither CLI owns the repository's pull requests, reviews, merge state, or CI runs, so both are deliberately split providers rather than incomplete stand-alone trackers. Setup installs `github.md` beside the selected issue descriptor and keeps the selected provider in the config; repository and PR operations delegate to that companion.
+
+Three boundaries keep the split predictable. Issue identifiers remain native (`ENG-123`) and are cross-linked visibly rather than pretending GitHub close keywords will transition them. Claims use the issue tracker's assignee/label/comment signals, while PR claims use GitHub identity and labels. Finally, provider-specific label behavior stays honest: Linear guards only labels already defined in its workspace/team, Jira's ordinary Labels field is free-form, and the GitHub companion owns the provisioned PR taxonomy. This resolves the earlier deferred item for popular contributed descriptors without changing the tracker operation contract or config schema.
+
 ## 2026-09-02 — om-synthetic-users believes only what repeats, and never a stated preference
 
 The first version of the skill built three personas, interviewed them once, and reported what they said. The published work on synthetic respondents — silicon sampling (Argyle et al. 2022), interview-grounded agents (Park et al. 2024), the diversity loss of aligned models (Mohammadi 2024), silicon-crowd ensembles (Schoenegger et al. 2024), and the practitioner reports of a commercial synthetic-users platform that publishes its methods — agrees on the failure modes: a single run is noise, a panel from one context converges on one voice, stated preferences are compliments, and a plausible individual persona says nothing about the distribution. The skill now samples a fresh panel per run in separate subagent contexts, runs at least twice, reports only what survived every run with its spread as the error bar, asks only about the past and then simulates the decision under pressure, records the fast reaction before the considered one, and — when real interview notes exist — runs the same script on the panel and treats the deviation as the finding and the calibration loop. Three things the same sources do that this skill will not: predict survey numbers (the sources themselves document that different populations produce identical marginals), generate personality profiles without a source, and read a parity number as permission to skip real people. The `[SYNTHETIC]` label, the no-numbers rule, and the real-user check on every finding stand.
@@ -243,9 +249,19 @@ Four gaps between what `SDLC.md` promised and what the skills enforced, closed i
 
 Between a brief and Intake somebody typed epics and stories into the tracker by hand, and the dedupe, the labels, and the rationale comment that `om-prepare-issue` guarantees for one issue were skipped for thirty. `om-backlog` drafts the tree and files it through `om-prepare-issue` one issue at a time, adding only what a tree needs — ids in titles, `Epic:` and `Story:` lines, acceptance criteria, an epic checklist — through **update-issue**. A second creation path was rejected outright (it would fork the label and dedupe logic), and so was any tracker-specific hierarchy object: an epic is an issue with a checklist, which every descriptor can express. Two more choices. **Readiness gates the backlog, not just the ticket**: a brief that rests on synthetic or assumed problems produces only the research backlog, because thirty well-formed stories about an unverified problem are the most expensive form of slop. **Ids are stable and live in titles**, because a tracker's own numbering says nothing about structure and a local file can be lost; the title is the one field every tracker keeps and every human reads.
 
-## 2026-09-02 — om-ux-style: a declared contract, in om-ux-setup's files, never a second format
+## 2026-09-09 — Separate discovery prototypes from detailed design
 
-`om-ux-setup` extracts a design contract from code; a greenfield repository has no code to extract from, and the proposed palette it derives from whatever colors exist is documentation of an accident, not a decision. Without a declared contract the first screens take the generic look, and `om-ux-review-pr` has nothing to cite. `om-ux-style` creates the contract from references the team chooses. Two choices worth recording. **It writes the same files** — declared tokens into `tokens.json` with two additive fields, rules into the manual section of `conventions.md`, a minimal `contract.json` — rather than a second design-system format, so every UX skill reads it unchanged and a later extraction converges with it instead of competing. A separate "style skill" file or a fourth descriptor was rejected for the reason the prototype spec rejected a design-system descriptor: eight tokens in one file and one manual section already solve it. **It creates and does not judge**, the mirror of `om-ux-setup`'s "extract, do not judge": findings belong to `om-ux-review-pr`, direction to `om-ux-shape`, code and Storybook to Implement. The generic look's signatures are written down as anti-patterns the quality gate checks, because "avoid the AI look" is an instruction nobody can apply and a list of nine signatures is.
+The discovery stage needs a flow that people can click before the brief refresh
+and backlog. The unreleased `om-ux-style` name becomes `om-mockup-prototype`, and
+its output is a neutral low-fi prototype with source context, visible assumptions
+and browser checks. It does not author a design contract or tokens. Each refresh
+writes a new revision so previous decisions and manual changes remain available.
+
+Detailed design belongs to the specification stage on the repository's design
+system. PR #106 will provide that stage under `om-ux-design`; #107 introduces no
+invocation of that unshipped skill. A prototype approval chooses a flow; it does
+not validate demand or satisfy the Definition of Ready. The old branch-local
+name never reached a release, so no alias or migration is needed.
 
 ## 2026-09-02 — Product decisions are a protected contract; drift is superseded, never silent
 
@@ -275,6 +291,27 @@ The first team session produced rounds nobody in the room could answer: "the pri
 
 A first test with the team showed the seam between the pre-Intake skills: after `om-discover` wrote the brief, the user had to know that the panel comes next, that its result only enters the brief through `--refresh`, and that the backlog refuses until the Definition of Ready is met. Run one by one, the skills made no sense to someone who had not written them. `om-discover` now ends with a hand-off: one yes/no at a time, the synthetic panel optional, the backlog only when the brief is ready, one more decision round when it is not. Each step still runs the named skill verbatim with its own confirmation stop, so nothing became autonomous. A separate orchestrator skill was rejected: it would duplicate the readiness logic that already lives in `om-backlog` and the refresh logic in `om-discover`, and it would be one more name to learn. In the same change, housekeeping questions (where the brief lands, who owns it, a missing founder's name) left the eight-question round: the first run in a repository without a config spent a round seat proposing a path from a neighbouring folder, and another asking the person running the session who owns the brief.
 
+## 2026-09-07 — Backlog ids identify a source's items; routing describes work still to run
+
+PR #107's review found that title-only backlog ids collide when two specs start at `E01`. Issues now carry an explicit source path and full item id, and updates require both. New numbers follow used numbers while existing mappings survive insertion, reordering, and moves; the local record retains every source. A global renumbering was rejected because it would break references to issues already filed. Legacy mappings instead pass through the existing adoption confirmation.
+
+The same review found three hand-off ambiguities and a missing read field. `om-discover` keeps executing accepted follow-ups, but its `Next:` line returns to the collection's existing meaning: a chosen action still to execute, never one completed or declined. `om-mockup-prototype --refresh` preserves earlier prototype revisions and their decisions. For screen walks, the main agent operates the browser and feeds observations to isolated persona subagents; expanding the personas' tool access was unnecessary. `om-approve-merge-pr` explicitly fetches the SHA it compares and the commit history it reports on a mismatch.
+
+Only the affected skills' specific instructions and templates change; shared reference boilerplate and unrelated skills keep their existing behavior. Companion references and docs for each corrected workflow are updated together.
+
+## 2026-09-07 — The product layer is a second setup, and the Definition of Ready belongs to it
+
+Every skill's step 0 names one setup authority, and the first version of the pre-intake work put its process text — the Discovery stage, the Definition of Ready, protected product decisions — unconditionally into the SDLC template, with three "add by hand" migration notes for repositories that already had an `SDLC.md`. Two things were wrong with that. The generated document now assumed roles the Roles list did not declare (a decision owner, a designer behind `.uxproof/`, a release manager, a second reviewer), so a solo developer got a process that named people they did not have. And a team that wants the delivery pipeline only — ticket to merged PR — was gated by a readiness check it never asked for, because the intake skills fell back to the collection's own two-tier list when the section was absent.
+
+The layer is now opt-in through one skill, `om-setup-discovery-pipeline`, modeled on `om-ux-setup`: one config key (`discovery.enabled`, with role flags), the same template with the product blocks under `IF discovery`, and the blocks inserted into an existing `SDLC.md` between markers so a re-run is idempotent and a later template change is a `--refresh`, not a hand merge. `om-setup-agent-pipeline` does not ask about the layer at all, so the delivery setup stays what it was. The readiness fallback is gone with it: a repository whose `SDLC.md` has no Definition of Ready gets no readiness check, in all three intake skills. Two alternatives were rejected. Asking about product roles inside `om-setup-agent-pipeline` would have put product questions in front of every team, including the ones that only want the pipeline. Making the product skills require the layer (auto-running the setup the way delivery skills do) would have contradicted the 2026-09-02 decision that a discovery session must run in a repository with no pipeline at all; instead, the product skills mention the setup once in their reports, and only `om-setup-discovery-pipeline` pulls in the delivery setup when it is missing.
+
+Roles were settled at the same time, against the roles teams know from the market. Product owner is the one role the layer always has (the maintainer plays it when nobody else does); Domain expert and Designer are flags. Tech lead is not a new role: the Reviewer line says it is the second person on `risk-high` and the spec sign-off. Release manager is the Maintainer unless a team names one. Security is not a role or a gate: the `risk-high` evidence table and the second review are what a security review would give a small team, and a team with a security engineer declares them as that second person. A delivery manager is absent on purpose — the process is a flow with gates, not sprints, and plans no capacity.
+## 2026-09-07 — Discovery recommends decisions only when their premises are known
+
+A session using `om-discover` grouped factual corrections, terminology, acceptance policy, and review responsibilities into yes/no questions with a preferred answer and one blanket confirmation. The wording was readable, but the required recommendation on every question encouraged the agent to fill missing context and anchor the answer. The rule now follows the information needed: verify accessible facts, ask neutrally about experience, and offer alternatives with consequences for decisions. Recommendations remain useful when their premises are known, so they are optional and conditional, with a meaningful trade-off in every mode. A dependency is asked first, and approval of a policy records that choice without upgrading its unsupported premises into evidence.
+
+The entrypoint, interviewer and skeptic instructions, evidence gate, and skill card use the same distinction. Batch confirmation still works for explicit independent choices with their consequences shown; it does not resolve missing facts or dependent questions. This changes interview behavior only; opting repositories into the Definition of Ready is a separate process decision.
+
 ## 2026-09-10: Discovery follows the current decision
 
 The review of `om-discover` and an existing product brief found that required recommendations were leading research answers, rounds were chosen to fill sections, and repeated decisions made the brief difficult to use. This revises the question format and handoff described in the discovery entries of 2026-09-02 and 2026-09-03.
@@ -300,6 +337,28 @@ The user approved the whole-skill audit's fixes. Interview-note fields now captu
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.
-- Shipped tracker descriptors other than GitHub. The seam (`tracker` config field + descriptor contract + `TEMPLATE.md`) ships in v1; teams write their own `linear.md`/`jira.md` from the template until popular ones are contributed back.
 - Skills beyond the PR pipeline that are product-specific upstream (module scaffolding, design-system review). Reviewing design files (a design tool's own documents) against the contract stays out for the same reason; the accepted prototype linked from a spec's UI/UX section (`Prototype:`) is the artifact `om-ux-review-pr` compares an implementation with, and it is a file in the repository that any browser provider can open. Two former members of this list were later generalized and extracted: `om-spec-writing` (upstream architecture laws replaced by the repo's own agent-instruction rules; specs live in the repo's design-doc area) and `om-integration-tests` (the upstream ephemeral-environment machinery was first stripped, then re-introduced in agnostic form as the standalone `om-prepare-test-env` skill — see Test environment above; a repo-local `.ai/skills/om-integration-tests` override remains the place for environment specifics). A third pair was later migrated and generalized: `om-prepare-test-env` (new, no upstream counterpart) and `om-auto-verify-pr-ui` (migrated from upstream, made stack-agnostic and tracker-optional).
 - Automated sync from the upstream monorepo. Curation is manual.
+
+## 2026-09-04 — Decision-oriented output across the collection
+
+PR bodies, issue descriptions, and reports had become difficult to use for a
+maintainer deciding whether a change belongs in the codebase. Mandatory empty
+sections, repeated summaries, and instructions to expand every report caused
+that noise. This supersedes the July requirement to fill and expand every human
+output template; the August complete-agent/shorter-human review contract remains.
+
+The PR or issue body now owns the explanation: what changes for whom, why, where
+it reaches, and any consequential decision or commitment. Reviews distinguish
+product direction from verified defects and cite evidence. Comments report new
+findings, state changes, or handoffs; they link existing detail. Simple changes
+get short prose, and cross-system changes may use a small Mermaid diagram. No
+extra intake document or publishing layer is introduced.
+
+All thirty-seven skills receive the shared writing rules in their own copies;
+role-specific templates, their workflow callers, and the authoring/review
+standards are updated together. Length guidance is a target, never a reason to
+drop actionable findings, evidence limits, or recovery instructions. Tracker
+markers, full label rationales, chaining fields, execution plans, review
+artifacts, and QA/merge gates retain their contracts. The user's collection-wide
+rewrite request authorizes this shared-file sync.

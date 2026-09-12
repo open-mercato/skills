@@ -13,13 +13,13 @@ For Simple runs, skip the whole run-folder ceremony. Requirements:
 - Targeted validation for the touched area(s) only — the subset of `validation.commands` relevant to what changed.
 - Conventional-commit subject.
 - Push the fix directly to the PR branch.
-- PR body stays short — summary + test plan + rollback (no `Tracking plan:` line, no `Status:` field, no linked run folder). If the existing body already has these tracking fields from a prior promotion, leave them; otherwise do not add them.
+- PR body stays short — behavioral change + validation result/limits + rollback only when material (no `Tracking plan:` line, no `Status:` field, no linked run folder). If the existing body already has these tracking fields from a prior promotion, leave them; otherwise do not add them.
 - Still respect: an isolated worktree (skip straight to step 4 for worktree setup); the three-signal `in-progress` lock (already claimed in step 1, released at run end); label discipline (pipeline + category + meta); the single step-8 `om-auto-review-pr` pass in autofix mode (compatibility checks inside it).
-- Final summary comment still posts, but compacted to: summary of changes, how to verify, what can go wrong. No "Verification phases" matrix, no "External references honored" section unless actually relevant.
+- Final summary comment still posts using `references/summary-comment-template.md`: the run’s delta, verification evidence and next action, without repeating the PR body.
 
 ## Spec-implementation-run contract
 
-Keep the full contract documented in the rest of the `SKILL.md` file: run-folder lookup, HANDOFF.md → Tasks table → NOTIFY tail orientation, lean per-Step commits, checkpoint-batched verification, full validation gate before flipping to `complete`, `om-auto-review-pr` autofix pass, comprehensive summary comment with all headings.
+Keep the full contract documented in the rest of the `SKILL.md` file: run-folder lookup, HANDOFF.md → Tasks table → NOTIFY tail orientation, lean per-Step commits, checkpoint-batched verification, full validation gate before flipping to `complete`, `om-auto-review-pr` autofix pass, outcome and handoff comment using `references/summary-comment-template.md`.
 
 ## Promotion path (Simple → Spec-implementation)
 

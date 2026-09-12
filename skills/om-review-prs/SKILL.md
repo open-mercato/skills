@@ -32,17 +32,9 @@ This skill is a sweep, not a single-PR step: it finds every unreviewed open PR a
 
 3. **Sort newest first.** Most recently created PRs are reviewed first.
 
-4. **Present the queue.**
-
-   ```markdown
-   ## 🔍 Review Queue — {date}
-
-   Found {count} unreviewed PRs (newest first):
-
-   | # | Title | Author | Created | Labels |
-   |---|-------|--------|---------|--------|
-   | [#456](url) | Add catalog search | @bob | 2h ago | `feature`, `review` |
-   ```
+4. **Present the queue.** Say how many PRs will be reviewed, newest first.
+   Link the queue or list PR numbers/titles only when needed to show scope;
+   omit repeated labels, author metadata, and dates.
 
 5. **Review sequentially.** For each PR:
 
@@ -51,24 +43,27 @@ This skill is a sweep, not a single-PR step: it finds every unreviewed open PR a
    3. Record the verdict and a one-sentence outcome for the step 6 summary — what drove the verdict, or why the review could not run
    4. Continue to the next PR
 
-   Between PRs, print only this one-line progress marker — the full story of each review belongs in the step 6 summary:
+   Between PRs, print only this one-line progress marker — each full review stays on its PR; step 6 reports decisions and links:
 
    ```text
    Reviewed {done}/{total}. Next: #{number}
    ```
 
-6. **Post the final summary.** Every row carries a one-sentence outcome in full sentences — what drove the verdict, or why the PR was skipped — so a reader who did not watch the sweep understands each result:
+6. **Post the final summary.** Use one row per PR: concrete change, verdict,
+   decisive reason, and next action. Link the detailed review; do not repeat
+   finding lists or label inventories.
 
    ```markdown
-   ## ✅ Review Session Complete — {date}
+   Reviewed {count} PRs; {approved} approved, {changes} need changes, {skipped} skipped.
 
-   | # | Title | Verdict | Label | Outcome |
-   |---|-------|---------|-------|---------|
-   | #456 | Add catalog search | ✅ APPROVED | `merge-queue` | Clean implementation with tests covering the new filters; queued for merge. |
-   | #445 | Fix auth redirect | ❌ CHANGES REQUESTED | `changes-requested` | The redirect drops the return-URL parameter; handed back to the author with two blockers. |
+   | PR / Change | Verdict | Reason and next action |
+   |-------------|---------|------------------------|
+   | [#456](url) — Filter catalog search | APPROVED | Filters passed validation; QA must exercise saved searches. |
+   | [#445](url) — Preserve login destination | CHANGES REQUESTED | Return URL is discarded; restore it and re-request review. [Review](reviewUrl). |
    ```
 
-   If the queue is empty, say so and suggest running `om-merge-buddy` instead.
+   Include every skipped PR and its reason. If the queue is empty, say so and
+   suggest `om-merge-buddy` only when a merge-readiness sweep is a useful next step.
 
 ## Rules
 

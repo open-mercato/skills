@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>🧠 plan · 🔨 implement · 🔍 review · ✅ QA gate · 🚢 merge</b><br/>
-  Forty agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
+  Forty-one agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 npx skills add open-mercato/skills --skill '*'
 ```
 
-Install all forty — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all forty-one — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
@@ -100,6 +100,12 @@ The skills chain: every PR-producing skill ends with a `PR: #<number> (link: <ur
 
 ```mermaid
 flowchart LR
+    discover["om-discover<br/>(product context)"] --> brainstorm
+    discover -. "optional first panel" .-> panel["om-synthetic-users"]
+    panel -. "optional low-fi flow" .-> prototype["om-mockup-prototype"]
+    prototype --> refresh["om-discover --refresh"]
+    panel -. "prototype declined" .-> refresh
+    refresh -. "ready" .-> backlog["om-backlog --dry-run"]
     brainstorm["om-brainstorm<br/>(conversation)"] -. "small task" .-> createPR
     brainstorm -. "feature" .-> writeSpec
     subgraph brief ["From a task brief"]
@@ -156,15 +162,16 @@ Interactive helpers (no `auto` in the name — the other half of the naming conv
 | Skill | What it does |
 |---|---|
 | [`om-setup-agent-pipeline`](docs/skills/om-setup-agent-pipeline.md) | One-per-repo configurator. Inspects the repository, asks a few questions, writes `.ai/agentic.config.json`, installs tracker and browser-provider descriptors, generates `SDLC.md` and an `AGENTS.md` starter when missing. Verifies cross-skill coverage: if an installed skill references one that isn't installed, it prints the exact `npx skills add` command to fix it. |
+| [`om-setup-discovery-pipeline`](docs/skills/om-setup-discovery-pipeline.md) | Adds the optional product layer to a configured repo: one yes per product role, a `discovery` block in the config, and the Discovery stage, Definition of Ready, product roles, and protected product decisions inserted into the existing `SDLC.md` between markers. Turns on the readiness checks in [`om-auto-manage-issues`](docs/skills/om-auto-manage-issues.md), [`om-auto-fix-issue`](docs/skills/om-auto-fix-issue.md), and [`om-backlog`](docs/skills/om-backlog.md); nothing in [`om-discover`](docs/skills/om-discover.md) requires it. |
 | [`om-apply-upgrade-notes`](docs/skills/om-apply-upgrade-notes.md) | Post-upgrade migrator. Applies `UPGRADE_NOTES.md` to the repo: re-syncs installed tracker/browser descriptors while preserving local edits, reports custom-provider gaps, and checks the config against notable upgrades. |
 | [`om-merge-buddy`](docs/skills/om-merge-buddy.md) | Scans open PRs and reports which can merge now and which are close but blocked, based on labels, reviews, CI, and mergeability. |
 | [`om-pipeline-retro`](docs/skills/om-pipeline-retro.md) | Classifies runs the pipeline already finished — clean single pass, hard recovery, loop checkpoints, or a second pass with no recorded cause — and ranks the causes by the wall-clock hours they cost. Read-only; hands the top cause to `om-prepare-issue`. |
 | [`om-approve-merge-pr`](docs/skills/om-approve-merge-pr.md) | Approves and squash-merges a PR given only its number. Can file a follow-up issue at the same time. |
 | [`om-check-and-commit`](docs/skills/om-check-and-commit.md) | Runs the configured validation gate on the current branch, fixes obvious drift, then commits and pushes when green. |
 | [`om-followup-issue-from-pr`](docs/skills/om-followup-issue-from-pr.md) | Turns a PR or a PR comment into a tracked follow-up issue, assigned to the right person. |
-| [`om-discover`](docs/skills/om-discover.md) | Product-level discovery and define, before there is anything to brainstorm about. Runs in three modes — existing product, client idea, own idea — and leaves one `product-brief.md`: problem and who has it, stakeholders, rules, flows, benchmark, success criteria, scope (now, later, not doing), non-goals, decisions with owners, riskiest assumptions with tests, open questions. Gathers real material first: a section with nothing behind it becomes a collection plan with capture templates, never prose; synthetic personas and assumptions are tagged and never count as evidence. `om-brainstorm`, `om-spec-writing`, and `om-prepare-issue` read the brief when it exists. |
+| [`om-discover`](docs/skills/om-discover.md) | Product-level discovery and define, before there is anything to brainstorm about. Runs in three modes — existing product, client idea, own idea — and leaves one `product-brief.md`: problem and who has it, stakeholders, rules, flows, benchmark, success criteria, scope (now, later, not doing), non-goals, decisions with owners, riskiest assumptions with tests, open questions. Gathers real material first: a section with nothing behind it becomes a collection plan with capture templates, never prose; synthetic personas and assumptions are tagged and never count as evidence. [`om-brainstorm`](docs/skills/om-brainstorm.md), [`om-spec-writing`](docs/skills/om-spec-writing.md), and [`om-prepare-issue`](docs/skills/om-prepare-issue.md) read the brief when it exists, and its non-goals, business rules, and decisions become a contract the review skills enforce. |
 | [`om-synthetic-users`](docs/skills/om-synthetic-users.md) | A panel of personas from the material the repo already holds, interviewed about the last time and then under the pressures the brief describes (never "would you use"), walking one flow through their eyes — on the brief or spec as a narrative, on a static prototype, or on the running app through the browser provider. Fresh panel per run, at least two runs, only what repeats is a finding, spread is the error bar; saturation tracked; a parity check against real interview notes when they exist, where the deviation is the finding. Three stances: `validate`, `simulate` (every answer is "to confirm"), `adversary` (agreement is discarded). Everything tagged `[SYNTHETIC]`, never evidence, never numbers. |
-| [`om-ux-style`](docs/skills/om-ux-style.md) | A design contract from scratch, for a repository with no design system yet: a moodboard from references the team chooses, five confirmed principles and five anti-patterns, tokens by role for both themes with contrast checked, the components the flows need with all six states, three recipes. Written into `.uxproof/` where [`om-ux-review-pr`](docs/skills/om-ux-review-pr.md) and [`om-ux-shape`](docs/skills/om-ux-shape.md) already read, plus a `theme.css` with the eight identity tokens a prototype directory expects. Routes to [`om-ux-setup`](docs/skills/om-ux-setup.md) when a design system already exists. |
+| [`om-mockup-prototype`](docs/skills/om-mockup-prototype.md) | Turns a selected brief flow and the first synthetic panel into a neutral clickable discovery prototype. Keeps assumptions visible, checks navigation and recovery states in a browser, and writes a local revision with its context. It runs before the brief refresh and backlog; detailed visual design belongs to the later specification stage. |
 | [`om-backlog`](docs/skills/om-backlog.md) | Turns a product brief or a spec's Phasing into epics, stories with acceptance criteria, and tasks — ids in titles, `Epic:` lines, epic checklists — filing every issue through [`om-prepare-issue`](docs/skills/om-prepare-issue.md) so dedupe, labels, and rationale are unchanged. Adopts existing issues instead of duplicating them, refuses a brief that rests on assumptions (offering the research backlog instead), and shows the whole tree before writing anything. |
 | [`om-brainstorm`](docs/skills/om-brainstorm.md) | The conversation before any artifact exists: open questions one at a time, alternatives weighed (including building nothing), a challenger subagent attacks the conclusion, then the user confirms a routing decision — a machine-parsed `Next:` line plus a handoff brief that feeds [`om-prepare-issue`](docs/skills/om-prepare-issue.md), [`om-auto-write-spec`](docs/skills/om-auto-write-spec.md), [`om-spec-writing`](docs/skills/om-spec-writing.md), or [`om-auto-create-pr`](docs/skills/om-auto-create-pr.md). |
 | [`om-spec-writing`](docs/skills/om-spec-writing.md) | Writes and reviews feature specs to staff-engineer standards: skeleton-first with a hard Open Questions gate, phased implementation breakdown that feeds [`om-auto-create-pr`](docs/skills/om-auto-create-pr.md), severity-ranked architectural reviews. |
@@ -197,6 +204,7 @@ Turn ideas into well-formed, labeled work — and review the plan before any cod
 
 | ▶️ You run | ⚙️ Runs automatically inside | 🎁 You get |
 |---|---|---|
+| `/om-setup-discovery-pipeline` once | [`om-setup-agent-pipeline`](docs/skills/om-setup-agent-pipeline.md) when the delivery layer is missing; the SDLC template's product-layer blocks | the product layer switched on: product roles, the Discovery stage, the Definition of Ready, and protected decisions in `SDLC.md`, and the readiness gate the skills below enforce |
 | `/om-discover --mode client "Benefits portal for SMB clients"` | context gate over your research folder, interview rounds, a skeptic subagent, a quality gate against invented evidence | `product-brief.md` with tagged evidence and owned decisions, or a collection plan naming what still has to be gathered |
 | `/om-synthetic-users .ai/specs/product-brief.md --flow "first claim"` | personas built from the brief's evidence, simulated interviews, a narrative or browser walk, a quality gate against invented detail | barriers, missing cases, and contradictions as `[SYNTHETIC]` hypotheses, each with the real-user check that would settle it |
 | `/om-backlog .ai/specs/product-brief.md` | readiness check against the Definition of Ready, dedupe per story, [`om-prepare-issue`](docs/skills/om-prepare-issue.md) per issue | epics, stories with acceptance criteria, and tasks in the tracker, ids in titles, a `backlog.md` map — after you have seen the tree and said yes |
@@ -302,7 +310,7 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
 
 A Rust repo puts `cargo test` and `cargo clippy` in `validation.commands`; a Go repo puts `go test ./...`. Skills run whatever you configure and treat any non-zero exit as a gate failure. A skill invoked in a repo without the config runs [`om-setup-agent-pipeline`](docs/skills/om-setup-agent-pipeline.md) first — interactively when you're there to answer its questions, with `--defaults` when running unattended — then continues with the freshly written config.
 
-GitHub is the default tracker, but nothing in the skills is hard-wired to it — see the tracker providers section below.
+GitHub is the default tracker. Shipped split-provider templates also support Linear issues through `schpet/linear-cli` and Jira Cloud work items through Atlassian CLI, while GitHub continues to own PRs, reviews, and CI — see the tracker providers section below.
 
 Agent-browser is the default browser automation provider for fresh setups. It
 installs itself and Chrome for Testing when needed; existing repositories remain
@@ -344,8 +352,9 @@ No skill calls `gh` — or any tracker CLI — directly. Skills name **tracker o
 That file is yours, which makes three things easy:
 
 - **Extend or override GitHub behavior** — edit `.ai/trackers/github.md`: add flags, change the merge strategy, adjust comment conventions, extend the label taxonomy commands. Every skill picks it up on its next run.
-- **Bring your own tracker (Linear, Jira, …)** — write `.ai/trackers/<name>.md` from the shipped `TEMPLATE.md` (in `om-setup-agent-pipeline/references/trackers/`), implementing each operation with your tracker's CLI, MCP tools, or API, and set `"tracker": "<name>"` in the config. No skill changes needed — the descriptor is the whole integration surface.
-- **Split setups** — issues in Linear, PRs on GitHub: implement the issue operations against Linear and delegate the PR sections to the GitHub descriptor. The template documents this pattern, including how identifiers cross-link (a `ENG-123` ticket referenced from a GitHub PR).
+- **Use a shipped split provider** — select `linear` for Linear issues through [`schpet/linear-cli`](https://github.com/schpet/linear-cli), or `jira` for Jira Cloud work items through [Atlassian CLI](https://developer.atlassian.com/cloud/acli/guides/introduction/). Setup installs the selected descriptor plus `github.md`, because the code host still owns PRs, reviews, CI, and PR labels. The templates document authentication, issue-label semantics, claim signals, identifier cross-links, and explicit post-merge issue transitions.
+- **Bring your own tracker** — write `.ai/trackers/<name>.md` from the shipped `TEMPLATE.md` (in `om-setup-agent-pipeline/references/trackers/`), implementing each operation with your tracker's CLI, MCP tools, or API, and set `"tracker": "<name>"` in the config. No skill changes needed — the descriptor is the whole integration surface.
+- **Build another split setup** — implement issue operations against the project tracker and delegate repository/PR/review/CI/PR-label operations to its code-host companion. The template documents the pattern, including how identifiers cross-link (for example, an `ENG-123` ticket referenced from a GitHub PR).
 
 The claim protocol (assignee + `in-progress` + 🤖 comment), the label guards (missing label ⇒ logged skip, `labels.enabled: false` ⇒ no label ops), and the QA gate semantics are part of the contract — a provider must express them, in whatever way its tracker allows.
 
@@ -368,7 +377,7 @@ assertions, and screenshots.
 
 Every PR carries at most one pipeline label (`review`, `changes-requested`, `merge-queue`, ...) plus additive category, meta, priority, and risk labels; priority says how urgent the work is, risk says how dangerous the change is to ship. The full taxonomy, and whether to use labels at all, lives in the config; [`om-setup-agent-pipeline`](docs/skills/om-setup-agent-pipeline.md) documents every group and creates missing labels for you.
 
-The QA gate is the one hard rule: a PR labeled `needs-qa` cannot merge until a human adds `qa-approved`, no matter how green the checks are. Automated skills request QA; they never grant it.
+A PR labeled `needs-qa` cannot merge without `qa-approved`, even with green checks. A QA reviewer grants approval, or `om-auto-qa-pr --self-qa-signoff` uses the documented exception below `risk-high`, with evidence tied to the current head and the `qa-self-verified` label. Authoring and merge skills do not grant QA approval.
 
 ## 🚀 Built with this workflow
 

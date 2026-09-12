@@ -32,28 +32,39 @@ Replacement PR requirements:
 - Mention that the branch was re-reviewed after autofix and is intended to be merge-ready
 - Reassign the replacement PR to the original PR author when possible, and leave a handoff comment inviting them to do the next recheck from the carried-forward branch
 
-Suggested replacement PR body:
+Replacement PR body — this is the canonical explanation of the carried work,
+so describe the resulting behavior instead of saying only “original changes.”
+Keep the supersede line in the first 20 lines and the exact credit prefix.
 
 ```markdown
 Supersedes #{prNumber}
 
-Credit: original implementation by @{originalAuthor}. This follow-up PR carries that work forward with the requested fixes so it can merge without waiting on the original branch.
+Credit: original implementation by @{originalAuthor}.
 
-## Included work
-- Original changes from #{prNumber}
-- Follow-up fixes applied during re-review
+{Who can do what now, or which failure is corrected, and why it matters.}
+
+{What this run fixed beyond the original PR, with review/evidence links.}
+{Only consequential shared-surface or compatibility effects and any remaining gate.}
+
+🧪 {Validation result and applicable QA evidence; disclose pending required checks}.
 ```
 
-Suggested replacement PR handoff comment:
+Aim for 150–300 words or fewer when the change is simple. Keep any inherited
+`Tracking plan:`, `Status:`, issue linkage, and other parsed body fields exactly.
+Use the full label normalization contract without copying labels into the body.
+
+Replacement PR handoff comment:
 
 ```markdown
-Thanks @{originalAuthor} — this replacement PR carries your original work forward with the requested fixes applied. Reassigning it to you so you can do the next recheck from the merge-ready branch.
+@{originalAuthor}, please recheck {specific corrected behavior} in [this review]({reviewUrl}).
+{Reassignment confirmation only when it succeeded}.
 ```
 
-Suggested original PR closing comment:
+Original PR closing comment — preserve the first line for credit tooling:
 
 ```markdown
 Closing in favor of #{newPrNumber} ({newPrUrl}).
 
-Credit to @{originalAuthor} for the original implementation. The replacement PR carries the same work forward with the requested fixes so it can merge without waiting on the fork branch.
+Credit to @{originalAuthor} for the original implementation. The replacement
+includes {concrete fixes}; review and evidence are linked there.
 ```

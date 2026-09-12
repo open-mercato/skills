@@ -12,7 +12,7 @@ Read before drafting. The goal is to learn what supports the current decision, w
 | Repository | README, specs, design contract, compatibility surfaces, relevant schema and routes | what exists or was specified; never demand by itself | `[PRODUCT]` |
 | Tracker | read-only **search-issues**, **search-prs**, **get-issue**, **list-issue-comments** when configured | existing work, support accounts and recorded decisions | `[DOCUMENT]` |
 | Benchmarks | provided or discovered links checked on a date | reference behaviour relevant to this decision | `[BENCHMARK]` |
-| Synthetic walkthroughs | research walkthrough reports | hypotheses and missing cases only | `[SYNTHETIC]` |
+| Synthetic walkthroughs | research walkthrough reports, including nested session directories and older flat reports | hypotheses and missing cases only | `[SYNTHETIC]` |
 
 Read enough of each source to assess what it actually supports. A filename or source tag is not proof. Identify copies of the same source and state where provenance or independence is unknown. Follow `references/evidence-tiers.md` for the distinction between observations, decisions and hypotheses.
 
@@ -120,3 +120,18 @@ If the user explicitly chooses to proceed from beliefs, draft those as `[ASSUMPT
 - Consequences, and what would make us revisit it:
 - Status: active | superseded by D{nn}
 ```
+
+## Completed discovery prototypes
+
+During a handoff refresh, read the explicitly returned `Prototype context:`
+file and both the completed first-panel and optional screen-walk reports. Use
+their exact `Walkthrough:` paths and immutable session persona snapshots;
+never reconstruct a filename or substitute the shared latest personas. Preserve
+their original sources, assumption labels, decision owners and scope limits. Synthetic reactions remain
+`[SYNTHETIC]`; unverified flow details remain `[ASSUMPTION]`. Browser evidence
+shows how the prototype behaves, not whether people need the product. Never
+count prototype approval as satisfying the ticket-level Definition of Ready.
+Keep `Verification: incomplete` or `not-run` and any partial-session limitations
+visible; a generated file or proposed browser action is not evidence of a
+completed screen check. Review changed brief content through steps 4–6 before
+its step-7 confirmation and write.

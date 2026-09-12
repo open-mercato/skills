@@ -6,8 +6,9 @@ not already implemented, and is the ticket ready to be built from? Operate
 **read-only** — file reads, code search, and read-only tracker operations
 (**get-issue**, **search-prs**, **search-issues**, **repo-info**,
 **current-user**) only. No edits, commits, claims, or branch creation. The single
-exception is the idempotent not-ready comment in section 4, posted via
-**comment-issue** so the author sees why the run stopped.
+exception is the idempotent not-ready comment in section 4: find its marker via
+**list-issue-comments**, post it via **comment-issue** on the first run, and rewrite
+it via **update-comment** when its missing-items list changes.
 
 ## Decision procedure
 
@@ -49,9 +50,10 @@ Before writing any spec, prove the feature does not already exist:
 
 ### 4. Is the ticket ready to be built from?
 
-Read the **Definition of Ready** in the repo's `SDLC.md` (default to this
-collection's own two-tier list when the file has none) and check the issue against
-its **ticket-level** tier only: the problem and who has it, the expected outcome
+Read the **Definition of Ready** section of the repo's `SDLC.md`. When
+`SDLC.md` has no such section, the product layer is not set up
+(`om-setup-discovery-pipeline` adds it): skip this step, treat the ticket as ready, and
+continue. Otherwise check the issue against its **ticket-level** tier only: the problem and who has it, the expected outcome
 and how it is checked, what is out of scope, no blocking open question left
 unanswered, and any autonomous assumption already confirmed by a human. A
 maintainer's explicit waiver on the ticket ("ready as is") satisfies the tier.
@@ -61,11 +63,13 @@ permissions, dependencies, prototype link — are **not** checked here: a coveri
 spec supplies them, and step F3c authors one when it is missing.
 
 When a ticket-level item is missing, post one idempotent comment (marker
-`` 🤖 `om-auto-fix-issue` — not ready ``, updated in place on re-runs, the same
-shape `om-auto-manage-issues` uses: the missing items as a list, addressed to the
-author, with the waiver sentence) and stop with `NOT_READY`. Never fill the gap
-yourself — a guessed problem statement is the failure this gate exists to
-prevent.
+`` 🤖 `om-auto-fix-issue` — not ready ``, the same shape
+`om-auto-manage-issues` uses: the missing items as a list, addressed to the
+author, with the waiver sentence). Find it via **list-issue-comments**, update it
+in place via **update-comment** when the missing-items list changes, and skip the
+mutation when it already reflects the current state. Then stop with `NOT_READY`.
+Never fill the gap yourself — a guessed problem statement is the failure this
+gate exists to prevent.
 
 ## Output contract
 

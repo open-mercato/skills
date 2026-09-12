@@ -5,7 +5,9 @@ honestly supports. The tag is part of the contract with the reader: it tells
 them how hard to push back.
 
 1. `[PRODUCT]` — this repository's own design contract (`.uxproof/`), its
-   analytics, or a documented team decision. Cite the rule or the file.
+   analytics, or a documented team decision, including confirmed brief/spec
+   decisions and accepted prototype behavior. Cite the exact rule or decision
+   and its acceptance source.
 2. `[STANDARD]` — WCAG, platform guidelines, or a regulation. Name which one
    (for example WCAG 2.4.7, or the DSA for consent patterns).
 3. `[PLATFORM]` — default framework or operating-system behavior users
@@ -20,5 +22,9 @@ Rules:
   argument destroys the value of every other tag in the report.
 - A review whose findings are mostly assumptions must say so in its summary,
   so the author knows how much of it is taste.
-- Without a design contract, tier 1 is unavailable. Say that once, on the
-  Contract line, instead of stretching lower tiers to sound authoritative.
+- Without `.uxproof/`, state that the visual contract is unavailable on the
+  Contract line. Confirmed brief/spec/prototype decisions can still support
+  `[PRODUCT]` findings about the accepted behavior. A neutral discovery prototype
+  does not establish visual fidelity requirements, and unconfirmed assumptions
+  never qualify as product rules. When no applicable product source exists,
+  tier 1 is unavailable for that claim.

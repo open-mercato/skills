@@ -1,4 +1,4 @@
-# Report templates
+# Discovery report
 
 Use this content guide for `om-discover`. The human-facing report should make the outcome understandable without repeating the brief. Adapt the wording to the user's language, combine related points and omit inapplicable commentary. Paragraph count and labels are flexible; output markers remain exact.
 
@@ -14,7 +14,9 @@ The brief is saved at {link}. {The decision, owner and agreed scope, with the re
 {What the brief supports next and why; the next action and whether it is offered, authorized and pending, completed or declined.}
 ```
 
-Add a short review note: material corrections and their consequence, or one sentence when no correction was needed. Disclose an inline-only review. Expand the explanation when a consequential disagreement or correction needs it; do not add a paragraph per tag or deferred section. Link a completed companion's report. If it returns a downstream `Next:`, check that action against this skill's authorization and readiness rules. Preserve an authorized, unstarted route with all its arguments in the final `Next:`; describe completed actions and unaccepted suggestions only in prose.
+Add a short review note: material corrections and their consequence, or one sentence when no correction was needed. Disclose an inline-only review. Expand the explanation when a consequential disagreement or correction needs it; do not add a paragraph per tag or deferred section. Link completed companions' reports using their exact returned paths. Keep the first panel and optional screen walk distinct, with their session evidence and limitations. Relay a written prototype's `Prototype:`, `Prototype context:` and actual `Verification:` fields before this skill's final contract lines. Do not emit artifact paths for work that produced no files.
+
+No child `Next:` is executed or forwarded automatically. Check any suggested action against this skill's authorization and readiness rules. Preserve only an authorized, unstarted route that is ready to run, with all its supported arguments, in the single final `Next:`; describe completed actions and unaccepted suggestions only in prose. A completed panel, prototype, screen walk or backlog dry run yields `Next: none` unless a separate outstanding action was authorized. Readiness blockers prevent a backlog handoff, and an incomplete or unverified prototype prevents a screen-walk handoff. A backlog dry run does not authorize issue filing.
 
 End with the applicable contract lines from `SKILL.md`:
 

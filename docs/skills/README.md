@@ -25,6 +25,7 @@ One card per skill, with its parameters and the companion skills it works with. 
 | [om-pipeline-retro](om-pipeline-retro.md) | 🧑‍💻 | Classifies finished runs and ranks what second passes cost, in wall-clock hours. |
 | [om-approve-merge-pr](om-approve-merge-pr.md) | 🧑‍💻 | Approves and squash-merges a PR by number, honoring the QA gate. |
 | [om-setup-agent-pipeline](om-setup-agent-pipeline.md) | 🧑‍💻 | One-per-repo configurator: writes the config, installs descriptors, generates project docs. |
+| [om-setup-discovery-pipeline](om-setup-discovery-pipeline.md) | 🧑‍💻 | Adds the product layer on top: product roles, the Discovery stage, the Definition of Ready, and protected decisions into SDLC.md between markers; optional, additive, idempotent. |
 | [om-apply-upgrade-notes](om-apply-upgrade-notes.md) | 🧑‍💻 | Applies UPGRADE_NOTES.md after an upgrade, preserving local edits. |
 | [om-check-and-commit](om-check-and-commit.md) | 🧑‍💻 | Runs the validation gate on the branch, fixes obvious drift, commits and pushes when green. |
 | [om-discover](om-discover.md) | 🧑‍💻 | Product-level discovery and define in three modes; leaves a product-brief.md built from real material, with tagged evidence and owned decisions. |
@@ -34,7 +35,7 @@ One card per skill, with its parameters and the companion skills it works with. 
 | [om-prepare-issue](om-prepare-issue.md) | 🧑‍💻 | Files one well-formed, labeled tracker issue from a brief without implementing it. |
 | [om-spec-writing](om-spec-writing.md) | 🧑‍💻 | Writes and reviews feature specs to staff-engineer standards. |
 | [om-ux-review-pr](om-ux-review-pr.md) | 🧑‍💻 | Design-judgment review of a PR's UI: walks screens in a real browser, posts evidence-tagged findings with done-when criteria. |
-| [om-ux-style](om-ux-style.md) | 🧑‍💻 | Builds a declared design contract from scratch — moodboard, principles, tokens for both themes, components with states — into `.uxproof/` plus a theme.css for prototypes. |
+| [om-mockup-prototype](om-mockup-prototype.md) | 🧑‍💻 | Creates neutral clickable discovery prototypes from the brief and first synthetic panel, with flow context, assumptions and browser checks. |
 | [om-ux-setup](om-ux-setup.md) | 🧑‍💻 | Extracts the repo's design contract (tokens, components, archetypes, conventions) into committed files. Once per repo. |
 | [om-ux-shape](om-ux-shape.md) | 🧑‍💻 | Turns a vague feature idea into a decided direction: scope, interaction contract, validation plan; AI-necessity gate included. |
 | [om-followup-issue-from-pr](om-followup-issue-from-pr.md) | 🧑‍💻 | Turns a PR or PR comment into a tracked follow-up issue. |

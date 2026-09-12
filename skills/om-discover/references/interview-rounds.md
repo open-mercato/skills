@@ -4,7 +4,7 @@ Use the material to identify the decision this session needs to support. Ask abo
 
 ## Sources before questions
 
-Read the research directory, the relevant repository files, the tracker when available (read-only), and benchmarks the user points at. Ask the user for facts and decisions only they can supply. Do not ask them to repeat what a source already says. An answer of “we do not know” settles that gap for this session; reopen it only when new material or a correction changes what can be answered. When sources disagree, cite the disagreement and ask only about what you cannot resolve by reading.
+Read the research directory, the relevant repository files, the tracker when available (read-only), and benchmarks the user points at. Check which revision the material describes before calling a discrepancy current. Ask the user for facts and decisions only they can supply. Do not ask them to repeat what a source already says. An answer of “we do not know” settles that gap for this session; reopen it only when new material or a correction changes what can be answered. When sources disagree, cite the disagreement and ask only about what you cannot resolve by reading. A factual correction supported by an authoritative source is a finding to report, not a policy choice to approve; any implementation correction stays outside discovery's write surface.
 
 Establish the current decision from the request and material before choosing questions. If it is unclear, start with one question, such as "What do you need to decide after this conversation?" A decision might be whether to investigate a problem, test an idea, narrow a proposed scope, or proceed with a known change. Do not assume that every session must justify building a product.
 
@@ -18,6 +18,8 @@ Distinguish two kinds of question:
 
 - **Research:** ask what happened, what someone did, what it cost, or what supports a claim. Do not suggest an answer, attach a recommendation, or supply a numeric example. Let the user describe one real experience in their own words. If the answer format is unclear, a prompt such as "Start with the last time it happened" is enough.
 - **Decision:** ask the authorized person to choose between known alternatives or set a constraint. When the evidence supports a recommendation, explain what it rests on and the actual tradeoff. Do not invent an option, a target, or a counterargument to complete a question format. Without a basis for recommending, present the choice plainly.
+
+Separate current facts from desired policy. Naming a role does not decide its responsibilities, and assigning a reviewer does not decide when review is required. Resolve a recommendation's unknown prerequisite first, or state the alternatives conditionally without treating one as the settled default.
 
 For example, a research question can be:
 

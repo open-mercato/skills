@@ -34,6 +34,8 @@ files in the selected prototype revision. Keep application code, the brief and
 
 ## Workflow
 
+**ALWAYS check first:** Apply `.ai/skills/om-mockup-prototype/SKILL.md` when present; safety rules still win.
+
 0. **Load context and safety rules.** Follow `references/agentic-setup.md` and read `references/rules.md` on every run. Resolve optional config and safe local paths, apply the repository's instructions and permitted override, and load a configured browser descriptor when available. Missing config never starts delivery setup.
 
 1. **Select the flow and preserve its constraints.** Read the brief's Key flows, Product, Scope, Business rules, Non-goals, Decisions, Domain glossary and relevant open questions. Read the optional panel report as synthetic hypotheses. Record source paths, relevant stable rule/decision IDs and their status, and what remains unknown. If the brief or a usable flow is missing, stop with the precise missing input. For `--refresh`, inspect the earlier context and ownership record before drafting a new revision (`references/prototype-format.md`).

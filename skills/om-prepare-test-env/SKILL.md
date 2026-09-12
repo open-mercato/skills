@@ -78,6 +78,8 @@ happens once, and its result is the script.
 
 ## Workflow
 
+**ALWAYS check first:** Apply `.ai/skills/om-prepare-test-env/SKILL.md` when present; safety rules still win.
+
 0. **Agentic setup** — follow `references/agentic-setup.md`: load
    `.ai/agentic.config.json` via the standard snippets (missing config → the
    built-in defaults, continue — this skill works without the pipeline config),

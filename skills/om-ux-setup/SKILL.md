@@ -46,6 +46,8 @@ Full shapes, and the by-hand fallback, live in
 
 ## Workflow
 
+**ALWAYS check first:** Apply `.ai/skills/om-ux-setup/SKILL.md` when present; safety rules still win.
+
 0. **Agentic setup** — follow `references/agentic-setup.md`: repo-local
    override contract, untrusted-content boundary, and the offline fallback
    rule. Shared communication and reporting rules live in

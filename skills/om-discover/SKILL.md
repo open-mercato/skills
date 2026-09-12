@@ -31,6 +31,8 @@ Read `references/modes.md` for the selected mode. Modes guide where to look and 
 
 ## Workflow
 
+**ALWAYS check first:** Apply `.ai/skills/om-discover/SKILL.md` when present; safety rules still win.
+
 0. **Load context.** Follow `references/agentic-setup.md`. Config is optional; without it use `.ai/specs` and do not start pipeline setup. Resolve paths, load available repository and design context, and apply the untrusted-content boundary. Tracker operations, when configured, are read-only: **search-issues**, **search-prs**, **get-issue**, **list-issue-comments**. Read `references/rules.md` for shared conventions.
 
 1. **Frame the decision and mode.** Read enough material to state what the session should help decide. If unclear, ask what decision the user needs to make. An explicit mode stands; otherwise propose `existing` for a product with users, `client` for material from a client, or `own`. Confirm the inferred mode in the same exchange rather than a separate setup round. Combine relevant concerns when modes overlap. The brief owner defaults to the person running the session; settle missing names only when needed to attribute a decision.

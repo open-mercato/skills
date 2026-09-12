@@ -275,6 +275,28 @@ The first team session produced rounds nobody in the room could answer: "the pri
 
 A first test with the team showed the seam between the pre-Intake skills: after `om-discover` wrote the brief, the user had to know that the panel comes next, that its result only enters the brief through `--refresh`, and that the backlog refuses until the Definition of Ready is met. Run one by one, the skills made no sense to someone who had not written them. `om-discover` now ends with a hand-off: one yes/no at a time, the synthetic panel optional, the backlog only when the brief is ready, one more decision round when it is not. Each step still runs the named skill verbatim with its own confirmation stop, so nothing became autonomous. A separate orchestrator skill was rejected: it would duplicate the readiness logic that already lives in `om-backlog` and the refresh logic in `om-discover`, and it would be one more name to learn. In the same change, housekeeping questions (where the brief lands, who owns it, a missing founder's name) left the eight-question round: the first run in a repository without a config spent a round seat proposing a path from a neighbouring folder, and another asking the person running the session who owns the brief.
 
+## 2026-09-10: Discovery follows the current decision
+
+The review of `om-discover` and an existing product brief found that required recommendations were leading research answers, rounds were chosen to fill sections, and repeated decisions made the brief difficult to use. This revises the question format and handoff described in the discovery entries of 2026-09-02 and 2026-09-03.
+
+Default rounds contain two or three independent questions about uncertainties that can change the decision. Experience and evidence questions have no suggested answer; recommendations belong to choices with explainable alternatives. Quick mode has one substantive round, while a full session allows three including skeptic questions unless the user asks for more. A new short Decision summary points to the existing sections and canonical rule rows. Optional gaps become research tasks only when they matter to the current decision or the user requests that research.
+
+Source tags remain provenance markers. Observations, decisions and hypotheses are distinguished in the wording and table context: agreeing to a proposal does not confirm its factual premise. The Coverage output shape and legacy tagged-line counting scope stay unchanged. Since that scope excludes Hypotheses to test, its synthetic count remains zero in a conforming brief and a separate header note makes the excluded hypotheses visible. Readiness checks inspect the relevant claims and sources rather than the total.
+
+Existing headings, argument names, ids and table fields remain. Missing ownership, source and change-control columns are appended; older briefs remain readable. The skeptic corrects source errors directly and returns consequential unresolved choices to the user. Handoffs follow the decision's needs; a synthetic panel requires a concrete flow and is optional. Local confirmed choices and direct personal accounts may be captured as sources, with their origin and limits preserved. Shared reporting conventions across the collection are unchanged.
+
+## 2026-09-11: Use design thinking inside the discovery conversation
+
+The user approved four additions: start from a real situation, distinguish interpretation from observation, frame the need without prescribing a feature, and connect alternatives and prototypes to the decision. These fit inside the existing rounds and brief sections. Settled choices remain binding; no additional workshop or artifact is required.
+
+The adaptation draws on [IDEO's process](https://designthinking.ideo.com/process), [IDEO.org's insight statements](https://www.designkit.org/methods/create-insight-statements.html) and [How Might We](https://www.designkit.org/methods/how-might-we.html). They inform the instructions; reading these external pages is not a runtime prerequisite. The existing evidence rules and experiment checks remain in force.
+
+## 2026-09-12: Correct discovery questions, reporting and handoffs
+
+The user approved the whole-skill audit's fixes. Interview-note fields now capture the actual task, actions, outcomes and alternatives without presuming a problem or failure. Discovery reports summarize the decision, evidence, consequential unknown and next action; their paragraphs can be combined. This scoped reporting rule lives under `om-discover specifics` and replaces its generic expansion requirement. The authoring and review instructions point to this scoped exception. Other skills' reporting conventions are outside this change; same-named reference files were compared before editing.
+
+`Next:` retains its parser shape and now names only an authorized action that has not started and is ready to run. Offers and completed actions stay in prose. Panel handoffs select the subject independently of the stance: a running-product check uses `--app`, while a written-flow review is explicitly narrative. Refresh collects tracker decisions before drafting and repeats the checks when reviewed content changes. Existing brief headings, fields, ids, source tags and Coverage counting are preserved.
+
 ## Deferred
 
 - A bespoke `npx open-mercato-skills` installer CLI. skills.sh covers installation in v1.

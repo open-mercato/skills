@@ -1,47 +1,46 @@
 # Report templates
 
-Final-report shapes for `om-discover` (workflow step 9). Fill them exactly and expand with detail — the reader did not sit in the session. End with the Output contract lines from the skill body, one per line, exact and undecorated.
+Use this content guide for `om-discover`. The human-facing report should make the outcome understandable without repeating the brief. Adapt the wording to the user's language, combine related points and omit inapplicable commentary. Paragraph count and labels are flexible; output markers remain exact.
 
 ## Brief written
 
+A compact report can read:
+
 ```markdown
-## 🎯 om-discover — product brief
+The brief is saved at {link}. {The decision, owner and agreed scope, with the reason it serves the current need.}
 
-📋 **Mode and why.** {the mode chosen, what in the repository or the material decided it, and who signs the Definition of Ready in this mode}
+{Independent source basis and its limits; the consequential unknown, what it blocks and who can resolve it. Include synthetic hypotheses separately when present.}
 
-📝 **What the brief establishes.** {the vision in one sentence; the users and the problem; the scope split; the decisions taken this session, each with its owner}
-
-📸 **What it rests on.** {the sources used, and the coverage line in words: how much is interviews and data, how much is synthetic or assumed, and which sections are thinnest}
-
-⚠️ **What is still missing.** {every section on the collection plan with who, how, and by when; every blocking open question and who can answer it; the riskiest assumption and its test}
-
-🔍 **What the skeptic changed.** {claims that lost a tag or moved to the collection plan; questions that went back to the user; what held}
-
-🧪 **Ready for what.** {whether the ticket-level tier of the Definition of Ready is satisfied on tiers 1 to 5; what the next skill can start from and what it cannot yet}
-
-🧭 **Next step.** {what the hand-off offered (the synthetic panel on which flow, the backlog dry run, one more decision round), what the user chose, and what ran as a result, with its own contract lines quoted when a skill ran}
-
-Product brief: {…}
-Coverage: {…}
-Collection plan: {…}
-Next: {…}
+{What the brief supports next and why; the next action and whether it is offered, authorized and pending, completed or declined.}
 ```
 
-Include `Collection plan:` only when the gate held anything back; `{k}` counts entries, in the same shape as the brief header. Always end with `Elapsed: <minutes per step>` before the contract lines, so the next run can be sized.
+Add a short review note: material corrections and their consequence, or one sentence when no correction was needed. Disclose an inline-only review. Expand the explanation when a consequential disagreement or correction needs it; do not add a paragraph per tag or deferred section. Link a completed companion's report. If it returns a downstream `Next:`, check that action against this skill's authorization and readiness rules. Preserve an authorized, unstarted route with all its arguments in the final `Next:`; describe completed actions and unaccepted suggestions only in prose.
+
+End with the applicable contract lines from `SKILL.md`:
+
+```text
+Elapsed: {observed minutes per step, or timing not recorded}
+Product brief: {repo-relative path}
+Coverage: {legacy count from the brief, without the collection-plan suffix}
+Collection plan: {k} entries waiting for material
+Next: {authorized, unstarted skill action and supported args, or none}
+```
+
+Emit `Collection plan:` only when actual material requests remain. It does not count deferred optional sections. Coverage counts tagged lines, not independent evidence or product validation; its synthetic count excludes the Hypotheses section. State that section's separate count in prose when nonzero. Apply the `Next:` states in `SKILL.md`; an offer or a completed action is not an instruction to run it.
 
 ## Quick pass
 
-Under `--quick`, the report is the *Brief written* shape with the header line `Quick pass — one round, inline skeptic, critical gate items only.` and one more paragraph, **🔁 What a full run would add**: the sections left on the collection plan by the mode rather than by missing material, the skeptic checks that needed a fresh pair of eyes, and the gate items not scored.
+Use the same content guide, normally in two or three short paragraphs plus the contract lines. State that this was a quick pass with an inline review; give the actual number of question rounds only if useful. State the important undecided point and whether deeper work would help the current choice. Do not turn untouched sections into homework or imply that quick mode skipped source, coherence or compression checks.
 
-## Nothing written — collection plan only
+## Collection plan only
 
-When the gate found no material for the ticket-level sections and the user did not choose to continue on assumptions, the report is the plan itself: the sections waiting, who can answer them, how, the owner and the date, and the capture templates written under the research directory. Close with why nothing was written (the sections that would have been fiction) and the contract lines:
+When the user has not chosen to draft assumptions and essential material is absent, report the specific requests, the decisions they block and the supplied capture templates. Name owners and timing only when known. Do not emit `Product brief:` or `Coverage:` when no brief was written.
 
-```
+```text
 Collection plan: {k} entries waiting for material
 Next: none
 ```
 
 ## Refresh
 
-On `--refresh`, the report adds a **🔁 What changed** section: sections rewritten and why, decisions superseded (old id → new id, owner), coverage before and after, and collection-plan entries closed.
+Briefly state what changed: scope or evidence, superseded ids and their replacements, closed requests, and any changed readiness conclusion. Fold this into the outcome paragraph when it is short. Distinguish new independent material from edited or deduplicated prose; a changed count alone does not mean stronger evidence.

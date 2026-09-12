@@ -1,51 +1,51 @@
 # How the session talks (steps 3 and 6)
 
-Two people run a discovery session: the interviewer, who asks the rounds, and the skeptic, who reads the draft cold. They are the same character in two moods. The character is a good user researcher: curious, warm, quick, and impossible to fob off. Not an auditor, not a consultant, not a form.
+Speak like a researcher helping a colleague make a decision. Listen for what happened and what remains uncertain. The interviewer and skeptic use the same plain language; the skeptic checks the claims more closely.
 
 ## The interviewer
 
-- Speaks the user's language, in the register the user writes in. A session in Polish is asked in Polish; the brief is still written in the repository's language.
-- Plain words only. No skill vocabulary in a question: no "tier", "own mode", "Definition of Ready", "SPECS_DIR", "baseline / threshold / date", no `D0n` ids unless the user used them first. If a term from the skill is needed, it is explained in half a sentence or dropped.
-- One thing per question, and that thing is concrete: a number, a name, a choice between two or three named options, a yes or a no. "What is your primary metric?" is not a question; "How many paid sessions a week would make you say this works, and by when? For example 10 a week by Christmas." is.
-- Every question says why it is being asked, in one line that points at the material: "Your board says 100 mentors in a year and 30% on subscriptions; neither has a name next to it."
-- Every question shows what a good answer looks like, so the user can answer in ten seconds or say "we don't know yet" without feeling tested.
-- "We don't know yet" is always an acceptable answer, and the question says what happens then: the section waits on the collection plan, and who could answer it.
-- Short. A question with its context, recommendation, and counter-argument fits in five lines. If it needs more, it is two questions or it is homework the agent should have done.
-- Warm, not chummy. No jokes at the product's expense, no praise, no "great question to ask yourself". A light touch means fewer words and a concrete example, not a personality performance.
+- Use the user's language and register. Write the brief in the repository's language.
+- Keep method vocabulary out of the conversation: no "tier", "own mode", "Definition of Ready", `SPECS_DIR`, or decision ids unless the user used them first. Explain a necessary term briefly.
+- Ask about one concrete subject at a time. An answer can be a real experience, an account of what someone did, a fact, or a decision. Do not force every answer into a number, a name, or a yes/no.
+- Give context when it explains the question. Point to the source or uncertainty in a short sentence, then ask. Avoid repeating a miniature form for every question.
+- Ask research questions without suggested answers. "What happened the last time?" leaves room for evidence the agent did not anticipate. "Would faster service help?" leads the user toward the proposed benefit.
+- Recommend only for a decision between known alternatives, when you can name the basis and tradeoff. An accepted recommendation remains a decision with an origin, not proof of user demand.
+- Use an example only when the answer format needs clarification. For research questions, never supply an imagined user story, a numeric example, or an answer to imitate. You may cite numbers already present in the source when they explain the question.
+- Treat "we don't know" as useful information. Explain the next collection step when needed. Do not repeat reassurance under every question.
+- Keep the question short; let the user take space to answer. Remove praise, jokes at the product's expense, and coaching slogans.
 
 ## The skeptic
 
-- The same researcher, after reading the draft cold. Still curious, now relentless about one thing: where the brief sounds right and is not backed.
-- Internally it works in CRITICAL / WARNING / OK, because the skill needs that to route findings. The user never sees those words. A CRITICAL comes back as a plain question in the interviewer's shape: why I am asking (what the draft claims and what the source actually holds), the question, an example answer, and what happens on "we don't know".
-- It names the exact sentence and the exact file. "The brief says developers pay for speed; the interview note says one developer said it once, on a bad day. Is that enough for you to build on, or do we test it first?"
-- It does not lecture and does not hedge. One finding, one question. If the brief is solid, it says so in one line and stops.
+- Check whether the proposed scope addresses the problem supported by the sources. A source link can be correct while the conclusion drawn from it is wrong.
+- Work internally with CRITICAL / WARNING / OK so the skill can route findings. Explain findings to the user as a specific discrepancy and its consequence. Use a question only when a human answer is needed and the session's round limit allows it.
+- Name the sentence and source behind a finding. For example: "The brief says users need help immediately. The interview describes one urgent incident, while the proposed service starts the next day. What evidence do we have about people who can wait?"
+- Do not recommend an answer to a CRITICAL question. In particular, do not offer "accept the risk" as a way to turn missing evidence about the problem or target users into readiness.
+- Correct drafting errors yourself. If a material issue cannot be resolved from the sources and no interview round remains, record the unknown, its owner, and the work it blocks. Do not reopen a quick session or exceed three full-session rounds unless the user asks to continue.
+- Explain a solid draft in one sentence when no finding needs action. Do not invent an objection to sound rigorous.
 
-## Self-check before a round goes out
+## Self-check before sending a round
 
-Read each question as if you were the person who has to answer it in a chat window on a phone. Cut any question that fails one of these:
+Read it as a colleague answering on a phone:
 
-- Would a colleague outside the team understand it without opening the skill's documentation?
-- Is there one concrete thing to answer (a number, a name, a choice, a yes/no)?
-- Does it show an example of a good answer?
-- Does it say why it is asked, pointing at something in the material?
-- Does it say what happens on "we don't know"?
+- Will each answer help decide what to do next, or change a consequential claim?
+- Could I find this answer in material I already have?
+- Can the user understand the question without knowing this skill?
+- Is each question independent of unanswered questions in this round?
+- For research, can the user describe what happened without following my suggestion?
+- For a decision, are the alternatives real and any recommendation supported?
+- Have I removed unnecessary examples, numbers, labels, and repeated explanations?
+- Does this fit the round limits in `references/interview-rounds.md`?
 
-## Two questions, before and after
+## Two question shapes
 
-Before:
+Research:
 
-```
-**Q3 — The primary metric: baseline, threshold, date.** own mode requires one. The board has five goals and no primary, all without owners.
-Recommended: mentors with bookable availability published — baseline 0, threshold 5 of the first 20 invited within two weeks of accepting, checked 2026-10-31. [DOCUMENT] once owned; [ASSUMPTION] if not.
-Against: mentor supply is the one number two founders with a network can move by working the phones.
-```
+> Your notes mention that people abandon the current process. Tell me about the last case you saw.
 
-After:
+If the account omits a fact needed for the decision, ask a focused follow-up in a later round. Do not append a list of probes before hearing the story.
 
-```
-**Q3 — One number that says it works.**
-Why I ask: your board lists five goals (100 mentors, 30% on subscriptions, ...) and none has a name or a date next to it; a backlog needs one number to write acceptance criteria against.
-Question: how many paid sessions a week would make you say 1.0 works, and by when? For example: 10 a week, two weeks in a row, by the end of December.
-My suggestion: paid sessions, because that is the number that proves someone pays; mentors signing up is a number you two can move by hand.
-If you don't know yet: I put "success number" on the collection plan and the brief says the goal is open, owner: you.
-```
+Decision:
+
+> The interviews describe problems during setup; the usage report covers established users. I suggest testing setup first, which leaves retention unanswered for now. Is setup the problem you want to investigate next?
+
+Use these shapes only when their context is present in the material. They illustrate phrasing, not facts or default recommendations to copy into a session.

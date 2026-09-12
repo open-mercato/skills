@@ -64,6 +64,11 @@ points there; **never re-explain the detail here**, or the copy drifts.
    `skills/om-auto-create-pr/references/rules.md` (Reporting style, Label
    commentary) and each skill's `references/report-templates.md`.
 
+   Scoped exception: `om-discover` follows its skill-specific reporting rules
+   and content guide. Paragraph structure and decorative emojis are optional;
+   required content and machine markers remain mandatory. Other skills retain
+   the shared reporting standard.
+
 3. **Consistent emoji usage.** All user-facing output draws from **one shared
    glossary**, reproduced verbatim in every skill's `references/rules.md`:
 

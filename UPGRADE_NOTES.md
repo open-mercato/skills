@@ -14,6 +14,20 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-09-19 — `set_pipeline_label` removes competing labels under zsh
+
+`set_pipeline_label` in the GitHub tracker descriptor iterated the pipeline labels with
+`for label in $PIPELINE_LABELS`. zsh does not word-split an unquoted parameter expansion,
+so under zsh (the default login shell on macOS) the loop ran once with the whole string as
+one label, removed nothing, and pipeline labels silently stopped being mutually exclusive.
+The loop now splits on newlines through `read`, which behaves the same in sh, bash and zsh,
+and `scripts/test-tracker-providers.mjs` runs the function under each available shell.
+
+- **Migration:** re-sync `.ai/trackers/github.md` (and the companion copy installed next to
+  `linear.md` or `jira.md`) from `om-setup-agent-pipeline`'s shipped descriptor, or replace
+  the `set_pipeline_label` body by hand. A repository whose copy still contains
+  `for label in $PIPELINE_LABELS` is affected whenever a skill runs under zsh.
+
 ## 2026-09-09 — New skill: om-mockup-prototype, neutral discovery flows
 
 `om-mockup-prototype` creates a neutral clickable prototype after the first

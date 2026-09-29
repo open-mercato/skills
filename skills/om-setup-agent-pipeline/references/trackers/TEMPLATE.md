@@ -65,7 +65,7 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 - **review-pr** — number, verdict (approve / request changes), body.
 - **merge-pr** — number; squash by default.
 - **mark-pr-ready** — promote a draft PR.
-- **get-pr-checks** — number → CI check runs (name, state, link).
+- **get-pr-checks** — number → CI check runs (name, state, link). Document whether this surface can under-report while CI is starting up — on trackers where a queued pipeline registers its jobs lazily, a short result means "not yet known", not "nothing to run", and consumers must cross-check the run level (**list-runs** below, filtered to the PR head SHA) before reading a green verdict out of it.
 - **get-required-checks** — base branch → required status checks; when unreadable, treat all reported checks as required.
 - **get-pr-comment / get-review-comment** — comment id → body, author, URL (conversation vs inline review comment).
 - **list-review-comments** — number → the PR's inline review comments (file, line, author, body). This is how a skill reads feedback left *on the diff* rather than in the conversation: `om-auto-review-pr` carries it as inherited findings, and `om-auto-continue-pr` mines it for remaining work when it adopts a PR that has no execution plan. When the tracker has no separate inline-comment surface, document that here — consumers degrade to review bodies plus conversation comments and say so in their report.

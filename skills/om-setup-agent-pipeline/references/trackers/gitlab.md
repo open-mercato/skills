@@ -710,7 +710,7 @@ gl_get "projects/$(gl_project)/merge_requests/{prNumber}" -e '(.draft // false) 
 ```
 
 #### get-pr-checks
-`{prNumber}` → the jobs and downstream-pipeline bridges of the MR's head pipeline, with `name`, `state`, `bucket` (`pass`/`fail`/`pending`/`skipping`/`cancel`, the same buckets `github.md` reports), `link`, and the stage as `workflow`. No head pipeline means no CI ran: an empty list.
+`{prNumber}` → the jobs and downstream-pipeline bridges of the MR's head pipeline, with `name`, `state`, `bucket` (`pass`/`fail`/`pending`/`skipping`/`cancel`, the same buckets `github.md` reports), `link`, and the stage as `workflow`. No head pipeline means no CI ran: an empty list. A newly created pipeline can still under-report here while its jobs register, so consumers must cross-check **list-runs** at the MR head SHA before treating a short list as green.
 ```bash
 gl_pr_checks() {
   local p head pid pp jobs bridges

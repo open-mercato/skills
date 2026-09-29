@@ -50,13 +50,31 @@ disabling checks to pass is forbidden, and a repo-local override cannot relax th
 
 - PR mode: **get-pr-checks** for `{prNumber}` (name, state, link) and
   **get-required-checks** for the base branch; when required checks are unreadable,
-  treat all reported checks as required.
+  treat all reported checks as required. Then **always** take the second reading
+  below before trusting the first.
 - Branch mode (`--ci-only --branch <name>`): **list-runs** for the branch; take the
   newest run per workflow; **get-run** for the per-job breakdown.
 
-Classify every check as passing, pending, or failing. Nothing failing and nothing
-pending → report "already green". Checks pending → **watch-run** (or poll) until they
-settle before diagnosing, under the wait budget below.
+**The completeness guard — a short check list is not a green one.** The check-run
+surface reports *jobs*, and a workflow run the tracker has already created
+contributes **no rows at all** until its jobs register. On a head pushed seconds
+ago — which is exactly when this loop looks — the list is legitimately partial, and
+the jobs still to appear are neither passing nor pending but simply *absent*, so the
+"nothing failing and nothing pending" test passes vacuously and the loop reports
+green off a run that has not started. Before classifying anything, run **list-runs**
+on the PR head branch, keep the runs whose `headSha` is the PR head SHA, and count
+every run whose `status` is not `completed` as PENDING in its own right, whatever the
+check list says.
+
+Classify every check as passing, pending, or failing, and fold in the incomplete
+runs from the guard. Nothing failing and nothing pending **in either reading** →
+report "already green"; the two readings must agree, and when they disagree the run
+level wins. Anything pending → **watch-run** (or poll) until they settle before
+diagnosing, under the wait budget below. Report the reading that produced the
+verdict — "N checks, M workflow runs at `<sha>`, all completed" — so a green claim
+is auditable rather than asserted; a run that never got created is indistinguishable
+from one the path filters skipped, so that residue is disclosed as pending CI (see
+`references/ci-followup.md`) and never resolved by guessing.
 
 ### The fix → push → re-check loop (up to `--max-iterations`, default 5)
 

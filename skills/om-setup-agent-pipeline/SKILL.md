@@ -43,6 +43,7 @@ Every skill in this collection reads its repository-specific settings from `.ai/
     "scripts": ".ai/scripts",
     "qa": ".ai/qa"
   },
+  "designTokens": null,
   "reviewChecklist": null,
   "closeKeywords": []
 }
@@ -67,8 +68,9 @@ Field reference:
 - `engine.stepReview` — optional; how often the loop skills code-review landed work mid-run: `final` (default — only the authoritative end-of-run review), `checkpoint` (review the diff at every checkpoint pass), or `per-step` (review each Step's commit as it lands). Blocker/major findings are fixed immediately as `X.Y-review-fix` Steps; minors defer to the final review, which runs in every mode.
 - `paths.runs` — where execution plans of autonomous runs are stored.
 - `paths.analysis` — where generated reports are stored.
-- `paths.specs` — where feature specifications live (default `.ai/specs`). Spec filenames follow `{YYYY-MM-DD}-{kebab-case-title}.md`. `om-spec-writing` writes here, `om-prepare-issue` links from here, `om-followup-issue-from-pr` checks here first in design-doc mode, and `om-brainstorm` writes handoff briefs under `<paths.specs>/briefs/`.
-- `paths.prototypes` — optional repository-relative root for local prototypes (default `.ai/prototypes`). Discovery prototypes live under `discovery/<slug>/`. Preserve a configured value; use the default silently when absent and do not add a setup question. Prototype skills create their own output directories when needed.
+- `paths.specs` — specification root (default `.ai/specs`); filenames use `{YYYY-MM-DD}-{kebab-case-title}.md`, with handoff briefs under `<paths.specs>/briefs/`.
+- `paths.prototypes` — prototype root (default `.ai/prototypes`); discovery prototypes use `discovery/<slug>/`. Preserve configured values; otherwise use the default and do not add a setup question. Prototype skills create their output directories.
+- `designTokens` — optional repo-relative snapshot, unset by default. Preserve it without asking.
 - `paths.scripts` — where reusable environment scripts are generated (default `.ai/scripts`); `om-prepare-test-env` writes the env bring-up/teardown scripts here.
 - `paths.qa` — where QA working state and artifacts live (default `.ai/qa`): the shared `test-env.json` descriptor, and QA reports/screenshots under `<paths.qa>/artifacts_<runId>/`.
 - `reviewChecklist` — optional path to a repo-local review checklist file. When set, the `om-code-review` skill reads it in addition to its built-in checklist. A root `CODE_REVIEW.md` (see Project docs) is always picked up regardless.

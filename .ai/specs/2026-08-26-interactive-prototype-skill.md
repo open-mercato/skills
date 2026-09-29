@@ -179,6 +179,9 @@ What those tools carry that this skill should keep skipping: a runtime, an accou
 
 ## 📋 Implementation Plan
 
+The phases below preserve the original extraction plan. For #106, the amended
+**Rollout** section below governs the release prerequisite.
+
 ### Phase 1 — Decouple upstream (separate repository, prerequisite)
 
 Proven against a real design system before anything lands here (D5).
@@ -216,7 +219,33 @@ Proven against a real design system before anything lands here (D5).
 
 ## 📋 Rollout
 
-Phase 2 is a single additive pull request here, mergeable once Phase 1 is verified upstream. No installation is affected until a user adds the skill; existing installs are untouched because nothing shared changes. Phase 3 is an upstream follow-up with no dependency in this direction.
+The original Phase 1 → Phase 2 extraction required the upstream decoupling to
+land first. For PR #106, the [replacement proposed on 2026-09-14](https://github.com/open-mercato/skills/pull/106#issuecomment-5667076965)
+was [accepted by @matgren](https://github.com/open-mercato/skills/pull/106#issuecomment-5678863467). The detailed-design workflow now ships
+as `om-ux-design`, per `.ai/specs/2026-09-14-ux-design-skill.md`; this collection is
+the source going forward. The original phases above remain the extraction
+history, with the following gate governing #106:
+
+1. Pin the imported upstream source to `open-mercato/open-mercato` commit
+   `9ea83205be7447867c042bbcfd3caaa9b4cadfb5` and record every source-to-destination file mapping.
+2. Account for all intentional differences under `skills/om-ux-design/`,
+   including the detailed workflow, portable templates, helper fixes and
+   comment-engine changes. Preserve the comparison and verification evidence in
+   `.ai/runs/2026-09-15-ux-design-import-verification.md`.
+3. Retain the recorded browser executions and upstream baseline results, and
+   pass the collection's configured validation commands on the current #106 head.
+   Any later implementation changes require an updated comparison and relevant
+   verification before review.
+4. Obtain @pkarw's explicit confirmation of this revised condition and fresh
+   review of the current #106 head. He raised the original gate in the
+   2026-09-04 review; @matgren specifically retained this confirmation before
+   changing the pipeline label.
+
+`blocked` remains until item 4 is satisfied; this amendment alone does not clear
+it or authorize merging. Once the revised gate is confirmed and its evidence is
+accepted, #5832 merging is no longer a prerequisite for #106. Phase 3 remains an
+independent upstream consumption follow-up. The shipped discovery skill
+`om-mockup-prototype` from #107 is outside this amendment.
 
 ## 📋 Open question for the design-system track owner
 
@@ -247,3 +276,4 @@ The body above is written product-agnostically because the imported files must c
 - **2026-08-26** — Initial spec. Three-layer decoupling (base tokens from a committed snapshot, theming contract as a substituted primitive with a file-swap seam, visual primitives kept without a fidelity claim), three-phase rollout across two repositories, and one boundary question referred to the upstream design-system track owner.
 - **2026-08-29** — Review revision. Corrected the origin story: the skill is merged and stable upstream, not stranded, so the coupling argument carries the problem statement and no rescue phase exists. Added the concrete-pointers appendix, the screen-anatomy template with override scaffolding (new Phase 2 step 13), the desktop-only viewport scope, the re-anchoring mismatch check in the engine checklist, and the `om-ux-shape` `agents/` correction in the contract inventory.
 - **2026-08-31** — Step 13 states its relation to the D5 gate: new behavior touching no design-system surface, verifiable in any repository, so it does not require the upstream Phase 1 proof.
+- **2026-09-15** — Recorded the #106 rollout amendment accepted by @matgren: pinned-source import, complete file mapping, accounted differences and retained verification replace upstream merge ordering, subject to @pkarw confirming the condition and re-reviewing the current head before `blocked` is removed.

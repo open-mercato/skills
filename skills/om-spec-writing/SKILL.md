@@ -27,6 +27,11 @@ Design and review feature specifications against the project's architecture, nam
 4. **Iterate** — apply the answers, fill in the skeleton, remove the Open Questions block once all are resolved. If new unknowns surface later, repeat the gate for those questions only.
 5. **Research** — challenge the requirements against open-source market leaders in the domain. What do they get right that this spec ignores? What complexity do they carry that this spec can skip?
 6. **Design** — the architecture: components, data model, contracts, failure modes.
+   Reuse the exact accepted design version and scope when supplied. Keep a pending
+   design linked as a proposal; do not replace an accepted `Prototype:` reference
+   until the owner accepts the new version and authorizes that update. Detailed
+   screens can be requested through `om-ux-design` as an optional separate task;
+   do not invoke it automatically or make it a prerequisite for writing this spec.
 7. **Implementation breakdown** — split delivery into **Phases** (stories) and **Steps** (testable tasks). Each step must leave the application working. This structure maps directly onto `om-auto-create-pr`'s execution plan: a well-broken-down spec can be handed to it phase by phase, with the spec referenced as `Source doc:`.
 8. **Review** — apply the review checklist below. Delegate the scope-cohesion item to a fresh-context subagent that receives only the spec file path — an author cannot adversarially re-read their own spec.
 9. **Output** — finalize the file and report in 3–6 short lines: proposed outcome, the file link, open decisions or review blockers, and next action. Keep the design detail in the file. When the spec ships as a PR, `om-followup-issue-from-pr` can file the `Implement:` tracking issue once it merges.
@@ -60,7 +65,7 @@ Use the relevant sections below; omit empty sections and standard framework beha
 
 ## 📝 UI/UX
 {Flows, states, accessibility; only what is unique — not standard CRUD}
-Prototype: {repo-relative path, when one exists — the mockups om-auto-write-spec renders under assets, or an interactive prototype directory; once accepted it is the artifact the review skills compare the implementation with. Omit the line when there is none.}
+Prototype: {repo-relative path to the exact accepted design version, when one exists — accepted mockups under assets or an interactive design with its launch record. Record the acceptance evidence and accepted scope nearby. Omit the line when no version is accepted; link pending proposals separately.}
 
 ## 📝 Edge Cases & Failure Scenarios
 {What breaks, and what the user sees when it does}

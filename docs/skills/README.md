@@ -36,6 +36,7 @@ One card per skill, with its parameters and the companion skills it works with. 
 | [om-spec-writing](om-spec-writing.md) | 🧑‍💻 | Writes and reviews feature specs to staff-engineer standards. |
 | [om-ux-review-pr](om-ux-review-pr.md) | 🧑‍💻 | Design-judgment review of a PR's UI: walks screens in a real browser, posts evidence-tagged findings with done-when criteria. |
 | [om-mockup-prototype](om-mockup-prototype.md) | 🧑‍💻 | Creates neutral clickable discovery prototypes from the brief and first synthetic panel, with flow context, assumptions and browser checks. |
+| [om-ux-design](om-ux-design.md) | 🧑‍💻 | Designs connected screens from a specification or selected backlog scope, reusing repository components and preserving review feedback; reports browser evidence and acceptance separately. |
 | [om-ux-setup](om-ux-setup.md) | 🧑‍💻 | Extracts the repo's design contract (tokens, components, archetypes, conventions) into committed files. Once per repo. |
 | [om-ux-shape](om-ux-shape.md) | 🧑‍💻 | Turns a vague feature idea into a decided direction: scope, interaction contract, validation plan; AI-necessity gate included. |
 | [om-followup-issue-from-pr](om-followup-issue-from-pr.md) | 🧑‍💻 | Turns a PR or PR comment into a tracked follow-up issue. |

@@ -90,9 +90,18 @@ remove_issue_label() { remove_label "$1" "$2"; }
 
 # Pipeline labels are mutually exclusive: setting one removes the others first.
 # Note the argument order, unchanged: $1 = PR number, $2 = label.
+#
+# $PIPELINE_LABELS is a space-separated string, and `for label in $PIPELINE_LABELS`
+# iterates it once as a single word under zsh, which does not word-split an unquoted
+# parameter expansion (setting IFS does not change that; only the non-default
+# SH_WORD_SPLIT option does). The competing labels are then never removed and the
+# mutual exclusion silently does not hold. Splitting on newlines through `read` behaves
+# identically in sh, bash and zsh; the trailing newline from `printf` matters, because
+# `read` returns non-zero on an unterminated last line and drops it.
 set_pipeline_label() {
   if [ "$LABELS_ENABLED" != "true" ]; then return 0; fi
-  for label in $PIPELINE_LABELS; do
+  printf '%s\n' "$PIPELINE_LABELS" | tr ' ' '\n' | while IFS= read -r label; do
+    [ -z "$label" ] && continue
     [ "$label" = "$2" ] && continue
     remove_label "$label" "$1"
   done

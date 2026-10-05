@@ -21,6 +21,20 @@ against them — not against the copies shipped in this repo:
 - **What differs on GitLab**, all inside the descriptor: skills' "PR" is a merge request and `PR: #<n>` carries its iid; drafts are `Draft:` title prefixes; review verdicts are native approvals plus a marker note; comment ids are handles such as `merge_requests/12/345`; required checks are every non-`allow_failure` job of the head pipeline. `Closes #N` auto-closes only on merges into the default branch.
 - **No migration for existing repositories.** The config schema and tracker operation names are unchanged. The lint gate now also rejects direct `glab` calls in skill content outside the tracker descriptors.
 
+## 2026-09-19 — `set_pipeline_label` removes competing labels under zsh
+
+`set_pipeline_label` in the GitHub tracker descriptor iterated the pipeline labels with
+`for label in $PIPELINE_LABELS`. zsh does not word-split an unquoted parameter expansion,
+so under zsh (the default login shell on macOS) the loop ran once with the whole string as
+one label, removed nothing, and pipeline labels silently stopped being mutually exclusive.
+The loop now splits on newlines through `read`, which behaves the same in sh, bash and zsh,
+and `scripts/test-tracker-providers.mjs` runs the function under each available shell.
+
+- **Migration:** re-sync `.ai/trackers/github.md` (and the companion copy installed next to
+  `linear.md` or `jira.md`) from `om-setup-agent-pipeline`'s shipped descriptor, or replace
+  the `set_pipeline_label` body by hand. A repository whose copy still contains
+  `for label in $PIPELINE_LABELS` is affected whenever a skill runs under zsh.
+
 ## 2026-09-09 — New skill: om-mockup-prototype, neutral discovery flows
 
 `om-mockup-prototype` creates a neutral clickable prototype after the first

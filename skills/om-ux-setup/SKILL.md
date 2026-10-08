@@ -1,6 +1,6 @@
 ---
 name: om-ux-setup
-description: Extract the repository's design contract (tokens, component registry, screen archetypes, conventions) into .uxproof/ so every UX skill judges against THIS repo's design system, whatever it is. Run once per repository; re-run to refresh after design-system changes.
+description: Extract the repository's design contract (tokens, component registry, screen archetypes, conventions) into .uxproof/ so every UX skill judges against THIS repo's design system, whatever it is — including one shipped by a dependency, imported as a version-stamped layer. Run once per repository; re-run to refresh after design-system changes.
 ---
 
 # UX Setup
@@ -22,10 +22,11 @@ colors its code already uses as the first draft of a design system.
 not review anything: no findings, no verdicts, no lists of what is wrong with
 the code, the screens, or the mockups, however tempting that is once the
 contract is fresh. When the user wants judgment, name the skill that owns it
-and stop: `om-ux-review-pr` for a pull request's running UI, `om-ux-shape` in
-Review mode for a whole module or flow. Reviewing design files against the
-contract is not covered by any skill in this collection yet; say so plainly
-rather than improvising it here. When the repository has no design system to
+and stop: `om-ux-review-pr` for a pull request's running UI (its `--guard`
+mode for a static check of code against the contract, or of the whole
+repository with `--health`), `om-ux-shape` in Review mode for a whole module or
+flow, and `om-figma-design-with-ds` for design-tool files (a brief for a new
+screen, or an audit of an existing design against the contract). When the repository has no design system to
 extract, report that limit and leave final visual decisions to the design stage.
 For an early flow experiment, name `om-mockup-prototype`: it creates neutral
 clickable screens and keeps `.uxproof/` unchanged.
@@ -40,8 +41,16 @@ clickable screens and keeps `.uxproof/` unchanged.
   holds the judgment calls only the team can know, survives every
   regeneration, and outranks generated rules on conflict. This is the
   local-override surface every other UX skill honors.
+- `guards.json` (optional) — deterministic conformance rules (forbidden
+  patterns, required states) written by the team or imported from a layer; the
+  extractor never touches it.
 
-Full shapes, and the by-hand fallback, live in
+A design system that arrives with a dependency, or from a sibling package that
+ships its own contract, is imported as a **layer**: its tokens, components,
+archetype anatomy and guard rules join the contract tagged with their origin,
+stamped with the installed version, and its UI guides are recorded as pointers.
+
+Full shapes, the optional additive fields, and the by-hand fallback, live in
 `references/contract-format.md`.
 
 ## Workflow
@@ -72,22 +81,36 @@ Full shapes, and the by-hand fallback, live in
    manual fallback in `references/contract-format.md` instead of a partial
    scan.
 
-3. **Show what was found.** Report the detected stack, the token and component
+3. **Layer shipped design systems.** When `knowledge.sources` in the config
+   names a dependency or repo path that ships a design contract, import it as
+   a layer per `references/design-sources.md`: repository entries win on name
+   collisions, imported entries carry their origin, the layer is stamped with
+   the installed version, UI guides are recorded as pointers and never copied.
+   A refresh always re-runs this step after extraction, because the extractor
+   rewrites the generated files. No `knowledge.sources` key → skip the step.
+
+4. **Show what was found.** Report the detected stack, the token and component
    counts, and the screen archetypes with their canonical examples, so the
    user can sanity-check the extraction before it becomes the rule everyone
-   is judged against.
+   is judged against. Report each layer with its version and import counts,
+   how many entries the repository shadowed, and, on a refresh, layers whose
+   installed version moved since the last import.
 
-4. **Ask what only the team knows.** Two or three judgment calls that no
+5. **Ask what only the team knows.** Two or three judgment calls that no
    scanner can infer: naming rules, forbidden patterns, tone, the exceptions
-   the team deliberately keeps. Write the answers into the manual section.
+   the team deliberately keeps. Write the answers into the manual section. A
+   forbidden pattern the team can state exactly (a class, an element, a raw
+   value) may also go into `guards.json` as a team-authored rule, after the
+   user confirms the pattern and its severity, so the guard pass can check it
+   deterministically.
 
-5. **Check the contract's own hygiene.** The extractor warns when a fifth or
+6. **Check the contract's own hygiene.** The extractor warns when a fifth or
    more of the tokens come from files that look like scratch or generated
    output. Surface that warning: a contract built from throwaway files is a
    bad judge, and the fix (delete or exclude, then re-run the sync) belongs in
    the handover, not in a later review.
 
-6. **Hand over.** Use `references/report-templates.md` to report what was extracted or changed,
+7. **Hand over.** Use `references/report-templates.md` to report what was extracted or changed,
    evidence limits, and the single most useful next command. Recommend committing
    the contract when it was written or refreshed. Stop there.
 

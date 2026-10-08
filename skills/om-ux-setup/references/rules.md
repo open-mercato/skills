@@ -39,5 +39,9 @@ stricter rule wins.
   derived palette is documentation of what the code already does. It never
   arms the audit and is never cited as a `[PRODUCT]` rule until the team
   declares real tokens.
+- **Imported is not authored.** A layer's facts carry their origin and version
+  stamp; they never overwrite an entry the working tree defines, never touch
+  the manual section, and its prose guides stay pointers. A layer that cannot
+  be read in full is skipped and reported, never half-imported.
 - The contract is committed like code. Treat a contract change as a code
   change: reviewable, diffable, and explained in the commit.

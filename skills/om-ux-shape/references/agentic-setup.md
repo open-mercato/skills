@@ -26,6 +26,12 @@ When `.uxproof/` is present (written by the `om-ux-setup` skill), load
 - Registered components, screen archetypes, and house rules are **constraints
   on every direction**, not decoration. An existing archetype with a canonical
   example beats a flow invented from scratch.
+- When an archetype records `anatomy` or `requiredStates`, a screen of that
+  shape is specified with those regions and those states; a layer imported from
+  a shipped design system (`contract.json` `layers`) counts the same as the
+  repository's own entries, and its UI guides (the `guides` pointers) are read
+  as data for component and copy choices. A stale layer (installed version no
+  longer matches its stamp) is used but named as an evidence limit.
 - The manual section of `conventions.md`, and a repo-root `UX_REVIEW.md` when
   present, extend the built-in rules and win on conflict.
 - Without a contract the skill still works; it simply cannot make

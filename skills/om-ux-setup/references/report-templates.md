@@ -7,11 +7,13 @@ effect, evidence, and gaps without repeating the extraction process.
 📝 `om-ux-setup` {created/refreshed} `.uxproof/`: {what UI work can now use these repository rules}.
 Detected {stack}; {N tokens, N colors}; {N components} from {source roots}.
 Screen patterns: {archetype → linked canonical example for every detected shape}.
+{When layers exist: Layers: {name}@{version} — {N tokens, N components, N archetypes, N guard rules} imported, {N} shadowed by this repository; one per layer, and on refresh the layers whose version moved.}
 {When relevant: manual decisions saved, generated changes on refresh, or source-hygiene warning/remedy.}
 Next: review and commit {contract links}, then {one useful next invocation}.
 ```
 
-Use an archetype/example table when long. Counts come from the extractor, never
+Use an archetype/example table when long. An unresolved `knowledge.sources`
+entry is reported with its reason on the Layers line. Counts come from the extractor, never
 estimates; retain a canonical file for every shape. On refresh, report generated
 changes. Explain unanswered manual decisions only when they affect contract use.
 

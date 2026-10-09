@@ -162,7 +162,7 @@ for pattern in "${patterns[@]}"; do
   fi
 done
 
-# Tracker-abstraction gate: no direct gh or glab CLI usage inside skills — all
+# Tracker-abstraction gate: no direct gh, glab, or Forgejo API usage inside skills — all
 # tracker operations go through the descriptor layer. The shipped descriptors
 # under references/trackers/ are the one place code-host CLI commands belong.
 gh_hits=$(grep -rEn '(^|[`"[:space:]])gh (api|pr|issue|label|repo|search|auth|run) ' skills/ 2>/dev/null | grep -v 'references/trackers/' || true)
@@ -174,6 +174,13 @@ glab_hits=$(grep -rEn '(^|[`"[:space:]])glab (api|mr|issue|label|repo|auth|ci|re
 if [ -n "$glab_hits" ]; then
   err "direct glab CLI usage found outside references/trackers/ (use a tracker operation instead):"
   printf '%s\n' "$glab_hits" >&2
+fi
+# Forgejo has no CLI; its descriptor calls the REST API through fj_* helpers, which
+# likewise belong only in the shipped descriptor.
+fj_hits=$(grep -rEn '(^|[`"[:space:]$(])fj_(http|get|list|list_jq|write) ' skills/ 2>/dev/null | grep -v 'references/trackers/' || true)
+if [ -n "$fj_hits" ]; then
+  err "direct Forgejo API helper usage found outside references/trackers/ (use a tracker operation instead):"
+  printf '%s\n' "$fj_hits" >&2
 fi
 
 if [ "$fail" -ne 0 ]; then

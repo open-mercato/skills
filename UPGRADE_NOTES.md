@@ -14,6 +14,17 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-10-08 — Shipped Forgejo tracker provider
+
+- **Forgejo repositories can run the whole pipeline**, self-hosted or on Codeberg. Select `forgejo` to run issues, pull requests, reviews, CI (commit statuses and Forgejo Actions), and labels through the Forgejo REST API. It is stand-alone, so no `.ai/trackers/github.md` companion is installed.
+- **Setup:** have `curl` 7.76+, `jq`, and Forgejo 16+. Export a token for the host as `FORGEJO_TOKEN_<HOST>` (e.g. `FORGEJO_TOKEN_CODEBERG_ORG`) or `FORGEJO_TOKEN`, with the scopes `write:repository`, `write:issue`, and `read:user`. A service account is recommended. Then re-run `/om-setup-agent-pipeline` and pick `forgejo`; there is no host auto-detection.
+- **What differs on Forgejo**, all inside the descriptor:
+  - drafts are `WIP:` title prefixes;
+  - CI checks are commit statuses, so any CI works;
+  - run operations need Forgejo Actions and answer `RUNS_UNAVAILABLE` otherwise;
+  - **rerun-failed** reports a re-run link (`RERUN_UNAVAILABLE`) by default, because the API cannot re-run a job. Switch it to `dispatch` in `.ai/trackers/forgejo.md` for unattended runs; that mode diagnoses but leaves the PR check red.
+- **For every repository:** `om-auto-fix-pr` now treats `RERUN_UNAVAILABLE` as an unconfirmed flake, and the lint gate rejects Forgejo API helpers in skill content outside the tracker descriptors. No migration is needed: the config schema and operation names are unchanged.
+
 ## 2026-09-22 — Shipped GitLab tracker provider
 
 - **GitLab repositories can run the whole pipeline.** Select `gitlab` to run issues, merge requests, reviews, CI pipelines, and labels on gitlab.com or a self-managed instance through `glab` (REST v4 via `glab api`). It is stand-alone: no `.ai/trackers/github.md` companion is installed.

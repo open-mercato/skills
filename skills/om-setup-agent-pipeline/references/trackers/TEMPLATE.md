@@ -1,6 +1,6 @@
 # Tracker provider: {name}
 
-Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/agentic.config.json`, and fill in every operation below. This is the whole integration surface: no skill changes are needed to support a new tracker — skills name operations, this file says how to execute them. Use `github.md` as the reference implementation for structure and level of detail; `gitlab.md` shows a stand-alone provider for a different code host, including how to serialize its objects into the field shapes skills parse.
+Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/agentic.config.json`, and fill in every operation below. This is the whole integration surface: no skill changes are needed to support a new tracker — skills name operations, this file says how to execute them. Use `github.md` as the reference implementation for structure and level of detail; `gitlab.md` shows a stand-alone provider for a different code host, including how to serialize its objects into the field shapes skills parse; `forgejo.md` shows one built on plain `curl` + `jq` when the host has no CLI with a raw-API mode.
 
 ## How to write a provider
 

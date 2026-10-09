@@ -77,8 +77,10 @@ Gather everything the script will need. Discover from evidence, never assume:
 
 1. **The repo's own ephemeral/test environment** — package scripts, `Makefile`,
    `Taskfile.yml`, `justfile` targets named like `test:*:ephemeral`, `test-env`,
-   `e2e:setup`, `dev:test`, `db:test`; CI workflows (`.github/workflows/*` —
-   prefer whatever CI actually runs); `docker-compose*.yml` / `compose*.yml`,
+   `e2e:setup`, `dev:test`, `db:test`; CI workflows (`.github/workflows/*` — or, when the
+   configured tracker is `forgejo`, `.forgejo/workflows/*`, falling back to
+   `.github/workflows/*` only when `.forgejo/workflows/` is absent — prefer
+   whatever CI actually runs); `docker-compose*.yml` / `compose*.yml`,
    `Dockerfile`, `.devcontainer/`. When a usable environment exists, **the
    generated script wraps the repo's own up-command** — including its own
    reuse/caching flags when it has them — and never re-implements what the repo

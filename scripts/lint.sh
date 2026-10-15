@@ -184,5 +184,6 @@ if [ "$fail" -ne 0 ]; then
 fi
 
 node scripts/test-discovery-contracts.mjs || exit 1
+node scripts/test-spec-writing-data-model.mjs || exit 1
 
 echo "Lint OK."

@@ -48,6 +48,20 @@ verification and the owner's acceptance before replacing that authoritative link
 - **What differs on GitLab**, all inside the descriptor: skills' "PR" is a merge request and `PR: #<n>` carries its iid; drafts are `Draft:` title prefixes; review verdicts are native approvals plus a marker note; comment ids are handles such as `merge_requests/12/345`; required checks are every non-`allow_failure` job of the head pipeline. `Closes #N` auto-closes only on merges into the default branch.
 - **No migration for existing repositories.** The config schema and tracker operation names are unchanged. The lint gate now also rejects direct `glab` calls in skill content outside the tracker descriptors.
 
+## 2026-09-19 — `set_pipeline_label` removes competing labels under zsh
+
+`set_pipeline_label` in the GitHub tracker descriptor iterated the pipeline labels with
+`for label in $PIPELINE_LABELS`. zsh does not word-split an unquoted parameter expansion,
+so under zsh (the default login shell on macOS) the loop ran once with the whole string as
+one label, removed nothing, and pipeline labels silently stopped being mutually exclusive.
+The loop now splits on newlines through `read`, which behaves the same in sh, bash and zsh,
+and `scripts/test-tracker-providers.mjs` runs the function under each available shell.
+
+- **Migration:** re-sync `.ai/trackers/github.md` (and the companion copy installed next to
+  `linear.md` or `jira.md`) from `om-setup-agent-pipeline`'s shipped descriptor, or replace
+  the `set_pipeline_label` body by hand. A repository whose copy still contains
+  `for label in $PIPELINE_LABELS` is affected whenever a skill runs under zsh.
+
 ## 2026-09-09 — New skill: om-mockup-prototype, neutral discovery flows
 
 `om-mockup-prototype` creates a neutral clickable prototype after the first
@@ -200,6 +214,15 @@ When `product-brief.md` exists, its Non-goals, Business rules, and Decisions tab
 - **Decisions are surfaced where people work.** `om-auto-manage-issues` ends its implementation-notes comment with *Decisions in play*; `om-spec-writing`'s core sections gain `## 📝 Decisions in play`; the PR body templates gain a conditional *Decisions touched* section.
 - **Confirmed assumptions become decisions.** `om-discover --refresh` reads the resolved-assumptions comments on spec PRs (read-only, via **search-prs** and **list-issue-comments**) and records each human-confirmed assumption as a Decision row with the confirmer as owner.
 - **Migration:** nothing to do in a repository without `product-brief.md`. A generated `SDLC.md` gains the section *Product decisions as a protected contract* when the product layer is on; `/om-setup-discovery-pipeline` adds it to an existing one.
+
+## 2026-08-25 — CI verdicts need a completeness guard: re-sync `.ai/trackers/<tracker>.md`
+
+The tracker descriptor stated that "CI status truth comes from **get-pr-checks**", and the skills reading it concluded green whenever that surface reported nothing failing and nothing pending. But the check surface reports *jobs*: a workflow run the tracker has already created contributes **no rows at all** until its jobs register, so on a head pushed seconds ago the list is legitimately partial and the missing jobs are neither passing nor pending but absent. The test passed vacuously, and a run reported "CI green" off a workflow that had not started — observed on a real PR as green read from 4 of an eventual 14 check runs.
+
+- **The descriptor now carries the guard.** `get-pr-checks` is still the check-level truth; a green verdict additionally requires the run level to agree — **list-runs** on the PR head branch, filtered to the runs whose `headSha` is the PR head SHA, with any run whose `status` is not `completed` counted as pending. The two readings must agree, and the run level wins when they disagree. No operation was added, renamed, or changed: `list-runs` has always been part of the CI-runs contract.
+- **Skills affected:** `om-auto-fix-pr` (the CI baseline in `references/stabilize-ci.md`), `om-merge-buddy` (the CI gate behind its merge-ready rows), and the shared `references/ci-followup.md` bounded wait carried by `om-auto-fix-pr`, `om-auto-review-pr`, and `om-pr-autopilot`. Each now also reports which reading its verdict rests on, so a green claim is auditable.
+- **Migration:** re-sync your committed `.ai/trackers/<tracker>.md` — `/om-apply-upgrade-notes` does it while preserving local edits, or copy the CI bullet from `skills/om-setup-agent-pipeline/references/trackers/github.md` by hand. An un-synced descriptor is not broken; its skills simply keep the old, vacuously-green reading, which is exactly the bug. Custom descriptors for other trackers should document whether their own check surface can under-report while CI starts up, per the note now in `TEMPLATE.md`.
+- **No merge gate moved.** `om-approve-merge-pr` never enumerated checks — it merges on the tracker's own mergeability plus branch protection, so a vacuous green could misreport and could let the fix loop exit early, but it could not merge a red PR. That boundary is unchanged.
 
 ## 2026-08-25 — Shipped Linear and Atlassian split tracker providers
 

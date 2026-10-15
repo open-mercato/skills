@@ -302,6 +302,7 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
     "runs": ".ai/runs",
     "analysis": ".ai/analysis",
     "specs": ".ai/specs",
+    "dataModel": ".ai/data-model",
     "scripts": ".ai/scripts",
     "qa": ".ai/qa"
   },

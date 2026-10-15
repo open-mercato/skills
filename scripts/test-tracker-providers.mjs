@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
-import { chmodSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import { chmodSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,8 +15,19 @@ const github = read(`${trackerDir}/github.md`);
 const linear = read(`${trackerDir}/linear.md`);
 const jira = read(`${trackerDir}/jira.md`);
 const gitlab = read(`${trackerDir}/gitlab.md`);
+const trackerTemplate = read(`${trackerDir}/TEMPLATE.md`);
 const setup = read("skills/om-setup-agent-pipeline/SKILL.md");
 const upgradeNotes = read("UPGRADE_NOTES.md");
+const autoFix = read("skills/om-auto-fix-pr/SKILL.md");
+const autoFixStabilize = read("skills/om-auto-fix-pr/references/stabilize-ci.md");
+const autoReview = read("skills/om-auto-review-pr/SKILL.md");
+const mergeBuddy = read("skills/om-merge-buddy/SKILL.md");
+const prAutopilot = read("skills/om-pr-autopilot/SKILL.md");
+const ciFollowups = [
+  "skills/om-auto-fix-pr/references/ci-followup.md",
+  "skills/om-auto-review-pr/references/ci-followup.md",
+  "skills/om-pr-autopilot/references/ci-followup.md",
+].map((path) => [path, read(path)]);
 
 const operationHeadings = (descriptor) =>
   [...descriptor.matchAll(/^#### (.+)$/gm)].map((match) => match[1]).sort();
@@ -40,6 +51,43 @@ assert.deepEqual(
   githubOperations,
   "gitlab: shipped stand-alone provider must implement every GitHub tracker operation",
 );
+
+// A check-run list can be temporarily incomplete while a workflow/pipeline is
+// registering jobs. Every consumer that can declare CI green must therefore
+// retain the run-level completeness guard, and every shipped provider must
+// document whether its check surface can under-report.
+assert.match(
+  trackerTemplate,
+  /get-pr-checks[\s\S]*under-report[\s\S]*\*\*list-runs\*\*/,
+  "tracker template: get-pr-checks must require documenting the run-level completeness guard",
+);
+assert.match(github, /A short `get-pr-checks` result is not evidence of green/);
+assert.match(gitlab, /under-report here while its jobs register[\s\S]*cross-check \*\*list-runs\*\*/);
+
+for (const [name, skill] of [
+  ["om-auto-fix-pr", autoFix],
+  ["om-auto-review-pr", autoReview],
+  ["om-pr-autopilot", prAutopilot],
+  ["om-merge-buddy", mergeBuddy],
+]) {
+  assert.match(skill, /\*\*list-runs\*\*/, `${name}: must declare the list-runs operation`);
+}
+assert.match(autoFixStabilize, /short check list is not a green one/);
+assert.match(autoFixStabilize, /status` is not `completed` as PENDING/);
+
+const completenessBlocks = ciFollowups.map(([path, contents]) => {
+  const start = contents.indexOf('"Settled" is a claim about a complete reading');
+  const end = contents.indexOf("**Checks settled inside the budget**", start);
+  assert.ok(start >= 0 && end > start, `${path}: must carry the CI completeness guard`);
+  return [path, contents.slice(start, end)];
+});
+for (const [path, block] of completenessBlocks.slice(1)) {
+  assert.equal(
+    block,
+    completenessBlocks[0][1],
+    `${path}: shared CI completeness guard must stay synced with ${completenessBlocks[0][0]}`,
+  );
+}
 assert.doesNotMatch(
   gitlab,
   /companion `?\.ai\/trackers\/github\.md`?/,
@@ -84,6 +132,37 @@ assert.match(jira, /requires Atlassian CLI 1\.3\.5-stable or newer/);
 assert.match(jira, /workitem edit --help \| grep -Fq -- '--remove-labels'/);
 assert.match(jira, /workitem comment list --help \| grep -Fq -- '--paginate'/);
 assert.match(jira, /workitem comment update --help \| grep -Fq -- '--body-file'/);
+
+// set_pipeline_label must remove every competing pipeline label in each shell the
+// descriptor may run under. zsh does not word-split an unquoted parameter expansion,
+// so a `for label in $PIPELINE_LABELS` loop ran once there and removed nothing.
+const setPipelineLabel = github.match(/^set_pipeline_label\(\) \{\n[\s\S]*?^\}$/m)?.[0];
+assert.ok(setPipelineLabel, "github: set_pipeline_label definition not found");
+const pipelineHarness = `
+remove_label() { echo "remove $1"; }
+apply_label() { echo "apply $1"; }
+LABELS_ENABLED=true
+PIPELINE_LABELS="review changes-requested qa qa-failed merge-queue blocked do-not-merge"
+${setPipelineLabel}
+set_pipeline_label 1 merge-queue
+`;
+const shells = ["/bin/sh", "/bin/bash", "/bin/zsh"].filter((shell) => existsSync(shell));
+for (const shell of shells) {
+  const lines = execFileSync(shell, ["-c", pipelineHarness], { encoding: "utf8" }).trim().split("\n");
+  assert.deepEqual(
+    lines,
+    [
+      "remove review",
+      "remove changes-requested",
+      "remove qa",
+      "remove qa-failed",
+      "remove blocked",
+      "remove do-not-merge",
+      "apply merge-queue",
+    ],
+    `github: set_pipeline_label under ${shell} must remove every competing pipeline label`,
+  );
+}
 
 // --- GitLab: auth-check probes the glab api surface every operation relies on --
 for (const flag of ["--paginate", "--input", "--header"]) {

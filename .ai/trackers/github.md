@@ -43,6 +43,7 @@ Upstream references: cli/cli#11983 (`gh pr edit` aborts without any project flag
 - Claim/lock signals on an issue or PR are: assignee set to the automation user, the `in-progress` label, and a `🤖`-prefixed claim comment. All three are set on claim; the label is guarded (below). The `ci-monitoring` label is **not** a claim signal — it marks work that is finished and reported while its CI-result follow-up is still owed, and never makes another skill back off.
 - Long, multi-line comment bodies are posted with `--body-file` (or a heredoc via process substitution) so formatting is preserved.
 - CI status truth comes from **get-pr-checks**; the set of *required* checks comes from **get-required-checks** (branch protection). When branch protection is not readable (404), treat every reported check as required.
+- **A short `get-pr-checks` result is not evidence of green.** It reports *check runs*, and a workflow run GitHub has already created contributes no rows until its jobs register — so on a freshly pushed head the list is legitimately partial, and every job still to appear is neither passing nor pending but simply absent. Before concluding "green" or "nothing pending", cross-check the workflow level: **list-runs** on the PR head branch, keep the runs whose `headSha` is the PR head SHA, and count any whose `status` is not `completed` as PENDING. Green requires both — every reported check passing *and* every workflow run at that SHA completed. A workflow that has not been created at all is indistinguishable from one the path filters skipped; that residue is disclosed as pending CI, never resolved by guessing.
 
 ## Label guards
 
@@ -89,9 +90,18 @@ remove_issue_label() { remove_label "$1" "$2"; }
 
 # Pipeline labels are mutually exclusive: setting one removes the others first.
 # Note the argument order, unchanged: $1 = PR number, $2 = label.
+#
+# $PIPELINE_LABELS is a space-separated string, and `for label in $PIPELINE_LABELS`
+# iterates it once as a single word under zsh, which does not word-split an unquoted
+# parameter expansion (setting IFS does not change that; only the non-default
+# SH_WORD_SPLIT option does). The competing labels are then never removed and the
+# mutual exclusion silently does not hold. Splitting on newlines through `read` behaves
+# identically in sh, bash and zsh; the trailing newline from `printf` matters, because
+# `read` returns non-zero on an unterminated last line and drops it.
 set_pipeline_label() {
   if [ "$LABELS_ENABLED" != "true" ]; then return 0; fi
-  for label in $PIPELINE_LABELS; do
+  printf '%s\n' "$PIPELINE_LABELS" | tr ' ' '\n' | while IFS= read -r label; do
+    [ -z "$label" ] && continue
     [ "$label" = "$2" ] && continue
     remove_label "$label" "$1"
   done

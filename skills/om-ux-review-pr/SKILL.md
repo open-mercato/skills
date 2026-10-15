@@ -1,6 +1,6 @@
 ---
 name: om-ux-review-pr
-description: Evidence-first design review of a PR's UI. Walks the changed screens in a real browser, performs the user's tasks, and posts findings ranked by user impact, each with evidence, a pattern, a trade-off and an acceptance criterion.
+description: Evidence-first design review of a PR's UI. Walks the changed screens in a real browser, performs the user's tasks, and posts findings ranked by user impact, each with evidence, a pattern, a trade-off and an acceptance criterion. A --guard mode checks code statically against the design contract, per PR or repository-wide with --health.
 ---
 
 # UX Review
@@ -14,6 +14,8 @@ out loud. Opinions are allowed; they are labeled as opinions.
 **Scope guard.** This skill reviews the increment a PR ships. When the subject
 is a whole module, flow, or existing product area, run the `om-ux-shape` skill
 in Review mode instead and use the walk below only to gather its evidence.
+`--guard --health` is the one repository-wide form: it counts contract-rule
+hits and their trend, and judges no screen.
 
 **Input and output** — two execution paths, decided in step 1:
 
@@ -21,9 +23,12 @@ in Review mode instead and use the walk below only to gather its evidence.
 |---|---|---|
 | A PR number, or a branch with an open PR | tracker path: **get-pr**, **get-pr-diff**, then **comment-pr** for a first review or **update-comment** when the marker already exists | one marker-idempotent review comment per `references/report-templates.md`, with the screenshots its findings cite via **attach-image-evidence** |
 | A branch with no open PR, or nothing (the working tree) | local path: diff against `BASE_BRANCH`, no tracker operation at all | the same report, returned to the user, with the screenshots saved locally and the Contract line stating that nothing was posted |
+| Any of the above plus `--guard` | guard mode: the static contract check of the diff only — no app, no browser | one marker-idempotent guard comment on the tracker path, or the same guard report returned locally |
+| `--guard --health [<path>]` | health mode: the guard rules counted across the repository or `<path>`, always local | the health report with per-rule, per-area counts and the trend against the previous report |
 
 The local path exists so a review before opening a PR is still possible; it
-mutates nothing.
+mutates nothing. Health mode writes one file, and only when the config names
+it (`ux.healthReport`).
 
 ## Workflow
 
@@ -65,15 +70,24 @@ mutates nothing.
    Capture 📸 evidence for every state you judge.
 
 4. **Check the state matrix.** Default, empty, loading, error, no-permission,
-   long-content, narrow viewport. A missing state is a finding. For theming,
+   long-content, narrow viewport. Where the screen takes input or runs an
+   operation, also validation (the first invalid field gets focus, entered
+   input survives a failure), duplicate-submit prevention while an operation
+   runs, and a denied state distinct from not-found. When the contract's
+   archetype for this screen lists `requiredStates`, each one is required. A
+   missing state is a finding. For theming,
    use the app's own theme toggle, because class-driven themes ignore
    operating-system colour-scheme emulation; when no toggle is reachable,
    report the dark-mode pass as not performed rather than skipping it
    silently.
 
-5. **Check contract conformance.** Hardcoded colors where tokens exist, raw
+5. **Check contract conformance.** Run the guard pass over the diff first
+   (`references/guard-pass.md`) and fold its critical and warning violations in
+   as `[PRODUCT]` findings, one per rule, citing the rule and its lines. Then
+   judge what no pattern can: hardcoded colors where tokens exist, raw
    elements where the registry has a house component, screens that ignore the
-   repo's own archetype for that shape. These are `[PRODUCT]` findings citing
+   repo's own archetype (and its `anatomy`, when the contract records one) for
+   that shape. These are `[PRODUCT]` findings citing
    the contract. When `${SPECS_DIR}/product-brief.md` exists, its Non-goals,
    Business rules, and Decisions are part of the contract too: a screen that
    ships what a non-goal excludes, or that lets a user do what a business rule
@@ -108,6 +122,19 @@ mutates nothing.
    user, note where the screenshots were saved, and call no tracker operation.
    Either way, state that findings are advisory input for the author: this
    skill applies no labels, changes no source, and blocks no merge.
+
+## Guard mode
+
+`--guard` replaces steps 2–7 with the guard pass over the diff
+(`references/guard-pass.md`): build the rule set from `.uxproof/guards.json`
+and the contract, match only the lines the diff changes, triage exemptions,
+and order the violations into a remediation plan. Step 8 then delivers the
+guard report from `references/report-templates.md` under its own marker, so a
+full review on the same PR is never overwritten. With `--health`, the pass runs
+across the repository or `<path>` instead, on the local path only, and
+reports counts, coverage, the trend, and the suggested next area. Neither form
+starts the app, attaches evidence, or changes source; like the full review,
+both are advisory.
 
 ## Security boundaries
 

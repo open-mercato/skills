@@ -51,6 +51,9 @@ Every skill in this collection reads its repository-specific settings from `.ai/
 
 Field reference:
 
+Optional capability fields, defaults, owners, and loading snippets:
+`references/config-capabilities.md`.
+
 - `baseBranch` — the branch PRs target. `"auto"` means resolve at runtime from the repository's default branch; set an explicit name only when PRs target something else.
 - `tracker` — selects `.ai/trackers/<tracker>.md`. Shipped values are `"github"`, `"gitlab"`, `"linear"` (Linear issues + GitHub PRs/CI), and `"jira"` (Jira Cloud issues + GitHub PRs/CI); see Tracker providers below.
 - `browser.provider` — the browser-automation provider used by QA and integration-test skills. Selects `.ai/browsers/<provider>.md`. Fresh setups default to `"agent-browser"`; configs without this key keep legacy Playwright behavior (see Browser providers).
@@ -111,7 +114,7 @@ Every skill in this collection checks, right after loading the config, for a rep
 
    Prefer commands mirroring what CI already runs (`.github/workflows/*.yml`).
 
-3. **Ask the user (skip with `--defaults`).** Confirm validation, tracker (`github`, `linear`, `jira`, `gitlab`, or custom; default per step 2), browser provider, label mode, QA gate, spec path, optional review checklist, and missing project docs. Full guidance: `references/interview-questions.md`.
+3. **Ask the user (skip with `--defaults`).** Confirm validation, tracker (`github`, `linear`, `jira`, `gitlab`, or custom; default per step 2), browser provider, label mode, QA gate, spec path, optional review checklist, and missing project docs. Offer only detected optional capabilities from `references/config-capabilities.md`. Full guidance: `references/interview-questions.md`.
 
 4. **Install the tracker descriptor.** Copy the shipped descriptor for the chosen tracker from this skill's `references/trackers/<tracker>.md` to `.ai/trackers/<tracker>.md` (create the directory). Rules:
 
@@ -149,7 +152,9 @@ Every skill in this collection checks, right after loading the config, for a rep
 
 ## The standard config-loading snippet
 
-The canonical config-loading snippet, the auto-run-setup contract, and the post-load sequence are homed in this skill at `references/agentic-setup.md`. Other skills reproduce that snippet and contract; this skill's copy is the canonical version.
+Core loading and post-load behavior: `references/agentic-setup.md`.
+Capability defaults: `references/config-capabilities.md`. Consumers load only
+the slots they use; these copies are canonical.
 
 ## Rules
 

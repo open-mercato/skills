@@ -371,6 +371,31 @@ Four choices keep it that way. **Serialize into the shapes skills already parse:
 
 The descriptor's shell and jq are executed in CI against a stubbed `glab` (`scripts/test-tracker-providers.mjs`), since no live GitLab instance is part of the gate. Left for later: Linear and Jira still require the GitHub companion; letting a split provider name `gitlab.md` as its code host is a separate change to setup and both split descriptors.
 
+## 2026-10-08 — Forgejo ships as a stand-alone tracker provider
+
+`forgejo.md` is the second stand-alone provider for a non-GitHub code host. Forgejo owns issues, pull requests, reviews, commit statuses, Actions runs, and labels, so setup installs no companion. The rule was to do what `gitlab.md` does unless the Forgejo API forbids it. The contract, operation names, config schema, and chaining lines are unchanged. Spec: `.ai/specs/2026-10-08-forgejo-tracker-provider.md` (#133).
+
+Deviations from the GitLab shape, each forced by the API:
+
+- **Client.** It uses `curl` + `jq` behind one `fj_http` call site, not a CLI, because no Forgejo CLI has a raw-API mode like `glab api`. The helpers take over what `glab` did:
+  - pagination through `Link` / `X-HasMore`;
+  - "a failed read is never empty", including a 204 or an empty body;
+  - host and repo from `origin`.
+
+  The token is chosen per contacted host (`FORGEJO_TOKEN_<HOST>`, then `FORGEJO_TOKEN`) and reaches curl on stdin, never on argv.
+- **Merge state.** Forgejo's `mergeable` is a boolean that also reads `false` while the conflict check runs. **get-pr** re-reads it once, then derives `BLOCKED` / `CLEAN` / `UNKNOWN` from `GET /branches/{base}`, which needs no admin rights, plus the combined status. `reviewDecision` counts only official, fresh, undismissed reviews against `required_approvals`, with a floor of 1.
+- **Close links.** There is no closes-issues API, so `closingIssuesReferences` is parsed from Forgejo's own keywords in the title and body, skipping code spans. `#N` searches read the issue timeline instead of the search indexer.
+- **CI.** Checks come from commit statuses, so any CI works, Woodpecker included. Run operations use Actions by head SHA, because PR runs are recorded against `#N`, not the branch. They report `RUNS_UNAVAILABLE` instead of an empty list when the CI is external.
+- **Rerun.** The API cannot re-run a job. A dispatched workflow reports under a different status context (`… (workflow_dispatch)` vs `… (pull_request)`), so it cannot turn the PR's check green. **rerun-failed** therefore defaults to `report`: it prints `RERUN_UNAVAILABLE <link>` and exits 3, and `om-auto-fix-pr` records that as an unconfirmed flake. A committed one-line switch selects `dispatch` for unattended orchestrators. An empty-commit mode was rejected: it moves the head past the verified SHA, can dismiss approvals, and fails on fork PRs.
+- **Shared number space.** Issues and PRs share numbers and comment ids are global, so GitLab's parent-qualified handles are not needed. **get-issue** reports `isPullRequest` instead.
+
+Four additive skill edits came with it:
+- setup and `om-prepare-test-env` read `.forgejo/workflows/` for the `forgejo` tracker;
+- `om-followup-issue-from-pr` accepts Forgejo links;
+- `om-auto-fix-pr` handles `RERUN_UNAVAILABLE`.
+
+GitHub and GitLab paths are unchanged. The descriptor's shell and jq run in CI against a stubbed `fj_http`. Live verification (a public Codeberg sandbox, plus version checks on a self-hosted Forgejo 16.0.3) is recorded in the run record. Gitea is out of scope.
+
 ## 2026-09-17: Add `om-qa-buddy`, a human-in-the-loop manual QA companion
 
 A contributor's own 10-skill manual QA pipeline, battle-tested in an external

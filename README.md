@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>🧠 plan · 🔨 implement · 🔍 review · ✅ QA gate · 🚢 merge</b><br/>
-  Forty-one agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
+  Forty-three agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 npx skills add open-mercato/skills --skill '*'
 ```
 
-Install all forty-one — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all forty-three — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
@@ -172,6 +172,7 @@ Interactive helpers (no `auto` in the name — the other half of the naming conv
 | [`om-discover`](docs/skills/om-discover.md) | Product-level discovery and define, before there is anything to brainstorm about. Runs in three modes — existing product, client idea, own idea — and leaves one `product-brief.md`: problem and who has it, stakeholders, rules, flows, benchmark, success criteria, scope (now, later, not doing), non-goals, decisions with owners, riskiest assumptions with tests, open questions. Gathers real material first: a section with nothing behind it becomes a collection plan with capture templates, never prose; synthetic personas and assumptions are tagged and never count as evidence. [`om-brainstorm`](docs/skills/om-brainstorm.md), [`om-spec-writing`](docs/skills/om-spec-writing.md), and [`om-prepare-issue`](docs/skills/om-prepare-issue.md) read the brief when it exists, and its non-goals, business rules, and decisions become a contract the review skills enforce. |
 | [`om-synthetic-users`](docs/skills/om-synthetic-users.md) | A panel of personas from the material the repo already holds, interviewed about the last time and then under the pressures the brief describes (never "would you use"), walking one flow through their eyes — on the brief or spec as a narrative, on a static prototype, or on the running app through the browser provider. Fresh panel per run, at least two runs, only what repeats is a finding, spread is the error bar; saturation tracked; a parity check against real interview notes when they exist, where the deviation is the finding. Three stances: `validate`, `simulate` (every answer is "to confirm"), `adversary` (agreement is discarded). Everything tagged `[SYNTHETIC]`, never evidence, never numbers. |
 | [`om-mockup-prototype`](docs/skills/om-mockup-prototype.md) | Turns a selected brief flow and the first synthetic panel into a neutral clickable discovery prototype. Keeps assumptions visible, checks navigation and recovery states in a browser, and writes a local revision with its context. It runs before the brief refresh and backlog; detailed visual design belongs to the later specification stage. |
+| [`om-ux-design`](docs/skills/om-ux-design.md) | Designs connected screens from a specification or selected backlog scope, reusing the repository's components and prototype runtime. Verifies relevant states, viewports and themes, preserves review comments, and hands over the selected version with its component sources and acceptance status. |
 | [`om-backlog`](docs/skills/om-backlog.md) | Turns a product brief or a spec's Phasing into epics, stories with acceptance criteria, and tasks — ids in titles, `Epic:` lines, epic checklists — filing every issue through [`om-prepare-issue`](docs/skills/om-prepare-issue.md) so dedupe, labels, and rationale are unchanged. Adopts existing issues instead of duplicating them, refuses a brief that rests on assumptions (offering the research backlog instead), and shows the whole tree before writing anything. |
 | [`om-brainstorm`](docs/skills/om-brainstorm.md) | The conversation before any artifact exists: open questions one at a time, alternatives weighed (including building nothing), a challenger subagent attacks the conclusion, then the user confirms a routing decision — a machine-parsed `Next:` line plus a handoff brief that feeds [`om-prepare-issue`](docs/skills/om-prepare-issue.md), [`om-auto-write-spec`](docs/skills/om-auto-write-spec.md), [`om-spec-writing`](docs/skills/om-spec-writing.md), or [`om-auto-create-pr`](docs/skills/om-auto-create-pr.md). |
 | [`om-spec-writing`](docs/skills/om-spec-writing.md) | Writes and reviews feature specs to staff-engineer standards: skeleton-first with a hard Open Questions gate, phased implementation breakdown that feeds [`om-auto-create-pr`](docs/skills/om-auto-create-pr.md), severity-ranked architectural reviews. |
@@ -217,17 +218,18 @@ More: [docs/roles/product-manager.md](docs/roles/product-manager.md)
 
 ### 🎨 Designer
 
-Get a written spec with visuals attached — mockups of the new layout next to screenshots of the current app.
+Design connected screens from a specification, then compare the implementation with the accepted version. Reuse your repository's components, stories and prototype runtime.
 
 | ▶️ You run | ⚙️ Runs automatically inside | 🎁 You get |
 |---|---|---|
 | `/om-auto-write-spec "Redesign the checkout summary panel"` | `om-spec-writing --autonomous`, [`om-open-pr`](docs/skills/om-open-pr.md), [`om-prepare-test-env`](docs/skills/om-prepare-test-env.md) + browser provider | a ready spec PR with UI mockups, current-app screenshots, and an assumptions comment |
+| `/om-ux-design .ai/specs/2026-07-18-checkout-redesign.md --scope "checkout summary"` | requirement mapping, component reuse, connected states and browser verification | a local detailed design with launch instructions, component sources, evidence and a separate acceptance status |
 | `/om-auto-implement-spec 2026-07-18-checkout-redesign` | [`om-auto-create-pr`](docs/skills/om-auto-create-pr.md), [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md), [`om-auto-qa-pr`](docs/skills/om-auto-qa-pr.md) | the built change with before/after screenshots from the working app |
 | `/om-auto-qa-pr 123` | [`om-prepare-test-env`](docs/skills/om-prepare-test-env.md), browser provider | fresh screenshots of a PR's UI to design-review, no source touched |
 | `/om-ux-setup` once, then `/om-ux-review-pr 123` | [`om-ux-setup`](docs/skills/om-ux-setup.md) extracts the repo's design contract; [`om-ux-review-pr`](docs/skills/om-ux-review-pr.md) walks the PR in a real browser | a design review judged against your own design system: evidence-tagged findings with done-when criteria |
 | `/om-ux-shape "Quick-add flow for the people list"` | [`om-ux-shape`](docs/skills/om-ux-shape.md) | a decided direction before anything is drawn: scope, states, riskiest-assumption test |
 
-💡 Tip — ask for visuals explicitly to force mockups: `/om-auto-write-spec "Redesign the checkout summary panel — include mockups of the new layout and screenshots of the current one"`.
+💡 Use `om-mockup-prototype` to try a neutral flow during discovery and `om-ux-design` for detailed screens during specification. An accepted detailed design supplies the spec's proposed visuals; spec-authoring need not draw another version.
 
 More: [docs/roles/designer.md](docs/roles/designer.md)
 

@@ -41,9 +41,13 @@ mutates nothing.
    `BASE_BRANCH`. Say which path you are on before continuing, then read the
    diff and list the screens it touches, naming the ones you cannot reach. When
    the PR body names a spec (`Source doc:`) whose UI/UX section carries a
-   `Prototype:` line, that prototype is the accepted design for these screens:
-   note its path now, so step 5 can open it beside the app. Read its context
-   and compare only the scope the spec accepts. A neutral discovery prototype
+   `Prototype:` line, that line conventionally identifies the accepted design:
+   note its exact version and launch path so step 5 can open it beside the app.
+   Read nearby acceptance evidence and the design's context. An explicit pending,
+   unaccepted or superseded status overrides the marker, including in older specs;
+   report the inconsistency and treat that design as a proposal, not a product
+   rule. Proposal links carry no acceptance by themselves. Compare only the scope
+   the spec accepts. A neutral discovery prototype
    establishes no visual-fidelity target; its unconfirmed assumptions remain
    questions rather than product rules.
 
@@ -79,7 +83,7 @@ mutates nothing.
    ships what a non-goal excludes, or that lets a user do what a business rule
    forbids, is a `[PRODUCT]` finding quoting the entry's id, and its
    acceptance criterion is a superseding entry approved by the owner or a
-   changed screen — never a quiet exception. When the spec links a prototype,
+   changed screen — never a quiet exception. When the spec links an accepted prototype,
    open it through the browser provider beside the running screen and compare
    flow, states, and copy: a deviation the spec does not explain is a
    `[PRODUCT]` finding citing the prototype screen, with 📸 evidence of both;

@@ -92,7 +92,11 @@ Per iteration:
    - **Flake** — suspected when the failure is unrelated to the diff,
      timing-dependent, or historically intermittent. Before touching code,
      **rerun-failed** once. If it passes on rerun, record it as a flake — do not
-     "fix" it blindly; note it for a follow-up issue.
+     "fix" it blindly; note it for a follow-up issue. If **rerun-failed** prints
+     `RERUN_UNAVAILABLE <link>` (a tracker whose API cannot re-run a job), do not
+     treat that as "failed again": record the failure as an unconfirmed flake with
+     the link, change no code for it, and leave the check for a human to re-run
+     from the link — report it as the remaining blocker if it gates the merge.
    - **Infra / out of scope** — runner outages, missing secrets, base branch already
      broken (verify by checking whether the same check fails on `origin/$BASE_BRANCH`
      via **list-runs** on the base branch). These are blockers, not fixables —

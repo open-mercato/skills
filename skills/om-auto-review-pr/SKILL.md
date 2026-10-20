@@ -45,7 +45,7 @@ Emit `APPROVED` or `CHANGES REQUESTED` and the exact `PR:` line. Include `Issue:
 
    For eligible autofix runs, fetch the latest `baseRefName` and resolve conflicts before review. Review the resolved local diff. Resolve fork conflicts on the replacement branch from `references/fork-pr-flow.md`.
 
-6. **Check for duplicate work.** Follow `references/duplicate-detection.md`. If the complete change already exists on the PR base, request changes with supporting commits or PR links. Apply the verdict and author handoff, then clean up. For partial overlap, report the redundant parts and review the remaining change.
+6. **Check for duplicate work.** Follow `references/duplicate-detection.md`. If the complete change already exists on the PR base, request changes with supporting commits or PR links. Apply the verdict and author handoff. Continue through steps 12–14. For partial overlap, report the redundant parts and review the remaining change.
 
 7. **Check the diff patterns.** Skip this step for `SPEC_ONLY`. Otherwise, apply `references/diff-auto-detections.md` to the diff under review. Include every applicable hard-rule violation. Skip patterns for stacks the repository does not use. Keep one finding per defect.
 
@@ -64,13 +64,13 @@ Emit `APPROVED` or `CHANGES REQUESTED` and the exact `PR:` line. Include `Issue:
 
 11. **Fix eligible PRs.** Follow the single fix loop in `references/review-report.md`. Skip branch changes when `AUTOFIX_ELIGIBLE` is false. State `autofix: skipped (not my PR — re-run with --autofix to fix it here)` in that case.
 
-    Fix conflicts first, review findings second, and CI failures third. Include inherited findings. Add meaningful tests for changed behavior. Validate and re-review after fixes. Add commits without rewriting history. Use `references/fork-pr-flow.md` for fork replacements. Publish the updated verdict through step 10. Stop only at the explicit blockers in the fix-loop reference.
+    Fix conflicts first, review findings second, and CI failures third. Include inherited findings. Add meaningful tests for changed behavior. Validate after fixes. Review the updated diff. Add commits without rewriting history. Use `references/fork-pr-flow.md` for fork replacements. Publish the updated verdict through step 10. Stop only at the explicit blockers in the fix-loop reference.
 
 12. **Report completion and release the claim.** Post the completion comment from `references/report-templates.md` before any CI wait. Release only a claim this run created. Retain and annotate an inherited chain lock. Use `ci-monitoring` only when this run will follow up on CI. Follow `references/claim-pr.md` for each case.
 
     Clean up worktrees this run created through `references/worktree-setup.md`. Keep the validation evidence for the reviewed tree.
 
-13. **Follow up on CI within the limit.** Follow `references/ci-followup.md` for at most `CI_MAX_WAIT_MINUTES`. A value of `0` skips the wait. Cross-check workflow runs and check results at the reviewed head. Post the idempotent CI-result comment. Correct the pipeline label if a required failure changes the verdict. Remove `ci-monitoring` when done or out of time. Local checks never replace required CI.
+13. **Follow up on CI within the limit.** Follow `references/ci-followup.md` for at most `CI_MAX_WAIT_MINUTES`. A value of `0` skips the wait. Cross-check **list-runs** and **get-pr-checks** at the reviewed head. Post the idempotent CI-result comment. Correct the pipeline label if a required failure changes the verdict. Remove `ci-monitoring` when done or out of time. Local checks never replace required CI.
 
 14. **Report the result.** Follow `references/report-templates.md`. State the verdict, evidence limits, review link, and next action. Link findings instead of repeating them. End with the exact chaining lines:
 

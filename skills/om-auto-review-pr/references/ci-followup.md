@@ -1,73 +1,38 @@
-# Reporting before CI, and the bounded CI follow-up
+# Report before the bounded CI follow-up
 
-The rule this file exists for: **reporting is decoupled from CI verification.** The
-moment the work is done, the labels go on, the review is submitted, the comments are
-posted, and a draft is promoted to ready — whatever CI is doing at that instant.
-Only then does the run look at CI, and only for a bounded window.
+Use this procedure in step 13 of `om-auto-review-pr`.
 
-## Why — the failure this prevents
+## Publish before waiting
 
-CI on a real repository runs for twenty minutes to several hours. A skill that
-treats "required checks green" as a precondition for posting its verdict pays for
-that twice. It burns the whole budget idling instead of finishing, and — the part
-that actually hurts — if the monitoring process dies mid-wait, the pull request is
-left **stranded**: still a draft, no labels, no review, not one comment recording
-that any work happened at all. The analysis is gone and the next human to look at
-the PR cannot tell whether anything was ever done to it.
+Complete these actions before any CI wait:
 
-Posting first makes the stranded case harmless. The worst outcome becomes a fully
-reviewed, fully labeled PR whose CI result nobody summarized — which the tracker
-shows anyway.
+1. Apply the full label set through the descriptor guards.
+2. Submit the complete review body and verdict.
+3. Post the label rationale, completion comment, handoff, and applicable evidence.
+4. Promote an eligible completed draft to ready.
+5. Release this run's claim or retain the inherited chain claim for its owner.
 
-## What must land before any CI wait
-
-In this order, and all of it before the run so much as reads a check status for
-follow-up purposes:
-
-1. The full label set through the `apply_label` / `set_pipeline_label` guards.
-2. The review or verdict, submitted with its complete body.
-3. The run's comments — label rationale, summary, handoff, evidence.
-4. The draft → ready promotion, when the work is complete.
-5. The claim released or handed off (below), so a dead process cannot strand the
-   lock either.
-
-## Disclosing pending CI in the review body
-
-When a required check was still `PENDING` at the moment of the verdict, the review
-body (or, for a skill that posts no review, its summary comment) MUST carry the
-disclosure as its own short paragraph, so the PR is self-documenting and nobody
-mistakes the approval for a green run:
+If required checks are pending, include this separate paragraph in the review body:
 
 ```markdown
 **CI pending:** {check names and links} on this head. Required CI and QA approval
 still gate merge. A follow-up will report the CI result.
 ```
 
-Drop the last sentence when the run will not follow up — never
-promise a follow-up the run does not intend to make. When no required check was
-pending, omit the paragraph entirely rather than writing a "CI was green" variant;
-the review's own validation section already covers that.
+Omit the last sentence if this run will not follow up. Omit the paragraph if no required checks are pending.
 
-## Swapping the lock to `ci-monitoring`
+## Use the monitoring label
 
-`in-progress` is a claim: it means an auto-skill is actively working the item and
-others must back off. Once the work is done and reported, that is no longer true, so
-the release step **swaps** instead of removing — `unlabel-pr` `in-progress`, then
-`apply_label "ci-monitoring"` — when, and only when, the run intends to post a
-CI-result follow-up. `ci-monitoring` is a meta label, not a pipeline label: it
-coexists with `merge-queue`, `changes-requested` and the rest exactly as `needs-qa`
-does, and it is **not** a lock — another agent or a human may act on the PR while it
-is set. It says one thing: the CI-result follow-up comment is still owed.
+Read `CI_MAX_WAIT_MINUTES` from `ci.maxWaitMinutes`, with a default of `40`.
+A value of `0` skips the wait and the monitoring label.
 
-A run that will not follow up on CI simply removes `in-progress` as before and never
-applies `ci-monitoring`. Both mutations go through the descriptor's label guards, so
-a repository that never created the label degrades to a logged skip.
+For a claim this run owns, remove `in-progress` before waiting. Add `ci-monitoring` only if this run will follow up.
+Retain an inherited chain claim as `references/claim-pr.md` requires. Never release another run's lock.
+Use the descriptor guards for each mutation. A missing label produces a logged skip.
 
-## The bounded wait
+`ci-monitoring` is a meta label. It neither reserves work nor replaces a pipeline label.
 
-Read `CI_MAX_WAIT_MINUTES` from `ci.maxWaitMinutes` (default `40`; `0` means do not
-wait at all — report and stop, applying no `ci-monitoring`). Then poll the required
-checks through **get-pr-checks** until they settle or the budget is spent.
+## Read complete CI evidence
 
 "Settled" is a claim about a complete reading, so make the reading complete before
 believing it: the check-run surface reports *jobs*, and a workflow run the tracker
@@ -84,42 +49,39 @@ workflow runs at that SHA), because a
 "green" that came from an empty list is the one failure this whole file exists to
 keep off a pull request.
 
-**Checks settled inside the budget** — post the outcome as an idempotent
-`` 🤖 `<skill-name>` — CI result `` comment (find the marker via
-**list-issue-comments** and rewrite via **update-comment** on a re-run): which
-required checks passed or failed, with links, and what it means for the verdict.
-Then remove `ci-monitoring`.
+**Checks settled inside the budget**
 
-- Green, verdict unchanged → say so; the PR keeps the pipeline label it already has.
-- A required check went red on an **approved** PR → the verdict no longer holds:
-  move the pipeline label to `changes-requested` via `set_pipeline_label`, explain
-  which check failed and why in the CI-result comment, update the single
-  `🏷️ label rationale` comment in place, and hand the PR back to its author.
-- A red check that was already red at verdict time changes nothing — it was priced
-  into the changes-requested verdict already.
+If the PR head changes, stop this follow-up. Report that the new head needs review. Remove `ci-monitoring`.
 
-**Budget exhausted with checks still running** — stop waiting. Do not keep the
-process alive on a run that may take hours. Instead:
+Find the `` 🤖 `om-auto-review-pr` — CI result `` comment through **list-issue-comments**.
+Update it through **update-comment**, or create it through **comment-pr** when absent. Use a body file.
 
-1. Run the repository's configured `validation.commands` gate in order, scoped to
-   the change where the toolchain supports scoping, as the run's own completion
-   evidence.
-2. Post the bail-out comment under the same `` 🤖 `<skill-name>` — CI result ``
-   marker, carrying: the local validation results command by command, the required
-   checks that were still pending at bail-out with their links, and the explicit
-   statement that **no further follow-up will come from this agent** — a human or a
-   later skill run owns the CI outcome from here.
-3. Remove `ci-monitoring`. Nobody is monitoring any more, and leaving it on would
-   promise a follow-up that is never coming; that honesty is the whole point of the
-   label.
-4. Close the run out cleanly and report, rather than hanging.
+- Passed checks with an unchanged verdict: report the evidence. Keep the current pipeline label.
+- New required failure after approval: use `set_pipeline_label` to apply `changes-requested`. Name the failed check and link its evidence.
+- Required failure already included in the verdict: report its current state without repeating the review.
 
-## The guard that is never traded away
+For a changed verdict, update the single label-rationale comment and hand the PR back to its author.
+Remove `ci-monitoring` after the follow-up.
 
-Bailing out of the CI wait is **not** permission to merge without CI. The local gate
-substitutes for this agent's own confidence and reporting, never for branch
-protection: required checks still gate the actual merge, and every merge skill still
-refuses to merge until they are genuinely green. Reporting early is safe; merging
-early is not. Nothing in this file relaxes the QA-approval gate, makes
-`qa-approved` appliable from a diff, sets the human-only `qa` pipeline label, or
-lets a pipeline label stop being mutually exclusive.
+## Stop at the time limit
+
+Do not extend the wait beyond `CI_MAX_WAIT_MINUTES`.
+Use the command results already recorded for the reviewed tree when their inputs remain unchanged.
+Do not rerun the same gate merely because remote CI is still pending.
+
+If local evidence is missing or invalid, run the configured gate again in an isolated worktree.
+Recreate a worktree if step 12 removed this run's worktree. Clean up only worktrees created for that validation.
+Record failures or unavailable checks honestly.
+
+Update the CI-result comment with every local command result and pending check name and link. Include this exact statement:
+
+```text
+no further follow-up will come from this agent
+```
+
+Name the human or later run that owns the next check. Remove `ci-monitoring`. Finish the report.
+
+## Keep the merge gates
+
+Local results are this run's evidence. They never replace required CI or branch protection.
+Keep required CI and QA approval as merge gates. Never derive `qa-approved` from a diff or set the human-only `qa` label.

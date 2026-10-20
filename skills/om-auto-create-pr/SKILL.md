@@ -103,7 +103,7 @@ Use `om-open-pr` for PR mechanics when available. Use `om-auto-review-pr` for th
 
 11. **Post the outcome.** Update the summary through `references/summary-comment-template.md` after the review finishes or reports a blocker. Use a body file. Link validation and review evidence. Include UI screenshots through **attach-image-evidence** when UI changed. Name unresolved findings, pending checks, and the next action.
 
-12. **Finish and clean up.** Add `PR: #{n}` below the plan's `## Progress` heading. Commit and push that record. Set `Status: complete` only after all Steps, validation, and review are complete. Promote the draft through **mark-pr-ready**. An incomplete run stays draft. Release only claims this run owns. Always run cleanup from `references/worktree-setup.md`.
+12. **Finish and clean up.** Add `PR: #{n}` below the plan's `## Progress` heading. Commit that record. Push the commit. Set `Status: complete` only after all Steps, validation, and review are complete. Promote the draft through **mark-pr-ready**. An incomplete run stays draft. Release only claims this run owns. Always run cleanup from `references/worktree-setup.md`.
 
 13. **Report the result.** Follow `references/report-templates.md`. State the result, evidence limits, and next action. For incomplete work, name the first remaining Step and `om-auto-continue-pr {prNumber}`. End with the exact chaining lines:
 

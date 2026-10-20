@@ -61,4 +61,4 @@ PR: #140
 ### Phase 2: Verify and publish
 
 - [x] 2.1 Run checks and review protected contracts — 1f233b7
-- [ ] 2.2 Publish and review the PR
+- [x] 2.2 Publish and review the PR — 0b70ead

@@ -37,7 +37,7 @@ Compared `rules.md`, `review-report.md`, and `ci-followup.md` with their same-na
 
 All five configured validation commands passed. The tracker-provider check confirms the preserved run-level CI guard. Manual comparisons confirm unchanged CLI arguments, Progress example, shared-rule prefixes, and chaining fields. Other skills, descriptors, configuration, and tooling are untouched.
 
-The self-review traced the free-slot and existing-run paths, foreign and inherited claims, spec-only review, other-author review without autofix, fork carry-forward, pending and failing CI, timeout evidence, and changed-head handling. A separate read-only review is running before final handoff. Full ASD-STE100 dictionary compliance is not claimed.
+The self-review traced the free-slot and existing-run paths, foreign and inherited claims, spec-only review, other-author review without autofix, fork carry-forward, pending and failing CI, timeout evidence, and changed-head handling. Independent review b3de9836 approved e7e1138 with no actionable findings and passed every configured check. Later commits change only the execution plan. The clean review report is posted on PR #140. GitHub rejected native self-approval because the current account is the author; a separate GitHub reviewer owns that approval. Full ASD-STE100 dictionary compliance is not claimed.
 
 ## Risks
 
@@ -60,5 +60,5 @@ PR: #140
 
 ### Phase 2: Verify and publish
 
-- [ ] 2.1 Run checks and review protected contracts
+- [x] 2.1 Run checks and review protected contracts — 1f233b7
 - [ ] 2.2 Publish and review the PR

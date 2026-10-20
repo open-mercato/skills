@@ -33,6 +33,12 @@ Non-goals: change other skills, install external plugins, change the SDLC, or me
 
 Compared `rules.md`, `review-report.md`, and `ci-followup.md` with their same-named copies. Asked whether to sync the other skills, as AGENTS.md requires. The default remains the two requested skills. Common rule text and the emoji glossary are unchanged. The CI completeness block remains byte-for-byte identical across its existing consumers.
 
+## Verification evidence
+
+All five configured validation commands passed. The tracker-provider check confirms the preserved run-level CI guard. Manual comparisons confirm unchanged CLI arguments, Progress example, shared-rule prefixes, and chaining fields. Other skills, descriptors, configuration, and tooling are untouched.
+
+The self-review traced the free-slot and existing-run paths, foreign and inherited claims, spec-only review, other-author review without autofix, fork carry-forward, pending and failing CI, timeout evidence, and changed-head handling. A separate read-only review is running before final handoff. Full ASD-STE100 dictionary compliance is not claimed.
+
 ## Risks
 
 - Shorter instructions can omit a decision branch. Compare each old branch with the rewrite.
@@ -42,6 +48,8 @@ Compared `rules.md`, `review-report.md`, and `ci-followup.md` with their same-na
 - Reuse validation evidence only for the same reviewed tree and unchanged inputs. New changes require new checks.
 
 ## Progress
+
+PR: #140
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 

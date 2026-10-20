@@ -29,6 +29,10 @@ Non-goals: change other skills, install external plugins, change the SDLC, or me
 
 2.2 Publish the PR with the configured labels. Run the installed review workflow. Address findings and post the final summary.
 
+## Shared reference scope
+
+Compared `rules.md`, `review-report.md`, and `ci-followup.md` with their same-named copies. Asked whether to sync the other skills, as AGENTS.md requires. The default remains the two requested skills. Common rule text and the emoji glossary are unchanged. The CI completeness block remains byte-for-byte identical across its existing consumers.
+
 ## Risks
 
 - Shorter instructions can omit a decision branch. Compare each old branch with the rewrite.
@@ -44,7 +48,7 @@ Non-goals: change other skills, install external plugins, change the SDLC, or me
 ### Phase 1: Rewrite and simplify
 
 - [x] 1.1 Rewrite both skill entrypoints — 554dcba
-- [ ] 1.2 Remove repeated metadata requests and validation work
+- [x] 1.2 Remove repeated metadata requests and validation work — 76cbe54
 
 ### Phase 2: Verify and publish
 

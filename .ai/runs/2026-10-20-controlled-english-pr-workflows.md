@@ -43,7 +43,7 @@ Non-goals: change other skills, install external plugins, change the SDLC, or me
 
 ### Phase 1: Rewrite and simplify
 
-- [ ] 1.1 Rewrite both skill entrypoints
+- [x] 1.1 Rewrite both skill entrypoints — 554dcba
 - [ ] 1.2 Remove repeated metadata requests and validation work
 
 ### Phase 2: Verify and publish

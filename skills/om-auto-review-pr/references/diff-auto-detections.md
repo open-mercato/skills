@@ -23,7 +23,7 @@ not an optional heuristic; skip rows that have no equivalent in this codebase
 |-----------------|---------|
 | New route, handler, subscriber, or worker file missing the registration or metadata exports the codebase's conventions require | Major: required exports for discovery/registration |
 | Direct low-level HTTP or data call in UI or page code, outside tests, where the repo provides a shared client helper | Major: must use the shared client helper |
-| Behavior change with no corresponding test file in the diff | Major: behavior changes must include tests |
+| Behavior change with no test coverage for the changed behavior | Major: behavior changes must include tests |
 | Entity or schema changed but no migration file or no-op rationale in the diff | Major: schema changes must ship with a scoped migration |
 | Hand-written migration SQL that bypasses the repo's migration tooling without a scoped rationale | Major: prefer generated/tooled migrations; manual SQL must be scoped and keep the tooling's state files in sync |
 | Missing explicit data scoping in sub-entity queries | Major: defense in depth |

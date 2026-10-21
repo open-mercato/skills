@@ -400,3 +400,18 @@ Finally, the skill grows a small local QA knowledge base
 that later sessions read before planning — the one genuinely new,
 cross-session capability the source pipeline had that no existing skill in
 this collection covers.
+
+## 2026-10-21 — Autofix checks behavior coverage, and runtime writing rules are self-contained
+
+The autofix review loop judges tests by the changed behavior, not by whether a
+test filename appears in the PR diff. Existing coverage can satisfy the gate
+when it exercises the changed behavior. Code behavior changes still require
+appropriate tests. Documentation-only changes do not need artificial unit
+tests. This keeps the diff detector and the fix loop on one policy, so an
+evidence-backed coverage decision cannot leave an unfixable Major finding.
+
+The controlled-English and simplicity instructions in `om-auto-create-pr` and
+`om-auto-review-pr` are also complete in their installed `rules.md` copies.
+Runtime instructions do not depend on an external dictionary, web page, or
+third-party skill path. Sources may remain in design history for attribution,
+but an executing agent does not fetch or install them to apply these rules.

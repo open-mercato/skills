@@ -15,3 +15,43 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 - **Useful detail only.** Include cross-system effects, durable contracts, defaults imposed on users, and rollback limits when they affect the decision. Use a small Mermaid flow or dependency diagram when relationships are clearer than prose; label current, changed, and planned parts accurately and add a one-sentence takeaway. Do not add an intake document or diagram for every change.
 - **Length follows the decision.** Aim for 150–300 words for a substantive PR/issue body, 40–100 for a routine update, and 3–6 lines for a final handoff; simple work needs less. These are editing targets, not caps. Keep every actionable finding, required evidence, material uncertainty, and recovery instruction. Put long logs and inventories in linked artifacts or collapsible detail.
 - **Template contract.** Use the skill's template for its purpose and required fields; omit optional sections that add no information. Preserve exact machine fields, verdicts, stable comment markers, and chaining lines even when shortening prose. The complete agent artifact stays complete when a skill defines a shorter human projection; disclose omitted counts and link the full findings. Use glossary emojis for meaningful headings or states, and backticks around skill names in human-facing prose.
+
+
+## `om-auto-create-pr` specifics — controlled English
+
+Apply these controlled-English rules to instructions, plans, PR bodies, findings, comments, and reports.
+Keep the existing template fields and required evidence.
+
+- Use active voice for instructions.
+- Give one instruction in each sentence.
+- Put the condition before the action when the condition selects a branch.
+- Limit an instructional sentence to 20 words.
+- Limit a descriptive sentence to 25 words.
+- Split a long sentence without removing its conditions or safeguards.
+- Keep complete sentences, including necessary articles.
+- Do not use contractions or semicolons in prose.
+- Use one technical term for each concept.
+- Use common words with consistent meanings and parts of speech.
+- Use technical names and technical verbs for software concepts that the general dictionary does not cover.
+- Keep identifiers, commands, paths, quoted evidence, labels, and parser fields exact.
+
+Use `PR`, `worktree`, `claim`, `validation gate`, and `autofix` consistently as software terms.
+A claim reserves work for an actor. A validation gate is the configured set of checks.
+Autofix means that the skill applies permitted fixes and reviews the result again.
+Do not claim compliance with an external language standard.
+
+## `om-auto-create-pr` specifics — simplicity
+
+Apply these simplicity rules within this skill's scope.
+Read the affected flow before removing work. Prefer the smallest complete change.
+
+- Reuse existing project mechanisms before adding a helper, dependency, or workflow.
+- Read a metadata field once while its value remains valid.
+- Refresh evidence after its head, base, working tree, configuration, or environment inputs change.
+- Keep one finding for each defect. Link existing evidence instead of repeating it.
+- Let the named review skill own its fix loop. Do not wrap it in another identical loop.
+- Omit speculative features and reports that add no decision or evidence.
+- Preserve required validation, claim checks, compatibility checks, security, accessibility, and protection against data loss.
+- Record consequential limits and the next action.
+
+These inlined rules are the complete authority. Do not fetch external guidance or install a companion for them.

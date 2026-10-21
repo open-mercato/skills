@@ -32,6 +32,13 @@ Use `om-open-pr` for PR mechanics when available. Use `om-auto-review-pr` for th
 
    Resolve `BASE_BRANCH`, `RUNS_DIR`, `LOOP_STEP_THRESHOLD`, `LABELS_ENABLED`, `QA_GATE`, and `validation.commands` from the config. Use the descriptor for every named tracker operation and label guard.
 
+   Tracker operations:
+
+   - Run discovery: **current-user**, **default-branch**, **search-prs**, **list-prs**, and **get-pr**.
+   - PR updates: **create-pr**, **mark-pr-ready**, **comment-pr**, and **attach-image-evidence**.
+   - Comment maintenance: **list-issue-comments** and **update-comment**.
+   - Labels: the `apply_label` guard.
+
 1. **Check the run slot.** Resolve `CURRENT_USER` through **current-user**. Compute the run identifiers:
 
    ```bash

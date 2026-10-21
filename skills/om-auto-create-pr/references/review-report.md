@@ -8,7 +8,8 @@ Invoke `om-auto-review-pr {prNumber} --autofix`. Stop and name the missing skill
 Follow its complete workflow. Its `om-code-review` engine supplies the compatibility, security, scope, and breaking-change checks.
 Do not run another direct code review before it. Do not wrap its fix loop in a second fix loop.
 
-The review skill must claim the PR before review work. It releases only claims that it creates.
+The review skill checks the claim signals first. It then claims or re-enters as `references/claim-pr.md` specifies.
+It releases only claims that it creates.
 It retains inherited chain locks for their owner. Follow `references/claim-pr.md` for the claim contract.
 
 ## `om-auto-create-pr` specifics

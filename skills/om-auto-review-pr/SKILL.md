@@ -27,6 +27,14 @@ Emit `APPROVED` or `CHANGES REQUESTED` and the exact `PR:` line. Include `Issue:
 
    Resolve `LABELS_ENABLED`, `QA_GATE`, `CI_MAX_WAIT_MINUTES`, and `validation.commands` from the config. Use the descriptor for all tracker operations and label guards. Use the PR's `baseRefName` for diffs and conflict resolution.
 
+   Tracker operations:
+
+   - Read state: **current-user**, **default-branch**, **get-pr**, **get-pr-diff**, **get-pr-checks**, and **get-required-checks**.
+   - Read activity: **list-runs**, **list-issue-comments**, and **list-review-comments**.
+   - Work on the PR: **checkout-pr**, **review-pr**, **assign-pr**, **unassign-pr**, and **comment-pr**.
+   - Update state: **update-comment**, **mark-pr-ready**, **unlabel-pr**, and **create-pr**.
+   - Labels: the `apply_label` and `set_pipeline_label` guards.
+
 1. **Claim the PR.** Resolve `CURRENT_USER` through **current-user**. Fetch the metadata required by `references/pr-metadata.md`, including claim fields. Reuse this snapshot in the following steps. Check the three claim signals through `references/claim-pr.md`. Do not treat `ci-monitoring` as a claim.
 
    Stop on another actor's live claim unless `--force` permits takeover. Post the takeover comment before review when re-entering a current-user claim. Otherwise, claim through **assign-pr**, `apply_label`, and the claim comment. Register release of a claim this run creates, including failure paths. Retain an inherited chain lock for its owner.

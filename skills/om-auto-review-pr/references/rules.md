@@ -19,8 +19,7 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## `om-auto-review-pr` specifics — controlled English
 
-Use [ASD-STE100](https://www.asd-ste100.org/about_STE.html) for prose that you write during this skill.
-Apply these rules to instructions, plans, PR bodies, findings, comments, and reports.
+Apply these controlled-English rules to instructions, plans, PR bodies, findings, comments, and reports.
 Keep the existing template fields and required evidence.
 
 - Use active voice for instructions.
@@ -32,19 +31,18 @@ Keep the existing template fields and required evidence.
 - Keep complete sentences, including necessary articles.
 - Do not use contractions or semicolons in prose.
 - Use one technical term for each concept.
-- Use approved general words with their approved meanings and parts of speech.
+- Use common words with consistent meanings and parts of speech.
 - Use technical names and technical verbs for software concepts that the general dictionary does not cover.
 - Keep identifiers, commands, paths, quoted evidence, labels, and parser fields exact.
 
 Use `PR`, `worktree`, `claim`, `validation gate`, and `autofix` consistently as software terms.
 A claim reserves work for an actor. A validation gate is the configured set of checks.
 Autofix means that the skill applies permitted fixes and reviews the result again.
-Use the standard's dictionary when it is available. Report any unchecked vocabulary limits.
-Do not claim a complete compliance check from sentence-length checks alone.
+Do not claim compliance with an external language standard.
 
 ## `om-auto-review-pr` specifics — simplicity
 
-Apply the [Ponytail](https://github.com/DietrichGebert/ponytail/blob/main/skills/ponytail/SKILL.md) approach within this skill's scope.
+Apply these simplicity rules within this skill's scope.
 Read the affected flow before removing work. Prefer the smallest complete change.
 
 - Reuse existing project mechanisms before adding a helper, dependency, or workflow.
@@ -56,4 +54,4 @@ Read the affected flow before removing work. Prefer the smallest complete change
 - Preserve required validation, claim checks, compatibility checks, security, accessibility, and protection against data loss.
 - Record consequential limits and the next action.
 
-These links document the source of this guidance. This workflow does not require a network fetch or a Ponytail installation.
+These inlined rules are the complete authority. Do not fetch external guidance or install a companion for them.

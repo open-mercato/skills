@@ -1,6 +1,6 @@
 # Pipeline-label mechanics, priority/risk inference, and comment text (step 10)
 
-The label machinery `om-auto-review-pr` uses in step 10: the `set_pipeline_label` helper's behavior, the priority/risk inference rules, and the suggested comment strings. The verdict→label decisions and QA safety rules live in the skill body.
+The label machinery `om-auto-review-pr` uses in step 10: the `set_pipeline_label` helper's behavior, the category check, the priority/risk inference rules, and the suggested comment strings. The verdict→label decisions and QA safety rules live in the skill body.
 
 ## The `set_pipeline_label` helper
 
@@ -19,6 +19,26 @@ The helper:
 - preserves category labels (`bug`, `feature`, `refactor`, `security`, `dependencies`, `documentation`), meta labels (`needs-qa`, `skip-qa`, `qa-approved`, `qa-self-verified`, `in-progress`, `ci-monitoring`), priority labels (`priority-low`, `priority-medium`, `priority-high`, `priority-extreme`), and risk labels (`risk-low`, `risk-medium`, `risk-high`)
 
 Every label change is reflected in the **single consolidated `🏷️ label rationale` comment** (template below) — updated in place, never a new comment per change.
+
+## Category label (verified and corrected on every review, when labels are enabled)
+
+Category labels are what the changelog and generated release notes group a PR by, so every review makes them right before the verdict is posted — including fork PRs, whose authors usually cannot set labels.
+
+1. Determine the expected category from the diff and the conventional title, using what the PR changes for users:
+
+   | Change | Category |
+   |---|---|
+   | fixes a vulnerability, an auth or data-scoping flaw, or a vulnerable dependency | `security` |
+   | `feat` — new capability or public API | `feature` |
+   | `fix` — incorrect behavior corrected | `bug` |
+   | `refactor`, `perf`, `test`, `ci`, `build`, `chore` with no user-visible behavior change | `refactor` |
+   | `deps` / `chore(deps)` — dependency bumps | `dependencies` |
+   | `docs` only | `documentation` |
+
+   One category is the norm; `security` goes next to `bug` or `dependencies` when the change closes a vulnerability — keep it whenever it applies.
+2. If the expected category is missing, add it through `apply_label`; if a present category is wrong, remove it with **unlabel-pr** (only when `LABELS_ENABLED`). Record the change and its reason as the category line of the label-rationale comment.
+3. A category fix alone is never a finding and never changes the verdict; mention it in the report's material changes.
+4. If the title does not read as a release-note line (a conventional title stating the user-visible effect), report a **nit** with a suggested title — renaming is the author's call.
 
 ## Priority label (always ensure exactly one, when labels are enabled)
 
@@ -41,6 +61,7 @@ Exactly **one** marker-idempotent comment from this skill per PR describes the w
 
 - 🚀 `merge-queue` — code review passed; `needs-qa` stays on, so the QA-approval gate holds the merge until a QA reviewer adds `qa-approved`.
 - 🧪 `needs-qa` — the change alters user-facing behavior that a human should exercise.
+- 🐛 `bug` — {why this category fits, one full sentence; say so when this review corrected it}.
 - 🔺 `priority-high` — {why this priority, one full sentence}.
 - 🟡 `risk-medium` — {why this risk, one full sentence}.
 ```

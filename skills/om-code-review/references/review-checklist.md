@@ -229,6 +229,22 @@ A contract surface is anything an external consumer may depend on. Removing or r
 - [ ] Is a significant design decision recorded where the repo keeps decision records? (minor)
 - [ ] Does every TODO carry an owner or an issue link, not just a wish? (nit)
 
+## 13. PR Category Label & Title (PR reviews only)
+
+The changelog and generated release notes group a PR by its category label and print its title, so a missing or wrong category misfiles the change for readers. Expected category, from what the PR changes for users (conventional-commit type as the starting point):
+
+| Change | Category |
+|---|---|
+| fixes a vulnerability, an auth or data-scoping flaw, or a vulnerable dependency | `security` |
+| `feat` — new capability or public API | `feature` |
+| `fix` — incorrect behavior corrected | `bug` |
+| `refactor`, `perf`, `test`, `ci`, `build`, `chore` with no user-visible behavior change | `refactor` |
+| `deps` / `chore(deps)` — dependency bumps | `dependencies` |
+| `docs` only | `documentation` |
+
+- [ ] Does the PR carry exactly the category its change calls for — plus `security` next to `bug` or `dependencies` when it closes a vulnerability? A caller with label permission (`om-auto-review-pr`) fixes it itself and records it, with no finding; otherwise report the expected label. (minor)
+- [ ] Does the title read as a release-note line — a conventional title stating the user-visible effect (`fix(checkout): keep the total after a discount edit`)? Suggest a title; renaming is the author's call. (nit)
+
 ## Anti-Pattern Quick Table
 
 Flag any of these on sight:

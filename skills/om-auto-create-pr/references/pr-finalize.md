@@ -37,7 +37,32 @@ Verification proofs land on the PR, not only in the plan. Keep the validation ou
 
 ## PR body
 
-Use the template in `references/pr-body-template.md` — a conventional-commit-prefixed title scoped to the primary area, and a body that **MUST** include the `Tracking plan:` line so `om-auto-continue-pr` can resume. Flip `Status:` to `complete` on the PR body once all Progress steps are checked.
+Use the template in `references/pr-body-template.md` — a title built per §PR title below, and a body that **MUST** include the `Tracking plan:` line so `om-auto-continue-pr` can resume. Flip `Status:` to `complete` on the PR body once all Progress steps are checked.
+
+## PR title
+
+Build the title from the optional `prTitleTemplate` config key. When the key is absent the title keeps the default format, unchanged:
+
+```bash
+PR_TITLE_TEMPLATE=$(jq -r '.prTitleTemplate // empty' "${CONFIG:-.ai/agentic.config.json}" 2>/dev/null)
+[ -n "$PR_TITLE_TEMPLATE" ] || PR_TITLE_TEMPLATE='{prefix}({area}): {summary}{issueRef}'
+TICKET_KEY_PATTERN=$(jq -r '.ticketKeyPattern // empty' "${CONFIG:-.ai/agentic.config.json}" 2>/dev/null)
+TICKET_KEY=""
+if [ -n "$TICKET_KEY_PATTERN" ]; then
+  TICKET_KEY=$(git branch --show-current | grep -oE -- "$TICKET_KEY_PATTERN" | head -n 1)
+fi
+```
+
+| Placeholder | Value |
+|---|---|
+| `{prefix}` | Conventional-commit type (`feat`, `fix`, `refactor`, …). |
+| `{area}` | Primary affected area. |
+| `{summary}` | One-line behavioral summary. |
+| `{issue}` | The subject issue as its tracker writes it: `#123` for a numeric id, the key itself (`ENG-123`) otherwise. Empty without an issue. |
+| `{issueRef}` | ` (#{issueId})` in an issue-driven run, else empty — the legacy suffix the default uses. |
+| `{ticketKey}` | First match of the `ticketKeyPattern` ERE in the head branch name (case-sensitive). Empty when the key is unset or nothing matches. |
+
+An empty `{issue}` or `{ticketKey}` is removed together with a `[]` or `()` pair wrapped directly around it and one following space, so `[{issue}] {prefix}…` never renders `[] `. A caller-supplied title always wins. Keep the conventional-commit type as the first word after any leading reference: `om-auto-update-changelog` reads it from there.
 
 ## Label normalization
 

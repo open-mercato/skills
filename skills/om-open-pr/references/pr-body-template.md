@@ -6,7 +6,7 @@ material limits even when they need more space. Omit empty sections and `N/A`.
 On later runs, refresh this explanation to match the final change instead of
 appending a history of the work. Preserve human-authored text on adopted PRs.
 
-Title: `<prefix>(<area>): <behavioral change>`; use the caller's title when given.
+Title: per `references/pr-finalize.md` §PR title (default `<prefix>(<area>): <behavioral change>`); use the caller's title when given.
 
 ```markdown
 Closes #{issueId}

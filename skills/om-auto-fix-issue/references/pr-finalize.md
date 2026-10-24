@@ -15,12 +15,37 @@ Before opening anything, check whether a PR already exists for this branch (or o
 `om-open-pr` is an **optional** enhancement — a repo may install this skill without it, and it must still work. When `om-open-pr` is absent, perform the mechanics inline:
 
 1. Commit the worktree changes with a conventional-commit subject; push the branch.
-2. Open the PR via the tracker operation **create-pr** against `$BASE_BRANCH`, with a conventional-commit-prefixed title scoped to the primary area. Lead the body with the trigger and corrected behavior, then the relevant mechanism, test evidence, and any material compatibility/rollout risk; omit empty sections. Keep the linkage line (`Fixes #{issueId}`), any `LOW_CONFIDENCE` flag, and all existing parsed `Tracking plan:` / `Status:` fields. Aim for 150–300 words; keep detailed findings and QA in their linked reports.
+2. Open the PR via the tracker operation **create-pr** against `$BASE_BRANCH`, with a title built per §PR title below. Lead the body with the trigger and corrected behavior, then the relevant mechanism, test evidence, and any material compatibility/rollout risk; omit empty sections. Keep the linkage line (`Fixes #{issueId}`), any `LOW_CONFIDENCE` flag, and all existing parsed `Tracking plan:` / `Status:` fields. Aim for 150–300 words; keep detailed findings and QA in their linked reports.
 3. Normalize labels per the section below.
 4. Transfer the chain lock onto the PR — **assign-pr** `$CURRENT_USER`, `apply_label "in-progress" {prNumber}`, and the 🤖 hand-off comment naming `om-auto-review-pr` — exactly as `om-open-pr --handoff` would (`references/claim-pr.md`, chained hand-off).
 5. Then hand the issue back and release the issue's `in-progress` lock per `references/claim-pr.md`.
 
 Detect availability simply: if invoking `om-open-pr` is not possible in this environment (skill not present), take the inline path. Behavior is identical either way — the same PR, the same labels, the same lock hand-off.
+
+## PR title
+
+Build the title from the optional `prTitleTemplate` config key. When the key is absent the title keeps the default format, unchanged:
+
+```bash
+PR_TITLE_TEMPLATE=$(jq -r '.prTitleTemplate // empty' "${CONFIG:-.ai/agentic.config.json}" 2>/dev/null)
+[ -n "$PR_TITLE_TEMPLATE" ] || PR_TITLE_TEMPLATE='{prefix}({area}): {summary}{issueRef}'
+TICKET_KEY_PATTERN=$(jq -r '.ticketKeyPattern // empty' "${CONFIG:-.ai/agentic.config.json}" 2>/dev/null)
+TICKET_KEY=""
+if [ -n "$TICKET_KEY_PATTERN" ]; then
+  TICKET_KEY=$(git branch --show-current | grep -oE -- "$TICKET_KEY_PATTERN" | head -n 1)
+fi
+```
+
+| Placeholder | Value |
+|---|---|
+| `{prefix}` | Conventional-commit type (`feat`, `fix`, `refactor`, …). |
+| `{area}` | Primary affected area. |
+| `{summary}` | One-line behavioral summary. |
+| `{issue}` | The subject issue as its tracker writes it: `#123` for a numeric id, the key itself (`ENG-123`) otherwise. Empty without an issue. |
+| `{issueRef}` | ` (#{issueId})` in an issue-driven run, else empty — the legacy suffix the default uses. |
+| `{ticketKey}` | First match of the `ticketKeyPattern` ERE in the head branch name (case-sensitive). Empty when the key is unset or nothing matches. |
+
+An empty `{issue}` or `{ticketKey}` is removed together with a `[]` or `()` pair wrapped directly around it and one following space, so `[{issue}] {prefix}…` never renders `[] `. A caller-supplied title always wins. Keep the conventional-commit type as the first word after any leading reference: `om-auto-update-changelog` reads it from there.
 
 ## Ready vs draft
 

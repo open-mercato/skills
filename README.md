@@ -327,6 +327,8 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
 
 A Rust repo puts `cargo test` and `cargo clippy` in `validation.commands`; a Go repo puts `go test ./...`. Skills run whatever you configure and treat any non-zero exit as a gate failure. A skill invoked in a repo without the config runs [`om-setup-agent-pipeline`](docs/skills/om-setup-agent-pipeline.md) first — interactively when you're there to answer its questions, with `--defaults` when running unattended — then continues with the freshly written config.
 
+Projects using [agent-qa](https://github.com/vostride/agent-qa) can run selected natural-language web tests through the same validation-command setting, with advanced memidex memory and self-improvement. The [agent-qa QA guide](docs/roles/qa.md#existing-agent-qa-tests) covers prerequisites, test selection, recorded evidence, and how those results fit the QA gate.
+
 GitHub is the default tracker; a repository whose `origin` is on GitLab (gitlab.com or self-managed) defaults to the stand-alone GitLab provider, which runs issues, merge requests, reviews, CI pipelines, and labels through `glab`. Shipped split-provider templates also support Linear issues through `schpet/linear-cli` and Jira Cloud work items through Atlassian CLI, while GitHub continues to own PRs, reviews, and CI — see the tracker providers section below.
 
 Agent-browser is the default browser automation provider for fresh setups. It

@@ -48,9 +48,16 @@ version documents.
 - A native tool that exits non-zero because it found advisories is a success;
   one that fails for any other reason falls back to the OSV scan, and the report
   names the fallback.
-- After any tool runs, check `git status --porcelain`; restore every file the run
-  changed (`git checkout -- <file>` for tracked files, delete only files this run
-  created) and mention it in the report.
+- Never discard the user's own edits. Before any native tool runs, record
+  `git status --porcelain --untracked-files=all` as the baseline. When the
+  manifest or lockfile the tool reads is already modified or untracked in that
+  baseline, skip the native tool for that ecosystem and use the OSV scan
+  instead — the bundled scanner only reads files.
+- After a native tool runs, compare `git status --porcelain --untracked-files=all`
+  with the baseline. Restore only files that were clean in the baseline and are
+  changed now (`git restore -- <file>`), and delete only untracked files that did
+  not exist in the baseline. A file that was already dirty is never restored,
+  reset, or deleted. Name every restored or deleted file in the report.
 - Native output is normalized into the same fields the OSV scan produces
   (`references/osv-scan.md`): package, installed version, advisory ids and
   aliases, severity, fixed versions, direct or transitive.

@@ -17,12 +17,20 @@ python3 -I "<this skill's directory>/references/osv-scan.py" \
   --root . --min-severity "$MIN_SEVERITY" pubspec.lock app/package-lock.json > "$RUN_TMP/osv.json"
 ```
 
-Exit codes: `0` — the scan completed (advisories found or not); `3` — the
-database was unreachable: every lockfile lands in `skipped` with reason
-`advisory database unreachable`, and the report names those ecosystems as **not
-scanned** — never as clean; `2` — a usage error (bad flag or severity value),
-with nothing on stdout: fix the invocation and rerun, never report it as a scan
-result.
+Exit codes:
+
+- `0` — the scan completed with full coverage (advisories found or not).
+- `4` — the scan completed with gaps listed in `incomplete` (unpinned
+  requirements, advisory details that could not be fetched). Use the findings,
+  and report each gap under **Not scanned** as partial coverage — never as clean.
+- `3` — the database was unreachable or answered malformed data: every lockfile
+  lands in `skipped` with reason `advisory database unreachable`, and the report
+  names those ecosystems as **not scanned** — never as clean.
+- `2` — a usage error (bad flag or severity value), with nothing on stdout: fix
+  the invocation and rerun; never report it as a scan result.
+
+Lockfile arguments must resolve inside `--root`; anything else is skipped with
+reason `outside --root`.
 
 Output shape:
 
@@ -30,6 +38,7 @@ Output shape:
 {
   "scanned":  [{"lockfile": "pubspec.lock", "ecosystem": "Pub", "packages": 87}],
   "skipped":  [{"lockfile": "ios/Podfile.lock", "reason": "CocoaPods has no advisory feed in OSV"}],
+  "incomplete": [{"lockfile": "requirements.txt", "reason": "2 unpinned entries not scanned"}],
   "invalid_entries": 0,
   "errors":   [],
   "findings": [{

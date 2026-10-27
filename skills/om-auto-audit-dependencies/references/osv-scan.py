@@ -9,10 +9,11 @@ Usage:
                         [--min-severity low|moderate|high|critical] [LOCKFILE ...]
 
 With no LOCKFILE arguments it scans every lockfile git tracks under --root.
-Exit codes: 0 on a completed scan, even when advisories are found; 3 when the
-advisory database was unreachable (the caller reports the ecosystems as "not
-scanned"); 2 is argparse's usage error, so a bad invocation is never mistaken
-for an unreachable database.
+Exit codes: 0 on a complete scan, even when advisories are found; 4 when the
+scan finished with gaps (see "incomplete"); 3 when the advisory database was
+unreachable or answered malformed data (the caller reports the ecosystems as
+"not scanned"); 2 is argparse's usage error, so a bad invocation is never
+mistaken for an unreachable database.
 """
 import argparse
 import json
@@ -26,6 +27,9 @@ import urllib.request
 
 API = "https://api.osv.dev/v1"
 EXIT_UNREACHABLE = 3
+EXIT_INCOMPLETE = 4
+# Yarn ranges that resolve outside the registry (git, tarball URL, local path, workspace).
+NON_REGISTRY_RANGE = re.compile(r"^(git|github:|gitlab:|bitbucket:|https?:|file:|link:|portal:|workspace:|exec:|patch:)")
 SEVERITY_RANK = {"low": 1, "moderate": 2, "high": 3, "critical": 4}
 NAME_RE = re.compile(r"^[A-Za-z0-9@._/+:-]+$")
 VERSION_RE = re.compile(r"^[A-Za-z0-9._+~-]+$")
@@ -134,7 +138,10 @@ def p_yarn_lock(text):
                 if spec.startswith("__metadata"):
                     continue
                 at = spec.find("@", 1)
-                if at > 0:
+                rng = spec[at + 1:] if at > 0 else ""
+                if rng.startswith("npm:"):
+                    rng = rng[4:]
+                if at > 0 and not NON_REGISTRY_RANGE.match(rng):
                     names.append(spec[:at])
             continue
         m = re.match(r'^  version:?\s+"?([^"\s]+)"?\s*$', line)
@@ -210,9 +217,17 @@ def p_requirements(text):
     out = []
     for line in text.splitlines():
         line = line.split("#", 1)[0].strip()
-        m = re.match(r"^([A-Za-z0-9._-]+)(\[[^\]]*\])?\s*===?\s*([A-Za-z0-9._+!-]+)", line)
+        line = re.sub(r"\s+--hash=\S+", "", line).rstrip("\\").strip()  # pip-compile hashes / continuations
+        if not line or re.match(r"^--?(hash|index-url|extra-index-url|find-links|trusted-host|"
+                                r"no-binary|only-binary|prefer-binary|require-hashes|pre|i)\b", line):
+            continue
+        m = re.match(r"^([A-Za-z0-9._-]+)(\[[^\]]*\])?\s*===?\s*([A-Za-z0-9._+!-]+)\s*(;.*)?$", line)
         if m:
             out.append((m.group(1), m.group(3), True))
+        else:
+            # A range, an include (-r/-c), an editable or URL requirement: what
+            # ships is not pinned here, so the file is only partly covered.
+            out.append(UNPINNED)
     return out
 
 
@@ -284,6 +299,7 @@ def p_nuget_lock(text):
     return [(n, v, d) for (n, v), d in seen.items()]
 
 
+UNPINNED = ("", "", None)  # marker row: an entry this parser cannot pin to a version
 PARSERS = {k[2:]: v for k, v in globals().items() if k.startswith("p_")}
 
 
@@ -451,6 +467,9 @@ def query_ids(api, queries):
     for start in range(0, len(queries), 1000):
         chunk = queries[start:start + 1000]
         res = post(api, "/querybatch", {"queries": chunk})["results"]
+        if not isinstance(res, list) or len(res) != len(chunk):
+            raise ValueError("querybatch answered %s results for %d queries"
+                             % (len(res) if isinstance(res, list) else "no", len(chunk)))
         for q, r in zip(chunk, res):
             found = [v["id"] for v in r.get("vulns", [])]
             token = r.get("next_page_token")
@@ -488,7 +507,9 @@ def main():
     if not re.match(r"^https://", a.api):
         sys.exit("--api must be an https URL")
 
-    report = {"scanned": [], "skipped": [], "findings": [], "invalid_entries": 0, "errors": []}
+    report = {"scanned": [], "skipped": [], "incomplete": [], "findings": [], "invalid_entries": 0,
+              "errors": []}
+    root = os.path.realpath(a.root)
     entries = []  # (lockfile, ecosystem, name, version, direct)
     for rel in a.lockfiles or tracked_lockfiles(a.root):
         base = os.path.basename(rel)
@@ -500,20 +521,32 @@ def main():
             report["skipped"].append({"lockfile": rel, "reason": "not a recognized lockfile"})
             continue
         eco, parser = kind
+        path = os.path.realpath(os.path.join(root, rel))
+        if os.path.commonpath([root, path]) != root:
+            report["skipped"].append({"lockfile": rel, "reason": "outside --root"})
+            continue
         try:
-            with open(os.path.join(a.root, rel), encoding="utf-8") as fh:
+            with open(path, encoding="utf-8") as fh:
                 rows = PARSERS[parser](fh.read())
         except (OSError, ValueError) as exc:
             report["skipped"].append({"lockfile": rel, "reason": "unreadable: %s" % exc.__class__.__name__})
             continue
-        good = 0
+        good = unpinned = 0
         for name, ver, direct in rows:
+            if (name, ver, direct) == UNPINNED:
+                unpinned += 1
+                continue
             if not (NAME_RE.match(name) and VERSION_RE.match(str(ver))):
                 report["invalid_entries"] += 1
                 continue
             entries.append((rel, eco, name, str(ver), direct))
             good += 1
+        if unpinned and not good:
+            report["skipped"].append({"lockfile": rel, "reason": "no pinned versions (%d unpinned entries)" % unpinned})
+            continue
         report["scanned"].append({"lockfile": rel, "ecosystem": eco, "packages": good})
+        if unpinned:
+            report["incomplete"].append({"lockfile": rel, "reason": "%d unpinned entries not scanned" % unpinned})
 
     uniq = sorted({(e[1], e[2], e[3]) for e in entries})
     try:
@@ -533,7 +566,7 @@ def main():
                 cache[vid] = get(a.api, "/vulns/" + urllib.request.quote(vid))
             except (urllib.error.URLError, OSError, ValueError) as exc:
                 report["errors"].append("detail %s: %s" % (vid, exc))
-                cache[vid] = {"id": vid}
+                cache[vid] = None
         return cache[vid]
 
     hits = {k: v for k, v in zip(uniq, ids) if v}
@@ -541,6 +574,10 @@ def main():
         advisories, seen, details = [], set(), {}
         for vid in vids:
             v = vuln(vid)
+            if v is None:  # details unavailable: never guess a severity or a fix
+                report["incomplete"].append({"package": "%s/%s@%s" % (eco, name, ver),
+                                             "reason": "advisory %s details unavailable" % vid})
+                continue
             aliases = sorted(set(v.get("aliases", [])) - {vid})
             group = {vid, *aliases}
             if group & seen:
@@ -550,7 +587,7 @@ def main():
             sev, score = severity_of(v)
             if sev is None:  # fall back to a rated alias (GHSA usually carries one)
                 for al in aliases:
-                    if al.startswith("GHSA-"):
+                    if al.startswith("GHSA-") and vuln(al):
                         sev, score = severity_of(vuln(al))
                         if sev:
                             break
@@ -578,7 +615,7 @@ def main():
             "target_clears_all": pick_target([details[x["id"]] for x in advisories], eco, name, ver),
         })
     print(json.dumps(report, indent=2))
-    return 0
+    return EXIT_INCOMPLETE if report["incomplete"] else 0
 
 
 if __name__ == "__main__":

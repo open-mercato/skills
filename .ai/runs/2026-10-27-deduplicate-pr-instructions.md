@@ -32,7 +32,7 @@ A shorter instruction could hide a branch. Compare the retained reference agains
 
 ### Phase 1: Remove repeated instructions
 
-- [ ] 1.1 Deduplicate entrypoints against their retained references
+- [x] 1.1 Deduplicate entrypoints against their retained references — 37d0a05
 
 ### Phase 2: Verify and publish
 

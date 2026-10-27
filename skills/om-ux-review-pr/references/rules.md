@@ -44,3 +44,8 @@ stricter rule wins.
 - Scope: this skill judges the increment a PR ships. Whole modules, flows, or
   existing product areas belong to the `om-ux-shape` skill in Review mode,
   which uses this skill's walk procedure to gather its evidence.
+- Guard mode keeps the same read-only contract: it posts at most one comment
+  under its own marker `` 🤖 `om-ux-review-pr` — design-contract guard `` and,
+  in `--health` mode, writes only the configured `ux.healthReport` file. A
+  guard rule is a pattern, not a verdict: triage every hit before reporting
+  it, and never report a pre-existing line as a finding of the PR under review.

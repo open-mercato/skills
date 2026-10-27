@@ -32,7 +32,16 @@ Labels come from the config's taxonomy, always through the `apply_label` guard f
 - `skip-qa` **only** for clearly low-risk non-user-facing changes (docs-only, dependency-only, CI-only, test-only, trivial typos, single-file maintenance).
 - `needs-qa` when the run touches UI or other user-facing behavior that requires manual exercise.
 - Never both `needs-qa` and `skip-qa`.
-- Additive category labels when they clearly apply: `bug`, `feature`, `refactor`, `security`, `dependencies`, `documentation`.
+- Additive category labels when they clearly apply: `bug`, `feature`, `refactor`, `security`, `dependencies`, `documentation`. Every PR carries at least one: the changelog and generated release notes group a PR by its category and print its title, so the title must read as a release-note line (a conventional title stating the user-visible effect). Pick the category from what the PR changes for users, starting from its conventional-commit type; add `security` next to `bug` or `dependencies` when the change closes a vulnerability:
+
+  | Change | Category |
+  |---|---|
+  | fixes a vulnerability, an auth or data-scoping flaw, or a vulnerable dependency | `security` |
+  | `feat` — new capability or public API | `feature` |
+  | `fix` — incorrect behavior corrected | `bug` |
+  | `refactor`, `perf`, `test`, `ci`, `build`, `chore` with no user-visible behavior change | `refactor` |
+  | `deps` / `chore(deps)` — dependency bumps | `dependencies` |
+  | `docs` only | `documentation` |
 - Exactly one priority label and exactly one risk label. The engine maintains **one** marker-idempotent consolidated rationale comment covering the whole applied label set — one label per line with its emoji and a full-sentence reason, updated in place via **update-comment** on later changes — never one comment per label.
 - When `qaGate` is `true`, a `needs-qa` PR will not be mergeable until QA signs off with `qa-approved`. `qa-approved` is never added by an authoring skill — it is earned by manual QA or the self-QA exception.
 

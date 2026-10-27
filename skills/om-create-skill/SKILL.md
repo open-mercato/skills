@@ -54,7 +54,9 @@ before generating, and it **will not hand back a result that fails the gate** â€
       whether it mutates the tracker (needs the claim/lock protocol) or is
       read-only; whether it belongs to the autofix chain (needs handoff
       markers). See `references/description-guide.md` for the
-      trigger/description craft.
+      trigger/description craft. If the brief is only this repository's delta
+      to an existing skill, write an overlay instead of a new skill
+      (`references/overlay-contract.md`) and go straight to the gate.
    2. **Draft the router body** from `references/templates/skill-skeleton.md`:
       a two-line step 0 pointing at the new skill's own
       `references/agentic-setup.md`, built from the shared preamble blocks in
@@ -63,8 +65,10 @@ before generating, and it **will not hand back a result that fails the gate** â€
    3. **Push detail down** to `references/` using the up/down rule in
       `references/philosophy.md` â€” output templates, conditional branches, big
       tables, and detailed sub-procedures start in layer 3, not the body.
+      What to write at all, how much freedom to leave, and whether a fragment
+      is a reference, script, or asset: `references/authoring-patterns.md`.
    4. **Scaffold** `skills/<name>/SKILL.md`, its `references/`, and (optional)
-      a repo-local stub from `references/templates/repo-local-stub.md`.
+      a repo-local overlay from `references/templates/repo-local-stub.md`.
    5. **Optionally** record a one-line entry in `DECISIONS.md` when the skill
       introduces a new capability worth logging (ask first).
 
@@ -92,6 +96,9 @@ before generating, and it **will not hand back a result that fails the gate** â€
    3. **Readability test** â€” the body alone still reads as a recipe: what the
       skill does, in what order, and where to look for detail (per
       `references/philosophy.md`).
+   4. **Overlay shape** â€” when an overlay was written or edited: no
+      frontmatter, the override banner, named delta sections only, under 50%
+      of the base (manual check in `references/overlay-contract.md`).
 
    If any check fails, fix and re-run â€” do not hand back a failing skill. On
    `--dry-run`, print the planned files and the checks that would run, and
@@ -124,6 +131,10 @@ before generating, and it **will not hand back a result that fails the gate** â€
   another skill's `references/`.
 - **Restraint**: do not split a skill under ~150 lines or extract a fragment that
   loads on every run anyway; a split must leave the map shorter than the terrain.
+- **Overlays are deltas, not forks**: a repo-local `.ai/skills/<name>/SKILL.md`
+  has no frontmatter, opens with the override banner, carries only named delta
+  sections, and stays under 50% of the base â€” otherwise move the change into
+  the base skill or give it its own name (`references/overlay-contract.md`).
 - **The gate is mandatory**: never hand back a skill until `references/gates.md`
   is green.
 - Shared rules: `references/rules.md` â€” label discipline, claim etiquette,

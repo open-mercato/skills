@@ -32,6 +32,8 @@ Use `om-open-pr` for PR mechanics when available. Use `om-auto-review-pr` for th
 
    Resolve `BASE_BRANCH`, `RUNS_DIR`, `LOOP_STEP_THRESHOLD`, `LABELS_ENABLED`, `QA_GATE`, and `validation.commands` from the config. Use the descriptor for every named tracker operation and label guard.
 
+   Load optional `PR_TITLE_TEMPLATE` and `TICKET_KEY_PATTERN` through the PR-title procedure in `references/pr-finalize.md`.
+
    Tracker operations:
 
    - Run discovery: **current-user**, **default-branch**, **search-prs**, **list-prs**, and **get-pr**.

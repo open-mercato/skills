@@ -14,6 +14,33 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-09-14: Detailed screen design with `om-ux-design`
+
+`om-ux-design` creates detailed connected screens from a spec or selected backlog
+scope. It reuses a repository's prototype runtime, components and design rules;
+portable HTML is available when needed. Install it through the collection's usual
+installer and add it to the delivery Designer role when updating an existing SDLC.
+Existing setup files are not rewritten automatically.
+
+Keep `om-mockup-prototype`: it is the neutral discovery skill from #107. The new
+skill is based on the unreleased #106 import, not a rename of that released
+capability. If you installed #106 directly, inspect your local override before
+moving any specialized instructions into `.ai/skills/om-ux-design/`. Do not move
+discovery output or rename existing prototype IDs/storage keys. Export browser
+feedback before changing its host or port, retain operation IDs/tombstones, and
+keep accepted source versions available.
+
+No new setup questions are required. `paths.prototypes` keeps its existing value
+or `.ai/prototypes` default. `designTokens` is optional and unset by default; the
+portable helper uses `.uxproof/tokens.json` first, then that explicit path, the
+conventional snapshot and its bundled default. The helper accepts both the flat
+extraction format with themes and the old snapshot format. A malformed selected
+source or missing explicit snapshot fails instead of silently using other colors.
+
+Use a proposal link until a concrete version is accepted. Preserve accepted
+`Prototype:` references when editing; new source changes require renewed visual
+verification and the owner's acceptance before replacing that authoritative link.
+
 ## 2026-09-22 — Shipped GitLab tracker provider
 
 - **GitLab repositories can run the whole pipeline.** Select `gitlab` to run issues, merge requests, reviews, CI pipelines, and labels on gitlab.com or a self-managed instance through `glab` (REST v4 via `glab api`). It is stand-alone: no `.ai/trackers/github.md` companion is installed.

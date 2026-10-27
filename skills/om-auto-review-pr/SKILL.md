@@ -66,6 +66,8 @@ Emit `APPROVED` or `CHANGES REQUESTED` and the exact `PR:` line. Include `Issue:
 
 10. **Publish the verdict and labels immediately.** Follow `references/verdict-and-labels.md` and `references/label-transitions.md`. Submit through **review-pr**. Keep findings, severity, command results, and the pending-CI disclosure in the review body. Keep direction questions separate from verified defects.
 
+    Check and correct the category through `references/label-transitions.md`. A category correction alone is not a finding.
+
     Use the descriptor guards for labels. Update one consolidated label-rationale comment through **update-comment**. Keep one priority and one risk label. Preserve QA approvals. On approval, set `merge-queue`. Keep `needs-qa` when QA remains necessary.
 
     Promote an approved draft only when autofix is eligible and the draft is not intentional. Hand a changes-requested PR back to its author. For approved `needs-qa` PRs, post the instructions from `references/manual-qa-template.md`. Skip that label-dependent comment when labels are disabled.

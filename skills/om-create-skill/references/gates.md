@@ -75,6 +75,14 @@ empty-section rituals, repeated body/comment summaries, or brevity that drops a
 gate, evidence limitation, or parsed field. Skip this check for a pure split,
 which preserves the original wording.
 
+## Gate 5 — overlay shape (whenever an overlay was written or edited)
+
+Run the overlay gate in `references/overlay-contract.md`: no frontmatter, the
+`> **Repo-local override.**` banner on line 1, only named delta sections, and
+under 50% of the base `SKILL.md`. Over the limit is a fork — move the change into
+the base skill or give it its own name; do not hand back a bigger overlay. This
+check is manual; `scripts/lint.sh` does not enforce it.
+
 ## On failure
 
 Fix and re-run — never hand back a skill with a failing gate. Report the final

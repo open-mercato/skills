@@ -42,6 +42,52 @@ In local mode return this report with artifact paths and state on the Contract
 line that nothing was posted. In PR mode the final reply links this review with
 its recommendation and next action in 3–6 lines.
 
+## Guard comment (`--guard`)
+
+Same marker discipline as the review comment, with its own marker so it never
+replaces a full review. Lead with what the violations do to users; keep every
+violation's rule, lines, and fix.
+
+```markdown
+🤖 `om-ux-review-pr` — design-contract guard
+
+🔍 {Recommended action and the user-visible consequence of the worst violations}.
+
+**Contract**: {contract path; layers with version, stale ones marked | no design contract}; {N} rules ({team}/{layer}/{derived}).
+**Scope**: {N} changed lines in {N} files; {N} older occurrences in touched files, not counted against this change.
+
+### 🔍 Violations
+- ❌ **critical** `{rule id}` — {file}:{lines} — {what the line does} → {fix}. {why}
+- ⚠️ **warning** `{rule id}` — {file}:{lines} — {…} → {fix}.
+- **info** `{rule id}` — {…}
+
+### 📋 Remediation plan
+1. {Shared component first: file, rule, lines, exact replacement}.
+
+{Only when present: exempt-with-a-reason candidates, and cases to check by hand.}
+_Advisory; the author decides how to address these._
+```
+
+A clean pass says so in one line with the rule count and scope, and still
+states older occurrences when there are any.
+
+## Health report (`--guard --health`)
+
+Returned locally; written to `ux.healthReport` only when configured.
+
+```markdown
+🔍 Design-contract health — {path or repository}, {date}: {the one trend that matters most, and the suggested next area}.
+
+| Rule | Severity | Count | Change | Target |
+|---|---|---|---|---|
+| `{rule id}` | {severity} | {N} | {+N / −N / new / no baseline} | 0 |
+| `{when/require rule id}` coverage | {severity} | {N}% | {±N pts} | 100% |
+
+**By area** (worst first): {area — total; top rule}.
+**Next area**: {top of the ranking}.
+{Only when relevant: stale layers, rules skipped as invalid, baseline missing.}
+```
+
 ## Rules for filling it
 
 - Rank by impact × frequency × reach. Usually five to seven findings suffice;

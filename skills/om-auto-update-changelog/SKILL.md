@@ -52,8 +52,8 @@ This skill drafts a `CHANGELOG.md` entry and delegates the PR mechanics to `om-a
 
 3. **Categorize each PR.** Per-PR category derivation, in priority order:
 
-   1. **Labels** (the config's category taxonomy) — pick the first match: `bug` → `fix`, `security` → `security`, `feature` → `feat`, `refactor` → `refactor`, `dependencies` → `chore`, `documentation` → `docs`.
-   2. **Conventional-commit prefix in the PR title** (`feat:`, `fix:`, `security:`, `refactor:`, `docs:`, `test:`, `chore:`, `ci:`, `build:`, `perf:`, `style:`). Allow optional scope: `fix(auth):`.
+   1. **Labels** (the config's category taxonomy) — pick the first match: `security` → `security`, `bug` → `fix`, `feature` → `feat`, `refactor` → `refactor`, `dependencies` → `chore`, `documentation` → `docs`.
+   2. **Conventional-commit prefix in the PR title** (`feat:`, `fix:`, `security:`, `refactor:`, `docs:`, `test:`, `chore:`, `ci:`, `build:`, `perf:`, `style:`). Allow optional scope: `fix(auth):`. Skip a leading bracketed reference first (`[ENG-123] `, `[#123] `), which a configured `prTitleTemplate` may put before the type.
    3. Fallback → `chore`.
 
    Map category → section + emoji:

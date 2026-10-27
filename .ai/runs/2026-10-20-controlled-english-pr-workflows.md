@@ -65,3 +65,5 @@ PR: #140
 - [x] 2.1 Run checks and review protected contracts — 1f233b7
 - [x] 2.2 Publish and review the PR — 0b70ead
 - [x] Post-review fix: address Bernard's review findings — 6b5963a
+
+- [x] Post-review fix: integrate current base while retaining title settings and category correction — 62d6259

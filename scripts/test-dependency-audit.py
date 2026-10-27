@@ -202,6 +202,21 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertEqual(report["findings"][0]["target"], "1.2.0")
 
+    def test_ghsa_alias_supplies_fix_data_without_a_separate_batch_hit(self):
+        primary = advisory("CVE-example", fixed=None)
+        primary["aliases"] = ["GHSA-example"]
+        code, report = self.run_scan({"package-lock.json": self.lock()}, records={"CVE-example": primary, "GHSA-example": advisory()}, hits={"1.0.0": ["CVE-example"]})
+        self.assertEqual(code, 0)
+        self.assertEqual(report["findings"][0]["target"], "1.2.0")
+        self.assertEqual(len(report["findings"][0]["advisories"]), 1)
+
+    def test_non_record_alias_does_not_invalidate_complete_primary_details(self):
+        primary = advisory()
+        primary["aliases"] = ["CVE-alias-only"]
+        code, report = self.run_scan({"package-lock.json": self.lock()}, records={"GHSA-example": primary})
+        self.assertEqual(code, 0)
+        self.assertTrue(report["scanned"])
+
     def test_candidate_verification_failure_does_not_claim_clean_coverage(self):
         record = advisory("A")
         code, report = self.run_scan({"package-lock.json": self.lock()}, records={"A": record}, hits={"1.0.0": ["A"], "1.2.0": ["missing"]})

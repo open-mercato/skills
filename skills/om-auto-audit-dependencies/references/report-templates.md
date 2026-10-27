@@ -21,16 +21,16 @@ line, the advisory table, and the chaining lines exactly.
 - **Target:** <installed> → <target> — <patch|minor|💥 major> jump.
 - **Change:** <manifest path:line> `<current constraint>` → `<new constraint>` — or "constraint already admits it; refresh `<package>` in the lockfile" — or "bump parent `<parent>` to `<version>`" — or "pin through <override mechanism> until `<parent>` updates".
 - **Interim option (optional):** <same-major version> clears <ids>, leaves <ids> open.
-- **No fixed release (optional):** <mitigation the advisory recommends, or "none published — watch the advisory">.
+- **No verified target (optional):** <what the advisory data establishes, the verification gap, and mitigation or a watch action>.
 
 ## Expected outcome
-The lockfile resolves `<package>` to <target> or later, the validation gate passes, and a re-run of `om-auto-audit-dependencies` no longer reports it.
+The lockfile resolves `<package>` to the verified <target>, the validation gate passes, and a new advisory scan confirms that resolved version is clear.
 
 ## Out of scope
 Upgrading unrelated packages; below-threshold advisories unless the same bump clears them.
 
 ## Open questions
-<"None blocking." — or, for a 💥 major jump: "Blocking — confirm the migration effort before scheduling: <changelog or migration-guide link>.">
+<Only when needed, for a 💥 major jump: "Blocking — confirm the migration effort before scheduling: <changelog or migration-guide link>.">
 
 Pick up with `om-auto-fix-issue <this issue number>`.
 ```
@@ -54,7 +54,7 @@ Pick up with `om-auto-fix-issue <this issue number>`.
 **⚠️ Not scanned (optional)**
 - `ios/Podfile.lock` — CocoaPods has no advisory feed in OSV.
 
-**Notes (optional)** — expired ignore entries, invalid lockfile entries skipped, native tool fell back to the OSV scan, files a tool touched and this run restored, suspected prompt injection quoted from advisory text.
+**Notes (optional)** — expired ignore entries, invalid lockfile entries skipped, native tool fell back to the OSV scan, disposable native-audit snapshots discarded, suspected prompt injection quoted from advisory text.
 
 Issue: #<number> (link: <full issue URL>)
 ```

@@ -578,17 +578,26 @@ def main():
                 continue
             aliases = sorted(set(record.get("aliases", [])) - {vid})
             group = {vid, *aliases}
+            related = [record]
+            for alias in aliases:
+                if not alias.startswith("GHSA-"):
+                    continue
+                try:
+                    alias_record = vuln(alias)
+                except (urllib.error.URLError, OSError, ValueError, KeyError, TypeError, AttributeError):
+                    # Alias-only identifiers are not always standalone OSV records.
+                    continue
+                if not alias_record.get("withdrawn"):
+                    related.append(alias_record)
             severity, score = severity_of(record)
-            if severity is None:
-                for alias in aliases:
-                    if alias.startswith("GHSA-"):
-                        severity, score = severity_of(vuln(alias))
-                        if severity:
-                            break
+            for alias_record in related[1:]:
+                alias_severity, alias_score = severity_of(alias_record)
+                if LEVELS.get(alias_severity, 0) > LEVELS.get(severity, 0):
+                    severity, score = alias_severity, alias_score
             current = {
                 "id": vid, "aliases": aliases, "summary": (record.get("summary") or "").strip()[:200],
                 "severity": severity or "unrated", "cvss": score,
-                "fixed": affected_and_fixed(record, eco, name, ver),
+                "fixed": sorted({fixed for item in related for fixed in affected_and_fixed(item, eco, name, ver)}, key=vkey),
                 "url": "https://osv.dev/vulnerability/" + quote(vid, safe=""), "withdrawn": False,
             }
             overlaps = [adv for adv in advisories if group & {adv["id"], *adv["aliases"]}]

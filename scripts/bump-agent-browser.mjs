@@ -12,9 +12,10 @@
 // prereleases. Sums come from the release's asset digest fields — the same
 // source the descriptor's Pinned release section documents for manual bumps.
 
-import { readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 
 const DESCRIPTOR = 'skills/om-setup-agent-pipeline/references/browsers/agent-browser.md'
+const INSTALLED_DESCRIPTOR = '.ai/browsers/agent-browser.md'
 const RELEASES_LATEST = 'https://api.github.com/repos/vercel-labs/agent-browser/releases/latest'
 const EXPECTED_ASSETS = [
   'agent-browser-darwin-arm64',
@@ -60,6 +61,10 @@ if (process.argv.includes('--latest-tag')) {
 }
 
 const original = readFileSync(DESCRIPTOR, 'utf8')
+const hasInstalledCopy = existsSync(INSTALLED_DESCRIPTOR)
+if (hasInstalledCopy && readFileSync(INSTALLED_DESCRIPTOR, 'utf8') !== original) {
+  fail('repository-local browser descriptor differs from the shipped copy; reconcile it before bumping the pin')
+}
 const pinned = /AGENT_BROWSER_VERSION=(v\d+\.\d+\.\d+)/.exec(original)?.[1]
 if (!pinned) fail(`no AGENT_BROWSER_VERSION pin found in ${DESCRIPTOR}`)
 
@@ -93,4 +98,5 @@ for (const digest of digests.values()) {
 if (updated.includes(pinned)) fail(`old version ${pinned} still present after rewrite; aborting without writing`)
 
 writeFileSync(DESCRIPTOR, updated)
+if (hasInstalledCopy) writeFileSync(INSTALLED_DESCRIPTOR, updated)
 console.log(`bumped agent-browser pin: ${pinned} -> ${tag}`)

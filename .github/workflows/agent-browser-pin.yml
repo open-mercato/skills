@@ -43,7 +43,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b chore/bump-agent-browser
-          git add skills/om-setup-agent-pipeline/references/browsers/agent-browser.md
+          git add skills/om-setup-agent-pipeline/references/browsers/agent-browser.md .ai/browsers/agent-browser.md
           git commit -m "chore(om-setup-agent-pipeline): bump pinned agent-browser to $tag"
           git push -f origin chore/bump-agent-browser
           gh pr create \

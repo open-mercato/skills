@@ -188,5 +188,6 @@ node scripts/test-spec-writing-data-model.mjs || exit 1
 node scripts/test-migrated-skill-tools.mjs || exit 1
 
 node scripts/test-pr-titles.mjs || exit 1
+node scripts/test-bump-agent-browser.mjs || exit 1
 
 echo "Lint OK."

@@ -22,26 +22,33 @@ For each kept package:
 
 1. **search-issues** (open and closed) for the marker text plus the package name.
    Read candidates with **get-issue** and match the marker exactly.
-2. **search-issues** (open) for each advisory id and alias — catches an issue a
-   person filed by hand.
+2. **search-issues** (open) for each advisory id and alias. Reuse a hand-filed
+   issue only when it also identifies the same package and ecosystem. A shared
+   advisory id alone does not establish duplicate work.
+
+Before updating or commenting on an existing issue, read its assignees, labels,
+and recent claim comments. Resolve the actor through **current-user**. Defer an
+item with another actor’s live claim or assignment, and report it as deferred.
+Do not take its implementation lock or overwrite its body.
 
 Then:
 
 | Found | Action |
 |---|---|
-| Own open issue | Re-render the body. Unchanged → leave it (count `unchanged`). Changed (new advisory, new target, new lockfile) → **update-issue** the body, then one **comment-issue** naming only what changed (count `updated`). Labels: raise priority when a new advisory is more severe; never lower it. |
+| Own open issue | Re-render the body. Unchanged → leave it (count `unchanged`). Changed (new advisory, new target, new lockfile) → **update-issue** the body, then one **comment-issue** naming only what changed (count `updated`). Labels: raise priority when a new advisory is more severe; never lower it. Remove sibling priority labels through the descriptor guard before applying the new priority. |
 | Hand-filed open issue naming one of the advisories | Do not file. Post the upgrade path once as a marker-idempotent comment (find it via **list-issue-comments**, rewrite via **update-comment**); count `updated`. |
 | Own **closed** issue, same package still vulnerable | File a new issue whose body links the closed one ("the earlier fix did not land, or the package regressed"). |
 | Nothing | File a new issue. |
 
-An own open issue whose package no longer shows up in this run gets one comment
-saying the latest audit no longer finds the advisories and naming the version
-now locked — never close it; closing belongs to the change that fixed it.
+An own open issue gets a no-longer-affected comment only when a complete scan
+positively verifies its package, version, and advisories are clear. A failed or
+partial scan, ignored advisory, changed threshold, or missing package is not
+proof of a fix. Never close it; closing belongs to the implementing change.
 
 ## Title
 
 - With a target: `Security: upgrade <package> <installed> → <target> (<n> <highest-severity> advisor<y|ies>)`
-- No fixed release: `Security: <package> <installed> has no fixed release (<highest-severity>)`
+- No verified target: `Security: <package> <installed> has no verified target (<highest-severity>)`
 
 Several installed versions → use the lowest installed version in the title.
 Package and version strings were validated in step 0; never put advisory
@@ -56,7 +63,7 @@ defines its own inference for any of these, its rules win.
 |---|---|
 | Category | `security` |
 | Priority | highest kept severity — critical → `priority-extreme`, high → `priority-high`, moderate → `priority-medium`, low → `priority-low` |
-| Risk | the upgrade, not the advisory — patch/minor jump → `risk-low`; override pin or no fixed release → `risk-medium`; major jump → `risk-high` |
+| Risk | the upgrade, not the advisory — patch/minor jump → `risk-low`; override pin or no verified target → `risk-medium`; major jump → `risk-high` |
 
 Never pipeline labels, never `in-progress`. Record the set once in a
 `` 🤖 `om-auto-audit-dependencies` — 🏷️ label rationale `` comment, one label per

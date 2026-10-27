@@ -32,7 +32,7 @@ function run(args, options = {}) {
 // Python harness: loads the script as a module, swaps the HTTP client for canned
 // advisories, and prints a JSON verdict for every unit case plus one full main() run.
 const harness = String.raw`
-import importlib.util, io, json, sys, contextlib
+import importlib.util, io, json, sys, contextlib, os
 spec = importlib.util.spec_from_file_location("osv_scan", sys.argv[1])
 m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
 P = m.PARSERS
@@ -222,8 +222,11 @@ def fake_post(api, path, payload):
     if path == "/querybatch":
         res = []
         for q in payload["queries"]:
-            hit = q["package"]["name"] == "pkg" and q["version"] == "1.2.0"
-            res.append({"vulns": [{"id": i} for i in ("A-2", "A-3", "CVE-1", "W-1")]} if hit else {})
+            ids = []
+            if q["package"]["name"] == "pkg":
+                ids = {"1.2.0": ["A-2", "A-3", "CVE-1", "W-1"],
+                       "1.5.0": ["A-3"], "2.3.0": ["A-3"]}.get(q["version"], [])
+            res.append({"vulns": [{"id": i} for i in ids]} if ids else {})
         return {"results": res}
     raise AssertionError("unexpected POST " + path)
 def fake_get(api, path):
@@ -251,6 +254,20 @@ def flaky_get(api, path):
 out["truncated"] = main_with(["package-lock.json"], short_batch, fake_get)
 out["detail_fail"] = main_with(["package-lock.json"], fake_post, flaky_get)
 out["outside"] = main_with(["../outside/package-lock.json", "requirements.txt"], fake_post, fake_get)
+def target_requery(api, path, payload):
+    if any(q["version"] == "1.5.0" for q in payload["queries"]):
+        return {"results": [{"vulns": [{"id": "A-2"}]} for _ in payload["queries"]]}
+    return fake_post(api, path, payload)
+out["target_requery"] = main_with(["package-lock.json"], target_requery, fake_get)
+def target_failure(api, path, payload):
+    if any(q["version"] == "1.5.0" for q in payload["queries"]):
+        raise OSError("candidate database unavailable")
+    return fake_post(api, path, payload)
+out["target_failure"] = main_with(["package-lock.json"], target_failure, fake_get)
+os.makedirs(os.path.join(sys.argv_root, "invalid"), exist_ok=True)
+with open(os.path.join(sys.argv_root, "invalid", "package-lock.json"), "w") as fh:
+    json.dump({"packages": {"node_modules/bad": {"name": "pkg\n", "version": "1.0.0"}}}, fh)
+out["invalid_entries"] = main_with(["invalid/package-lock.json"], fake_post, fake_get)
 for case, reply in {"null_result": {"results": [None, {}]}, "bad_vulns": {"results": [{"vulns": [None]}, {}]}}.items():
     try:
         out[case] = main_with(["package-lock.json"], lambda *args: reply, fake_get)
@@ -343,6 +360,11 @@ try {
     { lockfile: 'requirements.txt', reason: 'no pinned versions (1 unpinned entries)' },
   ], 'lockfile paths stay inside --root; a requirements file with no pins is not "scanned"')
 
+  assert.equal(out.target_requery.report.findings[0].target, '2.3.0', 'OSV re-query rejects a candidate still reported vulnerable')
+  assert.equal(out.target_failure.exit, 4, 'unavailable candidate evidence is partial coverage')
+  assert.equal(out.target_failure.report.findings[0].target, null)
+  assert.equal(out.invalid_entries.exit, 4, 'invalid entries prevent a full-coverage claim')
+  assert.equal(out.invalid_entries.report.invalid_entries, 1)
   for (const name of ['null_result', 'bad_vulns']) {
     assert.equal(out[name].exit, 3, `${name}: malformed batch data must produce the documented coverage report`)
     assert.deepEqual(out[name].report.scanned, [])

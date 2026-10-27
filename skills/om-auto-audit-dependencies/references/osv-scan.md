@@ -21,7 +21,7 @@ Exit codes:
 
 - `0` — the scan completed with full coverage (advisories found or not).
 - `4` — the scan completed with gaps listed in `incomplete` (unpinned
-  requirements, advisory details that could not be fetched). Use the findings,
+  requirements, advisory details or candidate verification that could not be fetched). Use the findings,
   and report each gap under **Not scanned** as partial coverage — never as clean.
 - `3` — the database was unreachable or answered malformed data: every lockfile
   lands in `skipped` with reason `advisory database unreachable`, and the report
@@ -58,9 +58,8 @@ Output shape:
 - `at_threshold` counts the advisories rated at or above `--min-severity`
   (unrated ones never count).
 - `target` is the smallest published fixed version that no advisory at or above
-  `--min-severity` still affects, checked against each advisory's affected
-  ranges; `null` means no such version exists — or, when `at_threshold` is `0`,
-  that nothing needed one. `target_clears_all` does the same across every
+  `--min-severity` still affects, checked against the advisory ranges and re-queried against OSV; `null` means no candidate was verified, verification was unavailable (see
+  `incomplete`), or `at_threshold` is `0`. `target_clears_all` does the same across every
   severity.
 - Version ordering in the script is an approximation that covers semver, dotted,
   and common PEP 440 forms; when an ecosystem's ordering is exotic (epochs,

@@ -49,7 +49,7 @@ version documents.
   one that fails for any other reason falls back to the OSV scan, and the report
   names the fallback.
 - Run native tools only in a disposable snapshot under this run's scratch
-  directory. Copy the required project inputs without credentials or secret
+  directory, outside the original checkout. Copy the required project inputs without credentials or secret
   files. Keep the original checkout untouched, including edits made during
   the scan. If a safe snapshot cannot be prepared, use the bundled OSV scan.
 - Discard only the disposable snapshot after the native tool finishes. Never

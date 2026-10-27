@@ -199,7 +199,7 @@ def p_toml_packages(text):
                 ver = m.group(2)
         elif line.startswith("source") and "registry" not in line and "pypi" not in line.lower():
             # git / path sources are not registry releases
-            if "git" in line or "path" in line:
+            if any(kind in line for kind in ("git", "path", "editable", "virtual", "directory", "file", "url")):
                 name = None
     return out
 
@@ -584,13 +584,14 @@ def main():
         except (OSError, ValueError, TypeError, AttributeError) as exc:
             report["skipped"].append({"lockfile": rel, "reason": "unreadable: %s" % exc.__class__.__name__})
             continue
-        good = unpinned = 0
+        good = unpinned = invalid = 0
         for name, ver, direct in rows:
             if (name, ver, direct) == UNPINNED:
                 unpinned += 1
                 continue
-            if not (NAME_RE.match(name) and VERSION_RE.match(str(ver))):
+            if not isinstance(name, str) or not (NAME_RE.fullmatch(name) and VERSION_RE.fullmatch(str(ver))):
                 report["invalid_entries"] += 1
+                invalid += 1
                 continue
             entries.append((rel, eco, name, str(ver), direct))
             good += 1
@@ -600,6 +601,8 @@ def main():
         report["scanned"].append({"lockfile": rel, "ecosystem": eco, "packages": good})
         if unpinned:
             report["incomplete"].append({"lockfile": rel, "reason": "%d unpinned entries not scanned" % unpinned})
+        if invalid:
+            report["incomplete"].append({"lockfile": rel, "reason": "%d invalid entries not scanned" % invalid})
 
     uniq = sorted({(e[1], e[2], e[3]) for e in entries})
     try:
@@ -622,6 +625,40 @@ def main():
                 cache[vid] = None
         return cache[vid]
 
+    def verified_target(vulns, ecosystem, name, installed, threshold):
+        candidates = {fixed for item in vulns
+                      for fixed in affected_and_fixed(item, ecosystem, name, installed)}
+        for candidate in sorted(candidates, key=vkey):
+            try:
+                candidate_ids = query_ids(a.api, [{"package": {"ecosystem": ecosystem, "name": name},
+                                                  "version": candidate}])[0]
+                affected = False
+                for vid in candidate_ids:
+                    item = vuln(vid)
+                    if item is None:
+                        raise ValueError("candidate advisory details unavailable")
+                    if item.get("withdrawn"):
+                        continue
+                    severity, _ = severity_of(item)
+                    if severity is None:
+                        for alias in item.get("aliases", []):
+                            alias_item = vuln(alias) if alias.startswith("GHSA-") else None
+                            if alias_item:
+                                severity, _ = severity_of(alias_item)
+                                if severity:
+                                    break
+                    if severity is None:
+                        raise ValueError("candidate has an unrated advisory")
+                    if SEVERITY_RANK[severity] >= threshold:
+                        affected = True
+                if not affected:
+                    return candidate
+            except (urllib.error.URLError, OSError, ValueError, KeyError) as exc:
+                report["incomplete"].append({"package": "%s/%s@%s" % (ecosystem, name, installed),
+                                             "reason": "target %s verification unavailable: %s" % (candidate, exc)})
+                return None
+        return None
+
     hits = {k: v for k, v in zip(uniq, ids) if v}
     for (eco, name, ver), vids in sorted(hits.items()):
         advisories, seen, details = [], set(), {}
@@ -636,6 +673,13 @@ def main():
             if group & seen:
                 continue  # same advisory reached through another alias
             seen |= group
+            # Alias records can carry richer package ranges than the primary id.
+            related = [v]
+            for alias in aliases:
+                alias_record = vuln(alias)
+                if alias_record and not alias_record.get("withdrawn"):
+                    related.append(alias_record)
+            v = dict(v, affected=[entry for item in related for entry in item.get("affected", [])])
             details[vid] = v
             sev, score = severity_of(v)
             if sev is None:  # fall back to a rated alias (GHSA usually carries one)
@@ -664,8 +708,8 @@ def main():
             "direct": True if any(w[1] for w in where) else (None if any(w[1] is None for w in where) else False),
             "advisories": advisories,
             "at_threshold": len(kept),
-            "target": pick_target(kept, eco, name, ver) if kept else None,
-            "target_clears_all": pick_target([details[x["id"]] for x in advisories], eco, name, ver),
+            "target": verified_target(kept, eco, name, ver, threshold) if kept else None,
+            "target_clears_all": verified_target([details[x["id"]] for x in advisories], eco, name, ver, 1),
         })
     print(json.dumps(report, indent=2))
     return EXIT_INCOMPLETE if report["incomplete"] else 0

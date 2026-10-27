@@ -9,8 +9,8 @@ Usage:
   python3 -I osv-scan.py [--root DIR] [--api URL] [LOCKFILE ...]
 
 With no LOCKFILE arguments it scans every lockfile git tracks under --root.
-Exit code 0 even when advisories are found; 2 when any input or API response
-could not be completely scanned (see skipped/errors, never report those clean).
+Exit code 0 even when advisories are found; 2 for unsupported/incomplete inputs
+or argument errors; 3 for incomplete API responses. Only valid JSON is a report.
 """
 import argparse
 import json
@@ -498,7 +498,7 @@ def main():
         report["scanned"], report["skipped"] = [], report["skipped"] + [
             {"lockfile": s["lockfile"], "reason": "advisory database unreachable"} for s in report["scanned"]]
         print(json.dumps(report, indent=2))
-        return 2
+        return 3
 
     cache = {}
 
@@ -576,7 +576,7 @@ def main():
     skipped_files = {entry["lockfile"] for entry in report["skipped"]}
     report["scanned"] = [entry for entry in report["scanned"] if entry["lockfile"] not in skipped_files]
     print(json.dumps(report, indent=2))
-    return 2 if report["skipped"] or report["errors"] else 0
+    return 3 if report["errors"] else (2 if report["skipped"] else 0)
 
 
 if __name__ == "__main__":

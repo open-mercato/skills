@@ -19,7 +19,10 @@ python3 -I "<this skill's directory>/references/osv-scan.py" \
   --root . --min-severity "$MIN_SEVERITY" pubspec.lock app/package-lock.json > "$RUN_TMP/osv.json"
 ```
 
-Exit code 2 means some coverage is incomplete: inspect `skipped` and `errors`,
+Exit code 3 means advisory queries/details or target verification failed. Exit
+code 2 means unsupported/incomplete inputs, or an argument error. Treat stdout
+as a report only after parsing valid JSON with the documented keys; an argument
+error with no JSON is an execution failure. Inspect `skipped` and `errors`,
 retain results from successfully scanned lockfiles, and report each skipped
 lockfile as **not scanned**. Unreachable/malformed responses, failed advisory
 details, unsupported formats, invalid entries, unpinned requirements and escaping
@@ -74,6 +77,9 @@ Taken in this order, first hit wins:
 3. The rating of a `GHSA-` alias.
 4. Otherwise `unrated` — reported with its link, never filed, never dropped
    silently.
+
+CVSS v2/v4 vectors are not scored by the bundled script. Without a source label
+or a rated GHSA alias, these records remain explicitly unrated in the report.
 
 Native tools that report their own severity keep it, mapped onto the same four
 levels.

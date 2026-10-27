@@ -46,7 +46,9 @@ Every skill in this collection reads its repository-specific settings from `.ai/
   },
   "reviewChecklist": null,
   "closeKeywords": [],
-  "dependencyAudit": { "minSeverity": "high", "ignore": [] }
+  "dependencyAudit": { "minSeverity": "high", "ignore": [] },
+  "prTitleTemplate": "{prefix}({area}): {summary}{issueRef}",
+  "ticketKeyPattern": ""
 }
 ```
 
@@ -75,7 +77,9 @@ Field defaults: `references/config-capabilities.md`.
 - `paths.scripts` — where reusable environment scripts are generated (default `.ai/scripts`); `om-prepare-test-env` writes the env bring-up/teardown scripts here.
 - `paths.qa` — where QA working state and artifacts live (default `.ai/qa`): the shared `test-env.json` descriptor, and QA reports/screenshots under `<paths.qa>/artifacts_<runId>/`.
 - `reviewChecklist` — optional path to a repo-local review checklist file. When set, the `om-code-review` skill reads it in addition to its built-in checklist. A root `CODE_REVIEW.md` (see Project docs) is always picked up regardless.
-- `closeKeywords` — optional list of extra words that mark a PR as closing an issue, for repositories whose PR bodies are not written in English. `om-close-fixed-issues` matches the built-in English keywords (`fix`/`fixes`/`fixed`, `close`/`closes`/`closed`, `resolve`/`resolves`/`resolved`) plus everything listed here, case-insensitively and only immediately before a `#N` token; configured words extend the built-ins and never replace them. The tracker's own `closingIssuesReferences` parse is English-only too, so a Polish repo writing `Zamyka #88` gets no closing signal from either source until it sets, for example, `["zamyka", "naprawia", "rozwiązuje"]`. Leave it empty on an English repository. Whatever the setting, a run that finds issue mentions without a recognized keyword reports them rather than passing over them silently.
+- `closeKeywords` — optional extra issue-closing words, e.g. `["zamyka", "naprawia", "rozwiązuje"]`. Extend the built-in English `fix`/`close`/`resolve` variants; never replace them. Match case-insensitively immediately before `#N`. The tracker's `closingIssuesReferences` is English-only; unmatched mentions are reported. Default `[]` keeps English behavior.
+- `prTitleTemplate` — optional PR title template; defaults to `{prefix}({area}): {summary}{issueRef}`. Placeholders and literal substitution: `references/config-capabilities.md`. Explicit caller titles win.
+- `ticketKeyPattern` — optional ERE for the first ticket key in the head branch; default empty. A nonmatching branch renders no key.
 - `discovery` — optional; written by `om-setup-discovery-pipeline`, never asked for here. `discovery.enabled` switches the product-layer blocks of the SDLC template (product roles, the Discovery stage, the Definition of Ready, protected product decisions) and the readiness checks in the intake skills; `discovery.roles.domainExpert` / `discovery.roles.designer` declare the product roles. Without the key the repository is delivery-only. Present on a re-run, the blocks render between `<!-- discovery:start -->` / `<!-- discovery:end -->` markers, the shape `om-setup-discovery-pipeline` writes.
 
 ## Tracker providers

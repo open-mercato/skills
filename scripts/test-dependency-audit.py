@@ -170,7 +170,7 @@ class CommandTests(unittest.TestCase):
 
     def test_failed_detail_is_incomplete_coverage(self):
         code, report = self.run_scan({"package-lock.json": self.lock()}, fail_detail=True)
-        self.assertEqual(code, 2)
+        self.assertEqual(code, 3)
         self.assertEqual(report["scanned"], [])
         self.assertEqual(len(report["skipped"]), 1)
         self.assertTrue(report["errors"])
@@ -201,7 +201,7 @@ class CommandTests(unittest.TestCase):
     def test_candidate_verification_failure_does_not_claim_clean_coverage(self):
         record = advisory("A")
         code, report = self.run_scan({"package-lock.json": self.lock()}, records={"A": record}, hits={"1.0.0": ["A"], "1.2.0": ["missing"]})
-        self.assertEqual(code, 2)
+        self.assertEqual(code, 3)
         self.assertEqual(report["scanned"], [])
 
     def test_below_threshold_advisories_stay_visible(self):

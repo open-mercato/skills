@@ -185,5 +185,8 @@ node scripts/test-discovery-contracts.mjs || exit 1
 node scripts/test-spec-writing-data-model.mjs || exit 1
 node scripts/test-migrated-skill-tools.mjs || exit 1
 python3 scripts/test-dependency-audit.py || exit 1
+node scripts/test-osv-scan.mjs || exit 1
+
+node scripts/test-pr-titles.mjs || exit 1
 
 echo "Lint OK."

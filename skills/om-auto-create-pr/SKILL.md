@@ -28,7 +28,7 @@ Use `om-open-pr` for PR mechanics when available. Use `om-auto-review-pr` for th
 
 **ALWAYS check first:** Apply `.ai/skills/om-auto-create-pr/SKILL.md` when present; safety rules still win.
 
-0. **Load the setup and rules.** Read `references/agentic-setup.md` and `references/rules.md` first. Load the config and tracker descriptor. Apply the repo-local skill at `.ai/skills/om-auto-create-pr/SKILL.md` when present. Local rules cannot weaken safety rules.
+0. **Load the setup and rules.** Read `references/agentic-setup.md` and `references/rules.md` first. Load the config and tracker descriptor.
 
    Resolve `BASE_BRANCH`, `RUNS_DIR`, `LOOP_STEP_THRESHOLD`, `LABELS_ENABLED`, `QA_GATE`, and `validation.commands` from the config. Use the descriptor for every named tracker operation and label guard.
 
@@ -85,7 +85,7 @@ Use `om-open-pr` for PR mechanics when available. Use `om-auto-review-pr` for th
 
    Count Steps before saving. If the count exceeds `LOOP_STEP_THRESHOLD`, delegate through `references/engine-selection.md`. Otherwise, save the plan at `$PLAN_PATH`. Keep the exact `Engine:` report line from that reference.
 
-5. **Prepare the isolated worktree.** Follow `references/worktree-setup.md`. Reuse the current linked worktree. Otherwise, create one from `origin/$BASE_BRANCH`. Never nest worktrees. Create the task branch there. Copy any handoff file unchanged. Install dependencies only when required. Register cleanup for worktrees created by this run.
+5. **Prepare the isolated worktree.** Follow `references/worktree-setup.md` for checkout, dependency installation, and cleanup. Copy any handoff file unchanged.
 
 6. **Commit the plan and open the draft.** Commit the plan before implementation:
 
@@ -106,7 +106,7 @@ Use `om-open-pr` for PR mechanics when available. Use `om-auto-review-pr` for th
 
 9. **Update the same PR.** Follow `references/pr-finalize.md` and `references/pr-body-template.md`. Refresh the draft body. Apply `review`, category, one QA meta label, one priority, and one risk through the descriptor guards. Update one consolidated label-rationale comment. Keep the PR draft until the work is complete.
 
-10. **Run one review and autofix flow.** Invoke `om-auto-review-pr {prNumber} --autofix`. Follow `references/review-report.md`. Its `om-code-review` engine owns compatibility, security, scope, and breaking-change checks. Do not add a separate self-review pass. Let the review skill own its fix loop and claim. Record its fixes in Progress. Leave `Status: in-progress` if the review cannot finish.
+10. **Run one review and autofix flow.** Invoke `om-auto-review-pr {prNumber} --autofix`. Follow `references/review-report.md` for review ownership, Progress updates, and incomplete results.
 
 11. **Post the outcome.** Update the summary through `references/summary-comment-template.md` after the review finishes or reports a blocker. Use a body file. Link validation and review evidence. Include UI screenshots through **attach-image-evidence** when UI changed. Name unresolved findings, pending checks, and the next action.
 

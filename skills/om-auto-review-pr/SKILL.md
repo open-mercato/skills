@@ -23,7 +23,7 @@ Emit `APPROVED` or `CHANGES REQUESTED` and the exact `PR:` line. Include `Issue:
 
 **ALWAYS check first:** Apply `.ai/skills/om-auto-review-pr/SKILL.md` when present; safety rules still win.
 
-0. **Load the setup and rules.** Read `references/agentic-setup.md` and `references/rules.md` first. Load the config and tracker descriptor. Apply `.ai/skills/om-auto-review-pr/SKILL.md` when present. Local rules cannot weaken safety rules.
+0. **Load the setup and rules.** Read `references/agentic-setup.md` and `references/rules.md` first. Load the config and tracker descriptor.
 
    Resolve `LABELS_ENABLED`, `QA_GATE`, `CI_MAX_WAIT_MINUTES`, and `validation.commands` from the config. Use the descriptor for all tracker operations and label guards. Use the PR's `baseRefName` for diffs and conflict resolution.
 
@@ -49,7 +49,7 @@ Emit `APPROVED` or `CHANGES REQUESTED` and the exact `PR:` line. Include `Issue:
 
    Carry unresolved conflicts and failing required checks as blockers. Record pending checks for disclosure. Continue the complete review despite either red signal. An eligible autofix run resolves conflicts first in step 5.
 
-5. **Prepare the isolated worktree.** Follow `references/worktree-setup.md`. Reuse the current linked worktree or create one at the PR head. Install dependencies as required. Register cleanup for worktrees this run creates.
+5. **Prepare the isolated worktree.** Follow `references/worktree-setup.md` for checkout, dependency installation, and cleanup.
 
    For eligible autofix runs, fetch the latest `baseRefName` and resolve conflicts before review. Review the resolved local diff. Resolve fork conflicts on the replacement branch from `references/fork-pr-flow.md`.
 
@@ -59,7 +59,7 @@ Emit `APPROVED` or `CHANGES REQUESTED` and the exact `PR:` line. Include `Issue:
 
 8. **Run the review engine.**
 
-   - Code PR: run `om-code-review` through `references/review-report.md`. Run `validation.commands` in order. Apply compatibility, security, breaking-change, test-coverage, and project checklists. Include step-7 findings without duplication.
+   - Code PR: run `om-code-review` through `references/review-report.md` for the complete validation gate and checklists.
    - Spec-only PR: follow `references/spec-review.md`. Check the design against the repository. Apply the five design lenses. Run documentation checks. Identify skipped checks. Keep fixes in the spec and its assets.
 
 9. **Choose the verdict.** Request changes for any blocker or any major without an explicit documented waiver. Approve when only minor findings or nits remain. Include unresolved inherited requests, conflicts, and failing required checks. Identify pending checks separately. A pending check does not fail the review.
@@ -72,7 +72,7 @@ Emit `APPROVED` or `CHANGES REQUESTED` and the exact `PR:` line. Include `Issue:
 
 11. **Fix eligible PRs.** Follow the single fix loop in `references/review-report.md`. Skip branch changes when `AUTOFIX_ELIGIBLE` is false. State `autofix: skipped (not my PR — re-run with --autofix to fix it here)` in that case.
 
-    Fix conflicts first, review findings second, and CI failures third. Include inherited findings. Add meaningful tests for changed behavior. Validate after fixes. Review the updated diff. Add commits without rewriting history. Use `references/fork-pr-flow.md` for fork replacements. Publish the updated verdict through step 10. Stop only at the explicit blockers in the fix-loop reference.
+    Use that reference for fix order, tests, validation, commits, fork replacements, and stop conditions. Publish the updated verdict through step 10.
 
 12. **Report completion and release the claim.** Post the completion comment from `references/report-templates.md` before any CI wait. Release only a claim this run created. Retain and annotate an inherited chain lock. Use `ci-monitoring` only when this run will follow up on CI. Follow `references/claim-pr.md` for each case.
 

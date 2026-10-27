@@ -88,6 +88,10 @@ class ParserTests(unittest.TestCase):
         record = {"affected": [{"package": {"ecosystem": "PyPI", "name": "Example_Package"}, "ranges": [{"events": [{"fixed": "2.0.0"}]}]}]}
         self.assertEqual(scan.affected_and_fixed(record, "PyPI", "example.package", "1.0.0"), ["2.0.0"])
 
+    def test_yarn_aliases_query_the_real_package(self):
+        text = '"safealias@npm:lodash@^4.0.0":\n  version "4.17.15"\n"alias@npm:@scope/real@^1.0.0":\n  version: 1.0.1\n'
+        self.assertEqual(scan.p_yarn_lock(text), [("lodash", "4.17.15", None), ("@scope/real", "1.0.1", None)])
+
 
 class ClientTests(unittest.TestCase):
     def test_batch_length_mismatch_fails(self):
@@ -112,7 +116,7 @@ class ClientTests(unittest.TestCase):
 
 
 class CommandTests(unittest.TestCase):
-    def run_scan(self, files, records=None, hits=None, extra=(), fail_detail=False):
+    def run_scan(self, files, records=None, hits=None, extra=(), fail_detail=False, post_transform=None, detail_transform=None):
         records = {"GHSA-example": advisory()} if records is None else records
         hits = {"1.0.0": list(records)} if hits is None else hits
         with tempfile.TemporaryDirectory() as root:
@@ -124,12 +128,14 @@ class CommandTests(unittest.TestCase):
             def post(api, path, payload):
                 self.assertTrue(api.startswith("https://"))
                 self.assertEqual(path, "/querybatch")
-                return {"results": [{"vulns": [{"id": vid} for vid in hits.get(q["version"], [])]} for q in payload["queries"]]}
+                result = {"results": [{"vulns": [{"id": vid} for vid in hits.get(q["version"], [])]} for q in payload["queries"]]}
+                return post_transform(result) if post_transform else result
 
             def get(api, path):
                 if fail_detail:
                     raise OSError("unavailable")
-                return records[path.rsplit("/", 1)[1]]
+                result = records[path.rsplit("/", 1)[1]]
+                return detail_transform(result) if detail_transform else result
 
             out = io.StringIO()
             argv = [str(SCANNER), "--root", root, *extra, *files]
@@ -227,6 +233,20 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(report["scanned"], [])
         self.assertTrue(report["incomplete"])
         self.assertEqual(report["findings"][0]["package"], "example")
+
+    def test_malformed_batch_rows_report_failed_coverage(self):
+        for response in ({"results": [None]}, {"results": [{"vulns": [None]}]}):
+            with self.subTest(response=response):
+                code, report = self.run_scan({"package-lock.json": self.lock()}, post_transform=lambda _: response)
+                self.assertEqual(code, 3)
+                self.assertEqual(report["scanned"], [])
+                self.assertTrue(report["incomplete"])
+
+    def test_malformed_details_report_failed_coverage(self):
+        code, report = self.run_scan({"package-lock.json": self.lock()}, detail_transform=lambda _: [])
+        self.assertEqual(code, 3)
+        self.assertEqual(report["scanned"], [])
+        self.assertTrue(report["incomplete"])
 
 
 if __name__ == "__main__":

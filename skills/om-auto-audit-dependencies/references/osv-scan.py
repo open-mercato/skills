@@ -137,15 +137,21 @@ def p_yarn_lock(text):
                     continue
                 at = spec.find("@", 1)
                 if at > 0:
+                    name = spec[:at]
                     selector = spec[at + 1:]
-                    if not re.match(r"^(npm:|[~^*<>=0-9])", selector):
+                    if selector.startswith("npm:"):
+                        selector = selector[4:]
+                        alias_at = selector.find("@", 1)
+                        if alias_at > 0:
+                            name, selector = selector[:alias_at], selector[alias_at + 1:]
+                    if not re.fullmatch(r"[A-Za-z0-9.*~^<>=| +_-]+", selector):
                         out.append(UNPINNED)
                         continue
-                    names.append(spec[:at])
+                    names.append(name)
             continue
         m = re.match(r'^  version:?\s+"?([^"\s]+)"?\s*$', line)
         if m and names:
-            out.append((names[0], m.group(1), None))
+            out.extend((name, m.group(1), None) for name in dict.fromkeys(names))
             names = []
     return out
 
@@ -404,26 +410,72 @@ def get(api, path):
         return json.load(r)
 
 
+def page_ids(page):
+    if not isinstance(page, dict):
+        raise ValueError("query result is not an object")
+    vulns = page.get("vulns", [])
+    token = page.get("next_page_token", "")
+    if not isinstance(vulns, list) or not isinstance(token, str):
+        raise ValueError("query result has invalid vulnerabilities or page token")
+    if any(not isinstance(v, dict) or not isinstance(v.get("id"), str) or not v["id"] for v in vulns):
+        raise ValueError("query result has an invalid advisory id")
+    return [v["id"] for v in vulns], token
+
+
 def query_ids(api, queries):
     ids = []
     for start in range(0, len(queries), 1000):
         chunk = queries[start:start + 1000]
-        res = post(api, "/querybatch", {"queries": chunk})["results"]
+        response = post(api, "/querybatch", {"queries": chunk})
+        res = response.get("results") if isinstance(response, dict) else None
         if not isinstance(res, list) or len(res) != len(chunk):
-            raise ValueError("OSV batch result count does not match query count")
+            raise ValueError("querybatch answered %s results for %d queries"
+                             % (len(res) if isinstance(res, list) else "no", len(chunk)))
         for q, r in zip(chunk, res):
-            found = [v["id"] for v in r.get("vulns", [])]
-            token = r.get("next_page_token")
+            found, token = page_ids(r)
             seen_tokens = set()
             while token:
                 if token in seen_tokens:
-                    raise ValueError("OSV pagination repeated a token")
+                    raise ValueError("query pagination repeated a page token")
                 seen_tokens.add(token)
-                page = post(api, "/query", dict(q, page_token=token))
-                found += [v["id"] for v in page.get("vulns", [])]
-                token = page.get("next_page_token")
+                next_ids, token = page_ids(post(api, "/query", dict(q, page_token=token)))
+                found += next_ids
             ids.append(found)
     return ids
+
+
+def validate_advisory(data):
+    if not isinstance(data, dict) or not isinstance(data.get("id"), str) or not data["id"]:
+        raise ValueError("advisory has no valid identity")
+    for field in ("affected", "aliases", "severity"):
+        if not isinstance(data.get(field, []), list):
+            raise ValueError("invalid advisory " + field)
+    if any(not isinstance(alias, str) for alias in data.get("aliases", [])):
+        raise ValueError("invalid advisory aliases")
+    if not isinstance(data.get("summary") or "", str):
+        raise ValueError("invalid advisory summary")
+    if not isinstance(data.get("database_specific") or {}, dict):
+        raise ValueError("invalid advisory metadata")
+    for severity in data.get("severity", []):
+        if not isinstance(severity, dict) or not isinstance(severity.get("score", ""), str):
+            raise ValueError("invalid advisory severity")
+    for affected in data.get("affected", []):
+        if not isinstance(affected, dict) or not isinstance(affected.get("package", {}), dict):
+            raise ValueError("invalid affected package")
+        if not all(isinstance(affected.get("package", {}).get(k, ""), str) for k in ("name", "ecosystem")):
+            raise ValueError("invalid affected package identity")
+        for field in ("database_specific", "ecosystem_specific"):
+            if not isinstance(affected.get(field) or {}, dict):
+                raise ValueError("invalid affected metadata")
+        if not isinstance(affected.get("versions", []), list) or not isinstance(affected.get("ranges", []), list):
+            raise ValueError("invalid affected versions or ranges")
+        for rng in affected.get("ranges", []):
+            if not isinstance(rng, dict) or not isinstance(rng.get("events", []), list):
+                raise ValueError("invalid affected range")
+            for event in rng.get("events", []):
+                if not isinstance(event, dict) or any(not isinstance(v, str) for v in event.values()):
+                    raise ValueError("invalid affected event")
+    return data
 
 
 # ---------------------------------------------------------------- main
@@ -512,7 +564,7 @@ def main():
 
     def vuln(vid):
         if vid not in cache:
-            record = get(a.api, "/vulns/" + quote(vid, safe=""))
+            record = validate_advisory(get(a.api, "/vulns/" + quote(vid, safe="")))
             if not isinstance(record, dict) or record.get("id") != vid or not isinstance(record.get("affected"), list):
                 raise ValueError("invalid advisory detail")
             cache[vid] = record

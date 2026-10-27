@@ -21,7 +21,13 @@ For each kept package:
 1. **search-issues** (open and closed) for the marker text plus the package name.
    Read candidates with **get-issue** and match the marker exactly.
 2. **search-issues** (open) for each advisory id and alias — catches an issue a
-   person filed by hand.
+   person filed by hand. Confirm that the same ecosystem and package are in
+   scope; an advisory id alone may cover several packages.
+
+Before updating any existing issue, run the three-signal claim check using its
+assignees, labels and recent claim comments from **get-issue**, with the current
+login from **current-user**. An item claimed by another actor is left unchanged
+and reported as deferred; this audit never takes over or releases anyone's lock.
 
 Then:
 
@@ -32,9 +38,13 @@ Then:
 | Own **closed** issue, same package still vulnerable | File a new issue whose body links the closed one ("the earlier fix did not land, or the package regressed"). |
 | Nothing | File a new issue. |
 
-An own open issue whose package no longer shows up in this run gets one comment
-saying the latest audit no longer finds the advisories and naming the version
-now locked — never close it; closing belongs to the change that fixed it.
+An own open issue whose package no longer shows up is not evidence of a fix:
+it may be excluded, ignored, below threshold, removed, or in a failed scan.
+Only after successfully querying the currently locked version(s) and verifying
+that the issue's advisory ids/aliases no longer affect them, post/update one
+marker-idempotent comment with purpose `no longer affected` naming the verified
+versions. Otherwise report the evidence gap without a resolution claim. Never
+close it; closing belongs to the change that fixed it.
 
 ## Title
 
@@ -59,6 +69,9 @@ defines its own inference for any of these, its rules win.
 Never pipeline labels, never `in-progress`. Record the set once in a
 `` 🤖 `om-auto-audit-dependencies` — 🏷️ label rationale `` comment, one label per
 line with a full-sentence reason, rewritten in place on later changes.
+When changing priority or risk, remove competing labels in that group through
+`remove_issue_label` so exactly one remains; preserve an existing higher
+priority, and do not change unrelated classifications.
 
 ## Creating the issue
 

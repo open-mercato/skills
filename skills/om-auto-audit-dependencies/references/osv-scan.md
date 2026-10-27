@@ -6,19 +6,28 @@ usable native audit tool (step 2) and merges every source into one finding list
 
 ## Running the bundled scanner
 
-`references/osv-scan.py` (Python 3, standard library only) parses the
+`references/osv-scan.py` (Python 3, standard library only; TOML lockfiles require
+Python 3.11+) parses the
 lockfiles, queries the OSV database with `(ecosystem, package, version)` triples
 only, and prints one JSON document. Run it in isolated mode from the repository
 root, passing the lockfiles chosen in step 1 (none → every tracked lockfile):
 
 ```bash
+RUN_TMP=$(mktemp -d)
+# Retain the JSON until the run report is assembled; remove this directory only.
 python3 -I "<this skill's directory>/references/osv-scan.py" \
   --root . --min-severity "$MIN_SEVERITY" pubspec.lock app/package-lock.json > "$RUN_TMP/osv.json"
 ```
 
-Exit code 2 means the database was unreachable: every lockfile lands in
-`skipped` with reason `advisory database unreachable`, and the report names
-those ecosystems as **not scanned** — never as clean.
+Exit code 2 means some coverage is incomplete: inspect `skipped` and `errors`,
+retain results from successfully scanned lockfiles, and report each skipped
+lockfile as **not scanned**. Unreachable/malformed responses, failed advisory
+details, unsupported formats, invalid entries, unpinned requirements and escaping
+paths are never reported as clean. Zero supported packages is also a skip.
+Non-registry/local sources are outside registry-version matching; Go replacements
+and non-registry Yarn/npm entries require a native scanner. Do not install tools
+to fill these gaps. An incomplete native result may still contribute findings,
+but does not establish complete coverage.
 
 Output shape:
 
@@ -42,12 +51,16 @@ Output shape:
 - `direct` is `true`, `false`, or `null` when the lockfile format does not say
   (`Cargo.lock`, `composer.lock`, `yarn.lock`, …); resolve `null` from the
   manifest in step 4.
-- `target` is the smallest published fixed version that no advisory at or above
-  `--min-severity` still affects; `null` means no such version exists.
-  `target_clears_all` does the same across every severity.
+- `target` is the lowest ordered candidate among the advisory's fixed versions
+  for which an OSV re-query reports no remaining at-threshold or unrated advisory.
+  `target_clears_all` requires no remaining advisory at any severity. `null` means
+  no candidate was verified, not proof that no fixed release exists. Confirm
+  publication and ecosystem-specific ordering before filing an upgrade issue.
+- `at_threshold` counts rated advisories meeting `--min-severity`; below-threshold
+  and unrated records remain in `advisories` for the run's coverage accounting.
 - Version ordering in the script is an approximation that covers semver, dotted,
   and common PEP 440 forms; when an ecosystem's ordering is exotic (epochs,
-  calendar tags), confirm the target against the advisory page before filing.
+  calendar tags), confirm the target against the advisory page and registry before filing.
 
 ## Severity
 

@@ -2,28 +2,32 @@
 """Lockfile -> OSV advisory scan for om-auto-audit-dependencies (step 2 fallback).
 
 Read-only: parses lockfiles, sends only (ecosystem, package, version) triples to
-the OSV API, and prints one JSON document on stdout. Python 3 stdlib only.
+the OSV API, and prints one JSON document on stdout. Python 3 standard library;
+TOML lockfiles require Python 3.11 or newer.
 
 Usage:
   python3 -I osv-scan.py [--root DIR] [--api URL] [LOCKFILE ...]
 
 With no LOCKFILE arguments it scans every lockfile git tracks under --root.
-Exit code 0 even when advisories are found; 2 when the API was unreachable for
-every query (the caller reports the ecosystems as "not scanned").
+Exit code 0 even when advisories are found; 2 when any input or API response
+could not be completely scanned (see skipped/errors, never report those clean).
 """
 import argparse
 import json
 import math
 import os
+from pathlib import Path
 import re
 import subprocess
 import sys
 import urllib.error
 import urllib.request
+from urllib.parse import quote
 
 API = "https://api.osv.dev/v1"
 NAME_RE = re.compile(r"^[A-Za-z0-9@._/+:-]+$")
-VERSION_RE = re.compile(r"^[A-Za-z0-9._+~-]+$")
+VERSION_RE = re.compile(r"^[A-Za-z0-9._+!~-]+$")
+LEVELS = {"unrated": 0, "low": 1, "moderate": 2, "high": 3, "critical": 4}
 
 # basename (or glob-ish suffix) -> (ecosystem, parser name)
 LOCKFILES = {
@@ -103,8 +107,10 @@ def p_npm_lock(text):
         direct = set(root.get("dependencies", {})) | set(root.get("devDependencies", {})) \
             | set(root.get("optionalDependencies", {}))
         for key, meta in pkgs.items():
-            if not key or meta.get("link") or "version" not in meta:
+            if "node_modules/" not in key or meta.get("link") or "version" not in meta:
                 continue
+            if str(meta.get("resolved", "")).startswith(("git", "file:", "link:", "workspace:")):
+                raise ValueError("non-registry npm source; use the native scanner")
             name = meta.get("name") or key.rsplit("node_modules/", 1)[-1]
             out.append((name, meta["version"], key == "node_modules/" + name and name in direct))
         return out
@@ -129,6 +135,9 @@ def p_yarn_lock(text):
                     continue
                 at = spec.find("@", 1)
                 if at > 0:
+                    selector = spec[at + 1:]
+                    if not re.match(r"^(npm:|[~^*<>=0-9])", selector):
+                        raise ValueError("non-registry Yarn source; use the native scanner")
                     names.append(spec[:at])
             continue
         m = re.match(r'^  version:?\s+"?([^"\s]+)"?\s*$', line)
@@ -154,24 +163,28 @@ def p_pnpm_lock(text):
     return out
 
 
-def p_toml_packages(text):
-    out, name, ver = [], None, None
-    for line in text.splitlines() + ["[[package]]"]:
-        if line.strip() == "[[package]]":
-            if name and ver:
-                out.append((name, ver, None))
-            name = ver = None
-            continue
-        m = re.match(r'^(name|version)\s*=\s*"([^"]+)"', line)
-        if m:
-            if m.group(1) == "name":
-                name = m.group(2)
-            else:
-                ver = m.group(2)
-        elif line.startswith("source") and "registry" not in line and "pypi" not in line.lower():
-            # git / path sources are not registry releases
-            if "git" in line or "path" in line:
-                name = None
+def p_toml_packages(text, ecosystem=None):
+    try:
+        import tomllib
+    except ImportError as exc:
+        raise ValueError("TOML lockfiles require Python 3.11 or newer") from exc
+    out = []
+    for package in tomllib.loads(text).get("package", []):
+        name, version, source = package.get("name"), package.get("version"), package.get("source")
+        if isinstance(source, dict):
+            if any(key in source for key in ("git", "path", "directory", "editable", "virtual", "url")):
+                # Poetry's legacy PyPI source is the only supported URL source.
+                if source.get("type") != "legacy" or source.get("url", "").rstrip("/") != "https://pypi.org/simple":
+                    continue
+            elif source.get("registry", "").rstrip("/") != "https://pypi.org/simple":
+                continue
+        elif isinstance(source, str):
+            if source not in ("registry+https://github.com/rust-lang/crates.io-index", "sparse+https://index.crates.io/"):
+                continue
+        elif ecosystem == "crates.io":
+            continue  # workspace/path crates are not published registry releases
+        if name and version:
+            out.append((name, version, None))
     return out
 
 
@@ -188,11 +201,15 @@ def p_pipfile_lock(text):
 
 def p_requirements(text):
     out = []
-    for line in text.splitlines():
+    for line in text.replace("\\\n", " ").splitlines():
         line = line.split("#", 1)[0].strip()
-        m = re.match(r"^([A-Za-z0-9._-]+)(\[[^\]]*\])?\s*===?\s*([A-Za-z0-9._+!-]+)", line)
+        if not line:
+            continue
+        m = re.fullmatch(r"([A-Za-z0-9._-]+)(?:\[[^\]]*\])?\s*===?\s*([A-Za-z0-9._+!~-]+)(?:\s*;[^\\]*)?(?:\s+--hash=[A-Za-z0-9:]+)*\s*", line)
         if m:
-            out.append((m.group(1), m.group(3), True))
+            out.append((m.group(1), m.group(2), True))
+        else:
+            raise ValueError("requirements contain an unpinned entry or unsupported directive")
     return out
 
 
@@ -225,6 +242,8 @@ def p_gemfile_lock(text):
 
 
 def p_go_mod(text):
+    if re.search(r"^\s*replace\b", text, re.M):
+        raise ValueError("go.mod replacements require the native scanner")
     out, block = [], False
     for line in text.splitlines():
         s = line.strip()
@@ -272,35 +291,38 @@ PARSERS = {k[2:]: v for k, v in globals().items() if k.startswith("p_")}
 def vkey(v):
     """Approximate ordering across semver, PEP 440, and dotted versions."""
     v = str(v).lstrip("vV").split("+", 1)[0]
+    epoch, separator, remainder = v.partition("!")
+    epoch, v = (int(epoch), remainder) if separator and epoch.isdigit() else (0, v)
     m = re.match(r"^([0-9]+(?:\.[0-9]+)*)(.*)$", v)
     if not m:
-        return ((0,), 0, v)
+        return (epoch, (0,), 0, ((0, v),))
     nums = tuple(int(x) for x in m.group(1).split("."))
     nums = nums + (0,) * (6 - len(nums)) if len(nums) < 6 else nums
     rest = m.group(2).lstrip("-._")
     if not rest:
-        return (nums, 1, "")
-    if re.match(r"^(post|p|r)[0-9]*", rest, re.I):  # post-releases sort after the release
-        return (nums, 2, rest)
-    return (nums, 0, rest)  # pre-release / dev sorts before the release
+        return (epoch, nums, 1, ())
+    suffix = tuple((1, int(part)) if part.isdigit() else (0, part.lower()) for part in re.findall(r"[0-9]+|[^0-9]+", rest))
+    if re.fullmatch(r"(?:post|rev|p|r)\.?[0-9]*", rest, re.I):
+        return (epoch, nums, 2, suffix)
+    return (epoch, nums, 0, suffix)
 
 
 def affected_and_fixed(vuln, ecosystem, name, version):
     """Return the fixed versions newer than `version` for this package, or [] if none."""
     fixed = []
-    norm = name.lower().replace("_", "-") if ecosystem == "PyPI" else name
+    norm = re.sub(r"[-_.]+", "-", name).lower() if ecosystem == "PyPI" else name
     for aff in vuln.get("affected", []):
         pkg = aff.get("package", {})
         pname = pkg.get("name", "")
         if ecosystem == "PyPI":
-            pname = pname.lower().replace("_", "-")
+            pname = re.sub(r"[-_.]+", "-", pname).lower()
         if pkg.get("ecosystem", "").split(":")[0] != ecosystem or pname != norm:
             continue
         for rng in aff.get("ranges", []):
             if rng.get("type") == "GIT":
                 continue
             for ev in rng.get("events", []):
-                if "fixed" in ev and vkey(ev["fixed"]) > vkey(version):
+                if "fixed" in ev and VERSION_RE.fullmatch(ev["fixed"]) and vkey(ev["fixed"]) > vkey(version):
                     fixed.append(ev["fixed"])
     return sorted(set(fixed), key=vkey)
 
@@ -384,10 +406,16 @@ def query_ids(api, queries):
     for start in range(0, len(queries), 1000):
         chunk = queries[start:start + 1000]
         res = post(api, "/querybatch", {"queries": chunk})["results"]
+        if not isinstance(res, list) or len(res) != len(chunk):
+            raise ValueError("OSV batch result count does not match query count")
         for q, r in zip(chunk, res):
             found = [v["id"] for v in r.get("vulns", [])]
             token = r.get("next_page_token")
+            seen_tokens = set()
             while token:
+                if token in seen_tokens:
+                    raise ValueError("OSV pagination repeated a token")
+                seen_tokens.add(token)
                 page = post(api, "/query", dict(q, page_token=token))
                 found += [v["id"] for v in page.get("vulns", [])]
                 token = page.get("next_page_token")
@@ -399,29 +427,39 @@ def query_ids(api, queries):
 
 def tracked_lockfiles(root):
     try:
-        files = subprocess.run(["git", "-C", root, "ls-files"], capture_output=True,
-                               text=True, check=True).stdout.splitlines()
+        files = subprocess.run(["git", "-C", root, "ls-files", "-z"], capture_output=True,
+                               text=True, check=True).stdout.split("\0")
     except (OSError, subprocess.CalledProcessError):
         files = []
         for d, dirs, names in os.walk(root):
             dirs[:] = [x for x in dirs if x not in {".git", "node_modules", "vendor", ".dart_tool",
                                                     "build", "target", ".venv", "Pods", "dist"}]
             files += [os.path.relpath(os.path.join(d, n), root) for n in names]
-    return [f for f in files if classify(f) or os.path.basename(f) in UNSUPPORTED]
+    excluded = {".git", "node_modules", "vendor", ".dart_tool", "build", "target", ".venv", "Pods", "dist"}
+    return [f for f in files if not (set(Path(f).parts) & excluded)
+            and (classify(f) or os.path.basename(f) in UNSUPPORTED)]
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=".")
     ap.add_argument("--api", default=API)
+    ap.add_argument("--min-severity", choices=list(LEVELS)[1:], default="high")
     ap.add_argument("lockfiles", nargs="*")
     a = ap.parse_args()
     if not re.match(r"^https://", a.api):
         sys.exit("--api must be an https URL")
 
     report = {"scanned": [], "skipped": [], "findings": [], "invalid_entries": 0, "errors": []}
+    root = Path(a.root).resolve()
     entries = []  # (lockfile, ecosystem, name, version, direct)
     for rel in a.lockfiles or tracked_lockfiles(a.root):
+        try:
+            path = (root / rel).resolve()
+            path.relative_to(root)
+        except (OSError, ValueError, RuntimeError):
+            report["skipped"].append({"lockfile": rel, "reason": "lockfile is outside the repository root"})
+            continue
         base = os.path.basename(rel)
         if base in UNSUPPORTED:
             report["skipped"].append({"lockfile": rel, "reason": UNSUPPORTED[base]})
@@ -432,25 +470,31 @@ def main():
             continue
         eco, parser = kind
         try:
-            with open(os.path.join(a.root, rel), encoding="utf-8") as fh:
-                rows = PARSERS[parser](fh.read())
-        except (OSError, ValueError) as exc:
-            report["skipped"].append({"lockfile": rel, "reason": "unreadable: %s" % exc.__class__.__name__})
+            with path.open(encoding="utf-8") as fh:
+                text = fh.read()
+            rows = p_toml_packages(text, eco) if parser == "toml_packages" else PARSERS[parser](text)
+            if not rows:
+                raise ValueError("no supported pinned registry packages found")
+        except (OSError, ValueError, TypeError, AttributeError, KeyError) as exc:
+            report["skipped"].append({"lockfile": rel, "reason": "unreadable or unsupported lockfile (%s)" % exc.__class__.__name__})
             continue
         good = 0
         for name, ver, direct in rows:
-            if not (NAME_RE.match(name) and VERSION_RE.match(str(ver))):
+            if not (isinstance(name, str) and NAME_RE.fullmatch(name) and VERSION_RE.fullmatch(str(ver))):
                 report["invalid_entries"] += 1
                 continue
             entries.append((rel, eco, name, str(ver), direct))
             good += 1
-        report["scanned"].append({"lockfile": rel, "ecosystem": eco, "packages": good})
+        if good != len(rows):
+            report["skipped"].append({"lockfile": rel, "reason": "invalid package entries; coverage incomplete"})
+        else:
+            report["scanned"].append({"lockfile": rel, "ecosystem": eco, "packages": good})
 
     uniq = sorted({(e[1], e[2], e[3]) for e in entries})
     try:
         ids = query_ids(a.api, [{"package": {"ecosystem": e, "name": n}, "version": v} for e, n, v in uniq])
-    except (urllib.error.URLError, OSError, ValueError, KeyError) as exc:
-        report["errors"].append("OSV query failed: %s" % exc)
+    except (urllib.error.URLError, OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
+        report["errors"].append("OSV query failed (%s)" % exc.__class__.__name__)
         report["scanned"], report["skipped"] = [], report["skipped"] + [
             {"lockfile": s["lockfile"], "reason": "advisory database unreachable"} for s in report["scanned"]]
         print(json.dumps(report, indent=2))
@@ -460,50 +504,79 @@ def main():
 
     def vuln(vid):
         if vid not in cache:
-            try:
-                cache[vid] = get(a.api, "/vulns/" + urllib.request.quote(vid))
-            except (urllib.error.URLError, OSError, ValueError) as exc:
-                report["errors"].append("detail %s: %s" % (vid, exc))
-                cache[vid] = {"id": vid}
+            record = get(a.api, "/vulns/" + quote(vid, safe=""))
+            if not isinstance(record, dict) or record.get("id") != vid or not isinstance(record.get("affected"), list):
+                raise ValueError("invalid advisory detail")
+            cache[vid] = record
         return cache[vid]
+
+    def normalized(vids, eco, name, ver):
+        advisories = []
+        for vid in vids:
+            record = vuln(vid)
+            if record.get("withdrawn"):
+                continue
+            aliases = sorted(set(record.get("aliases", [])) - {vid})
+            group = {vid, *aliases}
+            severity, score = severity_of(record)
+            if severity is None:
+                for alias in aliases:
+                    if alias.startswith("GHSA-"):
+                        severity, score = severity_of(vuln(alias))
+                        if severity:
+                            break
+            current = {
+                "id": vid, "aliases": aliases, "summary": (record.get("summary") or "").strip()[:200],
+                "severity": severity or "unrated", "cvss": score,
+                "fixed": affected_and_fixed(record, eco, name, ver),
+                "url": "https://osv.dev/vulnerability/" + quote(vid, safe=""), "withdrawn": False,
+            }
+            overlaps = [adv for adv in advisories if group & {adv["id"], *adv["aliases"]}]
+            for previous in overlaps:
+                group.update((previous["id"], *previous["aliases"]))
+                current["fixed"] = sorted(set(current["fixed"] + previous["fixed"]), key=vkey)
+                if LEVELS[previous["severity"]] > LEVELS[current["severity"]]:
+                    current["severity"], current["cvss"] = previous["severity"], previous["cvss"]
+                current["summary"] = previous["summary"] or current["summary"]
+                current["id"], current["url"] = previous["id"], previous["url"]
+                advisories.remove(previous)
+            current["aliases"] = sorted(group - {current["id"]})
+            advisories.append(current)
+        return advisories
 
     hits = {k: v for k, v in zip(uniq, ids) if v}
     for (eco, name, ver), vids in sorted(hits.items()):
-        advisories, seen = [], set()
-        for vid in vids:
-            v = vuln(vid)
-            aliases = sorted(set(v.get("aliases", [])) - {vid})
-            group = {vid, *aliases}
-            if group & seen:
-                continue  # same advisory reached through another alias
-            seen |= group
-            sev, score = severity_of(v)
-            if sev is None:  # fall back to a rated alias (GHSA usually carries one)
-                for al in aliases:
-                    if al.startswith("GHSA-"):
-                        sev, score = severity_of(vuln(al))
-                        if sev:
-                            break
-            advisories.append({
-                "id": vid, "aliases": aliases,
-                "summary": (v.get("summary") or "").strip()[:200],
-                "severity": sev or "unrated", "cvss": score,
-                "fixed": affected_and_fixed(v, eco, name, ver),
-                "url": "https://osv.dev/vulnerability/" + vid,
-                "withdrawn": bool(v.get("withdrawn")),
-            })
-        advisories = [x for x in advisories if not x["withdrawn"]]
+        lockfiles = sorted({entry[0] for entry in entries if entry[1:4] == (eco, name, ver)})
+        try:
+            advisories = normalized(vids, eco, name, ver)
+            candidates = sorted({fixed for adv in advisories for fixed in adv["fixed"]}, key=vkey)
+            candidate_ids = query_ids(a.api, [{"package": {"ecosystem": eco, "name": name}, "version": candidate} for candidate in candidates])
+            target = target_all = None
+            for candidate, remaining_ids in zip(candidates, candidate_ids):
+                remaining = normalized(remaining_ids, eco, name, candidate)
+                if target is None and not any(LEVELS[adv["severity"]] >= LEVELS[a.min_severity] or adv["severity"] == "unrated" for adv in remaining):
+                    target = candidate
+                if target_all is None and not remaining:
+                    target_all = candidate
+        except (urllib.error.URLError, OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
+            report["errors"].append("Advisory or target verification failed (%s)" % exc.__class__.__name__)
+            report["skipped"].extend({"lockfile": rel, "reason": "advisory details or target verification incomplete"} for rel in lockfiles)
+            continue
         if not advisories:
             continue
-        where = sorted({(e[0], e[4]) for e in entries if (e[1], e[2], e[3]) == (eco, name, ver)})
+        direct_values = [entry[4] for entry in entries if entry[1:4] == (eco, name, ver)]
         report["findings"].append({
             "ecosystem": eco, "package": name, "version": ver,
-            "lockfiles": [w[0] for w in where],
-            "direct": True if any(w[1] for w in where) else (None if any(w[1] is None for w in where) else False),
+            "lockfiles": lockfiles,
+            "direct": True if any(direct_values) else (None if None in direct_values else False),
             "advisories": advisories,
+            "target": target, "target_clears_all": target_all,
+            "at_threshold": sum(LEVELS[adv["severity"]] >= LEVELS[a.min_severity] for adv in advisories),
         })
+    skipped_files = {entry["lockfile"] for entry in report["skipped"]}
+    report["scanned"] = [entry for entry in report["scanned"] if entry["lockfile"] not in skipped_files]
     print(json.dumps(report, indent=2))
-    return 0
+    return 2 if report["skipped"] or report["errors"] else 0
 
 
 if __name__ == "__main__":

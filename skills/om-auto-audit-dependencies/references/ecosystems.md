@@ -5,8 +5,11 @@ ecosystem, and where its advisories come from.
 
 ## Finding lockfiles
 
-List lockfiles that git tracks, so vendored, generated, and build output is
-excluded without a hand-kept ignore list:
+List lockfiles that git tracks, then exclude vendored/generated/build paths
+(`node_modules`, `vendor`, `.dart_tool`, `build`, `target`, `.venv`, `Pods`,
+`dist`). Tracked vendor files still need exclusion. Use NUL-delimited discovery
+when executing commands so paths with spaces or newlines are preserved. For a
+human-readable inventory:
 
 ```bash
 git ls-files | grep -E '(^|/)(pubspec\.lock|package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lock|Cargo\.lock|poetry\.lock|uv\.lock|Pipfile\.lock|requirements[^/]*\.txt|composer\.lock|Gemfile\.lock|go\.mod|gradle\.lockfile|packages\.lock\.json|Podfile\.lock|Package\.resolved|mix\.lock)$'
@@ -48,9 +51,16 @@ version documents.
 - A native tool that exits non-zero because it found advisories is a success;
   one that fails for any other reason falls back to the OSV scan, and the report
   names the fallback.
-- After any tool runs, check `git status --porcelain`; restore every file the run
-  changed (`git checkout -- <file>` for tracked files, delete only files this run
-  created) and mention it in the report.
+- Before running a native tool, create a disposable directory and copy the
+  selected current lockfile and required manifests into it, preserving relative
+  layout. Copy the working-tree versions, including existing edits, rather than
+  checking out HEAD. Resolve inputs inside the repository root; reject escaping
+  symlinks. Do not copy secrets, credential/config files, or arbitrary repository
+  content. Run the audit in that directory. If the tool requires unavailable
+  workspace/config state, use the bundled scanner against the original inputs.
+- Discard only the disposable directory created by this run. Never run
+  `git checkout`, `git restore`, or `git clean` to undo scan effects in the user's
+  tree; pre-existing edits and files must remain byte-for-byte unchanged.
 - Native output is normalized into the same fields the OSV scan produces
   (`references/osv-scan.md`): package, installed version, advisory ids and
   aliases, severity, fixed versions, direct or transitive.

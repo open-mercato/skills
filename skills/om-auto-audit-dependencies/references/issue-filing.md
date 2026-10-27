@@ -52,6 +52,7 @@ close it; closing belongs to the change that fixed it.
 
 - With a target: `Security: upgrade <package> <installed> → <target> (<n> <highest-severity> advisor<y|ies>)`
 - No fixed release: `Security: <package> <installed> has no fixed release (<highest-severity>)`
+- Unverified target: `Security: investigate upgrade for <package> <installed> (<highest-severity>)`. Use the no-fixed-release title only when advisory data confirms that fact; a null scanner target alone is insufficient.
 
 Several installed versions → use the lowest installed version in the title.
 Package and version strings were validated in step 0; never put advisory

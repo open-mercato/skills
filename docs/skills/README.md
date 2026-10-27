@@ -15,6 +15,7 @@ One card per skill, with its parameters and the companion skills it works with. 
 | [om-auto-write-spec](om-auto-write-spec.md) | 🤖 | Turns a brief or feature-request issue into a finished spec on a ready PR with mockups. |
 | [om-auto-implement-spec](om-auto-implement-spec.md) | 🤖 | Implements an existing spec and ships a reviewed, UI-verified PR. |
 | [om-auto-review-pr](om-auto-review-pr.md) | 🤖 | Reviews or re-reviews a PR by number, with an autofix loop until merge-ready. |
+| [om-auto-audit-dependencies](om-auto-audit-dependencies.md) | 🤖 | Audits locked dependencies across ecosystems and files deduplicated upgrade issues, reporting incomplete coverage explicitly. |
 | [om-auto-qa-pr](om-auto-qa-pr.md) | 🤖 | QAs a PR's UI in a real browser and posts screenshot evidence — no source touched. |
 | [om-auto-manage-issues](om-auto-manage-issues.md) | 🤖 | Brings existing issues up to standard: label sync, screenshot analysis, spec-coverage checks. |
 | [om-auto-update-changelog](om-auto-update-changelog.md) | 🤖 | Drafts a CHANGELOG release entry for merged PRs and ships it as a docs PR. |

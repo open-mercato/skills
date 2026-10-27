@@ -34,6 +34,7 @@ function run(args, options = {}) {
 const harness = String.raw`
 import importlib.util, io, json, sys, contextlib, tempfile
 from pathlib import Path
+sys.dont_write_bytecode = True
 spec = importlib.util.spec_from_file_location("osv_scan", sys.argv[1])
 m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
 P = m.PARSERS

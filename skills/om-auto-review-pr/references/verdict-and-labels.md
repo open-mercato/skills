@@ -32,6 +32,8 @@ Label rules:
 - **Never apply `qa-approved` based on reading the diff** — code-review approval is not QA approval. `qa-approved` is earned only by manual QA (by a QA reviewer, or by an engineer via the self-QA exception). Until it lands, a `needs-qa` PR sits in `merge-queue` blocked by the QA-approval gate whenever `qaGate` is on.
 - Never leave `review`, `changes-requested`, `qa`, `qa-failed`, and `merge-queue` on the same PR together.
 
+Category labels (verified on every review, when labels are enabled): determine the expected category from the diff and title, add a missing one and remove a wrong one, and record it in the label-rationale comment. A category fix is never a finding and never changes the verdict; a title that does not read as a release-note line is a nit with a suggested title. Change → category table and steps: `references/label-transitions.md`.
+
 Priority and risk labels (always ensure exactly one of each, when labels are enabled): infer and apply one when missing, keep the existing one unless the review shows it is clearly mis-rated, and remove the siblings when changing it. The full priority/risk inference rules and the suggested comment strings for every label live in `references/label-transitions.md`.
 
 ## Author handoff on `changes-requested`

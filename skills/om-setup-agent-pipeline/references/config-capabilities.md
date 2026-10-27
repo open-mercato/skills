@@ -43,6 +43,8 @@ committed configs keep working.
 | `platform.tierMap` | `[]` | Path-prefix to license-tier mapping. |
 | `ux.healthReport` | `null` | `om-ux-review-pr`; optional repo-relative health snapshot. |
 | `design.provider` | `null` | `om-figma-design-with-ds`; design-tool descriptor name. |
+| `prTitleTemplate` | `"{prefix}({area}): {summary}{issueRef}"` | PR-opening skills (`om-open-pr`, `om-auto-create-pr`, `om-auto-create-pr-loop`, `om-auto-fix-issue`, `om-auto-review-pr` fork flow); placeholders `{prefix}`, `{area}`, `{summary}`, `{issue}`, `{issueRef}`, `{ticketKey}`, e.g. `"[{issue}] {prefix}({area}): {summary}"`. |
+| `ticketKeyPattern` | absent | PR-opening skills; ERE whose first match in the head branch name fills `{ticketKey}` (e.g. `"[A-Z][A-Z0-9]+-[0-9]+"`). |
 
 ## Default-loading snippet
 
@@ -58,6 +60,8 @@ KNOWLEDGE_SOURCES=$(jq -c '.knowledge.sources // []' "$CONFIG")
 KNOWLEDGE_RESOLVER=$(jq -r '.knowledge.resolver // empty' "$CONFIG")
 SECURITY_CHECKLIST=$(jq -r '.securityChecklist // empty' "$CONFIG")
 SECURITY_REPORT_PUBLISH=$(jq -r '.securityReport.publish // "local"' "$CONFIG")
+PR_TITLE_TEMPLATE=$(jq -r '.prTitleTemplate // "{prefix}({area}): {summary}{issueRef}"' "$CONFIG")
+TICKET_KEY_PATTERN=$(jq -r '.ticketKeyPattern // empty' "$CONFIG")
 SECURITY_REPORT_DISCLOSURE=$(jq -r '.securityReport.disclosure // "withhold-live"' "$CONFIG")
 HELP_DATA=$(jq -c '.help.data // [".ai/help/*.md"]' "$CONFIG")
 HELP_SKILL_ROOTS=$(jq -c '.help.skillRoots // []' "$CONFIG")

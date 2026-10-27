@@ -84,6 +84,19 @@ Pipeline labels are mutually exclusive: a PR carries at most one, and it names w
 | Priority | `priority-low`, `priority-medium`, `priority-high`, `priority-extreme` | one at a time; unset = medium | Urgency of the work |
 | Risk | `risk-low`, `risk-medium`, `risk-high` | one at a time; unset = medium | Blast radius of the change |
 
+Category labels feed the changelog (`om-auto-update-changelog`) and any generated release notes, which group a PR by its category and print its title — so every PR carries at least one category and a title that reads as a release-note line (a conventional title stating the user-visible effect: `fix(checkout): keep the total after a discount edit`). Pick the category from what the PR changes for users, starting from its conventional-commit type:
+
+| Change | Category |
+|---|---|
+| fixes a vulnerability, an auth or data-scoping flaw, or a vulnerable dependency | `security` |
+| `feat` — new capability or public API | `feature` |
+| `fix` — incorrect behavior corrected | `bug` |
+| `refactor`, `perf`, `test`, `ci`, `build`, `chore` with no user-visible behavior change | `refactor` |
+| `deps` / `chore(deps)` — dependency bumps | `dependencies` |
+| `docs` only | `documentation` |
+
+One category is the norm; add `security` next to `bug` or `dependencies` when the change closes a vulnerability (it then files under Security). PR-opening skills set the category; the review step verifies it and, with label permission, corrects a missing or wrong one itself — a label fix is never a finding and never changes the verdict. Fork authors usually cannot set labels, so their PRs get theirs from review.
+
 Priority is how urgent the work is; risk is how dangerous the change is to ship. A one-line fix for an outage can be `priority-extreme` and `risk-low`; a large auth refactor that can wait can be `priority-low` and `risk-high`. A PR inherits both from its source issue unless the scope clearly changed. When an automated skill adds or changes a pipeline or meta label, it leaves a short comment explaining why.
 
 When no priority label is set, infer one:

@@ -217,6 +217,7 @@ class CommandTests(unittest.TestCase):
             for path in (str(external), str(link)):
                 result = subprocess.run([sys.executable, "-I", str(SCANNER), "--root", root, path], capture_output=True, text=True)
                 self.assertEqual(result.returncode, 4)
+                self.assertEqual(json.loads(result.stdout)["scanned"], [])
 
     def test_pinned_findings_survive_incomplete_requirements(self):
         record = advisory()
@@ -226,7 +227,6 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(report["scanned"], [])
         self.assertTrue(report["incomplete"])
         self.assertEqual(report["findings"][0]["package"], "example")
-                self.assertEqual(json.loads(result.stdout)["scanned"], [])
 
 
 if __name__ == "__main__":

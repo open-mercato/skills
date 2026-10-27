@@ -127,7 +127,9 @@ fi
 # file pointers `om-<skill>/references/<file>` (the reference-resolution gate above
 # owns those); and filename forms like `om-filozofia.md` that name a repo doc.
 # Everything else must be a shipped skill or listed here with a reason.
-name_allow=" om-skill om-skills "   # prose: "new om-skill", "the om-skills collection"
+# The prototype engine's persisted storage keys are not skill invocations.
+# Keep their exact names so existing exported/local feedback remains readable.
+name_allow=" om-skill om-skills om-prototype-comments om-prototype-author "
 shipped_names=" $(ls skills | tr '\n' ' ')"
 name_hits=$(grep -rnoE '(^|[^A-Za-z0-9_-])om-[a-z0-9]+(-[a-z0-9]+)*(-?\*|/|\.[a-z0-9]+)?' skills/ 2>/dev/null | sort -u || true)
 while IFS= read -r line; do
@@ -183,5 +185,8 @@ fi
 
 node scripts/test-discovery-contracts.mjs || exit 1
 node scripts/test-spec-writing-data-model.mjs || exit 1
+node scripts/test-migrated-skill-tools.mjs || exit 1
+
+node scripts/test-pr-titles.mjs || exit 1
 
 echo "Lint OK."

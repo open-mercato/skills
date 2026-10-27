@@ -20,3 +20,9 @@ The questions step 3 of `om-setup-agent-pipeline` asks the user (skipped with `-
 6. Where specs live (`paths.specs`, default `.ai/specs`) — confirm or point at an existing design-doc directory.
 7. Optional repo-local review checklist path.
 8. Project docs to generate (each only when missing): `SDLC.md` (recommended), `AGENTS.md` with the task-routing table (when no agent instruction file exists), `CODE_REVIEW.md`, and `BACKWARD_COMPATIBILITY.md`.
+
+Then consult `references/config-capabilities.md`. Ask only for optional
+capabilities the repository already evidences or the user explicitly enables;
+show the detected file/value and keep the safe default otherwise. Under
+`--defaults`, never guess harness commands, platform repositories, publication
+destinations, design providers, or knowledge sources.

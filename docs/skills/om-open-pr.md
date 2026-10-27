@@ -11,7 +11,7 @@ The shared PR-opening step of the agent pipeline. It commits the worktree, pushe
 | `issueId` | Optional | Tracker issue id; when present the run is issue-driven (adds the linkage line, hands the issue back, releases the lock). Omit for brief- or spec-driven runs. |
 | `repo` | Optional | Repository as `owner/name`; inferred from the git remote when omitted. |
 | `category` | Optional | One of `bug`, `feature`, `refactor`, `security`, `dependencies`, `documentation`; drives the title prefix and category label. Inferred from the diff when omitted. |
-| `--title <text>` | Optional | Full PR title; otherwise derives `<prefix>(<area>): <summary>` from the previous step. |
+| `--title <text>` | Optional | Full PR title; otherwise builds it from the previous step with the optional `prTitleTemplate` config key (default `<prefix>(<area>): <summary>`, plus ` (#<issue>)` in an issue-driven run). Set e.g. `"[{issue}] {prefix}({area}): {summary}"` to put the issue first. |
 | `--plan <path>` | Optional | Execution-plan path; adds the tracking-plan/status lines and `## Progress` section so `om-auto-continue-pr` can resume. |
 | `--draft` | Optional | Open as a draft — only for explicitly incomplete work; default is ready for review. |
 | `--summary-file <path>` | Optional | Caller-provided run-summary body, posted as a PR comment after labeling. |

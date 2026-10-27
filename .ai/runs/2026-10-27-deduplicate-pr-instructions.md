@@ -22,11 +22,17 @@ Non-goals: language fixes in #140, changes to other skills, removal of required 
 
 The body keeps the numbered algorithm and the branch conditions. Safety and QA rules remain loaded on every run. No standard reference file is edited, so no additional shared-copy synchronization is needed.
 
+## Verification evidence
+
+All five configured commands pass. Both remote checks pass at `c0c7cb0`, and the matching lint workflow completed. The review found no actionable defects. GitHub author self-approval is unavailable, so the report is a COMMENT review and a separate reviewer owns native approval. All reference files, frontmatter, arguments, step numbers, code blocks, tracker-operation lists, security sections, and machine fields remain unchanged. The entrypoints remove 140 words.
+
 ## Risks
 
 A shorter instruction could hide a branch. Compare the retained reference against each removed sentence. Keep step numbers unchanged so existing references still resolve.
 
 ## Progress
+
+PR: #147
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
@@ -36,5 +42,5 @@ A shorter instruction could hide a branch. Compare the retained reference agains
 
 ### Phase 2: Verify and publish
 
-- [ ] 2.1 Run the configured gate and compare behavior contracts
-- [ ] 2.2 Review and publish the separate optimization PR
+- [x] 2.1 Run the configured gate and compare behavior contracts — c0c7cb0
+- [x] 2.2 Review and publish the separate optimization PR — c0c7cb0

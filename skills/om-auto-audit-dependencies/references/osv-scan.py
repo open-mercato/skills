@@ -616,6 +616,8 @@ def main():
     hits = {k: v for k, v in zip(uniq, ids) if v}
     for (eco, name, ver), vids in sorted(hits.items()):
         lockfiles = sorted({entry[0] for entry in entries if entry[1:4] == (eco, name, ver)})
+        advisories = None
+        target = target_all = None
         try:
             advisories = normalized(vids, eco, name, ver)
             candidates = sorted({fixed for adv in advisories for fixed in adv["fixed"]}, key=vkey)
@@ -630,7 +632,9 @@ def main():
         except (urllib.error.URLError, OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
             report["errors"].append("Advisory or target verification failed (%s)" % exc.__class__.__name__)
             report["skipped"].extend({"lockfile": rel, "reason": "advisory details or target verification incomplete"} for rel in lockfiles)
-            continue
+            if advisories is None:
+                continue
+            target = target_all = None
         if not advisories:
             continue
         direct_values = [entry[4] for entry in entries if entry[1:4] == (eco, name, ver)]

@@ -223,6 +223,15 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(code, 3)
         self.assertEqual(report["scanned"], [])
 
+    def test_known_advisory_survives_failed_candidate_verification(self):
+        code, report = self.run_scan({"package-lock.json": self.lock()}, records={"A": advisory("A")},
+                                     hits={"1.0.0": ["A"], "1.2.0": ["missing"]})
+        self.assertEqual(code, 3)
+        self.assertEqual(report["findings"][0]["advisories"][0]["id"], "A")
+        self.assertIsNone(report["findings"][0]["target"])
+        self.assertIsNone(report["findings"][0]["target_clears_all"])
+        self.assertTrue(report["incomplete"])
+
     def test_below_threshold_advisories_stay_visible(self):
         code, report = self.run_scan({"package-lock.json": self.lock()}, records={"A": advisory("A", severity="LOW")})
         self.assertEqual(code, 0)

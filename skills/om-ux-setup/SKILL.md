@@ -28,6 +28,10 @@ repository with `--health`), `om-ux-shape` in Review mode for a whole module or
 flow, and `om-figma-design-with-ds` for design-tool files (a brief for a new
 screen, or an audit of an existing design against the contract). When the repository has no design system to
 extract, report that limit and leave final visual decisions to the design stage.
+For detailed screens from a specification, name `om-ux-design` as an optional
+next task. It uses the repository's components when available and labels a
+visual direction as proposed when there is no DS. Do not invoke it automatically
+or treat design approval as an extracted contract.
 For an early flow experiment, name `om-mockup-prototype`: it creates neutral
 clickable screens and keeps `.uxproof/` unchanged.
 

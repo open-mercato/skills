@@ -61,16 +61,15 @@ class ParserTests(unittest.TestCase):
 
     def test_unpinned_and_included_requirements_are_explicitly_incomplete(self):
         for text in ("example>=1\n", "-r nested.txt\n", "example==1.*\n", "example==1.0.0\nother>=2\n"):
-            with self.subTest(text=text), self.assertRaises(ValueError):
-                scan.p_requirements(text)
+            with self.subTest(text=text):
+                self.assertIn(scan.UNPINNED, scan.p_requirements(text))
 
     def test_pinned_requirements_with_hashes_and_markers(self):
         text = 'example==1.0.0 ; python_version >= "3.8" \\\n    --hash=sha256:abcdef\n'
         self.assertEqual(scan.p_requirements(text), [("example", "1.0.0", True)])
 
     def test_git_yarn_and_go_replacements_are_explicitly_incomplete(self):
-        with self.assertRaises(ValueError):
-            scan.p_yarn_lock('"example@git+https://example.invalid/repo.git":\n  version "1.0.0"\n')
+        self.assertIn(scan.UNPINNED, scan.p_yarn_lock('"example@git+https://example.invalid/repo.git":\n  version "1.0.0"\n'))
         with self.assertRaises(ValueError):
             scan.p_go_mod('require example.org/example v1.0.0\nreplace example.org/example => ../local\n')
 
@@ -83,8 +82,7 @@ class ParserTests(unittest.TestCase):
 
     def test_npm_git_source_is_not_a_registry_release(self):
         text = json.dumps({"packages": {"node_modules/example": {"version": "1.0.0", "resolved": "git+https://example.invalid/repo.git"}}})
-        with self.assertRaises(ValueError):
-            scan.p_npm_lock(text)
+        self.assertIn(scan.UNPINNED, scan.p_npm_lock(text))
 
     def test_python_package_normalization_matches_fixed_events(self):
         record = {"affected": [{"package": {"ecosystem": "PyPI", "name": "Example_Package"}, "ranges": [{"events": [{"fixed": "2.0.0"}]}]}]}
@@ -179,7 +177,7 @@ class CommandTests(unittest.TestCase):
         for filename, text in (("requirements.txt", "example>=1\n"), ("pnpm-lock.yaml", "unrecognized: data\n")):
             with self.subTest(filename=filename):
                 code, report = self.run_scan({filename: text}, records={}, hits={})
-                self.assertEqual(code, 2)
+                self.assertEqual(code, 4)
                 self.assertEqual(report["scanned"], [])
                 self.assertTrue(report["skipped"])
 
@@ -218,7 +216,16 @@ class CommandTests(unittest.TestCase):
             link.symlink_to(external)
             for path in (str(external), str(link)):
                 result = subprocess.run([sys.executable, "-I", str(SCANNER), "--root", root, path], capture_output=True, text=True)
-                self.assertEqual(result.returncode, 2)
+                self.assertEqual(result.returncode, 4)
+
+    def test_pinned_findings_survive_incomplete_requirements(self):
+        record = advisory()
+        record["affected"][0]["package"]["ecosystem"] = "PyPI"
+        code, report = self.run_scan({"requirements.txt": "example==1.0.0\nother>=2\n"}, records={"GHSA-example": record})
+        self.assertEqual(code, 4)
+        self.assertEqual(report["scanned"], [])
+        self.assertTrue(report["incomplete"])
+        self.assertEqual(report["findings"][0]["package"], "example")
                 self.assertEqual(json.loads(result.stdout)["scanned"], [])
 
 

@@ -20,7 +20,7 @@ python3 -I "<this skill's directory>/references/osv-scan.py" \
 ```
 
 Exit code 3 means advisory queries/details or target verification failed. Exit
-code 2 means unsupported/incomplete inputs, or an argument error. Treat stdout
+code 4 means unsupported/incomplete inputs; code 2 is an argument error. Treat stdout
 as a report only after parsing valid JSON with the documented keys; an argument
 error with no JSON is an execution failure. Inspect `skipped` and `errors`,
 retain results from successfully scanned lockfiles, and report each skipped
@@ -39,6 +39,7 @@ Output shape:
   "scanned":  [{"lockfile": "pubspec.lock", "ecosystem": "Pub", "packages": 87}],
   "skipped":  [{"lockfile": "ios/Podfile.lock", "reason": "CocoaPods has no advisory feed in OSV"}],
   "invalid_entries": 0,
+  "incomplete": [],
   "errors":   [],
   "findings": [{
     "ecosystem": "npm", "package": "lodash", "version": "4.17.15",

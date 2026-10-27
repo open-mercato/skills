@@ -9,8 +9,8 @@ Usage:
   python3 -I osv-scan.py [--root DIR] [--api URL] [LOCKFILE ...]
 
 With no LOCKFILE arguments it scans every lockfile git tracks under --root.
-Exit code 0 even when advisories are found; 2 for unsupported/incomplete inputs
-or argument errors; 3 for incomplete API responses. Only valid JSON is a report.
+Exit code 0 even when advisories are found; 4 for unsupported/incomplete inputs;
+2 for argument errors; 3 for incomplete API responses. Only valid JSON is a report.
 """
 import argparse
 import json
@@ -28,6 +28,7 @@ API = "https://api.osv.dev/v1"
 NAME_RE = re.compile(r"^[A-Za-z0-9@._/+:-]+$")
 VERSION_RE = re.compile(r"^[A-Za-z0-9._+!~-]+$")
 LEVELS = {"unrated": 0, "low": 1, "moderate": 2, "high": 3, "critical": 4}
+UNPINNED = ("", "", None)
 
 # basename (or glob-ish suffix) -> (ecosystem, parser name)
 LOCKFILES = {
@@ -110,7 +111,8 @@ def p_npm_lock(text):
             if "node_modules/" not in key or meta.get("link") or "version" not in meta:
                 continue
             if str(meta.get("resolved", "")).startswith(("git", "file:", "link:", "workspace:")):
-                raise ValueError("non-registry npm source; use the native scanner")
+                out.append(UNPINNED)
+                continue
             name = meta.get("name") or key.rsplit("node_modules/", 1)[-1]
             out.append((name, meta["version"], key == "node_modules/" + name and name in direct))
         return out
@@ -137,7 +139,8 @@ def p_yarn_lock(text):
                 if at > 0:
                     selector = spec[at + 1:]
                     if not re.match(r"^(npm:|[~^*<>=0-9])", selector):
-                        raise ValueError("non-registry Yarn source; use the native scanner")
+                        out.append(UNPINNED)
+                        continue
                     names.append(spec[:at])
             continue
         m = re.match(r'^  version:?\s+"?([^"\s]+)"?\s*$', line)
@@ -209,7 +212,7 @@ def p_requirements(text):
         if m:
             out.append((m.group(1), m.group(2), True))
         else:
-            raise ValueError("requirements contain an unpinned entry or unsupported directive")
+            out.append(UNPINNED)
     return out
 
 
@@ -450,7 +453,7 @@ def main():
     if not re.match(r"^https://", a.api):
         sys.exit("--api must be an https URL")
 
-    report = {"scanned": [], "skipped": [], "findings": [], "invalid_entries": 0, "errors": []}
+    report = {"scanned": [], "skipped": [], "incomplete": [], "findings": [], "invalid_entries": 0, "errors": []}
     root = Path(a.root).resolve()
     entries = []  # (lockfile, ecosystem, name, version, direct)
     for rel in a.lockfiles or tracked_lockfiles(a.root):
@@ -478,15 +481,19 @@ def main():
         except (OSError, ValueError, TypeError, AttributeError, KeyError) as exc:
             report["skipped"].append({"lockfile": rel, "reason": "unreadable or unsupported lockfile (%s)" % exc.__class__.__name__})
             continue
-        good = 0
+        good = unpinned = 0
         for name, ver, direct in rows:
+            if (name, ver, direct) == UNPINNED:
+                unpinned += 1
+                continue
             if not (isinstance(name, str) and NAME_RE.fullmatch(name) and VERSION_RE.fullmatch(str(ver))):
                 report["invalid_entries"] += 1
                 continue
             entries.append((rel, eco, name, str(ver), direct))
             good += 1
         if good != len(rows):
-            report["skipped"].append({"lockfile": rel, "reason": "invalid package entries; coverage incomplete"})
+            reason = "unpinned or non-registry entries; coverage incomplete" if unpinned else "invalid package entries; coverage incomplete"
+            report["skipped"].append({"lockfile": rel, "reason": reason})
         else:
             report["scanned"].append({"lockfile": rel, "ecosystem": eco, "packages": good})
 
@@ -497,6 +504,7 @@ def main():
         report["errors"].append("OSV query failed (%s)" % exc.__class__.__name__)
         report["scanned"], report["skipped"] = [], report["skipped"] + [
             {"lockfile": s["lockfile"], "reason": "advisory database unreachable"} for s in report["scanned"]]
+        report["incomplete"] = list(report["skipped"])
         print(json.dumps(report, indent=2))
         return 3
 
@@ -575,8 +583,9 @@ def main():
         })
     skipped_files = {entry["lockfile"] for entry in report["skipped"]}
     report["scanned"] = [entry for entry in report["scanned"] if entry["lockfile"] not in skipped_files]
+    report["incomplete"] = list(report["skipped"])
     print(json.dumps(report, indent=2))
-    return 3 if report["errors"] else (2 if report["skipped"] else 0)
+    return 3 if report["errors"] else (4 if report["skipped"] else 0)
 
 
 if __name__ == "__main__":

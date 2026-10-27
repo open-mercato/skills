@@ -285,7 +285,7 @@ try {
 
   // Full run against canned OSV data.
   const { exit, report } = out.main
-  assert.equal(exit, 2, 'main: unsupported lockfile reports incomplete coverage while preserving scanned results')
+  assert.equal(exit, 4, 'main: unsupported lockfile reports incomplete coverage while preserving scanned results')
   assert.deepEqual(report.skipped, [{ lockfile: 'ios/Podfile.lock', reason: 'CocoaPods has no advisory feed in OSV' }])
   assert.deepEqual(report.scanned, [{ lockfile: 'package-lock.json', ecosystem: 'npm', packages: 2 }])
   assert.equal(report.findings.length, 1, 'main: only the vulnerable package becomes a finding')

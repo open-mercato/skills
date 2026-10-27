@@ -62,10 +62,10 @@ still gets a real answer.
    native audit tool when it is installed and reports severity and fixed
    versions; otherwise the OSV scan in `references/osv-scan.md`, which reads the
    lockfiles directly through the bundled `references/osv-scan.py`. Read-only:
-   never run a command that resolves, installs, or rewrites dependencies, and
-   restore any file a tool touched anyway — never one the user had already
-   edited. A source that fails (tool missing,
-   network blocked) marks that ecosystem **not scanned** with the reason.
+   never run a command that resolves, installs, or rewrites dependencies.
+   Run native tools in disposable snapshots, as `references/ecosystems.md`
+   specifies. Never restore or delete files in the original checkout.
+   A source that fails (tool missing, network blocked) marks that ecosystem **not scanned** with the reason.
 
 3. **Normalize and filter.** Merge results into one finding per package and
    version: advisory ids and aliases, severity, first fixed version, direct or
@@ -96,9 +96,9 @@ still gets a real answer.
 - Shared rules: `references/rules.md` — autonomous-run contract, label
   discipline, secrets hygiene, marker contract, emoji glossary. They always apply.
 - **Read-only on the repository.** Never edit manifests or lockfiles, never run
-  an install, update, or dependency-resolution command, never commit. A file a
-  scan tool changed is restored before the report only when it was clean before
-  the run; the user's own uncommitted edits are never touched
+  an install, update, or dependency-resolution command, never commit. Each
+  native scan runs in a disposable snapshot. Discard only that snapshot;
+  never restore or delete files in the original checkout
   (`references/ecosystems.md`).
 - **No silent zero.** "No advisories" is only reported for ecosystems actually
   scanned; every skipped ecosystem appears in the report with its reason.

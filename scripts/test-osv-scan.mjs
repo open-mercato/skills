@@ -80,6 +80,7 @@ out["yarn_berry"] = P["yarn_lock"]('''__metadata:
 "lodash@npm:^4.17.0":
   version: 4.17.21
 ''')
+out["yarn_aliases"] = P["yarn_lock"]('"safealias@npm:lodash@^4.0.0":\n  version "4.17.15"\n"alias@npm:@scope/real@^1.0.0":\n  version: 1.0.1\n')
 out["pnpm"] = P["pnpm_lock"]('''lockfileVersion: '9.0'
 packages:
   lodash@4.17.15:
@@ -250,6 +251,15 @@ def flaky_get(api, path):
 out["truncated"] = main_with(["package-lock.json"], short_batch, fake_get)
 out["detail_fail"] = main_with(["package-lock.json"], fake_post, flaky_get)
 out["outside"] = main_with(["../outside/package-lock.json", "requirements.txt"], fake_post, fake_get)
+for case, reply in {"null_result": {"results": [None, {}]}, "bad_vulns": {"results": [{"vulns": [None]}, {}]}}.items():
+    try:
+        out[case] = main_with(["package-lock.json"], lambda *args: reply, fake_get)
+    except Exception as exc:
+        out[case] = {"exception": type(exc).__name__}
+try:
+    out["bad_detail"] = main_with(["package-lock.json"], fake_post, lambda *args: [])
+except Exception as exc:
+    out["bad_detail"] = {"exception": type(exc).__name__}
 print(json.dumps(out))
 `
 
@@ -277,6 +287,7 @@ try {
   assert.deepEqual(rows('yarn_v1'), ['@babel/core|7.1.2|', 'lodash|4.17.15|'],
     'yarn v1: scoped names and multi-spec headers; git and tarball sources are not registry releases')
   assert.deepEqual(rows('yarn_berry'), ['lodash|4.17.21|'], 'yarn berry: npm: protocol and __metadata skipped')
+  assert.deepEqual(rows('yarn_aliases'), ['lodash|4.17.15|', '@scope/real|1.0.1|'], 'Yarn aliases use the real registry package identity')
   assert.deepEqual(rows('pnpm'), ['lodash|4.17.15|', '@babel/core|7.1.2|'], 'pnpm v9: packages section only, scoped names')
   assert.deepEqual(rows('cargo'), ['serde|1.0.100|', 'app|0.1.0|'], 'Cargo.lock: git sources skipped')
   assert.deepEqual(rows('poetry'), ['requests|2.19.0|', 'safe-package|1.0.0|'],
@@ -331,6 +342,13 @@ try {
     { lockfile: '../outside/package-lock.json', reason: 'outside --root' },
     { lockfile: 'requirements.txt', reason: 'no pinned versions (1 unpinned entries)' },
   ], 'lockfile paths stay inside --root; a requirements file with no pins is not "scanned"')
+
+  for (const name of ['null_result', 'bad_vulns']) {
+    assert.equal(out[name].exit, 3, `${name}: malformed batch data must produce the documented coverage report`)
+    assert.deepEqual(out[name].report.scanned, [])
+  }
+  assert.equal(out.bad_detail.exit, 4, 'malformed advisory details must become a reported coverage gap')
+  assert.ok(out.bad_detail.report.incomplete.length > 0)
 
   // CLI contract: the documented invocation parses, bad input is a usage error (2),
   // an unreachable database is 3 with valid JSON on stdout.

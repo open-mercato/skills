@@ -7,9 +7,10 @@ future implementer makes (step 4). It reads manifests; it never edits them.
 
 - Start from the finding's `target` (or the native tool's recommended version).
   It must clear **every** kept advisory, not only the first one.
-- When `target` is `null`, no published version fixes the package. The path is
-  mitigation: say so, name any patched fork or replacement the advisory itself
-  recommends, and set the issue up as a watch item (step 5 risk rules).
+- When `target` is `null`, the advisory data did not establish a safe target.
+  Do not claim that no published fix exists. Verify the advisory's current
+  fix guidance. If no target can be verified, state that limit and propose
+  mitigation or a watch item (step 5 risk rules).
 - When `target_clears_all` equals `target`, say the upgrade also clears the
   below-threshold advisories; when it differs, mention the higher version as an
   option and do not file for the remainder.

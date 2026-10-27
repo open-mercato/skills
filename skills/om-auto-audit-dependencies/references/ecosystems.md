@@ -48,16 +48,13 @@ version documents.
 - A native tool that exits non-zero because it found advisories is a success;
   one that fails for any other reason falls back to the OSV scan, and the report
   names the fallback.
-- Never discard the user's own edits. Before any native tool runs, record
-  `git status --porcelain --untracked-files=all` as the baseline. When the
-  manifest or lockfile the tool reads is already modified or untracked in that
-  baseline, skip the native tool for that ecosystem and use the OSV scan
-  instead — the bundled scanner only reads files.
-- After a native tool runs, compare `git status --porcelain --untracked-files=all`
-  with the baseline. Restore only files that were clean in the baseline and are
-  changed now (`git restore -- <file>`), and delete only untracked files that did
-  not exist in the baseline. A file that was already dirty is never restored,
-  reset, or deleted. Name every restored or deleted file in the report.
+- Run native tools only in a disposable snapshot under this run's scratch
+  directory. Copy the required project inputs without credentials or secret
+  files. Keep the original checkout untouched, including edits made during
+  the scan. If a safe snapshot cannot be prepared, use the bundled OSV scan.
+- Discard only the disposable snapshot after the native tool finishes. Never
+  run `git restore`, reset, or cleanup deletion in the original checkout.
+  A before/after status comparison cannot prove which process changed a file.
 - Native output is normalized into the same fields the OSV scan produces
   (`references/osv-scan.md`): package, installed version, advisory ids and
   aliases, severity, fixed versions, direct or transitive.

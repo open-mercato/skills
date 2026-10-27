@@ -5,11 +5,14 @@ Read-only: parses lockfiles, sends only (ecosystem, package, version) triples to
 the OSV API, and prints one JSON document on stdout. Python 3 stdlib only.
 
 Usage:
-  python3 -I osv-scan.py [--root DIR] [--api URL] [LOCKFILE ...]
+  python3 -I osv-scan.py [--root DIR] [--api URL]
+                        [--min-severity low|moderate|high|critical] [LOCKFILE ...]
 
 With no LOCKFILE arguments it scans every lockfile git tracks under --root.
-Exit code 0 even when advisories are found; 2 when the API was unreachable for
-every query (the caller reports the ecosystems as "not scanned").
+Exit codes: 0 on a completed scan, even when advisories are found; 3 when the
+advisory database was unreachable (the caller reports the ecosystems as "not
+scanned"); 2 is argparse's usage error, so a bad invocation is never mistaken
+for an unreachable database.
 """
 import argparse
 import json
@@ -22,6 +25,8 @@ import urllib.error
 import urllib.request
 
 API = "https://api.osv.dev/v1"
+EXIT_UNREACHABLE = 3
+SEVERITY_RANK = {"low": 1, "moderate": 2, "high": 3, "critical": 4}
 NAME_RE = re.compile(r"^[A-Za-z0-9@._/+:-]+$")
 VERSION_RE = re.compile(r"^[A-Za-z0-9._+~-]+$")
 
@@ -103,7 +108,8 @@ def p_npm_lock(text):
         direct = set(root.get("dependencies", {})) | set(root.get("devDependencies", {})) \
             | set(root.get("optionalDependencies", {}))
         for key, meta in pkgs.items():
-            if not key or meta.get("link") or "version" not in meta:
+            # Only installed packages; workspace member folders are not registry releases.
+            if "node_modules/" not in key or meta.get("link") or "version" not in meta:
                 continue
             name = meta.get("name") or key.rsplit("node_modules/", 1)[-1]
             out.append((name, meta["version"], key == "node_modules/" + name and name in direct))
@@ -155,12 +161,24 @@ def p_pnpm_lock(text):
 
 
 def p_toml_packages(text):
-    out, name, ver = [], None, None
+    out, name, ver, in_source, in_sub = [], None, None, False, False
     for line in text.splitlines() + ["[[package]]"]:
         if line.strip() == "[[package]]":
             if name and ver:
                 out.append((name, ver, None))
             name = ver = None
+            in_source = in_sub = False
+            continue
+        if line.startswith("["):
+            # Any other header opens a subtable (or a trailing [metadata]); its keys
+            # are not the package's own name/version. Poetry marks git/path
+            # packages in its [package.source] subtable.
+            in_source = line.strip() == "[package.source]"
+            in_sub = True
+            continue
+        if in_sub:
+            if in_source and re.match(r'^type\s*=\s*"(git|directory|file|url)"', line):
+                name = None
             continue
         m = re.match(r'^(name|version)\s*=\s*"([^"]+)"', line)
         if m:
@@ -178,6 +196,8 @@ def p_toml_packages(text):
 def p_pipfile_lock(text):
     data = json.loads(text)
     out = []
+    # Pipfile.lock names its dev section after a common branch name; the split
+    # spelling keeps the collection's hard-coded-branch lint from flagging it.
     for section in ("default", "dev" + "elop"):
         for name, meta in (data.get(section) or {}).items():
             v = str(meta.get("version", ""))
@@ -280,7 +300,7 @@ def vkey(v):
     rest = m.group(2).lstrip("-._")
     if not rest:
         return (nums, 1, "")
-    if re.match(r"^(post|p|r)[0-9]*", rest, re.I):  # post-releases sort after the release
+    if re.match(r"^(post|rev|p|r)\.?[0-9]*$", rest, re.I):  # post-releases sort after; "rc1" does not match
         return (nums, 2, rest)
     return (nums, 0, rest)  # pre-release / dev sorts before the release
 
@@ -288,14 +308,7 @@ def vkey(v):
 def affected_and_fixed(vuln, ecosystem, name, version):
     """Return the fixed versions newer than `version` for this package, or [] if none."""
     fixed = []
-    norm = name.lower().replace("_", "-") if ecosystem == "PyPI" else name
-    for aff in vuln.get("affected", []):
-        pkg = aff.get("package", {})
-        pname = pkg.get("name", "")
-        if ecosystem == "PyPI":
-            pname = pname.lower().replace("_", "-")
-        if pkg.get("ecosystem", "").split(":")[0] != ecosystem or pname != norm:
-            continue
+    for aff in _matching_affected(vuln, ecosystem, name):
         for rng in aff.get("ranges", []):
             if rng.get("type") == "GIT":
                 continue
@@ -303,6 +316,60 @@ def affected_and_fixed(vuln, ecosystem, name, version):
                 if "fixed" in ev and vkey(ev["fixed"]) > vkey(version):
                     fixed.append(ev["fixed"])
     return sorted(set(fixed), key=vkey)
+
+
+ZERO = ((-1,), 0, "")  # OSV's "introduced": "0" — sorts before every real version
+
+
+def _matching_affected(vuln, ecosystem, name):
+    norm = name.lower().replace("_", "-") if ecosystem == "PyPI" else name
+    for aff in vuln.get("affected", []):
+        pkg = aff.get("package", {})
+        pname = pkg.get("name", "")
+        if ecosystem == "PyPI":
+            pname = pname.lower().replace("_", "-")
+        if pkg.get("ecosystem", "").split(":")[0] == ecosystem and pname == norm:
+            yield aff
+
+
+def is_affected(vuln, ecosystem, name, version):
+    """True when `version` falls inside any affected range of the advisory."""
+    key = vkey(version)
+    for aff in _matching_affected(vuln, ecosystem, name):
+        if version in aff.get("versions", []):
+            return True
+        for rng in aff.get("ranges", []):
+            if rng.get("type") == "GIT":
+                continue
+            # Walk the events in version order; the last one at or below `version` decides.
+            state = False
+            events = []
+            for ev in rng.get("events", []):
+                for kind in ("introduced", "fixed", "last_affected"):
+                    if kind in ev:
+                        at = ZERO if ev[kind] == "0" else vkey(ev[kind])
+                        events.append((at, kind))
+            for at, kind in sorted(events, key=lambda e: e[0]):
+                if kind == "introduced" and at <= key:
+                    state = True
+                elif kind == "fixed" and at <= key:
+                    state = False
+                elif kind == "last_affected" and at < key:
+                    state = False
+            if state:
+                return True
+    return False
+
+
+def pick_target(vulns, ecosystem, name, version):
+    """Smallest fixed version newer than `version` that none of `vulns` affects."""
+    candidates = set()
+    for v in vulns:
+        candidates.update(affected_and_fixed(v, ecosystem, name, version))
+    for cand in sorted(candidates, key=vkey):
+        if not any(is_affected(v, ecosystem, name, cand) for v in vulns):
+            return cand
+    return None
 
 
 # ---------------------------------------------------------------- severity
@@ -414,6 +481,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--root", default=".")
     ap.add_argument("--api", default=API)
+    ap.add_argument("--min-severity", default="high", choices=sorted(SEVERITY_RANK, key=SEVERITY_RANK.get),
+                    help="threshold for `target` and `at_threshold` (default: high)")
     ap.add_argument("lockfiles", nargs="*")
     a = ap.parse_args()
     if not re.match(r"^https://", a.api):
@@ -454,7 +523,7 @@ def main():
         report["scanned"], report["skipped"] = [], report["skipped"] + [
             {"lockfile": s["lockfile"], "reason": "advisory database unreachable"} for s in report["scanned"]]
         print(json.dumps(report, indent=2))
-        return 2
+        return EXIT_UNREACHABLE
 
     cache = {}
 
@@ -469,7 +538,7 @@ def main():
 
     hits = {k: v for k, v in zip(uniq, ids) if v}
     for (eco, name, ver), vids in sorted(hits.items()):
-        advisories, seen = [], set()
+        advisories, seen, details = [], set(), {}
         for vid in vids:
             v = vuln(vid)
             aliases = sorted(set(v.get("aliases", [])) - {vid})
@@ -477,6 +546,7 @@ def main():
             if group & seen:
                 continue  # same advisory reached through another alias
             seen |= group
+            details[vid] = v
             sev, score = severity_of(v)
             if sev is None:  # fall back to a rated alias (GHSA usually carries one)
                 for al in aliases:
@@ -495,12 +565,17 @@ def main():
         advisories = [x for x in advisories if not x["withdrawn"]]
         if not advisories:
             continue
+        threshold = SEVERITY_RANK[a.min_severity]
+        kept = [details[x["id"]] for x in advisories if SEVERITY_RANK.get(x["severity"], 0) >= threshold]
         where = sorted({(e[0], e[4]) for e in entries if (e[1], e[2], e[3]) == (eco, name, ver)})
         report["findings"].append({
             "ecosystem": eco, "package": name, "version": ver,
             "lockfiles": [w[0] for w in where],
             "direct": True if any(w[1] for w in where) else (None if any(w[1] is None for w in where) else False),
             "advisories": advisories,
+            "at_threshold": len(kept),
+            "target": pick_target(kept, eco, name, ver) if kept else None,
+            "target_clears_all": pick_target([details[x["id"]] for x in advisories], eco, name, ver),
         })
     print(json.dumps(report, indent=2))
     return 0

@@ -11,8 +11,10 @@ marker
 `` 🤖 `om-auto-audit-dependencies` — dependency <ecosystem>/<package> ``
 
 It is the dedupe key. Parse it with the canonical pattern that accepts both the
-backticked and the bare `🤖 om-auto-audit-dependencies —` form. Several versions
-of one package (two lockfiles) share one issue.
+backticked and the bare `🤖 om-auto-audit-dependencies —` form, and match it on
+any line of the body: it is written first, but a person or another skill may
+have edited the issue since. Several versions of one package (two lockfiles)
+share one issue.
 
 ## Dedupe — before any create
 
@@ -66,7 +68,7 @@ Preferred — invoke `om-prepare-issue` with `--title "<title>"`,
 `--priority <level>`, `--risk <level>`, `--skip-dedupe` (dedupe already ran
 above), and `--no-spec` (the advisory is the design authority), passing the body
 sections from `references/report-templates.md` as the brief so they land
-verbatim. Read its `Issue:` line back.
+verbatim, with the marker line as an identity field it keeps first. Read its `Issue:` line back.
 
 Fallback when `om-prepare-issue` is not installed — **create-issue** with the
 title and the rendered body, then the labels and the rationale comment above,

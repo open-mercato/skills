@@ -12,13 +12,17 @@ only, and prints one JSON document. Run it in isolated mode from the repository
 root, passing the lockfiles chosen in step 1 (none → every tracked lockfile):
 
 ```bash
+RUN_TMP=$(mktemp -d)   # this run's scratch directory; remove it after the report
 python3 -I "<this skill's directory>/references/osv-scan.py" \
   --root . --min-severity "$MIN_SEVERITY" pubspec.lock app/package-lock.json > "$RUN_TMP/osv.json"
 ```
 
-Exit code 2 means the database was unreachable: every lockfile lands in
-`skipped` with reason `advisory database unreachable`, and the report names
-those ecosystems as **not scanned** — never as clean.
+Exit codes: `0` — the scan completed (advisories found or not); `3` — the
+database was unreachable: every lockfile lands in `skipped` with reason
+`advisory database unreachable`, and the report names those ecosystems as **not
+scanned** — never as clean; `2` — a usage error (bad flag or severity value),
+with nothing on stdout: fix the invocation and rerun, never report it as a scan
+result.
 
 Output shape:
 
@@ -42,9 +46,13 @@ Output shape:
 - `direct` is `true`, `false`, or `null` when the lockfile format does not say
   (`Cargo.lock`, `composer.lock`, `yarn.lock`, …); resolve `null` from the
   manifest in step 4.
+- `at_threshold` counts the advisories rated at or above `--min-severity`
+  (unrated ones never count).
 - `target` is the smallest published fixed version that no advisory at or above
-  `--min-severity` still affects; `null` means no such version exists.
-  `target_clears_all` does the same across every severity.
+  `--min-severity` still affects, checked against each advisory's affected
+  ranges; `null` means no such version exists — or, when `at_threshold` is `0`,
+  that nothing needed one. `target_clears_all` does the same across every
+  severity.
 - Version ordering in the script is an approximation that covers semver, dotted,
   and common PEP 440 forms; when an ecosystem's ordering is exotic (epochs,
   calendar tags), confirm the target against the advisory page before filing.
@@ -56,7 +64,8 @@ Taken in this order, first hit wins:
 1. The advisory's own label (`database_specific.severity`, or the affected
    entry's `ecosystem_specific` / `database_specific` severity). `MEDIUM` →
    `moderate`.
-2. A CVSS v3 vector, scored to its base score: ≥9.0 critical, ≥7.0 high, ≥4.0
+2. A CVSS v3 vector, scored to its base score (CVSS v4 vectors are not scored;
+   a v4-only advisory falls through to step 3): ≥9.0 critical, ≥7.0 high, ≥4.0
    moderate, otherwise low.
 3. The rating of a `GHSA-` alias.
 4. Otherwise `unrated` — reported with its link, never filed, never dropped

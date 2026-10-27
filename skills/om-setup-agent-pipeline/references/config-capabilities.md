@@ -18,6 +18,8 @@ committed configs keep working.
 | `securityChecklist` | `null` | `om-auto-sec-report-pr`; repo-local security checklist. |
 | `securityReport.publish` | `"local"` | Security-report skills; `"pr"` is an explicit publication opt-in. |
 | `securityReport.disclosure` | `"withhold-live"` | Security-report skills; public disclosure policy. |
+| `dependencyAudit.minSeverity` | `"high"` | `om-auto-audit-dependencies`; lowest advisory severity that gets an issue (`low`, `moderate`, `high`, `critical`). |
+| `dependencyAudit.ignore` | `[]` | `om-auto-audit-dependencies`; accepted risks as `{id, reason, until?}` objects; entries without a reason are ignored with a warning. |
 | `help.data` | `[".ai/help/*.md"]` | `om-help`; repository routing data. |
 | `help.skillRoots` | `[]` | `om-help`; extra installed-skill roots. |
 | `judge.criteria` | `".ai/judge-criteria.md"` | `om-judge-agent-session`; evaluation criteria. |
@@ -63,6 +65,8 @@ SECURITY_REPORT_PUBLISH=$(jq -r '.securityReport.publish // "local"' "$CONFIG")
 PR_TITLE_TEMPLATE=$(jq -r '.prTitleTemplate // "{prefix}({area}): {summary}{issueRef}"' "$CONFIG")
 TICKET_KEY_PATTERN=$(jq -r '.ticketKeyPattern // empty' "$CONFIG")
 SECURITY_REPORT_DISCLOSURE=$(jq -r '.securityReport.disclosure // "withhold-live"' "$CONFIG")
+DEPENDENCY_AUDIT_MIN_SEVERITY=$(jq -r '.dependencyAudit.minSeverity // "high"' "$CONFIG")
+DEPENDENCY_AUDIT_IGNORE=$(jq -c '.dependencyAudit.ignore // []' "$CONFIG")
 HELP_DATA=$(jq -c '.help.data // [".ai/help/*.md"]' "$CONFIG")
 HELP_SKILL_ROOTS=$(jq -c '.help.skillRoots // []' "$CONFIG")
 JUDGE_CRITERIA=$(jq -r '.judge.criteria // ".ai/judge-criteria.md"' "$CONFIG")

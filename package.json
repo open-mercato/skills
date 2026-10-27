@@ -20,6 +20,7 @@
     "test:discovery-contracts": "node scripts/test-discovery-contracts.mjs",
     "test:spec-writing-data-model": "node scripts/test-spec-writing-data-model.mjs",
     "test:migrated-skill-tools": "node scripts/test-migrated-skill-tools.mjs",
+    "test:osv-scan": "node scripts/test-osv-scan.mjs",
     "test:agent-browser-codex": "bash scripts/test-agent-browser-codex.sh"
   }
 }

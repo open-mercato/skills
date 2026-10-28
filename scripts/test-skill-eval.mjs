@@ -211,6 +211,15 @@ test('native imports deduplicate response usage, verify model and keep cohorts s
   ];
   await fs.writeFile(session, events.map((entry) => JSON.stringify(entry)).join('\n'));
   const options = { session, pairId: 'm0-tiny-case-r1', variant: 'baseline', model: setup.config.models[0].name, effort: 'high', cohort: 'pilot-native' };
+  const trialDirectory = path.join(setup.out, 'trials', 'm0-tiny-case-r1-baseline');
+  const priorAttempts = await fs.readdir(trialDirectory);
+  await assert.rejects(importNative(setup.out, { ...options, artifactFile: path.join(setup.temporary, 'missing-artifact') }), { code: 'ENOENT' });
+  assert.deepEqual(await fs.readdir(trialDirectory), priorAttempts);
+  await fs.writeFile(path.join(setup.out, '.running'), '{}');
+  await assert.rejects(importNative(setup.out, options), { code: 'EEXIST' });
+  assert.deepEqual(await fs.readdir(trialDirectory), priorAttempts);
+  assert.equal(await fs.readFile(path.join(setup.out, '.running'), 'utf8'), '{}');
+  await fs.rm(path.join(setup.out, '.running'));
   const result = await importNative(setup.out, options);
   assert.equal(result.usage.totalTokens, 50);
   assert.equal(result.modelVerification, 'metadata-matched');

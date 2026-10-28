@@ -169,8 +169,20 @@ export async function run(output, { execute: executeTrials = false, retryFailed 
   }
 }
 
-export async function importNative(output, { session, pairId, variant, model, effort, cohort, artifactFile }) {
+export async function importNative(output, options) {
   const { root, manifest } = await loadRun(output);
+  const lock = path.join(root, '.running');
+  const handle = await fs.open(lock, 'wx', 0o600);
+  try {
+    await handle.writeFile(JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString(), operation: 'import' }));
+    return await importSession(root, manifest, options);
+  } finally {
+    await handle.close();
+    await fs.rm(lock, { force: true });
+  }
+}
+
+async function importSession(root, manifest, { session, pairId, variant, model, effort, cohort, artifactFile }) {
   if (!['baseline', 'candidate'].includes(variant)) throw new Error('variant must be baseline or candidate');
   if (!cohort || !/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/u.test(cohort) || cohort === 'cli') throw new Error('Native imports require an explicit separate non-cli --cohort');
   const pair = pairs(manifest).find((entry) => entry.id === pairId);
@@ -181,11 +193,11 @@ export async function importNative(output, { session, pairId, variant, model, ef
   const parsed = parseNativeSession(content);
   if (parsed.observedModels.some((observed) => observed !== model)) throw new Error('Native model metadata does not match --model');
   if (parsed.observedEfforts.some((observed) => observed !== effort)) throw new Error('Native effort metadata does not match --effort');
+  const artifact = parseArtifact(artifactFile ? await fs.readFile(artifactFile, 'utf8') : parsed.artifactText);
   const id = `${pairId}-${variant}`;
   const { directory, names } = await attemptsFor(root, id);
   const attemptDirectory = path.join(directory, `attempt-${names.length ? Number(names.at(-1).slice(8)) + 1 : 1}`);
   await fs.mkdir(attemptDirectory, { mode: 0o700 });
-  const artifact = parseArtifact(artifactFile ? await fs.readFile(artifactFile, 'utf8') : parsed.artifactText);
   const result = { version: 1, id, pairId, caseId: pair.caseId, repetition: pair.repetition, variant,
     skill: manifest.config.skill.name, skillCommit: manifest.variants[variant].commit,
     requestedModel: model, reasoningEffort: effort, backend: 'native-session-import', cohort,

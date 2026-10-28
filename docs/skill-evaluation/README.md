@@ -210,6 +210,10 @@ node scripts/skill-eval.mjs import --out /tmp/study-run --session /tmp/selected-
 node scripts/skill-eval.mjs report --out /tmp/study-run
 ```
 
+Imports use the same exclusive writer lock as execution. Wait for active trials
+to finish before importing sessions into that run. Invalid input files do not
+create an attempt or replace an earlier result.
+
 Only the explicitly supplied session file is read; the harness never searches
 private session directories and never copies the raw session into reports. It
 deduplicates `token_usage_record` usage by response ID. When those records are

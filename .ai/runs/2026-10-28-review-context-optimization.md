@@ -37,7 +37,7 @@ Natural PRs lack exhaustive ground truth. Repetitions help expose sampling varia
 - [x] 3.1 Run the frozen paired benchmark with both models
 - [x] 3.2 Adjudicate findings and compare generated descriptions
 - [x] 3.3 Run the repository gate and final independent review
-- [ ] 3.4 Publish measured results, finish PR metadata and clean owned snapshots
+- [x] 3.4 Publish measured results, finish PR metadata and clean owned snapshots
 
 ## Pre-benchmark evidence
 
@@ -64,3 +64,7 @@ Decision: retain the baseline for adoption; keep PR #150 as an experimental draf
 Final gate runner: **local**. All six configured commands pass in order. Independent final publication review verifies the resource calculations, all 96 public artifact/case bindings across the two datasets, description quotations and the bounded adoption conclusion. Privacy checks find no host paths, credential patterns or signed URLs in the public data. After all source judging, frozen inputs re-verify unchanged at digest `b0834a7b9e23f6bfdb710e435ef4def1b5e169b3fc30dd5e26085658eea53565` before owned snapshot cleanup.
 
 The final heuristic trace audit observes 96 assigned-entrypoint paths, 79 of 80 code-engine entrypoint paths and all 16 spec-engine entrypoint paths. One fresh Luna checkout control reads engine references without an observable engine-entrypoint read; this conformance limitation is disclosed and its recorded cost/artifact remain included. No benchmark trial is rerun or dropped to repair model behavior.
+
+Publication is complete in [PR #150](https://github.com/open-mercato/skills/pull/150), with the [consolidated results comment](https://github.com/open-mercato/skills/pull/150#issuecomment-6481022203) and all sanitized data committed. The PR remains draft with `changes-requested`, `refactor`, `skip-qa`, `priority-low` and `risk-medium`; a consolidated rationale records each choice. Human-only hard-block labels and QA approvals are not granted. The run's `in-progress` claim is released; `ci-monitoring` records only bounded final-head CI follow-up, whose result is maintained in the [release/rationale comment](https://github.com/open-mercato/skills/pull/150#issuecomment-6482702858).
+
+Both studies' owned source/variant worktrees are removed after source judging and integrity verification. All 96 raw trial results/streams, reports, exact bindings, judgments and measurement provenance remain retained privately. The primary source checkout keeps its pre-existing tracker edit and untracked environment backup (unread); installed review/create skill links remain unchanged. No source PR, installed proposal, merge or dependency installation is part of this work.

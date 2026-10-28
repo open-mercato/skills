@@ -44,3 +44,7 @@ Natural PRs lack exhaustive ground truth. Repetitions help expose sampling varia
 PR: #150
 
 All six configured repository commands pass locally. Independent read-only review approves contract preservation. Frontmatter and every pre-existing reference are byte-identical. Candidate implementation: `6862df0a20579c34c860b1d8dd6c0946cc7c12cf`. The frozen executor is `9c422c8a7fa124ddbad9769e3132bee118c4d74a`. The skill entrypoint is 10,780 bytes; entrypoint plus new always-read protocol is 15,219 bytes versus 20,488 bytes before. These are size measurements, not runtime savings.
+
+## First experiment and revision decision
+
+All 48 initial trials completed without failures, retries or input drift. Sol used 5.44% more total tokens and 10.06% more tool items; Luna used 8.06% more tokens and 0.32% fewer tool items. The efficiency target fails. Independent source-based quality and description adjudication is underway. [Results and the single planned retrieval refinement](../../docs/review-skill-optimization/results.md) are recorded before the refinement is implemented. The fresh revised comparison and final adjudication remain pending; no success is claimed.

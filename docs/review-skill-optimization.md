@@ -21,3 +21,5 @@ Primary sources, checked 2026-10-28:
 The structure already follows much of the guidance. The measured gap is runtime context use: agents can overfetch despite layered files. The proposed reference supplies retrieval and reuse rules while leaving necessary inspection open-ended. Mandatory safety and validation never become lazy optional material.
 
 This PR does not apply the previous Controlled English rewrite, alter report formats, change `om-code-review`, or synchronize shared references. The baseline and candidate use identical companions. See the dated specification and run plan for hypotheses, acceptance criteria and evidence limits.
+
+Measured outcomes and the focused revision proposal: [experiment results](review-skill-optimization/results.md).

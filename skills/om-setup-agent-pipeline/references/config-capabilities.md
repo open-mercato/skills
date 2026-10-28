@@ -11,6 +11,8 @@ committed configs keep working.
 | `agentsMd.template` | `null` | `om-create-agents-md`; repo-relative authoring template. |
 | `smartTest.map` | `".ai/test-map.json"` | `om-smart-test`; affected-unit map. |
 | `smartTest.suites` | absent | `om-smart-test`; named test suite definitions; absent derives from `validation.commands`. |
+| `reviewSweep.maxParallel` | `1` | `om-review-prs --subagents` only; positive integer concurrency limit, overridden by `--parallel N`. Unflagged sweeps ignore it. |
+| `reviewSweep.coordinationRoot` | `null` | `om-review-prs --subagents` only; existing absolute shared directory, or automatic repository-specific local storage when absent/null. |
 | `paths.specTemplate` | `null` | `om-pre-implement-spec`; repo-relative spec template. |
 | `paths.ejectLedger` | `".ai/ejected.json"` | `om-eject-and-customize`; provenance ledger. |
 | `knowledge.sources` | `[]` | `om-framework-context`; canonical knowledge-source entries. |
@@ -51,6 +53,11 @@ committed configs keep working.
 ## Default-loading snippet
 
 Load only the slots the executing skill uses, with these exact backward-compatible defaults:
+
+For `reviewSweep`, load the validated defaults only in the flagged sweep's own
+preflight; `--parallel N` bypasses the configured concurrency value. Unflagged
+skills must not read or validate these fields. See `om-review-prs` for that
+mode-specific loader and the lease/storage checks.
 
 ```bash
 AGENTS_MD_TEMPLATE=$(jq -r '.agentsMd.template // empty' "$CONFIG")

@@ -48,3 +48,7 @@ All six configured repository commands pass locally. Independent read-only revie
 ## First experiment and revision decision
 
 All 48 initial trials completed without failures, retries or input drift. Sol used 5.44% more total tokens and 10.06% more tool items; Luna used 8.06% more tokens and 0.32% fewer tool items. The efficiency target fails. Independent source-based quality and description adjudication is underway. [Results and the single planned retrieval refinement](../../docs/review-skill-optimization/results.md) are recorded before the refinement is implemented. The fresh revised comparison and final adjudication remain pending; no success is claimed.
+
+All 48 initial artifacts are now independently source-adjudicated with exact digest bindings. Quality/content retention is not equivalent: improved scope handling coexists with lost baseline mechanisms, and some established reference concerns are missed by both fresh versions. The sanitized assessment data and description examples are linked from the results.
+
+The one focused revision is frozen at `c19f1acd571fe196a208010b2b8c914627c58893`. All six local gates, grouped-read example checks and independent contract review pass. Its complete fresh 48-trial run has started with the same settings and fresh controls. Initial owned snapshots were cleaned only after all judges finished; traces, results, bindings and reports remain retained. No further candidate edits are planned during this run.

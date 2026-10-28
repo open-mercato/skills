@@ -23,3 +23,15 @@ The structure already follows much of the guidance. The measured gap is runtime 
 This PR does not apply the previous Controlled English rewrite, alter report formats, change `om-code-review`, or synchronize shared references. The baseline and candidate use identical companions. See the dated specification and run plan for hypotheses, acceptance criteria and evidence limits.
 
 Measured outcomes and the focused revision proposal: [experiment results](review-skill-optimization/results.md).
+
+The answer to “are all best practices implemented?” is **no**. This audit has explicit gaps:
+
+| Area | Status and limit |
+| --- | --- |
+| Discovery metadata | Name/description and routing are preserved to isolate this experiment. Automatic skill selection and description-style changes are not tested. |
+| Long-reference navigation | `ci-followup.md` (125 lines), `claim-pr.md` (107), and `fork-pr-flow.md` (121) lack an opening contents list. Existing references remain unchanged. |
+| Examples and tooling | The revision's portable grouped-read example passes with actual references and paths containing spaces. Windows execution and live provider writes remain untested. |
+| Evaluation breadth | Six real cases exceed the guidance's three-evaluation minimum. Both intended Sol/Luna models are tested; Haiku/Sonnet/Opus and unseen holdout cases are not. |
+| Observed behavior | The first candidate reduces instruction bytes but increases tokens. Structure alone does not establish effective disclosure or retrieval. |
+
+These limits are kept visible rather than adding unrelated metadata, shared-reference or provider changes to a frozen runtime experiment. The workflow already has explicit validation/fix loops and named tracker operations; static contract review and provider tests do not substitute for live write-side evaluation.

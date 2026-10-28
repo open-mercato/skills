@@ -1,0 +1,3473 @@
+{
+  "version": 1,
+  "experiment": 1,
+  "method": "Independent agent source adjudication, blinded to version/model/resource usage; reference-informed, not exhaustive human ground truth. One explicit version label masked in judging copies only. Digests bind full unchanged originals.",
+  "coordinatorChecks": [
+    "The unchanged om-code-review/SKILL.md:41 risk-high evidence gate requires boundary integration evidence or documented maintainer waiver; supported missing negative coverage does not establish an exploit.",
+    "Preserving a deferred concern and preserving its technical mechanism are separate content-retention dimensions."
+  ],
+  "cases": [
+    {
+      "caseId": "pr8087",
+      "issueCatalog": [
+        {
+          "issueKey": "checkout.actual-target-conflict",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "accepted",
+          "evidence": [
+            "context/pr.json: CONFLICTING / DIRTY",
+            "context/target-branch.json: main 9a501a4b0c5e136d8aada68743cfb072b6c0c0c1 differs from pinned base fb7858c0a279406ba3640fe9f9eb5a32723cb4e8"
+          ],
+          "rationale": "Actual-target merge conflict is a real workflow blocker. No conflicting paths or causal link to related PR #8089 are supplied. Pinned review range remains valid; rerun CI/review after resolution."
+        },
+        {
+          "issueKey": "checkout.policy-condensation-scope",
+          "origin": "inherited",
+          "domain": "convention-docs-coverage",
+          "decision": "accepted",
+          "evidence": [
+            "BACKWARD_COMPATIBILITY.md:15-25, head/base comparison",
+            "context/reviews.json:5679046453",
+            "context/comments.json:6463024382"
+          ],
+          "rationale": "The head retains condensation explicitly requested to be separated. Carry forward unresolved Medium scope feedback; restore wording or obtain explicit alternative disposition. Five substantive conditions remain; no new policy weakening or checkout defect is independently established."
+        },
+        {
+          "issueKey": "checkout.human-security-waiver",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "accepted",
+          "evidence": [
+            "BACKWARD_COMPATIBILITY.md:15-25 and final dated entry",
+            "UPGRADE_NOTES.md:27-54",
+            "context/reviews.json: Merge requirements (not findings)"
+          ],
+          "rationale": "Named human approval of security waiver is pending and mandatory before merge. The response removal uses an exception already existing in base. Pending approval is not a new implementation defect at route.ts:82."
+        },
+        {
+          "issueKey": "checkout.manual-qa-approval",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "accepted",
+          "evidence": [
+            "context/pr.json: needs-qa; no qa-approved",
+            "context/comments.json:6455478234 expressly says QA plan, not sign-off",
+            ".ai/docs/pr-workflow.md:167-169"
+          ],
+          "rationale": "Manual QA approval remains a hard merge gate despite passing integration CI. Automation cannot grant it."
+        },
+        {
+          "issueKey": "checkout.removal-breadth-direction",
+          "origin": "inherited",
+          "domain": "functional-design",
+          "decision": "disputed",
+          "evidence": [
+            "context/reviews.json: Low direction question, not verified defect",
+            "base .ai/specs/implemented/2026-03-19-checkout-pay-links.md:691-693 forbids admin-only fields",
+            "packages/checkout/src/modules/checkout/api/pay/[slug]/route.ts:81-89 retains remainingUses"
+          ],
+          "rationale": "Retain scope question for human waiver. Inspected payer consumers do not depend on removed management fields, so no separate functional defect is established."
+        },
+        {
+          "issueKey": "checkout.related-pr-exact-policy-overlap",
+          "origin": "inherited",
+          "domain": "workflow",
+          "decision": "unsupported",
+          "evidence": [
+            "context/related-pr-8089.json: changed filenames, no patch",
+            "context/reviews.json: prior same-paragraph/different-wording prediction"
+          ],
+          "rationale": "Same-file overlap is supported. A prior reviewer claim is not independent proof of exact paragraph changes, patch equality/difference, guaranteed conflict or cause of current conflict."
+        },
+        {
+          "issueKey": "checkout.template-parity-unavailable",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "unsupported",
+          "evidence": [
+            "context/ci-run.json: Check create-app template parity (always, unfiltered)=success",
+            "context/ci-log.txt:44951 globals.css parity/template-sync/contrast passes; 47079 compatibility-context cases pass"
+          ],
+          "rationale": "Absence of literal yarn template:sync alias is not absence of successful parity-suite evidence or proof of drift. Artifact 257f039e8e99e982 loses available evidence."
+        }
+      ],
+      "artifacts": [
+        {
+          "blindId": "257f039e8e99e982",
+          "artifactDigest": "3605346d9b28644bfbfadc12c6f3f396a12ba7592524f3ac943f838f7f300f3b",
+          "acceptedIssueKeys": [
+            "checkout.actual-target-conflict",
+            "checkout.policy-condensation-scope",
+            "checkout.human-security-waiver",
+            "checkout.manual-qa-approval"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "checkout.template-parity-unavailable",
+              "decision": "unsupported",
+              "rationale": "Absence of literal yarn template:sync alias is not absence of successful parity-suite evidence or proof of drift. Artifact 257f039e8e99e982 loses available evidence."
+            }
+          ],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "No distinct parity result claim drops available evidence.",
+            "Synthetic merge checkout not qualified."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Clear separation of inherited scope, waiver decision and actual-target conflict.",
+              "Scoped CI; correctly declines invented related-PR patch evidence."
+            ],
+            "weaknesses": [
+              "Parity row omits successful captured suite."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Policy separation outstanding; breadth direction-only; historical Blacksmith failures superseded; waiver/QA human merge-only."
+          },
+          "excerpts": [
+            {
+              "quote": "e:sync` parity step | ⚠️ No distinct execution/result was identified in the captured check data or inspected log. No local fallback was run under the GitHub-checks-first/read-only limits. |",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            },
+            {
+              "quote": "#### Minor (repo Medium) — remove the compatibility-policy rewrite from this PR (inherited reviewer request)",
+              "purpose": "Additional exact scope/disposition description excerpt."
+            }
+          ],
+          "trialId": "m1-pr8087-r1-candidate",
+          "model": "gpt-6-luna",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "3e16f56f2dd9bdf2",
+          "artifactDigest": "c28a55afb9a248ea83a9103c1ec6e535b58b1c9624809801b0b3acb8534702b0",
+          "acceptedIssueKeys": [
+            "checkout.actual-target-conflict",
+            "checkout.policy-condensation-scope",
+            "checkout.human-security-waiver",
+            "checkout.manual-qa-approval"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Affected-package scope omitted.",
+            "Synthetic merge checkout not described."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Actionable inherited resolution and accurate human-only gates.",
+              "Checks no policy weakening; does not attribute conflict to #8089."
+            ],
+            "weaknesses": [
+              "PASS table hides affected-package scope."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Policy separation outstanding; breadth direction-only; historical Blacksmith failures superseded; waiver/QA human merge-only."
+          },
+          "excerpts": [
+            {
+              "quote": " Comparing base and head did not establish that the condensation weakens the five conditions. The related #8089 snapshot confirms another edit to this file, but does not supply its policy diff or prove a future conflict.",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            },
+            {
+              "quote": "**I1 — `BACKWARD_COMPATIBILITY.md:15–25`: separate the general policy condensation from this security fix.** [@wojciechszyjka requested this](https://github.com/open-mercato/open-mercato/pull/8087#issuecomment-6463024382), and the edit remains in the pinned he",
+              "purpose": "Additional exact scope/disposition description excerpt."
+            }
+          ],
+          "trialId": "m0-pr8087-r2-baseline",
+          "model": "gpt-6.1-sol",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "5e3d7d6d96cbc18b",
+          "artifactDigest": "131e91b25b80cb9f445daf087c994886ab45748d63fac37da1a6a9071721310d",
+          "acceptedIssueKeys": [
+            "checkout.actual-target-conflict",
+            "checkout.policy-condensation-scope",
+            "checkout.human-security-waiver",
+            "checkout.manual-qa-approval"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Does not name synthetic merge SHA; pinned-base and future-resolution limits are clear."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Separates source facts, prior predictions, direction and human gates.",
+              "Strong scoped CI, parity equivalence, regression mechanisms and migration."
+            ],
+            "weaknesses": [
+              "Long with repeated process boundaries."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Policy separation outstanding; breadth direction-only; historical Blacksmith failures superseded; waiver/QA human merge-only."
+          },
+          "excerpts": [
+            {
+              "quote": "hat literal command, and absence of its alias from a log is not a drift finding.",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            },
+            {
+              "quote": "❌ **request changes** — resolve the captured conflict with `main` and address the inherited policy-scope request before requesting another review. No new checkout implementation defect was found.",
+              "purpose": "Additional exact scope/disposition description excerpt."
+            }
+          ],
+          "trialId": "m0-pr8087-r2-candidate",
+          "model": "gpt-6.1-sol",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "6db533d48a47b040",
+          "artifactDigest": "6c66e233628856eed7930d56579eb4d427bc9a0f58f61fa22a6a52300147b949",
+          "acceptedIssueKeys": [
+            "checkout.actual-target-conflict",
+            "checkout.policy-condensation-scope",
+            "checkout.human-security-waiver",
+            "checkout.manual-qa-approval"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "No synthetic merge SHA, but future-resolution validation explicitly excluded."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Balanced inherited-request explanation, intact policy conditions and unavailable related patch.",
+              "Explicit scoped CI, equivalent sync, successful parity/integration and human gates.",
+              "Correct gatewaySettings non-wire qualification."
+            ],
+            "weaknesses": [
+              "Process detail could be shortened."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Policy separation outstanding; breadth direction-only; historical Blacksmith failures superseded; waiver/QA human merge-only."
+          },
+          "excerpts": [
+            {
+              "quote": "e. `gatewaySettings` was already omitted from serialized JSON and is not an additional newly removed member.",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            },
+            {
+              "quote": "**I1 — `BACKWARD_COMPATIBILITY.md:15–25`: settle the policy-condensation scope request.** @wojciechszyjka requested removing the general Emergency Security Exception rewrite while retaining the dated pay-link entry, or landing one shared condensation separatel",
+              "purpose": "Additional exact scope/disposition description excerpt."
+            }
+          ],
+          "trialId": "m0-pr8087-r1-candidate",
+          "model": "gpt-6.1-sol",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "7969b9d698ce28a9",
+          "artifactDigest": "60bd68d205b0d5d1732628312a286d5a73eacc2f117e75dc2b3cd8b53c4a9ccc",
+          "acceptedIssueKeys": [
+            "checkout.actual-target-conflict",
+            "checkout.policy-condensation-scope",
+            "checkout.human-security-waiver",
+            "checkout.manual-qa-approval"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "checkout.human-security-waiver",
+              "decision": "disputed",
+              "rationale": "Underlying merge requirement accepted; classification as new implementation finding at route.ts:82 disputed. Named human approval of security waiver is pending and mandatory before merge. The response removal uses an exception already existing in base. Pending approval is not a new implementation defect at route.ts:82."
+            },
+            {
+              "issueKey": "checkout.related-pr-exact-policy-overlap",
+              "decision": "unsupported",
+              "rationale": "Same-file overlap is supported. A prior reviewer claim is not independent proof of exact paragraph changes, patch equality/difference, guaranteed conflict or cause of current conflict."
+            }
+          ],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Affected-package CI scope omitted.",
+            "Current target SHA versus base not stated."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Correct response/test summary and breadth direction treatment.",
+              "Preserves manual QA and human waiver."
+            ],
+            "weaknesses": [
+              "Promotes pending human waiver to new code blocker at route.ts:82.",
+              "Restates exact #8089 paragraph/different-wording claim without patch."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Policy separation outstanding; breadth direction-only; historical Blacksmith failures superseded; waiver/QA human merge-only."
+          },
+          "excerpts": [
+            {
+              "quote": "on text differently. The current head still contains both edits, so the request remains unaddressed. **Fix:** keep this PR’s dated exception entry and coordinate any shared policy condensation separately. Under the repository override, Medi",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            }
+          ],
+          "trialId": "m1-pr8087-r1-baseline",
+          "model": "gpt-6-luna",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "9a1c44672f82cd5d",
+          "artifactDigest": "08549f81defb2ad18f9d7399f1dfe450873ced15f92714a2f9585935c98d067c",
+          "acceptedIssueKeys": [
+            "checkout.actual-target-conflict",
+            "checkout.policy-condensation-scope",
+            "checkout.human-security-waiver",
+            "checkout.manual-qa-approval"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Affected-package scope and synthetic merge qualification omitted."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Compact separation of implementation, inherited request and merge gates.",
+              "Does not verify #8089 overlap without diff."
+            ],
+            "weaknesses": [
+              "PASS rows hide affected-package scope.",
+              "Handoff with review link should make future permalink explicit."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Policy separation outstanding; breadth direction-only; historical Blacksmith failures superseded; waiver/QA human merge-only."
+          },
+          "excerpts": [
+            {
+              "quote": "s required before merge. These are merge requirements, not code findings.",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            },
+            {
+              "quote": "A named human maintainer must approve the documented security waiver. The PR has `needs-qa` and no `qa-approved` label in the captured metadata; manual QA sign-off remains required before merge. These are merge requirements, not code findings.",
+              "purpose": "Additional exact scope/disposition description excerpt."
+            }
+          ],
+          "trialId": "m1-pr8087-r2-baseline",
+          "model": "gpt-6-luna",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "b432b9051c8b8eb7",
+          "artifactDigest": "418fa5c4d91677ebedd1025f2af3b1e5fee3a0c00c0b1ea75afa45cb51fc8897",
+          "acceptedIssueKeys": [
+            "checkout.actual-target-conflict",
+            "checkout.policy-condensation-scope",
+            "checkout.human-security-waiver",
+            "checkout.manual-qa-approval"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "checkout.related-pr-exact-policy-overlap",
+              "decision": "unsupported",
+              "rationale": "Same-file overlap is supported. A prior reviewer claim is not independent proof of exact paragraph changes, patch equality/difference, guaranteed conflict or cause of current conflict."
+            }
+          ],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Affected-package CI scope lost.",
+            "Sync-equivalence evidence missed."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Concise response/test summary with human-only gates.",
+              "No invented conflict path or review permalink."
+            ],
+            "weaknesses": [
+              "Asserts #8089 same-paragraph edit without patch.",
+              "Sync equivalent invocation/result available though called uncaptured."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Policy separation outstanding; breadth direction-only; historical Blacksmith failures superseded; waiver/QA human merge-only."
+          },
+          "excerpts": [
+            {
+              "quote": "et change with PR #8089, which edits the same paragraph. The current head still contains the rewrite. Restore the existing policy wording and trim the dated entry, or coordinate a single policy change and rebase both PRs onto it. [Prior rev",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            },
+            {
+              "quote": "The prior review raised a direction question, not a verified defect: whether the Emergency Security Exception’s “narrowest removal” condition supports removing all listed management fields, including usage counters and timestamps, as well as the email configur",
+              "purpose": "Additional exact scope/disposition description excerpt."
+            }
+          ],
+          "trialId": "m1-pr8087-r2-candidate",
+          "model": "gpt-6-luna",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "d9c3dd46602b6db0",
+          "artifactDigest": "65458981c87ff5bf015713e16487de38b9911879700a9088602522651ee09e98",
+          "acceptedIssueKeys": [
+            "checkout.actual-target-conflict",
+            "checkout.policy-condensation-scope",
+            "checkout.human-security-waiver",
+            "checkout.manual-qa-approval"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [],
+          "descriptionNotes": {
+            "strengths": [
+              "Most explicit synthetic-merge/pinned-base and scoped-CI qualifications.",
+              "Distinguishes newly removed wire fields from never-emitted ones.",
+              "Accurate inherited request and human-only gates."
+            ],
+            "weaknesses": [
+              "Risk-high proposal is defensible but optional reclassification of documented existing risk-medium.",
+              "Process exposition lengthy."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Policy separation outstanding; breadth direction-only; historical Blacksmith failures superseded; waiver/QA human merge-only."
+          },
+          "excerpts": [
+            {
+              "quote": "s checkout logs identify synthetic merge `f4b0e1fd517aaacf1939fe9b32bcc4a00da60fea`, combining that head with the pinned base. These results do not validate a resolution against the newer target tip. Rows below follow configured gate order;",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            },
+            {
+              "quote": "❌ **request changes** — resolve the captured conflict with `main` and address the inherited policy-scope request before re-requesting review. No new implementation defect was established in the changed route or serializer.",
+              "purpose": "Additional exact scope/disposition description excerpt."
+            }
+          ],
+          "trialId": "m0-pr8087-r1-baseline",
+          "model": "gpt-6.1-sol",
+          "variant": "baseline"
+        }
+      ],
+      "preference": {
+        "blindIds": [
+          "6db533d48a47b040",
+          "d9c3dd46602b6db0"
+        ],
+        "reasons": [
+          "Tie on substantive findings and correct inherited versus merge-only distinctions.",
+          "6db533d48a47b040 gives clear policy/scope and affected-CI explanations; d9c3dd46602b6db0 adds precise synthetic-merge and non-wire qualifications.",
+          "5e3d7d6d96cbc18b is close with strong parity-equivalence and disposition explanation. Length alone is not a preference criterion."
+        ],
+        "trialIds": [
+          "m0-pr8087-r1-candidate",
+          "m0-pr8087-r1-baseline"
+        ]
+      },
+      "limitations": [
+        "Natural-case, non-exhaustive adjudication; no numerical quality scores, precision or recall.",
+        "Only assigned bundle and pinned source/base/context read; no network, install, repo execution or source/tracker mutation.",
+        "No key, trials, variants, resource reports, other judgments, prior benchmark reports or installed review skill read. Exact unavailable skill-version obligations not inferred.",
+        "Later CI/tracker state, #8089 patch, third-party consumers and #8123 contents/landing unavailable.",
+        "Prototype-name scenario is conditional source reasoning, not an executed install."
+      ],
+      "sourceBehavior": [
+        {
+          "claim": "Public route uses dedicated allowlist after access checks; password challenge and preview rules preserved. Administrative serializer is unchanged from base.",
+          "evidence": [
+            "packages/checkout/src/modules/checkout/api/pay/[slug]/route.ts:43-89",
+            "packages/checkout/src/modules/checkout/lib/utils.ts:445-543"
+          ]
+        },
+        {
+          "claim": "No new checkout functional defect established in inspected consumers or regressions. Public payer fields remain; raw counters replaced by unchanged remainingUses derivation.",
+          "evidence": [
+            "packages/checkout/src/modules/checkout/components/PayPage.tsx:1500-1522",
+            "packages/checkout/src/modules/checkout/frontend/pay/[slug]/page.tsx:33-56",
+            "packages/checkout/src/modules/checkout/api/pay/[slug]/__tests__/route.test.ts:159-229",
+            "packages/checkout/src/modules/checkout/__integration__/TC-CHKT-045-public-payload.spec.ts:64-120"
+          ]
+        },
+        {
+          "claim": "Captured CI is successful for synthetic merge of reviewed head into pinned base, not newer actual main. Typecheck and package tests are affected-package filtered. Parity and new integration cases pass; skips are not executed passes.",
+          "evidence": [
+            "context/ci-log.txt:195 synthetic merge f4b0e1fd517aaacf1939fe9b32bcc4a00da60fea",
+            "context/ci-log.txt:5396,5464 affected filters",
+            "context/ci-log.txt:49474-49475 both new integration cases pass",
+            "context/ci-run.json: prepare/test success; 15 successful checks and 5 skips"
+          ]
+        }
+      ],
+      "source": {
+        "repository": "open-mercato/open-mercato",
+        "base": "fb7858c0a279406ba3640fe9f9eb5a32723cb4e8",
+        "head": "dcecfed0c9cbc5f51f81cc309bdb420d042a5b10"
+      }
+    },
+    {
+      "caseId": "pr8122",
+      "issueCatalog": [
+        {
+          "issueKey": "cli.inherited-lesson-count-ci-failure",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "accepted",
+          "evidence": [
+            ".ai/lessons.md:3 declares 157; 158 index paths and filenames in both snapshots",
+            "scripts/__tests__/check-lessons.test.mjs:48-49",
+            "packages/create-app/agentic/shared/scripts/check-lessons.mjs:162-164",
+            "context/ci-log.txt:8662-8687; context/checks.json: test=FAILURE"
+          ],
+          "rationale": "Real current-head workflow failure, not introduced by this PR. Source independently establishes pre-existence: catalog, guard, file count unchanged. Base CI run is unnecessary for source inheritance. #8123 landing and later green rerun unverified."
+        },
+        {
+          "issueKey": "cli.app-build-evidence-gap",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "accepted",
+          "evidence": [
+            ".ai/agentic.config.json:9-17",
+            "context/ci-run.json: prepare / Build app=skipped"
+          ],
+          "rationale": "Configured app build is unverified, intentionally skipped for scope. This is not a failed build. Extra evidence demand is conservative workflow follow-up, not runtime defect."
+        },
+        {
+          "issueKey": "cli.stale-public-install-guidance",
+          "origin": "new",
+          "domain": "convention-docs-coverage",
+          "decision": "accepted",
+          "evidence": [
+            "apps/docs/docs/cli/module-add.mdx:7,49-57,109",
+            "apps/docs/docs/cli/module-enable.mdx:48-57",
+            "packages/cli/src/lib/module-install.ts:266-268",
+            "packages/cli/src/mercato.ts:681-695,1489-1491"
+          ],
+          "rationale": "Add troubleshooting still says remove existing registration before reinstalling, contradicting matching-source no-op success. Add/enable guides promise unconditional generation despite new skip. Update docs while preserving different-source/eject safeguards. Minor; only ce12887dbdf3c943 reports it."
+        },
+        {
+          "issueKey": "cli.inherited-property-dependency-detection",
+          "origin": "new",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            "packages/cli/src/lib/module-install.ts:94-111, especially packageName in dependencies at 110",
+            "packages/cli/src/lib/module-install.ts:185-205,289-302",
+            "packages/cli/src/lib/module-package.ts:222-234",
+            "packages/cli/src/lib/module-install-args.ts:27-29",
+            "packages/cli/src/lib/__tests__/module-install.test.ts:373-433"
+          ],
+          "rationale": "For dependencies: {} and newly installed third-party constructor, inherited Object.prototype.constructor makes in return true despite no own dependency entry. On later resolution/registration failure, this suppresses the new leftover/removal hint. Use Object.hasOwn/hasOwnProperty and test absent versus own declaration. Small diagnostic correctness bug missed by all eight; not disabled-module absence, data loss, rollback failure or a security exploit. Source-derived conditional scenario, not executed install."
+        },
+        {
+          "issueKey": "cli.repeat-eject-must-be-idempotent",
+          "origin": "inherited",
+          "domain": "functional-design",
+          "decision": "unsupported",
+          "evidence": [
+            ".ai/specs/implemented/SPEC-065-2026-03-14-official-modules-cli-install-and-eject.md:204-207",
+            "packages/cli/src/lib/module-install.ts:208-216",
+            "context/reviews.json: Not changed / repeat eject explicitly retained"
+          ],
+          "rationale": "SPEC-065 requires existing eject destination fail-closed to protect local edits. Reviewer explicitly declined this expansion; preserve disposition."
+        },
+        {
+          "issueKey": "cli.cli-console-needs-ui-i18n",
+          "origin": "new",
+          "domain": "convention-docs-coverage",
+          "decision": "unsupported",
+          "evidence": [
+            ".ai/specs/implemented/SPEC-065-2026-03-14-official-modules-cli-install-and-eject.md:392-396"
+          ],
+          "rationale": "Implemented exception keeps CLI console output outside backend UI translations. No artifact raises this false positive; recorded as checked exclusion."
+        },
+        {
+          "issueKey": "cli.draft-spec-alignment",
+          "origin": "inherited",
+          "domain": "convention-docs-coverage",
+          "decision": "disputed",
+          "evidence": [
+            ".ai/specs/2026-09-29-module-sets-for-standalone-apps.md:175-177",
+            "context/issue-8121.json",
+            "context/reviews.json: historical non-idempotency note disposition"
+          ],
+          "rationale": "Future draft sentence preserving already-enabled error can be reconciled as direction/docs work. It does not override requested fix or turn disposed historical problem statement into runtime defect. Artifacts 87994a0a40b41975 and b661de430069df78 keep this a question."
+        },
+        {
+          "issueKey": "cli.prepare-build-generation-evidence-absent",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "unsupported",
+          "evidence": [
+            "context/ci-run.json: prepare / Build packages=success, Prepare generated modules=success, Rebuild packages with generated files=success"
+          ],
+          "rationale": "Artifact 87994a0a40b41975 marks these NOT RUN/no direct result, but successful named prepare steps are captured. Do not confuse skipped app build with available package build/generation evidence."
+        }
+      ],
+      "artifacts": [
+        {
+          "blindId": "02a5565e8bee64ee",
+          "artifactDigest": "743c590fd2942dec7e39435353b2435528a986677ae6e5d36c56358cd2e097fd",
+          "acceptedIssueKeys": [
+            "cli.inherited-lesson-count-ci-failure",
+            "cli.app-build-evidence-gap"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "cli.inherited-property-dependency-detection",
+              "evidence": [
+                "packages/cli/src/lib/module-install.ts:108-110,289-302"
+              ],
+              "rationale": "All eight miss inherited constructor membership suppressing removal guidance for an undeclared own dependency; low-impact diagnostic issue."
+            }
+          ],
+          "qualificationLosses": [
+            "Generic PASS loses affected scope.",
+            "Integration presence/current execution insufficiently separated."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Concise behavior and failed-job versus passing-Test-step distinction.",
+              "Does not invent base CI evidence."
+            ],
+            "weaknesses": [
+              "No affected-package qualification.",
+              "Promotes intentional build skip to extra blocker.",
+              "Source inheritance could be verified without a base CI run."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Version note, workspace removal test, JSON context, peer-dependency detection, result reuse and cleanup present. Repeat eject intentionally deferred for safety; historical draft note remains contextual. Prior validation is attributed, not rerun."
+          },
+          "excerpts": [
+            {
+              "quote": "failure to the base, but no separate base CI run is captured here, so that attribution is not independently verified. [Failed check](https://github.com/open-mercato/open-mercato/actions/runs/40722708113/job/122940895247). Update the lesson-",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            },
+            {
+              "quote": "- **Inherited reviewer requests:** none remain actionable in the captured feedback. The previous automated review reports its notes fixed on this head; no inline comments were captured.",
+              "purpose": "Additional exact scope/disposition description excerpt."
+            }
+          ],
+          "missingConventionDocsCoverage": [
+            "cli.stale-public-install-guidance"
+          ],
+          "trialId": "m1-pr8122-r1-candidate",
+          "model": "gpt-6-luna",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "31f915bfd33f869d",
+          "artifactDigest": "20fa4d65665d5306fb7c5dd0abcb116533990222f420848f0945685649ec6933",
+          "acceptedIssueKeys": [
+            "cli.inherited-lesson-count-ci-failure",
+            "cli.app-build-evidence-gap"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "cli.inherited-property-dependency-detection",
+              "evidence": [
+                "packages/cli/src/lib/module-install.ts:108-110,289-302"
+              ],
+              "rationale": "All eight miss inherited constructor membership suppressing removal guidance for an undeclared own dependency; low-impact diagnostic issue."
+            }
+          ],
+          "qualificationLosses": [
+            "Affected scope omitted.",
+            "Source inheritance not independently established.",
+            "Intentional build skip promoted to extra blocker."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Keeps eject safety boundary; clear unchanged-modules regression.",
+              "Correct real CI failure and unexecuted build."
+            ],
+            "weaknesses": [
+              "Table conflates yarn test failure with separate successful package step.",
+              "Filters automation instead of expressly checking all feedback dispositions."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Version note, workspace removal test, JSON context, peer-dependency detection, result reuse and cleanup present. Repeat eject intentionally deferred for safety; historical draft note remains contextual. Prior validation is attributed, not rerun."
+          },
+          "excerpts": [
+            {
+              "quote": "onversation comments are automation-marker feedback; the pinned skill directs filtering those markers from inherited findings. The earlier review's notes are context, not independent findings.",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            }
+          ],
+          "missingConventionDocsCoverage": [
+            "cli.stale-public-install-guidance"
+          ],
+          "trialId": "m1-pr8122-r1-baseline",
+          "model": "gpt-6-luna",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "3cbd287542de4bb5",
+          "artifactDigest": "051644723b1731e4b733d73256e4cbb43ad4f77063ee8b29a360c3a489d50e9b",
+          "acceptedIssueKeys": [
+            "cli.inherited-lesson-count-ci-failure",
+            "cli.app-build-evidence-gap"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "cli.inherited-property-dependency-detection",
+              "evidence": [
+                "packages/cli/src/lib/module-install.ts:108-110,289-302"
+              ],
+              "rationale": "All eight miss inherited constructor membership suppressing removal guidance for an undeclared own dependency; low-impact diagnostic issue."
+            }
+          ],
+          "qualificationLosses": [],
+          "descriptionNotes": {
+            "strengths": [
+              "Verifies inherited source mismatch, scopes CI, attributes prior integration result.",
+              "Good consumers and draft future-scope limits."
+            ],
+            "weaknesses": [
+              "Structured origin new is awkward beside introducedByPR=false; canonical workflow origin clearer.",
+              "Misses newly stale public guide."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Version note, workspace removal test, JSON context, peer-dependency detection, result reuse and cleanup present. Repeat eject intentionally deferred for safety; historical draft note remains contextual. Prior validation is attributed, not rerun."
+          },
+          "excerpts": [
+            {
+              "quote": "1 · `.ai/lessons.md:3` · independently verified, pre-existing on base.** The catalog declares 157 lessons but contains 158 indexed entries. `yarn test:scripts` fails at `scripts/__tests__/check-lessons.test.mjs:48`, causing the [current-hea",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            },
+            {
+              "quote": "Repeated `--eject` still rejects an existing destination at `module-install.ts:215`; preserving local source remains intentional. The draft module-sets spec’s historical non-idempotency observation does not require implementing its future batch-install scope h",
+              "purpose": "Additional exact scope/disposition description excerpt."
+            }
+          ],
+          "missingConventionDocsCoverage": [
+            "cli.stale-public-install-guidance"
+          ],
+          "trialId": "m0-pr8122-r2-baseline",
+          "model": "gpt-6.1-sol",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "87994a0a40b41975",
+          "artifactDigest": "0a0d93adddaf98598a8f4112188653eaf314d157e50d81c662b1c51c004d3848",
+          "acceptedIssueKeys": [
+            "cli.inherited-lesson-count-ci-failure",
+            "cli.app-build-evidence-gap"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "cli.prepare-build-generation-evidence-absent",
+              "decision": "unsupported",
+              "rationale": "Artifact 87994a0a40b41975 marks these NOT RUN/no direct result, but successful named prepare steps are captured. Do not confuse skipped app build with available package build/generation evidence."
+            }
+          ],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "cli.inherited-property-dependency-detection",
+              "evidence": [
+                "packages/cli/src/lib/module-install.ts:108-110,289-302"
+              ],
+              "rationale": "All eight miss inherited constructor membership suppressing removal guidance for an undeclared own dependency; low-impact diagnostic issue."
+            }
+          ],
+          "qualificationLosses": [
+            "Available build/generation evidence dropped.",
+            "Affected-package scope lost.",
+            "Source inheritance not checked."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Preserves deferred eject and nonblocking spec question.",
+              "Attributes base CI claim."
+            ],
+            "weaknesses": [
+              "Incorrect NOT RUN package builds/generation despite successful prepare steps.",
+              "Calls draft spec active."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Version note, workspace removal test, JSON context, peer-dependency detection, result reuse and cleanup present. Repeat eject intentionally deferred for safety; historical draft note remains contextual. Prior validation is attributed, not rerun."
+          },
+          "excerpts": [
+            {
+              "quote": "ld:packages` | NOT RUN | No direct result for this command in the captured evidence. |",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            },
+            {
+              "quote": "None remain actionable in the reviewed head. The prior review’s listed implementation notes are reflected in commit `a5ef321`; its `--eject` note was explicitly left out of scope, with the reason recorded in that review.",
+              "purpose": "Additional exact scope/disposition description excerpt."
+            }
+          ],
+          "missingConventionDocsCoverage": [
+            "cli.stale-public-install-guidance"
+          ],
+          "trialId": "m1-pr8122-r2-baseline",
+          "model": "gpt-6-luna",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "88cf2d4594d96a8e",
+          "artifactDigest": "540f428723419e318b167569d4aa6d569e1863db67a6547632869d294fec1324",
+          "acceptedIssueKeys": [
+            "cli.inherited-lesson-count-ci-failure",
+            "cli.app-build-evidence-gap"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "cli.inherited-property-dependency-detection",
+              "evidence": [
+                "packages/cli/src/lib/module-install.ts:108-110,289-302"
+              ],
+              "rationale": "All eight miss inherited constructor membership suppressing removal guidance for an undeclared own dependency; low-impact diagnostic issue."
+            }
+          ],
+          "qualificationLosses": [],
+          "descriptionNotes": {
+            "strengths": [
+              "Clear scoped package passes, failed root guard and intentional app skip.",
+              "Explicit SPEC-065 console exception/eject rule and prior dispositions.",
+              "Accurate synthetic merge and MERGEABLE/BLOCKED distinction."
+            ],
+            "weaknesses": [
+              "Misses stale public guide.",
+              "No explicit pipeline-label proposal despite clear verdict."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Version note, workspace removal test, JSON context, peer-dependency detection, result reuse and cleanup present. Repeat eject intentionally deferred for safety; historical draft note remains contextual. Prior validation is attributed, not rerun."
+          },
+          "excerpts": [
+            {
+              "quote": "rted checks as required. Skips are not failures or passes. No CI wait or monitoring promise is appropriate for this frozen snapshot.",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            },
+            {
+              "quote": "| `yarn typecheck` | NOT RUN — full scope | CI's affected-package typecheck passed for six packages, including CLI. This does not establish an unfiltered workspace pass. |",
+              "purpose": "Additional exact scope/disposition description excerpt."
+            }
+          ],
+          "missingConventionDocsCoverage": [
+            "cli.stale-public-install-guidance"
+          ],
+          "trialId": "m0-pr8122-r2-candidate",
+          "model": "gpt-6.1-sol",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "b661de430069df78",
+          "artifactDigest": "7085b744b4887e09a42ddf7fd8dfa526df3589c08b7032538e9bcab7e68cc40e",
+          "acceptedIssueKeys": [
+            "cli.inherited-lesson-count-ci-failure",
+            "cli.app-build-evidence-gap"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "cli.inherited-property-dependency-detection",
+              "evidence": [
+                "packages/cli/src/lib/module-install.ts:108-110,289-302"
+              ],
+              "rationale": "All eight miss inherited constructor membership suppressing removal guidance for an undeclared own dependency; low-impact diagnostic issue."
+            }
+          ],
+          "qualificationLosses": [
+            "App skip and affected scope lost."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Accurate behavior and read-only handling.",
+              "Draft alignment is a question; eject deferral retained."
+            ],
+            "weaknesses": [
+              "No command-specific app result claim misses explicit skip.",
+              "Generic PASS loses affected scope; source inheritance unverified."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Version note, workspace removal test, JSON context, peer-dependency detection, result reuse and cleanup present. Repeat eject intentionally deferred for safety; historical draft note remains contextual. Prior validation is attributed, not rerun."
+          },
+          "excerpts": [
+            {
+              "quote": "d:app` | NOT EVIDENCED | No command-specific result is present in the captured evidence; the `docker-build` check is skipped, which does not establish this command’s status. |",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            },
+            {
+              "quote": "The draft spec [`.ai/specs/2026-09-29-module-sets-for-standalone-apps.md`](.ai/specs/2026-09-29-module-sets-for-standalone-apps.md#L175) says the existing single-module invocation preserves its failure behavior and “already enabled” error. This PR deliberately",
+              "purpose": "Additional exact scope/disposition description excerpt."
+            }
+          ],
+          "missingConventionDocsCoverage": [
+            "cli.stale-public-install-guidance"
+          ],
+          "trialId": "m1-pr8122-r2-candidate",
+          "model": "gpt-6-luna",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "ce12887dbdf3c943",
+          "artifactDigest": "7c0a16bbba7a4f50bbf144a6a2c26de79fde0444756b36191c590790370a865e",
+          "acceptedIssueKeys": [
+            "cli.inherited-lesson-count-ci-failure",
+            "cli.app-build-evidence-gap",
+            "cli.stale-public-install-guidance"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "cli.inherited-property-dependency-detection",
+              "evidence": [
+                "packages/cli/src/lib/module-install.ts:108-110,289-302"
+              ],
+              "rationale": "All eight miss inherited constructor membership suppressing removal guidance for an undeclared own dependency; low-impact diagnostic issue."
+            }
+          ],
+          "qualificationLosses": [],
+          "descriptionNotes": {
+            "strengths": [
+              "Only artifact catches stale public guide with concrete trigger/fix.",
+              "Strong scope, dispositions, consumers, SPEC-065 exceptions and metadata proposal.",
+              "Does not rewrite adequate body or expand deferred scope."
+            ],
+            "weaknesses": [
+              "Still misses inherited-property diagnostic edge.",
+              "Exhaustive process exposition could be shorter."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Version note, workspace removal test, JSON context, peer-dependency detection, result reuse and cleanup present. Repeat eject intentionally deferred for safety; historical draft note remains contextual. Prior validation is attributed, not rerun."
+          },
+          "excerpts": [
+            {
+              "quote": "ds without rewriting it. Following the guide causes unnecessary configuration edits and regeneration.",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            },
+            {
+              "quote": "| `yarn typecheck` | PASS — scoped CI | CI runs `turbo run typecheck --filter=[origin/main]...`: six successful packages, including CLI. Full-workspace execution is not established. |",
+              "purpose": "Additional exact scope/disposition description excerpt."
+            }
+          ],
+          "trialId": "m0-pr8122-r1-candidate",
+          "model": "gpt-6.1-sol",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "d1d17f5cf69b40ca",
+          "artifactDigest": "73f022bfee90eb46dd04e38f0ea7458e44e02d3763b5e8103b3aecd98a5ed61f",
+          "acceptedIssueKeys": [
+            "cli.inherited-lesson-count-ci-failure",
+            "cli.app-build-evidence-gap"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "cli.inherited-property-dependency-detection",
+              "evidence": [
+                "packages/cli/src/lib/module-install.ts:108-110,289-302"
+              ],
+              "rationale": "All eight miss inherited constructor membership suppressing removal guidance for an undeclared own dependency; low-impact diagnostic issue."
+            }
+          ],
+          "qualificationLosses": [],
+          "descriptionNotes": {
+            "strengths": [
+              "Precise inherited mismatch, scoped passes and skipped app/integration.",
+              "Good exit-code trace and SPEC-065 fail-closed explanation."
+            ],
+            "weaknesses": [
+              "Misses public-guide issue.",
+              "Critical/blocker should denote workflow gate, not product severity of count mismatch."
+            ],
+            "verdictAndChaining": "Explicit request-changes verdict and complete PR/Issue chaining links are present. Actions are proposed, not submitted.",
+            "inheritedFeedbackDisposition": "Version note, workspace removal test, JSON context, peer-dependency detection, result reuse and cleanup present. Repeat eject intentionally deferred for safety; historical draft note remains contextual. Prior validation is attributed, not rerun."
+          },
+          "excerpts": [
+            {
+              "quote": "**B1 — Critical/blocker, inherited from base:** `.ai/lessons.md:3` declares 157 lessons, while both snapshots contain 158 lesson records. `scripts/__tests__/check-lessons.test.mjs:48` therefore fails during `yarn test:scripts` in the captur",
+              "purpose": "Exact description excerpt demonstrating the strength or qualification difference noted for this blind ID."
+            },
+            {
+              "quote": "Repeated `--eject` still rejects an existing destination. This preserves the explicit fail-closed rule in SPEC-065 § Registration Contract and protects local edits; it is not a new defect. The module-sets spec’s historical “Not idempotent” observation does not",
+              "purpose": "Additional exact scope/disposition description excerpt."
+            }
+          ],
+          "missingConventionDocsCoverage": [
+            "cli.stale-public-install-guidance"
+          ],
+          "trialId": "m0-pr8122-r1-baseline",
+          "model": "gpt-6.1-sol",
+          "variant": "baseline"
+        }
+      ],
+      "preference": {
+        "blindIds": [
+          "ce12887dbdf3c943"
+        ],
+        "reasons": [
+          "Only artifact finds supported stale public install guidance while preserving implemented exceptions and declined scope.",
+          "Actionable docs trigger/fix, verified inherited CI origin, clear scoped pass/failure/skip distinctions.",
+          "88cf2d4594d96a8e is strongest alternative for scope and exception handling. All artifacts miss small inherited-property diagnostic issue."
+        ],
+        "trialIds": [
+          "m0-pr8122-r1-candidate"
+        ]
+      },
+      "limitations": [
+        "Natural-case, non-exhaustive adjudication; no numerical quality scores, precision or recall.",
+        "Only assigned bundle and pinned source/base/context read; no network, install, repo execution or source/tracker mutation.",
+        "No key, trials, variants, resource reports, other judgments, prior benchmark reports or installed review skill read. Exact unavailable skill-version obligations not inferred.",
+        "Later CI/tracker state, #8089 patch, third-party consumers and #8123 contents/landing unavailable.",
+        "Prototype-name scenario is conditional source reasoning, not an executed install."
+      ],
+      "sourceBehavior": [
+        {
+          "claim": "Same-source registration returns unchanged result and skips generators; different-source registration still throws. Both CLI handlers consume registrationChanged and return 0; bin propagates exit code.",
+          "evidence": [
+            "packages/cli/src/lib/modules-config.ts:364-398",
+            "packages/cli/src/lib/module-install.ts:250-316",
+            "packages/cli/src/mercato.ts:681-695,1486-1506",
+            "packages/cli/src/bin.ts:121-125"
+          ]
+        },
+        {
+          "claim": "Package add still installs before checking registration; new hint suppresses advice when a dependency already existed or registration changed. Prototype lookup is the small diagnostic flaw, not the ordinary absence of a disabled module.",
+          "evidence": [
+            "packages/cli/src/lib/module-install.ts:94-119,278-303"
+          ]
+        },
+        {
+          "claim": "Unit regressions cover ordinary matching/source-conflict/removal cases; process integration checks repeated successful exits and unchanged registration. Current CI passes scoped package tests but skips integration, so prior 4/4 author result remains attributed.",
+          "evidence": [
+            "packages/cli/src/lib/__tests__/module-install.test.ts:79-181,348-433",
+            "packages/cli/src/lib/__integration__/TC-INT-007.spec.ts:25-42,229-248",
+            "context/ci-log.txt:4544,4603 affected filters",
+            "context/ci-run.json: Test success, Test scripts failure, ephemeral-integration skipped"
+          ]
+        }
+      ],
+      "source": {
+        "repository": "open-mercato/open-mercato",
+        "base": "9a501a4b0c5e136d8aada68743cfb072b6c0c0c1",
+        "head": "a5ef321f6757ddfb90772ff157e3dee6447ea39b"
+      }
+    },
+    {
+      "caseId": "pr8083",
+      "issueCatalog": [
+        {
+          "issueKey": "calendar.null-related-repeat",
+          "origin": "inherited",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            "head/packages/core/src/modules/customers/components/calendar/CalendarEventEditor.tsx:389-423",
+            "head/packages/core/src/modules/customers/lib/calendar/editorPayload.ts:441-451",
+            "head/packages/core/src/modules/customers/components/calendar/editor/hooks.ts:28-56",
+            "base/packages/core/src/modules/customers/components/calendar/editor/hooks.ts:28-56",
+            "context/reviews.json:5679067881"
+          ],
+          "rationale": "Null related lookup can repeat as other labels change. Bounded behavior already exists on base because dealLabel and assigneeName are effect dependencies. Prior review explicitly makes optimization conditional on observed traces. Memoizing relatedTo alone does not remove the other dependency triggers.",
+          "disposition": "optional existing optimization, not required defect"
+        },
+        {
+          "issueKey": "calendar.missing-i18n-sync-result",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "unsupported",
+          "evidence": [
+            "context/ci-log.txt:5245-5267",
+            "head/package.json:81"
+          ],
+          "rationale": "CI runs yarn tsx scripts/i18n-check-sync.ts and reports all translation files in sync; this is precisely the alias target. Missing literal command alias is not missing execution."
+        },
+        {
+          "issueKey": "calendar.qa-approval-required",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "accepted",
+          "evidence": [
+            "context/pr.json:labels",
+            "context/comments.json:6463064496",
+            "head/.ai/docs/pr-workflow.md:167-175"
+          ],
+          "rationale": "needs-qa without qa-approved blocks merge; it is not a code defect or reason to deny otherwise supported code approval."
+        },
+        {
+          "issueKey": "calendar.full-gate-equivalence",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "disputed",
+          "evidence": [
+            "context/ci-log.txt:6004,6069",
+            "context/checks.json",
+            "context/ci-run.json"
+          ],
+          "rationale": "Head CI succeeds but test/typecheck use affected-package Turbo graphs, and usage check is advisory. It is not an executed full ordered local workspace gate. checks.json contains eleven successful and six skipped contexts."
+        },
+        {
+          "issueKey": "calendar.template-mirror-required",
+          "origin": "new",
+          "domain": "convention-docs-coverage",
+          "decision": "unsupported",
+          "evidence": [
+            "context/pr.diff:file headers",
+            "head/AGENTS.md:116"
+          ],
+          "rationale": "Only packages/core calendar component and tests change. apps/mercato template-sync trigger is not met. Existing parity check may be reported separately."
+        }
+      ],
+      "sourceConclusions": [
+        "Real CrudForm.tsx:2844-2899 skips edited fields and refreshes dirty baseline only without unsaved edits. CalendarEventEditor.tsx:389-423 now hydrates initialValues, preserving pristine dismissal and actual drafts.",
+        "Hook cleanup:52-56 and scope key guard stale responses. Six new tests use real form/hook but mock lookup/dialog boundaries; direct deal/assignee hydration is not asserted. No additional mandatory functional/design defect found.",
+        "No template-mirror trigger or protected contract change. Eleven successful/six skipped checks; sync script runs successfully. needs-qa still holds merge."
+      ],
+      "artifacts": [
+        {
+          "blindId": "3395127ec7167e17",
+          "artifactDigest": "d7784e225f0a3b711c7daa76a1163fbc27a310a8142dd97e4eb6aaed693fc38d",
+          "acceptedIssueKeys": [
+            "calendar.null-related-repeat",
+            "calendar.qa-approval-required"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Memoizing relatedTo alone does not remove unchanged other label dependency triggers."
+          ],
+          "descriptionNotes": [
+            "Strong real-form causal explanation, synthetic merge checkout qualification, scoped CI, mock boundaries, QA and no redundant description rewrite."
+          ],
+          "excerpts": [
+            {
+              "quote": "Disposition: declined as a required change for this focused fix."
+            },
+            {
+              "quote": "This is not evidence of an unfiltered workspace execution."
+            }
+          ],
+          "feedbackDisposition": "Correctly preserves inherited approving nit as optional follow-up, with manual QA separate.",
+          "verdictAndChaining": "APPROVED explicitly in verdict; PR link and claim/autofix accounting present.",
+          "trialId": "m0-pr8083-r1-candidate",
+          "model": "gpt-6.1-sol",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "4364494bd0a05feb",
+          "artifactDigest": "1fdbfd52fecc4d682a969ae85e922500c3ea92dac3ff5dae358a794008d1d51b",
+          "acceptedIssueKeys": [
+            "calendar.null-related-repeat",
+            "calendar.qa-approval-required"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Does not qualify affected graph typecheck/test or advisory usage check.",
+            "Suggested stable relatedTo remedy omits other effect triggers."
+          ],
+          "descriptionNotes": [
+            "Compact clear separation of defects, feedback, workflow, QA and metadata. No configured-command evidence mapping, so less independently auditable than preferred reports."
+          ],
+          "excerpts": [
+            {
+              "quote": "keep it as a follow-up only if duplicate lookups appear in traces."
+            }
+          ],
+          "feedbackDisposition": "Correctly preserves inherited approving nit as optional follow-up, with manual QA separate.",
+          "verdictAndChaining": "Approving verdict and PR link present; no writes claimed. No standalone terminal uppercase APPROVED token.",
+          "trialId": "m1-pr8083-r2-candidate",
+          "model": "gpt-6-luna",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "56fb32783c742cf2",
+          "artifactDigest": "ab80802c7f08c20b4c83f80c750266312870f2a8a628d733769a7131566c3197",
+          "acceptedIssueKeys": [
+            "calendar.null-related-repeat",
+            "calendar.qa-approval-required"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Could explain explicitly that bounded repeats already occur on base."
+          ],
+          "descriptionNotes": [
+            "Preferred complete audit: exact script equivalence, advisory usage, scoped CI, real regressions/mocks, current consumers, concrete handoff and complete marker."
+          ],
+          "excerpts": [
+            {
+              "quote": "PASS, advisory"
+            },
+            {
+              "quote": "not an unfiltered workspace execution."
+            }
+          ],
+          "feedbackDisposition": "Correctly preserves inherited approving nit as optional follow-up, with manual QA separate.",
+          "verdictAndChaining": "Standalone APPROVED and PR link; complete dry-run/claim/autofix accounting.",
+          "trialId": "m0-pr8083-r2-candidate",
+          "model": "gpt-6.1-sol",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "80583b9d231584d1",
+          "artifactDigest": "9a755e90b89909f23284646636b2509620880da9510bb86631d0348295ad3bf6",
+          "acceptedIssueKeys": [
+            "calendar.null-related-repeat",
+            "calendar.qa-approval-required"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "calendar.null-related-repeat",
+              "decision": "unsupported-origin",
+              "reason": "Structured finding calls inherited same-head review nit new."
+            }
+          ],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Omits affected test/typecheck graph and usage advisory.",
+            "No inherited attribution/disposition; optional wording does not repair new-origin claim.",
+            "No detailed tracker/autofix handoff accounting."
+          ],
+          "descriptionNotes": [
+            "Readable bounded scenario and outcome-first summary; weaker provenance and evidence qualification than preferred artifacts."
+          ],
+          "excerpts": [
+            {
+              "quote": "I found one bounded case"
+            },
+            {
+              "quote": "This adds bounded requests without a demonstrated user-visible effect."
+            }
+          ],
+          "feedbackDisposition": "Same prior nit presented as new discovery.",
+          "verdictAndChaining": "Approving verdict and PR link present; no writes claimed. No standalone terminal uppercase APPROVED token.",
+          "trialId": "m1-pr8083-r1-baseline",
+          "model": "gpt-6-luna",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "9cda220fb730fb83",
+          "artifactDigest": "b586e12d0a25cb98b6c7763c563e7d0a7af6f88a2b06c071e429f4d8d7b27878",
+          "acceptedIssueKeys": [
+            "calendar.null-related-repeat",
+            "calendar.qa-approval-required"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Omits affected graph and usage advisory in PASS rows.",
+            "Emits Issue #6827 though PR body describes related PR #6827; available text does not establish subject-issue linkage."
+          ],
+          "descriptionNotes": [
+            "Clear concise conditional nit and sound merge/QA distinction, less precise CI scope."
+          ],
+          "excerpts": [
+            {
+              "quote": "retained as an optional follow-up; not a merge blocker."
+            },
+            {
+              "quote": "Issue: #6827"
+            }
+          ],
+          "feedbackDisposition": "Correctly preserves inherited approving nit as optional follow-up, with manual QA separate.",
+          "verdictAndChaining": "Approving verdict and PR link present; no writes claimed. No standalone terminal uppercase APPROVED token. Issue marker adds unverified linkage type.",
+          "trialId": "m1-pr8083-r1-candidate",
+          "model": "gpt-6-luna",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "b75486d233c6c02f",
+          "artifactDigest": "c9b4c6e23d552d1a89ad151969b01df21ccebd8301530fc1137c40e8edd0014d",
+          "acceptedIssueKeys": [
+            "calendar.null-related-repeat",
+            "calendar.qa-approval-required"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Checks count is wrong: 10 success/7 skip versus actual 11/6.",
+            "Repeats linked QA instructions substantially."
+          ],
+          "descriptionNotes": [
+            "Excellent base comparison and correct memoization limitation; scoped/advisory CI and test provenance precise. Wrong count is concrete but does not change conclusion."
+          ],
+          "excerpts": [
+            {
+              "quote": "Memoizing `relatedTo` alone would not remove the other effect triggers."
+            },
+            {
+              "quote": "10 contexts succeeded and 7 were skipped"
+            }
+          ],
+          "feedbackDisposition": "Correctly preserves inherited approving nit as optional follow-up, with manual QA separate.",
+          "verdictAndChaining": "Approving verdict and PR link present; no writes claimed. No standalone terminal uppercase APPROVED token.",
+          "trialId": "m0-pr8083-r2-baseline",
+          "model": "gpt-6.1-sol",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "c0a640e2faaec993",
+          "artifactDigest": "628753ae82ee85405a34ee5cc0cd2aaa49aa8d434cde06b719bf1eb416c85f0f",
+          "acceptedIssueKeys": [
+            "calendar.null-related-repeat",
+            "calendar.qa-approval-required"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "No terminal uppercase marker, though both prose and structured verdict approve."
+          ],
+          "descriptionNotes": [
+            "Preferred concise source judgment: correct inherited-existing behavior, actual baseline/edit semantics, scoped script-equivalent CI, mocks and missing direct deal/assignee test cases."
+          ],
+          "excerpts": [
+            {
+              "quote": "Memoizing `relatedTo` alone would not eliminate those restarts."
+            },
+            {
+              "quote": "the suite does not directly exercise deal or assignee hydration."
+            }
+          ],
+          "feedbackDisposition": "Correctly preserves inherited approving nit as optional follow-up, with manual QA separate.",
+          "verdictAndChaining": "Approving verdict and PR link present; no writes claimed. No standalone terminal uppercase APPROVED token.",
+          "trialId": "m0-pr8083-r1-baseline",
+          "model": "gpt-6.1-sol",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "eff8c88026a2dacb",
+          "artifactDigest": "962cefca33f70aa717754ccbafcbfcd6d41f71cc1932c6d652ed8db0bda96c5d",
+          "acceptedIssueKeys": [
+            "calendar.null-related-repeat",
+            "calendar.qa-approval-required"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "calendar.missing-i18n-sync-result",
+              "decision": "unsupported",
+              "reason": "CI log 5245-5267 executes alias target successfully; sole blocker and proposed changes-requested transition are false."
+            }
+          ],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Omits affected graph and usage advisory.",
+            "Would overwrite settled approval state based on false missing-command inference."
+          ],
+          "descriptionNotes": [
+            "Clear summary and inherited nit attribution, but wrong CI premise controls verdict and harmful handoff."
+          ],
+          "excerpts": [
+            {
+              "quote": "`yarn i18n:check-sync` has no result in the captured head CI evidence"
+            }
+          ],
+          "feedbackDisposition": "Correctly preserves inherited approving nit as optional follow-up, with manual QA separate.",
+          "verdictAndChaining": "Request-changes prose/structured verdict and PR link; no terminal CHANGES REQUESTED token. Sole blocker unsupported.",
+          "trialId": "m1-pr8083-r2-baseline",
+          "model": "gpt-6-luna",
+          "variant": "baseline"
+        }
+      ],
+      "preference": {
+        "blindIds": [
+          "c0a640e2faaec993",
+          "56fb32783c742cf2"
+        ],
+        "reasons": [
+          "c0a640e2faaec993 is the strongest concise source judgment, preserving pre-existing optional behavior, scoped CI and actual test limits.",
+          "56fb32783c742cf2 is preferred for full audit and explicit completion marker. 3395127ec7167e17 is close.",
+          "b75486d233c6c02f has excellent base reasoning but wrong check counts. eff8c88026a2dacb is disfavored: sole blocker contradicts log."
+        ],
+        "trialIds": [
+          "m0-pr8083-r1-baseline",
+          "m0-pr8083-r2-candidate"
+        ]
+      },
+      "limitations": [
+        "Only assigned bundle, pinned source/base and frozen context read; no network, installs, applications, repository execution, source/tracker mutations, other judgments, key, variants, trials or resource reports.",
+        "No numerical scores. Runtime conclusions are static source findings; exact assigned companion skill-only gate/format rules were deliberately not inspected.",
+        "No full runtime or current-target merge recomputation. Captured target-tip information qualifies mergeability only."
+      ],
+      "source": {
+        "repository": "open-mercato/open-mercato",
+        "base": "fb7858c0a279406ba3640fe9f9eb5a32723cb4e8",
+        "head": "a954f4dff25d8bc7ea8bf2a7b8edd4023971a211"
+      }
+    },
+    {
+      "caseId": "pr8058",
+      "issueCatalog": [
+        {
+          "issueKey": "messages.concurrent-prepare-execute-branch-mismatch",
+          "origin": "new",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            "head/packages/core/src/modules/messages/commands/messages.ts:1109-1166,1184-1226",
+            "head/packages/shared/src/lib/commands/command-bus.ts:342-375,604-618",
+            "head/packages/core/src/modules/messages/api/[id]/route.ts:579-604",
+            "context/pr.json:Known limitations",
+            "context/comments.json:6448530293"
+          ],
+          "rationale": "Two deletes by sender-as-recipient can both prepare an active recipient snapshot. First execution deletes recipient; second executes global delete after requery, but before.recipientId directs undo to recipient restoration only. Message stays globally deleted, unlike base undo. Route version check is earlier, not serialization; undo token CAS guards one replay token, not these forward operations. Actual bus invokes handler.undo directly, so snapshot helper tests cannot supply a hidden fence.",
+          "disposition": "Confirmed new undo consequence, explicitly disclosed and tracked as follow-up; preserve deferral unless new scope/contract evidence overrides it."
+        },
+        {
+          "issueKey": "messages.concurrent-race-must-block-this-pr",
+          "origin": "inherited",
+          "domain": "workflow",
+          "decision": "disputed",
+          "evidence": [
+            "context/pr.json:Known limitations",
+            "context/comments.json:6448530293"
+          ],
+          "rationale": "Race is real, but independent verification alone does not erase explicitly recorded tracked-follow-up scope. Missing issue contents do not prove invalid deferral. Requiring a new maintainer waiver is an additional unsupported scope escalation."
+        },
+        {
+          "issueKey": "messages.undo-isolation-integration-coverage",
+          "origin": "new",
+          "domain": "convention-docs-coverage",
+          "decision": "accepted",
+          "evidence": [
+            "head/packages/core/src/modules/messages/__integration__/TC-API-MSG-023.spec.ts:24-132",
+            "head/packages/core/src/modules/messages/commands/__tests__/messages.delete-for-actor-undo.test.ts:140-155",
+            "head/packages/core/src/modules/audit_logs/api/audit-logs/actions/undo/route.ts:83-158"
+          ],
+          "rationale": "Added integration tests are authorized same-scope paths; mocked helper arguments do not prove negative boundaries. Permission-denied/foreign-tenant/foreign-org cases are absent. This is coverage, not an exploit. Artifacts attribute mandatory blocker policy to assigned companion skill variants, which were deliberately not inspected by this blinded judge.",
+          "severityQualification": "Coverage absence accepted; exact variant-only mandatory-blocker gate not independently verified."
+        },
+        {
+          "issueKey": "messages.global-undo-organization-predicate",
+          "origin": "new",
+          "domain": "convention-docs-coverage",
+          "decision": "accepted",
+          "evidence": [
+            "head/packages/core/src/modules/messages/commands/messages.ts:1214-1220",
+            "head/packages/shared/src/lib/encryption/find.ts:48-62",
+            "head/.ai/review-checklist.md:352",
+            "head/packages/core/src/modules/audit_logs/api/audit-logs/actions/undo/route.ts:83-158"
+          ],
+          "rationale": "Rewritten loader lacks organizationId in where, and decryption scope does not filter query. Literal checklist gap is real and retained from old broad loader. Critical exploitable cross-organization defect is not established: actual HTTP route checks trusted log actor/tenant/org and log points to original scoped message; no attacker reassignment or organization move is shown.",
+          "severityQualification": "Literal rule gap accepted; security/blocker impact disputed."
+        },
+        {
+          "issueKey": "messages.seed-dependent-regression-fixtures",
+          "origin": "new",
+          "domain": "convention-docs-coverage",
+          "decision": "accepted",
+          "evidence": [
+            "head/packages/core/src/modules/messages/__integration__/TC-API-MSG-023.spec.ts:30,103",
+            "head/packages/core/src/modules/messages/__integration__/helpers.ts:76-100",
+            "head/packages/core/src/helpers/integration/api.ts:29-44",
+            "head/.ai/qa/AGENTS.md:7-8,20"
+          ],
+          "rationale": "Tests create a message but log into preexisting default admin/employee accounts. Required participants/grants are not created per test, contrary to explicit no-seeded-data rules. Existing helper reuse is not an exemption."
+        },
+        {
+          "issueKey": "messages.legacy-integration-helper-import",
+          "origin": "new",
+          "domain": "convention-docs-coverage",
+          "decision": "accepted",
+          "evidence": [
+            "head/packages/core/src/modules/messages/__integration__/TC-API-MSG-023.spec.ts:2",
+            "head/.ai/qa/AGENTS.md:87-89"
+          ],
+          "rationale": "New apiRequest import uses monorepo legacy path instead of published helpers/integration/api. Portability/convention finding; not observed monorepo test failure."
+        },
+        {
+          "issueKey": "messages.validation-unavailable",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "accepted",
+          "evidence": [
+            "context/ci-run.json:headSha,conclusion,jobs",
+            "context/checks.json",
+            "context/runs.json",
+            "context/ci-log.txt"
+          ],
+          "rationale": "Pinned main CI is completed/action_required with jobs=[]; only label and CLA succeeded. Actual log snapshot explicitly says unavailable. No substantive validation pass, failed test or pending job is established. Maintainer authorization/results are workflow evidence requirements, separate from code defects."
+        },
+        {
+          "issueKey": "messages.risk-high-automatically-needs-manual-qa",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "unsupported",
+          "evidence": [
+            "head/.ai/docs/pr-workflow.md:139-158",
+            "context/pr.diff:file headers"
+          ],
+          "rationale": "Risk-high alone neither qualifies nor disqualifies skip-qa. No rendering/schema/API shape changes and automated regression tests ship. Missing required coverage or stated UI-response reason may support needs-qa; generic high-risk/user-facing rationale is insufficient. If needs-qa is applied, qa-approved still gates merge."
+        },
+        {
+          "issueKey": "messages.recipient-whole-row-later-delete-ownership",
+          "origin": "inherited",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            "context/pr.json:Known limitations",
+            "context/comments.json:6448530293",
+            "head/packages/core/src/modules/messages/commands/messages.ts:1207-1211"
+          ],
+          "rationale": "Whole-row recipient snapshot undo can overwrite a later recipient/conversation removal. Disclosed broader recipient-undo limitations are explicitly tracked follow-up. Do not infer shared snapshot-undo helper coverage protects this handler or reopen as unqualified new defect.",
+          "disposition": "explicitly tracked follow-up"
+        }
+      ],
+      "sourceConclusions": [
+        "Sequential recipient delete -> sender global delete -> recipient undo is fixed. Normal global undo restores message. Tests drive DELETE, real audit undo, visibility reads and persisted state.",
+        "Command bus:614-618 invokes handler.undo directly. Shared snapshot helper coverage does not wrap/fence this handler. Token claim/latest-action selection does not serialize forward commands or validate another actor later mutation.",
+        "Sender-as-recipient prepare/execute mismatch is real and new in undo consequence, but explicitly tracked follow-up. No additional mandatory functional defect established beyond already-deferred limitations.",
+        "Seeded-account test dependency, legacy helper import and literal organization predicate omission are real convention gaps. No reachable tenant/org exploit demonstrated.",
+        "Substantive CI evidence is unavailable/action_required, not failing or pending."
+      ],
+      "artifacts": [
+        {
+          "blindId": "218b159ea6acdcc7",
+          "artifactDigest": "53bbecdd1118469d4089fd3bd707156685f5222248f08caaa601157237e52b50",
+          "acceptedIssueKeys": [
+            "messages.validation-unavailable",
+            "messages.undo-isolation-integration-coverage",
+            "messages.seed-dependent-regression-fixtures"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "messages.undo-isolation-integration-coverage",
+              "decision": "qualification",
+              "reason": "Negative coverage absence verified; exact variant-only rule making it a blocker deliberately not independently inspected. No exploit established."
+            }
+          ],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Other accepted convention/coverage findings omitted: messages.legacy-integration-helper-import, messages.global-undo-organization-predicate. These are not additional functional defects."
+          ],
+          "descriptionNotes": [
+            "Preferred messages report: actionable independent-fixture gap, correct follow-up disposition, action_required versus failure and conditional QA exemption. Good actual caller/accounting detail."
+          ],
+          "excerpts": [
+            {
+              "quote": "Preserve that disposition rather than reopening them as newly discovered blockers."
+            },
+            {
+              "quote": "Create independent sender and recipient fixtures."
+            }
+          ],
+          "feedbackDisposition": "Explicitly preserves #8059/#8060. No inherited reviewer requests.",
+          "verdictAndChaining": "Standalone CHANGES REQUESTED; PR/Issue links, concrete proposed publication and claim/autofix accounting.",
+          "contentRetention": {
+            "conclusion": "Retains the existence of concurrent-delete limitations and their tracked-follow-up disposition, but omits the sender-as-recipient precondition, prepare/execute branch mismatch, and the resulting globally deleted message after undo. This loses materially useful source-supported technical explanation, despite correctly avoiding an immediate-repair demand.",
+            "concernAndDispositionRetained": true,
+            "technicalMechanismRetained": false,
+            "materialTechnicalExplanationLost": true,
+            "sourceSupportedExplanation": "Two overlapping deletes by a sender who is also a recipient can both prepare before.recipientId while the row is active. After the first deletes the recipient row, the second execute requery chooses global deletion. Its undo still selects the recipient branch from before.recipientId, leaving message.deletedAt set; base undo restored the message timestamp.",
+            "evidence": [
+              "head/packages/core/src/modules/messages/commands/messages.ts:1109-1166,1202-1226",
+              "head/packages/shared/src/lib/commands/command-bus.ts:342-375,614-618",
+              "context/pr.json:Known limitations",
+              "context/comments.json:6448530293"
+            ],
+            "scopeEffect": "None. Keep accepted issue catalog, optional/deferred scope judgment and mandatory-change adjudication unchanged; preserve mechanism as deferred context rather than escalating it to an immediate blocker."
+          },
+          "trialId": "m0-pr8058-r2-candidate",
+          "model": "gpt-6.1-sol",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "512b769cd6d449de",
+          "artifactDigest": "d63e67d480bbfe531d2b9fe08bfb79b983872f3166736fbd13e4ae99b7c8e412",
+          "acceptedIssueKeys": [
+            "messages.concurrent-prepare-execute-branch-mismatch",
+            "messages.validation-unavailable"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "messages.concurrent-race-must-block-this-pr",
+              "decision": "disputed",
+              "reason": "Confirmed interleaving does not erase explicitly tracked follow-up; no new scope/contract evidence justifies fix-or-waiver escalation."
+            }
+          ],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Other accepted convention/coverage findings omitted: messages.undo-isolation-integration-coverage, messages.seed-dependent-regression-fixtures, messages.legacy-integration-helper-import, messages.global-undo-organization-predicate. These are not additional functional defects.",
+            "Generic needs-qa rationale omits automated-verification exemption."
+          ],
+          "descriptionNotes": [
+            "Clear concrete race/fix/regression and correct unavailable-not-failed CI. Tracked follow-up acknowledged then deprived of operative scope."
+          ],
+          "excerpts": [
+            {
+              "quote": "Those branches can differ under concurrent deletes."
+            },
+            {
+              "quote": "The race above is directly in the changed branch selection and remains actionable in this review."
+            }
+          ],
+          "feedbackDisposition": "Known deferral acknowledged but reopened as mandatory new defect.",
+          "verdictAndChaining": "Request-changes verdict and PR #8058 / Issue #8057 links present; no writes claimed. No standalone CHANGES REQUESTED token.",
+          "trialId": "m1-pr8058-r1-baseline",
+          "model": "gpt-6-luna",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "99a346f318810fb0",
+          "artifactDigest": "33ace9f03f3a46b62c0bd26afd922a245cf7930bc3433daab2ee4ad056f1ad16",
+          "acceptedIssueKeys": [
+            "messages.concurrent-prepare-execute-branch-mismatch",
+            "messages.undo-isolation-integration-coverage",
+            "messages.validation-unavailable"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "messages.concurrent-race-must-block-this-pr",
+              "decision": "disputed",
+              "reason": "Confirmed interleaving does not erase explicitly tracked follow-up; no new scope/contract evidence justifies fix-or-waiver escalation."
+            },
+            {
+              "issueKey": "messages.undo-isolation-integration-coverage",
+              "decision": "qualification",
+              "reason": "Negative coverage absence verified; exact variant-only rule making it a blocker deliberately not independently inspected. No exploit established."
+            }
+          ],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Other accepted convention/coverage findings omitted: messages.seed-dependent-regression-fixtures, messages.legacy-integration-helper-import, messages.global-undo-organization-predicate. These are not additional functional defects."
+          ],
+          "descriptionNotes": [
+            "Strong source-accurate bus/version/branch analysis and coverage-versus-exploit/author-evidence separation; correct conditional QA exemption. No-waiver reasoning over-escalates tracked scope."
+          ],
+          "excerpts": [
+            {
+              "quote": "optimistic version check does not serialize them."
+            },
+            {
+              "quote": "This is a coverage gate, not evidence of an observed cross-tenant exploit."
+            }
+          ],
+          "feedbackDisposition": "Tracked follow-up recognized, but race promoted to mandatory absence-of-waiver requirement.",
+          "verdictAndChaining": "Request-changes verdict and PR #8058 / Issue #8057 links present; no writes claimed. No standalone CHANGES REQUESTED token.",
+          "trialId": "m0-pr8058-r1-baseline",
+          "model": "gpt-6.1-sol",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "cbc29f6c1cab75ef",
+          "artifactDigest": "a917c38bc2418949ff17000f5aba1240a823d38a56ac6f4e1494e221161ab63a",
+          "acceptedIssueKeys": [
+            "messages.concurrent-prepare-execute-branch-mismatch",
+            "messages.undo-isolation-integration-coverage",
+            "messages.validation-unavailable"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "messages.concurrent-race-must-block-this-pr",
+              "decision": "disputed",
+              "reason": "Confirmed interleaving does not erase explicitly tracked follow-up; no new scope/contract evidence justifies fix-or-waiver escalation."
+            },
+            {
+              "issueKey": "messages.undo-isolation-integration-coverage",
+              "decision": "qualification",
+              "reason": "Negative coverage absence verified; exact variant-only rule making it a blocker deliberately not independently inspected. No exploit established."
+            },
+            {
+              "issueKey": "messages.risk-high-automatically-needs-manual-qa",
+              "decision": "unsupported",
+              "reason": "Explicit policy says risk-high alone does not disqualify exemption; report claims high-risk user-facing automatically requires needs-qa."
+            }
+          ],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Other accepted convention/coverage findings omitted: messages.seed-dependent-regression-fixtures, messages.legacy-integration-helper-import, messages.global-undo-organization-predicate. These are not additional functional defects.",
+            "Calls successful check Partner request label; captured name is label."
+          ],
+          "descriptionNotes": [
+            "Concrete race and coverage; unavailable-not-failed language is sound. Local-execution limitation dominates more useful workflow authorization next step; QA rationale too broad."
+          ],
+          "excerpts": [
+            {
+              "quote": "the repository's label policy requires `needs-qa` for a user-facing risk-high change."
+            }
+          ],
+          "feedbackDisposition": "Deferral acknowledged, then race requires new waiver.",
+          "verdictAndChaining": "Request-changes verdict and PR #8058 / Issue #8057 links present; no writes claimed. No standalone CHANGES REQUESTED token.",
+          "trialId": "m1-pr8058-r1-candidate",
+          "model": "gpt-6-luna",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "ec7bc200cc97ee8f",
+          "artifactDigest": "59cd0948f3e9d5bbc300094747ea76475f76b053391de2833f870b7360275441",
+          "acceptedIssueKeys": [
+            "messages.undo-isolation-integration-coverage",
+            "messages.validation-unavailable"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "messages.undo-isolation-integration-coverage",
+              "decision": "qualification",
+              "reason": "Negative coverage absence verified; exact variant-only rule making it a blocker deliberately not independently inspected. No exploit established."
+            }
+          ],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Other accepted convention/coverage findings omitted: messages.seed-dependent-regression-fixtures, messages.legacy-integration-helper-import, messages.global-undo-organization-predicate. These are not additional functional defects.",
+            "Calls log empty; actual snapshot explicitly reports unavailable log, not successful empty execution."
+          ],
+          "descriptionNotes": [
+            "Strong actual consumer audit, coverage/exploit separation, author attribution, tracked follow-ups and conditional QA exemption. Less actionable than 218 on fixtures."
+          ],
+          "excerpts": [
+            {
+              "quote": "These are static conclusions, not runtime pass results."
+            },
+            {
+              "quote": "Preserve that disposition rather than reopening them as independent discoveries."
+            }
+          ],
+          "feedbackDisposition": "Correctly preserves both disclosed follow-ups without claiming issue contents.",
+          "verdictAndChaining": "Standalone CHANGES REQUESTED; PR/Issue links and complete accounting.",
+          "contentRetention": {
+            "conclusion": "Retains the sender-as-recipient race as a concern and correctly preserves tracked-follow-up scope, but omits how prepare snapshots an active recipient, execute later chooses global delete, and undo still restores only the recipient. The missing mechanism and new undo consequence are materially useful technical content; preserving deferral does not preserve that explanation.",
+            "concernAndDispositionRetained": true,
+            "technicalMechanismRetained": false,
+            "materialTechnicalExplanationLost": true,
+            "sourceSupportedExplanation": "Two overlapping deletes by a sender who is also a recipient can both prepare before.recipientId while the row is active. After the first deletes the recipient row, the second execute requery chooses global deletion. Its undo still selects the recipient branch from before.recipientId, leaving message.deletedAt set; base undo restored the message timestamp.",
+            "evidence": [
+              "head/packages/core/src/modules/messages/commands/messages.ts:1109-1166,1202-1226",
+              "head/packages/shared/src/lib/commands/command-bus.ts:342-375,614-618",
+              "context/pr.json:Known limitations",
+              "context/comments.json:6448530293"
+            ],
+            "scopeEffect": "None. Keep accepted issue catalog, optional/deferred scope judgment and mandatory-change adjudication unchanged; preserve mechanism as deferred context rather than escalating it to an immediate blocker."
+          },
+          "trialId": "m0-pr8058-r1-candidate",
+          "model": "gpt-6.1-sol",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "edce66337750f7f1",
+          "artifactDigest": "f43bc084dfb517e82b52dfe627a3ac57d86fc1cc795e88a90163853e889dd2de",
+          "acceptedIssueKeys": [
+            "messages.global-undo-organization-predicate",
+            "messages.legacy-integration-helper-import",
+            "messages.validation-unavailable",
+            "messages.concurrent-prepare-execute-branch-mismatch"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "messages.concurrent-race-must-block-this-pr",
+              "decision": "disputed",
+              "reason": "Confirmed interleaving does not erase explicitly tracked follow-up; no new scope/contract evidence justifies fix-or-waiver escalation."
+            },
+            {
+              "issueKey": "messages.global-undo-organization-predicate",
+              "decision": "disputed-severity",
+              "reason": "Literal missing predicate gap accepted; actual trusted-log/caller path does not establish mismatched message organization or reachable exploit."
+            }
+          ],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Other accepted convention/coverage findings omitted: messages.seed-dependent-regression-fixtures. These are not additional functional defects.",
+            "Required negative coverage mentioned under org finding, not separately; exact companion-only blocker policy unverified."
+          ],
+          "descriptionNotes": [
+            "Best literal org-query and published-import detail, accurate caller caveat and concrete race. Severity/fix-or-waiver escalation goes beyond practical impact demonstrated."
+          ],
+          "excerpts": [
+            {
+              "quote": "This is a retained weakness in the rewritten loader, not evidence of a newly introduced cross-organization exploit."
+            },
+            {
+              "quote": "this is a portability/convention finding, not an observed monorepo test failure."
+            }
+          ],
+          "feedbackDisposition": "Whole-row follow-up retained; concurrent race reopened absent waiver, disputed.",
+          "verdictAndChaining": "Request-changes verdict and PR #8058 / Issue #8057 links present; no writes claimed. No standalone CHANGES REQUESTED token.",
+          "trialId": "m0-pr8058-r2-baseline",
+          "model": "gpt-6.1-sol",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "f8e9999ddf359ca6",
+          "artifactDigest": "06fd011074ed28841a94857adc03272eb605f9e1cd6a7de29883c0d162e970e4",
+          "acceptedIssueKeys": [
+            "messages.undo-isolation-integration-coverage",
+            "messages.validation-unavailable"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "messages.undo-isolation-integration-coverage",
+              "decision": "qualification",
+              "reason": "Negative coverage absence verified; exact variant-only rule making it a blocker deliberately not independently inspected. No exploit established."
+            }
+          ],
+          "missingFunctionalDesign": [
+            "messages.concurrent-prepare-execute-branch-mismatch: disclosed tracked follow-up is mentioned only generically; mechanism and disposition absent, not an additional mandatory defect."
+          ],
+          "qualificationLosses": [
+            "Other accepted convention/coverage findings omitted: messages.seed-dependent-regression-fixtures, messages.legacy-integration-helper-import, messages.global-undo-organization-predicate. These are not additional functional defects.",
+            "Does not state required-checks fallback precisely.",
+            "No explicit inherited-disposition/autofix/claim handoff section; generic manual-QA rationale omits exemption."
+          ],
+          "descriptionNotes": [
+            "Readable short coverage/CI review, correctly avoids failed-test inference; limited workflow and follow-up detail reduces actionability."
+          ],
+          "excerpts": [
+            {
+              "quote": "These states are unavailable/non-passing evidence, not confirmed failures."
+            }
+          ],
+          "feedbackDisposition": "Mentions tracked limitations but omits their concrete meaning and explicit retained disposition.",
+          "verdictAndChaining": "Request-changes verdict and PR #8058 / Issue #8057 links present; no writes claimed. No standalone CHANGES REQUESTED token.",
+          "trialId": "m1-pr8058-r2-baseline",
+          "model": "gpt-6-luna",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "fa30a524a60ca48a",
+          "artifactDigest": "8ef076ac306df3321555e59686f6e0ddeb623ab84798c97bf93446e989a8f103",
+          "acceptedIssueKeys": [
+            "messages.concurrent-prepare-execute-branch-mismatch",
+            "messages.validation-unavailable"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "messages.concurrent-race-must-block-this-pr",
+              "decision": "disputed",
+              "reason": "Confirmed interleaving does not erase explicitly tracked follow-up; no new scope/contract evidence justifies fix-or-waiver escalation."
+            }
+          ],
+          "missingFunctionalDesign": [],
+          "qualificationLosses": [
+            "Other accepted convention/coverage findings omitted: messages.undo-isolation-integration-coverage, messages.seed-dependent-regression-fixtures, messages.legacy-integration-helper-import, messages.global-undo-organization-predicate. These are not additional functional defects.",
+            "Manual-QA requirement omits automated-verification exemption."
+          ],
+          "descriptionNotes": [
+            "Clear concrete interleaving and branch-recording remedy with accurate CI states. Explicit deferral then demand for new waiver loses scope qualification."
+          ],
+          "excerpts": [
+            {
+              "quote": "Resolve the concurrency finding or document an explicit maintainer waiver before merge."
+            }
+          ],
+          "feedbackDisposition": "Known limitations acknowledged; mandatory fix/waiver disputed.",
+          "verdictAndChaining": "Request-changes verdict and PR #8058 / Issue #8057 links present; no writes claimed. No standalone CHANGES REQUESTED token. Complete prose verdict despite absent structured verdict/findings fields.",
+          "trialId": "m1-pr8058-r2-candidate",
+          "model": "gpt-6-luna",
+          "variant": "candidate"
+        }
+      ],
+      "preference": {
+        "blindIds": [
+          "218b159ea6acdcc7",
+          "ec7bc200cc97ee8f"
+        ],
+        "reasons": [
+          "218b159ea6acdcc7 combines correct deferral, actionable fixtures, workflow authorization next step, QA exemption and complete markers.",
+          "ec7bc200cc97ee8f has strong actual caller/coverage audit and correct follow-up preservation but misses fixtures/helper convention.",
+          "99a346f318810fb0 and edce66337750f7f1 have useful interleaving/query evidence but over-escalate recorded scope. No artifact captures every accepted convention gap."
+        ],
+        "trialIds": [
+          "m0-pr8058-r2-candidate",
+          "m0-pr8058-r1-candidate"
+        ]
+      },
+      "limitations": [
+        "Only assigned bundle, pinned source/base and frozen context read; no network, installs, applications, repository execution, source/tracker mutations, other judgments, key, variants, trials or resource reports.",
+        "No numerical scores. Runtime conclusions are static source findings; exact assigned companion skill-only gate/format rules were deliberately not inspected.",
+        "No full runtime or current-target merge recomputation. Captured target-tip information qualifies mergeability only.",
+        "Follow-up issue contents #8059/#8060 unavailable; author comment explicitly records tracking. No issue-to-limitation mapping or resolved status invented."
+      ],
+      "source": {
+        "repository": "open-mercato/open-mercato",
+        "base": "9117e4b0b3be2dde0352747899c7bf45ceb45a2c",
+        "head": "d6f8fd84d0cff3a81e5b0abe058fe7f7f2d46f9e"
+      }
+    },
+    {
+      "caseId": "pr8088",
+      "issueCatalog": [
+        {
+          "issueKey": "sso.current_target_conflict",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": "context/pr.json",
+              "lines": "mergeable, mergeStateStatus",
+              "detail": "CONFLICTING / DIRTY"
+            },
+            {
+              "path": "context/target-branch.json",
+              "lines": "main tip",
+              "detail": "9a501a4b0c5e136d8aada68743cfb072b6c0c0c1"
+            }
+          ],
+          "rationale": "A captured current-target merge block, not a source defect against the assigned pinned base. All eight artifacts preserve that distinction. Revalidate and review the resolution.",
+          "disposition": "outstanding mergeability requirement"
+        },
+        {
+          "issueKey": "sso.denial_audit_reason",
+          "origin": "inherited",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": "packages/core/src/modules/auth/api/login.ts",
+              "lines": "149-159",
+              "detail": "verifyPassword false for a confirmed user with a hash selects invalid_password"
+            },
+            {
+              "path": "packages/enterprise/src/modules/sso/services/ssoAuthService.ts",
+              "lines": "20-28",
+              "detail": "An otherwise valid password returns false for outstanding deactivation"
+            },
+            {
+              "path": "context/reviews.json",
+              "lines": "review 5678970170",
+              "detail": "Explicitly Low and optional"
+            }
+          ],
+          "rationale": "The audit limitation is real. Generic denial remains correct, and the inherited reviewer explicitly made this optional. It must not become a required security fix.",
+          "disposition": "verified optional follow-up; not fixed or filed in these dry runs"
+        },
+        {
+          "issueKey": "sso.preissuance_success_bookkeeping",
+          "origin": "inherited",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": "packages/core/src/modules/auth/api/login.ts",
+              "lines": "170-173,190-196",
+              "detail": "lastLoginAt and rate-limit reset precede final createSession rejection"
+            },
+            {
+              "path": "context/reviews.json",
+              "lines": "review 5678970170",
+              "detail": "Harmless for security; optional Low item"
+            }
+          ],
+          "rationale": "A denied race can leave success bookkeeping. There is no surviving-session bypass from this ordering. Optional inherited accounting cleanup.",
+          "disposition": "verified optional follow-up; not a blocker"
+        },
+        {
+          "issueKey": "sso.handled_rejection_reporting",
+          "origin": "new",
+          "domain": "convention-docs-coverage",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": "packages/core/src/modules/auth/api/autologin.ts",
+              "lines": "61-65",
+              "detail": "New catch converts branded rejection to null/redirect without reportError"
+            },
+            {
+              "path": "packages/core/src/modules/auth/api/login.ts",
+              "lines": "193-196",
+              "detail": "New catch emits auth event and returns 401 without reportError"
+            },
+            {
+              "path": ".ai/review-checklist.md",
+              "lines": "329-335",
+              "detail": "Every new non-rethrow catch must reach reportError; core uses runtime bridge"
+            },
+            {
+              "path": "apps/docs/docs/framework/runtime/error-reporting.mdx",
+              "lines": "10-16",
+              "detail": "Rule expressly includes catches returning a fallback, without expected-denial exception"
+            }
+          ],
+          "rationale": "Supported by explicit local reporting policy, even though the exception represents an expected authorization denial. This is a convention/observability finding, not an authorization correctness finding. 3e5467dfd288efc6 and 4e14be83527e466c identify it; the others omit it.",
+          "disposition": "new policy violation"
+        },
+        {
+          "issueKey": "sso.nulltenant_scope_ownership",
+          "origin": "inherited",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": "context/comments.json",
+              "lines": "comment 6456994487",
+              "detail": "Earlier null-tenant marker bypass request"
+            },
+            {
+              "path": "packages/enterprise/src/modules/sso/lib/deactivation.ts",
+              "lines": "16-60",
+              "detail": "Exact lookup, then null-tenant fallback with organization tenant ownership and matching null-tenant config; no active/deleted filters"
+            }
+          ],
+          "rationale": "The earlier defect is fixed at this head. Disabled/deleted configs deliberately do not reactivate an outstanding marker. All eight artifacts correctly disposition it as resolved.",
+          "disposition": "resolved in pinned head"
+        },
+        {
+          "issueKey": "sso.issuance_deactivation_race",
+          "origin": "inherited",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": "packages/enterprise/src/modules/sso/services/ssoAuthService.ts",
+              "lines": "36-52",
+              "detail": "User lock, fresh scoped eligibility read and session insertion share txEm"
+            },
+            {
+              "path": "packages/enterprise/src/modules/sso/services/scimService.ts",
+              "lines": "345-399",
+              "detail": "Deactivation and reactivation use same User lock and transaction; deactivation deletes sessions"
+            },
+            {
+              "path": "packages/enterprise/src/modules/sso/__integration__/api/TC-SSO-007-deactivation-login.spec.ts",
+              "lines": "13-15,75-93",
+              "detail": "Four tenant/method combinations choose deactivation-first for explicit tenant and session-first for omitted tenant"
+            }
+          ],
+          "rationale": "The prior session-survival race is fixed. Each tenant variant selects one ordering; tests cover both collectively, not every ordering in every tenant/method combination.",
+          "disposition": "resolved in pinned head"
+        },
+        {
+          "issueKey": "sso.manual_qa_gate",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": "context/pr.json",
+              "lines": "labels",
+              "detail": "needs-qa present; qa-approved absent"
+            },
+            {
+              "path": "context/comments.json",
+              "lines": "comment 6462897546",
+              "detail": "Existing manual QA instructions include real IdP exercise"
+            }
+          ],
+          "rationale": "Outstanding merge-only human requirement. Neither code approval nor green CI grants QA approval. No new implementation defect follows from its absence.",
+          "disposition": "human QA outstanding"
+        }
+      ],
+      "artifacts": [
+        {
+          "blindId": "174f6f269afaf9b9",
+          "artifactDigest": "5155614337c00e937ded91d7d1cd1f99a7ce09a0563f2f9166ab9f44298e02ce",
+          "acceptedIssueKeys": [
+            "sso.current_target_conflict",
+            "sso.denial_audit_reason",
+            "sso.preissuance_success_bookkeeping",
+            "sso.nulltenant_scope_ownership",
+            "sso.issuance_deactivation_race",
+            "sso.manual_qa_gate"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "missingConventionDocsCoverage": [
+            "sso.handled_rejection_reporting"
+          ],
+          "qualificationLosses": [
+            "The functional security conclusion is supported, but the unqualified no-new-implementation-defect summary omits the separate local observability violation."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Concrete workflow/code split, complete proposed label/handoff actions and precise affected-CI qualifiers.",
+              "Explicitly limits test-ordering cross-product and controlled-provider evidence."
+            ],
+            "weaknesses": [
+              "Omits new mandatory reporting-policy violation."
+            ],
+            "verdictAndChaining": "Request changes supported by captured workflow conflict; PR #8088 and Issue #7824 markers both present. This is not evidence of a code-security regression.",
+            "feedback": "Earlier blockers resolved; inherited nits remain optional; QA approval remains outstanding."
+          },
+          "excerpts": [
+            {
+              "quote": "No new implementation defect was verified in the pinned diff.",
+              "role": "description comparison"
+            },
+            {
+              "quote": "Each tenant variant selects one lock ordering; this is not an exhaustive cross-product of all combinations.",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m0-pr8088-r1-candidate",
+          "model": "gpt-6.1-sol",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "3e5467dfd288efc6",
+          "artifactDigest": "d8712fd37872ed25a6f85b55ddb311ff94b9a516b01f85097e835754318625b6",
+          "acceptedIssueKeys": [
+            "sso.current_target_conflict",
+            "sso.denial_audit_reason",
+            "sso.preissuance_success_bookkeeping",
+            "sso.nulltenant_scope_ownership",
+            "sso.issuance_deactivation_race",
+            "sso.manual_qa_gate",
+            "sso.handled_rejection_reporting"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "missingConventionDocsCoverage": [],
+          "qualificationLosses": [],
+          "descriptionNotes": {
+            "strengths": [
+              "Finds the reporting-policy issue with exact catch sites and a privacy-safe runtime-bridge remedy.",
+              "Preserves optional inherited disposition and scoped CI/source boundaries; structured proposedActions provide concrete guarded publication."
+            ],
+            "weaknesses": [
+              "User-facing review says publication actions are below, but concrete label/handoff details exist mainly in structured proposedActions."
+            ],
+            "verdictAndChaining": "Request changes supported by captured workflow conflict; PR #8088 and Issue #7824 markers both present. This is not evidence of a code-security regression.",
+            "feedback": "Earlier blockers resolved; inherited nits remain optional; QA approval remains outstanding."
+          },
+          "excerpts": [
+            {
+              "quote": "This does not establish a defect in the pinned implementation.",
+              "role": "description comparison"
+            },
+            {
+              "quote": "Use the shared telemetry runtime bridge with a stable code such as `auth.session_rejected`",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m0-pr8088-r2-baseline",
+          "model": "gpt-6.1-sol",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "4e14be83527e466c",
+          "artifactDigest": "a567b8fe209c28d29e832d2a8bfceda7a0c9fb25569b8ed5a7dc4f608daceae3",
+          "acceptedIssueKeys": [
+            "sso.current_target_conflict",
+            "sso.denial_audit_reason",
+            "sso.preissuance_success_bookkeeping",
+            "sso.nulltenant_scope_ownership",
+            "sso.issuance_deactivation_race",
+            "sso.manual_qa_gate",
+            "sso.handled_rejection_reporting"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "missingConventionDocsCoverage": [],
+          "qualificationLosses": [],
+          "descriptionNotes": {
+            "strengths": [
+              "Most complete actionable reporting-policy finding while expressly finding no additional authorization defect.",
+              "Explicit reasons for keeping each inherited nit optional; preserves merge-only QA and successful scoped CI.",
+              "Complete dry-run publication plan without claiming mutations or new review URL."
+            ],
+            "weaknesses": [
+              "Longer than needed in routine evidence sections, but the extra scope and feedback detail is substantive."
+            ],
+            "verdictAndChaining": "Request changes supported by captured workflow conflict; PR #8088 and Issue #7824 markers both present. This is not evidence of a code-security regression.",
+            "feedback": "Earlier blockers resolved; inherited nits remain optional; QA approval remains outstanding."
+          },
+          "excerpts": [
+            {
+              "quote": "No additional authorization correctness defect was established.",
+              "role": "description comparison"
+            },
+            {
+              "quote": "**Disposition: declined as a required change** because access remains denied and the reviewer explicitly classified it as optional.",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m0-pr8088-r2-candidate",
+          "model": "gpt-6.1-sol",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "6e38c002dd3335ca",
+          "artifactDigest": "b74fcfbd23f84de2547a278a730c4fab7346b6b49fb24a709e01de2a5b753e3b",
+          "acceptedIssueKeys": [
+            "sso.current_target_conflict",
+            "sso.denial_audit_reason",
+            "sso.preissuance_success_bookkeeping",
+            "sso.nulltenant_scope_ownership",
+            "sso.issuance_deactivation_race",
+            "sso.manual_qa_gate"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "missingConventionDocsCoverage": [
+            "sso.handled_rejection_reporting"
+          ],
+          "qualificationLosses": [
+            "Bare PASS for yarn typecheck/test can be read as unfiltered configured-gate execution; logs instead show affected-package Turbo commands.",
+            "No explicit continue-on-error qualifier for i18n usage; ci.yml:727 marks it advisory."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Clear concise workflow blocker and optional-nit dispositions; full PR/Issue markers."
+            ],
+            "weaknesses": [
+              "PASS rows lose affected-package type/test scope and advisory i18n qualification.",
+              "Misses the new reporting-policy violation and controlled-provider/live-IdP limit.",
+              "Concrete metadata/handoff is in structured actions rather than the proposed review body."
+            ],
+            "verdictAndChaining": "Request changes supported by captured workflow conflict; PR #8088 and Issue #7824 markers both present. This is not evidence of a code-security regression.",
+            "feedback": "Earlier blockers resolved; inherited nits remain optional; QA approval remains outstanding."
+          },
+          "excerpts": [
+            {
+              "quote": "I found no new implementation defect in the reviewed diff",
+              "role": "description comparison"
+            },
+            {
+              "quote": "`yarn typecheck` | PASS",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m1-pr8088-r1-baseline",
+          "model": "gpt-6-luna",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "7d0a7cb8b03a48a7",
+          "artifactDigest": "98b27bc32958ce333c18243498f47419ed725a39bf932aeb25eb09b6eb4274b5",
+          "acceptedIssueKeys": [
+            "sso.current_target_conflict",
+            "sso.denial_audit_reason",
+            "sso.preissuance_success_bookkeeping",
+            "sso.nulltenant_scope_ownership",
+            "sso.issuance_deactivation_race",
+            "sso.manual_qa_gate"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "missingConventionDocsCoverage": [
+            "sso.handled_rejection_reporting"
+          ],
+          "qualificationLosses": [
+            "Successful scoped test/type steps are listed as unqualified configured-command PASS.",
+            "Test-ordering coverage is collective, and live external IdP was not established; body does not make those limits explicit."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Preserves pinned range, actual conflict, optional inherited requests, QA requirement and complete chaining references."
+            ],
+            "weaknesses": [
+              "Misses reporting policy and exact affected-CI/advisory qualifiers.",
+              "Proposed label operations exist in structured output but not complete publication text."
+            ],
+            "verdictAndChaining": "Request changes supported by captured workflow conflict; PR #8088 and Issue #7824 markers both present. This is not evidence of a code-security regression.",
+            "feedback": "Earlier blockers resolved; inherited nits remain optional; QA approval remains outstanding."
+          },
+          "excerpts": [
+            {
+              "quote": "found no new code-level blocker, major, or minor.",
+              "role": "description comparison"
+            },
+            {
+              "quote": "skipped states are non-failing.",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m1-pr8088-r1-candidate",
+          "model": "gpt-6-luna",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "acbd3aeb4919660f",
+          "artifactDigest": "5616804ecd12a5668f9a1d4f5a0439870d59085a66f173256d1c987c7aea4c26",
+          "acceptedIssueKeys": [
+            "sso.current_target_conflict",
+            "sso.denial_audit_reason",
+            "sso.preissuance_success_bookkeeping",
+            "sso.nulltenant_scope_ownership",
+            "sso.issuance_deactivation_race",
+            "sso.manual_qa_gate"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "missingConventionDocsCoverage": [
+            "sso.handled_rejection_reporting"
+          ],
+          "qualificationLosses": [
+            "Unqualified yarn test/typecheck PASS rows hide affected-package scope; passing suite totals do not imply an unfiltered gate."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Practical concise target-conflict handoff, generic-response qualification and accurate unit/integration counts.",
+              "Explicitly distinguishes CI evidence from local/manual verification."
+            ],
+            "weaknesses": [
+              "Misses reporting policy and CI affected-package/advisory scope.",
+              "Source facts for nits are checked in prose, while structured finding evidence mainly cites human approval."
+            ],
+            "verdictAndChaining": "Request changes supported by captured workflow conflict; PR #8088 and Issue #7824 markers both present. This is not evidence of a code-security regression.",
+            "feedback": "Earlier blockers resolved; inherited nits remain optional; QA approval remains outstanding."
+          },
+          "excerpts": [
+            {
+              "quote": "This is not an access-control bypass",
+              "role": "description comparison"
+            },
+            {
+              "quote": "This is CI evidence, not a local rerun or manual QA result.",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m1-pr8088-r2-baseline",
+          "model": "gpt-6-luna",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "ad50378cb35f47ab",
+          "artifactDigest": "fb78ebf06aa78b4b4e961104508ebbc2133c364bf51fca8dd09ce001fcb19686",
+          "acceptedIssueKeys": [
+            "sso.current_target_conflict",
+            "sso.denial_audit_reason",
+            "sso.preissuance_success_bookkeeping",
+            "sso.nulltenant_scope_ownership",
+            "sso.issuance_deactivation_race",
+            "sso.manual_qa_gate"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "missingConventionDocsCoverage": [
+            "sso.handled_rejection_reporting"
+          ],
+          "qualificationLosses": [
+            "package.json:81 maps i18n:check-sync to tsx scripts/i18n-check-sync.ts; ci-log:7066-7067 explicitly executes that same script. The claimed command-specific evidence gap is unwarranted.",
+            "ci-log:7825/7899 executes scoped Turbo commands rather than literal yarn typecheck/yarn test. Its direct-command assertions overstate execution evidence."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Concrete per-finding origin, evidence, scenario and optional remedy; complete proposed label/handoff and QA accounting."
+            ],
+            "weaknesses": [
+              "False evidence gap for i18n sync and inaccurate literal-alias claims for typecheck/test.",
+              "Misses local reporting policy and affected-package scope."
+            ],
+            "verdictAndChaining": "Request changes supported by captured workflow conflict; PR #8088 and Issue #7824 markers both present. This is not evidence of a code-security regression.",
+            "feedback": "Earlier blockers resolved; inherited nits remain optional; QA approval remains outstanding."
+          },
+          "excerpts": [
+            {
+              "quote": "Command-specific result is not established by the captured evidence.",
+              "role": "description comparison"
+            },
+            {
+              "quote": "Exact command appears in the successful `test` workflow.",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m1-pr8088-r2-candidate",
+          "model": "gpt-6-luna",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "aefb85e8417a48c8",
+          "artifactDigest": "cef91e6a9d4374f6e2927377520cdf593bf50582998ab23b71359b73ad457dae",
+          "acceptedIssueKeys": [
+            "sso.current_target_conflict",
+            "sso.denial_audit_reason",
+            "sso.preissuance_success_bookkeeping",
+            "sso.nulltenant_scope_ownership",
+            "sso.issuance_deactivation_race",
+            "sso.manual_qa_gate"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [],
+          "missingConventionDocsCoverage": [
+            "sso.handled_rejection_reporting"
+          ],
+          "qualificationLosses": [
+            "No new functional access-control defect is established, but the broad no-new-implementation-defect conclusion omits a convention violation."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Best synthetic-merge/pinned-head explanation; exact scope preservation and concrete review/label/comment proposals.",
+              "Careful optional nits, source-verified historical dispositions and controlled-provider/live-IdP distinction."
+            ],
+            "weaknesses": [
+              "Omits explicit new reporting-policy violation."
+            ],
+            "verdictAndChaining": "Request changes supported by captured workflow conflict; PR #8088 and Issue #7824 markers both present. This is not evidence of a code-security regression.",
+            "feedback": "Earlier blockers resolved; inherited nits remain optional; QA approval remains outstanding."
+          },
+          "excerpts": [
+            {
+              "quote": "Checkout logs show the synthetic merge of that head into the pinned base",
+              "role": "description comparison"
+            },
+            {
+              "quote": "No surviving credential was demonstrated from this ordering.",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m0-pr8088-r1-baseline",
+          "model": "gpt-6.1-sol",
+          "variant": "baseline"
+        }
+      ],
+      "preference": {
+        "blindIds": [
+          "4e14be83527e466c"
+        ],
+        "reasons": [
+          "Catches the explicit new error-reporting rule while making clear no additional authorization defect was found.",
+          "Most explicit inherited optional disposition and complete source/CI/QA/publication qualification.",
+          "3e5467dfd288efc6 is a close alternative; aefb85e8417a48c8 is particularly strong on synthetic-merge evidence but omits the policy issue."
+        ],
+        "trialIds": [
+          "m0-pr8088-r2-candidate"
+        ]
+      },
+      "limitations": [
+        "This is static adjudication; no live IdP or application behavior was reproduced.",
+        "Frozen successful checks are scoped historical evidence and do not validate conflict resolution.",
+        "No independent new functional/security defect was established beyond inherited optional accounting issues; lack of live QA is not a code defect."
+      ],
+      "establishedBehavior": [
+        {
+          "claim": "Password eligibility fails closed when the lookup throws; no fallback to core password-only issuance was found.",
+          "evidence": [
+            {
+              "path": "packages/enterprise/src/modules/sso/services/ssoAuthService.ts",
+              "lines": "20-28",
+              "detail": "Awaited lookup error propagates"
+            },
+            {
+              "path": "packages/enterprise/src/modules/sso/services/__tests__/ssoAuthService.test.ts",
+              "lines": "71-74",
+              "detail": "Explicit lookup-failure rejection test"
+            }
+          ]
+        },
+        {
+          "claim": "SSO callback rejects absent/inactive config or absent/failed provider before session creation.",
+          "evidence": [
+            {
+              "path": "packages/enterprise/src/modules/sso/services/ssoService.ts",
+              "lines": "103-124,143-147",
+              "detail": "Active config and provider required; callback awaited; session created later with trusted config scope"
+            }
+          ]
+        },
+        {
+          "claim": "Core auth contract remains additive and enterprise policy stays in the enabled SSO DI override.",
+          "evidence": [
+            {
+              "path": "packages/enterprise/src/modules/sso/di.ts",
+              "lines": "18-26",
+              "detail": "authService override registered by SSO"
+            },
+            {
+              "path": "packages/enterprise/src/modules/sso/services/ssoAuthService.ts",
+              "lines": "31-35",
+              "detail": "Scope is optional, preserving two-argument calls"
+            }
+          ]
+        },
+        {
+          "claim": "Captured CI is successful for the pinned head/synthetic merge with the pinned base, using affected-package test/type scopes.",
+          "evidence": [
+            {
+              "path": "context/ci-log.txt",
+              "lines": "667,7066-7067,7825,7899,6243-6246",
+              "detail": "Pinned-base merge, underlying sync script, scoped Turbo invocations and all four passing cases"
+            },
+            {
+              "path": "package.json",
+              "lines": "38-39,81",
+              "detail": "Aliases establish equivalence but not literal invocation"
+            }
+          ]
+        }
+      ],
+      "feedbackDisposition": "Two earlier blockers fixed; two exact-head nits explicitly optional; historical Blacksmith failure superseded by current-head results. No captured owner/backup reviewer request was found in reviews/comments/inline-comments, so none is invented.",
+      "source": {
+        "repository": "open-mercato/open-mercato",
+        "base": "fb7858c0a279406ba3640fe9f9eb5a32723cb4e8",
+        "head": "096c84105a8df95c4fc131edbead70bd4ce60507"
+      }
+    },
+    {
+      "caseId": "pr8031",
+      "issueCatalog": [
+        {
+          "issueKey": "pcfg.lock_connection_loss_fencing",
+          "origin": "new",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "265,271-289",
+              "detail": "Dedicated session advisory-lock connection spans independent module/sales writes; connection loss only stops next write; finalising sessions recover"
+            },
+            {
+              "path": "packages/core/src/modules/sales/commands/documents.ts",
+              "lines": "7989-7997,8058,8220-8245",
+              "detail": "Sales forks its EM, checks version before write transaction, generates random insertion ID, and commits its own write"
+            },
+            {
+              "path": "packages/shared/src/lib/crud/optimistic-lock-command.ts",
+              "lines": "121-133",
+              "detail": "Pure version assertion; it does not fence an in-flight transaction"
+            },
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "479-482",
+              "detail": "Only snapshot unique(session_id) is proposed; not uniqueness of sales lines referencing a snapshot"
+            }
+          ],
+          "rationale": "Drop only the lock connection while the first sales write is in flight. A second worker acquires the released lock and sees no committed line, then both can insert different IDs carrying the same snapshot. Both can pass the version read before either commits; a snapshot session uniqueness constraint does not constrain referencing sales lines. An accepted major design gap, inferred rather than reproduced. Require transaction-enforced idempotency/fencing or a provably shared lifetime. This is PostgreSQL session-lock loss, not Redis TTL expiry."
+        },
+        {
+          "issueKey": "pcfg.numeric_product_tax_lost",
+          "origin": "new",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "180-185,237-244,251-253",
+              "detail": "BoundProductRef exposes only taxRateId; write omits it if null; promises bound-product tax"
+            },
+            {
+              "path": "packages/core/src/modules/catalog/commands/products.ts",
+              "lines": "385-403",
+              "detail": "Products support a numeric tax rate with no taxRateId"
+            },
+            {
+              "path": "packages/core/src/modules/sales/commands/documents.ts",
+              "lines": "8020-8044",
+              "detail": "Sales only forwards supplied rate inputs to tax service"
+            },
+            {
+              "path": "packages/core/src/modules/sales/services/taxCalculationService.ts",
+              "lines": "92-112",
+              "detail": "No id or inline rate defaults to zero"
+            }
+          ],
+          "rationale": "A product whose rate is 23 and id null produces zero tax through the proposed payload. Include the numeric rate in the catalog seam and forward it as fallback; sales remains calculation owner."
+        },
+        {
+          "issueKey": "pcfg.explicit_order_recovery_destination",
+          "origin": "new",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "274-277,303",
+              "detail": "Retry uses order ID equal to quote ID; busy conversion hook skips work relying on running finalise"
+            },
+            {
+              "path": "packages/core/src/modules/sales/commands/documents.ts",
+              "lines": "6760,6901-6905",
+              "detail": "Conversion accepts explicit destination ID and preserves line IDs"
+            }
+          ],
+          "rationale": "After configured-line commit, explicit-ID conversion can finish while finalise holds the advisory lock, its hook skips, and finalise can crash before linking. Retry cannot find the nondefault destination and cancels despite a committed order line. Persist destination or durable reconciliation input even on busy-hook path. It is distinct from the documented hook-failed risk."
+        },
+        {
+          "issueKey": "pcfg.guard_late_input_modifier",
+          "origin": "new",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "342,737",
+              "detail": "Priority 1000 is claimed to see final input; planned TC-PCFG-035 covers earlier modifiers only"
+            },
+            {
+              "path": "packages/shared/src/lib/commands/command-interceptor.ts",
+              "lines": "12-13",
+              "detail": "priority is an unrestricted number"
+            },
+            {
+              "path": "packages/shared/src/lib/commands/command-interceptor-runner.ts",
+              "lines": "55-58,82-99",
+              "detail": "Ascending priority and accumulated modifiedInput"
+            },
+            {
+              "path": "packages/shared/src/lib/commands/command-bus.ts",
+              "lines": "303-315,335-339,369-372",
+              "detail": "Accumulated final input is sent to handler"
+            }
+          ],
+          "rationale": "The universal final-input claim is false: supported priority 1001 modifier can alter protected price/marker after guard. This is a valid design counterexample, not a claim that such a modifier already exists in this PR. Require authoritative validation after modifiers rather than merely raising the number. Blocker severity is stronger than necessary absent a concrete installed offender, but design correction is warranted."
+        },
+        {
+          "issueKey": "pcfg.guard_precision_canonicalization",
+          "origin": "new",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "344",
+              "detail": "Protected numeric comparisons round both values to four decimals without canonicalizing accepted input"
+            },
+            {
+              "path": "packages/core/src/modules/sales/data/validators.ts",
+              "lines": "58-62",
+              "detail": "Decimal coercion imposes no four-decimal precision"
+            },
+            {
+              "path": "packages/core/src/modules/sales/commands/documents.ts",
+              "lines": "2309,2657,2805,2833-2838,8063,8120",
+              "detail": "Six-decimal normalized quantity; raw quantity retained for line calculation"
+            },
+            {
+              "path": "packages/core/src/modules/sales/lib/calculations.ts",
+              "lines": "118-131",
+              "detail": "Net subtotal uses raw quantity times unit net"
+            }
+          ],
+          "rationale": "Quantity 1.00004 rounds equal to stored 1 for guard but a unit net 100000 calculates 100004, while persisted quantity rounds to 1. Canonicalize to stored protected inputs or reject the extra precision. Valid static counterexample; no runtime reproduction claimed."
+        },
+        {
+          "issueKey": "pcfg.guard_stale_explicit_totals",
+          "origin": "new",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "344,663",
+              "detail": "Unchanged explicit tax/gross accepted alongside commercial discount/tax changes"
+            },
+            {
+              "path": "packages/core/src/modules/sales/lib/lineSnapshots.ts",
+              "lines": "159-174",
+              "detail": "Caller-provided tax/gross override recalculation even when pricing changed"
+            },
+            {
+              "path": "packages/core/src/modules/sales/lib/calculations.ts",
+              "lines": "131-171",
+              "detail": "Net recomputed; explicit tax and gross honored"
+            }
+          ],
+          "rationale": "For net100/tax20/gross120, adding a 10% discount while resending tax20/gross120 passes guard and produces net90/tax20/gross120. Permit ordinary commercial edits but strip/reject explicit derived amounts when needed. Correct the spec claim that totalNetAmount is used verbatim: calculator recomputes it."
+        },
+        {
+          "issueKey": "pcfg.group_pricing_stale_premise",
+          "origin": "new",
+          "domain": "convention-docs-coverage",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "218",
+              "detail": "Future-tense customerGroupIds premise plus explicit interim exclusion"
+            },
+            {
+              "path": "packages/core/src/modules/catalog/lib/pricing.ts",
+              "lines": "17-20,114-115,147-155",
+              "detail": "Multi-group context/matcher/filter already exist"
+            },
+            {
+              "path": "packages/core/src/modules/customer_groups/services/customerGroupsService.ts",
+              "lines": "100,267",
+              "detail": "Scoped resolver already exists"
+            }
+          ],
+          "rationale": "The claim that the context field is future work is stale and should be corrected. This fact alone does not require adding group prices to deliberately scoped CPQ v1. A valid fix may explicitly retain exclusion and document it, rather than mandatorily resolve groups."
+        },
+        {
+          "issueKey": "pcfg.group_pricing_mandatory",
+          "origin": "new",
+          "domain": "functional-design",
+          "decision": "unsupported",
+          "evidence": [
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "218",
+              "detail": "Explicitly states group prices do not apply to configured lines until integration"
+            },
+            {
+              "path": "packages/core/src/modules/catalog/lib/pricing.ts",
+              "lines": "147-155",
+              "detail": "Omitted groups consistently exclude group rows"
+            }
+          ],
+          "rationale": "Catalog capability exists, but no contract supplied requires this new configurator to apply all customer-group prices. Different scoped pricing is a deliberate new-module policy, not an existing customer quote regression. 65870e84d8e0d597/fbf50e2547b161e4 elevate this to blocker and demand expansion; 4550672c18c27fd1 also prescribes integration rather than permitting scope clarification. Accept only the separate stale-description correction."
+        },
+        {
+          "issueKey": "pcfg.disabled_module_guard_mandatory",
+          "origin": "new",
+          "domain": "functional-design",
+          "decision": "unsupported",
+          "evidence": [
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "630,637-638",
+              "detail": "Optional module disabled leaves lines and configuration plain data; line guard disappears; no sales change"
+            },
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "340-353",
+              "detail": "Guard belongs to active module"
+            }
+          ],
+          "rationale": "The behavior 1cdbb8a6aa85d389 describes is real and explicitly chosen. No retained-enforcement-after-disable contract is shown. Moving guard into always-active sales changes the proposed architecture/scope; present as a maintainer lifecycle decision unless an actual compatibility/security requirement is established."
+        },
+        {
+          "issueKey": "pcfg.generic_nontransactional_upsert_race",
+          "origin": "new",
+          "domain": "functional-design",
+          "decision": "disputed",
+          "evidence": [
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "342-344,794-799",
+              "detail": "Nontransactional read is acknowledged; each configured upsert rejects protected-field changes"
+            },
+            {
+              "path": "packages/core/src/modules/sales/commands/shared.ts",
+              "lines": "29-49",
+              "detail": "No-header version checks are optional"
+            }
+          ],
+          "rationale": "13fe41d1868e473a cites a real pretransaction read but never explains how the concurrent guarded upsert can change unitPriceNet: both would reject a changed protected value. A stale read alone does not establish price mutation when the protected value is invariant. Require a concrete allowed interleaving (e.g. an unchecked path or marker transition), not the risk register as proof. Do not conflate with the independently supported late-modifier or precision bypasses."
+        },
+        {
+          "issueKey": "pcfg.conversion_hook_outer_commit_boundary",
+          "origin": "new",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": "packages/core/src/modules/sales/api/quotes/accept/route.ts",
+              "lines": "128-142",
+              "detail": "Public acceptance passes transactionalEm and executes conversion before outer callback commits"
+            },
+            {
+              "path": "packages/core/src/modules/sales/commands/documents.ts",
+              "lines": "6725-6730,7074-7088",
+              "detail": "Conversion joins caller transaction, returns before its commit and uses that EM for captureAfter"
+            },
+            {
+              "path": "packages/shared/src/lib/commands/command-bus.ts",
+              "lines": "495-516,531-544",
+              "detail": "Normal command afterExecute runs before returning; special outer-lifetime handling here applies to ambient replay"
+            },
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "303",
+              "detail": "Cleanup mutates CPQ session state and reconciles via queryEngine but specifies no transaction ownership/aftercommit contract"
+            },
+            {
+              "path": "packages/core/src/modules/query_index/lib/engine.ts",
+              "lines": "272-296,386",
+              "detail": "queryEngine owns an injected EM and obtains Kysely from it; spec does not define binding to ctx.transactionalEm"
+            }
+          ],
+          "rationale": "A real current consumer can invoke the proposed conversion cleanup before outer commit. Define whether CPQ state joins the same transaction/visibility or is durable postcommit work; otherwise a separate scoped read can miss uncommitted order lines and cancel, or session changes can survive a rolled-back conversion. This is a required design-boundary clarification, not a reproduced bug in nonexistent CPQ. 65870e84d8e0d597 raises it as a direction question, appropriately acknowledging uncertainty."
+        },
+        {
+          "issueKey": "pcfg.postcommit_exception_outcome_recovery",
+          "origin": "new",
+          "domain": "functional-design",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": "packages/core/src/modules/sales/commands/documents.ts",
+              "lines": "8220-8249",
+              "detail": "Sales line is committed in execute before captureAfter"
+            },
+            {
+              "path": "packages/shared/src/lib/commands/command-bus.ts",
+              "lines": "369-375,434,495-523,543",
+              "detail": "After execute, captureAfter/buildLog/persistLog and cache/side-effect work are still awaited and may reject"
+            },
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "282-287,295-296,303",
+              "detail": "Every dispatch failure sets open/cancelled; busy conversion hook assumes finalise ends it; reconcile-first guarantee is only next-call recovery"
+            }
+          ],
+          "rationale": "Dispatch rejection does not prove no sales commit. With quote still present, the next-call step2 can safely adopt even though status reset open; do not claim every postcommit exception duplicates lines. The uncovered concrete boundary is commit then conversion while finalise lock is busy, followed by a postcommit capture/log/cache failure: step5 sees no quote and cancels instead of reconciling the committed order line. Define immediate committed-outcome reconciliation before terminal cancellation, preserve destination, and test failures after actual commit. None of the eight artifacts explicitly analyzes this dispatch-rejected-after-commit path."
+        },
+        {
+          "issueKey": "pcfg.variant_price_fallback_policy",
+          "origin": "new",
+          "domain": "functional-design",
+          "decision": "disputed",
+          "evidence": [
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "212",
+              "detail": "New service deliberately chooses variant-specific rows for variant SKU"
+            },
+            {
+              "path": "packages/core/src/modules/catalog/lib/pricing.ts",
+              "lines": "57-64",
+              "detail": "Existing reusable helper permits product fallback"
+            }
+          ],
+          "rationale": "4550672c18c27fd1 correctly keeps this as a scope/direction question. Existing helper availability does not mandate product fallback for a deliberately exact-SKU service. No mandatory defect accepted."
+        },
+        {
+          "issueKey": "pcfg.optin_test_selection",
+          "origin": "new",
+          "domain": "convention-docs-coverage",
+          "decision": "disputed",
+          "evidence": [
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "40,730",
+              "detail": "Q4 requests maintainer CI choice; requiredEnvVars and dependsOnModules explicitly planned"
+            }
+          ],
+          "rationale": "65870e84d8e0d597 recommends an enabled lane and questions metadata. Valid implementation direction, not a present missing-test or failed-CI finding in a spec-only PR."
+        },
+        {
+          "issueKey": "pcfg.pending_cla_action_required",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": "context/checks.json",
+              "lines": "2 reported checks",
+              "detail": "label SUCCESS; license/cla PENDING"
+            },
+            {
+              "path": "context/runs.json",
+              "lines": "exact-head workflow conclusions",
+              "detail": "CI, Mutation tests and Enterprise Contribution Guard action_required"
+            },
+            {
+              "path": "context/ci-run.json",
+              "lines": "jobs",
+              "detail": "No jobs captured"
+            },
+            {
+              "path": "context/required-checks.json",
+              "lines": "status",
+              "detail": "404 Required status checks not enabled"
+            }
+          ],
+          "rationale": "Merge-only contribution/workflow requirements, not failed tests. Pending CLA does not prove unsigned, and action_required with no jobs/log cannot be claimed pass/fail. All artifacts broadly preserve that distinction; bc0b7307b53117d7 omits the third action-required workflow."
+        },
+        {
+          "issueKey": "pcfg.maintainer_direction_Q1_Q5",
+          "origin": "workflow",
+          "domain": "workflow",
+          "decision": "accepted",
+          "evidence": [
+            {
+              "path": ".ai/specs/2026-10-23-product-configurator-module.md",
+              "lines": "35-41",
+              "detail": "Placement, sales contracts, catalog seam, opt-in CI and quote/dialog integration require decisions"
+            },
+            {
+              "path": "context/pr.json",
+              "lines": "body decisions requested",
+              "detail": "Q1-Q5 explicitly requested before implementation"
+            }
+          ],
+          "rationale": "Direction choices are not standalone defects in a design proposal. Phase E replacement race is explicitly after v1 and must not become a v1 feature mandate. Valid v1 integrity gaps above do still need design resolution."
+        }
+      ],
+      "artifacts": [
+        {
+          "blindId": "13fe41d1868e473a",
+          "artifactDigest": "8c343155ae56ef223d9f94aece40c0e166ef35b75eeead0a3320b08f9762d9ab",
+          "acceptedIssueKeys": [
+            "pcfg.pending_cla_action_required",
+            "pcfg.maintainer_direction_Q1_Q5"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "pcfg.generic_nontransactional_upsert_race",
+              "decision": "disputed",
+              "rationale": "Acknowledged risk does not establish how a second guarded writer changes a protected field."
+            }
+          ],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "pcfg.lock_connection_loss_fencing",
+              "evidenceReference": "issueCatalog.pcfg.lock_connection_loss_fencing"
+            },
+            {
+              "issueKey": "pcfg.numeric_product_tax_lost",
+              "evidenceReference": "issueCatalog.pcfg.numeric_product_tax_lost"
+            },
+            {
+              "issueKey": "pcfg.explicit_order_recovery_destination",
+              "evidenceReference": "issueCatalog.pcfg.explicit_order_recovery_destination"
+            },
+            {
+              "issueKey": "pcfg.guard_late_input_modifier",
+              "evidenceReference": "issueCatalog.pcfg.guard_late_input_modifier"
+            },
+            {
+              "issueKey": "pcfg.guard_precision_canonicalization",
+              "evidenceReference": "issueCatalog.pcfg.guard_precision_canonicalization"
+            },
+            {
+              "issueKey": "pcfg.guard_stale_explicit_totals",
+              "evidenceReference": "issueCatalog.pcfg.guard_stale_explicit_totals"
+            },
+            {
+              "issueKey": "pcfg.conversion_hook_outer_commit_boundary",
+              "evidenceReference": "issueCatalog.pcfg.conversion_hook_outer_commit_boundary"
+            },
+            {
+              "issueKey": "pcfg.postcommit_exception_outcome_recovery",
+              "evidenceReference": "issueCatalog.pcfg.postcommit_exception_outcome_recovery"
+            }
+          ],
+          "qualificationLosses": [
+            "The stale-read consequence is asserted as established even though its protected write is what the guard disallows.",
+            "Required check configuration unavailable is true, but fallback can conservatively treat the reported CLA as required; no failed check is shown either way."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Concise findings with a test proposal; preserves design-only scope and Q1-Q5/Phase E distinctions.",
+              "Correct pending/action-required evidence and no invented CI failure."
+            ],
+            "weaknesses": [
+              "Sole finding lacks a concrete permitted protected-field mutation path; misses stronger current-consumer counterexamples.",
+              "risk-medium proposal is not explained in terms of the submitted docs-only diff.",
+              "Does not apply the all-reported-checks fallback consistently to pending CLA status."
+            ],
+            "verdictAndChaining": "PR #8031 marker present; no linked issue is captured so no Issue marker is required. Implementation gates appropriately not run for design-only scope.",
+            "feedback": "No captured inherited technical review requests. CLA is a pending contribution requirement; partner-label request is already satisfied. Q1-Q5 remain direction questions."
+          },
+          "excerpts": [
+            {
+              "quote": "a concurrent upsert changes `unitPriceNet`",
+              "role": "description comparison"
+            },
+            {
+              "quote": "Q2’s Phase E atomic-replacement choice is deferred and does not by itself block v1.",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m1-pr8031-r1-baseline",
+          "model": "gpt-6-luna",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "1cdbb8a6aa85d389",
+          "artifactDigest": "03878aee835f63059ba5060fd58c83444178a49ecc1e4ad349e4f4e030f0c2ae",
+          "acceptedIssueKeys": [
+            "pcfg.pending_cla_action_required",
+            "pcfg.maintainer_direction_Q1_Q5"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "pcfg.disabled_module_guard_mandatory",
+              "decision": "unsupported",
+              "rationale": "Describes the explicitly chosen disable behavior but supplies no violated contract requiring active enforcement after disable."
+            }
+          ],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "pcfg.lock_connection_loss_fencing",
+              "evidenceReference": "issueCatalog.pcfg.lock_connection_loss_fencing"
+            },
+            {
+              "issueKey": "pcfg.numeric_product_tax_lost",
+              "evidenceReference": "issueCatalog.pcfg.numeric_product_tax_lost"
+            },
+            {
+              "issueKey": "pcfg.explicit_order_recovery_destination",
+              "evidenceReference": "issueCatalog.pcfg.explicit_order_recovery_destination"
+            },
+            {
+              "issueKey": "pcfg.guard_late_input_modifier",
+              "evidenceReference": "issueCatalog.pcfg.guard_late_input_modifier"
+            },
+            {
+              "issueKey": "pcfg.guard_precision_canonicalization",
+              "evidenceReference": "issueCatalog.pcfg.guard_precision_canonicalization"
+            },
+            {
+              "issueKey": "pcfg.guard_stale_explicit_totals",
+              "evidenceReference": "issueCatalog.pcfg.guard_stale_explicit_totals"
+            },
+            {
+              "issueKey": "pcfg.conversion_hook_outer_commit_boundary",
+              "evidenceReference": "issueCatalog.pcfg.conversion_hook_outer_commit_boundary"
+            },
+            {
+              "issueKey": "pcfg.postcommit_exception_outcome_recovery",
+              "evidenceReference": "issueCatalog.pcfg.postcommit_exception_outcome_recovery"
+            }
+          ],
+          "qualificationLosses": [
+            "Recovery-guarantee endorsement is unsupported given independent lock/write connections and conversion destination gaps."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Grounded lifecycle explanation, exact retained configuration path and concrete optional remediation.",
+              "Separates maintainer decisions, spec-only testing and merge requirements."
+            ],
+            "weaknesses": [
+              "Turns a scoped lifecycle choice into the sole major defect and prescribes an always-active cross-module seam.",
+              "Fails to examine the independent sales commit/fencing boundary despite naming recovery as complex."
+            ],
+            "verdictAndChaining": "PR #8031 marker present; no linked issue is captured so no Issue marker is required. Implementation gates appropriately not run for design-only scope.",
+            "feedback": "No captured inherited technical review requests. CLA is a pending contribution requirement; partner-label request is already satisfied. Q1-Q5 remain direction questions."
+          },
+          "excerpts": [
+            {
+              "quote": "Turning off the optional module removes its configured-line guard",
+              "role": "description comparison"
+            },
+            {
+              "quote": "No simpler alternative with the same recovery guarantees was established",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m1-pr8031-r1-candidate",
+          "model": "gpt-6-luna",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "4550672c18c27fd1",
+          "artifactDigest": "f501138c7c83c1ab92b570e80304aa5a7beacb3750121a8f73f8a61aeae151e5",
+          "acceptedIssueKeys": [
+            "pcfg.guard_late_input_modifier",
+            "pcfg.group_pricing_stale_premise",
+            "pcfg.pending_cla_action_required",
+            "pcfg.maintainer_direction_Q1_Q5"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "pcfg.group_pricing_mandatory",
+              "decision": "unsupported",
+              "rationale": "Stale premise is real, but its prescribed group resolver/new behavior is not the only valid scoped correction."
+            },
+            {
+              "issueKey": "pcfg.variant_price_fallback_policy",
+              "decision": "disputed",
+              "rationale": "Correctly presented as direction rather than verified defect."
+            }
+          ],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "pcfg.lock_connection_loss_fencing",
+              "evidenceReference": "issueCatalog.pcfg.lock_connection_loss_fencing"
+            },
+            {
+              "issueKey": "pcfg.numeric_product_tax_lost",
+              "evidenceReference": "issueCatalog.pcfg.numeric_product_tax_lost"
+            },
+            {
+              "issueKey": "pcfg.explicit_order_recovery_destination",
+              "evidenceReference": "issueCatalog.pcfg.explicit_order_recovery_destination"
+            },
+            {
+              "issueKey": "pcfg.guard_precision_canonicalization",
+              "evidenceReference": "issueCatalog.pcfg.guard_precision_canonicalization"
+            },
+            {
+              "issueKey": "pcfg.guard_stale_explicit_totals",
+              "evidenceReference": "issueCatalog.pcfg.guard_stale_explicit_totals"
+            },
+            {
+              "issueKey": "pcfg.conversion_hook_outer_commit_boundary",
+              "evidenceReference": "issueCatalog.pcfg.conversion_hook_outer_commit_boundary"
+            },
+            {
+              "issueKey": "pcfg.postcommit_exception_outcome_recovery",
+              "evidenceReference": "issueCatalog.pcfg.postcommit_exception_outcome_recovery"
+            }
+          ],
+          "qualificationLosses": [
+            "The first claim is a supported design counterexample, not a demonstrated production exploit.",
+            "F2 should accept scope clarification as an alternative to adding group pricing."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Precise priority1001 counterexample and final-input ownership remedy tied to actual runner/bus.",
+              "Strong scope/CI distinction and reusable independent review body with concrete metadata and handoff.",
+              "Variant fallback is correctly qualified as a direction question."
+            ],
+            "weaknesses": [
+              "Overstates final-input severity as blocker without an installed later offender, though universal guarantee is invalid.",
+              "Prescribes group integration instead of permitting explicitly documented exclusion.",
+              "Misses lock loss, numeric tax and explicit conversion recovery."
+            ],
+            "verdictAndChaining": "PR #8031 marker present; no linked issue is captured so no Issue marker is required. Implementation gates appropriately not run for design-only scope.",
+            "feedback": "No captured inherited technical review requests. CLA is a pending contribution requirement; partner-label request is already satisfied. Q1-Q5 remain direction questions."
+          },
+          "excerpts": [
+            {
+              "quote": "A supported interceptor at priority `1001` can therefore change a configured price or marker",
+              "role": "description comparison"
+            },
+            {
+              "quote": "This is kept as a direction question because the new service explicitly proposes its own filtering policy.",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m0-pr8031-r1-candidate",
+          "model": "gpt-6.1-sol",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "65870e84d8e0d597",
+          "artifactDigest": "c531f8951db898051b33c04f23220d150ba89b09474002c10ad211701b9e61c8",
+          "acceptedIssueKeys": [
+            "pcfg.guard_precision_canonicalization",
+            "pcfg.lock_connection_loss_fencing",
+            "pcfg.group_pricing_stale_premise",
+            "pcfg.conversion_hook_outer_commit_boundary",
+            "pcfg.pending_cla_action_required",
+            "pcfg.maintainer_direction_Q1_Q5"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "pcfg.group_pricing_mandatory",
+              "decision": "unsupported",
+              "rationale": "Catalog supports groups, but exclusion in this new module is explicit; not a blocker mandating expanded scope."
+            },
+            {
+              "issueKey": "pcfg.optin_test_selection",
+              "decision": "disputed",
+              "rationale": "Reasonable direction question, not a current design-only CI failure."
+            }
+          ],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "pcfg.numeric_product_tax_lost",
+              "evidenceReference": "issueCatalog.pcfg.numeric_product_tax_lost"
+            },
+            {
+              "issueKey": "pcfg.explicit_order_recovery_destination",
+              "evidenceReference": "issueCatalog.pcfg.explicit_order_recovery_destination"
+            },
+            {
+              "issueKey": "pcfg.guard_late_input_modifier",
+              "evidenceReference": "issueCatalog.pcfg.guard_late_input_modifier"
+            },
+            {
+              "issueKey": "pcfg.guard_stale_explicit_totals",
+              "evidenceReference": "issueCatalog.pcfg.guard_stale_explicit_totals"
+            },
+            {
+              "issueKey": "pcfg.postcommit_exception_outcome_recovery",
+              "evidenceReference": "issueCatalog.pcfg.postcommit_exception_outcome_recovery"
+            }
+          ],
+          "qualificationLosses": [
+            "Correctly marks concurrency consequences as static, but grouping the scoped pricing omission as blocker materially overstates the review."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Distinct precision-boundary bypass with numeric example and raw calculation path.",
+              "Good independent-lock fencing analysis; explicitly notes both workers may pass the version read.",
+              "Only artifact to raise public acceptance outer transaction versus cleanup timing."
+            ],
+            "weaknesses": [
+              "Lead blocker conflates stale catalog premise with mandatory group behavior.",
+              "Misses tax-rate fallback, explicit destination recovery, late input modifier, and explicit-total path."
+            ],
+            "verdictAndChaining": "PR #8031 marker present; no linked issue is captured so no Issue marker is required. Implementation gates appropriately not run for design-only scope.",
+            "feedback": "No captured inherited technical review requests. CLA is a pending contribution requirement; partner-label request is already satisfied. Q1-Q5 remain direction questions."
+          },
+          "excerpts": [
+            {
+              "quote": "Both callers can also read the same quote version before either commits.",
+              "role": "description comparison"
+            },
+            {
+              "quote": "An `afterExecute` hook alone is not evidence of an outer commit.",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m0-pr8031-r2-baseline",
+          "model": "gpt-6.1-sol",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "6c32f5b4e3c9c8cd",
+          "artifactDigest": "55af46eeadb49a3f487543c414da1203c1d5eaeef438a772a2d080fbcb9b1c0b",
+          "acceptedIssueKeys": [
+            "pcfg.lock_connection_loss_fencing",
+            "pcfg.numeric_product_tax_lost",
+            "pcfg.explicit_order_recovery_destination",
+            "pcfg.group_pricing_stale_premise",
+            "pcfg.pending_cla_action_required",
+            "pcfg.maintainer_direction_Q1_Q5"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "pcfg.guard_late_input_modifier",
+              "evidenceReference": "issueCatalog.pcfg.guard_late_input_modifier"
+            },
+            {
+              "issueKey": "pcfg.guard_precision_canonicalization",
+              "evidenceReference": "issueCatalog.pcfg.guard_precision_canonicalization"
+            },
+            {
+              "issueKey": "pcfg.guard_stale_explicit_totals",
+              "evidenceReference": "issueCatalog.pcfg.guard_stale_explicit_totals"
+            },
+            {
+              "issueKey": "pcfg.conversion_hook_outer_commit_boundary",
+              "evidenceReference": "issueCatalog.pcfg.conversion_hook_outer_commit_boundary"
+            },
+            {
+              "issueKey": "pcfg.postcommit_exception_outcome_recovery",
+              "evidenceReference": "issueCatalog.pcfg.postcommit_exception_outcome_recovery"
+            }
+          ],
+          "qualificationLosses": [],
+          "descriptionNotes": {
+            "strengths": [
+              "Best set of independently supported v1 findings: independent-lock loss, numeric-only tax, and busy-hook explicit-order crash recovery.",
+              "States precise default behavior and remedies while keeping calculations sales-owned.",
+              "Allows group exclusion as deliberate scope and separates Q1-Q5 and post-v1 Phase E.",
+              "Clear inferred-not-executed evidence and complete dry-run/CI/handoff qualification."
+            ],
+            "weaknesses": [
+              "Still misses late input modification, precision, stale explicit totals, and outer-commit/postcommit-exception boundaries.",
+              "Fencing blocker label could be expressed as major design-integrity finding without weakening the request-changes outcome."
+            ],
+            "verdictAndChaining": "PR #8031 marker present; no linked issue is captured so no Issue marker is required. Implementation gates appropriately not run for design-only scope.",
+            "feedback": "No captured inherited technical review requests. CLA is a pending contribution requirement; partner-label request is already satisfied. Q1-Q5 remain direction questions."
+          },
+          "excerpts": [
+            {
+              "quote": "Stopping the first worker before its *next* write cannot stop the sales write already in progress.",
+              "role": "description comparison"
+            },
+            {
+              "quote": "an intentional exclusion of group pricing should be recorded as a scope decision",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m0-pr8031-r2-candidate",
+          "model": "gpt-6.1-sol",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "bc0b7307b53117d7",
+          "artifactDigest": "a20d43798f2396d78d8c4e14479abc73c0b20741928e417a80538da823c40d92",
+          "acceptedIssueKeys": [
+            "pcfg.pending_cla_action_required",
+            "pcfg.maintainer_direction_Q1_Q5"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "pcfg.lock_connection_loss_fencing",
+              "evidenceReference": "issueCatalog.pcfg.lock_connection_loss_fencing"
+            },
+            {
+              "issueKey": "pcfg.numeric_product_tax_lost",
+              "evidenceReference": "issueCatalog.pcfg.numeric_product_tax_lost"
+            },
+            {
+              "issueKey": "pcfg.explicit_order_recovery_destination",
+              "evidenceReference": "issueCatalog.pcfg.explicit_order_recovery_destination"
+            },
+            {
+              "issueKey": "pcfg.guard_late_input_modifier",
+              "evidenceReference": "issueCatalog.pcfg.guard_late_input_modifier"
+            },
+            {
+              "issueKey": "pcfg.guard_precision_canonicalization",
+              "evidenceReference": "issueCatalog.pcfg.guard_precision_canonicalization"
+            },
+            {
+              "issueKey": "pcfg.guard_stale_explicit_totals",
+              "evidenceReference": "issueCatalog.pcfg.guard_stale_explicit_totals"
+            },
+            {
+              "issueKey": "pcfg.conversion_hook_outer_commit_boundary",
+              "evidenceReference": "issueCatalog.pcfg.conversion_hook_outer_commit_boundary"
+            },
+            {
+              "issueKey": "pcfg.postcommit_exception_outcome_recovery",
+              "evidenceReference": "issueCatalog.pcfg.postcommit_exception_outcome_recovery"
+            }
+          ],
+          "qualificationLosses": [
+            "Approval/readiness language overstates design assurance when finalise commit and fencing guarantees are unproven.",
+            "Action-required workflow inventory is incomplete; runs.json records three, not two."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Good concise Q1-Q5 decomposition and accurate distinction between proposed tests and tested implementation.",
+              "Preserves spec-only scope and pending contribution requirements."
+            ],
+            "weaknesses": [
+              "Approves without identifying any of the supported integrity/tax/recovery counterexamples.",
+              "Names only CI and Mutation tests action-required; omits Enterprise Contribution Guard.",
+              "Structured evidence says two action-required workflows although three are captured."
+            ],
+            "verdictAndChaining": "PR #8031 marker present; no linked issue is captured so no Issue marker is required. Implementation gates appropriately not run for design-only scope.",
+            "feedback": "No captured inherited technical review requests. CLA is a pending contribution requirement; partner-label request is already satisfied. Q1-Q5 remain direction questions."
+          },
+          "excerpts": [
+            {
+              "quote": "no verified specification defect requires changes in this pass.",
+              "role": "description comparison"
+            },
+            {
+              "quote": "the tests in the spec are planned coverage for implementation phases.",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m1-pr8031-r2-baseline",
+          "model": "gpt-6-luna",
+          "variant": "baseline"
+        },
+        {
+          "blindId": "cd82ee666ece4158",
+          "artifactDigest": "2829dfeb19f65b8c889624fd44e20352960e6772aba43249a2930cdd9bf5157a",
+          "acceptedIssueKeys": [
+            "pcfg.pending_cla_action_required",
+            "pcfg.maintainer_direction_Q1_Q5"
+          ],
+          "unsupportedOrDisputed": [],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "pcfg.lock_connection_loss_fencing",
+              "evidenceReference": "issueCatalog.pcfg.lock_connection_loss_fencing"
+            },
+            {
+              "issueKey": "pcfg.numeric_product_tax_lost",
+              "evidenceReference": "issueCatalog.pcfg.numeric_product_tax_lost"
+            },
+            {
+              "issueKey": "pcfg.explicit_order_recovery_destination",
+              "evidenceReference": "issueCatalog.pcfg.explicit_order_recovery_destination"
+            },
+            {
+              "issueKey": "pcfg.guard_late_input_modifier",
+              "evidenceReference": "issueCatalog.pcfg.guard_late_input_modifier"
+            },
+            {
+              "issueKey": "pcfg.guard_precision_canonicalization",
+              "evidenceReference": "issueCatalog.pcfg.guard_precision_canonicalization"
+            },
+            {
+              "issueKey": "pcfg.guard_stale_explicit_totals",
+              "evidenceReference": "issueCatalog.pcfg.guard_stale_explicit_totals"
+            },
+            {
+              "issueKey": "pcfg.conversion_hook_outer_commit_boundary",
+              "evidenceReference": "issueCatalog.pcfg.conversion_hook_outer_commit_boundary"
+            },
+            {
+              "issueKey": "pcfg.postcommit_exception_outcome_recovery",
+              "evidenceReference": "issueCatalog.pcfg.postcommit_exception_outcome_recovery"
+            }
+          ],
+          "qualificationLosses": [
+            "No QA approval requirement is established for a docs-only diff routed to skip-qa; phrase should be conditional on applicable QA routing.",
+            "Checklist-section completeness is not evidence that finalisation recovery and line invariants are sound."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Readable compact grounding and explicit design-only testing/CI limits.",
+              "Correct all-three action-required run inventory, pinned range and no invented mutation claims."
+            ],
+            "weaknesses": [
+              "Confident all-clear misses supported v1 design failures.",
+              "Generic QA approval language conflicts with its own proposed spec-only skip-qa route."
+            ],
+            "verdictAndChaining": "PR #8031 marker present; no linked issue is captured so no Issue marker is required. Implementation gates appropriately not run for design-only scope.",
+            "feedback": "No captured inherited technical review requests. CLA is a pending contribution requirement; partner-label request is already satisfied. Q1-Q5 remain direction questions."
+          },
+          "excerpts": [
+            {
+              "quote": "I found no verified blocker, major, minor, or nit in the proposed design.",
+              "role": "description comparison"
+            },
+            {
+              "quote": "Required CI and QA approval still gate merge.",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m1-pr8031-r2-candidate",
+          "model": "gpt-6-luna",
+          "variant": "candidate"
+        },
+        {
+          "blindId": "fbf50e2547b161e4",
+          "artifactDigest": "59cf8b0e6fb694c5a46800799ec3ff35af579918aff0fca599c589829cd56a62",
+          "acceptedIssueKeys": [
+            "pcfg.guard_stale_explicit_totals",
+            "pcfg.lock_connection_loss_fencing",
+            "pcfg.group_pricing_stale_premise",
+            "pcfg.pending_cla_action_required",
+            "pcfg.maintainer_direction_Q1_Q5"
+          ],
+          "unsupportedOrDisputed": [
+            {
+              "issueKey": "pcfg.group_pricing_mandatory",
+              "decision": "unsupported",
+              "rationale": "Existing group capability supports correcting the description, not mandatory group expansion/blocker severity."
+            }
+          ],
+          "missingFunctionalDesign": [
+            {
+              "issueKey": "pcfg.numeric_product_tax_lost",
+              "evidenceReference": "issueCatalog.pcfg.numeric_product_tax_lost"
+            },
+            {
+              "issueKey": "pcfg.explicit_order_recovery_destination",
+              "evidenceReference": "issueCatalog.pcfg.explicit_order_recovery_destination"
+            },
+            {
+              "issueKey": "pcfg.guard_late_input_modifier",
+              "evidenceReference": "issueCatalog.pcfg.guard_late_input_modifier"
+            },
+            {
+              "issueKey": "pcfg.guard_precision_canonicalization",
+              "evidenceReference": "issueCatalog.pcfg.guard_precision_canonicalization"
+            },
+            {
+              "issueKey": "pcfg.conversion_hook_outer_commit_boundary",
+              "evidenceReference": "issueCatalog.pcfg.conversion_hook_outer_commit_boundary"
+            },
+            {
+              "issueKey": "pcfg.postcommit_exception_outcome_recovery",
+              "evidenceReference": "issueCatalog.pcfg.postcommit_exception_outcome_recovery"
+            }
+          ],
+          "qualificationLosses": [
+            "F1 overstates functional defect and demands behavior expansion; its stale-documentation portion is valid separately."
+          ],
+          "descriptionNotes": {
+            "strengths": [
+              "Strong mixed discount-plus-unchanged-tax/gross counterexample, and correctly corrects totalNetAmount semantics.",
+              "Supported independent-lock loss scenario is explicitly inferred, not reproduced.",
+              "Detailed current consumer references and clear contribution/CI/direction separation."
+            ],
+            "weaknesses": [
+              "Lead pricing blocker imposes new scope despite deliberate exclusion.",
+              "Misses numeric product tax, explicit destination, late modifier, precision and committed-outcome boundaries."
+            ],
+            "verdictAndChaining": "PR #8031 marker present; no linked issue is captured so no Issue marker is required. Implementation gates appropriately not run for design-only scope.",
+            "feedback": "No captured inherited technical review requests. CLA is a pending contribution requirement; partner-label request is already satisfied. Q1-Q5 remain direction questions."
+          },
+          "excerpts": [
+            {
+              "quote": "An API update adds a 10% discount while resending `taxAmount: 20` and `totalGrossAmount: 120`.",
+              "role": "description comparison"
+            },
+            {
+              "quote": "This is a design inference from the independent connections, not a reproduced runtime failure.",
+              "role": "description comparison"
+            }
+          ],
+          "trialId": "m0-pr8031-r1-baseline",
+          "model": "gpt-6.1-sol",
+          "variant": "baseline"
+        }
+      ],
+      "preference": {
+        "blindIds": [
+          "6c32f5b4e3c9c8cd"
+        ],
+        "reasons": [
+          "Finds three concrete current-consumer v1 defects with independent lock, tax and recovery evidence.",
+          "Avoids treating explicit customer-group exclusion or post-v1 replacement scope as mandatory defects.",
+          "No artifact is complete: 4550672c18c27fd1 adds the late-modifier case; 65870e84d8e0d597 adds precision and outer-commit timing; fbf50e2547b161e4 adds stale explicit totals. These complementary supported findings should survive consolidation after removing unsupported scope expansion."
+        ],
+        "trialIds": [
+          "m0-pr8031-r2-candidate"
+        ]
+      },
+      "limitations": [
+        "CPQ is a proposed design, not executable implementation; scenarios are static counterexamples, not reproduced runtime failures.",
+        "Postcommit exception and outer-transaction findings identify design ownership requirements; exact future implementation behavior depends on the seam chosen.",
+        "Current-target MERGEABLE/BLOCKED and pending CLA/action-required workflows do not imply failed tests.",
+        "Explicitly documented group-price/disable policies are evaluated as scope choices absent an actual violated contract."
+      ],
+      "feedbackDisposition": "No formal review or inline findings captured; CLA pending and partner-label comment correctly separated. Internal review rounds claimed in the spec are author history, not independent truth.",
+      "lockingAndRecoveryConclusion": "Actual pinned mechanism is a dedicated PostgreSQL session advisory lock, not Redis. There is no TTL takeover problem for a merely paused worker. Connection loss still releases exclusion while independent sales writes may commit. Retry-before-reevaluation handles ordinary process crash, but busy explicit-ID conversion and postcommit dispatch failure are separate uncovered outcomes.",
+      "source": {
+        "repository": "open-mercato/open-mercato",
+        "base": "3aa8463bd811086334c373ebc24ac028659b0271",
+        "head": "d42907d6eef7b75a259802feacd7ac7b072ce37d"
+      }
+    }
+  ]
+}

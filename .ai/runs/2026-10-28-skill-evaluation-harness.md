@@ -39,12 +39,12 @@ External tracker mutations are forbidden in trials. Use read-only sandbox execut
 
 - [x] 3.1 Produce paired JSON, CSV, Markdown and blinded descriptions — 3039eef
 - [x] 3.2 Test safety, malformed or failed runs, resume and metric accounting — a266c03
-- [ ] 3.3 Run six-PR comparison and document reuse for another skill
-- [ ] 3.4 Run repository gate and independent review, then publish the ready PR
+- [x] 3.3 Run six-PR comparison and document reuse for another skill — a266c03
+- [x] 3.4 Run repository gate and independent review, then publish the ready PR — 00156f6
 
 ## Implementation evidence
 
-Runtime snapshot: `a266c03`. All 15 disposable-repository/fake-Codex tests pass,
+Initial runtime snapshot: `a266c03`. All 15 initial disposable-repository/fake-Codex tests pass,
 including a second generic skill, baseline phase ordering, independent sessions,
 SIGTERM, native task/effort verification, unknown usage and resume drift. Runner:
 local Node and Git. Every configured validation command passed in order: lint,
@@ -53,9 +53,14 @@ design tests. The new suite is additive as `test:skill-eval`; CI configuration i
 unchanged. Documentation includes the generic config, native import, manual
 assessment/blinding, another-skill reuse and PR replay evidence requirements.
 
-The live six-case study, independent review and publication remain coordinator
-work. Raw traces, source snapshots, auth material and personal local paths remain
-outside the repository.
+The six-case study completed all 24 CLI trials with two pinned skill revisions,
+both requested models and high reasoning. Three independent blinded reviewers
+assessed all 24 artifacts. The original four-run native pilot remains a separate
+cohort. Results and description comparisons are published in
+[skills PR #140](https://github.com/open-mercato/skills/pull/140#issuecomment-6477327051).
+Raw traces, source snapshots, auth material and personal local paths remain
+outside the repository. The reusable tool ships separately in
+[PR #149](https://github.com/open-mercato/skills/pull/149); no merge is authorized.
 
 Independent-review follow-up: the reusable tool now counts every expected CLI
 pair, including pairs that never started, while native cohorts cover imported
@@ -65,4 +70,7 @@ whole-artifact digests and stale retry/reimport judgments are rejected. Legacy
 stored results receive derived report digests without mutation. All 22 evaluator
 tests and all six configured validation commands pass locally, including 39 UX
 tests. The frozen `a266c03` executor and live-study inputs/results were untouched.
-The coordinator's live-study/publication steps above remain unchecked.
+Independent re-review approves all three fixes in `00156f6`. Reporting the legacy
+study with that revision preserved every resource aggregate and attached 24
+digest-bound assessments without rewriting stored trial results. Final changes
+after that reviewed implementation are documentation and publication metadata.

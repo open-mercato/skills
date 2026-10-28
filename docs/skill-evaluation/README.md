@@ -269,3 +269,10 @@ For PR replay, use [the adapter recipe](pr-replay.md). To release disk space whi
 retaining results, run `cleanup --out /tmp/study-run`. It removes only owned
 worktrees/frozen inputs and keeps trial evidence/reports. Execution cannot resume
 after cleanup; prepare a fresh experiment instead.
+
+The [six-PR comparison in skills PR #140](https://github.com/open-mercato/skills/pull/140#issuecomment-6477327051)
+exercised 24 real CLI trials across two skill revisions and both requested models.
+Its four-run native pilot is reported separately. Execution used frozen runtime
+`a266c03`; reporter `00156f6` preserved the measurements and attached assessments
+bound to the exact judged artifacts. The results illustrate why shorter prose,
+fewer tool calls and better review quality need separate checks.

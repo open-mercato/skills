@@ -89,7 +89,12 @@ metadata; the original checkouts, branches, tracked files and global installed
 skills are untouched. The evaluated task cannot write to the worktrees. A failed
 preparation removes only worktrees/directories created by that preparation.
 
-`run` prints a dry plan unless `--execute` is explicit. Each trial starts a new
+`run` prints a dry plan unless `--execute` is explicit. Its `commandArgv` array
+contains the absolute Node executable, absolute CLI entrypoint and separate
+arguments. Invoke it with an argument-array process API, such as
+`execFile(commandArgv[0], commandArgv.slice(1))`; do not join it into shell text.
+Paths containing spaces, dollar substitutions or backticks remain literal data.
+Each trial starts a new
 ephemeral Codex process, closes stdin, uses argument arrays without a shell, and
 enforces the read-only sandbox. The prompt names the assigned pinned collection,
 applies repository-local override extensions and AGENTS guidance, and prohibits
@@ -224,7 +229,10 @@ real cases and independently judged quality are needed to interpret savings.
 
 ## Import an explicit native session
 
-Native trials are a separate backend/cohort and are never pooled with CLI costs:
+Native trials are a separate backend/cohort and are never pooled with CLI costs.
+Each imported result and import reply records its numbered `attempt`; assessment
+identity still binds to the full artifact digest, so an unchanged artifact can
+retain its judgment:
 
 ```sh
 node scripts/skill-eval.mjs import --out /tmp/study-run --session /tmp/selected-trial.jsonl --pair m0-case-001-r1 --variant baseline --model gpt-6.1-sol --effort high --cohort native-pilot --artifact /tmp/selected-artifact.txt

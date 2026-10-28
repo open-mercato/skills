@@ -14,13 +14,13 @@ const execute = promisify(execFile);
 const cli = path.resolve('scripts/skill-eval.mjs');
 const git = async (directory, ...args) => (await execute('git', ['-C', directory, ...args])).stdout.trim();
 
-async function fixture(t, { mode = 'success', skillName = 'describe-change' } = {}) {
+async function fixture(t, { mode = 'success', skillName = 'describe-change', outputName = 'run' } = {}) {
   const temporary = await fs.mkdtemp(path.join(os.tmpdir(), 'skill-eval-test-'));
   const collection = path.join(temporary, 'collection');
   const source = path.join(temporary, 'source');
   const configDirectory = path.join(temporary, 'config');
   const context = path.join(configDirectory, 'evidence');
-  const out = path.join(temporary, 'run');
+  const out = path.join(temporary, outputName);
   for (const directory of [collection, source, context]) await fs.mkdir(directory, { recursive: true });
   for (const directory of [collection, source]) {
     await git(directory, 'init', '-q');
@@ -128,6 +128,18 @@ test('a second skill runs using the same contract; arguments never enter a shell
   await assert.rejects(fs.access(path.join(setup.temporary, 'SHOULD_NOT_EXIST')));
 });
 
+test('dry plan exposes executable arguments that preserve shell metacharacters as path data', async (t) => {
+  const setup = await fixture(t, { outputName: 'run $(touch dollar-marker) `touch tick-marker`' });
+  await prepare(setup.configPath, setup.out);
+  const dry = await run(setup.out);
+  assert.ok(!('command' in dry));
+  assert.deepEqual(dry.commandArgv, [process.execPath, cli, 'run', '--out', await fs.realpath(setup.out), '--execute']);
+  const result = await execute(dry.commandArgv[0], dry.commandArgv.slice(1), { cwd: setup.temporary });
+  assert.equal(JSON.parse(result.stdout).completed, 2);
+  await assert.rejects(fs.access(path.join(setup.temporary, 'dollar-marker')));
+  await assert.rejects(fs.access(path.join(setup.temporary, 'tick-marker')));
+});
+
 test('config rejects versions, duplicate cases, invalid refs, symlink escapes and nested outputs', async (t) => {
   const setup = await fixture(t);
   for (const change of [
@@ -221,6 +233,7 @@ test('native imports deduplicate response usage, verify model and keep cohorts s
   assert.equal(await fs.readFile(path.join(setup.out, '.running'), 'utf8'), '{}');
   await fs.rm(path.join(setup.out, '.running'));
   const result = await importNative(setup.out, options);
+  assert.equal(result.attempt, 2);
   assert.equal(result.usage.totalTokens, 50);
   assert.equal(result.modelVerification, 'metadata-matched');
   assert.equal(result.effortVerification, 'metadata-matched');
@@ -496,6 +509,7 @@ test('assessment digest includes structured findings and rejects changed native 
   artifact.findings[0].detail = 'Different finding';
   await fs.writeFile(artifactFile, JSON.stringify(artifact));
   const second = await importNative(setup.out, options);
+  assert.equal(second.attempt, first.attempt + 1);
   assert.notEqual(first.artifactDigest, second.artifactDigest);
   await assert.rejects(report(setup.out, { assessmentsFile: assessmentFile }), /Stale assessment/u);
   assert.equal(artifactDigest({ findings: [], artifactText: 'Stable' }), artifactDigest({ artifactText: 'Stable', findings: [] }));

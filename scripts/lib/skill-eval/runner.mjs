@@ -79,7 +79,7 @@ export async function run(output, { execute: executeTrials = false, retryFailed 
   const jobs = pairs(manifest);
   return { dryRun: true, pairs: jobs.length, trials: jobs.length * 2,
     models: manifest.config.models, order: 'all baseline trials finish before candidate trials start',
-    command: `node scripts/skill-eval.mjs run --out ${JSON.stringify(root)} --execute` };
+    commandArgv: [process.execPath, fileURLToPath(new URL('../../skill-eval.mjs', import.meta.url)), 'run', '--out', root, '--execute'] };
 }
 
 async function executeRun({ root, manifest }, retryFailed) {
@@ -187,9 +187,10 @@ async function importSession(root, manifest, { session, pairId, variant, model, 
   const artifact = parseArtifact(artifactFile ? await fs.readFile(artifactFile, 'utf8') : parsed.artifactText);
   const id = `${pairId}-${variant}`;
   const { directory, names } = await attemptsFor(root, id);
-  const attemptDirectory = path.join(directory, `attempt-${names.length ? Number(names.at(-1).slice(8)) + 1 : 1}`);
+  const attempt = names.length ? Number(names.at(-1).slice(8)) + 1 : 1;
+  const attemptDirectory = path.join(directory, `attempt-${attempt}`);
   await fs.mkdir(attemptDirectory, { mode: 0o700 });
-  const result = { version: 1, id, pairId, caseId: pair.caseId, repetition: pair.repetition, variant,
+  const result = { version: 1, id, pairId, caseId: pair.caseId, repetition: pair.repetition, variant, attempt,
     skill: manifest.config.skill.name, skillCommit: manifest.variants[variant].commit,
     requestedModel: model, reasoningEffort: effort, backend: 'native-session-import', cohort,
     importedAt: new Date().toISOString(), sessionDigest: digest(content), elapsedSeconds: null,
@@ -199,6 +200,6 @@ async function importSession(root, manifest, { session, pairId, variant, model, 
     modelVerification: parsed.observedModels.length ? 'metadata-matched' : 'unverified-import',
     effortVerification: parsed.observedEfforts.length ? 'metadata-matched' : 'unverified-import' };
   await writeJson(path.join(attemptDirectory, 'result.json'), result);
-  return { id, cohort, status: result.status, artifactDigest: result.artifactDigest, usage: parsed.usage, modelVerification: result.modelVerification,
+  return { id, cohort, attempt, status: result.status, artifactDigest: result.artifactDigest, usage: parsed.usage, modelVerification: result.modelVerification,
     effortVerification: result.effortVerification };
 }

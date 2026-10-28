@@ -72,5 +72,16 @@ tests and all six configured validation commands pass locally, including 39 UX
 tests. The frozen `a266c03` executor and live-study inputs/results were untouched.
 Independent re-review approves all three fixes in `00156f6`. Reporting the legacy
 study with that revision preserved every resource aggregate and attached 24
-digest-bound assessments without rewriting stored trial results. Final changes
-after that reviewed implementation are documentation and publication metadata.
+digest-bound assessments without rewriting stored trial results.
+
+Additional review follow-up: dry plans expose executable `commandArgv` data,
+with absolute Node/CLI paths, rather than shell command text. A regression invokes
+that array from another directory with literal dollar substitutions/backticks in
+the output path and verifies no marker creation. Native import results also
+record their numeric attempt. The existing UX outside-Git fixture now sets a
+temporary Git ceiling for only its fallback assertion and restores the prior
+environment in `finally`; production UX helpers are unchanged. Its failure was
+reproduced with an owned repository-local TMPDIR before the fix. All 23 evaluator
+tests and all six configured gate commands pass locally; the full 39-test UX gate
+also passes with repository-local TMPDIR. Frozen study/executor files remain
+untouched. Tracker reconciliation and publication remain coordinator work.

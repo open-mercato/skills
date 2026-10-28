@@ -1,3 +1,68 @@
+# Unreleased
+
+## Features
+
+- Add `om-ux-design` for detailed screens from specifications, with repository
+  component reuse, optional portable HTML, review feedback and verified handoff.
+  Preserve the separate discovery prototype workflow.
+
+## Fixes
+
+- Preserve literal template values and the requested repository root in portable
+  design helpers; validate themed extraction tokens and review comment imports.
+- Preserve deleted feedback and earlier-clock replies across reviewer clock
+  differences, and keep screen navigation and Back working in presentation and
+  click-through modes.
+
+# 1.1.0 (2026-08-13)
+
+## Highlights
+<!-- TODO: Highlights — auto-update-changelog leaves this blank for the human author to fill in. -->
+
+## ✨ Features
+- ✨ Reframe doc-originated spec PRs into feature PRs. (#46) *(@pkarw)*
+- ✨ Default to plain engine, gate loop behind >20 steps or `--loop`. (#47) *(@pkarw)*
+- ✨ Templated reporting, autofix opt-in, atomic spec PRs, idempotent label rationale. (#49) *(@pkarw)*
+- ✨ Self-route plain vs loop — engine selection moves into the engine, threshold configurable. (#54) *(@matgren)*
+- ✨ Plan-time executor dispatch — `Exec` column in the Tasks table + abstract model tiers. (#55) *(@matgren)*
+- ✨ `om-brainstorm` — the divergent conversation that routes into the pipeline. (#58) *(@matgren)*
+- ✨ Address reviewer comments already posted on the PR. (#66) *(@pkarw)*
+- ✨ `om-ux-shape`, `om-ux-setup`, `om-ux-review-pr` — the UX judgment layer. (#57) *(@zielivia)*
+- ✨ Add `om-pr-autopilot` PR dispatcher skill. (#65) *(@wojciechszyjka)*
+- ✨ Adopt PRs that were never planned instead of giving up on them. (#69) *(@pkarw)*
+- ✨ `om-pipeline-retro`: classify finished runs and rank what second passes cost. (#68) *(@matgren)*
+- ✨ Test-env credentials become references — password values never enter the agent's context. (#81) *(@matgren)*
+
+## 🐛 Fixes
+- 🐛 Consolidate label rationale into one comment, strengthen PR body placeholders (fixes #44). (#45) *(@pkarw)*
+- 🐛 Deduplicate chained review passes. (#48) *(@pkarw)*
+- 🔧 Mutate GitHub labels, assignees, and bodies through REST. (#67) *(@pkarw)*
+- 🔧 Report before CI, label the watch phase with `ci-monitoring`, bound the wait. (#73) *(@pkarw)*
+- 🔧 Clear the Critical/High skills.sh audit findings without changing skill behavior. (#76) *(@matgren)*
+- 🐛 Make close-keyword matching configurable (fixes #75). (#79) *(@pkarw)*
+
+## 🛠️ Improvements
+- 🛠️ Simplify algorithms — remove redundant reads and a dead branch (behavior-preserving). (#51) *(@pkarw)*
+- 🛠️ Chore/simplify algorithms. (#53) *(@pkarw)*
+- 🛠️ Keep the pinned agent-browser at the latest stable release. (#78) *(@matgren)*
+
+## 📝 Specs & Documentation
+- 📝 Explain how to update installed skills. (#42) *(@pkarw)*
+- 📝 Codify skill authoring standards in AGENTS.md & CODE_REVIEW.md. (#61) *(@pkarw)*
+- 📝 Credit the author, not the merger. (#74) *(@patzick)*
+- 📝 Canonical Security boundaries section for every skill with a non-clean audit rating. (#77) *(@matgren)*
+- 📝 Split safe no-op review detection from comment budgeting. (#80) *(@wojciechszyjka)*
+
+## 👥 Contributors
+
+- @pkarw
+- @matgren
+- @zielivia
+- @wojciechszyjka
+- @patzick
+
+---
+
 # 1.0.0 (2026-07-21)
 
 ## Highlights

@@ -10,10 +10,14 @@ Before touching anything, remember the reuse guard: when a PR already exists for
 
 **Prefer the `om-open-pr` skill when installed** — reuse its push + label normalization instead of duplicating it. `om-open-pr` is an **optional** enhancement: when it is absent, perform the mechanics inline via the tracker operations below so this skill works standalone. Behavior is identical either way — the same PR, the same labels.
 
+## Spec-only PRs stay design-only
+
+A PR whose branch changes only spec/design files (`$SPECS_DIR`, docs areas, the run folder) is a **spec PR** — an atomic design deliverable. A resume never lands implementation code on it (the skill-body step 6 guard stops before that happens): implementation ships on its **own PR** via `om-auto-implement-spec`, which links the spec PR with `Refs #{prNumber}`. A branch that already mixes spec and implementation code from an earlier run is an implementation PR and is finished as one.
+
 ## Update the PR body
 
 - If every row in the Tasks table now has `Status: done`, flip the PR body's `Status: in-progress` to `Status: complete` **and flip the PR from draft to ready via mark-pr-ready** — `om-auto-create-pr-loop` leaves the PR a draft while unfinished, so completing the resume is what promotes it. A resume that stays `in-progress` leaves the PR a draft the user can watch and re-enter.
-- Extend the `What Changed` / `Tests` sections with the new work from this resume.
+- Refresh agent-owned prose using `references/pr-body-template.md`: describe the full current change and validation, replacing stale text instead of appending a run history. Preserve adopted human-authored prose. The summary comment carries only this resume’s delta and next action.
 
 ## Label normalization (resume state machine)
 
@@ -25,7 +29,7 @@ Labels — every mutation goes through the `apply_label`/`label_exists` guards f
 - Preserve the priority label; raise it only when the resume materially widens scope (e.g. now touches auth, money, data scoping, or a release-blocking area) and comment why. If the PR somehow has no priority label, infer and apply one per the config taxonomy.
 - Preserve the risk label; raise it only when the resume materially widens the blast radius (e.g. now touches auth, money, data scoping, migrations, encryption, event reliability, shared contracts, or spans more areas) and comment why. If the PR somehow has no risk label, infer and apply one per the config taxonomy.
 - Never add `qa-approved` and never set the `qa` pipeline label from this skill. When `qaGate` is on, a `needs-qa` PR may sit in `merge-queue` while the QA-approval gate blocks the merge until a QA reviewer adds `qa-approved`; when `qaGate` is off, `needs-qa` is advisory only.
-- After any label change, post a short PR comment explaining why.
+- Maintain the single consolidated `🏷️ label rationale` comment instead of per-change comments: on any label change, find the `` 🤖 `om-auto-continue-pr-loop` — 🏷️ label rationale `` marker via **list-issue-comments** and rewrite that comment via **update-comment** to the current label state — one label per line with its emoji and a full-sentence reason; create it when absent, never post a second (the format and label emoji map are the shared contract in `om-open-pr`'s label normalization).
 
 ## Final tracking-file updates before releasing the lock
 

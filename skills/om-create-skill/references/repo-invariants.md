@@ -63,7 +63,7 @@ A generated skill that touches PRs/issues should reuse these, not parallel copie
   created — never touch the primary worktree.
 - **Label taxonomy**: pipeline labels (`review`, `changes-requested`, `qa`,
   `qa-failed`, `merge-queue`, `blocked`, `do-not-merge`), meta labels
-  (`needs-qa`, `skip-qa`, `qa-approved`, `qa-self-verified`, `in-progress`), one
+  (`needs-qa`, `skip-qa`, `qa-approved`, `qa-self-verified`, `in-progress`, `ci-monitoring`), one
   `priority-*` and one `risk-*`; every mutation goes through the descriptor's
   label guards.
 - **Chain handoff contract**: emit the chaining reference lines on success —

@@ -24,6 +24,16 @@ Run variables to fill after the preflight:
 - `CURRENT_USER` via the tracker operation **current-user**.
 - `REPO` via **repo-info** (or the `--repo` override).
 - `SINCE_DATE` resolved from `--since` as described under the skill body's Arguments section (`last-release` → most recent release heading date in `CHANGELOG.md`, e.g. `# X.Y.Z (YYYY-MM-DD)`; unparseable → last 7 days).
+- `CLOSE_KEYWORDS` — the close-keyword vocabulary for the step 3.2 fallback regex: the built-in English list plus the config's optional `closeKeywords` array.
+
+  ```bash
+  # Built-ins always apply; closeKeywords extends them, never replaces them.
+  CLOSE_KEYWORDS="fix fixes fixed close closes closed resolve resolves resolved"
+  EXTRA_KEYWORDS=$(jq -r '.closeKeywords // [] | .[] | select(type == "string" and length > 0 and (test("\\s") | not))' .ai/agentic.config.json)
+  CLOSE_KEYWORDS="$CLOSE_KEYWORDS $EXTRA_KEYWORDS"
+  ```
+
+  Both the tracker's `closingIssuesReferences` parse and the built-in list recognize English only, which is why the array exists: a repository writing PR bodies in another language (`Zamyka #88`, `Behebt #62`) gets no signal from either without it. Regex-escape every configured entry before OR-ing it into the pattern, match it case-insensitively, and require the same adjacency the built-ins use — the keyword, then whitespace, then `#{digits}` — so a keyword can never fire as a substring of a longer word. Each entry is a single word: the adjacency rule puts whitespace between the keyword and `#N`, so a multi-word phrase could never match and the `select` above drops it. Skip every malformed entry (non-string, empty, or containing whitespace) with a logged warning naming it, instead of failing the run, and report in step 7 how many configured keywords were in effect when the run produced unmatched mentions.
 
 Label mutations on issues go through the label guards from the tracker descriptor (`label_exists`, `apply_issue_label`, `remove_issue_label`) — existence check + `labels.enabled`, exactly as the descriptor defines them. This skill operates on `$REPO`, so use the cross-repo variant the descriptor describes: the guards target `$REPO` (both the mutation and the label-existence check) rather than the current checkout.
 

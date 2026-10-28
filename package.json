@@ -14,6 +14,16 @@
     "lint": "scripts/lint.sh",
     "test:agent-harness": "node scripts/test-agent-harness.mjs",
     "test:browser-providers": "node scripts/test-browser-providers.mjs",
-    "test:agent-browser-codex": "bash scripts/test-agent-browser-codex.sh"
+    "test:tracker-providers": "node scripts/test-tracker-providers.mjs",
+    "test:classify-runs": "node scripts/test-classify-runs.mjs",
+    "test:bump-agent-browser": "node scripts/test-bump-agent-browser.mjs",
+    "test:pr-titles": "node scripts/test-pr-titles.mjs",
+    "test:close-keywords": "node scripts/test-close-keywords.mjs",
+    "test:discovery-contracts": "node scripts/test-discovery-contracts.mjs",
+    "test:spec-writing-data-model": "node scripts/test-spec-writing-data-model.mjs",
+    "test:migrated-skill-tools": "node scripts/test-migrated-skill-tools.mjs",
+    "test:osv-scan": "node scripts/test-osv-scan.mjs",
+    "test:agent-browser-codex": "bash scripts/test-agent-browser-codex.sh",
+    "test:ux-design": "node --test scripts/test-ux-design.mjs scripts/test-ux-design-comments.mjs"
   }
 }

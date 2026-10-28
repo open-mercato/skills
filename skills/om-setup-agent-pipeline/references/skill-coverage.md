@@ -1,13 +1,11 @@
 # Cross-skill coverage check
 
-Skills in this collection delegate to each other by name (for example the autofix
+Skills in this collection delegate to each other by name (e.g. the autofix
 chain `om-verify-in-repo` → `om-root-cause` → `om-fix` → `om-open-pr` →
 `om-auto-review-pr`) and point at each other's reference files
-(`om-<skill>/references/<file>` — most commonly the tracker and browser
-descriptors shipped inside `om-setup-agent-pipeline`). A cherry-picked install
-can leave those references dangling: a skill runs, names its next step, and the
-step's skill is simply not installed. This check finds every dangling reference
-and produces one ready-to-paste command that installs everything missing.
+(`om-<skill>/references/<file>`). A cherry-picked install can leave those
+references dangling. This check finds every dangling reference and produces one
+ready-to-paste command that installs everything missing.
 
 Run it during setup (workflow step "Verify cross-skill coverage") and any time
 the user reports a skill "not found" mid-pipeline.
@@ -41,7 +39,7 @@ Runnable check (POSIX shell; run from the repository root so repo-local
 ```bash
 # SKILLS_ROOT: parent directory of this skill's installed directory.
 SKILLS_ROOT=${SKILLS_ROOT:-"$HOME/.claude/skills"}
-ROSTER="om-apply-upgrade-notes om-approve-merge-pr om-auto-continue-pr om-auto-continue-pr-loop om-auto-create-pr om-auto-create-pr-loop om-auto-fix-issue om-auto-fix-pr om-auto-implement-spec om-auto-manage-issues om-auto-qa-pr om-auto-review-pr om-auto-update-changelog om-auto-write-spec om-check-and-commit om-close-fixed-issues om-code-review om-create-skill om-fix om-fix-issue om-fix-issue-multi om-fix-issue-multi-optimized om-fix-issue-optimized om-followup-issue-from-pr om-harness om-implement-feature om-implement-feature-multi om-implement-feature-multi-optimized om-implement-feature-optimized om-integration-tests om-merge-buddy om-open-pr om-prepare-issue om-prepare-test-env om-review-prs om-root-cause om-setup-agent-harness om-setup-agent-pipeline om-spec-writing om-verify-in-repo"
+ROSTER="om-app-spec-writing om-apply-upgrade-notes om-approve-merge-pr om-auto-audit-dependencies om-auto-continue-pr om-auto-continue-pr-loop om-auto-create-pr om-auto-create-pr-loop om-auto-fix-issue om-auto-fix-pr om-auto-implement-spec om-auto-manage-issues om-auto-qa-pr om-auto-qa-scenarios om-auto-review-pr om-auto-sec-report om-auto-sec-report-pr om-auto-update-changelog om-auto-write-spec om-backlog om-brainstorm om-check-and-commit om-close-fixed-issues om-code-review om-create-agents-md om-create-skill om-discover om-eject-and-customize om-evolve-harness om-figma-design-with-ds om-fix om-fix-issue om-fix-issue-multi om-fix-issue-multi-optimized om-fix-issue-optimized om-followup-issue-from-pr om-framework-context om-gap-analysis om-harness om-help om-implement-feature om-implement-feature-multi om-implement-feature-multi-optimized om-implement-feature-optimized om-integration-tests om-judge-agent-session om-merge-buddy om-mockup-prototype om-open-pr om-pipeline-retro om-pr-autopilot om-pre-implement-spec om-prepare-issue om-prepare-test-env om-qa-buddy om-review-prs om-root-cause om-setup-agent-harness om-setup-agent-pipeline om-setup-discovery-pipeline om-share-this-session om-smart-test om-spec-writing om-synthetic-users om-troubleshooter om-ux-design om-ux-review-pr om-ux-setup om-ux-shape om-verify-in-repo"
 missing=""
 add_missing() { case " $missing " in *" $1 "*) ;; *) missing="$missing $1" ;; esac; }
 for dir in "$SKILLS_ROOT"/om-*/; do

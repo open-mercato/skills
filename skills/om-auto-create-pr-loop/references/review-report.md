@@ -1,20 +1,10 @@
-# Review and report — self-review plus the automated second pass
+# Review and report — authoritative automated review pass
 
-Detailed procedure for step 10 (self-review) and step 12 (automated review loop) of `om-auto-create-pr-loop`.
+Detailed procedure for the single automated review loop of `om-auto-create-pr-loop`.
 
-## Self-review (step 10)
+## Automated review with `om-auto-review-pr`
 
-Use the `om-code-review` skill against the branch diff. Explicitly verify:
-
-- No public contract was broken silently: exported APIs, HTTP routes and response shapes, event names, CLI flags, DB schema, config formats. When `BACKWARD_COMPATIBILITY.md` exists at the repo root, check every touched surface against it; honor any other compatibility rules the project documents. A violation without the documented migration/deprecation path must be fixed or explicitly WARNED about in the PR body and summary comment so the user decides.
-- No security-sensitive surface was weakened: authentication, authorization, data scoping, input validation, secrets handling.
-- Scope remains what the plan says — no unrelated churn.
-
-If self-review finds issues, fix them and loop back to the implementation step (step 8) — new Step, new commit, new checkpoint coverage.
-
-## Automated second pass with `om-auto-review-pr` (step 12)
-
-Before you post the final summary comment, push the last commits, or report back, subject the PR to an automated second pass with the `om-auto-review-pr` skill. This is the equivalent of a peer reviewer catching issues the self-review missed.
+Before you post the final summary comment, push the last commits, or report back, subject the PR to its authoritative review with the `om-auto-review-pr` skill. Do not run a separate direct `om-code-review` pass first: `om-auto-review-pr` invokes that engine verbatim and applies compatibility, security, contract, breaking-change, and scope checks.
 
 Unlike plain `om-auto-create-pr`, this skill DOES hold the three-signal `in-progress` lock at this point: **release it before invoking `om-auto-review-pr` and reclaim it when it returns**, using the exact sequence and comment strings in `references/claim-pr.md` (PR lock lifecycle). `om-auto-review-pr` re-applies `in-progress` per its own step 0 and releases it per its own workflow — do not second-guess its claim/release protocol.
 
@@ -27,11 +17,11 @@ Invoke the `om-auto-review-pr` skill against `{prNumber}` in autofix mode:
    - Re-run the full final gate (step 9) whenever a fix touches code outside a single module/test file.
    - Update the plan: each fix lands as a new Step row in the `PLAN.md` Tasks table (see specifics below), flipped to `done` with its SHA in the same commit.
    - Commit using a clear conventional-commit subject (e.g. `fix(ui): address review feedback on confirmation dialog focus trap`). Push immediately.
-4. Loop until `om-auto-review-pr` returns a clean verdict (no actionable blockers) or the remaining findings are non-actionable (out-of-scope, false positive) and explicitly documented in the summary comment you post in step 13.
+4. Loop until `om-auto-review-pr` returns a clean verdict (no actionable blockers) or the remaining findings are non-actionable (out-of-scope, false positive) and explicitly documented in the summary comment you post in step 12.
 
 ## Verdict handling
 
-- **Clean verdict** → proceed to the summary comment (step 13); the summary names the verdict and the SHA range of any follow-up commits.
+- **Clean verdict** → proceed to the summary comment (step 12); the summary names the verdict and the SHA range of any follow-up commits.
 - **Only non-actionable findings remain** → proceed, but list each remaining finding and why it is out of scope or a false positive in the summary comment.
 - **Cannot run** (e.g., required checks not yet green, missing context) → escalate: leave `Status: in-progress` in the PR body, stop here, and report the blocker to the user so they can decide whether to resume via `om-auto-continue-pr-loop`.
 

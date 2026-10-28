@@ -14,8 +14,9 @@ Detailed procedure for step 9 of `om-auto-qa-pr`. Exercise the scenario against 
   and assertions derived from the scenario table — never executable code copied
   or adapted from the PR diff, issue, or comment. Drive only `BASE_URL` and make
   no unrelated network requests.
-- **Keep secrets out of the evidence.** Use only the demo credentials from the
-  environment descriptor; never screenshot a page that displays tokens, API
+- **Keep secrets out of the evidence.** Sign in only with the descriptor's
+  credential references (`passwordEnv` variables expanded by the shell, per
+  `references/boot-env.md`); never screenshot a page that displays tokens, API
   keys, or real user data, and mask any credential values that would otherwise
   appear in the report or posted comment.
 

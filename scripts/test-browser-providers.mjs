@@ -26,6 +26,12 @@ const prepare = readSkill("om-prepare-test-env");
 const envDescriptor = read("skills/om-prepare-test-env/references/env-descriptor.md");
 const qaPr = readSkill("om-auto-qa-pr");
 const integration = readSkill("om-integration-tests");
+const repoConfig = JSON.parse(read(".ai/agentic.config.json"));
+const lintWorkflow = read(".github/workflows/lint.yml");
+const installedAgentBrowser = read(".ai/browsers/agent-browser.md");
+const shippedGithubTracker = read("skills/om-setup-agent-pipeline/references/trackers/github.md");
+const installedGithubTracker = read(".ai/trackers/github.md");
+const gitignore = read(".gitignore");
 
 const operations = [
   "ensure-installed",
@@ -101,4 +107,35 @@ for (const consumer of [qaPr, integration]) {
   }
 }
 
-console.log(`Browser provider contract OK (${operations.length} operations, ${matrix.length} platform targets).`);
+// This repository consumes the same pipeline contract it ships. Keep its
+// installed config and provider descriptors under regression coverage so a
+// skills upgrade cannot silently leave the repository's own automation stale.
+assert.equal(repoConfig.browser?.provider, "agent-browser");
+assert.deepEqual(repoConfig.engine, {
+  loopStepThreshold: 20,
+  executorTier: "standard",
+  stepReview: "final",
+});
+assert.deepEqual(repoConfig.closeKeywords, []);
+assert.ok(repoConfig.labels?.meta?.includes("ci-monitoring"));
+
+const ciCommands = [...lintWorkflow.matchAll(/^\s+run:\s+(.+)$/gm)]
+  .map((match) => match[1].trim());
+assert.deepEqual(
+  repoConfig.validation?.commands,
+  ciCommands,
+  "repository validation.commands must mirror the lint workflow in order",
+);
+assert.equal(
+  installedAgentBrowser,
+  agentBrowser,
+  "repository agent-browser descriptor must match the shipped descriptor",
+);
+assert.equal(
+  installedGithubTracker,
+  shippedGithubTracker,
+  "repository GitHub tracker descriptor must match the shipped descriptor",
+);
+assert.match(gitignore, /^\.ai\/qa\/test-env\.env$/m);
+
+console.log(`Browser provider and repository pipeline contract OK (${operations.length} operations, ${matrix.length} platform targets).`);

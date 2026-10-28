@@ -1,57 +1,79 @@
 # Review report output format
 
-The report skeleton `om-code-review` produces at workflow step 8. Callers
-(`om-auto-review-pr`, `om-review-prs`, the self-review steps of
-`om-auto-create-pr` / `om-auto-continue-pr`) consume the verdict and the
-blocker/major findings from this structure.
-
-Use this structure for every review:
+Use one decision-oriented review as the authoritative finding record. Keep
+`Verdict`, **approve / request changes**, and the severity headings
+**Blocker / Major / Minor / Nit** explicit so callers can route the result.
+Aim for 150–300 words before the validation table; expand for actionable
+findings and evidence, never to fill a section. A short review still runs the
+full checklist.
 
 ```markdown
-# Code Review: {PR title or change description}
-
-## Summary
-{1-3 sentences: what the change does, overall assessment}
+# 🔍 Code Review: {PR title or change description}
 
 ## Verdict
-{approve | request changes} — {one-line justification}
+{✅ approve | ❌ request changes} — {the concrete reason and next action}
 
-## Validation Gate
+## 🎯 Summary
+{Who can do what after this change, or which failure it fixes; one or two
+sentences. Name the main area and any shared surface that changes the decision.}
 
-| Command | Status | Notes |
-|---------|--------|-------|
-| {validation.commands[0]} | PASS/FAIL | |
-| {validation.commands[1]} | PASS/FAIL | |
-| {…one row per configured command, in order} | | |
+## Direction and scope
+{Only when a product/architecture choice needs attention: the choice, current
+consumer or cited plan, durable commitment, and recommended action. Distinguish
+an observed fact from an inference or something not checked.}
 
 ## Findings
 
-### Blocker
-{Must fix before merge — security, data integrity, data scoping, contract breaks, failing gates}
+### ⛔ Blocker
+- `{file:line}` — {trigger → wrong behavior or broken rule → concrete fix}.
+  {Evidence or repo rule link when needed to establish the claim.}
 
-### Major
-{Correctness bugs, architecture violations, missing regression tests, weakened assertions}
+### ⚠️ Major
+- `{file:line}` — {trigger → consequence → concrete fix}.
 
 ### Minor
-{Convention violations, suboptimal patterns, readability}
+- `{file:line}` — {specific improvement and its benefit}.
 
 ### Nit
-{Style suggestions, optional polish}
+- `{file:line}` — {optional suggestion and its reason}.
 
-## Breaking Changes
-- [ ] No exported/public symbol removed or renamed without a deprecation path
-- [ ] No function signature changed in a breaking way (required params removed or reordered, return type changed)
-- [ ] No required type field removed or narrowed
-- [ ] No HTTP route URL removed or renamed; no method changed for an existing operation
-- [ ] No field removed or retyped in an existing response shape
-- [ ] No event or message name renamed or removed; no payload field removed
-- [ ] No CLI command or flag renamed or removed; no machine-parsed output format changed
-- [ ] No database table or column renamed or removed; no column type narrowed
-- [ ] No config key renamed and no default changed silently
-- [ ] Where a contract had to change: old surface kept working through a deprecation window, with migration notes
+## 🧪 Validation Gate
 
-## Test Coverage
-{covered | gaps, with the exact test cases to add}
+| Command | Status | Evidence or limitation |
+|---------|--------|------------------------|
+| {each configured command, in order} | PASS / FAIL / NOT RUN | {failure, useful evidence link, or why not run} |
+
+## 💥 Breaking Changes
+{Only touched contracts with a material consequence: what becomes a dependency,
+who consumes it, and any migration/deprecation path or uncovered risk.}
+
+## 🧪 Test Coverage
+{Changed behavior proved by the tests; material gaps with exact cases and files.
+Link evidence; do not repeat a missing-test finding already listed above.}
 ```
 
-Omit empty severity sections. Mark passing checklist items with `[x]` and failing with `[ ]` plus an explanation.
+- Keep Verdict, Summary, and Validation Gate. Omit empty findings, optional
+  sections, passing checklists, and routine praise. Per-command results remain
+  mandatory; NOT RUN is a limitation, never evidence of a pass. Any unexecuted
+  configured command keeps the verdict at request changes until validation runs.
+- Separate direction/scope choices from verified defects. A planned consumer
+  or an unavailable roadmap is a decision dependency, not automatically a bug.
+  Report a repository-rule violation only with the applicable rule and code
+  evidence; preference alone does not establish a major or blocker.
+- Check current consumers before claiming there are none. Name the searched
+  symbols, paths, revision, and relevant exclusions; say “not found in this
+  search” rather than claiming absence across an ecosystem you did not inspect.
+- State whether consequential claims were observed, inferred, or not checked
+  where the distinction matters. Do not infer runtime behavior solely from a
+  screenshot or claim a broad impact from line count alone.
+- Add a small Mermaid diagram only when connections explain the decision more
+  clearly than prose. Label nodes existing/new/planned, label each relationship,
+  and give a one-sentence takeaway. Do not duplicate the same inventory in prose.
+- Re-reviews lead with what changed since the prior review. Link resolved
+  findings and retain every unresolved actionable finding with its severity.
+  Preserve inherited-feedback author, source link, and disposition without
+  repeating the same issue in several sections.
+- When the review was posted, final session replies link it and give verdict,
+  validation limit, and next action in 3–6 lines. For a local review, return the
+  report itself. Do not paste a posted report a second time.
+- Never include secrets, credentials, or tokens, including in quoted code.

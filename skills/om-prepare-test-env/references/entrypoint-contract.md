@@ -56,8 +56,10 @@ of this section. In order:
    `"status":"running"`, reuse only when **all** pass (a state file is a claim,
    not proof): recorded PID alive (`kill -0`); real readiness probes with
    bounded timeouts at increasing depth (app shell → unauthenticated API →
-   one authenticated round trip when credentials are recorded — the deep probes
-   catch an app that lost its database); fresh (age within TTL **and** no
+   one authenticated round trip when credentials are recorded — the script
+   sources `credentialsFile` itself, so password values stay inside the script
+   run; the deep probes catch an app that lost its database); fresh (age
+   within TTL **and** no
    tracked source file newer than `startedAt`). All pass → print the base URL
    and exit 0 (unless `--force`). Any failure → treat as stale, tear down what
    this repo started, continue.
@@ -107,9 +109,11 @@ of this section. In order:
 6. **App start + health wait.** Launch in the background, record the PID, poll
    the base URL until healthy (bounded), resolve the real bound port.
 
-7. **Descriptor write + output.** Write `$ENV_DESCRIPTOR` (full schema in
-   `references/env-descriptor.md`) and print machine-readable result lines
-   consumers can grep:
+7. **Descriptor write + output.** Write `$ENV_DESCRIPTOR` and the
+   `credentialsFile` env file beside it (full schema and the
+   credential-reference contract in `references/env-descriptor.md`), ensure the
+   env file is covered by `.gitignore` (append the entry when missing), and
+   print machine-readable result lines consumers can grep:
 
    ```
    TEST_ENV_STATUS=running

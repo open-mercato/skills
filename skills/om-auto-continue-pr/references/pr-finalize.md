@@ -14,10 +14,14 @@ Before opening anything, check whether a PR already exists for this branch via *
 
 `om-open-pr` is an **optional** enhancement — a repo may install this skill without it, and it must still work. When absent, perform the mechanics inline via the tracker operations: commit with a conventional-commit subject, push the head branch, normalize labels per the section below. Behavior is identical either way — the same PR, the same labels — so installing `om-open-pr` only removes duplication, it never changes the outcome.
 
+## Spec-only PRs stay design-only
+
+A PR whose branch changes only spec/design files (`$SPECS_DIR`, docs areas) is a **spec PR** — an atomic design deliverable. A resume never lands implementation code on it (the skill-body step 5 guard stops before that happens): implementation ships on its **own PR** via `om-auto-implement-spec`, which links the spec PR with `Refs #{prNumber}`. A branch that already mixes spec and implementation code from an earlier run is an implementation PR and is finished as one.
+
 ## PR body updates
 
 - If all Progress steps are now `- [x]`, flip `Status: in-progress` to `Status: complete` **and flip the PR from draft to ready via mark-pr-ready** — `om-auto-create-pr` leaves the PR a draft while unfinished, so completing the resume is what promotes it. A resume that stays `in-progress` leaves the PR a draft the user can watch and re-enter.
-- Extend the `What Changed` / `Tests` sections with the new work from this resume.
+- Refresh agent-owned prose using `references/pr-body-template.md`: describe the full current change and validation, replacing stale text instead of appending a run history. Preserve adopted human-authored prose. The summary comment carries only this resume’s delta and next action.
 
 ## Label normalization — resume semantics
 
@@ -29,11 +33,11 @@ Every mutation goes through the `apply_label`/`label_exists` guards from the tra
 - Preserve the priority label. If the resume materially widens the scope (e.g. now touches auth, money, or data scoping), raise the priority accordingly and comment why; otherwise leave it. If the PR somehow has no priority, infer and apply one: outage, data loss, or a security incident → `priority-extreme`; security hardening or a release-blocking regression → `priority-high`; ordinary bug or feature → `priority-medium`; cosmetic, docs, dependency bumps, or cleanup → `priority-low`.
 - Preserve the risk label. If the resume materially widens the blast radius (e.g. now touches auth, money, data scoping, migrations, encryption, event reliability, shared contracts, or spans more areas), raise the risk accordingly and comment why; otherwise leave it. If the PR somehow has no risk label, infer and apply one: auth/session/data scoping/money, migrations, encryption, event reliability, shared contract surfaces, or broad cross-cutting edits → `risk-high`; ordinary single-area change with tests → `risk-medium`; docs, dependency bumps, test-only, or isolated cleanup → `risk-low`.
 - Never add `qa-approved` and never set the `qa` pipeline label from this skill. When `qaGate` is on, a `needs-qa` PR may sit in `merge-queue` while the QA-approval gate blocks the merge until a QA reviewer adds `qa-approved`; when `qaGate` is off, `needs-qa` is advisory only.
-- After any label change, post a short PR comment explaining why.
+- Maintain the single consolidated `🏷️ label rationale` comment instead of per-change comments: on any label change, find the `` 🤖 `om-auto-continue-pr` — 🏷️ label rationale `` marker via **list-issue-comments** and rewrite that comment via **update-comment** to the current label state — one label per line with its emoji and a full-sentence reason; create it when absent, never post a second (the format and label emoji map are the shared contract in `om-open-pr`'s label normalization).
 
 ## Summary comment
 
-Every resume ends with a single comprehensive summary comment the human reviewer can read top-to-bottom without clicking into the diff, posted in step 9 via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. Full structure and rules: `references/summary-comment-template.md`. Never post it before the automated review loop (step 8) finishes, never claim a completion you did not reach, and never paste secrets into it. The summary's "Verification phases completed" section is where this resume's validation-gate and integration/UI outcomes land on the PR; when a verification runs mid-flight and is worth surfacing early, post it as its own idempotent `` 🤖 `om-auto-continue-pr` — verification `` comment (screenshots via **attach-image-evidence** when UI changed).
+Every resume ends with one outcome and handoff comment (delta, verification result or evidence link, and next action; no repeated PR-body or label narrative), posted in step 9 via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. Full structure and rules: `references/summary-comment-template.md`. Never post it before the automated review loop (step 8) finishes, never claim a completion you did not reach, and never paste secrets into it. Keep this resume’s validation-gate and integration/UI outcomes in the PR body or linked evidence; when a verification runs mid-flight and is worth surfacing early, post it as its own idempotent `` 🤖 `om-auto-continue-pr` — verification `` comment (screenshots via **attach-image-evidence** when UI changed).
 
 ## Marker emission
 

@@ -32,13 +32,22 @@ Labels come from the config's taxonomy, always through the `apply_label` guard f
 - `skip-qa` **only** for clearly low-risk non-user-facing changes (docs-only, dependency-only, CI-only, test-only, trivial typos, single-file maintenance).
 - `needs-qa` when the run touches UI or other user-facing behavior that requires manual exercise.
 - Never both `needs-qa` and `skip-qa`.
-- Additive category labels when they clearly apply: `bug`, `feature`, `refactor`, `security`, `dependencies`, `documentation`.
-- Exactly one priority label and exactly one risk label, each with a short rationale comment.
+- Additive category labels when they clearly apply: `bug`, `feature`, `refactor`, `security`, `dependencies`, `documentation`. Every PR carries at least one: the changelog and generated release notes group a PR by its category and print its title, so the title must read as a release-note line (a conventional title stating the user-visible effect). Pick the category from what the PR changes for users, starting from its conventional-commit type; add `security` next to `bug` or `dependencies` when the change closes a vulnerability:
+
+  | Change | Category |
+  |---|---|
+  | fixes a vulnerability, an auth or data-scoping flaw, or a vulnerable dependency | `security` |
+  | `feat` — new capability or public API | `feature` |
+  | `fix` — incorrect behavior corrected | `bug` |
+  | `refactor`, `perf`, `test`, `ci`, `build`, `chore` with no user-visible behavior change | `refactor` |
+  | `deps` / `chore(deps)` — dependency bumps | `dependencies` |
+  | `docs` only | `documentation` |
+- Exactly one priority label and exactly one risk label. The engine maintains **one** marker-idempotent consolidated rationale comment covering the whole applied label set — one label per line with its emoji and a full-sentence reason, updated in place via **update-comment** on later changes — never one comment per label.
 - When `qaGate` is `true`, a `needs-qa` PR will not be mergeable until QA signs off with `qa-approved`. `qa-approved` is never added by an authoring skill — it is earned by manual QA or the self-QA exception.
 
 ## Summary comment
 
-Every run ends with a single comprehensive summary comment the human reviewer can read top-to-bottom without clicking into the diff, posted via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. The structure is the engine's summary-comment template; it is never posted before the automated review loop finishes, never claims a completion that was not reached, and never contains secrets.
+Every run ends with one outcome and handoff comment (delta, verification result or evidence link, and next action; no repeated PR-body or label narrative), posted via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. The structure is the engine's summary-comment template; it is never posted before the automated review loop finishes, never claims a completion that was not reached, and never contains secrets.
 
 ## Marker emission
 
@@ -56,6 +65,6 @@ Chained consumers (`om-auto-review-pr`, `om-auto-qa-pr`, orchestration scripts) 
 
 This skill never opens a PR itself; it enforces the contract at two points:
 
-- **Before invoking an engine (step 2)** — the reuse guard decides the route: when `SPEC_PR` is set (e.g. from `om-auto-write-spec`), implementation is a **continuation of that PR** via `om-auto-continue-pr` / `-loop`; a fresh `om-auto-create-pr` run on top would open a second PR for the same work, the exact collision this contract forbids. One PR per spec, always.
-- **Finish-state confirmation (step 4)** — after the engine reports the PR complete, confirm: PR **ready** (the engine flips draft spec PRs to ready via **mark-pr-ready** once `Status: complete` — except under a `⚠ NEEDS HUMAN CONFIRMATION` assumptions guard, which keeps the PR draft for the user); the full label set above present, with user-facing PRs carrying `needs-qa` and never `qa-approved` / `qa-self-verified`; the engine's summary comment posted, with the UI-verification outcome appended to it or posted as its own evidence comment; when `ISSUE_ID` is known, the PR body carries `Closes #${ISSUE_ID}` and the plan the `Source doc:` line. Anything missing that this skill can add through the descriptor operations (a label via the guard, the UI outcome via **comment-pr**), add; anything engine-owned that is wrong, report as a defect rather than papering over.
-- Then report spec path, engine used, branch, PR URL, validation/review outcome, UI verification outcome — and emit the chaining reference lines exactly as above.
+- **Before invoking an engine (step 2)** — the reuse guard decides the route: an open **implementation PR** already referencing the spec (`Source doc:` / `Refs #{SPEC_PR}`) is resumed via `om-auto-continue-pr` / `-loop`; otherwise `om-auto-create-pr` opens the one implementation PR. The **spec PR is never the implementation PR** — it stays design-only, and the implementation PR links it with `Refs #{SPEC_PR}`. One implementation PR per spec, always.
+- **Finish-state confirmation (step 4)** — after the engine reports the PR complete, confirm: implementation PR **ready** (the engine flips its draft PR to ready via **mark-pr-ready** once `Status: complete` — except under a `⚠ NEEDS HUMAN CONFIRMATION` assumptions guard, which keeps the PR draft for the user); the full label set above present, with user-facing PRs carrying `needs-qa` and never `qa-approved` / `qa-self-verified`; the engine's summary comment posted, with the UI-verification outcome appended to it or posted as its own evidence comment; when `ISSUE_ID` is known, the PR body carries `Closes #${ISSUE_ID}` and the plan the `Source doc:` line. Anything missing that this skill can add through the descriptor operations (a label via the guard, the UI outcome via **comment-pr**), add; anything engine-owned that is wrong, report as a defect rather than papering over.
+- Report once using `references/report-templates.md`: outcome, material verification limits and next action, with exact engine/chaining fields. Keep detailed scope and label reasoning in the existing PR body/comments.

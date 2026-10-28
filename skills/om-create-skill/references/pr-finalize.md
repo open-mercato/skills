@@ -15,19 +15,34 @@ Apply labels from the config's taxonomy after opening the PR, always through the
 - Add `skip-qa` **only** for clearly low-risk non-user-facing changes (docs-only, dependency-only, CI-only, test-only, trivial typos, single-file maintenance).
 - Add `needs-qa` when the run touches UI or other user-facing behavior that requires manual exercise.
 - Never add both `needs-qa` and `skip-qa`.
-- Add additive category labels when they clearly apply: `bug`, `feature`, `refactor`, `security`, `dependencies`, `documentation`.
+- Add additive category labels when they clearly apply: `bug`, `feature`, `refactor`, `security`, `dependencies`, `documentation`. Every PR carries at least one: the changelog and generated release notes group a PR by its category and print its title, so the title must read as a release-note line (a conventional title stating the user-visible effect). Pick the category from what the PR changes for users, starting from its conventional-commit type; add `security` next to `bug` or `dependencies` when the change closes a vulnerability:
+
+  | Change | Category |
+  |---|---|
+  | fixes a vulnerability, an auth or data-scoping flaw, or a vulnerable dependency | `security` |
+  | `feat` — new capability or public API | `feature` |
+  | `fix` — incorrect behavior corrected | `bug` |
+  | `refactor`, `perf`, `test`, `ci`, `build`, `chore` with no user-visible behavior change | `refactor` |
+  | `deps` / `chore(deps)` — dependency bumps | `dependencies` |
+  | `docs` only | `documentation` |
 - Apply exactly one priority label. Infer it from the brief and the diff: outage, data loss, or a security incident → `priority-extreme`; security hardening or a release-blocking regression → `priority-high`; ordinary bug or feature → `priority-medium`; cosmetic, docs, dependency bumps, or cleanup → `priority-low`.
 - Apply exactly one risk label. Infer it from the diff: changes to auth, session handling, data scoping, money, DB migrations, or shared contract surfaces, or broad cross-cutting edits → `risk-high`; an ordinary single-area change with tests → `risk-medium`; docs, dependency bumps, test-only, or isolated cleanup → `risk-low`.
-- After each applied label, post a short PR comment explaining why.
+- After applying the label set, post **one** consolidated rationale comment covering every applied label — never one comment per label (that spams the PR timeline and multiplies tracker API calls). Labels are still applied individually through the `apply_label` guard; only the commentary consolidates. The comment carries the standard idempotent marker, so a re-run updates it in place.
 - When `qaGate` is `true`, a `needs-qa` PR will not be mergeable until QA signs off with `qa-approved`. Do not add `qa-approved` from an authoring skill — it is earned by manual QA or the self-QA exception. State in the PR summary that manual QA is still pending.
 
-Suggested label comments:
+Consolidated label-rationale comment — exactly **one** marker-idempotent comment from this skill per PR, listing only the labels actually applied: **one label per line**, each with its emoji from the map below and a full-sentence reason (drop lines for labels not applied; never compress into a `·`-concatenated one-liner). On any later label change, find the marker via **list-issue-comments** and rewrite this same comment via **update-comment** so it always describes the current label state; never post an additional per-change comment (no **update-comment** in the descriptor → post a replacement stating it supersedes the previous rationale). A generated skill substitutes its own name for `<skill>`:
 
-- `review`: `🏷️ Label set to \`review\` because the PR is ready for code review.`
-- `skip-qa`: `🏷️ Label set to \`skip-qa\` because this is a docs-only / low-risk change.`
-- `needs-qa`: `🏷️ Label set to \`needs-qa\` because this touches {area} and must be manually exercised.`
-- `priority-*`: `🏷️ Priority set to \`priority-{level}\` because {one-line rationale}.`
-- `risk-*`: `🏷️ Risk set to \`risk-{level}\` because {one-line rationale}.`
+```markdown
+🤖 `<skill>` — 🏷️ label rationale
+
+- 🔍 `review` — ready for code review.
+- ✨ `feature` — {why this category fits, one full sentence}.
+- 🧪 `needs-qa` — {why manual QA is needed}.
+- 🔺 `priority-high` — {why this priority}.
+- 🟡 `risk-medium` — {why this risk}.
+```
+
+Label emoji map (decoration only — parsers key on the backticked label text): 🔍 `review` · ❌ `changes-requested` / `qa-failed` · 🧪 `qa` / `needs-qa` · 🚀 `merge-queue` · ⛔ `blocked` / `do-not-merge` · 🐛 `bug` · ✨ `feature` · ♻️ `refactor` · 🔒 `security` · 📦 `dependencies` · 📚 `documentation` · ⏭️ `skip-qa` · ✅ `qa-approved` · 📸 `qa-self-verified` · 🔥 `priority-extreme` · 🔺 `priority-high` · 🔹 `priority-medium` · 🔽 `priority-low` · ⚠️ `risk-high` · 🟡 `risk-medium` · 🟢 `risk-low` · 🤖 `in-progress` · ⏱️ `ci-monitoring`.
 
 ## om-create-skill specifics
 

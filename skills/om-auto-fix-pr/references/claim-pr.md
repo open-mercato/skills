@@ -16,6 +16,8 @@ Decision:
 - Signals point at `CURRENT_USER` → re-entry into your own run; refresh the claim (idempotent) and continue.
 - Signals point at someone else → **STOP** and report the owner — unless the lock is stale (below) or `--force` was passed.
 
+**`ci-monitoring` is not a lock signal.** It is a meta label meaning the previous run's work is *finished and fully reported* — labels applied, review submitted, comments posted — and that run is only watching CI, so it still owes a CI-result follow-up comment. An item carrying `ci-monitoring` **and none of the three signals above** is **not** in progress: claim it and proceed normally, without `--force` and without an override comment. Never fold `ci-monitoring` into the three-signal check, and never treat it as a reason to back off; the whole point of the label is that a monitoring process which dies leaves an honest state rather than a lock nobody holds. When `in-progress` and `ci-monitoring` are both present, the `in-progress` signal decides — `ci-monitoring` neither adds to it nor cancels it.
+
 ## Stale-lock recovery
 
 A claim is **stale** when the newest claim signal is older than the stale window (24 h) and the claimant has produced no commits, comments, or label changes on the item since. Recover by posting a takeover note first — `🤖 Previous claim by {owner} appears stale ({age}); taking over.` — then claim normally. Never silently overwrite a live claim.
@@ -38,7 +40,7 @@ Idempotent — safe to re-run on re-entry:
 
 When the run finishes, hands off, or aborts:
 
-- Remove the `in-progress` label via the guard.
+- Remove the `in-progress` label via the guard — and when the run intends to follow up with CI results after reporting, **swap** rather than simply remove: `apply_label "ci-monitoring"` in the same breath, so the item is never observably unlabeled and the outstanding follow-up is visible. Remove `ci-monitoring` when the CI-result comment is finally posted, or when the CI wait is abandoned at its `ci.maxWaitMinutes` cap (nobody is monitoring then, and leaving the label would promise a follow-up that never comes). A run that does no CI follow-up at all just removes `in-progress` as before and never applies `ci-monitoring`.
 - In issue-driven runs, hand the issue back: restore the original assignee/author when the pipeline convention expects it.
 - Post a short release comment stating the outcome (PR opened with its number, blocked with the blocker, or no action needed).
 - The claimant releases their own claim — never release a lock another agent holds. A sub-skill that claims for itself (e.g. a standalone `om-auto-review-pr` run) owns its own release; under a chained hand-off the sub-skill instead re-enters and retains the lock (see Chained hand-off below). Do not second-guess either.

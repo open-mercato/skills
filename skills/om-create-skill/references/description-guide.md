@@ -9,10 +9,10 @@ unchanged.
 ## What a good OM description contains
 
 - **A one-line "what it does + what it produces"** — the outcome, not the mechanism.
-- **An explicit "when to use"** with concrete **trigger phrases**, in **both
-  Polish and English** — this repo's skills route on bilingual triggers. Quote the
-  phrases the way a user actually types them: `"stwórz skill do…"`,
-  `"nowy om-skill"`, `"split this skill"`, `"refactor SKILL.md"`.
+- **An explicit "when to use"** with concrete **trigger phrases**, in **English**
+  — every description in the collection routes on English triggers. Quote the
+  phrases the way a user actually types them: `"create a skill for…"`,
+  `"new om-skill"`, `"split this skill"`, `"refactor SKILL.md"`.
 - **Disambiguation from siblings** when a nearby skill overlaps — say what this
   one is *not* for (e.g. "use the plain X for small fixes").
 
@@ -31,7 +31,7 @@ unchanged.
 
 ## Shape to aim for
 
-> `<one line: what it does and produces>. <optional disambiguation from a sibling>. Use when the user says "<EN trigger>", "<EN trigger>", "<PL trigger>", "<PL trigger>".`
+> `<one line: what it does and produces>. <optional disambiguation from a sibling>. Use when the user says "<trigger>", "<trigger>", "<trigger>", "<trigger>".`
 
 Draft it, then read it back cold: from this line alone, would the model know to
 pick this skill over every other for the intended request — and know *not* to pick

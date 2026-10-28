@@ -1,12 +1,14 @@
 # FR triage gate — is this an unbuilt feature?
 
-The read-only gate `om-auto-fix-issue`'s **feature route** runs (step F1) before
-touching a worktree. It is the feature-side analogue of the `om-verify-in-repo` bug
-gate: a bug gate asks "is this defect real and still unfixed?"; this gate asks "is
-this really a feature request, and is the feature not already implemented?" Operate
+The gate `om-auto-fix-issue`'s **feature route** runs (step F1) before
+touching a worktree. It asks: is this really a feature request, is the feature
+not already implemented, and is the ticket ready to be built from? Operate
 **read-only** — file reads, code search, and read-only tracker operations
 (**get-issue**, **search-prs**, **search-issues**, **repo-info**,
-**current-user**) only. No edits, commits, claims, or branch creation.
+**current-user**) only. No edits, commits, claims, or branch creation. The single
+exception is the idempotent not-ready comment in section 4: find its marker via
+**list-issue-comments**, post it via **comment-issue** on the first run, and rewrite
+it via **update-comment** when its missing-items list changes.
 
 ## Decision procedure
 
@@ -22,21 +24,12 @@ with no activity is not a stop on its own.)
 
 ### 2. Is it a feature request, or actually a bug?
 
-Classify conservatively, label-first then content:
-
-- **Feature / enhancement signal** → a category label such as `feature` (or the
-  repo's equivalent enhancement label); or a title/body describing a *new*
-  capability, endpoint, screen, option, or behavior that does not exist yet
-  ("add…", "support…", "allow…", "introduce…", "new…").
-- **Bug signal** → a `bug` label; or a title/body describing something that
-  *used to work / should work but is broken* (a regression, error, crash, wrong
-  output, "broken", "fails", "regressed", stack trace, steps-to-reproduce).
-
-If the issue is clearly a **bug**, stop this feature route with `NO_ACTION_NEEDED`
-and state that it belongs on `om-auto-fix-issue`'s bug chain, not the feature route.
-When an issue mixes a defect and a new capability, prefer stopping and recommend the
-user split it (the bug goes to the bug chain, the FR stays on the feature route)
-rather than guessing.
+Re-check the step-2 classification (label-first, then content — the same
+feature-vs-bug signals). If the issue is clearly a **bug**, stop this feature route
+with `NO_ACTION_NEEDED` and state that it belongs on `om-auto-fix-issue`'s bug
+chain. When an issue mixes a defect and a new capability, prefer stopping and
+recommend the user split it (the bug goes to the bug chain, the FR stays on the
+feature route) rather than guessing.
 
 ### 3. Is the feature already implemented, or already in flight?
 
@@ -55,7 +48,41 @@ Before writing any spec, prove the feature does not already exist:
 - Scan recent issue comments for `implemented in`, `shipped in`, `duplicate of`,
   `superseded by` and follow the links.
 
+### 4. Is the ticket ready to be built from?
+
+Read the **Definition of Ready** section of the repo's `SDLC.md`. When
+`SDLC.md` has no such section, the product layer is not set up
+(`om-setup-discovery-pipeline` adds it): skip this step, treat the ticket as ready, and
+continue. Otherwise check the issue against its **ticket-level** tier only: the problem and who has it, the expected outcome
+and how it is checked, what is out of scope, no blocking open question left
+unanswered, and any autonomous assumption already confirmed by a human. A
+maintainer's explicit waiver on the ticket ("ready as is") satisfies the tier.
+
+Spec-level items — acceptance criteria, business rules, paths, data and
+permissions, dependencies, prototype link — are **not** checked here: a covering
+spec supplies them, and step F3c authors one when it is missing.
+
+When a ticket-level item is missing, post one idempotent comment (marker
+`` 🤖 `om-auto-fix-issue` — not ready ``, the same shape
+`om-auto-manage-issues` uses: the missing items as a list, addressed to the
+author, with the waiver sentence). Find it via **list-issue-comments**, update it
+in place via **update-comment** when the missing-items list changes, and skip the
+mutation when it already reflects the current state. Then stop with `NOT_READY`.
+Never fill the gap yourself — a guessed problem statement is the failure this
+gate exists to prevent.
+
 ## Output contract
+
+**Stop the run** (not ready):
+
+```
+NOT_READY
+<one paragraph: which ticket-level items are missing, and that the not-ready
+comment on the issue lists them for the author>
+```
+
+The literal token `NOT_READY` on its own line triggers the clean stop; the
+reporting in step F4 passes the missing items through.
 
 **Stop the run** (no action needed):
 

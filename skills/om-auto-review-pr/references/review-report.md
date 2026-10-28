@@ -20,7 +20,11 @@ Use the `om-code-review` skill against the PR diff. Explicitly verify:
 
 ## om-auto-review-pr specifics — autonomous autofix flow (step 11)
 
-After posting a `changes_requested` review, **immediately proceed to fix all actionable findings** without asking the user. The om-auto-review-pr skill must be fully autonomous — it reviews, fixes, re-reviews, and iterates until the PR is merge-ready or a real blocker remains.
+The loop below runs only on **autofix-eligible** runs: `--autofix` was passed, or the PR author is `$CURRENT_USER` (the automation finishing its own work). On another author's PR without `--autofix`, skip it — the run ends with the review, labels, and author handoff, noting `autofix: skipped (not my PR — re-run with --autofix to fix it here)` in the completion comment and report. Never modify someone else's branch uninstructed.
+
+**Work order — binding, in this sequence:** (1) **any merge conflict against the latest base, always first**, including one that arose since step 4a and never deferred to a later pass — a conflicted branch makes every downstream signal unreliable, because the diff under review is not the diff that will merge; (2) **then the findings** — the unit-test audit first, then fix batches with targeted validation, re-review, repeat; (3) **CI only once neither conflicts nor findings remain**, since resolving those changes what CI does on the next run anyway. The loop below implements stages 2 and 3.
+
+When eligible: after posting a `changes_requested` review, **immediately proceed to fix all actionable findings** without asking the user — including the `INHERITED` ones collected in step 2 from the review feedback other reviewers already posted on the PR (`references/pr-metadata.md`), which are fixed on the same severity order as this run's own and reported per-item as fixed, deferred to a follow-up, or declined with a reason. The om-auto-review-pr skill must be fully autonomous — it reviews, fixes, re-reviews, and iterates until the PR is merge-ready or a real blocker remains.
 
 Only stop and ask the user in these critical situations:
 

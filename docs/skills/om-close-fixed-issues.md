@@ -4,6 +4,8 @@
 
 Reconciles a window of recent pull requests against the issue tracker. Where a merged PR authoritatively closes an issue — via `fixes`/`closes`/`resolves` keywords or the tracker's `closingIssuesReferences` — it closes the issue with a linked comment; where a PR was closed without merging (or merged into a non-base branch), it leaves an informational comment instead of closing. It never acts on bare `#N` mentions and respects `do-not-close`, `blocked`, and claim locks. Use it for post-merge housekeeping and release prep.
 
+Both the built-in keywords and the tracker's own parser recognize English only, so repositories writing PR bodies in another language extend the vocabulary through the optional `closeKeywords` array in `.ai/agentic.config.json` (for example `["zamyka", "naprawia"]`); configured words add to the built-ins rather than replacing them. Whether or not the field is set, a run that finds `#N` mentions with no recognized closing keyword lists them in a ⚠️ section of its report instead of reporting a silent `closed 0`.
+
 ## Parameters
 
 | Parameter | Required | Description |

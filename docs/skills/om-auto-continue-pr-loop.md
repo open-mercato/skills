@@ -2,7 +2,7 @@
 
 > 🤖 Autonomous — runs end-to-end without supervision
 
-The advanced counterpart to `om-auto-continue-pr`, for resuming long spec-implementation runs started by `om-auto-create-pr-loop`. Given a PR number, it claims the PR, re-enters an isolated worktree, reads `HANDOFF.md` for session context, parses the authoritative `## Tasks` table in the run folder's `PLAN.md`, and resumes from the first row whose status is not `done`. It keeps the strict discipline of the creator loop — one lean commit per Step, verification batched into `checkpoint-<N>-checks.md` every ~5 Steps (with focused integration tests and screenshots when UI was touched), the full validation gate plus the repo's integration suite and a style-compliance pass at spec completion — and preserves the run-folder and label contract. Use the plain `om-auto-continue-pr` for simple runs.
+The advanced counterpart to `om-auto-continue-pr`, for resuming long spec-implementation runs started by `om-auto-create-pr-loop`. Given a PR number, it claims the PR, re-enters an isolated worktree, reads `HANDOFF.md` for session context, parses the authoritative `## Tasks` table in the run folder's `PLAN.md`, and resumes from the first row whose status is not `done`, honoring the plan's `Exec` placement column when dispatching executors. It keeps the strict discipline of the creator loop — one lean commit per Step, verification batched into `checkpoint-<N>-checks.md` every ~5 Steps (with focused integration tests and screenshots when UI was touched), the full validation gate plus the repo's integration suite and a style-compliance pass at spec completion — and preserves the run-folder and label contract. Use the plain `om-auto-continue-pr` for simple runs.
 
 ## Parameters
 
@@ -14,7 +14,7 @@ The advanced counterpart to `om-auto-continue-pr`, for resuming long spec-implem
 
 ## Works with
 
-Consumes a `{prNumber}`, reads the `Tracking plan:` / `Tracking run folder:` line written by [om-auto-create-pr-loop](om-auto-create-pr-loop.md), and ends by emitting the `PR:` / `Issue:` chaining reference lines for the next skill in a chain. It invokes the companion skills [om-open-pr](om-open-pr.md) (push + label normalization), [om-code-review](om-code-review.md) (compatibility self-review), [om-auto-review-pr](om-auto-review-pr.md) (the autofix second pass), and [om-integration-tests](om-integration-tests.md) (checkpoint + final-gate suites).
+Consumes a `{prNumber}`, reads the `Tracking plan:` / `Tracking run folder:` line written by [om-auto-create-pr-loop](om-auto-create-pr-loop.md), and ends by emitting the `PR:` / `Issue:` chaining reference lines for the next skill in a chain. It invokes the companion skills [om-open-pr](om-open-pr.md) (push + label normalization), [om-code-review](om-code-review.md) (compatibility self-review), [om-auto-review-pr](om-auto-review-pr.md) (the autofix second pass), and [om-integration-tests](om-integration-tests.md) (checkpoint + final-gate suites). A PR with no resolvable plan at all was not created by a loop run, so it is handed to [om-auto-continue-pr](om-auto-continue-pr.md), which adopts it by reconstructing the plan from the PR's own context — and hands the run back here when that plan is long enough to need the loop engine.
 
 ---
 *Source: [`skills/om-auto-continue-pr-loop/SKILL.md`](../../skills/om-auto-continue-pr-loop/SKILL.md)*

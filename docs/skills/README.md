@@ -15,18 +15,31 @@ One card per skill, with its parameters and the companion skills it works with. 
 | [om-auto-write-spec](om-auto-write-spec.md) | 🤖 | Turns a brief or feature-request issue into a finished spec on a ready PR with mockups. |
 | [om-auto-implement-spec](om-auto-implement-spec.md) | 🤖 | Implements an existing spec and ships a reviewed, UI-verified PR. |
 | [om-auto-review-pr](om-auto-review-pr.md) | 🤖 | Reviews or re-reviews a PR by number, with an autofix loop until merge-ready. |
+| [om-auto-audit-dependencies](om-auto-audit-dependencies.md) | 🤖 | Audits locked dependencies across ecosystems and files deduplicated upgrade issues, reporting incomplete coverage explicitly. |
 | [om-auto-qa-pr](om-auto-qa-pr.md) | 🤖 | QAs a PR's UI in a real browser and posts screenshot evidence — no source touched. |
 | [om-auto-manage-issues](om-auto-manage-issues.md) | 🤖 | Brings existing issues up to standard: label sync, screenshot analysis, spec-coverage checks. |
 | [om-auto-update-changelog](om-auto-update-changelog.md) | 🤖 | Drafts a CHANGELOG release entry for merged PRs and ships it as a docs PR. |
+| [om-pr-autopilot](om-pr-autopilot.md) | 🤖 | Diagnoses what state one open PR is really in, then runs the matching chain of the skills above. Dispatch only. |
 | [om-review-prs](om-review-prs.md) | 🧑‍💻 | Sweeps every unreviewed open PR, newest first, through the review skill. |
 | [om-close-fixed-issues](om-close-fixed-issues.md) | 🧑‍💻 | Post-merge housekeeping: closes issues merged PRs fixed, comments on closed-unmerged PRs. |
 | [om-merge-buddy](om-merge-buddy.md) | 🧑‍💻 | Reports which open PRs can merge now and which are close but blocked. |
+| [om-pipeline-retro](om-pipeline-retro.md) | 🧑‍💻 | Classifies finished runs and ranks what second passes cost, in wall-clock hours. |
 | [om-approve-merge-pr](om-approve-merge-pr.md) | 🧑‍💻 | Approves and squash-merges a PR by number, honoring the QA gate. |
 | [om-setup-agent-pipeline](om-setup-agent-pipeline.md) | 🧑‍💻 | One-per-repo configurator: writes the config, installs descriptors, generates project docs. |
+| [om-setup-discovery-pipeline](om-setup-discovery-pipeline.md) | 🧑‍💻 | Adds the product layer on top: product roles, the Discovery stage, the Definition of Ready, and protected decisions into SDLC.md between markers; optional, additive, idempotent. |
 | [om-apply-upgrade-notes](om-apply-upgrade-notes.md) | 🧑‍💻 | Applies UPGRADE_NOTES.md after an upgrade, preserving local edits. |
 | [om-check-and-commit](om-check-and-commit.md) | 🧑‍💻 | Runs the validation gate on the branch, fixes obvious drift, commits and pushes when green. |
+| [om-discover](om-discover.md) | 🧑‍💻 | Product-level discovery and define in three modes; leaves a product-brief.md built from real material, with tagged evidence and owned decisions. |
+| [om-synthetic-users](om-synthetic-users.md) | 🧑‍💻 | A fresh persona panel per run, interviews under decision pressure, a persona walk of a flow on a brief, spec, prototype, or the running app; only what repeats is a finding; parity check against real interviews; hypotheses tagged synthetic, never evidence. |
+| [om-brainstorm](om-brainstorm.md) | 🧑‍💻 | Divergent conversation before any artifact exists; converges on which skill runs next, plus a handoff brief. |
+| [om-backlog](om-backlog.md) | 🧑‍💻 | Epics, stories with acceptance criteria, and tasks from a brief or a spec, filed through om-prepare-issue; adopts existing issues, waits for a yes. |
 | [om-prepare-issue](om-prepare-issue.md) | 🧑‍💻 | Files one well-formed, labeled tracker issue from a brief without implementing it. |
 | [om-spec-writing](om-spec-writing.md) | 🧑‍💻 | Writes and reviews feature specs to staff-engineer standards. |
+| [om-ux-review-pr](om-ux-review-pr.md) | 🧑‍💻 | Design-judgment review of a PR's UI: walks screens in a real browser, posts evidence-tagged findings with done-when criteria. |
+| [om-mockup-prototype](om-mockup-prototype.md) | 🧑‍💻 | Creates neutral clickable discovery prototypes from the brief and first synthetic panel, with flow context, assumptions and browser checks. |
+| [om-ux-design](om-ux-design.md) | 🧑‍💻 | Designs connected screens from a specification or selected backlog scope, reusing repository components and preserving review feedback; reports browser evidence and acceptance separately. |
+| [om-ux-setup](om-ux-setup.md) | 🧑‍💻 | Extracts the repo's design contract (tokens, components, archetypes, conventions) into committed files. Once per repo. |
+| [om-ux-shape](om-ux-shape.md) | 🧑‍💻 | Turns a vague feature idea into a decided direction: scope, interaction contract, validation plan; AI-necessity gate included. |
 | [om-followup-issue-from-pr](om-followup-issue-from-pr.md) | 🧑‍💻 | Turns a PR or PR comment into a tracked follow-up issue. |
 | [om-prepare-test-env](om-prepare-test-env.md) | 🧑‍💻 | Boots the app for QA and tests on any stack and provisions the browser provider. |
 | [om-integration-tests](om-integration-tests.md) | 🧑‍💻 | Creates and runs integration/E2E tests by exploring the running app first. |

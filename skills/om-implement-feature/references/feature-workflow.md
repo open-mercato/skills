@@ -99,7 +99,7 @@ with no inherited planning or implementation transcript and run
 write version 1 validation evidence with the actual command arrays, exit codes,
 and observed results, run `prepare-review --kind implementation` with that
 evidence and the allowlist so the subject includes tracked, staged, unstaged,
-deleted, and newly created files, and execute the bound council per 
+deleted, and newly created files, and execute the bound council per
 `om-harness/references/code-review-contract.md`. Regenerate both artifacts
 after any diff change, and bound the fix-and-re-review loop at three
 iterations before stopping with the surviving findings.

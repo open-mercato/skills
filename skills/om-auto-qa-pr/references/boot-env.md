@@ -23,7 +23,13 @@ setup error — invoke `om-setup-agent-pipeline` to install it, then retry.
 Record whether this run started the env (so the final step tears down only what it
 created — reuse the descriptor's `startedByThisRepo`). Pick the login role whose
 access actually covers the changed surface from the descriptor's `credentials`,
-and note the chosen role in the report. If `om-prepare-test-env` reports the app
+and note the chosen role in the report. Credentials are references: load the
+descriptor's `credentialsFile` into the shell (`set -a; . "$CREDENTIALS_FILE";
+set +a`) and write the entry's `passwordEnv` reference literally in login
+commands — `"$TEST_ADMIN_PASSWORD"`, expanded by the shell — never read
+`credentialsFile` into your context or restate a password value. A legacy
+descriptor with inline values is passed through the runner's environment the
+same way, without quoting them back. If `om-prepare-test-env` reports the app
 could not boot or browsers could not be installed, do **not** fabricate results:
 record the environment blocker in the report honestly, post/save it, and release
 the lock.

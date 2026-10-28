@@ -11,11 +11,23 @@ This skill drives an **existing** PR to merge-ready; it never opens one, so ther
 Apply labels always through the descriptor guards (`set_pipeline_label` / `apply_label`); missing labels degrade to a logged skip; `LABELS_ENABLED=false` skips everything — note that in the summary comment. Bring the PR's labels to match its **real** state:
 
 - **Pipeline label**: `merge-queue` when the review is approving and every required check is green; otherwise the honest state (`changes-requested`, `blocked`).
+- **Draft → ready**: when the loop exit criteria are met (approvable review, green checks, UI verified or n/a) and the PR is still a draft — and not draft-by-intent (a spec-only design PR, or a `⚠ NEEDS HUMAN CONFIRMATION` guard) — promote it via **mark-pr-ready**; a merge-ready PR must not linger as a draft.
+- **Label commentary**: reflect every label change in the single idempotent `` 🤖 `om-auto-fix-pr` — 🏷️ label rationale `` comment (one label per line with its emoji and a full-sentence reason, updated in place via **update-comment**; format and emoji map: the shared contract in `om-open-pr`'s label normalization) — never one comment per change.
 - **QA meta**: keep `needs-qa` when user-facing behavior changed and `QA_GATE` is on. `om-auto-qa-pr` runs here in evidence-only mode, so it attaches screenshots but sets **no** QA labels; this skill **never** adds `qa-approved` or `qa-self-verified` — the QA gate and a QA reviewer own that (a human can opt into the self-QA sign-off separately). When the gate is on, a `needs-qa` PR stays unmergeable until signed off.
 
 ## Summary comment
 
-Every run ends with a single comprehensive summary comment the human reviewer can read top-to-bottom without clicking into the diff. Post it via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. Cover: base merged in, loop outcome (review verdict, CI status, UI evidence), follow-ups filed, and the merge-readiness verdict with the exact next command (`om-approve-merge-pr {prNumber}` when ready, or the blocker when not). Never post it before the loop finishes, never claim a completion you did not reach, and never paste secrets into it.
+Post one marker-idempotent result comment after the loop settles, preserving
+multi-line formatting. Aim for 40–100 words: concrete fixes, current review/CI/UI
+result, unresolved blocker or next action. Link the authoritative review's
+per-item dispositions (including inherited feedback), QA evidence, and follow-up
+issues. Do not repeat the PR explanation, finding lists, routine base-merge
+metadata, or label inventory. Preserve the existing summary marker and update it
+in place. Never claim completion before reaching it or expose secrets.
+
+When ready, give `om-approve-merge-pr {prNumber}` as the next command and state
+any required QA sign-off still outstanding. When blocked or checks are pending,
+state the actual limit and required action; a local pass does not replace CI.
 
 ## Marker emission
 

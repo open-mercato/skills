@@ -42,8 +42,11 @@ ANALYSIS_DIR=$(jq -r '.paths.analysis // ".ai/analysis"' "$CONFIG")
 LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
 QA_GATE=$(jq -r '.qaGate // false' "$CONFIG")
 SPECS_DIR=$(jq -r '.paths.specs // ".ai/specs"' "$CONFIG")
+DATA_MODEL_DIR=$(jq -r '.paths.dataModel // ".ai/data-model"' "$CONFIG")
+PROTOTYPES_DIR=$(jq -r '.paths.prototypes // ".ai/prototypes"' "$CONFIG")
 SCRIPTS_DIR=$(jq -r '.paths.scripts // ".ai/scripts"' "$CONFIG")
 QA_DIR=$(jq -r '.paths.qa // ".ai/qa"' "$CONFIG")
+LOOP_STEP_THRESHOLD=$(jq -r '.engine.loopStepThreshold // 20' "$CONFIG")
 BROWSER_PROVIDER=$(jq -r '.browser.provider // "playwright"' "$CONFIG")
 case "$BROWSER_PROVIDER" in
   ''|*[!A-Za-z0-9._-]*) echo "Invalid browser.provider: $BROWSER_PROVIDER" >&2; exit 1 ;;

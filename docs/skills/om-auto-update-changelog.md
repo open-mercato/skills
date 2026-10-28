@@ -2,7 +2,7 @@
 
 > 🤖 Autonomous — runs end-to-end without supervision
 
-Drafts a `CHANGELOG.md` release entry covering every PR merged since the last release, using an emoji-driven, categorized format (Features, Fixes, Security, and so on). It credits the right contributor even for carried-forward fork PRs via the Supersede Credit Rule, leaves the Highlights paragraph blank for a human to fill, then hands the file edit to `om-auto-create-pr` so it lands as a normal docs PR. Use it at release time or at the end of a sprint; it is meant to be run by a maintainer, not on a schedule.
+Drafts a `CHANGELOG.md` release entry covering every PR merged since the last release, using an emoji-driven, categorized format (Features, Fixes, Security, and so on). It credits the right contributor even for carried-forward fork PRs, umbrella merges of a long-lived feature branch, and hand-offs written in prose — the Supersede Credit Rule's five detection paths, backed by a mandatory pass that verifies every credit against the PR's commit authorship. It leaves the Highlights paragraph blank for a human to fill, then hands the file edit to `om-auto-create-pr` so it lands as a normal docs PR. Use it at release time or at the end of a sprint; it is meant to be run by a maintainer, not on a schedule.
 
 ## Parameters
 
@@ -10,6 +10,7 @@ Drafts a `CHANGELOG.md` release entry covering every PR merged since the last re
 |---|---|---|
 | `--version <x.y.z>` | Optional | Release heading version. Defaults to the manifest version; if that already matches the top heading, the skill asks which bump to use. |
 | `--since <value>` | Optional | Lower bound for merged PRs — an ISO date, a git ref, or `last-release` (default), which resolves to the date in the topmost changelog heading. |
+| `--release-ref <ref>` | Optional | The branch or ref the release is cut from. Defaults to the configured base branch; set it when releases are cut from a different branch than PRs target, so the window is built from what is actually reachable on the released ref. |
 | `--date <YYYY-MM-DD>` | Optional | Date shown in the heading. Defaults to today. |
 | `--dry-run` | Optional | Print the drafted entry to stdout only — do not edit `CHANGELOG.md` and do not invoke `om-auto-create-pr`. |
 | `--slug <kebab-case>` | Optional | Override the slug passed to `om-auto-create-pr`. Defaults to `changelog-<version>`. |

@@ -29,36 +29,60 @@ Open the PR **ready for review** — the spec PR is the finished deliverable of 
 
 ## PR body
 
-Title: `docs(specs): ${TITLE}`. Use the spec-PR variant of the unified template:
+Title: `docs(specs): ${TITLE}`. This body is the canonical explanation of the
+proposal. Aim for 150–300 words, less for a small spec; omit empty sections.
+Describe proposed behavior as proposed, and ground claims in the spec or code.
 
 ```markdown
-Refs #{issueId}            <!-- issue-driven runs only; never `Closes` —
-                                merging a spec must not close the FR -->
+Refs #{issueId}
 Source doc: ${SPEC_PATH}
-Status: complete           <!-- draft/gated runs state the ⚠ merge gate here -->
+Status: complete
 
-## 🎯 Goal
-- {one-line feature summary from the brief/issue}
+## 🎯 What changes
+{Who would gain what capability, what happens today, and why the change is needed.
+State that this PR delivers the design; implementation follows separately.}
 
-## What Changed
-- Spec document at `${SPEC_PATH}`
-- Mockups: {list | skipped — {reason}}
+## 📋 Scope
+{Where the proposal lands and how it affects shared systems or current consumers.
+Name dependencies on future work when they determine whether the design pays off.}
 
-## 💥 Breaking Changes
-- None — design only
+## ⚠️ Decision needed
+{Only if relevant: the direction call or assumption to confirm, the recommended
+choice and its tradeoff. Link the defaults comment for the full resolved table.
+Include every `⚠ NEEDS HUMAN CONFIRMATION` merge gate here.}
+
+## 💥 Compatibility
+{Only when proposed contracts, schema, defaults or dependencies will be costly
+to reverse: who would be affected and the migration/rollback limits.}
+
+## 🧪 Validation
+{Design checks actually completed and remaining uncertainties. Link current-app
+screenshots and proposed-UI mockups, clearly distinguished; if expected visuals
+could not be produced, state why. Do not imply mockups prove working behavior.}
 ```
+
+Omit `Refs` when no issue exists; never use `Closes` on a spec PR. Preserve the
+`Source doc:` and `Status:` fields, and state any draft/merge gate in the body.
+Use a small Mermaid dependency/flow diagram only when it explains system reach;
+label existing/new/planned components and add one prose takeaway. Distinguish
+observed facts, inferences and behavior not checked. Cite a specific repository
+rule for any claimed violation; a direction preference is not a code defect.
 
 ## Label normalization
 
 Apply labels from the config's taxonomy after opening the PR, always through the `apply_label` guard from the tracker descriptor (missing labels degrade to a logged skip; `labels.enabled: false` skips everything — note that in the summary comment).
 
-For a spec PR the set is: `review` (pipeline), `documentation` (category), `skip-qa` (docs-only — a spec PR changes no runtime behavior), exactly one priority (inferred from the brief/issue), exactly one risk (typically `risk-low` for design-only changes). Never both `needs-qa` and `skip-qa`; never `qa-approved` from this skill. After each applied label, post a short PR comment explaining why:
+For a spec PR the set is: `review` (pipeline), `documentation` (category), `skip-qa` (docs-only — a spec PR changes no runtime behavior), exactly one priority (inferred from the brief/issue), exactly one risk (typically `risk-low` for design-only changes). Never both `needs-qa` and `skip-qa`; never `qa-approved` from this skill. After applying the set, post exactly **one** marker-idempotent consolidated rationale comment — never one comment per label (that spams the PR timeline and multiplies tracker API calls). Labels are still applied individually through the `apply_label` guard; only the commentary consolidates. **One label per line**, each with its emoji and a full-sentence reason; on any later label change, find the marker via **list-issue-comments** and rewrite this same comment via **update-comment** — never post an additional per-change comment:
 
-- `review`: `🏷️ Label set to \`review\` because the PR is ready for code review.`
-- `documentation`: `🏷️ Label set to \`documentation\` because this PR lands a spec document.`
-- `skip-qa`: `🏷️ Label set to \`skip-qa\` because this is a docs-only / design-only change.`
-- `priority-*`: `🏷️ Priority set to \`priority-{level}\` because {one-line rationale}.`
-- `risk-*`: `🏷️ Risk set to \`risk-{level}\` because {one-line rationale}.`
+```markdown
+🤖 `om-auto-write-spec` — 🏷️ label rationale
+
+- 🔍 `review` — ready for specification review.
+- 📚 `documentation` — lands a spec document, design-only.
+- ⏭️ `skip-qa` — docs/design-only, no runtime behavior to QA.
+- 🔹 `priority-medium` — {why this priority}.
+- 🟢 `risk-low` — {why this risk}.
+```
 
 ## Evidence comment
 
@@ -66,23 +90,20 @@ After the PR exists, publish the step-5 visuals via **attach-image-evidence**: `
 
 ## Summary comment
 
-Every run ends with a single comprehensive summary comment the human reviewer can read top-to-bottom without clicking into the diff. Post it via the tracker operation **comment-pr** with a body file so multi-line formatting is preserved. Never claim a completion you did not reach, and never paste secrets into it. Structure:
+Update the marker below via **update-comment** on a rerun; use **comment-pr**
+with a body file only when absent. Aim for 40–100 words: publication state,
+remaining decision and handoff, with a link to the canonical PR body. Never
+repeat its scope, visual inventory or label rationale; never include secrets.
 
 ```markdown
 ## 🤖 `om-auto-write-spec` — run summary
 
-**Spec:** ${SPEC_PATH}
-**Branch:** spec/${SLUG}
 **Final status:** {complete | draft — merge gated on ⚠ assumptions}
-
-### 📝 Assumptions applied
-- {count of autonomous defaults + any ⚠ NEEDS HUMAN CONFIRMATION rows — or "spec had no Open Questions"}
-
-### 📸 Visual evidence
-- {mockup/screenshot inventory — or why visuals were skipped}
-
-### 🔁 Hand-off
-Implement with: `om-auto-implement-spec ${SPEC_PATH}` (or `om-auto-continue-pr {prNumber}` for spec-only continuation).
+{The spec is ready for review, or name the assumption that keeps it draft.}
+{Only when relevant: link to the resolved defaults or visual evidence needed for the decision.}
+[Proposal and scope]({PR URL})
+Implement with `om-auto-implement-spec ${SPEC_PATH}`; use
+`om-auto-continue-pr {prNumber}` for further design work on this PR.
 ```
 
 ## Marker emission

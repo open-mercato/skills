@@ -14,3 +14,11 @@ jobs:
         run: bash scripts/lint.sh
       - name: Browser provider contract and platform matrix
         run: node scripts/test-browser-providers.mjs
+      - name: Tracker provider contract and compatibility invariants
+        run: node scripts/test-tracker-providers.mjs
+      - name: Pipeline-retro classifier rules
+        run: node scripts/test-classify-runs.mjs
+      - name: Close-keyword configurability contract
+        run: node scripts/test-close-keywords.mjs
+      - name: Detailed design helpers and review comments
+        run: node --test scripts/test-ux-design.mjs scripts/test-ux-design-comments.mjs

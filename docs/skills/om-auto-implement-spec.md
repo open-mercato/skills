@@ -11,11 +11,12 @@ Takes an existing spec and returns an implemented, code-reviewed, UI-verified, r
 | `{spec}` | Yes | The spec to implement: a repo-relative path, a spec name/slug, an issue id whose body links a spec, or a spec-PR number. |
 | `{repo}` | No | `owner/name`; inferred from the git remote when omitted. |
 | `--no-ui` | No | Skip end-of-run UI verification even when the change is user-facing. |
+| `--loop` | No | Forwarded verbatim to `om-auto-create-pr` on a fresh run, which then hands off to the loop engine immediately; never re-routes an existing run. |
 | `--force` | No | Bypass claim-conflict checks (passed through to the engine skill). |
 
 ## Works with
 
-Continues on the spec PR that [om-auto-write-spec](om-auto-write-spec.md) may already have opened rather than opening a second one, and ends with the `PR:` / `Spec:` chaining reference lines. It delegates implementation to [om-auto-create-pr](om-auto-create-pr.md) (fresh runs) or [om-auto-continue-pr](om-auto-continue-pr.md) (when a PR exists), then runs [om-auto-review-pr](om-auto-review-pr.md) and [om-auto-qa-pr](om-auto-qa-pr.md), with [om-open-pr](om-open-pr.md) as a fallback piece.
+Continues on the spec PR that [om-auto-write-spec](om-auto-write-spec.md) may already have opened rather than opening a second one, and ends with the `PR:` / `Spec:` chaining reference lines. It delegates implementation to [om-auto-create-pr](om-auto-create-pr.md) (fresh runs — the engine self-routes to [om-auto-create-pr-loop](om-auto-create-pr-loop.md) for long plans) or [om-auto-continue-pr](om-auto-continue-pr.md) (when a PR exists; the loop continue variant when the PR tracks a run folder), then runs [om-auto-review-pr](om-auto-review-pr.md) and [om-auto-qa-pr](om-auto-qa-pr.md), with [om-open-pr](om-open-pr.md) as a fallback piece.
 
 ---
 *Source: [`skills/om-auto-implement-spec/SKILL.md`](../../skills/om-auto-implement-spec/SKILL.md)*

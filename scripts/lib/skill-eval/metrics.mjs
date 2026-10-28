@@ -60,15 +60,32 @@ export function parseNativeSession(text) {
   const responses = new Map();
   const tools = new Set();
   const models = new Set();
+  const efforts = new Set();
   let cumulative = null;
   let malformedLines = 0;
   let agentMessages = 0;
   let artifactText = '';
+  let taskState = 'unknown';
+  let startedTasks = 0;
+  let completedTasks = 0;
+  let interruptedTasks = 0;
   for (const line of text.split('\n').filter((value) => value.trim())) {
     let event;
     try { event = JSON.parse(line); } catch { malformedLines++; continue; }
     const payload = event.payload ?? {};
     if (typeof payload.model === 'string') models.add(payload.model);
+    if (event.type === 'turn_context') {
+      const effort = payload.effort ?? payload.reasoning_effort ?? payload.reasoningEffort;
+      if (typeof effort === 'string') efforts.add(effort);
+    }
+    if (event.type === 'event_msg') {
+      if (['task_started', 'turn_started'].includes(payload.type)) { taskState = 'started'; startedTasks++; }
+      if (['task_complete', 'turn_complete'].includes(payload.type)) {
+        taskState = 'completed'; completedTasks++;
+        if (typeof payload.last_agent_message === 'string') artifactText = payload.last_agent_message;
+      }
+      if (['turn_aborted', 'task_aborted', 'task_interrupted'].includes(payload.type)) { taskState = 'interrupted'; interruptedTasks++; }
+    }
     if (event.type === 'token_usage_record' && payload.response_id && payload.usage) {
       responses.set(payload.response_id, normalizeUsage(payload.usage));
     }
@@ -86,7 +103,8 @@ export function parseNativeSession(text) {
   return { usage: responses.size ? sumUsage([...responses.values()]) : cumulative ?? sumUsage([]),
     usageSource: responses.size ? 'response-records' : cumulative ? 'session-cumulative' : 'unknown',
     completedToolCalls: tools.size, toolCountBasis: 'invocations (native logs may omit completion status)',
-    agentMessages, artifactText, malformedLines, observedModels: [...models] };
+    agentMessages, artifactText, malformedLines, observedModels: [...models], observedEfforts: [...efforts],
+    taskState, startedTasks, completedTasks, interruptedTasks };
 }
 
 export function textMetrics(text) {

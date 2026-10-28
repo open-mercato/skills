@@ -180,6 +180,7 @@ export async function importNative(output, { session, pairId, variant, model, ef
   const content = await fs.readFile(sessionPath, 'utf8');
   const parsed = parseNativeSession(content);
   if (parsed.observedModels.some((observed) => observed !== model)) throw new Error('Native model metadata does not match --model');
+  if (parsed.observedEfforts.some((observed) => observed !== effort)) throw new Error('Native effort metadata does not match --effort');
   const id = `${pairId}-${variant}`;
   const { directory, names } = await attemptsFor(root, id);
   const attemptDirectory = path.join(directory, `attempt-${names.length ? Number(names.at(-1).slice(8)) + 1 : 1}`);
@@ -189,9 +190,12 @@ export async function importNative(output, { session, pairId, variant, model, ef
     skill: manifest.config.skill.name, skillCommit: manifest.variants[variant].commit,
     requestedModel: model, reasoningEffort: effort, backend: 'native-session-import', cohort,
     importedAt: new Date().toISOString(), sessionDigest: digest(content), elapsedSeconds: null,
-    status: parsed.malformedLines || !artifact.artifactText.trim() ? 'partial' : 'completed',
+    status: parsed.taskState === 'interrupted' ? 'interrupted' :
+      parsed.malformedLines || !artifact.artifactText.trim() || parsed.taskState !== 'completed' ? 'partial' : 'completed',
     metrics: { ...parsed, artifactText: undefined }, artifact, textMetrics: textMetrics(artifact.artifactText),
-    modelVerification: parsed.observedModels.length ? 'metadata-matched' : 'unverified-import' };
+    modelVerification: parsed.observedModels.length ? 'metadata-matched' : 'unverified-import',
+    effortVerification: parsed.observedEfforts.length ? 'metadata-matched' : 'unverified-import' };
   await writeJson(path.join(attemptDirectory, 'result.json'), result);
-  return { id, cohort, status: result.status, usage: parsed.usage, modelVerification: result.modelVerification };
+  return { id, cohort, status: result.status, usage: parsed.usage, modelVerification: result.modelVerification,
+    effortVerification: result.effortVerification };
 }

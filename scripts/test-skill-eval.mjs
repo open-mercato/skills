@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { promises as fs } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { prepare, loadConfig, loadRun, cleanup, treeDigest, readJson } from './lib/skill-eval/storage.mjs';
 import { run, importNative } from './lib/skill-eval/runner.mjs';
@@ -199,19 +199,22 @@ test('native imports deduplicate response usage, verify model and keep cohorts s
   const session = path.join(setup.temporary, 'explicit-session.jsonl');
   const usage = { input_tokens: 40, cached_input_tokens: 30, output_tokens: 10, reasoning_output_tokens: 3 };
   const events = [
-    { type: 'turn_context', payload: { model: setup.config.models[0].name } },
+    { type: 'turn_context', payload: { model: setup.config.models[0].name, effort: 'high' } },
+    { type: 'event_msg', payload: { type: 'task_started' } },
     { type: 'token_usage_record', payload: { response_id: 'response-1', usage } },
     { type: 'token_usage_record', payload: { response_id: 'response-1', usage } },
     { type: 'event_msg', payload: { type: 'token_count', info: { total_token_usage: { input_tokens: 999, output_tokens: 999 } } } },
     { type: 'response_item', payload: { type: 'function_call', call_id: 'call-1' } },
     { type: 'response_item', payload: { type: 'function_call', call_id: 'call-1' } },
     { type: 'response_item', payload: { type: 'message', role: 'assistant', phase: 'final_answer', content: [{ type: 'output_text', text: 'Native description.' }] } },
+    { type: 'event_msg', payload: { type: 'task_complete' } },
   ];
   await fs.writeFile(session, events.map((entry) => JSON.stringify(entry)).join('\n'));
   const options = { session, pairId: 'm0-tiny-case-r1', variant: 'baseline', model: setup.config.models[0].name, effort: 'high', cohort: 'pilot-native' };
   const result = await importNative(setup.out, options);
   assert.equal(result.usage.totalTokens, 50);
   assert.equal(result.modelVerification, 'metadata-matched');
+  assert.equal(result.effortVerification, 'metadata-matched');
   await importNative(setup.out, { ...options, variant: 'candidate' });
   await assert.rejects(importNative(setup.out, { ...options, model: 'other' }), /model/u);
   await assert.rejects(importNative(setup.out, { ...options, cohort: 'cli' }), /cohort/u);
@@ -220,6 +223,72 @@ test('native imports deduplicate response usage, verify model and keep cohorts s
   assert.equal(summary.comparisons.length, 2);
   assert.equal(summary.trials.find((trial) => trial.cohort === 'pilot-native').metrics.completedToolCalls, 1);
   assert.equal(summary.comparisons[0].measurements['usage.totalTokens'].baseline, 110);
+  await fs.appendFile(session, '\n' + JSON.stringify({ type: 'event_msg', payload: { type: 'task_started' } }));
+  const artifactFile = path.join(setup.temporary, 'artifact.txt');
+  await fs.writeFile(artifactFile, 'A supplied artifact does not prove trial completion.');
+  assert.equal((await importNative(setup.out, { ...options, artifactFile })).status, 'partial');
+  await fs.appendFile(session, '\n' + JSON.stringify({ type: 'event_msg', payload: { type: 'turn_aborted' } }));
+  assert.equal((await importNative(setup.out, { ...options, artifactFile })).status, 'interrupted');
+  await fs.appendFile(session, '\n' + JSON.stringify({ type: 'turn_context', payload: { model: setup.config.models[0].name, effort: 'low' } }));
+  await assert.rejects(importNative(setup.out, options), /effort metadata/u);
+});
+
+test('concurrent repetitions use fresh sessions and a complete baseline phase barrier', async (t) => {
+  const setup = await fixture(t);
+  setup.config.repetitions = 2;
+  setup.config.concurrency = 2;
+  await fs.writeFile(setup.configPath, JSON.stringify(setup.config));
+  await prepare(setup.configPath, setup.out);
+  assert.equal((await run(setup.out, { execute: true })).completed, 4);
+  await report(setup.out);
+  const summary = await readJson(path.join(setup.out, 'reports', 'report.json'));
+  const baselineFinish = Math.max(...summary.trials.filter((trial) => trial.variant === 'baseline').map((trial) => Date.parse(trial.finishedAt)));
+  const candidateStart = Math.min(...summary.trials.filter((trial) => trial.variant === 'candidate').map((trial) => Date.parse(trial.startedAt)));
+  assert.ok(candidateStart >= baselineFinish);
+  const threads = new Set();
+  for (const trial of summary.trials) {
+    const raw = await fs.readFile(path.join(setup.out, 'trials', trial.id, 'attempt-1', 'stdout.jsonl'), 'utf8');
+    threads.add(JSON.parse(raw.split('\n')[0]).thread_id);
+  }
+  assert.equal(threads.size, 4);
+});
+
+test('SIGTERM preserves cancelled trial evidence and releases execution lock', async (t) => {
+  const setup = await fixture(t, { mode: 'timeout' });
+  setup.config.codex.timeoutSeconds = 30;
+  await fs.writeFile(setup.configPath, JSON.stringify(setup.config));
+  await prepare(setup.configPath, setup.out);
+  const child = spawn(process.execPath, [cli, 'run', '--out', setup.out, '--execute'], { stdio: 'ignore' });
+  const exited = new Promise((resolve) => child.once('exit', (code, signal) => resolve({ code, signal })));
+  const rawFile = path.join(setup.out, 'trials', 'm0-tiny-case-r1-baseline', 'attempt-1', 'stdout.jsonl');
+  let ready = false;
+  for (let poll = 0; poll < 250 && !ready; poll++) {
+    try { ready = (await fs.stat(rawFile)).size > 0; } catch {}
+    if (!ready) await new Promise((resolve) => setTimeout(resolve, 20));
+  }
+  assert.ok(ready, 'worker emitted a partial stream');
+  child.kill('SIGTERM');
+  assert.equal((await exited).code, 1);
+  await assert.rejects(fs.access(path.join(setup.out, '.running')));
+  const result = await readJson(path.join(path.dirname(rawFile), 'result.json'));
+  assert.equal(result.status, 'cancelled');
+  assert.equal(result.metrics.completedToolCalls, 1);
+  assert.equal(result.metrics.usage.totalTokens, null);
+});
+
+test('resume rejects changed executor version and reports missing result as interrupted', async (t) => {
+  const setup = await fixture(t);
+  await prepare(setup.configPath, setup.out);
+  await run(setup.out, { execute: true });
+  const executable = setup.config.codex.executable;
+  await fs.writeFile(executable, (await fs.readFile(executable, 'utf8')).replace('codex-cli fake-1', 'codex-cli fake-2'));
+  await assert.rejects(run(setup.out, { execute: true }), /environment drift/u);
+  const resultFile = path.join(setup.out, 'trials', 'm0-tiny-case-r1-baseline', 'attempt-1', 'result.json');
+  await fs.rm(resultFile);
+  await report(setup.out);
+  const summary = await readJson(path.join(setup.out, 'reports', 'report.json'));
+  assert.equal(summary.trials[0].status, 'interrupted');
+  assert.equal(summary.comparisons[0].complete, false);
 });
 
 test('metrics count completed tool IDs once, preserve unknown usage and handle prose heuristics', () => {

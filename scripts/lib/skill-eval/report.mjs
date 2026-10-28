@@ -11,7 +11,7 @@ const valueAt = (trial, key) => key.startsWith('usage.') ? trial.metrics?.usage?
   key.startsWith('text.') ? trial.textMetrics?.[key.slice(5)] ?? null : trial[key] ?? trial.metrics?.[key] ?? null;
 const measurements = ['usage.inputTokens', 'usage.cachedInputTokens', 'usage.cacheWriteInputTokens', 'usage.outputTokens',
   'usage.reasoningOutputTokens', 'usage.totalTokens', 'completedToolCalls', 'agentMessages', 'elapsedSeconds',
-  'text.words', 'text.bytes', 'text.heuristicMeanSentenceWords', 'text.heuristicSemicolons'];
+  'text.words', 'text.bytes', 'text.heuristicMeanSentenceWords', 'text.heuristicMaxSentenceWords', 'text.heuristicSemicolons'];
 const delta = (baseline, candidate) => ({ baseline, candidate, delta: numeric(baseline) && numeric(candidate) ? candidate - baseline : null,
   percent: numeric(baseline) && baseline !== 0 && numeric(candidate) ? (candidate - baseline) / baseline * 100 : null });
 const cell = (value) => String(value ?? 'unknown').replace(/&/gu, '&amp;').replace(/</gu, '&lt;').replace(/>/gu, '&gt;').replace(/\|/gu, '\\|').replace(/[\r\n]+/gu, ' ');

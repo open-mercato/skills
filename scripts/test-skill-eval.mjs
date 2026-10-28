@@ -53,6 +53,7 @@ const prompt = args.at(-1);
 if (!args.includes('--ignore-user-config') || args[args.indexOf('--sandbox') + 1] !== 'read-only') process.exit(21);
 if (args[args.indexOf('--model') + 1] !== 'model;$(touch SHOULD_NOT_EXIST)') process.exit(22);
 if (!prompt.includes('Assigned skill:') || !prompt.includes('Frozen case context:')) process.exit(23);
+if (!prompt.includes('Do not spawn or delegate to other agents') || !prompt.includes('trial outputs/results')) process.exit(24);
 const variant = prompt.includes('/variants/baseline/') ? 'baseline' : 'candidate';
 const mode = ${JSON.stringify(mode)};
 const emit = (event) => console.log(JSON.stringify(event));
@@ -235,6 +236,9 @@ test('metrics count completed tool IDs once, preserve unknown usage and handle p
   assert.equal(result.usage.totalTokens, null);
   assert.equal(parseNativeSession('').usage.totalTokens, null);
   assert.equal(textMetrics('One sentence; then another. Next.').heuristicSemicolons, 1);
+  const prose = textMetrics('# A long heading that is not a sentence\n\n| ignored table | words |\n\nRead [the result](https://example.invalid/path) and check `api.method`. Next.\n\n```js\nconst ignored = 1;\n```');
+  assert.deepEqual(prose.heuristicSentenceWords, [6, 1]);
+  assert.equal(prose.heuristicMaxSentenceWords, 6);
 });
 
 test('CLI rejects unexpected flags; cleanup refuses unowned directories and live locks', async (t) => {

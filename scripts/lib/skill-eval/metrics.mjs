@@ -90,13 +90,18 @@ export function parseNativeSession(text) {
 }
 
 export function textMetrics(text) {
-  const prose = text.replace(/```[\s\S]*?```/g, '').replace(/`[^`\n]+`/g, '');
+  const prose = text.replace(/```[\s\S]*?```/g, '').replace(/~~~[\s\S]*?~~~/g, '')
+    .replace(/^\s*#{1,6}\s.*$/gmu, '').replace(/^\s*\|.*$/gmu, '')
+    .replace(/!\[([^\]]*)\]\([^)]*\)/gu, '$1').replace(/\[([^\]]*)\]\([^)]*\)/gu, '$1')
+    .replace(/`[^`\n]+`/gu, 'identifier');
   const words = text.match(/\S+/gu) ?? [];
   const sentences = prose.split(/[.!?]+(?:\s|$)/u).map((value) => value.trim()).filter(Boolean);
   const lengths = sentences.map((sentence) => (sentence.match(/\S+/gu) ?? []).length);
   return { bytes: Buffer.byteLength(text), words: words.length,
     heuristicSentences: sentences.length,
     heuristicMeanSentenceWords: lengths.length ? lengths.reduce((total, count) => total + count, 0) / lengths.length : null,
+    heuristicMaxSentenceWords: lengths.length ? Math.max(...lengths) : null,
+    heuristicSentenceWords: lengths,
     heuristicSemicolons: (prose.match(/;/gu) ?? []).length };
 }
 

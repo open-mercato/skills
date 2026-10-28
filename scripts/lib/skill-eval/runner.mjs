@@ -3,8 +3,8 @@ import path from 'node:path';
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { loadRun, writeJson, readJson, treeDigest } from './storage.mjs';
-import { digest, parseCodexStream, parseNativeSession, parseArtifact, textMetrics } from './metrics.mjs';
+import { loadRun, withRunLock, writeJson, readJson, treeDigest } from './storage.mjs';
+import { artifactDigest, digest, parseCodexStream, parseNativeSession, parseArtifact, textMetrics } from './metrics.mjs';
 
 const execute = promisify(execFile);
 export function pairs(manifest) {
@@ -74,14 +74,16 @@ function stop(child) {
 }
 
 export async function run(output, { execute: executeTrials = false, retryFailed = false } = {}) {
+  if (executeTrials) return withRunLock(output, 'run', (state) => executeRun(state, retryFailed));
   const { root, manifest } = await loadRun(output);
   const jobs = pairs(manifest);
-  if (!executeTrials) return { dryRun: true, pairs: jobs.length, trials: jobs.length * 2,
+  return { dryRun: true, pairs: jobs.length, trials: jobs.length * 2,
     models: manifest.config.models, order: 'all baseline trials finish before candidate trials start',
     command: `node scripts/skill-eval.mjs run --out ${JSON.stringify(root)} --execute` };
-  const lock = path.join(root, '.running');
-  const handle = await fs.open(lock, 'wx', 0o600);
-  await handle.writeFile(JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString() }));
+}
+
+async function executeRun({ root, manifest }, retryFailed) {
+  const jobs = pairs(manifest);
   const active = new Set();
   let cancelled = false;
   const cancel = () => { cancelled = true; for (const child of active) stop(child); };
@@ -147,7 +149,7 @@ export async function run(output, { execute: executeTrials = false, retryFailed 
             execution.spawnError || execution.exitCode !== 0 || parsed.failedTurns || modelMismatch ? 'failed' :
               parsed.malformedLines || !parsed.completedTurns || !artifact.artifactText.trim() ? 'partial' : 'completed';
           const result = { ...metadata, status, ...execution, finishedAt: new Date().toISOString(),
-            metrics: { ...parsed, artifactText: undefined }, artifact, textMetrics: textMetrics(artifact.artifactText),
+            metrics: { ...parsed, artifactText: undefined }, artifact, artifactDigest: artifactDigest(artifact), textMetrics: textMetrics(artifact.artifactText),
             modelVerification: parsed.observedModels.length ? modelMismatch ? 'mismatch' : 'metadata-matched' : 'requested-only' };
           await writeJson(path.join(attemptDirectory, 'result.json'), result);
           if (status === 'completed') completed++; else failed++;
@@ -164,22 +166,11 @@ export async function run(output, { execute: executeTrials = false, retryFailed 
     cancel();
     process.off('SIGINT', cancel);
     process.off('SIGTERM', cancel);
-    await handle.close();
-    await fs.rm(lock, { force: true });
   }
 }
 
 export async function importNative(output, options) {
-  const { root, manifest } = await loadRun(output);
-  const lock = path.join(root, '.running');
-  const handle = await fs.open(lock, 'wx', 0o600);
-  try {
-    await handle.writeFile(JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString(), operation: 'import' }));
-    return await importSession(root, manifest, options);
-  } finally {
-    await handle.close();
-    await fs.rm(lock, { force: true });
-  }
+  return withRunLock(output, 'import', ({ root, manifest }) => importSession(root, manifest, options));
 }
 
 async function importSession(root, manifest, { session, pairId, variant, model, effort, cohort, artifactFile }) {
@@ -204,10 +195,10 @@ async function importSession(root, manifest, { session, pairId, variant, model, 
     importedAt: new Date().toISOString(), sessionDigest: digest(content), elapsedSeconds: null,
     status: parsed.taskState === 'interrupted' ? 'interrupted' :
       parsed.malformedLines || !artifact.artifactText.trim() || parsed.taskState !== 'completed' ? 'partial' : 'completed',
-    metrics: { ...parsed, artifactText: undefined }, artifact, textMetrics: textMetrics(artifact.artifactText),
+    metrics: { ...parsed, artifactText: undefined }, artifact, artifactDigest: artifactDigest(artifact), textMetrics: textMetrics(artifact.artifactText),
     modelVerification: parsed.observedModels.length ? 'metadata-matched' : 'unverified-import',
     effortVerification: parsed.observedEfforts.length ? 'metadata-matched' : 'unverified-import' };
   await writeJson(path.join(attemptDirectory, 'result.json'), result);
-  return { id, cohort, status: result.status, usage: parsed.usage, modelVerification: result.modelVerification,
+  return { id, cohort, status: result.status, artifactDigest: result.artifactDigest, usage: parsed.usage, modelVerification: result.modelVerification,
     effortVerification: result.effortVerification };
 }

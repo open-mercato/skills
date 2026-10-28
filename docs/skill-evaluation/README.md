@@ -142,6 +142,11 @@ within each trial/cohort for paired comparisons.
 Frozen input or manifest changes reject execution. Resume also rejects changed
 Codex version, Node/platform or helper-source digest; prepare a new experiment
 when changing the executor. Source refs and original context are not reloaded.
+Execution, native import and cleanup acquire the same exclusive `.running`
+writer lock. Ownership and frozen inputs are checked again inside the lock before
+execution/import. Cleanup checks ownership inside its lock and can remove owned
+snapshots even when their contents have drifted. A competing writer fails without
+removing the current writer's lock.
 SIGINT/SIGTERM stop current workers and preserve evidence. An abrupt host crash or
 SIGKILL can leave `.running`; after verifying its recorded process has ended,
 remove that stale lock explicitly before resuming. Never remove an active lock.
@@ -152,6 +157,9 @@ as interrupted. Raw partial stdout stays available for local diagnosis.
 
 `reports/report.json`, `pairs.csv` and `report.md` provide per-trial results, paired
 deltas and per-model/per-case aggregates. Only completed pairs enter aggregates.
+CLI comparisons cover every expected manifest pair, including missing/missing
+trials that never started; those pairs count as incomplete. Native cohorts cover
+only pairs with an imported attempt. `cohortScopes` records that distinction.
 Unknown values stay null/empty/unknown; a failed trial is never interpreted as
 zero-cost success. CLI tool counts count each completed invocation item ID once,
 including failed command executions. Agent messages have a separate count.
@@ -176,10 +184,17 @@ All reports stay local. Raw streams, error text, personal source paths and auth
 configuration are not copied into exports. Generated artifacts themselves can
 contain sensitive source details, so review any report before sharing it.
 `blinded-artifacts.json` omits variant/model provenance and randomizes artifact
-order by opaque run-specific IDs. Keep `blinding-key.private.json` away from the
+order by opaque run-specific IDs. Results, report JSON/CSV and blinded artifacts
+expose `artifactDigest`, a SHA-256 over the complete parsed artifact with sorted
+object keys. Text, structured findings/actions, array order and qualifications
+all participate in the digest. Legacy results without this field receive a
+derived digest when reporting; stored results are never rewritten. Keep
+`blinding-key.private.json` away from the
 judge; redact self-identification inside generated text if needed before judging.
 
 Optional manual/reference assessments keep quality separate from measured cost:
+copy [the assessment example](../../examples/skill-evaluation/assessments.json)
+and replace its trial identity, digest and judgment with reviewed evidence.
 
 ```json
 {
@@ -188,6 +203,7 @@ Optional manual/reference assessments keep quality separate from measured cost:
     {
       "trialId": "m0-case-001-r1-candidate",
       "cohort": "cli",
+      "artifactDigest": "<copy the exact artifact digest from report.json or the private blinding key>",
       "qualityScore": 4,
       "scale": "1–5, reviewer-defined retained-detail rubric",
       "notes": "Retained the compatibility and CI qualifications."
@@ -196,8 +212,13 @@ Optional manual/reference assessments keep quality separate from measured cost:
 }
 ```
 
-Pass it to `report --assessments FILE`. Notes need no numeric score; numeric scores
-require an explicit scale. The harness does not invent prices, precision, recall
+Pass it to `report --assessments FILE`. Every assessment, including notes-only
+assessments, requires the exact artifact digest. The report rejects a stale
+assessment when the latest retry or native reimport has a different artifact;
+reassess that artifact before applying a score. An unchanged artifact can retain
+its assessment. Blinded IDs change when their artifact changes. Notes need no
+numeric score; numeric scores require an explicit scale. The harness does not
+invent prices, precision, recall
 or ground truth. Fixed baseline-first order can favor warm caches; repetitions,
 real cases and independently judged quality are needed to interpret savings.
 

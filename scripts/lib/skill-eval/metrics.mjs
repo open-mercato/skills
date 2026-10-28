@@ -1,6 +1,15 @@
 import { createHash } from 'node:crypto';
 
 export const digest = (value) => createHash('sha256').update(value).digest('hex');
+export function artifactDigest(artifact) {
+  function canonical(value) {
+    if (Array.isArray(value)) return value.map(canonical);
+    if (value !== null && typeof value === 'object') return Object.fromEntries(
+      Object.keys(value).sort().map((key) => [key, canonical(value[key])]));
+    return value;
+  }
+  return digest(JSON.stringify(canonical(artifact)));
+}
 
 const tokenKeys = ['inputTokens', 'cachedInputTokens', 'cacheWriteInputTokens', 'outputTokens', 'reasoningOutputTokens'];
 const number = (value) => Number.isSafeInteger(value) && value >= 0 ? value : null;

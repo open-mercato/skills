@@ -8,7 +8,7 @@ import { promisify } from 'node:util';
 import { prepare, loadConfig, loadRun, cleanup, treeDigest, readJson } from './lib/skill-eval/storage.mjs';
 import { run, importNative } from './lib/skill-eval/runner.mjs';
 import { report } from './lib/skill-eval/report.mjs';
-import { parseCodexStream, parseNativeSession, textMetrics } from './lib/skill-eval/metrics.mjs';
+import { artifactDigest, parseCodexStream, parseNativeSession, textMetrics } from './lib/skill-eval/metrics.mjs';
 
 const execute = promisify(execFile);
 const cli = path.resolve('scripts/skill-eval.mjs');
@@ -336,4 +336,167 @@ test('CLI rejects unexpected flags; cleanup refuses unowned directories and live
   assert.equal(await fs.readFile(path.join(outside, 'keep'), 'utf8'), 'keep');
   await fs.rm(path.join(setup.out, 'trials'));
   await fs.rename(path.join(setup.out, 'saved-trials'), path.join(setup.out, 'trials'));
+});
+
+test('reports count every expected CLI pair before execution and native cohorts cover only imported pairs', async (t) => {
+  const setup = await fixture(t);
+  setup.config.cases.push({ ...setup.config.cases[0], id: 'never-started' });
+  await fs.writeFile(setup.configPath, JSON.stringify(setup.config));
+  await prepare(setup.configPath, setup.out);
+  await report(setup.out);
+  const reportFile = path.join(setup.out, 'reports', 'report.json');
+  const before = await readJson(reportFile);
+  assert.equal(before.recordedAttempts, 0);
+  assert.equal(before.comparisons.length, 2);
+  assert.ok(before.comparisons.every((pair) => !pair.complete && pair.baselineStatus === 'missing' && pair.candidateStatus === 'missing'));
+  assert.equal(before.aggregates.find((entry) => entry.caseId === '*').incompletePairs, 2);
+  assert.deepEqual(before.cohortScopes, [{ cohort: 'cli', scope: 'all manifest pairs', pairs: 2 }]);
+  const session = path.join(setup.temporary, 'selected-native.jsonl');
+  await fs.writeFile(session, JSON.stringify({ type: 'event_msg', payload: { type: 'task_complete', last_agent_message: 'One imported artifact.' } }));
+  await importNative(setup.out, { session, pairId: 'm0-tiny-case-r1', variant: 'baseline', model: setup.config.models[0].name, effort: 'high', cohort: 'native' });
+  await report(setup.out);
+  const after = await readJson(reportFile);
+  assert.equal(after.comparisons.filter((pair) => pair.cohort === 'cli').length, 2);
+  assert.equal(after.comparisons.filter((pair) => pair.cohort === 'native').length, 1);
+  assert.equal(after.comparisons.find((pair) => pair.cohort === 'native').candidateStatus, 'missing');
+  assert.deepEqual(after.cohortScopes.find((cohort) => cohort.cohort === 'native'), { cohort: 'native', scope: 'imported pairs only', pairs: 1 });
+});
+
+test('cleanup holds the writer lock against run/import/cleanup and failed acquisition preserves it', async (t) => {
+  const setup = await fixture(t);
+  await prepare(setup.configPath, setup.out);
+  const originalRm = fs.rm;
+  let release;
+  const paused = new Promise((resolve) => { release = resolve; });
+  let reached;
+  const reachedRemoval = new Promise((resolve) => { reached = resolve; });
+  const inputPath = await fs.realpath(path.join(setup.out, 'inputs'));
+  fs.rm = async (target, ...args) => {
+    if (target === inputPath) { reached(); await paused; }
+    return originalRm(target, ...args);
+  };
+  const cleaning = cleanup(setup.out);
+  try {
+    await reachedRemoval;
+    const lockPath = path.join(setup.out, '.running');
+    const owner = await fs.readFile(lockPath, 'utf8');
+    assert.equal(JSON.parse(owner).operation, 'cleanup');
+    await assert.rejects(run(setup.out, { execute: true }), { code: 'EEXIST' });
+    await assert.rejects(importNative(setup.out, {}), { code: 'EEXIST' });
+    await assert.rejects(cleanup(setup.out), { code: 'EEXIST' });
+    assert.equal(await fs.readFile(lockPath, 'utf8'), owner);
+    assert.deepEqual(await fs.readdir(path.join(setup.out, 'trials')), []);
+  } finally {
+    release();
+    await cleaning;
+    fs.rm = originalRm;
+  }
+  await assert.rejects(fs.access(path.join(setup.out, '.running')));
+  assert.deepEqual(await fs.readdir(path.join(setup.out, 'inputs')), []);
+});
+
+for (const operation of ['run', 'import']) {
+  test(`${operation} verifies frozen inputs after acquiring the writer lock`, async (t) => {
+    const setup = await fixture(t);
+    await prepare(setup.configPath, setup.out);
+    const originalOpen = fs.open;
+    const lockPath = path.join(await fs.realpath(setup.out), '.running');
+    let injected = false;
+    fs.open = async (target, ...args) => {
+      if (target === lockPath && !injected) {
+        injected = true;
+        await cleanup(setup.out);
+      }
+      return originalOpen(target, ...args);
+    };
+    try {
+      const writing = operation === 'run' ? run(setup.out, { execute: true }) : importNative(setup.out, {});
+      await assert.rejects(writing, /Frozen input drift/u);
+      assert.ok(injected);
+      assert.deepEqual(await fs.readdir(path.join(setup.out, 'trials')), []);
+      await assert.rejects(fs.access(path.join(setup.out, '.running')));
+    } finally { fs.open = originalOpen; }
+  });
+}
+
+test('cleanup verifies ownership under its lock and can clean owned drifted inputs', async (t) => {
+  const setup = await fixture(t);
+  await prepare(setup.configPath, setup.out);
+  await fs.appendFile(path.join(setup.out, 'inputs', 'cases', 'tiny-case', 'head', 'app.txt'), 'drift');
+  await cleanup(setup.out);
+  assert.deepEqual(await fs.readdir(path.join(setup.out, 'inputs')), []);
+  assert.equal(await treeDigest(setup.source), setup.before.source);
+  const originalOpen = fs.open;
+  const lockPath = path.join(await fs.realpath(setup.out), '.running');
+  const ownerFile = path.join(setup.out, '.skill-eval-owner.json');
+  const owner = await fs.readFile(ownerFile, 'utf8');
+  fs.open = async (target, ...args) => {
+    if (target === lockPath) await fs.writeFile(ownerFile, '{}');
+    return originalOpen(target, ...args);
+  };
+  try {
+    await assert.rejects(cleanup(setup.out), /ownership/u);
+    await assert.rejects(fs.access(lockPath));
+  } finally {
+    fs.open = originalOpen;
+    await fs.writeFile(ownerFile, owner);
+  }
+});
+
+test('artifact-bound assessments reject changed retry artifacts and derive legacy digests without modifying results', async (t) => {
+  const setup = await fixture(t, { mode: 'partial' });
+  await prepare(setup.configPath, setup.out);
+  await run(setup.out, { execute: true });
+  const resultFile = path.join(setup.out, 'trials', 'm0-tiny-case-r1-baseline', 'attempt-1', 'result.json');
+  const original = await readJson(resultFile);
+  assert.equal(original.artifactDigest, artifactDigest(original.artifact));
+  delete original.artifactDigest;
+  await fs.writeFile(resultFile, JSON.stringify(original));
+  const legacyBytes = await fs.readFile(resultFile, 'utf8');
+  await report(setup.out);
+  const reportFile = path.join(setup.out, 'reports', 'report.json');
+  const before = await readJson(reportFile);
+  const trial = before.trials.find((entry) => entry.id === 'm0-tiny-case-r1-baseline');
+  assert.equal(trial.artifactDigest, artifactDigest(original.artifact));
+  assert.equal(await fs.readFile(resultFile, 'utf8'), legacyBytes);
+  const assessmentFile = path.join(setup.temporary, 'assessments.json');
+  const assessment = { trialId: trial.id, cohort: trial.cohort, artifactDigest: trial.artifactDigest, qualityScore: 4, scale: '1-5 retained detail' };
+  await fs.writeFile(assessmentFile, JSON.stringify({ version: 1, assessments: [assessment] }));
+  await report(setup.out, { assessmentsFile: assessmentFile });
+  const judged = await readJson(reportFile);
+  assert.equal(judged.comparisons[0].assessments.baseline[0].artifactDigest, trial.artifactDigest);
+  const blindedBefore = await readJson(path.join(setup.out, 'reports', 'blinded-artifacts.json'));
+  assert.ok(blindedBefore.artifacts.some((entry) => entry.artifactDigest === trial.artifactDigest));
+  const executable = setup.config.codex.executable;
+  await fs.writeFile(executable, (await fs.readFile(executable, 'utf8')).replace('useful guard.', 'different guard.'));
+  await run(setup.out, { execute: true, retryFailed: true });
+  await assert.rejects(report(setup.out, { assessmentsFile: assessmentFile }), /Stale assessment/u);
+  await fs.writeFile(assessmentFile, JSON.stringify({ version: 1, assessments: [{ ...assessment, artifactDigest: undefined }] }));
+  await assert.rejects(report(setup.out, { assessmentsFile: assessmentFile }), /explicit artifactDigest/u);
+  await report(setup.out);
+  const after = await readJson(reportFile);
+  assert.notEqual(after.comparisons[0].artifactDigests.baseline, trial.artifactDigest);
+  const blindedAfter = await readJson(path.join(setup.out, 'reports', 'blinded-artifacts.json'));
+  assert.ok(!blindedAfter.artifacts.some((entry) => entry.artifactDigest === trial.artifactDigest));
+});
+
+test('assessment digest includes structured findings and rejects changed native reimports', async (t) => {
+  const setup = await fixture(t);
+  await prepare(setup.configPath, setup.out);
+  const session = path.join(setup.temporary, 'selected-session.jsonl');
+  await fs.writeFile(session, JSON.stringify({ type: 'event_msg', payload: { type: 'task_complete' } }));
+  const artifactFile = path.join(setup.temporary, 'artifact.json');
+  const artifact = { artifactText: 'Same description.', findings: [{ severity: 'low', detail: 'First finding' }] };
+  await fs.writeFile(artifactFile, JSON.stringify(artifact));
+  const options = { session, artifactFile, pairId: 'm0-tiny-case-r1', variant: 'baseline', model: setup.config.models[0].name, effort: 'high', cohort: 'native' };
+  const first = await importNative(setup.out, options);
+  const assessmentFile = path.join(setup.temporary, 'assessments.json');
+  await fs.writeFile(assessmentFile, JSON.stringify({ version: 1, assessments: [{ trialId: first.id, cohort: first.cohort, artifactDigest: first.artifactDigest, notes: 'Reviewed this exact finding.' }] }));
+  await report(setup.out, { assessmentsFile: assessmentFile });
+  artifact.findings[0].detail = 'Different finding';
+  await fs.writeFile(artifactFile, JSON.stringify(artifact));
+  const second = await importNative(setup.out, options);
+  assert.notEqual(first.artifactDigest, second.artifactDigest);
+  await assert.rejects(report(setup.out, { assessmentsFile: assessmentFile }), /Stale assessment/u);
+  assert.equal(artifactDigest({ findings: [], artifactText: 'Stable' }), artifactDigest({ artifactText: 'Stable', findings: [] }));
 });

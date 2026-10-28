@@ -174,12 +174,17 @@ export async function prepare(configFile, output) {
   }
 }
 
-export async function loadRun(output, { verifyInputs = true } = {}) {
+async function loadOwnedManifest(output) {
   const root = await fs.realpath(output);
   const owner = await readJson(path.join(root, '.skill-eval-owner.json'));
   const text = await fs.readFile(path.join(root, 'manifest.json'), 'utf8');
   const manifest = JSON.parse(text);
   requireValue(owner.version === 1 && manifest.version === 1 && owner.runId === manifest.runId && owner.manifestDigest === digest(text), 'Invalid or changed run manifest/ownership marker');
+  return { root, manifest };
+}
+
+export async function loadRun(output, { verifyInputs = true } = {}) {
+  const { root, manifest } = await loadOwnedManifest(output);
   for (const relative of ['inputs', 'trials']) {
     const absolute = path.join(root, relative);
     requireValue(!(await fs.lstat(absolute)).isSymbolicLink() && await fs.realpath(absolute) === absolute, 'Run directories must not be symlinks');
@@ -197,17 +202,29 @@ export async function loadRun(output, { verifyInputs = true } = {}) {
   return { root, manifest };
 }
 
-export async function cleanup(output) {
-  const { root, manifest } = await loadRun(output, { verifyInputs: false });
-  try { await fs.access(path.join(root, '.running')); throw new Error('Cannot clean a running experiment'); }
-  catch (error) { if (error.code !== 'ENOENT') throw error; }
-  for (const worktree of manifest.ownedWorktrees) {
-    const target = path.resolve(root, worktree.directory);
-    requireValue(inside(path.join(root, 'inputs'), target), 'Refusing cleanup outside owned inputs');
-    const registered = (await git(worktree.repository, ['worktree', 'list', '--porcelain', '-z'])).split('\0').includes(`worktree ${target}`);
-    if (registered) await git(worktree.repository, ['worktree', 'remove', '--force', target]);
+export async function withRunLock(output, operation, callback, { verifyInputs = true } = {}) {
+  const { root } = await loadOwnedManifest(output);
+  const lock = path.join(root, '.running');
+  const handle = await fs.open(lock, 'wx', 0o600);
+  try {
+    await handle.writeFile(JSON.stringify({ pid: process.pid, startedAt: new Date().toISOString(), operation }));
+    return await callback(await loadRun(root, { verifyInputs }));
+  } finally {
+    await handle.close();
+    await fs.rm(lock, { force: true });
   }
-  await fs.rm(path.join(root, 'inputs'), { recursive: true, force: true });
-  await fs.mkdir(path.join(root, 'inputs'));
-  await writeJson(path.join(root, 'cleanup.json'), { cleanedAt: new Date().toISOString(), runId: manifest.runId });
+}
+
+export async function cleanup(output) {
+  return withRunLock(output, 'cleanup', async ({ root, manifest }) => {
+    for (const worktree of manifest.ownedWorktrees) {
+      const target = path.resolve(root, worktree.directory);
+      requireValue(inside(path.join(root, 'inputs'), target), 'Refusing cleanup outside owned inputs');
+      const registered = (await git(worktree.repository, ['worktree', 'list', '--porcelain', '-z'])).split('\0').includes(`worktree ${target}`);
+      if (registered) await git(worktree.repository, ['worktree', 'remove', '--force', target]);
+    }
+    await fs.rm(path.join(root, 'inputs'), { recursive: true, force: true });
+    await fs.mkdir(path.join(root, 'inputs'));
+    await writeJson(path.join(root, 'cleanup.json'), { cleanedAt: new Date().toISOString(), runId: manifest.runId });
+  }, { verifyInputs: false });
 }

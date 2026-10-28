@@ -2,7 +2,7 @@ import { promises as fs } from 'node:fs';
 import path from 'node:path';
 import { loadRun, readJson, writeJson, writeText } from './storage.mjs';
 import { pairs } from './runner.mjs';
-import { digest } from './metrics.mjs';
+import { artifactDigest, digest } from './metrics.mjs';
 
 const note = 'Fixed baseline-first order can warm caches. Cached input is included in input tokens; reasoning is a subset of output, not an additional total. Unknown usage remains null. No prices or precision/recall are inferred. Natural cases and heuristic prose metrics do not establish quality. One sample is not a stable estimate. Ambient globally discoverable skill metadata may remain. Native import cohorts and CLI cohorts are separate.';
 const numeric = (value) => typeof value === 'number' && Number.isFinite(value);
@@ -20,6 +20,11 @@ const csv = (value) => `"${String(value ?? '').replace(/"/gu, '""')}"`;
 export async function report(output, { assessmentsFile } = {}) {
   const { root, manifest } = await loadRun(output, { verifyInputs: false });
   const trials = [];
+  function addTrial(trial) {
+    const calculated = artifactDigest(trial.artifact);
+    if (trial.artifactDigest && trial.artifactDigest !== calculated) throw new Error(`Stored artifact digest mismatch for ${trial.id}`);
+    trials.push({ ...trial, artifactDigest: calculated });
+  }
   for (const job of pairs(manifest)) {
     for (const variant of ['baseline', 'candidate']) {
       const id = `${job.id}-${variant}`;
@@ -29,39 +34,43 @@ export async function report(output, { assessmentsFile } = {}) {
       for (const name of names.filter((entry) => /^attempt-[0-9]+$/u.test(entry)).sort((left, right) => Number(left.slice(8)) - Number(right.slice(8)))) {
         const attemptDirectory = path.join(directory, name);
         if ((await fs.lstat(attemptDirectory)).isSymbolicLink()) throw new Error('Attempt path must not be a symlink');
-        try { trials.push(await readJson(path.join(attemptDirectory, 'result.json'))); }
+        try { addTrial(await readJson(path.join(attemptDirectory, 'result.json'))); }
         catch (error) {
           if (error.code !== 'ENOENT') throw error;
           const metadata = await readJson(path.join(attemptDirectory, 'trial.json'));
-          trials.push({ ...metadata, status: 'interrupted', metrics: {}, artifact: { artifactText: '' } });
+          addTrial({ ...metadata, status: 'interrupted', metrics: {}, artifact: { artifactText: '' } });
         }
       }
     }
   }
+  const latest = new Map();
+  for (const trial of trials) latest.set(`${trial.cohort}/${trial.id}`, trial);
   let assessments = [];
   if (assessmentsFile) {
     const provided = await readJson(assessmentsFile);
     if (provided.version !== 1 || !Array.isArray(provided.assessments)) throw new Error('Assessments require version 1 and assessments[]');
     assessments = provided.assessments;
     for (const assessment of assessments) {
-      if (!trials.some((trial) => trial.id === assessment.trialId && trial.cohort === assessment.cohort)) throw new Error('Assessment refers to an unknown trial/cohort');
+      const current = latest.get(`${assessment.cohort}/${assessment.trialId}`);
+      if (!current) throw new Error('Assessment refers to an unknown trial/cohort');
+      if (typeof assessment.artifactDigest !== 'string' || !/^[a-f0-9]{64}$/u.test(assessment.artifactDigest)) throw new Error('Assessments require an explicit artifactDigest from the report or blinding key');
+      if (assessment.artifactDigest !== current.artifactDigest) throw new Error(`Stale assessment for ${assessment.trialId}: artifactDigest does not match the latest artifact`);
       if (assessment.qualityScore !== undefined && (!numeric(assessment.qualityScore) || typeof assessment.scale !== 'string')) throw new Error('Quality scores require a finite number and explicit scale');
     }
   }
-  const latest = new Map();
-  for (const trial of trials) latest.set(`${trial.cohort}/${trial.id}`, trial);
-  const cohorts = [...new Set(trials.map((trial) => trial.cohort))];
+  const cohorts = [...new Set(['cli', ...trials.map((trial) => trial.cohort)])];
   const comparisons = [];
   for (const cohort of cohorts) for (const job of pairs(manifest)) {
     const baseline = latest.get(`${cohort}/${job.id}-baseline`);
     const candidate = latest.get(`${cohort}/${job.id}-candidate`);
-    if (!baseline && !candidate) continue;
+    if (cohort !== 'cli' && !baseline && !candidate) continue;
     const complete = baseline?.status === 'completed' && candidate?.status === 'completed';
     comparisons.push({ pairId: job.id, caseId: job.caseId, model: job.model.name, reasoningEffort: job.model.reasoningEffort,
       repetition: job.repetition, cohort, complete,
       baselineStatus: baseline?.status ?? 'missing', candidateStatus: candidate?.status ?? 'missing',
       measurements: Object.fromEntries(measurements.map((key) => [key, delta(baseline ? valueAt(baseline, key) : null, candidate ? valueAt(candidate, key) : null)])),
       artifacts: { baseline: baseline?.artifact ?? null, candidate: candidate?.artifact ?? null },
+      artifactDigests: { baseline: baseline?.artifactDigest ?? null, candidate: candidate?.artifactDigest ?? null },
       assessments: { baseline: assessments.filter((entry) => entry.trialId === baseline?.id && entry.cohort === cohort),
         candidate: assessments.filter((entry) => entry.trialId === candidate?.id && entry.cohort === cohort) } });
   }
@@ -88,19 +97,23 @@ export async function report(output, { assessmentsFile } = {}) {
   const summary = { version: 1, runId: manifest.runId, skill: manifest.config.skill.name,
     variants: Object.fromEntries(Object.entries(manifest.variants).map(([name, entry]) => [name, entry.commit])),
     expectedCliTrials: pairs(manifest).length * 2, recordedAttempts: trials.length, note,
+    cohortScopes: cohorts.map((cohort) => ({ cohort, scope: cohort === 'cli' ? 'all manifest pairs' : 'imported pairs only',
+      pairs: comparisons.filter((pair) => pair.cohort === cohort).length })),
     trials: exportedTrials, comparisons, aggregates, assessments };
   const directory = path.join(root, 'reports');
   try { if ((await fs.lstat(directory)).isSymbolicLink()) throw new Error('Reports path must not be a symlink'); }
   catch (error) { if (error.code !== 'ENOENT') throw error; }
   await fs.mkdir(directory, { recursive: true, mode: 0o700 });
   await writeJson(path.join(directory, 'report.json'), summary);
-  const columns = ['cohort', 'model', 'reasoningEffort', 'caseId', 'repetition', 'complete', 'baselineStatus', 'candidateStatus',
+  const columns = ['cohort', 'model', 'reasoningEffort', 'caseId', 'repetition', 'complete', 'baselineStatus', 'candidateStatus', 'baselineArtifactDigest', 'candidateArtifactDigest',
     ...measurements.flatMap((key) => [`${key}.baseline`, `${key}.candidate`, `${key}.delta`, `${key}.percent`])];
   const rows = comparisons.map((pair) => [pair.cohort, pair.model, pair.reasoningEffort, pair.caseId, pair.repetition, pair.complete,
-    pair.baselineStatus, pair.candidateStatus, ...measurements.flatMap((key) => ['baseline', 'candidate', 'delta', 'percent'].map((field) => pair.measurements[key][field]))]);
+    pair.baselineStatus, pair.candidateStatus, pair.artifactDigests.baseline, pair.artifactDigests.candidate,
+    ...measurements.flatMap((key) => ['baseline', 'candidate', 'delta', 'percent'].map((field) => pair.measurements[key][field]))]);
   await writeText(path.join(directory, 'pairs.csv'), `${[columns, ...rows].map((row) => row.map(csv).join(',')).join('\n')}\n`);
   const markdown = [`# Skill evaluation: ${manifest.config.skill.name}`, '', note, '',
     `Expected CLI trials: ${summary.expectedCliTrials}. Recorded attempts: ${trials.length}. Failed, partial and retried attempts remain in report.json.`, '',
+    'CLI aggregates include every manifest pair, including trials that never started. Native cohorts cover imported pairs only.', '',
     '| Cohort | Model / effort | Case | Complete pairs | Incomplete pairs | Total token delta | Tool delta | Seconds delta |',
     '| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |',
     ...aggregates.map((entry) => `| ${[entry.cohort, `${entry.model} / ${entry.reasoningEffort}`, entry.caseId, entry.completePairs, entry.incompletePairs,
@@ -109,15 +122,15 @@ export async function report(output, { assessmentsFile } = {}) {
     '| Pair / cohort | Baseline | Candidate |', '| --- | --- | --- |',
     ...comparisons.map((pair) => `| ${cell(`${pair.pairId} / ${pair.cohort}`)} | ${cell(pair.artifacts.baseline?.artifactText)} | ${cell(pair.artifacts.candidate?.artifactText)} |`), '',
     '## Adjudicated quality', '', assessments.length ?
-      '| Trial / cohort | Human score | Scale | Notes |\n| --- | ---: | --- | --- |\n' + assessments.map((entry) => `| ${[`${entry.trialId} / ${entry.cohort}`, entry.qualityScore, entry.scale, entry.notes].map(cell).join(' | ')} |`).join('\n') :
+      '| Trial / cohort | Artifact digest | Human score | Scale | Notes |\n| --- | --- | ---: | --- | --- |\n' + assessments.map((entry) => `| ${[`${entry.trialId} / ${entry.cohort}`, entry.artifactDigest, entry.qualityScore, entry.scale, entry.notes].map(cell).join(' | ')} |`).join('\n') :
       'No assessments supplied. Compare blinded artifacts independently before interpreting cost savings as an improvement.', ''];
   await writeText(path.join(directory, 'report.md'), markdown.join('\n'));
   const blinded = [];
   const key = [];
   for (const trial of latest.values()) {
-    const blindId = digest(`${manifest.runId}/${trial.cohort}/${trial.id}`).slice(0, 16);
-    blinded.push({ blindId, caseId: trial.caseId, status: trial.status, artifact: trial.artifact });
-    key.push({ blindId, trialId: trial.id, cohort: trial.cohort, variant: trial.variant, model: trial.requestedModel });
+    const blindId = digest(`${manifest.runId}/${trial.cohort}/${trial.id}/${trial.artifactDigest}`).slice(0, 16);
+    blinded.push({ blindId, caseId: trial.caseId, status: trial.status, artifactDigest: trial.artifactDigest, artifact: trial.artifact });
+    key.push({ blindId, trialId: trial.id, cohort: trial.cohort, artifactDigest: trial.artifactDigest, variant: trial.variant, model: trial.requestedModel });
   }
   blinded.sort((left, right) => left.blindId.localeCompare(right.blindId));
   await writeJson(path.join(directory, 'blinded-artifacts.json'), { version: 1, artifacts: blinded });

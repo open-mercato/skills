@@ -56,3 +56,13 @@ assessment/blinding, another-skill reuse and PR replay evidence requirements.
 The live six-case study, independent review and publication remain coordinator
 work. Raw traces, source snapshots, auth material and personal local paths remain
 outside the repository.
+
+Independent-review follow-up: the reusable tool now counts every expected CLI
+pair, including pairs that never started, while native cohorts cover imported
+pairs only. Execution, import and cleanup share one atomic writer lock; ownership
+and execution/import input checks occur inside it. Assessments bind to canonical
+whole-artifact digests and stale retry/reimport judgments are rejected. Legacy
+stored results receive derived report digests without mutation. All 22 evaluator
+tests and all six configured validation commands pass locally, including 39 UX
+tests. The frozen `a266c03` executor and live-study inputs/results were untouched.
+The coordinator's live-study/publication steps above remain unchecked.

@@ -27,17 +27,32 @@ External tracker mutations are forbidden in trials. Use read-only sandbox execut
 
 ### Phase 1: Define and prepare
 
-- [ ] 1.1 Define generic evaluation configuration and output contracts
-- [ ] 1.2 Prepare immutable skill and case snapshots
+- [x] 1.1 Define generic evaluation configuration and output contracts — 3039eef
+- [x] 1.2 Prepare immutable skill and case snapshots — 3039eef
 
 ### Phase 2: Execute and measure
 
-- [ ] 2.1 Run isolated Codex CLI trials and import native sessions
-- [ ] 2.2 Measure tokens, tool calls, time, failures, and artifact text
+- [x] 2.1 Run isolated Codex CLI trials and import native sessions — a266c03
+- [x] 2.2 Measure tokens, tool calls, time, failures, and artifact text — c51e737
 
 ### Phase 3: Report and verify
 
-- [ ] 3.1 Produce paired JSON, CSV, Markdown and blinded descriptions
-- [ ] 3.2 Test safety, malformed or failed runs, resume and metric accounting
+- [x] 3.1 Produce paired JSON, CSV, Markdown and blinded descriptions — 3039eef
+- [x] 3.2 Test safety, malformed or failed runs, resume and metric accounting — a266c03
 - [ ] 3.3 Run six-PR comparison and document reuse for another skill
 - [ ] 3.4 Run repository gate and independent review, then publish the ready PR
+
+## Implementation evidence
+
+Runtime snapshot: `a266c03`. All 15 disposable-repository/fake-Codex tests pass,
+including a second generic skill, baseline phase ordering, independent sessions,
+SIGTERM, native task/effort verification, unknown usage and resume drift. Runner:
+local Node and Git. Every configured validation command passed in order: lint,
+browser providers, tracker providers, run classifier, close keywords and 39 UX
+design tests. The new suite is additive as `test:skill-eval`; CI configuration is
+unchanged. Documentation includes the generic config, native import, manual
+assessment/blinding, another-skill reuse and PR replay evidence requirements.
+
+The live six-case study, independent review and publication remain coordinator
+work. Raw traces, source snapshots, auth material and personal local paths remain
+outside the repository.

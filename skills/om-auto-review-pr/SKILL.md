@@ -23,7 +23,7 @@ Emit `APPROVED` or `CHANGES REQUESTED` and the exact `PR:` line. Include `Issue:
 
 **ALWAYS check first:** Apply `.ai/skills/om-auto-review-pr/SKILL.md` when present; safety rules still win.
 
-0. **Load the setup and rules.** Read `references/agentic-setup.md` and `references/rules.md` first. Load the config and tracker descriptor. Apply `.ai/skills/om-auto-review-pr/SKILL.md` when present. Local rules cannot weaken safety rules.
+0. **Load the setup and rules.** Read `references/agentic-setup.md` and `references/rules.md` first. Read `.ai/agentic.config.json` and load its tracker descriptor. Apply `.ai/skills/om-auto-review-pr/SKILL.md` when present. Local rules cannot weaken safety rules.
 
    Resolve `LABELS_ENABLED`, `QA_GATE`, `CI_MAX_WAIT_MINUTES`, and `validation.commands` from the config. Use the descriptor for all tracker operations and label guards. Use the PR's `baseRefName` for diffs and conflict resolution.
 

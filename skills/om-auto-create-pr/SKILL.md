@@ -28,7 +28,7 @@ Use `om-open-pr` for PR mechanics when available. Use `om-auto-review-pr` for th
 
 **ALWAYS check first:** Apply `.ai/skills/om-auto-create-pr/SKILL.md` when present; safety rules still win.
 
-0. **Load the setup and rules.** Read `references/agentic-setup.md` and `references/rules.md` first. Load the config and tracker descriptor. Apply the repo-local skill at `.ai/skills/om-auto-create-pr/SKILL.md` when present. Local rules cannot weaken safety rules.
+0. **Load the setup and rules.** Read `references/agentic-setup.md` and `references/rules.md` first. Read `.ai/agentic.config.json` and load its tracker descriptor. Apply the repo-local skill at `.ai/skills/om-auto-create-pr/SKILL.md` when present. Local rules cannot weaken safety rules.
 
    Resolve `BASE_BRANCH`, `RUNS_DIR`, `LOOP_STEP_THRESHOLD`, `LABELS_ENABLED`, `QA_GATE`, and `validation.commands` from the config. Use the descriptor for every named tracker operation and label guard.
 

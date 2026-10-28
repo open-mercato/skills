@@ -32,7 +32,7 @@ Keep the existing template fields and required evidence.
 - Do not use contractions or semicolons in prose.
 - Use one technical term for each concept.
 - Use common words with consistent meanings and parts of speech.
-- Use technical names and technical verbs for software concepts that the general dictionary does not cover.
+- Use technical names and technical verbs for software concepts that common words do not cover.
 - Keep identifiers, commands, paths, quoted evidence, labels, and parser fields exact.
 
 Use `PR`, `worktree`, `claim`, `validation gate`, and `autofix` consistently as software terms.

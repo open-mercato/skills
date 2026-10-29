@@ -642,12 +642,14 @@ async function runCommandAdapter(model, commandKey, { worktree, prompt = '', env
     const metadataFile = join(temp, 'invocation-metadata.json')
     writeFileSync(promptFile, prompt)
     let schemaFile = SCHEMA_FILE
-    if (commandKey === 'review' && basename(model.commands.review[0]) === 'codex') {
+    if (commandKey === 'review' && /^codex(?:\.exe)?$/i.test(basename(model.commands.review[0]))) {
+      // Codex Structured Outputs requires every declared property. Keep that
+      // provider-specific constraint out of the legacy-compatible public schema.
       const schema = JSON.parse(REVIEW_SCHEMA)
       schema.required = Object.keys(schema.properties)
       schema.properties.version = { type: 'integer', enum: [1] }
       schemaFile = join(temp, 'codex-review-result.schema.json')
-      writeFileSync(schemaFile, JSON.stringify(schema))
+      writeFileSync(schemaFile, `${JSON.stringify(schema, null, 2)}\n`)
     }
     const command = expandCommand(model.commands[commandKey], {
       model: model.model,

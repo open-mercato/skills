@@ -2,17 +2,20 @@
 
 ## Decision
 
-The first correction batches are published at `cb4017b`, with code approval
-and passing CI. A further live-provider check found the Codex reviewer schema
-incompatible with Structured Outputs. The follow-up generates a strict temporary
-schema only for direct Codex reviewers; the public provider schema and legacy
-unversioned results remain unchanged. The regression fails before the fix and
-passes after; the actual Codex review now succeeds.
+The final local code review is **approve**, with no remaining confirmed blocker
+or major finding. The source preserves the author's concurrent `04f1cfe` runtime
+hardening and `7a8bb5a` equivalent strict-schema correction, together with this
+run's fixes and regression coverage. No contributor history is rewritten.
 
-The last earlier independent session verified the packet/concurrency fixes and
-reported the additional staging defect before stopping at model capacity. That
-defect was reproduced, fixed and tested by the parent. A completed independent
-approval of that earlier final tip is not claimed.
+Independent review approved the schema correction at `c8564fa` with no findings,
+and the combined runtime at `18ea351` with one minor hook gap. Both reviewers
+independently passed all nine configured commands. The remaining minor is now
+fixed: option-bearing directory traversal is conservatively unresolved, so an
+active sibling run requires host permission; quoted `--` still selects its
+literal destination. Red/green regressions cover physical/logical/combined and
+unsupported options plus ordinary behavior after the guard ends. The final
+small correction is reviewed by the parent; a separate independent approval of
+the exact final commit is not claimed.
 
 ## Fixed findings
 
@@ -27,6 +30,7 @@ approval of that earlier final tip is not claimed.
 | Split parts exceed concurrency limits | Major | One shared limiter covers models, split parts, verifiers and councils, bounded by both configured caps. Real HTTP tests exercise caps one and two. The independent cap-one probe changed from peak two to peak one. |
 | Handoff omits hidden outside-scope edits | Major | Compare the complete working diff with the complete staged diff independently of real index flags. Both flag variants now fail; the outside file and index flags are preserved and never staged. |
 | Codex reviewer rejects the output schema | Major | A temporary Codex-only schema requires all output fields and an explicitly typed integer version. Live Codex v0.165.0 returned `invalid_json_schema` before the fix; the same configured model now completes the review. The subprocess regression checks strict-schema acceptance and unchanged legacy output support. |
+| Directory options hide an active worktree | Minor | Treat unsupported `cd`/`pushd` options as unresolved instead of mistaking the option for the directory. An active sibling guard then requires host permission. Tests cover `-P`, `-L`, combined flags, unsupported options, quoted separators and ordinary commands after the run ends. |
 | Base conflicts | Major | Integrated `origin/main` at `fc77110`, preserving the harness suites and delegated-review suite across configuration, CI and SDLC. |
 
 Every runtime defect was observed failing before its fix and passing afterwards.
@@ -78,6 +82,13 @@ precedes this additional live-provider check. The ignored QA artifact directory
 contains the actual worker tool trace, sandbox observations, and before/after
 Codex council results. The schema rule is documented in
 [OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs#all-fields-must-be-required).
+
+The author's additional hardening preserves the strongest finding severity
+across split reviews, reviewers and verifier escalation. Worktree-specific
+publication guards activate on capture and clear on successful staging or
+explicit owner-bound abort; Unicode staging and quoted hook paths are covered.
+Independent lifecycle and severity-matrix probes passed, and real fresh-host
+staging plus the available custom council passed on the combined source.
 
 ## Compatibility and remaining gates
 

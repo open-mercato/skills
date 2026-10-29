@@ -598,6 +598,11 @@ that other skills attach to.
 
 ### Staged harness review hardening
 
+The bundled Codex reviewer now receives a temporary strict Structured Outputs
+schema. This fixes API rejection of the public schema's optional `version`
+property. Refresh the runtime; no configuration migration is required, and
+legacy unversioned output from other adapters remains supported.
+
 Refresh the harness runtime and both installed hook commands together through
 `/om-setup-agent-harness`. Publication hooks now activate only after `capture`
 and deactivate on successful `stage` or explicit `end-run --worktree <path>

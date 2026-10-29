@@ -18,6 +18,7 @@
     "test:bump-agent-browser": "node scripts/test-bump-agent-browser.mjs",
     "test:pr-titles": "node scripts/test-pr-titles.mjs",
     "test:close-keywords": "node scripts/test-close-keywords.mjs",
+    "test:review-sweep": "node scripts/test-review-sweep.mjs",
     "test:discovery-contracts": "node scripts/test-discovery-contracts.mjs",
     "test:spec-writing-data-model": "node scripts/test-spec-writing-data-model.mjs",
     "test:migrated-skill-tools": "node scripts/test-migrated-skill-tools.mjs",

@@ -91,6 +91,7 @@ bash scripts/lint.sh
 ## Conventions
 
 - Skills are written in second person, addressed to the executing agent, with `## Arguments`, `## Workflow` (numbered steps), and `## Rules` sections. Match this structure when editing.
+- `om-review-prs` runs an explicitly requested sweep without routine setup or scheduling confirmations. Resolve reversible local coordination setup automatically and detect conflicts through actual leases and claims; hypothetical concurrent activity is not a reason to ask the user again.
 - Skill names keep the upstream `om-` prefix deliberately (see `DECISIONS.md` → Naming).
 - **The `om-auto-*` prefix is a behavioral contract, not decoration:** an `om-auto-*` skill is autonomous and non-interactive — it runs end-to-end without a user in the loop, makes the recommended most-reversible call itself (documented for override) instead of stopping to ask, and is safe for schedules/CI (full contract: Cross-skill contract §1). A skill **without** the `auto` prefix is interactive: it acts once, may ask the user questions, reports, and hands control back. Name new skills accordingly, and never add mid-run questions to an `om-auto-*` skill.
 - Shell snippets inside skills must be POSIX-ish bash and platform-portable; they run on whatever machine the installing user has.

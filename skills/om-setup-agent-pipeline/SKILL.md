@@ -35,6 +35,7 @@ Write `.ai/agentic.config.json`. Run setup first in a fresh repository or when t
   "qaGate": true,
   "ci": { "maxWaitMinutes": 40 },
   "engine": { "loopStepThreshold": 20, "executorTier": "standard", "stepReview": "final" },
+  "reviewSweep": { "maxParallel": 1, "coordinationRoot": null },
   "paths": {
     "runs": ".ai/runs",
     "analysis": ".ai/analysis",
@@ -150,9 +151,9 @@ Every skill in this collection checks, right after loading the config, for a rep
 
 9. **Verify cross-skill coverage.** Run the check in `references/skill-coverage.md` (roster, detection script, source resolution): every skill referenced by an installed skill — by name or `om-<skill>/references/<file>` pointer — must be installed or repo-local under `.ai/skills/`. Print the paste-ready `npx skills add` command for anything missing and re-check after the user installs; unattended runs report the command and continue.
 
-10. **Report** per `references/report-templates.md`: what is ready to use,
-    consequential settings or gaps, coverage results, and any required next
-    action. Link the config instead of repeating every generated artifact. Name `om-setup-discovery-pipeline` as the optional product layer.
+10. **Report** per `references/report-templates.md`: readiness, consequential
+    settings/gaps, coverage, and next action. Link the config; name
+    `om-setup-discovery-pipeline` as the optional product layer.
 
 ## The standard config-loading snippet
 

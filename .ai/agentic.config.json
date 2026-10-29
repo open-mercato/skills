@@ -11,6 +11,7 @@
       "node scripts/test-classify-runs.mjs",
       "node scripts/test-close-keywords.mjs",
       "node --test scripts/test-ux-design.mjs scripts/test-ux-design-comments.mjs",
+      "node scripts/test-review-sweep.mjs",
       "node --test scripts/test-skill-eval.mjs"
     ]
   },

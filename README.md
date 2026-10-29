@@ -285,6 +285,7 @@ Sweep open PRs, drive them to merge-ready, and ship — the QA gate stays a huma
 |---|---|---|
 | `/om-merge-buddy` | tracker scan of labels, reviews, CI, mergeability | a report of which PRs can merge now and which are close but blocked |
 | `/om-review-prs` | [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md) per PR, claim-lock aware | every unreviewed open PR reviewed, newest first |
+| `/om-review-prs --subagents --parallel 3` | the same full review in a fresh agent and separate worktree per PR, up to three at once; automatically provisions local coordination unless `reviewSweep.coordinationRoot` is configured | the review sweep with isolated contexts, pinned configuration, and a lease excluding overlapping sweeps; omitting the new flags keeps the original sequential workflow |
 | `/om-auto-fix-pr 123` | [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md), its CI-stabilization step, [`om-auto-qa-pr`](docs/skills/om-auto-qa-pr.md), [`om-followup-issue-from-pr`](docs/skills/om-followup-issue-from-pr.md) | one PR driven to approvable, green, QA-evidenced — handed to [`om-approve-merge-pr`](docs/skills/om-approve-merge-pr.md), never self-merged |
 | `/om-auto-fix-pr 123 --ci-only` | tracker check status + failed-step logs | green CI from real fixes with tests, never by weakening checks |
 | `/om-pr-autopilot 123` | diagnosis of the PR's real state, then the matching chain of the skills above | one PR driven from wherever it is to merge-ready, with a summary comment covering every step — never merged unless `--allow-merge` |
@@ -315,6 +316,7 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
     "risk": ["risk-low", "risk-medium", "risk-high"]
   },
   "qaGate": true,
+  "reviewSweep": { "maxParallel": 1, "coordinationRoot": null },
   "paths": {
     "runs": ".ai/runs",
     "analysis": ".ai/analysis",
@@ -329,6 +331,8 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
 ```
 
 A Rust repo puts `cargo test` and `cargo clippy` in `validation.commands`; a Go repo puts `go test ./...`. Skills run whatever you configure and treat any non-zero exit as a gate failure. A skill invoked in a repo without the config runs [`om-setup-agent-pipeline`](docs/skills/om-setup-agent-pipeline.md) first — interactively when you're there to answer its questions, with `--defaults` when running unattended — then continues with the freshly written config.
+
+`reviewSweep` is read only by explicitly delegated review sweeps. An absent/null `coordinationRoot` automatically uses a stable repository-specific local directory; an explicit value selects an existing absolute directory. Known multi-host or cross-account deployments sharing resources must use the same physical storage. The skill proceeds without routine setup or scheduling confirmation, using actual lease and claim checks to handle conflicts. Shared local test resources require one worker at a time unless isolated per worker; approved CI-first reviews may inspect checks in parallel. See [`om-review-prs`](docs/skills/om-review-prs.md) for the configuration and recovery contract.
 
 GitHub is the default tracker; a repository whose `origin` is on GitLab (gitlab.com or self-managed) defaults to the stand-alone GitLab provider, which runs issues, merge requests, reviews, CI pipelines, and labels through `glab`. A stand-alone Forgejo provider (self-hosted or Codeberg) is offered at setup. Shipped split-provider templates also support Linear issues through `schpet/linear-cli` and Jira Cloud work items through Atlassian CLI, while GitHub continues to own PRs, reviews, and CI — see the tracker providers section below.
 

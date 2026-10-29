@@ -798,6 +798,17 @@ RETRY=$(glab api -X POST "projects/$(gl_project)/pipelines/{runId}/retry") || { 
 printf '%s' "$RETRY" | jq "$GL_JQ_DEFS"'gl_run'
 ```
 
+#### approve-pending-runs
+Head SHA → start the merge-request pipeline in the parent project when none exists for that commit yet. GitLab's equivalent of approving a held run: pipelines for MRs from forks do not run in the parent project until a member with Developer rights triggers them. Prints the new pipeline id; an empty result means a pipeline already exists. The pipeline runs the contributor's CI configuration with this project's runners and variables, so callers trigger it only on an MR a human has authorized for automation and read the diff's CI-config changes first.
+```bash
+gl_iid {prNumber} || exit 1
+P=$(gl_project)
+EXISTING=$(gl_get "projects/$P/pipelines?sha={headSha}&per_page=1" 'length') || exit 1
+if [ "$EXISTING" = "0" ]; then
+  printf '{}' | gl_write POST "projects/$P/merge_requests/{prNumber}/pipelines" | jq -r '.id'
+fi
+```
+
 #### watch-run
 Pipeline id → block until the pipeline finishes; exit non-zero unless it succeeded. `glab` has no blocking watch for an arbitrary pipeline, so this polls **get-run** within the caller's wait budget (`ci.maxWaitMinutes`, default 40).
 ```bash

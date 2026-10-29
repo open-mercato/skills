@@ -317,6 +317,9 @@ Delegate to GitHub **get-run-failed-logs**.
 #### rerun-failed
 Delegate to GitHub **rerun-failed**.
 
+#### approve-pending-runs
+Delegate to GitHub **approve-pending-runs**.
+
 #### watch-run
 Delegate to GitHub **watch-run**.
 

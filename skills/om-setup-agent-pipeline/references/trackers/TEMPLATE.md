@@ -76,6 +76,7 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 - **get-run** — run id → status, conclusion, per-job breakdown.
 - **get-run-failed-logs** — run id → log output of the failed steps (the diagnosis input for CI failures).
 - **rerun-failed** — run id → re-execute only the failed jobs (used to disambiguate flakes before code changes).
+- **approve-pending-runs** — PR head SHA (and PR number) → release CI runs the code host holds for maintainer approval (first-time or fork contributors) and return the released run ids; empty when nothing was held. Document what "held" means in this tracker and that releasing runs the contributor's CI code with this repository's runners and secrets. When the tracker has no such gate, implement it as a no-op that returns nothing.
 - **watch-run** — run id → block until the run completes, signaling success/failure; may degrade to polling **get-run**.
 
 ### Labels

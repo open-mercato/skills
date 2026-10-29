@@ -1066,6 +1066,13 @@ fj_rerun() {
 fj_rerun {runId}
 ```
 
+#### approve-pending-runs
+Head SHA → release workflow runs held for maintainer approval. Forgejo can hold runs from fork or first-time contributors until a maintainer approves them, but this descriptor documents no API endpoint for that approval, so the operation does not guess one: it prints `APPROVAL_UNAVAILABLE` and exits 3. The caller records the PR as waiting on a maintainer to approve its runs from the web UI and moves on. Replace the body in the repository's committed copy when your Forgejo version exposes an approval endpoint.
+```bash
+echo "APPROVAL_UNAVAILABLE {headSha}"
+exit 3
+```
+
 #### watch-run
 Run id → block until the run finishes; exit non-zero unless it succeeded. This polls **get-run** within the caller's wait budget (`ci.maxWaitMinutes`, default 40).
 ```bash

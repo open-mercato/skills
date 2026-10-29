@@ -154,6 +154,9 @@ patterns=(
   '(^|[^[:alnum:]-])develop($|[^[:alnum:]-])'
   '(^|[^[:alnum:]])yarn '
   'findWithDecryption'
+  # om-filozofia.md was never committed to this repo (issue #153) — a reference
+  # to it points past the skill's own canonical copy at a file that cannot be read.
+  'om-filozofia\.md'
 )
 
 for pattern in "${patterns[@]}"; do

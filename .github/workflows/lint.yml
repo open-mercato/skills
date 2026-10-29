@@ -22,3 +22,5 @@ jobs:
         run: node scripts/test-close-keywords.mjs
       - name: Detailed design helpers and review comments
         run: node --test scripts/test-ux-design.mjs scripts/test-ux-design-comments.mjs
+      - name: Skill evaluation harness accounting, safety and cleanup
+        run: node --test scripts/test-skill-eval.mjs

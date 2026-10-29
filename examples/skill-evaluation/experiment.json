@@ -10,8 +10,9 @@
     { "name": "gpt-6.1-sol", "reasoningEffort": "high" },
     { "name": "gpt-6-luna", "reasoningEffort": "high" }
   ],
-  "repetitions": 1,
+  "repetitions": 3,
   "concurrency": 1,
+  "order": "interleaved",
   "codex": { "executable": "codex", "timeoutSeconds": 1800 },
   "cases": [
     {

@@ -31,8 +31,9 @@ The version-1 JSON contract is:
     { "name": "gpt-6.1-sol", "reasoningEffort": "high" },
     { "name": "gpt-6-luna", "reasoningEffort": "high" }
   ],
-  "repetitions": 2,
+  "repetitions": 3,
   "concurrency": 2,
+  "order": "interleaved",
   "codex": { "executable": "codex", "timeoutSeconds": 1800 },
   "cases": [
     {
@@ -43,7 +44,11 @@ The version-1 JSON contract is:
         "base": "BASE_COMMIT",
         "head": "HEAD_COMMIT"
       },
-      "contextDirectory": "./cases/case-001"
+      "contextDirectory": "./cases/case-001",
+      "expectations": {
+        "mustFind": [["missing null check", "null guard"]],
+        "mustNotClaim": ["no issues found"]
+      }
     }
   ]
 }
@@ -57,9 +62,26 @@ The version-1 JSON contract is:
   time, so later branch movement cannot change the experiment.
 - Every model needs an explicit `reasoningEffort`: `none`, `minimal`, `low`,
   `medium`, `high` or `xhigh`. The selected model must support that effort.
-- `repetitions` defaults to 1 (range 1–100); `concurrency` defaults to 1 (1–32).
-  Concurrency runs independent cases/repetitions. All baseline trials finish
-  before any candidate trial starts, with the same assigned model/effort per pair.
+- `repetitions` defaults to 1 (range 1–100); use at least 3. One repetition gives
+  a single sample per pair, so no dispersion can be estimated within a case and
+  `report.md` prints an explicit warning. `concurrency` defaults to 1 (1–32) and
+  runs independent trials side by side, with the same assigned model/effort per pair.
+- `order` sets the run order: `baseline-first` (default — every baseline trial
+  finishes before any candidate trial starts), `interleaved` (ABBA: even pairs
+  run baseline first, odd pairs candidate first, with no phase barrier) or
+  `random` (a seeded shuffle of all trials). `seed` (integer 0–4294967295) applies
+  only to `random`; when omitted, prepare picks one. The seed is recorded in
+  `manifest.json` and the reports, so the order is reproducible. Baseline-first
+  order systematically biases `elapsedSeconds` and `cachedInputTokens`; total
+  tokens are unaffected because input tokens already include cached input.
+- `expectations` (optional, per case) pre-registers quality checks before the
+  run: `mustFind` and `mustNotClaim` list phrases, and an entry may be a list of
+  alternative phrases. Matching is literal and case-insensitive over every string
+  in the artifact, with whitespace collapsed. A trial passes when every `mustFind`
+  entry matches and no `mustNotClaim` entry does. Expectations are frozen in the
+  manifest, never shown to the worker, and reported as paired pass rates. They
+  are phrase checks, not semantic judgments; keep subtler quality questions for
+  blinded assessments.
 - `codex.executable` defaults to `codex` on PATH. A path containing a separator is
   resolved relative to the config. `timeoutSeconds` defaults to 1800 (1–86400).
 - Context directories must contain ordinary files/directories, with no symlinks.
@@ -83,7 +105,10 @@ node scripts/skill-eval.mjs run --out /tmp/study-run --execute
 node scripts/skill-eval.mjs report --out /tmp/study-run
 ```
 
-`prepare` archives both complete `skills/` collections from Git and creates
+`prepare` archives both complete `skills/` collections from Git under opaque
+per-run directory names (`inputs/variants/<random>`), so neither the worker
+prompt nor any path a worker cites names its arm; only `manifest.json` and the
+private blinding key map arms to directories. It also creates
 detached base/head worktrees per case. Worktree registration changes Git's common
 metadata; the original checkouts, branches, tracked files and global installed
 skills are untouched. The evaluated task cannot write to the worktrees. A failed
@@ -98,8 +123,9 @@ Each trial starts a new
 ephemeral Codex process, closes stdin, uses argument arrays without a shell, and
 enforces the read-only sandbox. The prompt names the assigned pinned collection,
 applies repository-local override extensions and AGENTS guidance, and prohibits
-tracker writes, claims, installs, autofix, commits, pushes, publishing, delegation
-and reading other variants/cases or trial results. Mutating
+tracker writes, claims, installs, autofix, commits, pushes, publishing and
+delegation. It restricts reads to the assigned collection, source and case
+context, and never names the arm or the two-arm design. Mutating
 skills can be evaluated for their proposed artifact/actions, not write side effects.
 Network access is prohibited by the evaluation prompt; the Codex read-only
 sandbox supplies enforcement according to the host's supported sandbox backend.
@@ -110,6 +136,19 @@ avoids user-config overrides, but ambient globally discoverable skill metadata
 may remain in model context. Both variants use the same host catalog, and the
 pinned skill/dependency paths are explicit. This is an evidence limit, not a
 claim of a hermetic model context.
+
+Further validity limits:
+
+- **No delegation.** Trials forbid spawning or delegating to other agents, so all
+  work is counted in one session (sub-agent tokens would not appear in the
+  stream). A skill whose procedure delegates — per-item sub-agents, a
+  fresh-context challenger, a `--subagents` mode — is therefore measured running
+  a single-agent variant of its procedure, not the procedure it ships.
+- **Execution, not triggering.** The prompt names the assigned `SKILL.md` path
+  directly. Trials measure how a skill executes once chosen, not whether its
+  `description` would make an agent pick it.
+- **One backend.** Codex CLI is the only execution backend. The same skill can
+  behave differently in another harness.
 
 The generic final result is either plain artifact text or a JSON object:
 
@@ -156,12 +195,46 @@ SIGINT/SIGTERM stop current workers and preserve evidence. An abrupt host crash 
 SIGKILL can leave `.running`; after verifying its recorded process has ended,
 remove that stale lock explicitly before resuming. Never remove an active lock.
 If disk/process failures prevent a result file, reports expose the trial metadata
-as interrupted. Raw partial stdout stays available for local diagnosis.
+as interrupted. Raw partial stdout stays available for local diagnosis. Attempt
+directories are created atomically: the first metadata file is written into a
+temporary directory that is then renamed into place, so a crash never leaves an
+`attempt-N` without metadata. An empty attempt directory from an older harness
+is still reported as interrupted (with `metadataMissing: true`) and treated as an
+interrupted CLI attempt on resume: skipped, or retried with `--retry-failed`.
+
+After every trial the runner checks only what that trial could read: the
+assigned collection and the case context by digest, and the case's source
+worktrees by `HEAD` plus an empty `git status`. Any change records the attempt as
+`input-drift` and stops the run. Each `run`, `import` and `report` start still
+hashes the whole frozen input tree.
+
+`report` takes no lock. When `.running` exists it warns that a writer may be
+active and that in-flight trials appear as interrupted; re-run it afterwards.
 
 ## Metrics and generated descriptions
 
 `reports/report.json`, `pairs.csv` and `report.md` provide per-trial results, paired
-deltas and per-model/per-case aggregates. Only completed pairs enter aggregates.
+deltas and per-model/per-case aggregates. Only completed pairs enter the deltas,
+intervals and expectation pass rates. So that failures cannot quietly leave the
+comparison, every aggregate also carries:
+
+- `incompleteByArm`: incomplete pairs split by which arm did not complete
+  (baseline only, candidate only, both).
+- `guardrails.<arm>`: counts by status over **all** recorded attempts, retried
+  failures included, plus the tokens and seconds spent on attempts that did not
+  complete (`nonCompleted`, with counts of attempts whose cost is unknown).
+- `statistics.<measurement>`: the mean, sample SD and a 95% t interval of the
+  paired deltas. When the aggregate pools two or more cases, the interval is
+  clustered by case (a t interval over per-case mean deltas, each case weighted
+  equally); within one case it covers the pair deltas. It needs at least two
+  cases or two complete pairs.
+- `expectations` (when cases define them): judged complete pairs, per-arm pass
+  counts, the paired split (both, baseline only, candidate only, neither) and
+  pass^k — the share of cases whose every one of k repetitions passed, counting
+  missing or failed trials as failures.
+
+`report.md` shows these as columns and prints warnings (single repetition,
+active writer lock) at the top; `report.json` lists them under `warnings`.
 CLI comparisons cover every expected manifest pair, including missing/missing
 trials that never started; those pairs count as incomplete. Native cohorts cover
 only pairs with an imported attempt. `cohortScopes` records that distinction.
@@ -188,14 +261,18 @@ survived. More findings are not automatically higher quality either.
 All reports stay local. Raw streams, error text, personal source paths and auth
 configuration are not copied into exports. Generated artifacts themselves can
 contain sensitive source details, so review any report before sharing it.
-`blinded-artifacts.json` omits variant/model provenance and randomizes artifact
+`judge/blinded-artifacts.json` is the only file in its directory, so the folder can
+be handed to a judge on its own. It omits variant/model provenance and randomizes artifact
 order by opaque run-specific IDs. Results, report JSON/CSV and blinded artifacts
 expose `artifactDigest`, a SHA-256 over the complete parsed artifact with sorted
 object keys. Text, structured findings/actions, array order and qualifications
 all participate in the digest. Legacy results without this field receive a
-derived digest when reporting; stored results are never rewritten. Keep
-`blinding-key.private.json` away from the
-judge; redact self-identification inside generated text if needed before judging.
+derived digest when reporting; stored results are never rewritten. The key is
+written to `private/blinding-key.private.json`. Keep it, and every file in
+`reports/` (each one identifies the arms), away from the judge. Redact
+self-identification inside generated text if needed before judging. Reports from
+older harness versions placed both files in `reports/`; re-running `report`
+removes those copies.
 
 Optional manual/reference assessments keep quality separate from measured cost:
 copy [the assessment example](../../examples/skill-evaluation/assessments.json)
@@ -224,8 +301,9 @@ reassess that artifact before applying a score. An unchanged artifact can retain
 its assessment. Blinded IDs change when their artifact changes. Notes need no
 numeric score; numeric scores require an explicit scale. The harness does not
 invent prices, precision, recall
-or ground truth. Fixed baseline-first order can favor warm caches; repetitions,
-real cases and independently judged quality are needed to interpret savings.
+or ground truth. Baseline-first order can favor warm caches; use `interleaved` or
+`random` order, at least 3 repetitions, real cases and independently judged
+quality before interpreting savings.
 
 ## Import an explicit native session
 

@@ -37,6 +37,18 @@ those checks. This adapter evaluates review reasoning/artifacts and proposed
 actions; it does not certify the write-side PR workflow.
 
 Choose diverse changes and include clean cases as well as known defects.
-Natural PRs rarely have complete ground truth. Have an independent reviewer judge
-retained evidence, unsupported claims, severity and usefulness using blinded
-artifacts. Keep any native pilot in a separate named cohort from the CLI study.
+Natural PRs rarely have complete ground truth. Write each case's `expectations`
+before the run: `mustFind` for defects a correct review must name, and
+`mustNotClaim` for false claims seen in earlier runs (for example "no issues
+found" on a PR with a known defect). Earlier reviewer disagreements make good
+cases. The report then gives a paired pass rate next to the cost deltas.
+
+Have an independent reviewer judge retained evidence, unsupported claims,
+severity and usefulness using blinded artifacts. When the judge is a model:
+
+- Give it only `judge/blinded-artifacts.json` — never `reports/` or `private/`.
+- Use one fixed judge prompt and rubric for both arms.
+- Judge each pair twice with the presentation order swapped, and treat a verdict
+  that flips with the order as a tie.
+
+Keep any native pilot in a separate named cohort from the CLI study.

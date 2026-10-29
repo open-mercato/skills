@@ -2091,6 +2091,8 @@ function commandStage(args) {
   const allow = new Set(paths)
   const unexpected = stagedPaths.filter((entry) => !allow.has(entry))
   if (unexpected.length) throw new Error(`Staged paths outside allowlist: ${unexpected.join(', ')}`)
+  const fullStagedSubject = git(['diff', '--cached', '--no-ext-diff', '--no-textconv', '--binary', 'HEAD'], worktree)
+  if (buildWorktreeDiff(worktree) !== fullStagedSubject) throw new Error('Unstaged or untracked files remain: complete working content differs from the index')
   const status = git(['status', '--porcelain=v1', '--untracked-files=all'], worktree).split(/\r?\n/).filter(Boolean)
   const residual = status.filter((line) => {
     const index = line.slice(0, 2)

@@ -27,7 +27,7 @@ This contract is loaded by both wrapper skills before creating their worktree.
    - both the packet and fresh host validation gates passed, with exit code zero for every passed command;
    - the staged diff is non-empty;
    - the staged diff passes whitespace/error checking;
-   - no non-ignored unstaged or untracked files remain;
+   - the complete non-ignored working diff matches the complete index diff, independently of Git assume-unchanged/skip-worktree flags, so no hidden unstaged content remains;
    - every staged path came from the allowlist.
 8. Report the absolute worktree path, branch, staged paths, validation evidence,
    suggested commit message, prepared pull-request body, and issue-claim state.

@@ -31,7 +31,8 @@ try {
   mkdirSync(repo)
   git('init', '-q')
   writeFileSync(join(repo, 'app.txt'), 'base\n')
-  git('add', 'app.txt'); git('commit', '-qm', 'fixture baseline')
+  writeFileSync(join(repo, 'outside-scope.txt'), 'outside baseline\n')
+  git('add', 'app.txt', 'outside-scope.txt'); git('commit', '-qm', 'fixture baseline')
   const keys = ['GITHUB_TOKEN', 'AWS_SECRET_ACCESS_KEY', 'OPENAI_API_KEY', 'STRIPE_KEY', 'DATABASE_URL', 'GOOGLE_APPLICATION_CREDENTIALS', 'SSH_AUTH_SOCK', 'DOCKER_AUTH_CONFIG', 'NODE_OPTIONS', 'GIT_CONFIG_PARAMETERS', 'OM_HARNESS_UNAPPROVED']
   for (const key of keys) process.env[key] = 'synthetic-test-value'
   const clean = h.sanitizedCliEnvironment({ OM_HARNESS_MODEL: 'fixture' })
@@ -203,6 +204,18 @@ try {
   }
   writeFileSync(host, approvedHost)
   console.log('PASS: failed packet/host gates and nonzero or missing successful exit codes cannot stage')
+  const outsideIndex = git('ls-files', '--stage', '--', 'outside-scope.txt')
+  for (const flag of ['--assume-unchanged', '--skip-worktree']) {
+    git('update-index', flag, 'outside-scope.txt')
+    const flaggedIndex = git('ls-files', '--stage', '-v', '--', 'outside-scope.txt')
+    writeFileSync(join(repo, 'outside-scope.txt'), 'unreviewed outside allowlist\n')
+    cli(args, 1)
+    assert.equal(git('ls-files', '--stage', '--', 'outside-scope.txt'), outsideIndex, 'Stage must not add the hidden outside file')
+    assert.equal(git('ls-files', '--stage', '-v', '--', 'outside-scope.txt'), flaggedIndex, 'Residual inspection must preserve real index flags')
+    git('update-index', flag.replace('--', '--no-'), 'outside-scope.txt')
+    git('restore', '--source=HEAD', '--staged', '--worktree', 'outside-scope.txt')
+  }
+  console.log('PASS: hidden unstaged content outside the allowlist blocks the handoff without staging it')
   writeFileSync(join(repo, 'app.txt'), 'changed after review\n')
   cli(args, 1)
   writeFileSync(join(repo, 'app.txt'), 'unreviewed content\n')

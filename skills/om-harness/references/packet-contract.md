@@ -35,6 +35,9 @@ Reserve and persist reviewer invocation and prompt-byte usage before each
 attempt, including split subjects, failed/invalid responses, verifier calls,
 and internal HTTP retries. Budget exhaustion blocks the packet before another
 model call; it never releases leases or silently increases the cap.
+Use one invocation limiter for all selected models, split subject parts, and
+verifier calls. Both `maxParallel` and `concurrency.reviewers` are upper bounds;
+the smaller value controls simultaneous provider work.
 
 ## Deterministic gate
 
@@ -43,6 +46,9 @@ Write their results to JSON matching `packet-gate.schema.json`. Cover every
 manifest acceptance criterion, include the ledger's current diff hash, and run
 `packet-gate`. The runtime re-hashes the packet diff before accepting evidence.
 Only a `gated` packet may be treated as integrated.
+Snapshot the entire allowed scope using a temporary index. Git assume-unchanged
+and skip-worktree flags must not hide pre-existing edits or post-review drift;
+a mismatch keeps the packet awaiting validation and its leases held.
 A passed command check requires an observed `exitCode: 0`; missing, null, or
 nonzero exit codes never release leases. Inspection-only checks use `method`
 and need no process exit code.

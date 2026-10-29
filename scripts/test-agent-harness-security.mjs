@@ -247,4 +247,5 @@ try {
   process.env = originalEnv
   rmSync(fixture, { recursive: true, force: true })
 }
+await import('./test-agent-harness-concurrency.mjs')
 console.log('Agent harness security regressions passed.')

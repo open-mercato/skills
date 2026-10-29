@@ -923,7 +923,7 @@ async function invokeReviewerWithRetries(id, model, prompt, worktree, retry, bef
   return { ...outcome, durationMs: totalDurationMs, attempts: attempt }
 }
 
-async function runReviewer(id, model, criteria, subject, worktree, workerFamilies, maxInputBytes, lens = null, reviewContract = null, retry = null, beforeInvocation = null) {
+async function runReviewer(id, model, criteria, subject, worktree, workerFamilies, maxInputBytes, lens = null, reviewContract = null, retry = null, beforeInvocation = null, limitInvocation = (invoke) => invoke()) {
   const built = buildReviewerPrompts(model, criteria, subject, maxInputBytes, lens)
   const envelope = {
     id,
@@ -937,7 +937,7 @@ async function runReviewer(id, model, criteria, subject, worktree, workerFamilie
     reviewContract: reviewContract || { name: 'om-code-review', version: CODE_REVIEW_CONTRACT_VERSION, rubricSha256: codeReviewRubric().sha256, subjectSha256: sha256(subject) },
     parts: built.prompts.length
   }
-  const invocations = await pool(built.prompts, 2, (prompt) => invokeReviewerWithRetries(id, model, prompt, worktree, retry, beforeInvocation))
+  const invocations = await pool(built.prompts, 2, (prompt) => limitInvocation(() => invokeReviewerWithRetries(id, model, prompt, worktree, retry, beforeInvocation)))
   const durationMs = invocations.reduce((total, invocation) => total + (invocation.durationMs || 0), 0)
   const attempts = Math.max(...invocations.map((invocation) => invocation.attempts ?? 1))
   envelope.attempts = attempts
@@ -965,6 +965,20 @@ async function runReviewer(id, model, criteria, subject, worktree, workerFamilie
       verdict: invocations.some((invocation) => invocation.review.verdict === 'request_changes') ? 'request_changes' : 'approve',
       findings: [...findings.values()],
       notes
+    }
+  }
+}
+
+function createInvocationLimiter(limit) {
+  let active = 0
+  const waiting = []
+  return async (invoke) => {
+    if (active >= limit) await new Promise((resume) => waiting.push(resume))
+    else active += 1
+    try { return await invoke() } finally {
+      const resume = waiting.shift()
+      if (resume) resume()
+      else active -= 1
     }
   }
 }
@@ -1073,19 +1087,29 @@ function git(args, cwd, options = {}) {
   return result.stdout
 }
 
-function buildWorktreeDiff(worktree, paths = []) {
+function buildWorktreeSnapshot(worktree, paths = []) {
   const temp = mkdtempSync(join(tmpdir(), 'harness-index-'))
-  const index = join(temp, 'index')
-  const env = { GIT_INDEX_FILE: index }
+  const env = { GIT_INDEX_FILE: join(temp, 'index') }
+  const snapshotGit = (args) => git(['-c', 'core.sparseCheckout=false', ...args], worktree, { env })
   try {
-    git(['read-tree', 'HEAD'], worktree, { env })
-    const pathspecs = paths.map((path) => `:(literal)${path}`)
-    const addArgs = paths.length ? ['add', '-A', '--', ...pathspecs] : ['add', '-A']
-    git(addArgs, worktree, { env })
-    return git(['diff', '--cached', '--no-ext-diff', '--no-textconv', '--binary', 'HEAD', ...(paths.length ? ['--', ...pathspecs] : [])], worktree, { env })
+    snapshotGit(['read-tree', 'HEAD'])
+    const scope = paths.length ? ['--', ...paths.map((path) => `:(literal)${path}`)] : []
+    if (paths.length) {
+      const candidates = nullSeparated(snapshotGit(['ls-files', '--cached', '--others', '--exclude-standard', '-z', ...scope]))
+      // Missing optional paths are valid scope, but Git add rejects an unmatched pathspec.
+      const present = paths.filter((path) => candidates.some((candidate) => candidate === path || candidate.startsWith(`${path}/`)))
+      if (present.length) snapshotGit(['add', '-A', '--', ...present.map((path) => `:(literal)${path}`)])
+    } else snapshotGit(['add', '-A'])
+    const diff = snapshotGit(['diff', '--cached', '--no-ext-diff', '--no-textconv', '--binary', 'HEAD', ...scope])
+    const changedPaths = nullSeparated(snapshotGit(['diff', '--cached', '--name-only', '--no-renames', '-z', 'HEAD', ...scope]))
+    return { sha256: sha256(diff), bytes: Buffer.byteLength(diff, 'utf8'), changedPaths, diff }
   } finally {
     rmSync(temp, { recursive: true, force: true })
   }
+}
+
+function buildWorktreeDiff(worktree, paths = []) {
+  return buildWorktreeSnapshot(worktree, paths).diff
 }
 
 function loadSubject(args, worktree) {
@@ -1353,9 +1377,7 @@ function changedOutsideAllowed(before, after, allowedPaths) {
 }
 
 function packetDiffSnapshot(worktree, allowedPaths) {
-  const changedPaths = dirtyPaths(worktree).filter((path) => isAllowedPath(path, allowedPaths))
-  const diff = changedPaths.length ? buildWorktreeDiff(worktree, changedPaths) : ''
-  return { sha256: sha256(diff), bytes: Buffer.byteLength(diff, 'utf8'), changedPaths, diff }
+  return buildWorktreeSnapshot(worktree, allowedPaths)
 }
 
 function setPacketState(ledger, state, details = {}) {
@@ -1486,6 +1508,7 @@ function packetReviewCriteria(manifest, lens) {
 
 async function runPacketReviewCycle({ ledger, ledgerPath, config, profile, worktree, manifest, snapshot, cycleNumber }) {
   const selection = selectPacketModels(profile, config, manifest.risk)
+  const limitInvocation = createInvocationLimiter(Math.min(profile.maxParallel, profile.concurrency.reviewers))
   const lenses = packetReviewLenses(profile.packetPolicy, selection.reviewers.length)
   const subject = `Packet contract:\n${JSON.stringify(packetPublicContract(manifest), null, 2)}\n\nPacket diff:\n${snapshot.diff}`
   const chargeReview = (prompt) => {
@@ -1499,7 +1522,7 @@ async function runPacketReviewCycle({ ledger, ledgerPath, config, profile, workt
   }
   const reviewers = await pool(selection.reviewers, profile.concurrency.reviewers, (id, index) => {
     const lens = lenses[index]
-    return runReviewer(id, config.agentHarness.models[id], packetReviewCriteria(manifest, lens), subject, worktree, profile.workerFamilies, profile.maxInputBytes, lens, null, profile.retry, chargeReview)
+    return runReviewer(id, config.agentHarness.models[id], packetReviewCriteria(manifest, lens), subject, worktree, profile.workerFamilies, profile.maxInputBytes, lens, null, profile.retry, chargeReview, limitInvocation)
   })
   const completed = reviewers.filter((reviewer) => reviewer.status === 'completed')
   const completedFamilies = new Set(completed.map((reviewer) => reviewer.family))
@@ -1522,7 +1545,7 @@ async function runPacketReviewCycle({ ledger, ledgerPath, config, profile, workt
     'Candidate findings:',
     JSON.stringify(findings, null, 2)
   ].join('\n')
-  cycle.verifiers = await pool(selection.verifiers, profile.concurrency.reviewers, (id) => runReviewer(id, config.agentHarness.models[id], verificationCriteria, subject, worktree, profile.workerFamilies, profile.maxInputBytes, verificationLens, null, profile.retry, chargeReview))
+  cycle.verifiers = await pool(selection.verifiers, profile.concurrency.reviewers, (id) => runReviewer(id, config.agentHarness.models[id], verificationCriteria, subject, worktree, profile.workerFamilies, profile.maxInputBytes, verificationLens, null, profile.retry, chargeReview, limitInvocation))
   cycle.verifiers.forEach((verifier) => { verifier.role = 'verifier'; verifier.freshContext = true })
   const completedVerifiers = cycle.verifiers.filter((verifier) => verifier.status === 'completed')
   cycle.verificationPolicy = {
@@ -1868,7 +1891,8 @@ async function commandReview(args, config) {
   } else if (args['host-review'] && args['host-review'] !== true) {
     throw new Error('--host-review requires --review-packet')
   }
-  const providerReviewers = await pool(profile.reviewers, profile.maxParallel, (id) => runReviewer(id, config.agentHarness.models[id], criteria, subject, worktree, profile.workerFamilies, profile.maxInputBytes, null, reviewContract, profile.retry))
+  const limitInvocation = createInvocationLimiter(Math.min(profile.maxParallel, profile.concurrency.reviewers))
+  const providerReviewers = await pool(profile.reviewers, profile.maxParallel, (id) => runReviewer(id, config.agentHarness.models[id], criteria, subject, worktree, profile.workerFamilies, profile.maxInputBytes, null, reviewContract, profile.retry, null, limitInvocation))
   let hostReviewer = null
   if (hostReviewPath) {
     try {

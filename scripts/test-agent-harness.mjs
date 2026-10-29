@@ -39,9 +39,10 @@ git(['init'])
 git(['config', 'user.email', 'harness@example.invalid'])
 git(['config', 'user.name', 'Harness Test'])
 writeFileSync(join(REPO, 'tracked.txt'), 'base\n')
+writeFileSync(join(REPO, 'untouched.txt'), 'unchanged invariant\n')
 writeFileSync(join(REPO, 'AGENTS.md'), '# Test instructions\n\nKeep changes bounded.\n')
 writeFileSync(join(REPO, 'CODE_REVIEW.md'), '# Test review rules\n\nRequire explicit boundary evidence.\n')
-git(['add', 'tracked.txt', 'AGENTS.md', 'CODE_REVIEW.md'])
+git(['add', 'tracked.txt', 'untouched.txt', 'AGENTS.md', 'CODE_REVIEW.md'])
 git(['commit', '-m', 'test: baseline'])
 const startHead = git(['rev-parse', 'HEAD'])
 const startState = join(TEMP, 'start-state.json')
@@ -549,13 +550,24 @@ writeFileSync(packetManifest, `${JSON.stringify({
   title: 'Implement the packet output',
   objective: 'Create the accepted packet output.',
   risk: 'high',
-  allowedPaths: ['packet.txt'],
+  allowedPaths: ['packet.txt', 'untouched.txt'],
   invariants: ['Do not change Git refs.', 'Do not edit files outside packet.txt.'],
   acceptanceCriteria: ['packet.txt contains fixed packet output'],
   dependencies: [],
   nonGoals: ['Do not edit tracked.txt.'],
   referencePatterns: ['worker.txt']
 }, null, 2)}\n`)
+for (const flag of ['--assume-unchanged', '--skip-worktree']) {
+  git(['update-index', flag, 'untouched.txt'])
+  writeFileSync(join(REPO, 'untouched.txt'), 'hidden preexisting dirty content\n')
+  const dirtyRunDir = join(TEMP, `dirty-preflight-${flag}`)
+  const dirtyRun = JSON.parse(run(process.execPath, [HARNESS, 'packet-run', '--config', CONFIG, '--profile', 'high-assurance', '--worktree', REPO, '--run-dir', dirtyRunDir, '--manifest', packetManifest], { expected: 2 }).stdout)
+  assert.equal(dirtyRun.status, 'blocked')
+  assert.match(dirtyRun.error, /already contain uncommitted changes/)
+  run(process.execPath, [HARNESS, 'packet-release', '--run-dir', dirtyRunDir, '--packet', 'packet-one', '--reason', 'hidden preflight test complete'])
+  git(['update-index', flag.replace('--', '--no-'), 'untouched.txt'])
+  git(['restore', '--source=HEAD', '--staged', '--worktree', 'untouched.txt'])
+}
 const packetRun = JSON.parse(run(process.execPath, [HARNESS, 'packet-run', '--config', CONFIG, '--profile', 'high-assurance', '--worktree', REPO, '--run-dir', packetRunDir, '--manifest', packetManifest]).stdout)
 assert.equal(packetRun.status, 'awaiting_validation')
 assert.equal(readFileSync(join(REPO, 'packet.txt'), 'utf8'), 'fixed packet output\n')
@@ -624,6 +636,17 @@ for (const exitCode of [1, null, undefined]) {
   assert.equal(retainedLease.leaseStatus, 'held')
 }
 writeFileSync(packetEvidence, passingPacketEvidence)
+for (const flag of ['--assume-unchanged', '--skip-worktree']) {
+  git(['update-index', flag, 'untouched.txt'])
+  writeFileSync(join(REPO, 'untouched.txt'), 'hidden post-review drift\n')
+  const hiddenDrift = run(process.execPath, [HARNESS, 'packet-gate', '--run-dir', packetRunDir, '--packet', 'packet-one', '--evidence', packetEvidence], { expected: 1 })
+  assert.match(hiddenDrift.stderr, /diff changed after review/)
+  const held = JSON.parse(run(process.execPath, [HARNESS, 'packet-status', '--run-dir', packetRunDir, '--packet', 'packet-one']).stdout)
+  assert.equal(held.status, 'awaiting_validation')
+  assert.equal(held.leaseStatus, 'held')
+  git(['update-index', flag.replace('--', '--no-'), 'untouched.txt'])
+  git(['restore', '--source=HEAD', '--staged', '--worktree', 'untouched.txt'])
+}
 writeFileSync(join(REPO, 'packet.txt'), 'drifted after review\n')
 const driftedGate = run(process.execPath, [HARNESS, 'packet-gate', '--run-dir', packetRunDir, '--packet', 'packet-one', '--evidence', packetEvidence], { expected: 1 })
 assert.match(driftedGate.stderr, /diff changed after review/)

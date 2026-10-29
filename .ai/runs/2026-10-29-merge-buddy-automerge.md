@@ -34,16 +34,16 @@ Add an `--automerge` mode to `om-merge-buddy` that works the queue of PRs a huma
 
 ### Phase 1: Tracker contract
 
-- [ ] 1.1 Add approve-pending-runs operation to tracker descriptors
+- [x] 1.1 Add approve-pending-runs operation to tracker descriptors — 133791a
 
 ### Phase 2: Pipeline configuration
 
-- [ ] 2.1 Add automerge.label config key and label creation to om-setup-agent-pipeline
+- [x] 2.1 Add automerge.label config key and label creation to om-setup-agent-pipeline — baa47b3
 
 ### Phase 3: Merge buddy automerge mode
 
-- [ ] 3.1 Add automerge mode to om-merge-buddy SKILL.md and references
+- [x] 3.1 Add automerge mode to om-merge-buddy SKILL.md and references — 3093a1d
 
 ### Phase 4: Docs
 
-- [ ] 4.1 Update docs page, README, SDLC.md, config, and upgrade notes
+- [x] 4.1 Update docs page, README, SDLC.md, config, and upgrade notes — 8dc3df5

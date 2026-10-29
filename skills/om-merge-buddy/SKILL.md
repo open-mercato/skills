@@ -63,7 +63,7 @@ Steps 0–2 above still apply — their gates are the merge bar. Then, per `refe
 8. **Approve held CI runs** via **approve-pending-runs** — never for an outside contribution that changes CI configuration — and again after every push.
 9. **Fix the least that blocks the merge.** Approved and green → straight to merge. Only red CI → `om-auto-fix-pr {n} --ci-only`. Only behind the base → merge the base in. Anything else → `om-auto-fix-pr {n}`, whose review runs with `--autofix` and carries fork PRs forward to a credited replacement that keeps the label.
 10. **Wait for CI within `CI_MAX_WAIT_MINUTES`**; still pending → park the PR as `ci-monitoring`, move on, and revisit it once after the queue.
-11. **Merge** through `om-approve-merge-pr {n}` once every step-2 gate passes on the current head; the label answers its merge confirmation and nothing else.
+11. **Merge** through `om-approve-merge-pr {n}` once every step-2 gate passes on the current head. The run's own `in-progress` claim is exempt, and a self-authored PR counts as approved by the pipeline's own approving review. The label answers its merge confirmation and nothing else.
 12. **Finish each PR** — release the claim, update the PR's automerge status comment — then report the run (`references/report-templates.md`).
 
 ## Rules

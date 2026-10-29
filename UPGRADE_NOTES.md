@@ -598,6 +598,16 @@ that other skills attach to.
 
 ### Staged harness review hardening
 
+Refresh the harness runtime and both installed hook commands together through
+`/om-setup-agent-harness`. Publication hooks now activate only after `capture`
+and deactivate on successful `stage` or explicit `end-run --worktree <path>
+--start-state <original artifact> --reason <text>`. Stop owning processes before
+ending an aborted or crashed run. The original artifact identifies its guard;
+other linked worktrees and ordinary publication remain unaffected. Both hook
+paths are quoted for repositories containing spaces. Legacy start-state files
+remain readable. Repeated finding fingerprints retain the strongest severity,
+including verifier escalation, and staging supports Unicode filenames.
+
 The harness now checks reviewer content/index changes, all non-remote ref
 namespaces, and exact reviewed content at staging. Stage commands require the
 final implementation packet and approved host attestation; regenerate old

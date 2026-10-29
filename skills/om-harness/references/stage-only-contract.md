@@ -4,7 +4,9 @@ This contract is loaded by both wrapper skills before creating their worktree.
 
 1. Work in an isolated worktree and run `capture` before any edits. Keep the
    resulting starting commit, complete ref snapshot, and reflog snapshot under
-   the ignored run-artifact directory.
+   the ignored run-artifact directory. Capture also activates the publication
+   guard in this worktree's Git directory and records its ownership in the
+   start-state artifact. A second capture cannot replace an active run.
 2. Do not create intermediate commits. Store progress in run artifacts instead.
 3. Do not invoke publication-oriented skills, remote writes, or the tracker
    `create-pr` operation.
@@ -31,6 +33,22 @@ This contract is loaded by both wrapper skills before creating their worktree.
    - every staged path came from the allowlist.
 8. Report the absolute worktree path, branch, staged paths, validation evidence,
    suggested commit message, prepared pull-request body, and issue-claim state.
+   A successful `stage` deactivates this run's publication guard after all
+   handoff checks pass. A failed stage keeps it active for repair and retry.
+
+On abort or terminal failure, stop all workers, reviewers, and validation
+processes, then run `end-run --worktree <path> --start-state <original artifact>
+--reason <text>`. This deactivates only the matching run's publication guard;
+it never resets files, releases issue claims, or releases packet leases. Perform
+the wrapper's claim cleanup and any explicit packet recovery separately. Keep
+the guard active while repairing or retrying the same run. After a crash,
+verify the owning processes stopped before using `end-run`; never delete
+another run's guard. Installed hooks allow ordinary publication outside an
+active run. Literal `git -C`, `cd`, and `pushd` targets are checked too, so
+starting a shell in the primary checkout cannot bypass an active worktree's
+guard. Unresolved directory expansions or indirect publication require host
+permission when this repository has an active run. Publication from other
+linked worktrees remains available when it does not target the active run.
 
 Worker adapters must also enforce disabled network, remote writes, and ref
 writes. The runtime passes only an explicit environment allowlist and disables

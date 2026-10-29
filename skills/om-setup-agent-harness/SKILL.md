@@ -115,7 +115,11 @@ yes). Copy `guard.mjs`, `block-push-and-pr.sh`, and `freeze-tests.sh` from the i
 them executable, and merge the `PreToolUse` entries from the sibling
 `hooks-settings-snippet.json` into `.claude/settings.json` without disturbing
 existing hooks. These are the preventive layer of the stage-only contract: the
-Bash guard denies `git push` and PR creation during a run, and the Edit/Write/MultiEdit/NotebookEdit
+Bash guard is inactive until `capture` starts a run in the current worktree and
+denies `git push` and PR creation until successful `stage` or explicit
+`end-run` ends it. Other linked worktrees and ordinary publication workflows
+remain usable. Keep both hook executable paths quoted so installation works
+in directories containing spaces. The Edit/Write/MultiEdit/NotebookEdit
 guard denies test-file edits while a `.om-freeze-tests` sentinel is present.
 Never overwrite locally edited hook files or settings silently; show a diff and
 ask.

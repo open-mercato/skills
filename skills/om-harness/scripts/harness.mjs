@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 import { spawn, spawnSync } from 'node:child_process'
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { closeSync, existsSync, lstatSync, mkdtempSync, openSync, readFileSync, readdirSync, readlinkSync, realpathSync, renameSync, statSync, writeFileSync, mkdirSync, rmSync, unlinkSync } from 'node:fs'
 import { homedir, tmpdir } from 'node:os'
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path'
@@ -457,6 +457,16 @@ function normalizeReview(value) {
     verdict: mechanicalVerdict,
     findings,
     notes
+  }
+}
+
+function mergeFinding(current, finding) {
+  // Keep the evidence for the strongest assessment, independent of reviewer or
+  // split-part ordering. Confirmation can escalate severity but never lower it.
+  return {
+    ...current,
+    ...(SEVERITY_ORDER[finding.severity] < SEVERITY_ORDER[current.severity] ? finding : {}),
+    confidence: Math.max(current.confidence, finding.confidence)
   }
 }
 
@@ -946,7 +956,10 @@ async function runReviewer(id, model, criteria, subject, worktree, workerFamilie
   const findings = new Map()
   const notes = []
   for (const invocation of invocations) {
-    for (const finding of invocation.review.findings) if (!findings.has(finding.fingerprint)) findings.set(finding.fingerprint, finding)
+    for (const finding of invocation.review.findings) {
+      const current = findings.get(finding.fingerprint)
+      findings.set(finding.fingerprint, current ? mergeFinding(current, finding) : finding)
+    }
     notes.push(...invocation.review.notes)
   }
   const actualModels = [...new Set(invocations.map((entry) => entry.actualModel).filter(Boolean))]
@@ -1022,8 +1035,10 @@ function aggregateFindings(reviewers) {
     for (const finding of reviewer.review.findings) {
       const current = byFingerprint.get(finding.fingerprint)
       if (current) {
-        if (!current.raisedBy.includes(reviewer.id)) current.raisedBy.push(reviewer.id)
-        current.confidence = Math.max(current.confidence, finding.confidence)
+        byFingerprint.set(finding.fingerprint, {
+          ...mergeFinding(current, finding),
+          raisedBy: [...new Set([...current.raisedBy, reviewer.id])]
+        })
       } else {
         byFingerprint.set(finding.fingerprint, { ...finding, raisedBy: [reviewer.id], resolution: 'unresolved' })
       }
@@ -1557,16 +1572,18 @@ async function runPacketReviewCycle({ ledger, ledgerPath, config, profile, workt
   for (const verifier of completedVerifiers) {
     for (const finding of verifier.review.findings) {
       if (!findings.some((candidate) => candidate.fingerprint === finding.fingerprint)) continue
-      const ids = confirmed.get(finding.fingerprint) || []
-      ids.push(verifier.id)
-      confirmed.set(finding.fingerprint, ids)
+      const current = confirmed.get(finding.fingerprint)
+      confirmed.set(finding.fingerprint, {
+        finding: current ? mergeFinding(current.finding, finding) : finding,
+        verifiedBy: [...new Set([...(current?.verifiedBy || []), verifier.id])]
+      })
     }
   }
   cycle.findings = findings.map((finding) => ({
-    ...finding,
+    ...(confirmed.has(finding.fingerprint) ? mergeFinding(finding, confirmed.get(finding.fingerprint).finding) : finding),
     verification: {
       status: confirmed.has(finding.fingerprint) ? 'verified' : 'rejected',
-      verifiedBy: confirmed.get(finding.fingerprint) || []
+      verifiedBy: confirmed.get(finding.fingerprint)?.verifiedBy || []
     }
   }))
   return cycle
@@ -2039,13 +2056,52 @@ function captureGitState(worktree) {
   }
 }
 
+function publicationGuardPath(worktree) {
+  // A linked worktree has its own Git directory. Do not activate the guard in
+  // the common directory, where it would also affect the primary checkout.
+  return join(git(['rev-parse', '--absolute-git-dir'], worktree).trim(), 'om-harness', 'stage-only.json')
+}
+
+function ownedPublicationGuard(worktree, startState, startStatePath) {
+  const path = publicationGuardPath(worktree)
+  if (!existsSync(path)) return null
+  const guard = readJson(path)
+  if (guard.version !== 1 || !startState.publicationGuard?.runId || guard.runId !== startState.publicationGuard.runId || guard.startState !== resolve(startStatePath)) {
+    throw new Error('Publication guard belongs to another staged run; use its original start-state artifact')
+  }
+  return path
+}
+
+function commandEndRun(args) {
+  const worktree = resolve(String(args.worktree || process.cwd()))
+  if (!args['start-state'] || args['start-state'] === true) throw new Error('--start-state <path> is required')
+  if (!args.reason || args.reason === true || !String(args.reason).trim()) throw new Error('--reason <text> is required')
+  const startStatePath = resolve(String(args['start-state']))
+  const path = ownedPublicationGuard(worktree, readJson(startStatePath), startStatePath)
+  if (path) unlinkSync(path)
+  process.stdout.write(`${JSON.stringify({ status: 'ended', worktree, guardReleased: Boolean(path), reason: String(args.reason).trim() }, null, 2)}\n`)
+}
+
 function commandCapture(args) {
   const worktree = resolve(String(args.worktree || process.cwd()))
   if (!args.output || args.output === true) throw new Error('--output <path> is required')
   const output = resolve(String(args.output))
   mkdirSync(dirname(output), { recursive: true })
-  const state = captureGitState(worktree)
-  writeFileSync(output, `${JSON.stringify(state, null, 2)}\n`)
+  const state = { ...captureGitState(worktree), publicationGuard: { runId: randomUUID() } }
+  const guardPath = publicationGuardPath(worktree)
+  mkdirSync(dirname(guardPath), { recursive: true })
+  try {
+    writeFileSync(guardPath, `${JSON.stringify({ version: 1, runId: state.publicationGuard.runId, startState: output })}\n`, { flag: 'wx' })
+  } catch (error) {
+    if (error.code === 'EEXIST') throw new Error('A staged run is already active in this worktree; end it with its original start-state artifact before capturing another')
+    throw error
+  }
+  try {
+    writeFileSync(output, `${JSON.stringify(state, null, 2)}\n`)
+  } catch (error) {
+    unlinkSync(guardPath)
+    throw error
+  }
   process.stdout.write(`${JSON.stringify({ status: 'captured', output, head: state.head }, null, 2)}\n`)
 }
 
@@ -2065,13 +2121,16 @@ function commandStage(args) {
   const worktree = resolve(String(args.worktree || process.cwd()))
   if (!args['start-state'] || args['start-state'] === true) throw new Error('--start-state <path> is required')
   if (!args['paths-file'] || args['paths-file'] === true) throw new Error('--paths-file <path> is required')
-  const startState = readJson(resolve(String(args['start-state'])))
+  const startStatePath = resolve(String(args['start-state']))
+  const startState = readJson(startStatePath)
+  const { publicationGuard, ...startingGitState } = startState
   const currentState = captureGitState(worktree)
   const startHead = startState.head
   const paths = readFileSync(resolve(String(args['paths-file'])), 'utf8').split(/\r?\n/).map((entry) => validateStagePath(worktree, entry)).filter(Boolean)
   if (!paths.length) throw new Error('Stage allowlist is empty')
   const currentHead = currentState.head
-  if (JSON.stringify(currentState) !== JSON.stringify(startState)) throw new Error('Git refs or reflogs changed during staged-only run')
+  if (JSON.stringify(currentState) !== JSON.stringify(startingGitState)) throw new Error('Git refs or reflogs changed during staged-only run')
+  const guardPath = ownedPublicationGuard(worktree, startState, startStatePath)
   if (!args['review-packet'] || args['review-packet'] === true || !args['host-review'] || args['host-review'] === true) throw new Error('Stage requires --review-packet and --host-review for the exact implementation diff')
   const packetPath = resolve(String(args['review-packet']))
   const packet = readJson(packetPath)
@@ -2087,7 +2146,7 @@ function commandStage(args) {
   git(['diff', '--cached', '--check'], worktree)
   const stagedSubject = git(['diff', '--cached', '--no-ext-diff', '--no-textconv', '--binary', 'HEAD', '--', ...paths.map((path) => `:(literal)${path}`)], worktree)
   if (sha256(stagedSubject) !== packet.subject.sha256) throw new Error('Staged content changed after the reviewed diff was verified')
-  const stagedPaths = git(['diff', '--cached', '--name-only'], worktree).trim().split(/\r?\n/).filter(Boolean)
+  const stagedPaths = nullSeparated(git(['diff', '--cached', '--name-only', '-z'], worktree))
   const allow = new Set(paths)
   const unexpected = stagedPaths.filter((entry) => !allow.has(entry))
   if (unexpected.length) throw new Error(`Staged paths outside allowlist: ${unexpected.join(', ')}`)
@@ -2104,6 +2163,10 @@ function commandStage(args) {
     const output = resolve(String(args.output))
     mkdirSync(dirname(output), { recursive: true })
     writeFileSync(output, `${JSON.stringify(result, null, 2)}\n`)
+  }
+  if (guardPath) {
+    const ownedGuardPath = ownedPublicationGuard(worktree, startState, startStatePath)
+    if (ownedGuardPath) unlinkSync(ownedGuardPath)
   }
   process.stdout.write(`${JSON.stringify(result, null, 2)}\n`)
 }
@@ -2127,6 +2190,7 @@ async function main() {
   try {
     if (command === 'configure') return commandConfigure(args)
     if (command === 'capture') return commandCapture(args)
+    if (command === 'end-run') return commandEndRun(args)
     if (command === 'stage') return commandStage(args)
     if (command === 'packet-gate') return commandPacketGate(args)
     if (command === 'packet-status') return commandPacketStatus(args)
@@ -2146,7 +2210,7 @@ async function main() {
     if (command === 'prepare-review') return commandPrepareReview(args, config)
     if (command === 'review') return await commandReview(args, config)
     if (command === 'packet-run') return await commandPacketRun(args, config)
-    throw new Error('Usage: harness.mjs <configure|validate-config|resolve-profile|probe|capture|worker|prepare-review|review|packet-run|packet-gate|packet-status|packet-release|stage> [options]')
+    throw new Error('Usage: harness.mjs <configure|validate-config|resolve-profile|probe|capture|end-run|worker|prepare-review|review|packet-run|packet-gate|packet-status|packet-release|stage> [options]')
   } catch (error) {
     fail(error.message)
   }

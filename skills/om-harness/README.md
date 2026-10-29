@@ -175,7 +175,10 @@ packet back to review.
 ## The safety model (stage-only, layered)
 
 1. **Prevention** — `hooks/block-push-and-pr.sh` denies `git push` and PR
-   creation at the tool boundary; `hooks/freeze-tests.sh` denies test edits
+   creation at the tool boundary during an active worktree run. `capture`
+   activates it; successful `stage` or explicit `end-run` clears it. Other
+   linked worktrees and ordinary publication stay unaffected.
+   `hooks/freeze-tests.sh` denies test edits
    while the fix-phase sentinel exists.
 2. **Isolation** — isolated worktrees; workers and command reviewers run with
    secret-stripped environments, no shell, Git protocols and credential
@@ -220,7 +223,8 @@ packet-run       claim, implement, blind-review, and fix one manifest packet
 packet-gate      bind trusted evidence to the reviewed diff, release leases
 packet-status    report packet state, usage, leases, diff identity
 packet-release   abort a packet and release its leases explicitly
-capture          snapshot refs and reflogs before any edit
+capture          snapshot refs/reflogs and activate the worktree publication guard
+end-run          end an aborted run's guard using its original start-state artifact
 stage            stage the allowlisted handoff and assert nothing else changed
 ```
 

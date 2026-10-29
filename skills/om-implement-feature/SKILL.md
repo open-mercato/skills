@@ -91,6 +91,13 @@ assert refs and reflogs still match the captured start state, require a clean
 staged diff, render the report from
 `references/report-templates.md`, and stop for human review.
 
+### 7. Abort or failure cleanup
+
+After capture, follow the `om-harness` stage-only contract to stop active
+processes and invoke `end-run` on abort or terminal failure. Preserve files and
+packet leases for deliberate recovery. Keep the guard active while repairing
+or retrying the same run; successful staging ends it.
+
 ## Rules
 
 - Shared communication, marker, label, and safety rules: `references/rules.md`. They always apply.

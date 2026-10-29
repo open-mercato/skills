@@ -25,7 +25,8 @@ keeping the adapter registry open to custom command and OpenAI-compatible models
 - `packet-gate --run-dir <path> --packet <id> --evidence <path>` — bind trusted validation evidence to the reviewed diff and release its path leases only on success.
 - `packet-status --run-dir <path> --packet <id>` — report packet state, usage, lease status, and current diff identity.
 - `packet-release --run-dir <path> --packet <id> --reason <text>` — abort a packet and release its leases for explicit manual recovery.
-- `capture --worktree <path> --output <path>` — record the starting commit, refs, and reflogs before edits.
+- `capture --worktree <path> --output <path>` — record the starting commit, refs, and reflogs before edits and activate this worktree's publication guard.
+- `end-run --worktree <path> --start-state <path> --reason <text>` — deactivate this run's publication guard after stopping an aborted or failed run; preserve all files and packet leases.
 - `stage --worktree <path> --start-state <path> --paths-file <path> --review-packet <path> --host-review <path>` — stage an allowlisted handoff and verify that no commit or ref mutation occurred.
 
 ## Workflow
@@ -50,7 +51,9 @@ Keep the generated JSON result as the source of truth. Render Markdown from that
 
 `hooks/` ships the preventive layer of the stage-only contract, installed into a
 repository by `om-setup-agent-harness`: `block-push-and-pr.sh` denies `git push`
-and PR creation at the tool boundary, and `freeze-tests.sh` denies test-file
+and PR creation at the tool boundary only while the current worktree has an
+active run. `capture` activates it; successful `stage` or explicit `end-run`
+deactivates it. `freeze-tests.sh` denies test-file
 edits while a `.om-freeze-tests` sentinel exists at or above the target file.
 `hooks-settings-snippet.json` holds the `PreToolUse` wiring.
 

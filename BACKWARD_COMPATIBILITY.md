@@ -130,3 +130,10 @@ Provider output accepts both legacy unversioned objects and optional `version: 1
 aggregated council artifacts and all existing result fields remain unchanged.
 Skill names are retained, and old handoff-template paths redirect to the own-skill
 `report-templates.md`. The ordinary published PR pipeline keeps its behavior.
+
+Starting-state artifacts may add `publicationGuard.runId`. New captures use it
+to own a publication guard in the worktree-specific Git directory. Successful
+staging clears that guard; the additive `end-run` command clears it on explicit
+abort without modifying files or packet leases. Staging still accepts legacy
+starting-state artifacts when no other run's guard is active. Refresh installed
+hooks together with the runtime to gain this scoped activation behavior.

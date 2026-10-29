@@ -86,6 +86,10 @@ report from `references/report-templates.md` and stop.
 
 ### 7. Abort or failure cleanup
 
+After capture, follow the `om-harness` stage-only contract to stop active
+processes and invoke `end-run` on abort or terminal failure. Preserve the
+guard while repairing or retrying the same run; successful staging ends it.
+
 On `--abort`, or on failure after `om-fix` claimed the issue but before a ready
 staged handoff exists, release the whole claim — remove the `in-progress` label
 through `unlabel-issue`, remove the harness assignee, and post an abort comment

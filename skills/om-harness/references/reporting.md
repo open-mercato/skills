@@ -15,6 +15,11 @@ unwaived major from a completed reviewer yields `request_changes`; only minor,
 nit, or no findings yields `approve`. Keep provider readiness policy separate
 from this review verdict.
 
+Merge repeated fingerprints using the strongest severity across reviewers,
+split parts, and confirming verifiers. Keep the evidence, impact, and
+remediation for that assessment, plus every reporting reviewer and the maximum
+confidence; never let an earlier lower-severity report hide a blocking defect.
+
 High-assurance packet artifacts add a packet ledger, immutable review-cycle
 JSON/Markdown files, path leases, invocation budgets, and a SHA-256 identity for
 the reviewed diff. Candidate findings carry `verification.status` of `verified`

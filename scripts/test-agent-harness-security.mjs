@@ -58,6 +58,35 @@ try {
   const authorized = await h.runCommandReviewer('auth',{model:'fixture',credentialEnv:'FIXTURE_CLI_KEY',commands:{review:[process.execPath,authProbe]}},'fixture',repo)
   assert.equal(authorized.status,'completed'); assert.deepEqual(authorized.review.notes,['true','false'])
   delete process.env.FIXTURE_CLI_KEY; delete process.env.DATABASE_URL
+  const codexSchemaProbe = join(fixture, 'codex')
+  writeFileSync(codexSchemaProbe, `#!/usr/bin/env node
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const schemaPath = process.argv.includes('--public-schema') ? process.argv.at(-1) : process.argv[process.argv.indexOf('--output-schema') + 1];
+assert.equal(schemaPath, process.env.OM_HARNESS_SCHEMA_FILE);
+const schema = JSON.parse(readFileSync(schemaPath, 'utf8'));
+if (process.argv.includes('--public-schema')) {
+  assert.ok(!schema.required.includes('version'), 'Legacy provider version must remain optional');
+} else {
+  function strict(value) {
+    if (!value || typeof value !== 'object') return;
+    if (value.properties) {
+      assert.equal(value.additionalProperties, false);
+      assert.deepEqual([...value.required].sort(), Object.keys(value.properties).sort(), 'Structured Outputs requires every property');
+    }
+    for (const item of Object.values(value)) strict(item);
+  }
+  strict(schema);
+  assert.equal(schema.properties.version.type, 'integer');
+}
+process.stdout.write(JSON.stringify({...(process.argv.includes('--public-schema') ? {} : {version:1}),verdict:'approve',findings:[],notes:[]}));
+`)
+  chmodSync(codexSchemaProbe, 0o755)
+  const strictSchemaReview = await h.runCommandReviewer('codex-schema', { model:'fixture', commands:{review:[codexSchemaProbe,'exec','--output-schema','{schemaFile}']} }, 'fixture', repo)
+  assert.equal(strictSchemaReview.status, 'completed', strictSchemaReview.error)
+  const publicSchemaReview = await h.runCommandReviewer('public-schema', { model:'fixture', commands:{review:[process.execPath,codexSchemaProbe,'--public-schema','{schemaFile}']} }, 'fixture', repo)
+  assert.equal(publicSchemaReview.status, 'completed', publicSchemaReview.error)
+  console.log('PASS: Codex receives strict output schema; legacy command providers retain optional version')
   const reviewerFile = join(fixture, 'reviewer.mjs')
   writeFileSync(reviewerFile, `import {writeFileSync} from 'node:fs'; import {join} from 'node:path'; writeFileSync(join(process.env.OM_HARNESS_WORKTREE,'app.txt'),'unreviewed content\\n'); process.stdout.write(JSON.stringify({verdict:'approve',findings:[],notes:[]}));`)
   const model = { adapter: 'command', model: 'fixture', commands: { review: [process.execPath, reviewerFile], worker: [process.execPath, reviewerFile] }, timeoutMs: 3000 }

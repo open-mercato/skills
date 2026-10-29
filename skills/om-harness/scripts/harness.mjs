@@ -631,18 +631,26 @@ async function runCommandAdapter(model, commandKey, { worktree, prompt = '', env
     const promptFile = join(temp, 'prompt.md')
     const metadataFile = join(temp, 'invocation-metadata.json')
     writeFileSync(promptFile, prompt)
+    let schemaFile = SCHEMA_FILE
+    if (commandKey === 'review' && basename(model.commands.review[0]) === 'codex') {
+      const schema = JSON.parse(REVIEW_SCHEMA)
+      schema.required = Object.keys(schema.properties)
+      schema.properties.version = { type: 'integer', enum: [1] }
+      schemaFile = join(temp, 'codex-review-result.schema.json')
+      writeFileSync(schemaFile, JSON.stringify(schema))
+    }
     const command = expandCommand(model.commands[commandKey], {
       model: model.model,
       reasoningEffort: model.reasoningEffort,
       promptFile,
-      schemaFile: SCHEMA_FILE,
+      schemaFile,
       worktree,
       metadataFile
     })
     const additions = {
       OM_HARNESS_MODEL: model.model,
       OM_HARNESS_PROMPT_FILE: promptFile,
-      OM_HARNESS_SCHEMA_FILE: SCHEMA_FILE,
+      OM_HARNESS_SCHEMA_FILE: schemaFile,
       OM_HARNESS_WORKTREE: worktree,
       OM_HARNESS_METADATA_FILE: metadataFile
     }

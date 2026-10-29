@@ -2,17 +2,17 @@
 
 ## Decision
 
-The final local code review is **approve**, with no remaining confirmed blocker
-or major finding. Publication is pending the task's explicit Guard confirmation;
-the published PR is still at `1f3c765` and remains changes-requested. After
-publication it still needs new CI and independent manual QA (`risk-high`,
-`needs-qa`). This report grants no QA approval.
+The first correction batches are published at `cb4017b`, with code approval
+and passing CI. A further live-provider check found the Codex reviewer schema
+incompatible with Structured Outputs. The follow-up generates a strict temporary
+schema only for direct Codex reviewers; the public provider schema and legacy
+unversioned results remain unchanged. The regression fails before the fix and
+passes after; the actual Codex review now succeeds.
 
-The last independent reviewer verified the preceding packet/concurrency fixes,
-ran all nine checks, and reproduced one additional staging defect. Its session
-then failed at model capacity before a final verdict. That defect was reproduced
-again by the parent, fixed in this commit, regression-tested, and re-reviewed
-locally. There is no claim of a completed independent approval of this final tip.
+The last earlier independent session verified the packet/concurrency fixes and
+reported the additional staging defect before stopping at model capacity. That
+defect was reproduced, fixed and tested by the parent. A completed independent
+approval of that earlier final tip is not claimed.
 
 ## Fixed findings
 
@@ -26,6 +26,7 @@ locally. There is no claim of a completed independent approval of this final tip
 | Packet scope omits hidden changes | Major | Snapshot the whole allowed scope through a fresh index. Hidden pre-existing edits and post-review drift block; directory/deletion/missing-path behavior and the real index remain intact. |
 | Split parts exceed concurrency limits | Major | One shared limiter covers models, split parts, verifiers and councils, bounded by both configured caps. Real HTTP tests exercise caps one and two. The independent cap-one probe changed from peak two to peak one. |
 | Handoff omits hidden outside-scope edits | Major | Compare the complete working diff with the complete staged diff independently of real index flags. Both flag variants now fail; the outside file and index flags are preserved and never staged. |
+| Codex reviewer rejects the output schema | Major | A temporary Codex-only schema requires all output fields and an explicitly typed integer version. Live Codex v0.165.0 returned `invalid_json_schema` before the fix; the same configured model now completes the review. The subprocess regression checks strict-schema acceptance and unchanged legacy output support. |
 | Base conflicts | Major | Integrated `origin/main` at `fc77110`, preserving the harness suites and delegated-review suite across configuration, CI and SDLC. |
 
 Every runtime defect was observed failing before its fix and passing afterwards.
@@ -56,8 +57,27 @@ installation. Node syntax checks and `git diff --check` also pass.
 The concurrency module is imported by the security suite, so it runs through the
 existing configured gate and CI without an additional command. Synthetic tests
 use temporary repositories, local mock providers and synthetic credentials.
-They do not validate real subscriptions, genuinely fresh Claude contexts, host
-publication permissions, or the guide's browser interactions.
+Additional evidence now includes eleven real desktop/mobile guide checks, a
+fresh Claude host that independently ran the fixture tests and produced a valid
+staged handoff, stale-content rejection, and live Codex workspace-write execution.
+The Codex worker fixed a disposable fixture and passed its tests. Its executed
+probe was denied writes outside the declared writable roots, Git ref changes and
+network access; parent observations confirmed unchanged sentinel, refs and HEAD
+and no request received by the local test server. A sibling temporary path was
+writable, matching Codex's declared `/tmp` allowance.
+
+A custom council explicitly selecting the single available Codex advisor, plus
+the genuine matching Claude host artifact, returns satisfied/approve after the
+schema correction. This does not stand in for the bundled five-advisor profile:
+DeepSeek/Zen credentials and the Kimi CLI remain unavailable. Model provenance
+remains unverified when the adapter cannot attest actual metadata. The tracker
+issue lifecycle remains unexercised. None of this grants person-owned QA approval.
+
+[Published browser and fresh-host evidence](https://github.com/open-mercato/skills/pull/152#issuecomment-6498131572)
+precedes this additional live-provider check. The ignored QA artifact directory
+contains the actual worker tool trace, sandbox observations, and before/after
+Codex council results. The schema rule is documented in
+[OpenAI Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs#all-fields-must-be-required).
 
 ## Compatibility and remaining gates
 
@@ -67,7 +87,8 @@ notes agree on the unreleased safety tightening. The optional harness preserves
 ordinary pipeline operation. No standard shared step-file copy was modified;
 changed staging/packet contracts are owned by the harness.
 
-Before merge: publish the prepared normal follow-up commits, wait for the new
-head's CI, and obtain independent manual QA evidence pinned to that head. The
-existing QA gate must remain in force. The task's Guard requires confirmation
-before pushing the shared PR branch; no commit has been pushed by this run.
+Before merge, the latest correction needs publication, new-head CI, and a
+person-owned high-risk QA sign-off pinned to that head. The user authorized
+normal follow-up pushes; no force-push or actual merge is requested. Keep
+`needs-qa` and the high-risk gate in force. There is no change to any standard
+shared step file or to a published output format.

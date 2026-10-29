@@ -572,6 +572,7 @@ test('an empty attempt directory is reported as interrupted and does not block r
   const setup = await fixture(t);
   await prepare(setup.configPath, setup.out);
   await fs.mkdir(path.join(setup.out, 'trials', 'm0-tiny-case-r1-candidate', 'attempt-1'), { recursive: true });
+  await fs.mkdir(path.join(setup.out, 'trials', 'm0-tiny-case-r1-candidate', '.attempt-2.crashed.tmp'));
   await report(setup.out);
   let summary = await readJson(path.join(setup.out, 'reports', 'report.json'));
   const empty = summary.trials.find((trial) => trial.id === 'm0-tiny-case-r1-candidate');

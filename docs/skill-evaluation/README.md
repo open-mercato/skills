@@ -79,7 +79,8 @@ The version-1 JSON contract is:
   alternative phrases. Matching is literal and case-insensitive over every string
   in the artifact, with whitespace collapsed. A trial passes when every `mustFind`
   entry matches and no `mustNotClaim` entry does. Expectations are frozen in the
-  manifest, never shown to the worker, and reported as paired pass rates. They
+  manifest and reported as paired pass rates. They are not in the prompt, and
+  workers are told not to read manifests; the read-only sandbox does not enforce that. They
   are phrase checks, not semantic judgments; keep subtler quality questions for
   blinded assessments.
 - `codex.executable` defaults to `codex` on PATH. A path containing a separator is
@@ -108,7 +109,9 @@ node scripts/skill-eval.mjs report --out /tmp/study-run
 `prepare` archives both complete `skills/` collections from Git under opaque
 per-run directory names (`inputs/variants/<random>`), so neither the worker
 prompt nor any path a worker cites names its arm; only `manifest.json` and the
-private blinding key map arms to directories. It also creates
+private blinding key map arms to directories. The output path and case IDs
+appear in every prompt verbatim, so keep the words `baseline` and `candidate` out
+of them; `prepare` warns when they appear. It also creates
 detached base/head worktrees per case. Worktree registration changes Git's common
 metadata; the original checkouts, branches, tracked files and global installed
 skills are untouched. The evaluated task cannot write to the worktrees. A failed
@@ -186,6 +189,9 @@ within each trial/cohort for paired comparisons.
 Frozen input or manifest changes reject execution. Resume also rejects changed
 Codex version, Node/platform or helper-source digest; prepare a new experiment
 when changing the executor. Source refs and original context are not reloaded.
+A run directory prepared by an older harness version can still be reported and
+cleaned up, but `run --execute` rejects it as environment drift (the harness
+digest changed); prepare a new experiment to execute more trials.
 Execution, native import and cleanup acquire the same exclusive `.running`
 writer lock. Ownership and frozen inputs are checked again inside the lock before
 execution/import. Cleanup checks ownership inside its lock and can remove owned
@@ -205,8 +211,8 @@ interrupted CLI attempt on resume: skipped, or retried with `--retry-failed`.
 After every trial the runner checks only what that trial could read: the
 assigned collection and the case context by digest, and the case's source
 worktrees by `HEAD` plus an empty `git status`. Any change records the attempt as
-`input-drift` and stops the run. Each `run`, `import` and `report` start still
-hashes the whole frozen input tree.
+`input-drift` and stops the run. Each `run` and `import` start still hashes
+the whole frozen input tree.
 
 `report` takes no lock. When `.running` exists it warns that a writer may be
 active and that in-flight trials appear as interrupted; re-run it afterwards.

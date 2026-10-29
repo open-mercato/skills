@@ -198,6 +198,9 @@ export async function prepare(configFile, output) {
     await fs.writeFile(path.join(root, 'manifest.json'), text, { mode: 0o600 });
     await writeJson(path.join(root, '.skill-eval-owner.json'), { version: 1, runId, manifestDigest: digest(text) });
     await fs.mkdir(path.join(root, 'trials'));
+    // These values reach every worker prompt verbatim; arm words in them would undo the blinding.
+    const labelled = [root, ...manifest.cases.map((entry) => entry.id)].filter((value) => /baseline|candidate/iu.test(value));
+    if (labelled.length) process.stderr.write(`skill-eval: warning: the output path or case ids contain "baseline" or "candidate" and will appear in worker prompts: ${labelled.map((value) => JSON.stringify(path.basename(value))).join(', ')}\n`);
     return manifest;
   } catch (error) {
     for (const worktree of manifest.ownedWorktrees.reverse()) {

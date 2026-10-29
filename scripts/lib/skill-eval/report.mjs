@@ -53,7 +53,7 @@ function pairedStatistics(entries, measurement) {
     ci95: half === null ? null : { method, center, low: center - half, high: center + half } };
 }
 const round = (value, digits = 1) => numeric(value) ? Number(value.toFixed(digits)) : value;
-const interval = (statistics) => statistics.ci95 ? `[${round(statistics.ci95.low)}, ${round(statistics.ci95.high)}]` : 'n/a';
+const interval = (statistics) => statistics.ci95 ? `${round(statistics.ci95.center)} [${round(statistics.ci95.low)}, ${round(statistics.ci95.high)}]` : 'n/a';
 const csv = (value) => `"${String(value ?? '').replace(/"/gu, '""')}"`;
 
 export async function report(output, { assessmentsFile } = {}) {
@@ -212,8 +212,8 @@ export async function report(output, { assessmentsFile } = {}) {
   const markdown = [`# Skill evaluation: ${manifest.config.skill.name}`, '',
     ...warnings.map((warning) => `> **Warning:** ${warning}\n`), note, '',
     `Order: ${summary.order}${summary.seed !== undefined ? ` (seed ${summary.seed})` : ''}. Repetitions: ${summary.repetitions}. Expected CLI trials: ${summary.expectedCliTrials}. Recorded attempts: ${trials.length}. Every attempt remains in report.json.`, '',
-    'CLI aggregates include every manifest pair, including trials that never started. Native cohorts cover imported pairs only. Deltas cover complete pairs; the 95% interval is clustered by case when two or more cases are pooled. Attempt columns count completed / all attempts per arm (baseline / candidate), including retried failures, and non-completed cost sums the tokens and seconds those attempts spent.', '',
-    '| Cohort | Model / effort | Case | Complete pairs | Incomplete (baseline / candidate / both failed) | Total token delta | 95% CI | Tool delta | Seconds delta | Completed / all attempts | Non-completed tokens | Non-completed seconds |',
+    'CLI aggregates include every manifest pair, including trials that never started. Native cohorts cover imported pairs only. Deltas are differences of means over complete pairs (unknown when any pair lacks the value). The 95% interval column shows its own centre and covers pairs with known values; when two or more cases are pooled it is clustered by case and weights each case equally, so its centre can differ from the delta. Attempt columns count completed / all attempts per arm (baseline / candidate), including retried failures, and non-completed cost sums the tokens and seconds those attempts spent.', '',
+    '| Cohort | Model / effort | Case | Complete pairs | Incomplete (baseline / candidate / both failed) | Total token delta | Interval centre [95% CI] | Tool delta | Seconds delta | Completed / all attempts | Non-completed tokens | Non-completed seconds |',
     '| --- | --- | --- | ---: | ---: | ---: | --- | ---: | ---: | ---: | ---: | ---: |',
     ...aggregates.map((entry) => `| ${[entry.cohort, `${entry.model} / ${entry.reasoningEffort}`, entry.caseId, entry.completePairs,
       `${entry.incompleteByArm.baselineOnly} / ${entry.incompleteByArm.candidateOnly} / ${entry.incompleteByArm.both}`,

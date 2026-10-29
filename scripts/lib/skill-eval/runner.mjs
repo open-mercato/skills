@@ -66,6 +66,10 @@ async function attemptsFor(root, id) {
   const directory = path.join(root, 'trials', id);
   await fs.mkdir(directory, { recursive: true });
   if ((await fs.lstat(directory)).isSymbolicLink()) throw new Error('Trial path must not be a symlink');
+  // Callers hold the writer lock, so leftover temporary attempt directories belong to a crashed writer.
+  for (const name of await fs.readdir(directory)) {
+    if (/^\.attempt-[0-9]+\..+\.tmp$/u.test(name)) await fs.rm(path.join(directory, name), { recursive: true, force: true });
+  }
   return { directory, names: await listAttempts(directory) };
 }
 

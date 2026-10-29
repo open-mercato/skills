@@ -12,7 +12,8 @@
       "node scripts/test-close-keywords.mjs",
       "node --test scripts/test-ux-design.mjs scripts/test-ux-design-comments.mjs",
       "node scripts/test-review-sweep.mjs",
-      "node --test scripts/test-skill-eval.mjs"
+      "node --test scripts/test-skill-eval.mjs scripts/test-skill-eval-portability.mjs",
+      "node --test scripts/test-skill-eval-portability.mjs"
     ]
   },
   "labels": {

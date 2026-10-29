@@ -13,7 +13,7 @@
   "repetitions": 3,
   "concurrency": 1,
   "order": "interleaved",
-  "codex": { "executable": "codex", "timeoutSeconds": 1800 },
+  "codex": { "executable": "codex", "timeoutSeconds": 1800, "maxOutputBytesPerStream": 16777216 },
   "cases": [
     {
       "id": "change-001",

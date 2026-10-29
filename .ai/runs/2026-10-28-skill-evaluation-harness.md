@@ -50,6 +50,7 @@ External tracker mutations are forbidden in trials. Use read-only sandbox execut
 - [x] 4.4 Scope per-trial input checks and create attempts atomically — 6b2f473
 - [x] 4.5 Document validity limits and run the evaluator suite in the gate and CI — f32601b
 - [x] Post-review fix: interval centre, temp-attempt sweep, arm-word warning and doc corrections — 5d651c6
+- [x] 4.6 Bound worker output, reject multi-task imports, and verify cross-platform descendant cleanup
 
 ## Implementation evidence
 
@@ -82,6 +83,12 @@ tests. The frozen `a266c03` executor and live-study inputs/results were untouche
 Independent re-review approves all three fixes in `00156f6`. Reporting the legacy
 study with that revision preserved every resource aggregate and attached 24
 digest-bound assessments without rewriting stored trial results.
+
+Final safety follow-up: worker stdout/stderr are independently capped, native
+imports reject logs with multiple task spans, config-relative executables accept
+both platform separator styles, and cancellation terminates descendant trees on
+Unix and Windows. The evaluator and portability regressions run in the configured
+gate; a dedicated `windows-latest` job exercises the real descendant lifecycle.
 
 Additional review follow-up: dry plans expose executable `commandArgv` data,
 with absolute Node/CLI paths, rather than shell command text. A regression invokes

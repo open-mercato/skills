@@ -34,7 +34,7 @@ The version-1 JSON contract is:
   "repetitions": 3,
   "concurrency": 2,
   "order": "interleaved",
-  "codex": { "executable": "codex", "timeoutSeconds": 1800 },
+  "codex": { "executable": "codex", "timeoutSeconds": 1800, "maxOutputBytesPerStream": 16777216 },
   "cases": [
     {
       "id": "case-001",
@@ -83,8 +83,12 @@ The version-1 JSON contract is:
   workers are told not to read manifests; the read-only sandbox does not enforce that. They
   are phrase checks, not semantic judgments; keep subtler quality questions for
   blinded assessments.
-- `codex.executable` defaults to `codex` on PATH. A path containing a separator is
-  resolved relative to the config. `timeoutSeconds` defaults to 1800 (1–86400).
+- `codex.executable` defaults to `codex` on PATH. A path containing `/` or `\\`
+  is resolved relative to the config, including Windows-style paths when the
+  config is loaded on Windows. `timeoutSeconds` defaults to 1800 (1–86400).
+  `maxOutputBytesPerStream` defaults to 16777216 (16 MiB; range 1024–268435456)
+  and independently caps captured stdout and stderr. Exceeding either cap stops
+  the worker tree and records the attempt as failed.
 - Context directories must contain ordinary files/directories, with no symlinks.
   Source worktrees may contain symlinks resolving inside the frozen inputs;
   escaping or dangling links fail preparation. Skill collection snapshots reject
@@ -197,7 +201,9 @@ writer lock. Ownership and frozen inputs are checked again inside the lock befor
 execution/import. Cleanup checks ownership inside its lock and can remove owned
 snapshots even when their contents have drifted. A competing writer fails without
 removing the current writer's lock.
-SIGINT/SIGTERM stop current workers and preserve evidence. An abrupt host crash or
+SIGINT/SIGTERM stop each worker process tree and preserve evidence. Unix workers
+receive process-group SIGTERM followed by SIGKILL escalation; Windows workers
+use `taskkill /T /F`, with a direct-child fallback when that command fails. An abrupt host crash or
 SIGKILL can leave `.running`; after verifying its recorded process has ended,
 remove that stale lock explicitly before resuming. Never remove an active lock.
 If disk/process failures prevent a result file, reports expose the trial metadata
@@ -331,8 +337,10 @@ Only the explicitly supplied session file is read; the harness never searches
 private session directories and never copies the raw session into reports. It
 deduplicates `token_usage_record` usage by response ID. When those records are
 absent, it uses the last `event_msg` token-count cumulative total for the supplied
-session, clearly labelled `session-cumulative`. Supply a session containing just
-the intended trial; cumulative totals can include earlier session activity.
+session, clearly labelled `session-cumulative`. The importer rejects logs
+containing more than one task span; provide a selected single-task session.
+Cumulative totals can still include activity outside that span when the log lacks
+per-response usage records, so prefer response records.
 Native function/custom tool call IDs are deduplicated invocation counts, labelled
 as such because the log may omit completion status. Elapsed time stays unknown.
 An explicit final-answer message supplies the artifact; `--artifact` can provide

@@ -73,7 +73,7 @@ async function attemptsFor(root, id) {
   return { directory, names: await listAttempts(directory) };
 }
 
-function capture(executable, args, directory, timeoutSeconds, active) {
+function capture(executable, args, directory, timeoutSeconds, maxOutputBytesPerStream, active) {
   return new Promise((resolve) => {
     const stdout = createWriteStream(path.join(directory, 'stdout.jsonl'), { mode: 0o600, flags: 'wx' });
     const stderr = createWriteStream(path.join(directory, 'stderr.log'), { mode: 0o600, flags: 'wx' });
@@ -82,31 +82,51 @@ function capture(executable, args, directory, timeoutSeconds, active) {
     active.add(child);
     let timedOut = false;
     let spawnError = null;
-    const timer = setTimeout(() => { timedOut = true; stop(child); }, timeoutSeconds * 1000);
-    child.stdout.pipe(stdout);
-    child.stderr.pipe(stderr);
+    let stdoutBytes = 0;
+    let stderrBytes = 0;
+    let outputLimitExceeded = false;
+    const captureChunk = (target, chunk, currentBytes) => {
+      const remaining = Math.max(0, maxOutputBytesPerStream - currentBytes);
+      if (remaining) target.write(chunk.subarray(0, remaining));
+      if (chunk.length > remaining && !outputLimitExceeded) {
+        outputLimitExceeded = true;
+        stopProcessTree(child);
+      }
+      return currentBytes + chunk.length;
+    };
+    const timer = setTimeout(() => { timedOut = true; stopProcessTree(child); }, timeoutSeconds * 1000);
+    child.stdout.on('data', (chunk) => { stdoutBytes = captureChunk(stdout, chunk, stdoutBytes); });
+    child.stderr.on('data', (chunk) => { stderrBytes = captureChunk(stderr, chunk, stderrBytes); });
     child.on('error', (error) => { spawnError = error.message; });
     child.on('close', async (exitCode, signal) => {
       clearTimeout(timer);
       active.delete(child);
       await Promise.all([new Promise((done) => stdout.end(done)), new Promise((done) => stderr.end(done))]);
-      resolve({ exitCode, signal, timedOut, spawnError, elapsedSeconds: (performance.now() - started) / 1000 });
+      resolve({ exitCode, signal, timedOut, outputLimitExceeded,
+        capturedStdoutBytes: Math.min(stdoutBytes, maxOutputBytesPerStream),
+        capturedStderrBytes: Math.min(stderrBytes, maxOutputBytesPerStream),
+        spawnError, elapsedSeconds: (performance.now() - started) / 1000 });
     });
   });
 }
 
-function stop(child) {
+const stopping = new WeakSet();
+export function stopProcessTree(child) {
+  if (stopping.has(child)) return;
+  stopping.add(child);
+  if (process.platform === 'win32') {
+    const killer = spawn('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true, shell: false });
+    const fallback = () => { try { child.kill('SIGKILL'); } catch {} };
+    killer.once('error', fallback);
+    killer.once('close', (code) => { if (code !== 0) fallback(); });
+    return;
+  }
   try {
-    if (process.platform === 'win32') child.kill('SIGTERM');
-    else process.kill(-child.pid, 'SIGTERM');
+    process.kill(-child.pid, 'SIGTERM');
   } catch {}
-  const timer = setTimeout(() => {
-    try {
-      if (process.platform === 'win32') child.kill('SIGKILL');
-      else process.kill(-child.pid, 'SIGKILL');
-    } catch {}
+  setTimeout(() => {
+    try { process.kill(-child.pid, 'SIGKILL'); } catch {}
   }, 1000);
-  timer.unref();
 }
 
 export async function run(output, { execute: executeTrials = false, retryFailed = false } = {}) {
@@ -122,7 +142,7 @@ export async function run(output, { execute: executeTrials = false, retryFailed 
 async function executeRun({ root, manifest }, retryFailed) {
   const active = new Set();
   let cancelled = false;
-  const cancel = () => { cancelled = true; for (const child of active) stop(child); };
+  const cancel = () => { cancelled = true; for (const child of active) stopProcessTree(child); };
   process.on('SIGINT', cancel);
   process.on('SIGTERM', cancel);
   let failed = 0;
@@ -164,13 +184,14 @@ async function executeRun({ root, manifest }, retryFailed) {
         backend: 'codex-cli', cohort: 'cli', startedAt: new Date().toISOString(), promptDigest: digest(prompt),
         environmentDigest: digest(JSON.stringify(environment)) };
       const attemptDirectory = await createAttempt(directory, attempt, 'trial.json', metadata);
-      const execution = await capture(manifest.config.codex.executable, args, attemptDirectory, manifest.config.codex.timeoutSeconds, active);
+      const execution = await capture(manifest.config.codex.executable, args, attemptDirectory,
+        manifest.config.codex.timeoutSeconds, manifest.config.codex.maxOutputBytesPerStream, active);
       const parsed = parseCodexStream(await fs.readFile(path.join(attemptDirectory, 'stdout.jsonl'), 'utf8'));
       const artifact = parseArtifact(parsed.artifactText);
       const drifted = !await trialInputsIntact(root, manifest, pair.entry, variant);
       const modelMismatch = parsed.observedModels.some((model) => model !== pair.model.name);
       const status = cancelled ? 'cancelled' : drifted ? 'input-drift' : execution.timedOut ? 'timed-out' :
-        execution.spawnError || execution.exitCode !== 0 || parsed.failedTurns || modelMismatch ? 'failed' :
+        execution.spawnError || execution.exitCode !== 0 || execution.outputLimitExceeded || parsed.failedTurns || modelMismatch ? 'failed' :
           parsed.malformedLines || !parsed.completedTurns || !artifact.artifactText.trim() ? 'partial' : 'completed';
       const result = { ...metadata, status, ...execution, finishedAt: new Date().toISOString(),
         metrics: { ...parsed, artifactText: undefined }, artifact, artifactDigest: artifactDigest(artifact), textMetrics: textMetrics(artifact.artifactText),
@@ -211,6 +232,9 @@ async function importSession(root, manifest, { session, pairId, variant, model, 
   const sessionPath = await fs.realpath(session);
   const content = await fs.readFile(sessionPath, 'utf8');
   const parsed = parseNativeSession(content);
+  if (parsed.startedTasks !== 1 || parsed.completedTasks + parsed.interruptedTasks > 1) {
+    throw new Error('Native imports must contain exactly one task span; provide a selected single-task JSONL file');
+  }
   if (parsed.observedModels.some((observed) => observed !== model)) throw new Error('Native model metadata does not match --model');
   if (parsed.observedEfforts.some((observed) => observed !== effort)) throw new Error('Native effort metadata does not match --effort');
   const artifact = parseArtifact(artifactFile ? await fs.readFile(artifactFile, 'utf8') : parsed.artifactText);

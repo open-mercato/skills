@@ -23,6 +23,7 @@ export const writeJson = (file, value) => writeText(file, `${JSON.stringify(valu
 function requireValue(condition, message) { if (!condition) throw new Error(message); }
 const nonempty = (value) => typeof value === 'string' && value.trim() && !value.includes('\0');
 const idPattern = /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/u;
+export const hasPathSeparator = (value) => /[\\/]/u.test(value);
 export async function canonical(file) {
   const absolute = path.resolve(file);
   try { return await fs.realpath(absolute); }
@@ -102,6 +103,9 @@ export async function loadConfig(file) {
   requireValue(new Set(cases.map((entry) => entry.id)).size === cases.length, 'Duplicate case ids');
   const timeoutSeconds = raw.codex?.timeoutSeconds ?? 1800;
   requireValue(Number.isSafeInteger(timeoutSeconds) && timeoutSeconds > 0 && timeoutSeconds <= 86400, 'timeoutSeconds must be 1..86400');
+  const maxOutputBytesPerStream = raw.codex?.maxOutputBytesPerStream ?? 16 * 1024 * 1024;
+  requireValue(Number.isSafeInteger(maxOutputBytesPerStream) && maxOutputBytesPerStream >= 1024 && maxOutputBytesPerStream <= 256 * 1024 * 1024,
+    'maxOutputBytesPerStream must be 1024..268435456');
   const executable = raw.codex?.executable ?? 'codex';
   requireValue(nonempty(executable), 'Invalid Codex executable');
   const order = raw.order ?? 'baseline-first';
@@ -111,7 +115,8 @@ export async function loadConfig(file) {
   requireValue(seed === null || (Number.isSafeInteger(seed) && seed >= 0 && seed < 2 ** 32), 'seed must be an integer 0..4294967295');
   return { version: 1, configPath, originalConfigDigest: digest(await fs.readFile(configPath)),
     skill, models, repetitions, concurrency, order, ...(seed !== null ? { seed } : {}), cases,
-    codex: { executable: executable.includes(path.sep) ? await fs.realpath(path.resolve(base, executable)) : executable, timeoutSeconds } };
+    codex: { executable: hasPathSeparator(executable) ? await fs.realpath(path.resolve(base, executable)) : executable,
+      timeoutSeconds, maxOutputBytesPerStream } };
 }
 
 export async function treeDigest(root, { allowInternalSymlinks = true } = {}) {

@@ -25,4 +25,14 @@ jobs:
       - name: Delegated review isolation regressions
         run: node scripts/test-review-sweep.mjs
       - name: Skill evaluation harness accounting, safety and cleanup
-        run: node --test scripts/test-skill-eval.mjs
+        run: node --test scripts/test-skill-eval.mjs scripts/test-skill-eval-portability.mjs
+
+  skill-eval-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Windows process-tree portability
+        run: node --test scripts/test-skill-eval-portability.mjs

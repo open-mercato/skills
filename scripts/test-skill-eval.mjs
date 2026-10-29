@@ -60,6 +60,13 @@ const variant = fs.readFileSync(assigned, 'utf8').includes('Use one sentence.') 
 const mode = ${JSON.stringify(mode)};
 const marker = ${JSON.stringify(path.join(temporary, 'failed-once'))};
 const emit = (event) => console.log(JSON.stringify(event));
+if (mode.startsWith('output-limit-')) {
+  process.stdout.on('error', () => {});
+  process.stderr.on('error', () => {});
+  if (mode === 'output-limit-stdout') process.stdout.write('x'.repeat(2048));
+  else process.stderr.write('y'.repeat(2048));
+  setInterval(() => {}, 30000);
+}
 emit({ type: 'thread.started', thread_id: 'new-context-' + process.pid });
 emit({ type: 'turn.started' });
 emit({ type: 'item.started', item: { id: 'tool-1', type: 'command_execution' } });
@@ -82,7 +89,8 @@ else if (mode !== 'partial') emit({ type: 'turn.completed', usage: { input_token
   const configPath = path.join(configDirectory, 'experiment.json');
   const config = { version: 1, skill: { repository: collection, baseline, candidate, name: skillName },
     models: [{ name: 'model;$(touch SHOULD_NOT_EXIST)', reasoningEffort: 'high' }], repetitions: 1, concurrency: 1,
-    codex: { executable: fake, timeoutSeconds: mode === 'timeout' ? 1 : 10 },
+    codex: { executable: fake, timeoutSeconds: mode === 'timeout' ? 1 : 10,
+      maxOutputBytesPerStream: mode.startsWith('output-limit-') ? 1024 : 16 * 1024 * 1024 },
     cases: [{ id: 'tiny-case', task: 'Describe the frozen code change. Data: $(touch SHOULD_NOT_EXIST)',
       source: { repository: source, base, head }, contextDirectory: context }] };
   await fs.writeFile(configPath, JSON.stringify(config));
@@ -158,6 +166,7 @@ test('config rejects versions, duplicate cases, invalid refs, symlink escapes an
     { ...setup.config, cases: [...setup.config.cases, ...setup.config.cases] },
     { ...setup.config, skill: { ...setup.config.skill, baseline: '--help' } },
     { ...setup.config, models: [{ name: 'model', reasoningEffort: undefined }] },
+    { ...setup.config, codex: { ...setup.config.codex, maxOutputBytesPerStream: 10 } },
   ]) {
     await fs.writeFile(setup.configPath, JSON.stringify(change));
     await assert.rejects(loadConfig(setup.configPath));
@@ -187,7 +196,7 @@ test('unsafe source symlink cleans only owned worktrees when preparation fails',
   await assert.rejects(fs.access(setup.out));
 });
 
-for (const mode of ['failure', 'malformed', 'partial', 'timeout']) {
+for (const mode of ['failure', 'malformed', 'partial', 'timeout', 'output-limit-stdout', 'output-limit-stderr']) {
   test(`preserves ${mode} attempts, unknown usage and explicit retries`, async (t) => {
     const setup = await fixture(t, { mode });
     await prepare(setup.configPath, setup.out);
@@ -201,6 +210,12 @@ for (const mode of ['failure', 'malformed', 'partial', 'timeout']) {
     assert.equal(summary.comparisons[0].complete, false);
     assert.equal(summary.trials[0].metrics.usage.totalTokens, null);
     assert.equal(summary.aggregates[0].measurements['usage.totalTokens'].delta, null);
+    if (mode.startsWith('output-limit-')) {
+      assert.ok(summary.trials.every((trial) => trial.outputLimitExceeded));
+      const attempt = path.join(setup.out, 'trials', 'm0-tiny-case-r1-baseline', 'attempt-1');
+      const stream = mode.endsWith('stdout') ? 'stdout.jsonl' : 'stderr.log';
+      assert.equal((await fs.stat(path.join(attempt, stream))).size, 1024);
+    }
   });
 }
 
@@ -243,6 +258,12 @@ test('native imports deduplicate response usage, verify model and keep cohorts s
   assert.deepEqual(await fs.readdir(trialDirectory), priorAttempts);
   assert.equal(await fs.readFile(path.join(setup.out, '.running'), 'utf8'), '{}');
   await fs.rm(path.join(setup.out, '.running'));
+  const multiTaskSession = path.join(setup.temporary, 'multi-task-session.jsonl');
+  await fs.writeFile(multiTaskSession, [...events,
+    { type: 'event_msg', payload: { type: 'task_started' } },
+    { type: 'event_msg', payload: { type: 'task_complete', last_agent_message: 'Unrelated task.' } },
+  ].map((entry) => JSON.stringify(entry)).join('\n'));
+  await assert.rejects(importNative(setup.out, { ...options, session: multiTaskSession }), /exactly one task span/u);
   const result = await importNative(setup.out, options);
   assert.equal(result.attempt, 2);
   assert.equal(result.usage.totalTokens, 50);
@@ -256,14 +277,18 @@ test('native imports deduplicate response usage, verify model and keep cohorts s
   assert.equal(summary.comparisons.length, 2);
   assert.equal(summary.trials.find((trial) => trial.cohort === 'pilot-native').metrics.completedToolCalls, 1);
   assert.equal(summary.comparisons[0].measurements['usage.totalTokens'].baseline, 110);
-  await fs.appendFile(session, '\n' + JSON.stringify({ type: 'event_msg', payload: { type: 'task_started' } }));
+  const partialSession = path.join(setup.temporary, 'partial-session.jsonl');
+  await fs.writeFile(partialSession, [
+    { type: 'turn_context', payload: { model: setup.config.models[0].name, effort: 'high' } },
+    { type: 'event_msg', payload: { type: 'task_started' } },
+  ].map((entry) => JSON.stringify(entry)).join('\n'));
   const artifactFile = path.join(setup.temporary, 'artifact.txt');
   await fs.writeFile(artifactFile, 'A supplied artifact does not prove trial completion.');
-  assert.equal((await importNative(setup.out, { ...options, artifactFile })).status, 'partial');
-  await fs.appendFile(session, '\n' + JSON.stringify({ type: 'event_msg', payload: { type: 'turn_aborted' } }));
-  assert.equal((await importNative(setup.out, { ...options, artifactFile })).status, 'interrupted');
-  await fs.appendFile(session, '\n' + JSON.stringify({ type: 'turn_context', payload: { model: setup.config.models[0].name, effort: 'low' } }));
-  await assert.rejects(importNative(setup.out, options), /effort metadata/u);
+  assert.equal((await importNative(setup.out, { ...options, session: partialSession, artifactFile })).status, 'partial');
+  await fs.appendFile(partialSession, '\n' + JSON.stringify({ type: 'event_msg', payload: { type: 'turn_aborted' } }));
+  assert.equal((await importNative(setup.out, { ...options, session: partialSession, artifactFile })).status, 'interrupted');
+  await fs.appendFile(partialSession, '\n' + JSON.stringify({ type: 'turn_context', payload: { model: setup.config.models[0].name, effort: 'low' } }));
+  await assert.rejects(importNative(setup.out, { ...options, session: partialSession }), /effort metadata/u);
 });
 
 test('concurrent repetitions use fresh sessions and a complete baseline phase barrier', async (t) => {
@@ -376,7 +401,10 @@ test('reports count every expected CLI pair before execution and native cohorts 
   assert.equal(before.aggregates.find((entry) => entry.caseId === '*').incompletePairs, 2);
   assert.deepEqual(before.cohortScopes, [{ cohort: 'cli', scope: 'all manifest pairs', pairs: 2 }]);
   const session = path.join(setup.temporary, 'selected-native.jsonl');
-  await fs.writeFile(session, JSON.stringify({ type: 'event_msg', payload: { type: 'task_complete', last_agent_message: 'One imported artifact.' } }));
+  await fs.writeFile(session, [
+    { type: 'event_msg', payload: { type: 'task_started' } },
+    { type: 'event_msg', payload: { type: 'task_complete', last_agent_message: 'One imported artifact.' } },
+  ].map((entry) => JSON.stringify(entry)).join('\n'));
   await importNative(setup.out, { session, pairId: 'm0-tiny-case-r1', variant: 'baseline', model: setup.config.models[0].name, effort: 'high', cohort: 'native' });
   await report(setup.out);
   const after = await readJson(reportFile);
@@ -508,7 +536,10 @@ test('assessment digest includes structured findings and rejects changed native 
   const setup = await fixture(t);
   await prepare(setup.configPath, setup.out);
   const session = path.join(setup.temporary, 'selected-session.jsonl');
-  await fs.writeFile(session, JSON.stringify({ type: 'event_msg', payload: { type: 'task_complete' } }));
+  await fs.writeFile(session, [
+    { type: 'event_msg', payload: { type: 'task_started' } },
+    { type: 'event_msg', payload: { type: 'task_complete' } },
+  ].map((entry) => JSON.stringify(entry)).join('\n'));
   const artifactFile = path.join(setup.temporary, 'artifact.json');
   const artifact = { artifactText: 'Same description.', findings: [{ severity: 'low', detail: 'First finding' }] };
   await fs.writeFile(artifactFile, JSON.stringify(artifact));

@@ -612,6 +612,18 @@ assert.match(incompleteGate.stderr, /does not cover acceptance criteria/)
 
 const packetEvidence = join(TEMP, 'packet-evidence.json')
 writeFileSync(packetEvidence, `${JSON.stringify({ version: 1, packetId: 'packet-one', diffSha256: packetRun.diffSha256, status: 'passed', checks: [{ id: 'content', criteria: ['packet.txt contains fixed packet output'], command: ['test', 'fixed packet output'], status: 'passed', exitCode: 0, evidence: 'Observed exact expected content.' }] }, null, 2)}\n`)
+const passingPacketEvidence = readFileSync(packetEvidence, 'utf8')
+for (const exitCode of [1, null, undefined]) {
+  const invalidEvidence = JSON.parse(passingPacketEvidence)
+  invalidEvidence.checks[0].exitCode = exitCode
+  writeFileSync(packetEvidence, JSON.stringify(invalidEvidence))
+  const rejectedExitCode = run(process.execPath, [HARNESS, 'packet-gate', '--run-dir', packetRunDir, '--packet', 'packet-one', '--evidence', packetEvidence], { expected: 1 })
+  assert.match(rejectedExitCode.stderr, /requires exitCode 0/)
+  const retainedLease = JSON.parse(run(process.execPath, [HARNESS, 'packet-status', '--run-dir', packetRunDir, '--packet', 'packet-one']).stdout)
+  assert.equal(retainedLease.status, 'awaiting_validation')
+  assert.equal(retainedLease.leaseStatus, 'held')
+}
+writeFileSync(packetEvidence, passingPacketEvidence)
 writeFileSync(join(REPO, 'packet.txt'), 'drifted after review\n')
 const driftedGate = run(process.execPath, [HARNESS, 'packet-gate', '--run-dir', packetRunDir, '--packet', 'packet-one', '--evidence', packetEvidence], { expected: 1 })
 assert.match(driftedGate.stderr, /diff changed after review/)
@@ -680,5 +692,48 @@ assert.equal(rogueRun.verdict, null)
 const rogueReview = JSON.parse(readFileSync(join(rogueDir, 'review-result.json'), 'utf8'))
 assert.equal(rogueReview.reviewers[0].status, 'failed')
 assert.match(rogueReview.reviewers[0].error, /refs or reflogs/)
+
+let bytesPerBudgetAttempt
+for (const scenario of [
+  { name: 'retry-success', failure: 'exit', cap: 3, attempts: 3, status: 'awaiting_validation' },
+  { name: 'retry-cap', failure: 'exit', cap: 1, attempts: 1, status: 'blocked' },
+  { name: 'invalid-cap', failure: 'invalid', cap: 1, attempts: 1, status: 'blocked' },
+  { name: 'byte-cap', failure: 'exit', cap: 3, attempts: 2, status: 'blocked', byteCap: true }
+]) {
+  const directory = join(TEMP, scenario.name)
+  const budgetRepo = join(directory, 'repo')
+  mkdirSync(budgetRepo, { recursive: true })
+  run('git', ['init', '-q'], { cwd: budgetRepo })
+  run('git', ['config', 'user.email', 'budget@example.invalid'], { cwd: budgetRepo })
+  run('git', ['config', 'user.name', 'Budget Test'], { cwd: budgetRepo })
+  writeFileSync(join(budgetRepo, 'base.txt'), 'base\n')
+  run('git', ['add', '.'], { cwd: budgetRepo })
+  run('git', ['commit', '-qm', 'baseline'], { cwd: budgetRepo })
+  const countFile = join(directory, 'attempts.txt')
+  const budgetReviewer = join(directory, 'reviewer.mjs')
+  writeFileSync(budgetReviewer, `import {existsSync,readFileSync,writeFileSync} from 'node:fs'; const path=${JSON.stringify(countFile)}; const count=existsSync(path)?Number(readFileSync(path)):0; writeFileSync(path,String(count+1)); if(count<2){${scenario.failure === 'exit' ? 'process.exit(1)' : "process.stdout.write('invalid JSON'); process.exit(0)"}} process.stdout.write(JSON.stringify({verdict:'approve',findings:[],notes:[]}));`)
+  const riskMap = { low: 1, medium: 1, high: 1, critical: 1 }
+  const budgetConfig = join(directory, 'config.json')
+  writeFileSync(budgetConfig, JSON.stringify({ agentHarness: {
+    version: 1, delivery: { mode: 'stage-only' }, retry: { maxAttempts: 3, backoffMs: 0 },
+    models: { worker: harnessConfig.models.worker, advisor: { adapter: 'command', family: 'independent', model: 'fixture', roles: ['reviewer'], commands: { review: [process.execPath, budgetReviewer] } } },
+    profiles: { 'high-assurance': { workers: ['worker'], reviewers: ['advisor'], packetPolicy: {
+      mode: 'adversarial', reviewersByRisk: riskMap, minimumFamiliesByRisk: riskMap, verificationReviewers: 1, lenses: ['security'], separateFixer: true, maxFixCycles: 0, blockingSeverities: ['blocker', 'major'],
+      budgets: { maxWorkerInvocations: 1, maxReviewerInvocations: scenario.cap, maxFixerInvocations: 1, maxReviewInputBytes: scenario.byteCap ? bytesPerBudgetAttempt * 2 : 1000000 }
+    } } }
+  } }))
+  const manifest = join(directory, 'manifest.json')
+  writeFileSync(manifest, JSON.stringify({ version: 1, id: 'budget', title: 'Budget fixture', objective: 'Bound every retry', risk: 'low', allowedPaths: ['worker.txt'], invariants: ['Stay bounded'], acceptanceCriteria: ['Worker output exists'] }))
+  const runDir = join(directory, 'run')
+  const outcome = JSON.parse(run(process.execPath, [HARNESS, 'packet-run', '--config', budgetConfig, '--profile', 'high-assurance', '--worktree', budgetRepo, '--run-dir', runDir, '--manifest', manifest], { expected: scenario.status === 'blocked' ? 2 : 0 }).stdout)
+  const budgetLedger = JSON.parse(readFileSync(join(runDir, 'packets/budget/packet-result.json'), 'utf8'))
+  const actualAttempts = Number(readFileSync(countFile, 'utf8'))
+  assert.equal(outcome.status, scenario.status)
+  assert.equal(actualAttempts, scenario.attempts, scenario.name)
+  assert.equal(budgetLedger.usage.reviewerInvocations, actualAttempts, 'Every actual review invocation must be accounted')
+  if (!bytesPerBudgetAttempt) bytesPerBudgetAttempt = budgetLedger.usage.reviewInputBytes / actualAttempts
+  assert.equal(budgetLedger.usage.reviewInputBytes, bytesPerBudgetAttempt * actualAttempts)
+  assert.equal(budgetLedger.leaseStatus, 'held')
+}
 
 process.stdout.write('Agent harness tests passed.\n')

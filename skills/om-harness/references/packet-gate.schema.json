@@ -24,6 +24,7 @@
         "type": "object",
         "additionalProperties": false,
         "required": ["id", "criteria", "status", "evidence"],
+        "allOf": [{ "if": { "properties": { "status": { "const": "passed" } }, "required": ["command", "status"] }, "then": { "required": ["exitCode"], "properties": { "exitCode": { "const": 0 } } } }],
         "properties": {
           "id": { "type": "string", "minLength": 1 },
           "criteria": {

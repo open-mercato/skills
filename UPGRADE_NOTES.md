@@ -605,3 +605,7 @@ unreviewed handoffs instead of bypassing this check. Legacy raw provider JSON
 remains accepted. Hooks are supplemental and require Bash/Node on macOS, Linux,
 or WSL; host permissions must independently deny publication. Recover crashed
 packet leases explicitly after verifying the owning worker stopped.
+Command adapters require macOS, Linux, or WSL for process-group cleanup; native
+Windows supports HTTP reviewers and artifact-only operations. Successful command
+evidence must include exit code zero; failed packet or fresh-host validation
+blocks staging regardless of the model verdict.

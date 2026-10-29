@@ -57,7 +57,11 @@ snapshotting all non-remote Git refs, reflogs, the index, and tracked/non-ignore
 working content around each invocation. A containment failure stops retries and fails the entire council, including an
 advisory profile; it can never become an optional skip or an approval.
 These are detection checks, not an OS filesystem sandbox; only bind trusted
-CLI executables. Host permissions independently prevent remote publication. A worker command may edit the worktree only through a
+CLI executables. Each command invocation owns a POSIX process group; the runtime
+terminates its remaining group members before checking containment, including on
+timeout. Native Windows command invocations fail closed: use WSL for this
+process-tree boundary. HTTP reviewers and artifact-only operations remain usable
+on native Windows. Host permissions independently prevent remote publication. A worker command may edit the worktree only through a
 runtime-recognized audited adapter. Version 1 recognizes only
 `codex-workspace-write-sandbox` and requires the exact safety shape shown
 above: `codex exec`, ignored user config and rules, ephemeral state,

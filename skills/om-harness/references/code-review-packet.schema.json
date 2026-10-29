@@ -39,6 +39,7 @@
             "type": "object",
             "additionalProperties": false,
             "required": ["command", "status", "exitCode", "evidence"],
+            "allOf": [{ "if": { "properties": { "status": { "const": "passed" } }, "required": ["status"] }, "then": { "properties": { "exitCode": { "const": 0 } } } }],
             "properties": {
               "command": {
                 "type": "array",

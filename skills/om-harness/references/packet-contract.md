@@ -31,6 +31,11 @@ and ignored run-artifact directory. The runtime:
 The JSON ledger under `<runDir>/packets/<id>/packet-result.json` is
 authoritative. Do not edit it by hand.
 
+Reserve and persist reviewer invocation and prompt-byte usage before each
+attempt, including split subjects, failed/invalid responses, verifier calls,
+and internal HTTP retries. Budget exhaustion blocks the packet before another
+model call; it never releases leases or silently increases the cap.
+
 ## Deterministic gate
 
 Run repository acceptance commands outside the model-authored packet loop.
@@ -38,6 +43,9 @@ Write their results to JSON matching `packet-gate.schema.json`. Cover every
 manifest acceptance criterion, include the ledger's current diff hash, and run
 `packet-gate`. The runtime re-hashes the packet diff before accepting evidence.
 Only a `gated` packet may be treated as integrated.
+A passed command check requires an observed `exitCode: 0`; missing, null, or
+nonzero exit codes never release leases. Inspection-only checks use `method`
+and need no process exit code.
 
 `packet-gate` does not execute commands from the evidence file. The host owns
 their safe execution from trusted repository configuration and records the

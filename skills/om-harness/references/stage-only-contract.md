@@ -24,6 +24,7 @@ This contract is loaded by both wrapper skills before creating their worktree.
 7. Require all of these checks to pass:
    - current `HEAD`, refs, and reflogs equal the captured starting state;
    - the working and staged content hashes both match the approved implementation packet;
+   - both the packet and fresh host validation gates passed, with exit code zero for every passed command;
    - the staged diff is non-empty;
    - the staged diff passes whitespace/error checking;
    - no non-ignored unstaged or untracked files remain;

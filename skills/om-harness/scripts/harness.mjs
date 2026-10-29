@@ -315,20 +315,36 @@ function workerEnvironment(additions) {
 function runProcess(command, { cwd, input = '', timeoutMs = 600000, env = {}, inheritEnv = true } = {}) {
   return new Promise((resolvePromise) => {
     const started = Date.now()
+    if (process.platform === 'win32') {
+      resolvePromise({ code: null, stdout: '', stderr: '', error: new Error('Native Windows command adapters require WSL for process-tree containment'), timedOut: false, durationMs: 0 })
+      return
+    }
     let stdout = ''
     let stderr = ''
     let timedOut = false
     let settled = false
+    let cleanupError = null
+    let escalationTimer
     const child = spawn(command[0], command.slice(1), {
+      detached: true,
       cwd,
       env: inheritEnv ? { ...process.env, ...env } : env,
       stdio: ['pipe', 'pipe', 'pipe'],
       shell: false
     })
+    // Each invocation owns a POSIX process group so CLI descendants cannot keep
+    // editing after their parent exits or times out and containment is checked.
+    const terminateGroup = (signal) => {
+      if (!child.pid) return
+      try { process.kill(-child.pid, signal) } catch (error) {
+        if (error.code !== 'ESRCH') cleanupError = error
+      }
+    }
     const timer = setTimeout(() => {
       timedOut = true
-      child.kill('SIGTERM')
-      setTimeout(() => child.kill('SIGKILL'), 1000).unref()
+      terminateGroup('SIGTERM')
+      escalationTimer = setTimeout(() => terminateGroup('SIGKILL'), 1000)
+      escalationTimer.unref()
     }, timeoutMs)
     child.stdout.on('data', (chunk) => { stdout += chunk.toString() })
     child.stderr.on('data', (chunk) => { stderr += chunk.toString() })
@@ -339,13 +355,17 @@ function runProcess(command, { cwd, input = '', timeoutMs = 600000, env = {}, in
       if (settled) return
       settled = true
       clearTimeout(timer)
+      clearTimeout(escalationTimer)
+      terminateGroup('SIGKILL')
       resolvePromise({ code: null, stdout, stderr, error, timedOut, durationMs: Date.now() - started })
     })
     child.on('close', (code) => {
       if (settled) return
       settled = true
       clearTimeout(timer)
-      resolvePromise({ code, stdout, stderr, error: null, timedOut, durationMs: Date.now() - started })
+      clearTimeout(escalationTimer)
+      terminateGroup('SIGKILL')
+      resolvePromise({ code, stdout, stderr, error: cleanupError, timedOut, durationMs: Date.now() - started })
     })
     child.stdin.end(input)
   })
@@ -451,6 +471,7 @@ function validateValidationGate(value, subjectKind) {
     validateCommand(check.command, `Review packet validationGate.checks[${index}].command`)
     if (!['passed', 'failed'].includes(check.status)) throw new Error(`Review packet validationGate.checks[${index}].status is invalid`)
     if (check.exitCode !== null && !Number.isInteger(check.exitCode)) throw new Error(`Review packet validationGate.checks[${index}].exitCode must be an integer or null`)
+    if (check.status === 'passed' && check.exitCode !== 0) throw new Error(`Review packet validationGate.checks[${index}] passed check requires exitCode 0`)
     if (typeof check.evidence !== 'string' || !check.evidence.trim()) throw new Error(`Review packet validationGate.checks[${index}].evidence is required`)
     return { command: check.command, status: check.status, exitCode: check.exitCode, evidence: check.evidence.trim() }
   })
@@ -534,6 +555,10 @@ function validateFreshReview(value, contract) {
   if (value.status !== 'completed') throw new Error('Fresh Claude review must be completed before the provider council runs')
   if (!Number.isInteger(value.durationMs) || value.durationMs < 0) throw new Error('Fresh Claude durationMs must be a non-negative integer')
   const review = normalizeReview(value.review)
+  if (validationGate.status === 'failed') {
+    review.verdict = 'request_changes'
+    review.notes.push('Validation gate failed; approval is blocked regardless of model verdict.')
+  }
   return {
     id: 'claude',
     family: 'anthropic',
@@ -682,10 +707,10 @@ function readInvocationMetadata(metadataFile, model) {
   }
 }
 
-async function runHttpReviewer(id, model, prompt, timeoutMs = null) {
+async function runHttpReviewer(id, model, prompt, timeoutMs = null, beforeRetry = null) {
   const credential = resolveCredential(model, false)
   if (!credential.key) return { status: 'skipped', durationMs: 0, error: credential.reason }
-  return runHttpReviewerWithCredential(model, prompt, credential.key, timeoutMs)
+  return runHttpReviewerWithCredential(model, prompt, credential.key, timeoutMs, beforeRetry)
 }
 
 function resolveCredential(model, allowAuthStore = true) {
@@ -701,7 +726,7 @@ function resolveCredential(model, allowAuthStore = true) {
   return { key: null, source: null, reason: `missing credential (${options.join(' or ') || 'no source configured'})` }
 }
 
-async function runHttpReviewerWithCredential(model, prompt, key, timeoutMs = null) {
+async function runHttpReviewerWithCredential(model, prompt, key, timeoutMs = null, beforeRetry = null) {
   const started = Date.now()
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), Number(timeoutMs ?? model.timeoutMs ?? 600000))
@@ -723,6 +748,7 @@ async function runHttpReviewerWithCredential(model, prompt, key, timeoutMs = nul
     if (!response.ok && response.status >= 500) {
       // Transient provider errors (503s from busy gateways) get one bounded retry
       // within the same overall timeout budget.
+      beforeRetry?.()
       await new Promise((resolvePromise) => setTimeout(resolvePromise, 2000))
       response = await fetch(model.endpoint, {
         method: 'POST',
@@ -747,23 +773,23 @@ async function runHttpReviewerWithCredential(model, prompt, key, timeoutMs = nul
     }
   } catch (error) {
     const status = error.name === 'AbortError' ? 'timed_out' : 'failed'
-    return { status, durationMs: Date.now() - started, error: error.message, actualModel: null, provider: new URL(model.endpoint).host, fallbackReason: null, provenanceStatus: 'unavailable' }
+    return { status, durationMs: Date.now() - started, error: error.message, ...(error.budgetExhausted ? { budgetExhausted: true } : {}), actualModel: null, provider: new URL(model.endpoint).host, fallbackReason: null, provenanceStatus: 'unavailable' }
   } finally {
     clearTimeout(timer)
   }
 }
 
-function locateKimiBinary(model) {
+async function locateKimiBinary(model) {
   const candidates = [model.binaryEnv && process.env[model.binaryEnv], join(homedir(), '.kimi', 'bin', 'kimi', 'kimi'), 'kimi'].filter(Boolean)
   for (const candidate of [...new Set(candidates)]) {
-    const result = spawnSync(candidate, ['--version'], { encoding: 'utf8', stdio: 'pipe', env: sanitizedCliEnvironment({}), timeout: 5000 })
-    if (!result.error && result.status === 0) return candidate
+    const result = await runProcess([candidate, '--version'], { env: sanitizedCliEnvironment({}), inheritEnv: false, timeoutMs: 5000 })
+    if (!result.error && result.code === 0 && !result.timedOut) return candidate
   }
   return null
 }
 
 async function runKimiPresetReviewer(model, prompt, timeoutMs = null) {
-  const binary = locateKimiBinary(model)
+  const binary = await locateKimiBinary(model)
   if (!binary) return { status: 'skipped', durationMs: 0, error: `missing Kimi CLI (${model.binaryEnv || 'OM_KIMI_BIN'} or managed subscription install)` }
   const temp = mkdtempSync(join(tmpdir(), 'harness-kimi-'))
   try {
@@ -785,6 +811,7 @@ async function runKimiPresetReviewer(model, prompt, timeoutMs = null) {
     })
     if (result.timedOut) return { status: 'timed_out', durationMs: result.durationMs, error: 'Kimi review timed out' }
     if (result.error) return { status: 'skipped', durationMs: result.durationMs, error: result.error.message }
+    if (result.code !== 0) return { status: 'failed', durationMs: result.durationMs, error: `Kimi CLI exited with ${result.code}; verify login and subscription status` }
     try {
       return {
         status: 'completed',
@@ -804,11 +831,11 @@ async function runKimiPresetReviewer(model, prompt, timeoutMs = null) {
   }
 }
 
-async function runPresetReviewer(model, prompt, timeoutMs = null) {
+async function runPresetReviewer(model, prompt, timeoutMs = null, beforeRetry = null) {
   if (model.preset === 'kimi-subscription') return runKimiPresetReviewer(model, prompt, timeoutMs)
   const credential = resolveCredential(model, true)
   if (!credential.key) return { status: 'skipped', durationMs: 0, error: credential.reason }
-  return runHttpReviewerWithCredential(model, prompt, credential.key, timeoutMs)
+  return runHttpReviewerWithCredential(model, prompt, credential.key, timeoutMs, beforeRetry)
 }
 
 function splitText(text, maxBytes) {
@@ -860,13 +887,17 @@ function buildReviewerPrompts(model, criteria, subject, maxInputBytes, lens = nu
 
 const NON_RETRYABLE_REVIEWER_STATUSES = new Set(['completed', 'skipped'])
 
-async function invokeReviewerWithRetries(id, model, prompt, worktree, retry) {
+async function invokeReviewerWithRetries(id, model, prompt, worktree, retry, beforeInvocation = null) {
   const baseTimeoutMs = Number(model.timeoutMs || 600000)
   const maxAttempts = Math.max(1, Number(retry?.maxAttempts || 1))
   let attempt = 0
   let outcome = null
   let totalDurationMs = 0
   while (attempt < maxAttempts) {
+    try { beforeInvocation?.(prompt) } catch (error) {
+      outcome = { status: 'failed', durationMs: 0, error: error.message, budgetExhausted: true }
+      break
+    }
     attempt += 1
     const timeoutMs = Math.min(
       Math.round(baseTimeoutMs * Math.pow(Number(retry?.timeoutEscalation || 1), attempt - 1)),
@@ -876,13 +907,13 @@ async function invokeReviewerWithRetries(id, model, prompt, worktree, retry) {
     outcome = model.adapter === 'command'
       ? await runCommandReviewer(id, model, prompt, worktree, timeoutMs)
       : model.adapter === 'preset'
-        ? await runPresetReviewer(model, prompt, timeoutMs)
-        : await runHttpReviewer(id, model, prompt, timeoutMs)
+        ? await runPresetReviewer(model, prompt, timeoutMs, () => beforeInvocation?.(prompt))
+        : await runHttpReviewer(id, model, prompt, timeoutMs, () => beforeInvocation?.(prompt))
     if (JSON.stringify(before) !== JSON.stringify(captureReviewerState(worktree))) {
       outcome = { status: 'failed', containmentFailure: true, durationMs: outcome.durationMs, error: 'reviewer changed Git refs or reflogs, index, or worktree content' }
     }
     totalDurationMs += outcome.durationMs || 0
-    if (outcome.containmentFailure) break
+    if (outcome.containmentFailure || outcome.budgetExhausted) break
     if (NON_RETRYABLE_REVIEWER_STATUSES.has(outcome.status)) break
     if (attempt >= maxAttempts) break
     const backoffMs = Math.round(Number(retry?.backoffMs || 0) * Math.pow(Number(retry?.backoffMultiplier || 1), attempt - 1))
@@ -892,7 +923,7 @@ async function invokeReviewerWithRetries(id, model, prompt, worktree, retry) {
   return { ...outcome, durationMs: totalDurationMs, attempts: attempt }
 }
 
-async function runReviewer(id, model, criteria, subject, worktree, workerFamilies, maxInputBytes, lens = null, reviewContract = null, retry = null) {
+async function runReviewer(id, model, criteria, subject, worktree, workerFamilies, maxInputBytes, lens = null, reviewContract = null, retry = null, beforeInvocation = null) {
   const built = buildReviewerPrompts(model, criteria, subject, maxInputBytes, lens)
   const envelope = {
     id,
@@ -906,9 +937,9 @@ async function runReviewer(id, model, criteria, subject, worktree, workerFamilie
     reviewContract: reviewContract || { name: 'om-code-review', version: CODE_REVIEW_CONTRACT_VERSION, rubricSha256: codeReviewRubric().sha256, subjectSha256: sha256(subject) },
     parts: built.prompts.length
   }
-  const invocations = await pool(built.prompts, 2, (prompt) => invokeReviewerWithRetries(id, model, prompt, worktree, retry))
+  const invocations = await pool(built.prompts, 2, (prompt) => invokeReviewerWithRetries(id, model, prompt, worktree, retry, beforeInvocation))
   const durationMs = invocations.reduce((total, invocation) => total + (invocation.durationMs || 0), 0)
-  const attempts = Math.max(...invocations.map((invocation) => invocation.attempts || 1))
+  const attempts = Math.max(...invocations.map((invocation) => invocation.attempts ?? 1))
   envelope.attempts = attempts
   const failed = invocations.find((invocation) => invocation.status !== 'completed')
   if (failed) return { ...envelope, ...failed, durationMs, attempts }
@@ -1282,9 +1313,9 @@ function dirtyPaths(worktree) {
   ])].sort()
 }
 
-function captureDirtyState(worktree) {
+function captureContentState(worktree, paths) {
   const state = {}
-  for (const path of dirtyPaths(worktree)) {
+  for (const path of paths) {
     const absolute = join(worktree, path)
     try {
       const stat = lstatSync(absolute)
@@ -1297,8 +1328,18 @@ function captureDirtyState(worktree) {
   return state
 }
 
+function captureDirtyState(worktree) {
+  return captureContentState(worktree, dirtyPaths(worktree))
+}
+
+function captureWorkingState(worktree) {
+  // Read tracked bytes independently of diff/status, which honor index flags.
+  const paths = [...new Set(nullSeparated(git(['ls-files', '--cached', '--others', '--exclude-standard', '-z'], worktree)))].sort()
+  return captureContentState(worktree, paths)
+}
+
 function captureReviewerState(worktree) {
-  return { git: captureGitState(worktree), files: captureDirtyState(worktree), index: sha256(git(['ls-files', '--stage', '-z'], worktree)), config: sha256(git(['config', '--local', '--null', '--list'], worktree)) }
+  return { git: captureGitState(worktree), files: captureWorkingState(worktree), index: sha256(git(['ls-files', '--stage', '-v', '-z'], worktree)), config: sha256(git(['config', '--local', '--null', '--list'], worktree)) }
 }
 
 function isAllowedPath(path, allowedPaths) {
@@ -1369,19 +1410,6 @@ function packetReviewLenses(policy, count) {
   return Array.from({ length: count }, (_, index) => policy.lenses[index % policy.lenses.length])
 }
 
-function estimateReviewUsage(ids, config, criteria, subject, profile, lenses) {
-  let invocations = 0
-  let inputBytes = 0
-  ids.forEach((id, index) => {
-    const model = config.agentHarness.models[id]
-    const assignedCriteria = Array.isArray(criteria) ? criteria[index] : criteria
-    const built = buildReviewerPrompts(model, assignedCriteria, subject, profile.maxInputBytes, lenses[index] || null)
-    invocations += built.prompts.length
-    for (const prompt of built.prompts) inputBytes += Buffer.byteLength(prompt, 'utf8')
-  })
-  return { invocations, inputBytes }
-}
-
 function consumePacketBudget(ledger, kind, amount, inputBytes = 0) {
   const budgets = ledger.policy.budgets
   const key = kind === 'worker' ? 'workerInvocations' : kind === 'fixer' ? 'fixerInvocations' : 'reviewerInvocations'
@@ -1422,7 +1450,7 @@ function buildPacketFixerPrompt(manifest, findings) {
 }
 
 async function invokeScopedPacketWorker({ ledger, ledgerPath, config, worktree, id, role, prompt }) {
-  const before = captureDirtyState(worktree)
+  const before = captureWorkingState(worktree)
   consumePacketBudget(ledger, role, 1)
   savePacketLedger(ledgerPath, ledger)
   const invocation = await invokeWorker({ id, model: config.agentHarness.models[id], worktree, prompt, role })
@@ -1433,7 +1461,7 @@ async function invokeScopedPacketWorker({ ledger, ledgerPath, config, worktree, 
     invocation.output = `[truncated; full transcript in ${transcriptName}]\n${invocation.output.slice(-LEDGER_OUTPUT_LIMIT)}`
   }
   invocation.transcript = transcriptName
-  const after = captureDirtyState(worktree)
+  const after = captureWorkingState(worktree)
   const outside = changedOutsideAllowed(before, after, ledger.packet.allowedPaths)
   if (outside.length) {
     invocation.status = 'failed'
@@ -1460,12 +1488,18 @@ async function runPacketReviewCycle({ ledger, ledgerPath, config, profile, workt
   const selection = selectPacketModels(profile, config, manifest.risk)
   const lenses = packetReviewLenses(profile.packetPolicy, selection.reviewers.length)
   const subject = `Packet contract:\n${JSON.stringify(packetPublicContract(manifest), null, 2)}\n\nPacket diff:\n${snapshot.diff}`
-  const usage = estimateReviewUsage(selection.reviewers, config, lenses.map((lens) => packetReviewCriteria(manifest, lens)), subject, profile, lenses)
-  consumePacketBudget(ledger, 'reviewer', usage.invocations, usage.inputBytes)
-  savePacketLedger(ledgerPath, ledger)
+  const chargeReview = (prompt) => {
+    try {
+      consumePacketBudget(ledger, 'reviewer', 1, Buffer.byteLength(prompt, 'utf8'))
+      savePacketLedger(ledgerPath, ledger)
+    } catch (error) {
+      error.budgetExhausted = true
+      throw error
+    }
+  }
   const reviewers = await pool(selection.reviewers, profile.concurrency.reviewers, (id, index) => {
     const lens = lenses[index]
-    return runReviewer(id, config.agentHarness.models[id], packetReviewCriteria(manifest, lens), subject, worktree, profile.workerFamilies, profile.maxInputBytes, lens, null, profile.retry)
+    return runReviewer(id, config.agentHarness.models[id], packetReviewCriteria(manifest, lens), subject, worktree, profile.workerFamilies, profile.maxInputBytes, lens, null, profile.retry, chargeReview)
   })
   const completed = reviewers.filter((reviewer) => reviewer.status === 'completed')
   const completedFamilies = new Set(completed.map((reviewer) => reviewer.family))
@@ -1488,10 +1522,7 @@ async function runPacketReviewCycle({ ledger, ledgerPath, config, profile, workt
     'Candidate findings:',
     JSON.stringify(findings, null, 2)
   ].join('\n')
-  const verificationUsage = estimateReviewUsage(selection.verifiers, config, verificationCriteria, subject, profile, selection.verifiers.map(() => verificationLens))
-  consumePacketBudget(ledger, 'reviewer', verificationUsage.invocations, verificationUsage.inputBytes)
-  savePacketLedger(ledgerPath, ledger)
-  cycle.verifiers = await pool(selection.verifiers, profile.concurrency.reviewers, (id) => runReviewer(id, config.agentHarness.models[id], verificationCriteria, subject, worktree, profile.workerFamilies, profile.maxInputBytes, verificationLens, null, profile.retry))
+  cycle.verifiers = await pool(selection.verifiers, profile.concurrency.reviewers, (id) => runReviewer(id, config.agentHarness.models[id], verificationCriteria, subject, worktree, profile.workerFamilies, profile.maxInputBytes, verificationLens, null, profile.retry, chargeReview))
   cycle.verifiers.forEach((verifier) => { verifier.role = 'verifier'; verifier.freshContext = true })
   const completedVerifiers = cycle.verifiers.filter((verifier) => verifier.status === 'completed')
   cycle.verificationPolicy = {
@@ -1676,6 +1707,7 @@ function validatePacketGateEvidence(value, ledger) {
     if (check.command === undefined && (typeof check.method !== 'string' || !check.method.trim())) throw new Error(`Packet gate check ${index + 1} needs command or method`)
     if (!['passed', 'failed'].includes(check.status)) throw new Error(`Packet gate check ${index + 1} status is invalid`)
     if (check.exitCode !== undefined && check.exitCode !== null && !Number.isInteger(check.exitCode)) throw new Error(`Packet gate check ${index + 1} exitCode is invalid`)
+    if (check.command !== undefined && check.status === 'passed' && check.exitCode !== 0) throw new Error(`Packet gate check ${index + 1} passed command requires exitCode 0`)
     if (typeof check.evidence !== 'string' || !check.evidence.trim()) throw new Error(`Packet gate check ${index + 1} needs evidence`)
   }
   const missing = ledger.packet.acceptanceCriteria.filter((criterion) => !covered.has(criterion))
@@ -1913,9 +1945,9 @@ async function commandProbe(args, config) {
   }
 }
 
-function probePresetModel(id, model) {
+async function probePresetModel(id, model) {
   if (model.preset === 'kimi-subscription') {
-    const binary = locateKimiBinary(model)
+    const binary = await locateKimiBinary(model)
     return { id, family: model.family, model: model.model, preset: model.preset, status: binary ? 'ready' : 'missing', note: binary ? `Kimi CLI at ${binary}` : 'Kimi subscription CLI not found' }
   }
   const credential = resolveCredential(model, true)
@@ -2021,7 +2053,9 @@ function commandStage(args) {
   const packet = readJson(packetPath)
   validateReviewPacket(packet, buildWorktreeDiff(worktree, paths))
   if (packet.subject.kind !== 'implementation') throw new Error('Stage requires an implementation review packet')
+  if (packet.validationGate.status !== 'passed') throw new Error('Stage requires a passing packet validation gate')
   const host = validateFreshReview(readJson(resolve(String(args['host-review']))), reviewContractFromPacket(packet, sha256(readFileSync(packetPath, 'utf8'))))
+  if (host.validationGate.status !== 'passed') throw new Error('Stage requires a passing fresh host validation gate')
   if (host.review.verdict !== 'approve') throw new Error('Stage requires an approved fresh host review')
   git(['add', '--', ...paths.map((path) => `:(literal)${path}`)], worktree)
   const staged = git(['diff', '--cached', '--name-status'], worktree).trim()

@@ -140,6 +140,10 @@ export async function run(output, { execute: executeTrials = false, retryFailed 
 }
 
 async function executeRun({ root, manifest }, retryFailed) {
+  const maxOutputBytesPerStream = manifest.config.codex.maxOutputBytesPerStream;
+  if (!Number.isSafeInteger(maxOutputBytesPerStream) || maxOutputBytesPerStream < 1024 || maxOutputBytesPerStream > 256 * 1024 * 1024) {
+    throw new Error('Execution environment drift detected: prepared run has no valid maxOutputBytesPerStream; prepare a new experiment');
+  }
   const active = new Set();
   let cancelled = false;
   const cancel = () => { cancelled = true; for (const child of active) stopProcessTree(child); };
@@ -185,7 +189,7 @@ async function executeRun({ root, manifest }, retryFailed) {
         environmentDigest: digest(JSON.stringify(environment)) };
       const attemptDirectory = await createAttempt(directory, attempt, 'trial.json', metadata);
       const execution = await capture(manifest.config.codex.executable, args, attemptDirectory,
-        manifest.config.codex.timeoutSeconds, manifest.config.codex.maxOutputBytesPerStream, active);
+        manifest.config.codex.timeoutSeconds, maxOutputBytesPerStream, active);
       const parsed = parseCodexStream(await fs.readFile(path.join(attemptDirectory, 'stdout.jsonl'), 'utf8'));
       const artifact = parseArtifact(parsed.artifactText);
       const drifted = !await trialInputsIntact(root, manifest, pair.entry, variant);

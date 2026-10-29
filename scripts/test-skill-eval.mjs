@@ -8,7 +8,7 @@ import { promisify } from 'node:util';
 import { prepare, loadConfig, loadRun, cleanup, treeDigest, readJson } from './lib/skill-eval/storage.mjs';
 import { run, importNative, schedule } from './lib/skill-eval/runner.mjs';
 import { report } from './lib/skill-eval/report.mjs';
-import { artifactDigest, checkExpectations, parseCodexStream, parseNativeSession, textMetrics } from './lib/skill-eval/metrics.mjs';
+import { artifactDigest, checkExpectations, digest, parseCodexStream, parseNativeSession, textMetrics } from './lib/skill-eval/metrics.mjs';
 
 const execute = promisify(execFile);
 const cli = path.resolve('scripts/skill-eval.mjs');
@@ -228,6 +228,24 @@ test('resume rejects frozen input drift and manifest tampering', async (t) => {
   const manifest = path.join(setup.out, 'manifest.json');
   await fs.appendFile(manifest, ' ');
   await assert.rejects(loadRun(setup.out), /manifest/u);
+});
+
+test('execution rejects a legacy manifest without an output cap before creating attempts', async (t) => {
+  const setup = await fixture(t);
+  await prepare(setup.configPath, setup.out);
+  const manifestFile = path.join(setup.out, 'manifest.json');
+  const ownerFile = path.join(setup.out, '.skill-eval-owner.json');
+  const manifest = await readJson(manifestFile);
+  delete manifest.config.codex.maxOutputBytesPerStream;
+  const text = `${JSON.stringify(manifest, null, 2)}\n`;
+  await fs.writeFile(manifestFile, text);
+  const owner = await readJson(ownerFile);
+  owner.manifestDigest = digest(text);
+  await fs.writeFile(ownerFile, `${JSON.stringify(owner, null, 2)}\n`);
+  await assert.rejects(run(setup.out, { execute: true }), /environment drift.*maxOutputBytesPerStream/iu);
+  assert.deepEqual(await fs.readdir(path.join(setup.out, 'trials')), []);
+  await assert.rejects(fs.access(path.join(setup.out, 'environment.json')));
+  assert.equal((await report(setup.out)).completePairs, 0);
 });
 
 test('native imports deduplicate response usage, verify model and keep cohorts separate', async (t) => {

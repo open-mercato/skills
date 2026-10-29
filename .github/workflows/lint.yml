@@ -26,3 +26,5 @@ jobs:
         run: node scripts/test-agent-harness.mjs
       - name: Staged harness security regressions
         run: node scripts/test-agent-harness-security.mjs
+      - name: Delegated review isolation regressions
+        run: node scripts/test-review-sweep.mjs

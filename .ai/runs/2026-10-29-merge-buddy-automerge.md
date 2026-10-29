@@ -30,6 +30,8 @@ Add an `--automerge` mode to `om-merge-buddy` that works the queue of PRs a huma
 
 ## Progress
 
+PR: #158
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Tracker contract
@@ -47,3 +49,7 @@ Add an `--automerge` mode to `om-merge-buddy` that works the queue of PRs a huma
 ### Phase 4: Docs
 
 - [x] 4.1 Update docs page, README, SDLC.md, config, and upgrade notes — 8dc3df5
+
+### Phase 5: Review fixes
+
+- [x] 5.1 Apply om-auto-review-pr findings — 00e1370

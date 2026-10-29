@@ -56,6 +56,9 @@ schema with optional `version`; their legacy unversioned output remains valid.
 A trusted command reviewer may declare one validated `credentialEnv` name;
 only that explicitly selected credential is passed to its review invocation,
 never to workers or version probes. Other inherited secrets remain excluded.
+Preserve non-secret OS identity variables `USER` and `LOGNAME` in the command
+environment so managed CLI authentication can locate the logged-in account.
+Do not copy OAuth tokens or credential-store content into the environment.
 
 A reviewer command must be read-only in the worktree; the runtime enforces this
 by running reviewer commands with a strict environment allowlist and by

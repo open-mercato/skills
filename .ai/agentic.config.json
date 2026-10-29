@@ -2,7 +2,9 @@
   "version": 1,
   "baseBranch": "auto",
   "tracker": "github",
-  "browser": { "provider": "agent-browser" },
+  "browser": {
+    "provider": "agent-browser"
+  },
   "validation": {
     "commands": [
       "bash scripts/lint.sh",
@@ -18,15 +20,52 @@
   },
   "labels": {
     "enabled": true,
-    "pipeline": ["review", "changes-requested", "qa", "qa-failed", "merge-queue", "blocked", "do-not-merge"],
-    "category": ["bug", "feature", "refactor", "security", "dependencies", "documentation"],
-    "meta": ["needs-qa", "skip-qa", "qa-approved", "qa-self-verified", "in-progress", "ci-monitoring"],
-    "priority": ["priority-low", "priority-medium", "priority-high", "priority-extreme"],
-    "risk": ["risk-low", "risk-medium", "risk-high"]
+    "pipeline": [
+      "review",
+      "changes-requested",
+      "qa",
+      "qa-failed",
+      "merge-queue",
+      "blocked",
+      "do-not-merge"
+    ],
+    "category": [
+      "bug",
+      "feature",
+      "refactor",
+      "security",
+      "dependencies",
+      "documentation"
+    ],
+    "meta": [
+      "needs-qa",
+      "skip-qa",
+      "qa-approved",
+      "qa-self-verified",
+      "in-progress",
+      "ci-monitoring"
+    ],
+    "priority": [
+      "priority-low",
+      "priority-medium",
+      "priority-high",
+      "priority-extreme"
+    ],
+    "risk": [
+      "risk-low",
+      "risk-medium",
+      "risk-high"
+    ]
   },
   "qaGate": true,
-  "ci": { "maxWaitMinutes": 40 },
-  "engine": { "loopStepThreshold": 20, "executorTier": "standard", "stepReview": "final" },
+  "ci": {
+    "maxWaitMinutes": 40
+  },
+  "engine": {
+    "loopStepThreshold": 20,
+    "executorTier": "standard",
+    "stepReview": "final"
+  },
   "paths": {
     "runs": ".ai/runs",
     "analysis": ".ai/analysis",
@@ -35,5 +74,181 @@
     "qa": ".ai/qa"
   },
   "reviewChecklist": null,
-  "closeKeywords": []
+  "closeKeywords": [],
+  "agentHarness": {
+    "version": 1,
+    "host": "claude",
+    "delivery": {
+      "mode": "stage-only",
+      "issueClaim": "hold"
+    },
+    "retry": {
+      "maxAttempts": 1,
+      "backoffMs": 0,
+      "backoffMultiplier": 1,
+      "timeoutEscalation": 1,
+      "maxTimeoutMs": 180000
+    },
+    "models": {
+      "codex": {
+        "adapter": "command",
+        "family": "openai",
+        "model": "gpt-6-luna",
+        "reasoningEffort": "low",
+        "roles": [
+          "worker",
+          "reviewer"
+        ],
+        "timeoutMs": 180000,
+        "workerSecurity": {
+          "network": "disabled",
+          "remoteWrites": "disabled",
+          "refWrites": "disabled",
+          "enforcedBy": "codex-workspace-write-sandbox"
+        },
+        "commands": {
+          "probe": [
+            "codex",
+            "--version"
+          ],
+          "review": [
+            "codex",
+            "exec",
+            "--ignore-user-config",
+            "--ignore-rules",
+            "--ephemeral",
+            "--config",
+            "model_reasoning_effort={reasoningEffort}",
+            "--sandbox",
+            "read-only",
+            "--cd",
+            "{worktree}",
+            "--model",
+            "{model}",
+            "--output-schema",
+            "{schemaFile}",
+            "-"
+          ],
+          "worker": [
+            "codex",
+            "exec",
+            "--ignore-user-config",
+            "--ignore-rules",
+            "--ephemeral",
+            "--config",
+            "model_reasoning_effort={reasoningEffort}",
+            "--sandbox",
+            "workspace-write",
+            "--cd",
+            "{worktree}",
+            "--model",
+            "{model}",
+            "-"
+          ]
+        }
+      },
+      "haiku": {
+        "adapter": "command",
+        "family": "anthropic",
+        "model": "claude-haiku-5-5",
+        "reasoningEffort": "low",
+        "roles": [
+          "reviewer"
+        ],
+        "timeoutMs": 180000,
+        "commands": {
+          "probe": [
+            "claude",
+            "--version"
+          ],
+          "review": [
+            "claude",
+            "--print",
+            "--model",
+            "{model}",
+            "--effort",
+            "low",
+            "--tools=",
+            "--permission-mode",
+            "dontAsk",
+            "--disable-slash-commands",
+            "--strict-mcp-config",
+            "--mcp-config",
+            "{\"mcpServers\":{}}",
+            "--setting-sources",
+            "user",
+            "--no-session-persistence"
+          ]
+        }
+      }
+    },
+    "profiles": {
+      "standard": {
+        "workers": [],
+        "reviewers": [],
+        "maxParallel": 2,
+        "concurrency": {
+          "reviewers": 2
+        },
+        "maxInputBytes": 300000,
+        "reviewPolicy": {
+          "mode": "advisory"
+        }
+      },
+      "optimized": {
+        "workers": [
+          "codex"
+        ],
+        "reviewers": [],
+        "maxParallel": 2,
+        "concurrency": {
+          "reviewers": 2
+        },
+        "maxInputBytes": 300000,
+        "reviewPolicy": {
+          "mode": "advisory"
+        }
+      },
+      "multi": {
+        "workers": [],
+        "reviewers": [
+          "codex",
+          "haiku"
+        ],
+        "maxParallel": 2,
+        "concurrency": {
+          "reviewers": 2
+        },
+        "maxInputBytes": 300000,
+        "reviewPolicy": {
+          "mode": "all-required",
+          "requiredReviewers": [
+            "codex",
+            "haiku"
+          ]
+        }
+      },
+      "multi-optimized": {
+        "workers": [
+          "codex"
+        ],
+        "reviewers": [
+          "codex",
+          "haiku"
+        ],
+        "maxParallel": 2,
+        "concurrency": {
+          "reviewers": 2
+        },
+        "maxInputBytes": 300000,
+        "reviewPolicy": {
+          "mode": "all-required",
+          "requiredReviewers": [
+            "codex",
+            "haiku"
+          ]
+        }
+      }
+    }
+  }
 }

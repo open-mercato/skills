@@ -83,6 +83,14 @@ model family as a self-check rather than independent confirmation. The optional
 `agentHarness` configuration lives in `.ai/agentic.config.json` and is managed
 separately by `om-setup-agent-harness`.
 
+This repository uses a low-cost harness configuration: Codex `gpt-6-luna` at
+`low` reasoning for implementation and review, plus `claude-haiku-5-5` at
+`low` effort as a tool-free advisor. Both selected advisors are required in
+`multi` and `multi-optimized`; use the same Haiku model and low effort for the
+mandatory genuinely fresh Claude host review. Codex review is marked as a
+self-check when Codex also implemented the change. The reduced model set does
+not enable `high-assurance`; its independent-family requirements remain intact.
+
 Every reviewer selected by a `multi` profile is invoked; quorum is a provider
 readiness threshold, not a fan-out limit. For both the spec/diagnosis checkpoint
 and final diff, the wrapper freezes one `om-code-review` packet, then starts a

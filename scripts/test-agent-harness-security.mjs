@@ -17,7 +17,7 @@ const repo = join(fixture, 'repo')
 const originalEnv = { ...process.env }
 // Tests use only synthetic credentials. Never expose the operator's environment
 // or credential stores to the deliberately misbehaving local adapters.
-process.env = { PATH: originalEnv.PATH, HOME: fixture, TMPDIR: fixture, GIT_CONFIG_GLOBAL: process.platform === 'win32' ? 'NUL' : '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'Security Test', GIT_AUTHOR_EMAIL: 'test@example.invalid', GIT_COMMITTER_NAME: 'Security Test', GIT_COMMITTER_EMAIL: 'test@example.invalid' }
+process.env = { PATH: originalEnv.PATH, HOME: fixture, USER: 'fixture-user', LOGNAME: 'fixture-user', TMPDIR: fixture, GIT_CONFIG_GLOBAL: process.platform === 'win32' ? 'NUL' : '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'Security Test', GIT_AUTHOR_EMAIL: 'test@example.invalid', GIT_COMMITTER_NAME: 'Security Test', GIT_COMMITTER_EMAIL: 'test@example.invalid' }
 function run(command, args, expected = 0, input) {
   const result = spawnSync(command, args, { cwd: repo, encoding: 'utf8', timeout: 15000, input })
   assert.equal(result.status, expected, `${args.join(' ')}\n${result.stderr || result.error || result.stdout}`)
@@ -38,6 +38,8 @@ try {
   const clean = h.sanitizedCliEnvironment({ OM_HARNESS_MODEL: 'fixture' })
   for (const key of keys) assert.ok(!(key in clean), `Leaked environment name ${key}`)
   assert.equal(clean.OM_HARNESS_MODEL, 'fixture')
+  assert.equal(clean.USER, 'fixture-user', 'Managed CLI login needs the non-secret OS account identity')
+  assert.equal(clean.LOGNAME, 'fixture-user')
   for (const key of keys) delete process.env[key]
   const hardening = h.workerEnvironment({})
   assert.equal(hardening.GIT_CONFIG_KEY_0, 'protocol.allow')
@@ -88,10 +90,10 @@ process.stdout.write(JSON.stringify({version:1,verdict:'approve',findings:[],not
   console.log('PASS: Codex receives a strict temporary output schema while legacy command adapters keep optional version support')
 
   const authProbe = join(fixture,'auth-probe.mjs')
-  writeFileSync(authProbe, `process.stdout.write(JSON.stringify({verdict:'approve',findings:[],notes:[String(Boolean(process.env.FIXTURE_CLI_KEY)),String(Boolean(process.env.DATABASE_URL))]}));`)
+  writeFileSync(authProbe, `process.stdout.write(JSON.stringify({verdict:'approve',findings:[],notes:[String(Boolean(process.env.FIXTURE_CLI_KEY)),String(Boolean(process.env.DATABASE_URL)),process.env.USER,process.env.LOGNAME]}));`)
   process.env.FIXTURE_CLI_KEY='synthetic-selected-key'; process.env.DATABASE_URL='synthetic-unselected-value'
   const authorized = await h.runCommandReviewer('auth',{model:'fixture',credentialEnv:'FIXTURE_CLI_KEY',commands:{review:[process.execPath,authProbe]}},'fixture',repo)
-  assert.equal(authorized.status,'completed'); assert.deepEqual(authorized.review.notes,['true','false'])
+  assert.equal(authorized.status,'completed'); assert.deepEqual(authorized.review.notes,['true','false','fixture-user','fixture-user'])
   delete process.env.FIXTURE_CLI_KEY; delete process.env.DATABASE_URL
   const codexSchemaProbe = join(fixture, 'codex')
   writeFileSync(codexSchemaProbe, `#!/usr/bin/env node

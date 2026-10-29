@@ -42,7 +42,7 @@ const PACKET_RISKS = ['low', 'medium', 'high', 'critical']
 const VALID_PACKET_RISKS = new Set(PACKET_RISKS)
 const VALID_PACKET_STATES = new Set(['planned', 'claimed', 'implementing', 'reviewing', 'fixing', 'awaiting_validation', 'gated', 'blocked', 'aborted'])
 const PACKET_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/
-const CLI_ENV_ALLOWLIST = new Set(['PATH', 'HOME', 'USERPROFILE', 'SYSTEMROOT', 'SystemRoot', 'COMSPEC', 'PATHEXT', 'TEMP', 'TMP', 'TMPDIR', 'LANG', 'LC_ALL', 'LC_CTYPE', 'TERM', 'NO_COLOR'])
+const CLI_ENV_ALLOWLIST = new Set(['PATH', 'HOME', 'USER', 'LOGNAME', 'USERPROFILE', 'SYSTEMROOT', 'SystemRoot', 'COMSPEC', 'PATHEXT', 'TEMP', 'TMP', 'TMPDIR', 'LANG', 'LC_ALL', 'LC_CTYPE', 'TERM', 'NO_COLOR'])
 const LEDGER_OUTPUT_LIMIT = 20000
 
 function fail(message, code = 1) {

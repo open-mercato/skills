@@ -598,6 +598,11 @@ that other skills attach to.
 
 ### Staged harness review hardening
 
+The command environment retains non-secret `USER` and `LOGNAME` identity
+variables. This fixes managed Claude authentication on macOS, where removing
+them can hide a valid login or select stale credentials. Tokens and other
+unapproved secret variables remain excluded.
+
 The bundled Codex reviewer now receives a temporary strict Structured Outputs
 schema. This fixes API rejection of the public schema's optional `version`
 property. Refresh the runtime; no configuration migration is required, and

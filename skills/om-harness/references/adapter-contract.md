@@ -47,6 +47,12 @@ Supported placeholders are `{model}`, `{reasoningEffort}`, `{promptFile}`,
 placeholder as one argument and launches the executable without a shell. It
 also supplies the prompt on standard input.
 
+For a `codex` reviewer executable, `{schemaFile}` and
+`OM_HARNESS_SCHEMA_FILE` name a temporary strict Structured Outputs schema:
+every property is required, including integer `version: 1`. The runtime
+removes it after the invocation. Other command adapters retain the public
+schema with optional `version`; their legacy unversioned output remains valid.
+
 A trusted command reviewer may declare one validated `credentialEnv` name;
 only that explicitly selected credential is passed to its review invocation,
 never to workers or version probes. Other inherited secrets remain excluded.

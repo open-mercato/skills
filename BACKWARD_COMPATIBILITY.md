@@ -137,3 +137,8 @@ staging clears that guard; the additive `end-run` command clears it on explicit
 abort without modifying files or packet leases. Staging still accepts legacy
 starting-state artifacts when no other run's guard is active. Refresh installed
 hooks together with the runtime to gain this scoped activation behavior.
+
+Codex reviewer invocations derive a strict temporary Structured Outputs schema
+without changing the public provider schema. `version` stays optional for
+legacy command and HTTP adapters; only the Codex-specific invocation schema
+requires integer `version: 1` along with the other declared properties.

@@ -52,6 +52,41 @@ try {
   assert.match(observedEnvironment.remoteError,/transport .* not allowed/)
   console.log('PASS: environment allowlist and worker Git hardening')
 
+  const providerSchema = join(root, 'skills/om-harness/references/review-result.schema.json')
+  const publicSchemaText = readFileSync(providerSchema, 'utf8')
+  const codexReviewer = join(fixture, 'codex')
+  writeFileSync(codexReviewer, `#!${process.execPath}
+import assert from 'node:assert/strict'
+import {readFileSync} from 'node:fs'
+const schemaPath = process.argv[process.argv.indexOf('--output-schema') + 1]
+assert.equal(schemaPath, process.env.OM_HARNESS_SCHEMA_FILE)
+const schema = JSON.parse(readFileSync(schemaPath, 'utf8'))
+function strict(node) {
+  if (node.type === 'object') {
+    assert.equal(node.additionalProperties, false)
+    assert.deepEqual([...node.required].sort(), Object.keys(node.properties).sort(), 'Structured Outputs requires every property')
+    Object.values(node.properties).forEach(strict)
+  }
+  if (node.items) strict(node.items)
+}
+strict(schema)
+assert.equal(schema.properties.version.type, 'integer')
+assert.deepEqual(schema.properties.version.enum, [1])
+process.stdout.write(JSON.stringify({version:1,verdict:'approve',findings:[],notes:[schemaPath]}))
+`)
+  chmodSync(codexReviewer, 0o755)
+  const codexSchemaReview = await h.runCommandReviewer('codex', { model: 'fixture', commands: { review: [codexReviewer, 'exec', '--output-schema', '{schemaFile}', '-'] } }, 'Return a structured review.', repo)
+  assert.equal(codexSchemaReview.status, 'completed', codexSchemaReview.error)
+  assert.equal(codexSchemaReview.review.verdict, 'approve')
+  assert.notEqual(codexSchemaReview.review.notes[0], providerSchema)
+  assert.equal(existsSync(codexSchemaReview.review.notes[0]), false, 'Temporary Codex schema must be cleaned up')
+  const legacyReviewer = join(fixture, 'legacy-reviewer.mjs')
+  writeFileSync(legacyReviewer, `import assert from 'node:assert/strict'; import {readFileSync} from 'node:fs'; const schema=JSON.parse(readFileSync(process.env.OM_HARNESS_SCHEMA_FILE,'utf8')); assert.equal(schema.required.includes('version'),false); process.stdout.write(JSON.stringify({verdict:'approve',findings:[],notes:[]}));`)
+  const legacySchemaReview = await h.runCommandReviewer('legacy', { model: 'fixture', commands: { review: [process.execPath, legacyReviewer] } }, 'Return a legacy review.', repo)
+  assert.equal(legacySchemaReview.status, 'completed', legacySchemaReview.error)
+  assert.equal(readFileSync(providerSchema, 'utf8'), publicSchemaText, 'Codex adaptation must not rewrite the public schema')
+  console.log('PASS: Codex receives a strict temporary output schema while legacy command adapters keep optional version support')
+
   const authProbe = join(fixture,'auth-probe.mjs')
   writeFileSync(authProbe, `process.stdout.write(JSON.stringify({verdict:'approve',findings:[],notes:[String(Boolean(process.env.FIXTURE_CLI_KEY)),String(Boolean(process.env.DATABASE_URL))]}));`)
   process.env.FIXTURE_CLI_KEY='synthetic-selected-key'; process.env.DATABASE_URL='synthetic-unselected-value'

@@ -466,3 +466,48 @@ Finally, the skill grows a small local QA knowledge base
 that later sessions read before planning — the one genuinely new,
 cross-session capability the source pipeline had that no existing skill in
 this collection covers.
+
+## 2026-10-29 — om-help: "no catalog" becomes "no memory", beside SDLC.md's lifecycle
+
+`om-help` routed from three weakly-connected sources — an `AGENTS.md` Task
+Router that names files and rules rather than skills, an optional `help.data`
+hook nothing in the collection ever writes to, and the installed skills'
+own frontmatter — while `SDLC.md`'s Ticket lifecycle table, generated for
+every pipeline-configured repo and naming a driving skill for each stage, was
+never read at all. The table covers roughly half the collection and mixes
+entry points with chain-only steps (`om-fix`, `om-open-pr`) in the same
+"Driven by" cell, so reading it naively would recommend skills a user can
+never run directly. `om-help` now reads it as its primary routing source,
+filtered through a new `references/flow-map.md` that holds exactly what
+`SDLC.md` cannot: which named skills are chain-only, the deciding criterion
+between near-duplicate skills it never distinguishes, and the skills that sit
+outside the ticket lifecycle entirely (setup, harness/meta, reporting
+windows, knowledge).
+
+Two alternatives were rejected. **SDLC-only** routing — reading the lifecycle
+table and nothing else — would leave roughly half the collection unroutable,
+including every setup, harness, and reporting-window skill, and would
+recommend chain-only skills with no filter. **Descriptions-only** routing —
+dropping repository data entirely and matching purely on installed
+frontmatter — would lose the deciding criteria between skills whose
+descriptions overlap by design (`om-auto-fix-pr` vs. `om-pr-autopilot` vs.
+`om-approve-merge-pr`; the QA family) and would lose this skill's one real
+drift-detection power: noticing when a repository's own docs describe a route
+differently from what is actually installed.
+
+The old "no catalog" rule is now "no memory": every skill name in an answer
+comes from exactly one of three places — disk discovery, a repository file
+(`AGENTS.md`, `SDLC.md`, `help.data`), or `om-help`'s own shipped flow map —
+and only a name discovered on disk is ever recommended as **runnable**; a
+name any other source mentions is reported as not installed. A new
+cross-skill lint gate (mirroring the existing coverage-roster check) keeps
+the flow map honest: every skill directory must be named in either
+`sdlc-template.md` or `flow-map.md`, so a newly added skill cannot go
+unrouted silently. The missing Spec stage in `SDLC.md`'s lifecycle table
+(`om-spec-writing` / `om-auto-write-spec`, `om-pre-implement-spec`, and
+`om-auto-implement-spec` all run today with no stage naming them) is a
+separate, filed follow-up — fixing the generated template is a bigger change
+than a router can make for itself, and `om-help` already routes to all four
+in the meantime (`om-spec-writing`/`om-auto-write-spec` from its own
+signal table, `om-pre-implement-spec`/`om-auto-implement-spec` from the
+flow map).

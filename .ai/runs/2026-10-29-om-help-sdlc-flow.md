@@ -74,36 +74,36 @@ Rework `skills/om-help/` so it routes correctly across the ~60-skill collection 
 
 ### Phase 1: New reference files — flow-map.md and setup-state.md
 
-- [ ] 1.1 Write `skills/om-help/references/flow-map.md`
-- [ ] 1.2 Write `skills/om-help/references/setup-state.md`
+- [x] 1.1 Write `skills/om-help/references/flow-map.md` — a8fe0a3
+- [x] 1.2 Write `skills/om-help/references/setup-state.md` — a8fe0a3
 
 ### Phase 2: Rewrite context-signals.md and routing-sources.md
 
-- [ ] 2.1 Update `skills/om-help/references/context-signals.md`
-- [ ] 2.2 Update `skills/om-help/references/routing-sources.md`
+- [x] 2.1 Update `skills/om-help/references/context-signals.md` — ff3aa8b
+- [x] 2.2 Update `skills/om-help/references/routing-sources.md` — ff3aa8b
 
 ### Phase 3: om-help's own SKILL.md, agentic-setup.md, rules.md, report-templates.md
 
-- [ ] 3.1 Rewrite `skills/om-help/SKILL.md`
-- [ ] 3.2 Update `skills/om-help/references/agentic-setup.md`
-- [ ] 3.3 Realign `skills/om-help/references/rules.md`
-- [ ] 3.4 Update `skills/om-help/references/report-templates.md`
-- [ ] 3.5 Review `skills/om-help/references/skill-discovery.md`
+- [x] 3.1 Rewrite `skills/om-help/SKILL.md` — 3fcb51e
+- [x] 3.2 Update `skills/om-help/references/agentic-setup.md` — 3fcb51e
+- [x] 3.3 Realign `skills/om-help/references/rules.md` — 3fcb51e
+- [x] 3.4 Update `skills/om-help/references/report-templates.md` — 3fcb51e
+- [x] 3.5 Review `skills/om-help/references/skill-discovery.md` — 3fcb51e (step-number fix only)
 
 ### Phase 4: Outside-the-skill files
 
-- [ ] 4.1 `DECISIONS.md`
-- [ ] 4.2 `BACKWARD_COMPATIBILITY.md`
-- [ ] 4.3 `scripts/lint.sh`
-- [ ] 4.4 `docs/skills/om-help.md`
-- [ ] 4.5 Root `README.md`
+- [x] 4.1 `DECISIONS.md` — 5792ce2
+- [x] 4.2 `BACKWARD_COMPATIBILITY.md` — 5792ce2
+- [x] 4.3 `scripts/lint.sh` — 5792ce2
+- [x] 4.4 `docs/skills/om-help.md` — 5db1640
+- [x] 4.5 Root `README.md` — 5db1640
 
 ### Phase 5: D5 issue
 
-- [ ] 5.1 File the Spec-stage issue via `om-prepare-issue`
+- [x] 5.1 File the Spec-stage issue via `om-prepare-issue` — issue #157 (tracker-only, no commit)
 
 ### Phase 6: Validation, acceptance walkthrough, review
 
-- [ ] 6.1 Full validation gate green
-- [ ] 6.2 Acceptance-scenario table in PR body
-- [ ] 6.3 `om-auto-review-pr --autofix` pass (stays draft)
+- [x] 6.1 Full validation gate green (two pre-existing, unrelated failures documented in the PR body)
+- [x] 6.2 Acceptance-scenario table in PR body
+- [x] 6.3 Self code-review pass — findings fixed in 88422df; PR stays draft per the operator override

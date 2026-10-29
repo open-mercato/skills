@@ -40,6 +40,7 @@ pattern before treating an entry as a spec to route on:
 | `research/` | Supporting material (interview notes, synthetic-panel output), not feature specs. |
 | `assets/` | Images/prototypes referenced by specs, not specs themselves. |
 | `*-app-spec-*.md` | `om-app-spec-writing` output — whole-app requirements, not a per-feature spec. |
+| `app-spec-notes/` | `om-app-spec-writing`'s challenger/gap notes, not a feature spec. |
 | Everything else | A candidate feature spec — read it and classify its state below. |
 
 For each candidate feature spec, read enough to classify its state:
@@ -60,7 +61,7 @@ For each candidate feature spec, read enough to classify its state:
 | Business requirements for a whole app, no existing product code | whole-app requirements authoring (`om-app-spec-writing`) |
 | A folder of client docs to check against the platform | gap analysis against the platform (`om-gap-analysis`) |
 | A screen, interaction state, or AI behavior to shape | UX shaping before a spec exists (`om-ux-shape`) |
-| Task described, non-trivial, no spec, no PR | writing a specification (co-designed or autonomous) |
+| Task described, non-trivial, no spec, no PR | writing a specification — `om-spec-writing` (co-designed) or `om-auto-write-spec` (autonomous) |
 | Spec in `SPECS_DIR`, classified above | the route its state resolves to |
 | Open PR with an unfinished execution plan on this branch | resuming an in-progress PR — see the autopilot boundary below |
 | Uncommitted or unpushed changes on a hand-worked branch, no PR | running the validation gate and committing (`om-check-and-commit`) — it does **not** open a PR; no skill opens a PR for a branch with no issue/plan/brief behind it. Surface this divergence from `SDLC.md`'s PR-stage row rather than silently routing to a PR opener that does not exist for this case. |
@@ -86,15 +87,15 @@ For each candidate feature spec, read enough to classify its state:
 `om-pr-autopilot {prNumber}` owns diagnosing and driving **one** open PR
 whose state is not already known — it reads ten read-only signals and runs
 the matching chain itself. Send any single-PR "what's left / finish it /
-drive it" request there (append `--dry-run` when the user is only asking,
-never when they want it driven); never diagnose the PR here first. `om-help`
-handles only what `om-pr-autopilot` does not cover:
+drive it" request there, per the flags rule (skill body Rules); never
+diagnose the PR here first. `om-help` handles only what `om-pr-autopilot`
+does not cover:
 
 - no PR yet for this work;
 - a multi-PR queue (`om-review-prs` for unreviewed PRs, `om-merge-buddy` for
   merge-readiness across the queue);
-- a hard block or a claim held by another actor — report it with ⚠️ and
-  `Next: none` unless the user explicitly asked for `--force`;
+- a hard block or a claim held by another actor — per the hard-block rule
+  (skill body Rules);
 - QA sign-off itself (route to the QA family in `references/flow-map.md` §b);
 - design review (`om-ux-review-pr`);
 - building a spec PR (`om-auto-implement-spec`);
@@ -108,7 +109,7 @@ automation the route carries, never which domain knowledge it needs.
 | Request shape | Delivery |
 |---|---|
 | Explanation or analysis | read-only answer, grounded in files; no skill run |
-| Discovery or shaping conversation, a user present | the matching interactive skill (`om-discover`, `om-brainstorm`, `om-ux-shape`, `om-app-spec-writing`, `om-gap-analysis`) — all need a user in the loop; say so |
+| Discovery or shaping conversation, a user present | the matching interactive skill — `om-discover`, `om-brainstorm`, `om-synthetic-users`, `om-backlog`, `om-mockup-prototype`, `om-app-spec-writing` all need a user in the loop; say so |
 | Small isolated change with clear behavior | the matching domain route directly; focused test and the validation gate |
 | One-shot change delivered as a PR | an end-to-end PR-producing skill |
 | Large change, or three or more independent steps | specification first, readiness review, then implementation |

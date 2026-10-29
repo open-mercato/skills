@@ -11,9 +11,11 @@ table marks it a hard gate.
 Most gaps here are **context**, not a stop: name the gap in the answer, let
 the capability's own skill run its own setup (most tracker-driven skills do
 this already), and keep routing. A gap is a **hard gate** only when the
-destination skill genuinely cannot produce a result without it — the
-"Hard config gates" list below is the complete set of those; everything else
-in the probe matrix is informational.
+destination skill genuinely cannot produce a result without it — the "Hard
+config gates" table below, plus the one file-based gate in the probe matrix
+itself (`.uxproof/contract.json`, which hard-gates only `om-figma-design-with-ds`),
+are the complete set of those; everything else in the probe matrix is
+informational.
 
 ## Probe matrix
 
@@ -29,6 +31,10 @@ in the probe matrix is informational.
 | No `.uxproof/contract.json` | `om-ux-setup`. Hard gate only for `om-figma-design-with-ds`; `om-ux-review-pr` degrades to a plainer pass without it. |
 | No `AGENTS.md` and no `CLAUDE.md` | `om-setup-agent-pipeline` writes a starter. |
 | No Task Router table in `AGENTS.md` | `om-create-agents-md`. |
+
+Both `SDLC.md` rows above and step 5's lifecycle-table read
+(`references/routing-sources.md` §3) read the same file — read it once here
+and reuse it in step 5 rather than re-opening it.
 
 ## Hard config gates
 

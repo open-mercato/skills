@@ -11,7 +11,7 @@ Whenever the recommended skill has an unmet prerequisite (`references/setup-stat
 
 ## Interactive / autonomous marker
 
-When the recommendation needs a person answering questions (anything in `references/context-signals.md`'s "discovery or shaping" delivery shape — `om-discover`, `om-brainstorm`, `om-ux-shape`, `om-app-spec-writing`, `om-gap-analysis`, `om-backlog`, `om-mockup-prototype`, `om-synthetic-users`), say so in the **Why** or **Next step** line ("interactive — walks you through it") so the user does not expect an unattended run. An `om-auto-*` recommendation needs no such note; autonomy is already in the name.
+When the recommendation is one of the interactive-only skills named in `references/context-signals.md`'s "discovery or shaping" delivery shape, say so in the **Why** or **Next step** line ("interactive — walks you through it") so the user does not expect an unattended run. An `om-auto-*` recommendation needs no such note; autonomy is already in the name.
 
 ## Flags rule
 

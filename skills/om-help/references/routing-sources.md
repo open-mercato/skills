@@ -18,8 +18,8 @@ question touches; a mixed task can match several.
   grounding; read it before answering a knowledge question.
 - A row that names a skill → a route candidate, subject to the installed
   check below.
-- **No Task Router** → say so once, recommend `om-create-agents-md` to add
-  one, and continue with the other sources.
+- **No Task Router** → report it as the setup gap it is
+  (`references/setup-state.md`) and continue with the other sources.
 
 ## 2. `help.data` — repository routing data
 
@@ -116,7 +116,7 @@ list:
 | Finding | Report as |
 |---|---|
 | A source names a skill outside the `om-` set | ⚠️ `<skill>` is named by `<file>` but is outside the `om-` set — `om-help` does not route to it; follow `<file>` directly or rename the skill into the set. |
-| `SDLC.md`, the Task Router, or the flow map names a skill that is not installed | ⚠️ `<skill>` is named by `<file>` but not installed — the route is unavailable until it is installed (the `om-setup-agent-pipeline` coverage check prints the install command) or the data is corrected. |
+| Any source — `SDLC.md`, the Task Router, `help.data`, `knowledge.sources`, or the flow map — names a skill that is not installed | ⚠️ `<skill>` is named by `<file>` but not installed — the route is unavailable until it is installed (the `om-setup-agent-pipeline` coverage check prints the install command) or the data is corrected. |
 | A source describes a skill differently from its installed `description` | ⚠️ `<file>` says `<skill>` does X; the installed skill says Y. The installed description is current behavior; the file is stale or states intent. |
 | A source names a skill under an old name that an installed skill's description now covers | ⚠️ likely renamed — cite both. |
 | An installed `om-*` skill is named in **neither** `SDLC.md` nor the flow map | ⚠️ `<skill>` is installed but has no documented route — recommend it only from its own description, and note that `references/flow-map.md` is missing it (`scripts/lint.sh` enforces this at the collection level; a repo-local skill can still fall through it). |

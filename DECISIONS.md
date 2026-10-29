@@ -507,5 +507,7 @@ unrouted silently. The missing Spec stage in `SDLC.md`'s lifecycle table
 (`om-spec-writing` / `om-auto-write-spec`, `om-pre-implement-spec`, and
 `om-auto-implement-spec` all run today with no stage naming them) is a
 separate, filed follow-up — fixing the generated template is a bigger change
-than a router can make for itself, and `om-help` already routes to all three
-through the flow map in the meantime.
+than a router can make for itself, and `om-help` already routes to all four
+in the meantime (`om-spec-writing`/`om-auto-write-spec` from its own
+signal table, `om-pre-implement-spec`/`om-auto-implement-spec` from the
+flow map).

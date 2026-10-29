@@ -42,6 +42,14 @@ External tracker mutations are forbidden in trials. Use read-only sandbox execut
 - [x] 3.3 Run six-PR comparison and document reuse for another skill — a266c03
 - [x] 3.4 Run repository gate and independent review, then publish the ready PR — 00156f6
 
+### Phase 4: Address the methodology re-review
+
+- [x] 4.1 Keep arm labels out of worker prompts and judge-facing artifacts — 6b2f473
+- [x] 4.2 Report per-arm attempts, non-completed cost, paired intervals and warnings — 6b2f473
+- [x] 4.3 Add run-order option and pre-registered expectations — 6b2f473
+- [x] 4.4 Scope per-trial input checks and create attempts atomically — 6b2f473
+- [x] 4.5 Document validity limits and run the evaluator suite in the gate and CI — f32601b
+
 ## Implementation evidence
 
 Initial runtime snapshot: `a266c03`. All 15 initial disposable-repository/fake-Codex tests pass,
@@ -85,3 +93,17 @@ reproduced with an owned repository-local TMPDIR before the fix. All 23 evaluato
 tests and all six configured gate commands pass locally; the full 39-test UX gate
 also passes with repository-local TMPDIR. Frozen study/executor files remain
 untouched. Tracker reconciliation and publication remain coordinator work.
+
+Methodology re-review follow-up ([review](https://github.com/open-mercato/skills/pull/149#pullrequestreview-5695826660)):
+all three majors, nine minors and two nits are addressed in `6b2f473` and `f32601b`.
+Variant snapshots use opaque per-run names, and the blinded file lives alone in
+`judge/` with the key in `private/`. Aggregates add per-arm guardrails over all
+attempts, an incomplete-by-arm split, paired SD and a case-clustered 95% t
+interval. `order` (baseline-first default, interleaved, seeded random) and
+per-case `expectations` (paired pass rate, pass^k) are new opt-in config keys.
+Per-trial drift checks are scoped to the trial's inputs, attempt directories are
+created atomically, and reports warn about single repetitions and a present
+writer lock. The docs state the no-delegation, execution-only and single-backend
+limits. The evaluator suite (31 tests) now runs in `validation.commands`, CI and
+SDLC.md. The frozen `a266c03` study is unaffected: existing manifests keep their
+recorded variant directories and full-tree checks.

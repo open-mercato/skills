@@ -144,3 +144,20 @@ export function parseArtifact(text) {
   } catch {}
   return { artifactText: text };
 }
+
+// Literal, case-insensitive phrase checks over every string in the artifact. An item passes when
+// any of its alternative phrases appears; a mustNotClaim item is violated when any alternative appears.
+export function checkExpectations(artifact, expectations) {
+  const strings = [];
+  (function collect(value) {
+    if (typeof value === 'string') strings.push(value);
+    else if (Array.isArray(value)) value.forEach(collect);
+    else if (value !== null && typeof value === 'object') Object.values(value).forEach(collect);
+  })(artifact);
+  const normalize = (text) => text.toLowerCase().replace(/\s+/gu, ' ');
+  const haystack = normalize(strings.join('\n'));
+  const present = (alternatives) => alternatives.some((phrase) => haystack.includes(normalize(phrase).trim()));
+  const missing = expectations.mustFind.filter((alternatives) => !present(alternatives)).map((alternatives) => alternatives[0]);
+  const violated = expectations.mustNotClaim.filter(present).map((alternatives) => alternatives[0]);
+  return { passed: !missing.length && !violated.length, missing, violated };
+}

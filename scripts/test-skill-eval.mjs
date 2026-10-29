@@ -6,9 +6,9 @@ import path from 'node:path';
 import { execFile, spawn } from 'node:child_process';
 import { promisify } from 'node:util';
 import { prepare, loadConfig, loadRun, cleanup, treeDigest, readJson } from './lib/skill-eval/storage.mjs';
-import { run, importNative } from './lib/skill-eval/runner.mjs';
+import { run, importNative, schedule } from './lib/skill-eval/runner.mjs';
 import { report } from './lib/skill-eval/report.mjs';
-import { artifactDigest, parseCodexStream, parseNativeSession, textMetrics } from './lib/skill-eval/metrics.mjs';
+import { artifactDigest, checkExpectations, parseCodexStream, parseNativeSession, textMetrics } from './lib/skill-eval/metrics.mjs';
 
 const execute = promisify(execFile);
 const cli = path.resolve('scripts/skill-eval.mjs');
@@ -54,15 +54,26 @@ if (!args.includes('--ignore-user-config') || args[args.indexOf('--sandbox') + 1
 if (args[args.indexOf('--model') + 1] !== 'model;$(touch SHOULD_NOT_EXIST)') process.exit(22);
 if (!prompt.includes('Assigned skill:') || !prompt.includes('Frozen case context:')) process.exit(23);
 if (!prompt.includes('Do not spawn or delegate to other agents') || !prompt.includes('trial outputs/results')) process.exit(24);
-const variant = prompt.includes('/variants/baseline/') ? 'baseline' : 'candidate';
+if (/baseline|candidate/iu.test(prompt)) process.exit(25);
+const assigned = prompt.match(/^Assigned skill: (.*)$/mu)[1];
+const variant = fs.readFileSync(assigned, 'utf8').includes('Use one sentence.') ? 'candidate' : 'baseline';
 const mode = ${JSON.stringify(mode)};
+const marker = ${JSON.stringify(path.join(temporary, 'failed-once'))};
 const emit = (event) => console.log(JSON.stringify(event));
 emit({ type: 'thread.started', thread_id: 'new-context-' + process.pid });
 emit({ type: 'turn.started' });
 emit({ type: 'item.started', item: { id: 'tool-1', type: 'command_execution' } });
 emit({ type: 'item.completed', item: { id: 'tool-1', type: 'command_execution', exit_code: 1 } });
 emit({ type: 'item.completed', item: { id: 'tool-1', type: 'command_execution', exit_code: 1 } });
-emit({ type: 'item.completed', item: { id: 'msg-1', type: 'agent_message', text: JSON.stringify({ artifactText: variant === 'baseline' ? 'The change improves loading; it adds a useful guard.' : 'Adds a loading guard.', proposedActions: [] }) } });
+emit({ type: 'item.completed', item: { id: 'msg-1', type: 'agent_message', text: JSON.stringify({ artifactText: variant === 'baseline' ? 'The change improves loading; it adds a useful guard.' : 'Adds a loading guard.', proposedActions: [],
+  ...(mode === 'echo-path' ? { evidence: [prompt.split('\\n').find((line) => line.startsWith('Assigned skill:'))] } : {}) }) } });
+if (mode === 'mutate') fs.appendFileSync(args[args.indexOf('-C') + 1] + '/app.txt', 'mutated');
+if (mode === 'candidate-fails-once' && variant === 'candidate' && !fs.existsSync(marker)) {
+  fs.writeFileSync(marker, '');
+  emit({ type: 'turn.completed', usage: { input_tokens: 5000, cached_input_tokens: 0, output_tokens: 500 } });
+  emit({ type: 'turn.failed', error: { message: 'Fixture failed once' } });
+  process.exit(2);
+}
 if (mode === 'timeout') setTimeout(() => {}, 30000);
 else if (mode === 'failure') { emit({ type: 'turn.failed', error: { message: 'Fixture failed' } }); process.exit(2); }
 else if (mode === 'malformed') console.log('{malformed');
@@ -108,7 +119,7 @@ test('CLI prepare/run/report/cleanup handles generic skill and paired metrics wi
   const exported = JSON.stringify(summary);
   assert.ok(!exported.includes(setup.temporary));
   assert.ok(!exported.includes('new-context-'));
-  const blinded = await readJson(path.join(setup.out, 'reports', 'blinded-artifacts.json'));
+  const blinded = await readJson(path.join(setup.out, 'judge', 'blinded-artifacts.json'));
   assert.equal(blinded.artifacts.length, 2);
   assert.ok(!JSON.stringify(blinded).includes('skillCommit'));
   assert.equal(await treeDigest(setup.source), setup.before.source);
@@ -478,7 +489,7 @@ test('artifact-bound assessments reject changed retry artifacts and derive legac
   await report(setup.out, { assessmentsFile: assessmentFile });
   const judged = await readJson(reportFile);
   assert.equal(judged.comparisons[0].assessments.baseline[0].artifactDigest, trial.artifactDigest);
-  const blindedBefore = await readJson(path.join(setup.out, 'reports', 'blinded-artifacts.json'));
+  const blindedBefore = await readJson(path.join(setup.out, 'judge', 'blinded-artifacts.json'));
   assert.ok(blindedBefore.artifacts.some((entry) => entry.artifactDigest === trial.artifactDigest));
   const executable = setup.config.codex.executable;
   await fs.writeFile(executable, (await fs.readFile(executable, 'utf8')).replace('useful guard.', 'different guard.'));
@@ -489,7 +500,7 @@ test('artifact-bound assessments reject changed retry artifacts and derive legac
   await report(setup.out);
   const after = await readJson(reportFile);
   assert.notEqual(after.comparisons[0].artifactDigests.baseline, trial.artifactDigest);
-  const blindedAfter = await readJson(path.join(setup.out, 'reports', 'blinded-artifacts.json'));
+  const blindedAfter = await readJson(path.join(setup.out, 'judge', 'blinded-artifacts.json'));
   assert.ok(!blindedAfter.artifacts.some((entry) => entry.artifactDigest === trial.artifactDigest));
 });
 
@@ -513,4 +524,154 @@ test('assessment digest includes structured findings and rejects changed native 
   assert.notEqual(first.artifactDigest, second.artifactDigest);
   await assert.rejects(report(setup.out, { assessmentsFile: assessmentFile }), /Stale assessment/u);
   assert.equal(artifactDigest({ findings: [], artifactText: 'Stable' }), artifactDigest({ artifactText: 'Stable', findings: [] }));
+});
+
+test('arm labels reach neither the worker prompt nor the judge-facing artifacts', async (t) => {
+  const setup = await fixture(t, { mode: 'echo-path' });
+  const manifest = await prepare(setup.configPath, setup.out);
+  for (const entry of Object.values(manifest.variants)) assert.doesNotMatch(entry.directory, /baseline|candidate/u);
+  assert.notEqual(manifest.variants.baseline.directory, manifest.variants.candidate.directory);
+  assert.equal((await run(setup.out, { execute: true })).completed, 2);
+  const generated = await report(setup.out);
+  const blinded = await fs.readFile(generated.blindedArtifacts, 'utf8');
+  assert.match(blinded, /Assigned skill:/u);
+  assert.doesNotMatch(blinded, /baseline|candidate/iu);
+  assert.deepEqual(await fs.readdir(path.join(setup.out, 'judge')), ['blinded-artifacts.json']);
+  assert.equal(path.basename(path.dirname(generated.blindingKey)), 'private');
+  const reports = await fs.readdir(path.join(setup.out, 'reports'));
+  assert.ok(!reports.some((name) => name.includes('blind')));
+  const key = await readJson(generated.blindingKey);
+  assert.deepEqual(key.key.map((entry) => entry.variant).sort(), ['baseline', 'candidate']);
+});
+
+test('a candidate failure that is retried to success stays visible in per-arm guardrails', async (t) => {
+  const setup = await fixture(t, { mode: 'candidate-fails-once' });
+  await prepare(setup.configPath, setup.out);
+  assert.deepEqual(await run(setup.out, { execute: true }), { completed: 1, failed: 1, skipped: 0, cancelled: false });
+  await report(setup.out);
+  let summary = await readJson(path.join(setup.out, 'reports', 'report.json'));
+  let all = summary.aggregates.find((entry) => entry.caseId === '*');
+  assert.deepEqual(all.incompleteByArm, { baselineOnly: 0, candidateOnly: 1, both: 0 });
+  assert.equal((await run(setup.out, { execute: true, retryFailed: true })).completed, 1);
+  await report(setup.out);
+  summary = await readJson(path.join(setup.out, 'reports', 'report.json'));
+  all = summary.aggregates.find((entry) => entry.caseId === '*');
+  assert.equal(all.completePairs, 1);
+  assert.equal(all.measurements['usage.totalTokens'].delta, -20);
+  assert.deepEqual(all.guardrails.baseline.byStatus, { completed: 1 });
+  assert.deepEqual(all.guardrails.candidate.byStatus, { completed: 1, failed: 1 });
+  assert.equal(all.guardrails.candidate.attempts, 2);
+  assert.equal(all.guardrails.candidate.nonCompleted.totalTokens, 5500);
+  assert.equal(all.guardrails.baseline.nonCompleted.attempts, 0);
+  assert.match(summary.note, /retried attempts appear in the per-arm attempt counts/u);
+  const markdown = await fs.readFile(path.join(setup.out, 'reports', 'report.md'), 'utf8');
+  assert.match(markdown, /\| 1\/1 \/ 1\/2 \| 0 \/ 5500 \|/u);
+});
+
+test('an empty attempt directory is reported as interrupted and does not block run', async (t) => {
+  const setup = await fixture(t);
+  await prepare(setup.configPath, setup.out);
+  await fs.mkdir(path.join(setup.out, 'trials', 'm0-tiny-case-r1-candidate', 'attempt-1'), { recursive: true });
+  await report(setup.out);
+  let summary = await readJson(path.join(setup.out, 'reports', 'report.json'));
+  const empty = summary.trials.find((trial) => trial.id === 'm0-tiny-case-r1-candidate');
+  assert.equal(empty.status, 'interrupted');
+  assert.equal(empty.metadataMissing, true);
+  assert.deepEqual(await run(setup.out, { execute: true }), { completed: 1, failed: 0, skipped: 1, cancelled: false });
+  assert.equal((await run(setup.out, { execute: true, retryFailed: true })).completed, 1);
+  await report(setup.out);
+  summary = await readJson(path.join(setup.out, 'reports', 'report.json'));
+  assert.equal(summary.comparisons[0].complete, true);
+  const attempts = await fs.readdir(path.join(setup.out, 'trials', 'm0-tiny-case-r1-candidate'));
+  assert.deepEqual(attempts.sort(), ['attempt-1', 'attempt-2']);
+});
+
+test('a trial that changes its own inputs is recorded as input drift and stops the run', async (t) => {
+  const setup = await fixture(t, { mode: 'mutate' });
+  await prepare(setup.configPath, setup.out);
+  await assert.rejects(run(setup.out, { execute: true }), /drift/u);
+  const result = await readJson(path.join(setup.out, 'trials', 'm0-tiny-case-r1-baseline', 'attempt-1', 'result.json'));
+  assert.equal(result.status, 'input-drift');
+});
+
+test('order option schedules interleaved and reproducible seeded random trials', async (t) => {
+  const setup = await fixture(t);
+  for (const change of [{ ...setup.config, order: 'alphabetical' }, { ...setup.config, seed: 3 }, { ...setup.config, order: 'random', seed: -1 }]) {
+    await fs.writeFile(setup.configPath, JSON.stringify(change));
+    await assert.rejects(loadConfig(setup.configPath), /order|seed/u);
+  }
+  const manifest = (order, seed) => ({ cases: [{ id: 'a' }, { id: 'b' }], config: { models: [{ name: 'm', reasoningEffort: 'high' }], repetitions: 2, order, seed } });
+  assert.deepEqual(schedule(manifest()).map((phase) => phase.map((task) => task.variant)), [Array(4).fill('baseline'), Array(4).fill('candidate')]);
+  const interleaved = schedule(manifest('interleaved'));
+  assert.equal(interleaved.length, 1);
+  assert.deepEqual(interleaved[0].map((task) => task.variant), ['baseline', 'candidate', 'candidate', 'baseline', 'baseline', 'candidate', 'candidate', 'baseline']);
+  const label = (phases) => phases[0].map((task) => `${task.pair.id}-${task.variant}`);
+  assert.deepEqual(label(schedule(manifest('random', 7))), label(schedule(manifest('random', 7))));
+  assert.notDeepEqual(label(schedule(manifest('random', 7))), label(schedule(manifest('random', 8))));
+  assert.equal(new Set(label(schedule(manifest('random', 7)))).size, 8);
+  await fs.writeFile(setup.configPath, JSON.stringify({ ...setup.config, order: 'random' }));
+  const prepared = await prepare(setup.configPath, setup.out);
+  assert.ok(Number.isSafeInteger(prepared.config.seed));
+  const dry = await run(setup.out);
+  assert.equal(dry.order, 'random');
+  assert.equal(dry.seed, prepared.config.seed);
+  assert.equal((await run(setup.out, { execute: true })).completed, 2);
+  await report(setup.out);
+  const summary = await readJson(path.join(setup.out, 'reports', 'report.json'));
+  assert.equal(summary.seed, prepared.config.seed);
+  assert.match(summary.note, /seeded random order/u);
+});
+
+test('aggregates carry paired dispersion and warn only for single repetitions', async (t) => {
+  const setup = await fixture(t);
+  await prepare(setup.configPath, setup.out);
+  await run(setup.out, { execute: true });
+  await report(setup.out);
+  const single = await readJson(path.join(setup.out, 'reports', 'report.json'));
+  assert.match(single.warnings[0], /repetitions is 1/u);
+  assert.equal(single.aggregates[0].statistics['usage.totalTokens'].ci95, null);
+  assert.match(await fs.readFile(path.join(setup.out, 'reports', 'report.md'), 'utf8'), /\*\*Warning:\*\* repetitions is 1/u);
+  const repeated = await fixture(t, { outputName: 'repeated' });
+  repeated.config.repetitions = 3;
+  await fs.writeFile(repeated.configPath, JSON.stringify(repeated.config));
+  await prepare(repeated.configPath, repeated.out);
+  await run(repeated.out, { execute: true });
+  await report(repeated.out);
+  const summary = await readJson(path.join(repeated.out, 'reports', 'report.json'));
+  assert.deepEqual(summary.warnings, []);
+  const statistics = summary.aggregates.find((entry) => entry.caseId === '*').statistics['usage.totalTokens'];
+  assert.equal(statistics.pairs, 3);
+  assert.equal(statistics.sd, 0);
+  assert.deepEqual(statistics.ci95, { method: 'paired-t', center: -20, low: -20, high: -20 });
+});
+
+test('pre-registered expectations produce paired pass rates and pass^k', async (t) => {
+  const setup = await fixture(t);
+  for (const expectations of [{ mustFind: [] }, { mustFind: [''] }, { mustFind: ['x'], extra: true }, { mustFind: 'x' }]) {
+    await fs.writeFile(setup.configPath, JSON.stringify({ ...setup.config, cases: [{ ...setup.config.cases[0], expectations }] }));
+    await assert.rejects(loadConfig(setup.configPath), /expectations/u);
+  }
+  setup.config.repetitions = 2;
+  setup.config.cases[0].expectations = { mustFind: [['loading guard', 'load guard']], mustNotClaim: ['useful'] };
+  await fs.writeFile(setup.configPath, JSON.stringify(setup.config));
+  await prepare(setup.configPath, setup.out);
+  await run(setup.out, { execute: true });
+  await report(setup.out);
+  const summary = await readJson(path.join(setup.out, 'reports', 'report.json'));
+  const all = summary.aggregates.find((entry) => entry.caseId === '*');
+  assert.deepEqual(all.expectations, { completePairs: 2, baselinePassed: 0, candidatePassed: 2,
+    paired: { both: 0, baselineOnly: 0, candidateOnly: 2, neither: 0 }, passHatK: { k: 2, baseline: 0, candidate: 1 } });
+  const baseline = summary.trials.find((trial) => trial.variant === 'baseline');
+  assert.deepEqual(baseline.expectations, { passed: false, missing: ['loading guard'], violated: ['useful'] });
+  assert.match(await fs.readFile(path.join(setup.out, 'reports', 'report.md'), 'utf8'), /## Pre-registered expectations/u);
+  assert.equal(checkExpectations({ artifactText: 'x', findings: [{ detail: 'Load   Guard' }] }, { mustFind: [['load guard']], mustNotClaim: [] }).passed, true);
+});
+
+test('report warns when a writer lock is present', async (t) => {
+  const setup = await fixture(t);
+  await prepare(setup.configPath, setup.out);
+  await fs.writeFile(path.join(setup.out, '.running'), '{}');
+  const generated = await report(setup.out);
+  assert.ok(generated.warnings.some((warning) => /writer lock/u.test(warning)));
+  await fs.rm(path.join(setup.out, '.running'));
 });

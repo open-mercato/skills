@@ -1,6 +1,6 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomInt, randomUUID } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { digest } from './metrics.mjs';
@@ -9,7 +9,7 @@ const execute = promisify(execFile);
 export const formatVersion = 1;
 export const inside = (parent, child) => child === parent || child.startsWith(`${parent}${path.sep}`);
 export async function git(repository, args) {
-  const { stdout } = await execute('git', ['-c', 'core.hooksPath=/dev/null', '-C', repository, ...args],
+  const { stdout } = await execute('git', ['--no-optional-locks', '-c', 'core.hooksPath=/dev/null', '-C', repository, ...args],
     { encoding: 'utf8', maxBuffer: 128 * 1024 * 1024 });
   return stdout.trimEnd();
 }
@@ -42,6 +42,26 @@ async function revision(repository, ref) {
   requireValue(nonempty(ref) && !ref.startsWith('-'), 'A non-option Git revision is required');
   return git(repository, ['rev-parse', '--verify', `${ref}^{commit}`]);
 }
+export const orders = ['baseline-first', 'interleaved', 'random'];
+
+// Pre-registered quality checks: each item is a phrase or a list of alternative phrases.
+function loadExpectations(raw) {
+  requireValue(raw && typeof raw === 'object' && !Array.isArray(raw), 'expectations must be an object');
+  requireValue(Object.keys(raw).every((key) => ['mustFind', 'mustNotClaim'].includes(key)), 'expectations accept only mustFind and mustNotClaim');
+  const phrases = (list, name) => {
+    if (list === undefined) return [];
+    requireValue(Array.isArray(list), `expectations.${name} must be an array`);
+    return list.map((item) => {
+      const alternatives = Array.isArray(item) ? item : [item];
+      requireValue(alternatives.length > 0 && alternatives.every(nonempty), `expectations.${name} entries must be non-empty phrases`);
+      return alternatives;
+    });
+  };
+  const expectations = { mustFind: phrases(raw.mustFind, 'mustFind'), mustNotClaim: phrases(raw.mustNotClaim, 'mustNotClaim') };
+  requireValue(expectations.mustFind.length + expectations.mustNotClaim.length > 0, 'expectations need at least one mustFind or mustNotClaim entry');
+  return expectations;
+}
+
 export async function loadConfig(file) {
   const configPath = await fs.realpath(file);
   const base = path.dirname(configPath);
@@ -76,15 +96,21 @@ export async function loadConfig(file) {
       requireValue((await fs.stat(contextDirectory)).isDirectory(), 'contextDirectory must be a directory');
       await treeDigest(contextDirectory, { allowInternalSymlinks: false });
     }
-    cases.push({ id: entry.id, task: entry.task, source, contextDirectory });
+    const expectations = entry.expectations === undefined ? null : loadExpectations(entry.expectations);
+    cases.push({ id: entry.id, task: entry.task, source, contextDirectory, ...(expectations ? { expectations } : {}) });
   }
   requireValue(new Set(cases.map((entry) => entry.id)).size === cases.length, 'Duplicate case ids');
   const timeoutSeconds = raw.codex?.timeoutSeconds ?? 1800;
   requireValue(Number.isSafeInteger(timeoutSeconds) && timeoutSeconds > 0 && timeoutSeconds <= 86400, 'timeoutSeconds must be 1..86400');
   const executable = raw.codex?.executable ?? 'codex';
   requireValue(nonempty(executable), 'Invalid Codex executable');
+  const order = raw.order ?? 'baseline-first';
+  requireValue(orders.includes(order), `order must be one of: ${orders.join(', ')}`);
+  requireValue(raw.seed === undefined || order === 'random', 'seed applies only to order "random"');
+  const seed = order === 'random' ? raw.seed ?? randomInt(0, 2 ** 32 - 1) : null;
+  requireValue(seed === null || (Number.isSafeInteger(seed) && seed >= 0 && seed < 2 ** 32), 'seed must be an integer 0..4294967295');
   return { version: 1, configPath, originalConfigDigest: digest(await fs.readFile(configPath)),
-    skill, models, repetitions, concurrency, cases,
+    skill, models, repetitions, concurrency, order, ...(seed !== null ? { seed } : {}), cases,
     codex: { executable: executable.includes(path.sep) ? await fs.realpath(path.resolve(base, executable)) : executable, timeoutSeconds } };
 }
 
@@ -139,13 +165,17 @@ export async function prepare(configFile, output) {
     variants: {}, cases: [], ownedWorktrees: [], inputDigest: null };
   try {
     for (const variant of ['baseline', 'candidate']) {
-      const relative = `inputs/variants/${variant}`;
+      // Opaque names keep the arm label out of worker prompts and generated artifacts.
+      let relative;
+      do relative = `inputs/variants/${randomBytes(8).toString('hex')}`;
+      while (Object.values(manifest.variants).some((entry) => entry.directory === relative));
       await freezeCollection(config.skill.repository, config.skill[variant], path.join(root, relative));
       await fs.access(path.join(root, relative, 'skills', config.skill.name, 'SKILL.md'));
       manifest.variants[variant] = { directory: relative, commit: config.skill[variant] };
     }
     for (const entry of config.cases) {
-      const prepared = { id: entry.id, task: entry.task, source: {}, context: `inputs/cases/${entry.id}/context` };
+      const prepared = { id: entry.id, task: entry.task, source: {}, context: `inputs/cases/${entry.id}/context`,
+        ...(entry.expectations ? { expectations: entry.expectations } : {}) };
       for (const kind of ['base', 'head'].filter((key) => entry.source[key])) {
         const relative = `inputs/cases/${entry.id}/${kind}`;
         const target = path.join(root, relative);
@@ -160,6 +190,10 @@ export async function prepare(configFile, output) {
       manifest.cases.push(prepared);
     }
     manifest.inputDigest = await treeDigest(path.join(root, 'inputs'));
+    manifest.inputDigests = { version: 1,
+      variants: Object.fromEntries(await Promise.all(Object.entries(manifest.variants).map(async ([variant, entry]) =>
+        [variant, await treeDigest(path.join(root, entry.directory))]))),
+      contexts: Object.fromEntries(await Promise.all(manifest.cases.map(async (entry) => [entry.id, await treeDigest(path.join(root, entry.context))]))) };
     const text = `${JSON.stringify(manifest, null, 2)}\n`;
     await fs.writeFile(path.join(root, 'manifest.json'), text, { mode: 0o600 });
     await writeJson(path.join(root, '.skill-eval-owner.json'), { version: 1, runId, manifestDigest: digest(text) });
@@ -200,6 +234,55 @@ export async function loadRun(output, { verifyInputs = true } = {}) {
   await assertNoSymlinks(path.join(root, 'trials'));
   if (verifyInputs) requireValue(await treeDigest(path.join(root, 'inputs')) === manifest.inputDigest, 'Frozen input drift detected; prepare a new experiment');
   return { root, manifest };
+}
+
+// After a trial, check only what that trial could read: its collection and case context by digest,
+// and its source worktrees by HEAD plus a clean status. loadRun keeps the full-tree check.
+export async function trialInputsIntact(root, manifest, entry, variant) {
+  if (!manifest.inputDigests) return await treeDigest(path.join(root, 'inputs')) === manifest.inputDigest;
+  try {
+    if (await treeDigest(path.join(root, manifest.variants[variant].directory)) !== manifest.inputDigests.variants[variant]) return false;
+    if (await treeDigest(path.join(root, entry.context)) !== manifest.inputDigests.contexts[entry.id]) return false;
+    for (const source of [entry.source.base, entry.source.head].filter(Boolean)) {
+      const directory = path.join(root, source.directory);
+      if (await git(directory, ['rev-parse', 'HEAD']) !== source.commit) return false;
+      if (await git(directory, ['status', '--porcelain=v1', '-z', '--untracked-files=all', '--ignored=matching']) !== '') return false;
+    }
+    return true;
+  } catch { return false; }
+}
+
+const attemptPattern = /^attempt-[0-9]+$/u;
+export async function listAttempts(directory) {
+  return (await fs.readdir(directory)).filter((name) => attemptPattern.test(name)).sort((left, right) => Number(left.slice(8)) - Number(right.slice(8)));
+}
+
+// Write the first file into a private temporary directory, then rename it into place, so an
+// attempt directory never exists without its metadata.
+export async function createAttempt(directory, attempt, file, value) {
+  const target = path.join(directory, `attempt-${attempt}`);
+  const temporary = path.join(directory, `.attempt-${attempt}.${randomUUID()}.tmp`);
+  await fs.mkdir(temporary, { mode: 0o700 });
+  try {
+    await writeJson(path.join(temporary, file), value);
+    try { await fs.lstat(target); throw Object.assign(new Error(`Attempt already exists: attempt-${attempt}`), { code: 'EEXIST' }); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+    await fs.rename(temporary, target);
+  } catch (error) {
+    await fs.rm(temporary, { recursive: true, force: true });
+    throw error;
+  }
+  return target;
+}
+
+// Read an attempt's result, falling back to its start metadata; null when neither file exists
+// (an attempt left empty by an older harness or a crash between mkdir and the first write).
+export async function readAttempt(attemptDirectory) {
+  for (const file of ['result.json', 'trial.json']) {
+    try { return { file, value: await readJson(path.join(attemptDirectory, file)) }; }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
+  }
+  return null;
 }
 
 export async function withRunLock(output, operation, callback, { verifyInputs = true } = {}) {

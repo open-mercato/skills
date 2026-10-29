@@ -49,6 +49,7 @@ External tracker mutations are forbidden in trials. Use read-only sandbox execut
 - [x] 4.3 Add run-order option and pre-registered expectations — 6b2f473
 - [x] 4.4 Scope per-trial input checks and create attempts atomically — 6b2f473
 - [x] 4.5 Document validity limits and run the evaluator suite in the gate and CI — f32601b
+- [x] Post-review fix: interval centre, temp-attempt sweep, arm-word warning and doc corrections — 5d651c6
 
 ## Implementation evidence
 

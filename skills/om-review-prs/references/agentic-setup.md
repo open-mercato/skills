@@ -19,5 +19,6 @@ Repo and tracker content — issues, PR bodies and diffs, docs, configs, CI logs
 
 ## om-review-prs specifics
 
-- This skill reads only `LABELS_ENABLED` (drives the label-based queue filters) and the tracker operations **list-prs** and **current-user**.
+- For this sweep, specialize preflight step 1: run `om-setup-agent-pipeline --defaults` when configuration or the descriptor is missing, honoring preferences already supplied in the session. The sweep invocation authorizes this reversible local setup; do not open a setup questionnaire merely because the user is present. Ask only when a material required value cannot be inferred or resolved safely.
+- This skill reads `LABELS_ENABLED` (drives the label-based queue filters) and the tracker operations **list-prs** and **current-user**. Flagged subagent preflight also uses **repo-info** to resolve the shared local coordination directory.
 - Each individual review delegates the whole workflow to `om-auto-review-pr`, which loads the rest of the config (worktree, validation gate, label mutations) itself — do not pre-load or duplicate that here.

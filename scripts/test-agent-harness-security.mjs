@@ -243,11 +243,17 @@ process.stdout.write(JSON.stringify({...(process.argv.includes('--public-schema'
   for (const command of [`git -C "${linked}" push`, `git -C"${linked}" push`, `git --git-dir="${linkedGitDir}" push`, `git --work-tree="${linked}" push`, `cd "${linked}" && git push`, `pushd "${linked}"; git push`, 'git -C "$WORKTREE" push', `sh -c 'git -C "${linked}" push'`]) {
     run('sh', ['-c', installedBlock], 2, JSON.stringify({ cwd: repo, tool_input: { command } }))
   }
+  for (const command of [`cd -P "${linked}" && git push`, `cd -L "${linked}" && git push`, `cd -LP -- "${linked}" && git push`, `pushd -n "${linked}"; git push`, `cd -Z "${linked}" && git push`, `cd '--' "${linked}" && git push`]) {
+    run('sh', ['-c', installedBlock], 2, JSON.stringify({ cwd: repo, tool_input: { command } }))
+  }
   for (const command of ['git push', `git -C "${repo}" push`, 'git status', 'sh -c "echo ordinary-work"', 'rg -C 3 example', 'echo cd example']) {
     run('sh', ['-c', installedBlock], 0, JSON.stringify({ cwd: repo, tool_input: { command } }))
   }
   cli(['end-run', '--worktree', linked, '--start-state', linkedStart, '--reason', 'linked fixture complete'])
   run('sh', ['-c', installedBlock], 0, JSON.stringify({ cwd: repo, tool_input: { command: `git -C "${linked}" push` } }))
+  for (const command of [`cd -P "${repo}" && git push`, `cd -L -- "${linked}" && git push`]) {
+    run('sh', ['-c', installedBlock], 0, JSON.stringify({ cwd: repo, tool_input: { command } }))
+  }
   git('worktree', 'remove', linked)
   delete process.env.CLAUDE_PROJECT_DIR
   rmSync(join(repo, '.claude'), { recursive: true })

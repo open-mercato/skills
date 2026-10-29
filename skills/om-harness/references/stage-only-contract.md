@@ -46,9 +46,10 @@ verify the owning processes stopped before using `end-run`; never delete
 another run's guard. Installed hooks allow ordinary publication outside an
 active run. Literal `git -C`, `cd`, and `pushd` targets are checked too, so
 starting a shell in the primary checkout cannot bypass an active worktree's
-guard. Unresolved directory expansions or indirect publication require host
-permission when this repository has an active run. Publication from other
-linked worktrees remains available when it does not target the active run.
+guard. Unsupported directory options, unresolved expansions, or indirect
+publication require host permission when this repository has an active run.
+Publication from other linked worktrees remains available when it does not
+target the active run.
 
 Worker adapters must also enforce disabled network, remote writes, and ref
 writes. The runtime passes only an explicit environment allowlist and disables

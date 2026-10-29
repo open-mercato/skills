@@ -66,7 +66,11 @@ function commandDirectories(words, cwd) {
       continue
     }
     let value = pathOption && word.length > pathOption.length ? word.slice(pathOption.length) : words[++index]
-    if (value === '--') value = words[++index]
+    if (directoryCommand && value && /^[-+]/.test(unquote(value)) && unquote(value) !== '--') {
+      unresolved = true
+      continue
+    }
+    if (value && unquote(value) === '--') value = words[++index]
     if (!value || /[$`~]/.test(value)) { unresolved = true; continue }
     value = unquote(value)
     const directory = resolve(directoryCommand ? shellDirectory : gitBase, value)

@@ -24,6 +24,7 @@
   },
   "qaGate": true,
   "ci": { "maxWaitMinutes": 40 },
+  "automerge": { "label": "automerge" },
   "engine": { "loopStepThreshold": 20, "executorTier": "standard", "stepReview": "final" },
   "paths": {
     "runs": ".ai/runs",

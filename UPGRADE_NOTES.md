@@ -14,6 +14,13 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-10-29 — `om-merge-buddy --automerge` and the `automerge` label
+
+- **Label a PR `automerge` and a scheduled `om-merge-buddy --automerge` run merges it once it is genuinely ready.** One PR at a time, the run approves CI runs held for maintainer approval, merges the base in, fixes conflicts, review findings, and red CI through `om-auto-fix-pr` (fork PRs are carried forward to a credited replacement PR that keeps the label), and merges through `om-approve-merge-pr`. It never waives a gate: the QA gate, required checks, and `do-not-merge` / `blocked` still hold. It skips PRs claimed `in-progress` by another agent and PRs referenced by another active orchestrator task. The default report mode is unchanged and still read-only.
+- **New optional config key `automerge.label`** (default `automerge`). Configs without it behave as `automerge`; set it when your repository already uses another name.
+- **New tracker operation `approve-pending-runs`.** Re-sync `.ai/trackers/<tracker>.md` to pick it up. On GitHub it approves `action_required` workflow runs, on GitLab it starts the parent-project pipeline for a fork MR, and on Forgejo it answers `APPROVAL_UNAVAILABLE` (approve from the web UI). A custom descriptor without it leaves held runs for a maintainer to approve, and `om-merge-buddy` says so in its report.
+- **Create the label** by re-running `/om-setup-agent-pipeline` (its label step now includes `automerge.label`), or add it by hand.
+
 ## 2026-10-08 — Shipped Forgejo tracker provider
 
 - **Forgejo repositories can run the whole pipeline**, self-hosted or on Codeberg. Select `forgejo` to run issues, pull requests, reviews, CI (commit statuses and Forgejo Actions), and labels through the Forgejo REST API. It is stand-alone, so no `.ai/trackers/github.md` companion is installed.

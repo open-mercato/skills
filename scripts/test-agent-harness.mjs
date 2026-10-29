@@ -4,7 +4,7 @@ import assert from 'node:assert/strict'
 import { spawn, spawnSync } from 'node:child_process'
 import { chmodSync, cpSync, existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { delimiter, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
@@ -21,7 +21,7 @@ const AUTH_FILE = join(TEMP, 'opencode-auth.json')
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd || ROOT,
-    env: { ...process.env, ...(options.env || {}) },
+    env: { ...process.env, PATH: `${TEMP}${delimiter}${process.env.PATH || ''}`, ...(options.env || {}) },
     encoding: 'utf8',
     timeout: options.timeout ?? 60000
   })
@@ -88,6 +88,7 @@ const worker = join(TEMP, 'codex')
 writeFileSync(worker, `#!/usr/bin/env node
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+if (process.argv.includes('--version')) { process.stdout.write('codex-fixture 1.0'); process.exit(0) }
 const prompt = readFileSync(process.env.OM_HARNESS_PROMPT_FILE, 'utf8')
 const isPacket = prompt.includes('"id": "packet-one"')
 const isFixer = prompt.includes('fresh fixer')
@@ -98,6 +99,7 @@ writeFileSync(process.env.OM_HARNESS_METADATA_FILE, JSON.stringify({ actualModel
 process.stdout.write('worker complete secret=' + Boolean(process.env.GITHUB_TOKEN))
 `)
 chmodSync(worker, 0o755)
+assert.equal(run('codex', ['--version']).stdout, 'codex-fixture 1.0')
 
 const invalidReviewer = join(TEMP, 'invalid-reviewer.mjs')
 writeFileSync(invalidReviewer, `process.stdout.write(JSON.stringify({ verdict: 'approve' }))\n`)
@@ -308,7 +310,8 @@ writeFileSync(bundledConfig, `${JSON.stringify({ agentHarness: bundled }, null, 
 run(process.execPath, [HARNESS, 'validate-config', '--config', bundledConfig])
 writeFileSync(AUTH_FILE, `${JSON.stringify({ deepseek: { type: 'api', key: 'test-deepseek' }, opencode: { type: 'api', key: 'test-zen' } }, null, 2)}\n`)
 const bundledProbe = JSON.parse(run(process.execPath, [HARNESS, 'probe', '--config', bundledConfig, '--profile', 'multi', '--worktree', REPO], { env: { OPENCODE_AUTH_FILE: AUTH_FILE, OM_KIMI_BIN: fakeKimi } }).stdout)
-for (const id of ['deepseek', 'kimi', 'glm', 'mimo']) assert.equal(bundledProbe.find((row) => row.id === id).status, 'ready')
+for (const id of ['codex', 'deepseek', 'kimi', 'glm', 'mimo']) assert.equal(bundledProbe.find((row) => row.id === id).status, 'ready')
+assert.equal(existsSync(join(REPO, 'worker.txt')), false, 'Version probes must not run the implementation worker')
 assert.match(bundledProbe.find((row) => row.id === 'deepseek').note, /OpenCode auth provider deepseek/)
 
 run(process.execPath, [HARNESS, 'validate-config', '--config', CONFIG])

@@ -86,7 +86,9 @@ explicitly opt-in and never applies to workers.
 ## 🧪 Test Coverage
 
 Both harness suites use temporary repositories, synthetic credentials and local
-mock providers. They do not contact live model providers or certify a real user's
+mock providers. CI exposed a bundled-profile probe that depended on an installed
+Codex CLI; the suite now prepends its synthetic CLI to PATH, checks all five
+bindings, and asserts that version probing never executes worker edits. They do not contact live model providers or certify a real user's
 subscription, native agent-context creation, or host permissions. Manual QA should
 exercise a standard staged handoff and a configured council, verify the frozen
 regression and exact staged diff, and confirm that publication permissions are

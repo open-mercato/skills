@@ -22,7 +22,7 @@ settings from the task branch.
 
 Immediately after `probe`, render its JSON as a readiness table and show it to
 the user before any model is invoked — one row per selected model with its id,
-requested binding, role, and status: ✅ for `ready`, 🟥 for `missing` or
+requested binding, role, and status: ✅ for `ready`, ❌ for `missing` or
 `failed` with the probe note appended (same format as the staged issue
 workflow). Include the table in the run report. Proceed only when every row the
 profile requires is ✅; otherwise follow the reroute above.
@@ -30,7 +30,7 @@ profile requires is ✅; otherwise follow the reroute above.
 When the requested profile is missing from the trusted config or its probe
 fails on required bindings, do not proceed, and do not substitute another
 profile. Tell the user plainly that the requested variant needs model bindings
-that are not configured or not ready, then run `om-setup-agent-harness`
+that are not configured or not ready, then, only in interactive mode, run `om-setup-agent-harness`
 interactively so they can bind the reviewers and workers they actually have —
 any OpenAI-compatible endpoint or local CLI through the generic adapters, not
 just the bundled jury. When setup finishes, re-probe and continue the
@@ -60,7 +60,7 @@ artifacts under the ignored QA artifact directory. For `multi`,
 `multi-optimized`, and `high-assurance`, run `prepare-review --kind spec`
 against the exact spec (including acceptance criteria and relevant nested
 instruction paths) and execute the bound council exactly as
-`om-harness/references/code-review-contract.md` defines it. Confirm findings against
+the `om-harness` skill's matching contract defines it. Confirm findings against
 repository evidence and revise and re-review the spec before coding.
 
 ## Worker packets
@@ -83,7 +83,7 @@ evidence before integrating it manually.
 
 For `high-assurance`, express each packet as a versioned manifest and follow
 the packet lifecycle exactly as
-`om-harness/references/packet-contract.md` defines it: `packet-run` instead of the raw
+the `om-harness` skill's matching contract defines it: `packet-run` instead of the raw
 `worker` operation, trusted gate evidence bound to the ledger's diff SHA-256,
 `packet-gate` before integration, and `packet-release` only as an explicit
 abort. Only a `gated` packet may be integrated.
@@ -100,10 +100,18 @@ write version 1 validation evidence with the actual command arrays, exit codes,
 and observed results, run `prepare-review --kind implementation` with that
 evidence and the allowlist so the subject includes tracked, staged, unstaged,
 deleted, and newly created files, and execute the bound council per
-`om-harness/references/code-review-contract.md`. Regenerate both artifacts
+the `om-harness` skill's matching contract. Regenerate both artifacts
 after any diff change, and bound the fix-and-re-review loop at three
 iterations before stopping with the surviving findings.
 
 Invoke the harness `stage` command with `START_STATE`; any ref or reflog change,
 unexpected staged path, residual untracked file, or diff-check failure blocks
 the handoff.
+
+## Final reviewed-content binding
+
+For every profile, invoke the `om-harness` preparation contract with kind
+`implementation`, the complete intended-path list, and passing host validation
+evidence. Save the genuinely fresh host review as its matching attestation.
+Pass both artifacts to `stage`; any content drift requires new validation and
+review. Model configuration is not required for `standard` preparation.

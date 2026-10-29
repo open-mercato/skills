@@ -57,7 +57,7 @@ remains available for configs that opt into partial-council tolerance.
 ## The model registry
 
 Bundled, individually selectable jury (defaults from
-`om-setup-agent-harness/references/configuration-template.json`):
+the template shipped by `om-setup-agent-harness`):
 
 | Id | Default binding | Roles |
 |---|---|---|
@@ -250,3 +250,13 @@ stage            stage the allowlisted handoff and assert nothing else changed
 </p>
 
 <p align="center"><sub>Staged-only multi-model agent harness · MIT-licensed</sub></p>
+
+### Staged harness review hardening
+
+The harness now checks reviewer content/index changes, all non-remote ref
+namespaces, and exact reviewed content at staging. Stage commands require the
+final implementation packet and approved host attestation; regenerate old
+unreviewed handoffs instead of bypassing this check. Legacy raw provider JSON
+remains accepted. Hooks are supplemental and require Bash/Node on macOS, Linux,
+or WSL; host permissions must independently deny publication. Recover crashed
+packet leases explicitly after verifying the owning worker stopped.

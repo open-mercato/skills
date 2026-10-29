@@ -521,3 +521,27 @@ Finally, the skill grows a small local QA knowledge base
 that later sessions read before planning — the one genuinely new,
 cross-session capability the source pipeline had that no existing skill in
 this collection covers.
+
+## 2026-10-29 — Harden the unreleased staged harness
+
+The replacement for closed PR #43 keeps the ten staged-workflow skill names and
+five profiles. Aliases remain thin profile selectors; shared preflights and
+communication rules are copied unchanged, with staged behavior in specifics.
+The issue and feature entrypoints now route setup and reports through their own
+references. `--interactive` is the default; `--autonomous` applies reversible
+defaults without granting publication or a weaker model profile.
+
+The staged feature composes specification, readiness, testing, and review skills
+by name. It deliberately does not invoke `om-auto-implement-spec`: that driver
+commits and opens a PR, which conflicts with this delivery boundary. Reusing it
+verbatim would require a separately designed stage-only engine contract. This
+records the disposition of PR #43's composition suggestion without silently
+changing existing autonomous skills.
+
+Reviewer checks cover tracked/non-ignored content, the index, local Git config,
+and all non-remote refs; Git replacement objects are disabled for runtime Git
+commands. Staging binds both working and indexed content to the approved review.
+Hooks supplement independently enforced host permissions and do not claim to
+sandbox arbitrary shell code. Packet leases require explicit recovery after
+owner termination; automatic expiry could release live work and is rejected.
+The configured CI gate includes both integration and security regressions.

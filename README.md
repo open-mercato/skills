@@ -487,3 +487,13 @@ Real production case studies are being added here.
 
 <!-- PIOTR: rewrite in your voice -->
 Built by the [Open Mercato](https://github.com/open-mercato/open-mercato) team, where these skills ship the product every week. We teach this way of working at [aitechleaders.pl](https://aitechleaders.pl) (an AI engineering course, in Polish).
+
+### Staged harness review hardening
+
+The harness now checks reviewer content/index changes, all non-remote ref
+namespaces, and exact reviewed content at staging. Stage commands require the
+final implementation packet and approved host attestation; regenerate old
+unreviewed handoffs instead of bypassing this check. Legacy raw provider JSON
+remains accepted. Hooks are supplemental and require Bash/Node on macOS, Linux,
+or WSL; host permissions must independently deny publication. Recover crashed
+packet leases explicitly after verifying the owning worker stopped.

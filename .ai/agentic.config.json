@@ -10,7 +10,9 @@
       "node scripts/test-tracker-providers.mjs",
       "node scripts/test-classify-runs.mjs",
       "node scripts/test-close-keywords.mjs",
-      "node --test scripts/test-ux-design.mjs scripts/test-ux-design-comments.mjs"
+      "node --test scripts/test-ux-design.mjs scripts/test-ux-design-comments.mjs",
+      "node scripts/test-agent-harness.mjs",
+      "node scripts/test-agent-harness-security.mjs"
     ]
   },
   "labels": {

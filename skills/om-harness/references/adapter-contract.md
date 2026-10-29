@@ -47,10 +47,17 @@ Supported placeholders are `{model}`, `{reasoningEffort}`, `{promptFile}`,
 placeholder as one argument and launches the executable without a shell. It
 also supplies the prompt on standard input.
 
+A trusted command reviewer may declare one validated `credentialEnv` name;
+only that explicitly selected credential is passed to its review invocation,
+never to workers or version probes. Other inherited secrets remain excluded.
+
 A reviewer command must be read-only in the worktree; the runtime enforces this
-by running reviewer commands with a credential-stripped environment and by
-snapshotting refs and reflogs around each invocation, failing the reviewer when
-either changes. A worker command may edit the worktree only through a
+by running reviewer commands with a strict environment allowlist and by
+snapshotting all non-remote Git refs, reflogs, the index, and tracked/non-ignored
+working content around each invocation. A containment failure stops retries and fails the entire council, including an
+advisory profile; it can never become an optional skip or an approval.
+These are detection checks, not an OS filesystem sandbox; only bind trusted
+CLI executables. Host permissions independently prevent remote publication. A worker command may edit the worktree only through a
 runtime-recognized audited adapter. Version 1 recognizes only
 `codex-workspace-write-sandbox` and requires the exact safety shape shown
 above: `codex exec`, ignored user config and rules, ephemeral state,
@@ -142,3 +149,9 @@ missing reviewers do not fail an advisory profile; under `all-required` every
 configured reviewer must complete. Never substitute another model silently.
 When an invocation uses a fallback, record both requested and observed model
 identifiers and the reason.
+
+`review-result.schema.json` describes one provider output, not the aggregated
+council file named `review-result.json`. Provider output may include `version: 1`;
+legacy unversioned provider objects remain accepted. Aggregates always carry
+their existing version. The JSON extractor scans balanced objects once and
+rejects ambiguous multiple objects.

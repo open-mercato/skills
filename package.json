@@ -24,6 +24,7 @@
     "test:migrated-skill-tools": "node scripts/test-migrated-skill-tools.mjs",
     "test:osv-scan": "node scripts/test-osv-scan.mjs",
     "test:agent-browser-codex": "bash scripts/test-agent-browser-codex.sh",
-    "test:ux-design": "node --test scripts/test-ux-design.mjs scripts/test-ux-design-comments.mjs"
+    "test:ux-design": "node --test scripts/test-ux-design.mjs scripts/test-ux-design-comments.mjs",
+    "test:agent-harness-security": "node scripts/test-agent-harness-security.mjs"
   }
 }

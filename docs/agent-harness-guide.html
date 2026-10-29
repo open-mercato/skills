@@ -3452,7 +3452,7 @@ html &gt; body {
       [&#x27;Implement&#x27;, &#x27;Claude or the audited worker edits only the intended paths. Workers receive bounded packets, never open-ended repo control.&#x27;, &#x27;Evidence: allowlist|worker transcript|ref snapshot&#x27;],
       [&#x27;Validate&#x27;, &#x27;Run the regression, configured validation spine, and required integration or UI verification against the changed diff.&#x27;, &#x27;Evidence: command + exit|real output|diff identity&#x27;],
       [&#x27;Review&#x27;, &#x27;Prepare the immutable subject and run fresh Claude plus the selected advisor council. Confirmed blockers loop back to a fresh fix.&#x27;, &#x27;Evidence: packet hash|review matrix|max 3 rounds&#x27;],
-      [&#x27;Stage only&#x27;, &#x27;Assert unchanged Git history, stage the explicit allowlist, check the index, and hand the worktree to the human.&#x27;, &#x27;Evidence: staged names|handoff report|no publication&#x27;]
+      [&#x27;Stage only&#x27;, &#x27;Match the approved review packet and fresh-host artifact to the exact working and staged content, verify Git state, and hand the worktree to the human.&#x27;, &#x27;Evidence: staged names|handoff report|no publication&#x27;]
     ],
     feature: [
       [&#x27;Check duplicate work&#x27;, &#x27;Confirm the capability is not already implemented or in flight before creating a new delivery path.&#x27;, &#x27;Evidence: repository sweep|tracker state|existing spec check&#x27;],
@@ -3462,7 +3462,7 @@ html &gt; body {
       [&#x27;Test the behavior&#x27;, &#x27;Add unit and integration coverage that proves the acceptance criteria without editing frozen regression intent after implementation.&#x27;, &#x27;Evidence: unit tests|integration tests|coverage of criteria&#x27;],
       [&#x27;Validate the product&#x27;, &#x27;Run the configured validation spine and required real-browser UI verification for the exact current diff.&#x27;, &#x27;Evidence: command + exit|screenshots when needed|diff identity&#x27;],
       [&#x27;Review&#x27;, &#x27;Prepare the immutable final subject and run fresh Claude plus the selected advisor council. Evidence—not majority vote—decides.&#x27;, &#x27;Evidence: packet hash|minority findings|bounded reconcile loop&#x27;],
-      [&#x27;Stage only&#x27;, &#x27;Assert unchanged Git history, stage the explicit allowlist, and prepare the report and unpublished PR body for a person.&#x27;, &#x27;Evidence: staged names|handoff report|no publication&#x27;]
+      [&#x27;Stage only&#x27;, &#x27;Verify unchanged Git state and exact approved content, stage the explicit allowlist, and prepare the unpublished handoff.&#x27;, &#x27;Evidence: staged names|handoff report|no publication&#x27;]
     ]
   };
 
@@ -3581,7 +3581,7 @@ html &gt; body {
 
   var safetyData = {
     push: [&#x27;prevention&#x27;, &#x27;Prevention&#x27;, &#x27;Tool-boundary hooks deny push and pull-request creation during a run. Final state assertions remain the backstop.&#x27;],
-    network: [&#x27;isolation&#x27;, &#x27;Isolation&#x27;, &#x27;Audited workers run in a workspace-write sandbox with network, remote writes, ref writes, shell access, and credentials structurally unavailable.&#x27;],
+    network: [&#x27;isolation&#x27;, &#x27;Isolation&#x27;, &#x27;Audited workers run in a workspace-write sandbox with network disabled, remote/ref writes guarded, and only approved environment variables passed. Host permissions independently prevent publication; lexical hooks are supplemental.&#x27;],
     ref: [&#x27;detection&#x27;, &#x27;Detection&#x27;, &#x27;The runtime snapshots local refs and relevant reflogs around workers, command reviewers, and final staging. Any mutation fails closed.&#x27;],
     stale: [&#x27;detection&#x27;, &#x27;Detection&#x27;, &#x27;Subject, packet, rubric, repository context, and reviewed diff hashes must match. A stale artifact cannot become evidence.&#x27;],
     &#x27;branch-config&#x27;: [&#x27;trust&#x27;, &#x27;Trust boundary&#x27;, &#x27;Executable provider settings resolve from the trusted base snapshot plus an optional user-local overlay—not from the task branch.&#x27;],

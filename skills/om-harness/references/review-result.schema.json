@@ -1,9 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Provider review output; distinct from the aggregated council result",
   "type": "object",
   "additionalProperties": false,
   "required": ["verdict", "findings", "notes"],
   "properties": {
+    "version": { "const": 1 },
     "verdict": {
       "type": "string",
       "enum": ["approve", "request_changes"]

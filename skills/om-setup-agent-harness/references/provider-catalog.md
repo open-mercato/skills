@@ -28,8 +28,8 @@ Probe with its version command. Bind the review command in read-only sandbox
 mode and the worker command in workspace-write sandbox mode with network access
 disabled. The version 1 worker binding must use the runtime-audited command
 shape with ignored user config and rules, ephemeral state, no extra writable
-directory, and `--cd {worktree}`. Pass `{model}` and `{promptFile}` as separate
-arguments. It may serve as worker, reviewer, or both. If the installed version
+directory, and `--cd {worktree}`. Pass `{model}` as one argument and deliver
+the worker prompt on stdin with `-`; reviewer bindings may use `{promptFile}`. It may serve as worker, reviewer, or both. If the installed version
 cannot enforce those capabilities, keep it reviewer-only.
 
 ### Kimi CLI

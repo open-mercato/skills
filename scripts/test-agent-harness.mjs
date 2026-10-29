@@ -11,6 +11,8 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const HARNESS = join(ROOT, 'skills/om-harness/scripts/harness.mjs')
 const BUNDLED_TEMPLATE = join(ROOT, 'skills/om-setup-agent-harness/references/configuration-template.json')
 const TEMP = mkdtempSync(join(tmpdir(), 'om harness test '))
+process.on('exit', () => rmSync(TEMP, { recursive: true, force: true }))
+for (const [signal, code] of [['SIGINT', 130], ['SIGTERM', 143]]) process.once(signal, () => process.exit(code))
 const REPO = join(TEMP, 'repo with spaces')
 const CONFIG = join(TEMP, 'agentic.config.json')
 const INPUT = join(TEMP, 'harness-input.json')
@@ -20,7 +22,8 @@ function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     cwd: options.cwd || ROOT,
     env: { ...process.env, ...(options.env || {}) },
-    encoding: 'utf8'
+    encoding: 'utf8',
+    timeout: options.timeout ?? 60000
   })
   const expected = options.expected ?? 0
   assert.equal(result.status, expected, `${command} ${args.join(' ')}\nstdout:\n${result.stdout}\nstderr:\n${result.stderr}`)
@@ -163,6 +166,7 @@ server.listen(0, '127.0.0.1', () => writeFileSync(${JSON.stringify(portFile)}, S
 setTimeout(() => server.close(), 120000).unref()
 `)
 const mockServer = spawn(process.execPath, [mockServerFile], { stdio: 'ignore' })
+mockServer.unref()
 process.on('exit', () => { if (!mockServer.killed) mockServer.kill() })
 for (let attempt = 0; attempt < 200 && !existsSync(portFile); attempt += 1) Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10)
 assert.ok(existsSync(portFile), 'mock provider did not start')
@@ -172,6 +176,7 @@ const harnessConfig = {
   version: 1,
   host: 'claude',
   delivery: { mode: 'stage-only', issueClaim: 'hold' },
+  retry: { maxAttempts: 2, backoffMs: 1, backoffMultiplier: 1, timeoutEscalation: 1, maxTimeoutMs: 10000 },
   models: {
     alpha: {
       adapter: 'command', family: 'family-alpha', model: 'alpha-model', roles: ['reviewer'], timeoutMs: 10000,
@@ -642,24 +647,33 @@ assert.doesNotMatch(isolatedStatus.stderr, /om-code-review contract is incomplet
 writeFileSync(join(REPO, 'tracked.txt'), 'changed\n')
 const pathsFile = join(TEMP, 'stage-paths.txt')
 writeFileSync(pathsFile, 'tracked.txt\nworker.txt\npacket.txt\n')
+const stagePacket = join(TEMP, 'stage-review-packet.json')
+const stageHost = join(TEMP, 'stage-host-review.json')
+const stagePrepared = JSON.parse(run(process.execPath, [HARNESS, 'prepare-review', '--config', CONFIG, '--worktree', REPO, '--kind', 'implementation', '--paths-file', pathsFile, '--validation-evidence', implementationEvidence, '--output', stagePacket]).stdout)
+const stageAttestation = JSON.parse(readFileSync(hostReview, 'utf8'))
+stageAttestation.contract = { name: 'om-code-review', version: 1, rubricSha256: stagePrepared.rubricSha256, packetSha256: stagePrepared.packetSha256, subjectSha256: stagePrepared.subjectSha256, subjectKind: 'implementation' }
+stageAttestation.validationGate = JSON.parse(readFileSync(stagePacket, 'utf8')).validationGate
+writeFileSync(stageHost, JSON.stringify(stageAttestation))
+const stageArgs = ['--review-packet', stagePacket, '--host-review', stageHost]
 writeFileSync(join(REPO, 'unexpected.txt'), 'must not be ignored\n')
-const residual = run(process.execPath, [HARNESS, 'stage', '--worktree', REPO, '--start-state', startState, '--paths-file', pathsFile], { expected: 1 })
+const residual = run(process.execPath, [HARNESS, 'stage', '--worktree', REPO, '--start-state', startState, '--paths-file', pathsFile, ...stageArgs], { expected: 1 })
 assert.match(residual.stderr, /Unstaged or untracked files remain/)
 rmSync(join(REPO, 'unexpected.txt'))
 git(['update-ref', 'refs/remotes/origin/fetch-noise', startHead])
-const handoff = JSON.parse(run(process.execPath, [HARNESS, 'stage', '--worktree', REPO, '--start-state', startState, '--paths-file', pathsFile]).stdout)
+const handoff = JSON.parse(run(process.execPath, [HARNESS, 'stage', '--worktree', REPO, '--start-state', startState, '--paths-file', pathsFile, ...stageArgs]).stdout)
 assert.equal(handoff.status, 'ready')
 assert.deepEqual(handoff.stagedPaths.sort(), ['packet.txt', 'tracked.txt', 'worker.txt'])
 
 git(['commit', '-m', 'test: unexpected checkpoint'])
 git(['reset', '--mixed', startHead])
 writeFileSync(join(REPO, 'tracked.txt'), 'changed again\n')
-const changedHead = run(process.execPath, [HARNESS, 'stage', '--worktree', REPO, '--start-state', startState, '--paths-file', pathsFile], { expected: 1 })
+const changedHead = run(process.execPath, [HARNESS, 'stage', '--worktree', REPO, '--start-state', startState, '--paths-file', pathsFile, ...stageArgs], { expected: 1 })
 assert.match(changedHead.stderr, /refs or reflogs changed/)
 
 const rogueDir = join(TEMP, 'rogue artifacts')
-const rogueRun = JSON.parse(run(process.execPath, [HARNESS, 'review', '--config', CONFIG, '--profile', 'rogue', '--worktree', REPO, '--artifact', artifact, '--output-dir', rogueDir]).stdout)
-assert.equal(rogueRun.status, 'degraded')
+const rogueRun = JSON.parse(run(process.execPath, [HARNESS, 'review', '--config', CONFIG, '--profile', 'rogue', '--worktree', REPO, '--artifact', artifact, '--output-dir', rogueDir], { expected: 2 }).stdout)
+assert.equal(rogueRun.status, 'failed')
+assert.equal(rogueRun.verdict, null)
 const rogueReview = JSON.parse(readFileSync(join(rogueDir, 'review-result.json'), 'utf8'))
 assert.equal(rogueReview.reviewers[0].status, 'failed')
 assert.match(rogueReview.reviewers[0].error, /refs or reflogs/)

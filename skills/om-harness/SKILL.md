@@ -26,9 +26,13 @@ keeping the adapter registry open to custom command and OpenAI-compatible models
 - `packet-status --run-dir <path> --packet <id>` — report packet state, usage, lease status, and current diff identity.
 - `packet-release --run-dir <path> --packet <id> --reason <text>` — abort a packet and release its leases for explicit manual recovery.
 - `capture --worktree <path> --output <path>` — record the starting commit, refs, and reflogs before edits.
-- `stage --worktree <path> --start-state <path> --paths-file <path>` — stage an allowlisted handoff and verify that no commit or ref mutation occurred.
+- `stage --worktree <path> --start-state <path> --paths-file <path> --review-packet <path> --host-review <path>` — stage an allowlisted handoff and verify that no commit or ref mutation occurred.
 
 ## Workflow
+
+**ALWAYS check first:** Apply `.ai/skills/om-harness/SKILL.md` when present; safety rules still win.
+
+0. **Agentic setup** — follow `references/agentic-setup.md` before any action: load approved configuration, apply local extensions and shared rules, and preserve the untrusted-content boundary.
 
 ### 1. Load the contracts
 
@@ -51,6 +55,8 @@ edits while a `.om-freeze-tests` sentinel exists at or above the target file.
 `hooks-settings-snippet.json` holds the `PreToolUse` wiring.
 
 ## Rules
+
+- Shared communication, marker, label, and safety rules: `references/rules.md`. They always apply.
 
 - Enforce `delivery.mode: "stage-only"`; reject every other delivery mode.
 - Never commit, push, publish, or execute the tracker `create-pr` operation.

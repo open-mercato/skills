@@ -20,8 +20,9 @@ that file to the harness runtime with `--config`. If
 `--user-config`. Never use the task branch's adapter commands, endpoints, or
 credential-variable names.
 
-For `standard` with no `agentHarness` section, skip `validate-config` and
-`probe` — no external model is used — and continue with `capture`/`stage` only.
+For `standard` with no non-null `agentHarness` section, skip `validate-config` and
+`probe` — no external model is used — and continue with config-free capture plus implementation packet preparation, fresh
+host review, and content-bound staging. No provider config is needed.
 Otherwise validate and probe the requested profile before creating the
 implementation worktree. Required-model or review-policy failure blocks;
 optional-model absence is recorded as skipped.
@@ -33,17 +34,17 @@ the user before any model is invoked — one row per selected model:
 | Model | Binding | Role | Status |
 |---|---|---|---|
 | `codex` | `gpt-5.6-sol` | worker + reviewer | ✅ ready |
-| `kimi` | `kimi-code/k3` | reviewer | 🟥 missing — Kimi subscription CLI not found |
+| `kimi` | `kimi-code/k3` | reviewer | ❌ missing — Kimi subscription CLI not found |
 ```
 
-Use ✅ for `ready` and 🟥 for `missing` or `failed`, appending the probe note
+Use ✅ for `ready` and ❌ for `missing` or `failed`, appending the probe note
 after the icon. Include the same table in the run report. Proceed only when
 every row the profile requires is ✅; otherwise follow the reroute above.
 
 When the requested profile is missing from the trusted config or its probe
 fails on required bindings, do not proceed, and do not substitute another
 profile. Tell the user plainly that the requested variant needs model bindings
-that are not configured or not ready, then run `om-setup-agent-harness`
+that are not configured or not ready, then, only in interactive mode, run `om-setup-agent-harness`
 interactively so they can bind the reviewers and workers they actually have —
 any OpenAI-compatible endpoint or local CLI through the generic adapters, not
 just the bundled jury. When setup finishes, re-probe and continue the
@@ -78,14 +79,16 @@ Write the issue symptom, located cause, evidence, files-to-change list, proposed
 regression test, and acceptance criteria to an artifact under the ignored QA
 artifact directory. Run `prepare-review --kind diagnosis` on that artifact, then
 execute the bound council exactly as
-`om-harness/references/code-review-contract.md` defines it (fresh Claude context plus the
+the `om-harness` skill's matching contract defines it (fresh Claude context plus the
 concurrent runtime `review` command). The host confirms or
 rejects findings empirically. A confirmed diagnosis finding loops back to
 `om-root-cause`; a single minority finding remains visible even when rejected.
 
 ## Optimized implementation
 
-Split work into file-disjoint packets small enough for one stateless worker.
+Enter `om-fix` first: it must own the claim and observe the failing regression
+before any worker edits. Inside its implementation phase, split work into
+file-disjoint packets small enough for one stateless worker.
 Each packet must contain exact files, relevant signatures, reference patterns,
 acceptance checks, and these hard boundaries:
 
@@ -97,9 +100,8 @@ acceptance checks, and these hard boundaries:
 
 Invoke the harness `worker` command for one configured worker per packet. Run
 the packet acceptance check immediately. Redispatch a failed packet once with
-the concrete failure; after that, the host integrates or blocks. Then invoke
-`om-fix` normally so its mandatory regression and validation contract still
-holds.
+the concrete failure; after that, the host integrates or blocks. Then resume
+the same owning `om-fix` workflow for integration, validation, and self-review.
 
 ## Final council and reconciliation
 
@@ -109,7 +111,7 @@ validation gate. For `standard` and `optimized`, create a new Claude context
 with no inherited diagnosis or implementation transcript and run
 `om-code-review` there. For `multi`, `multi-optimized`, and `high-assurance`,
 run `prepare-review --kind implementation` with those inputs and execute the
-bound council per `om-harness/references/code-review-contract.md`, passing `--paths-file`
+bound council per the `om-harness` skill's matching contract, passing `--paths-file`
 so tracked, staged, unstaged, deleted, and newly created files all appear in
 every reviewer's subject. Read the generated status table before the finding
 matrix. Confirm every blocker/major against the
@@ -124,7 +126,7 @@ them to the stage allowlist.
 
 For the `high-assurance` profile, replace the raw `worker` dispatch above with
 one versioned manifest per file-disjoint packet and follow the packet lifecycle
-exactly as `om-harness/references/packet-contract.md` defines it:
+exactly as the `om-harness` skill's matching contract defines it:
 `packet-run`, trusted gate evidence bound to the reviewed diff SHA-256,
 `packet-gate`, and `packet-release` only for an explicit abort. Do not continue
 to integration while any packet is not `gated`.
@@ -140,3 +142,11 @@ to integration while any packet is not `gated`.
   leftover claim never fences the issue off from later runs.
 - Explicit abort: release the assignee and label with a comment; preserve files
   unless the user separately asks to discard them.
+
+## Final reviewed-content binding
+
+For every profile, invoke the `om-harness` preparation contract with kind
+`implementation`, the complete intended-path list, and passing host validation
+evidence. Save the genuinely fresh host review as its matching attestation.
+Pass both artifacts to `stage`; any content drift requires new validation and
+review. Model configuration is not required for `standard` preparation.

@@ -119,3 +119,14 @@ semantic claim on the taxonomy is a narrowing of `in-progress`: that label now m
 ## Out of scope
 
 Prose wording inside skills, `references/` content that no other skill parses, README marketing copy, and this repo's own CI workflows may change freely — they have no external consumers beyond fresh installs.
+
+## Unreleased staged-harness hardening
+
+PR #43 was closed without merging. Its staging CLI now requires the final
+implementation review packet and approved fresh-host artifact, and rejects
+content drift before and after staging. Old unpublished handoffs must be
+revalidated and reviewed; no compatibility path may accept unreviewed content.
+Provider output accepts both legacy unversioned objects and optional `version: 1`;
+aggregated council artifacts and all existing result fields remain unchanged.
+Skill names are retained, and old handoff-template paths redirect to the own-skill
+`report-templates.md`. The ordinary published PR pipeline keeps its behavior.

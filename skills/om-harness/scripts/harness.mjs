@@ -42,7 +42,7 @@ const PACKET_RISKS = ['low', 'medium', 'high', 'critical']
 const VALID_PACKET_RISKS = new Set(PACKET_RISKS)
 const VALID_PACKET_STATES = new Set(['planned', 'claimed', 'implementing', 'reviewing', 'fixing', 'awaiting_validation', 'gated', 'blocked', 'aborted'])
 const PACKET_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/
-const SECRET_ENV_PATTERN = /(TOKEN|SECRET|PASSWORD|PASSWD|API_KEY|PRIVATE_KEY|ACCESS_KEY|SESSION)/i
+const CLI_ENV_ALLOWLIST = new Set(['PATH', 'HOME', 'USERPROFILE', 'SYSTEMROOT', 'SystemRoot', 'COMSPEC', 'PATHEXT', 'TEMP', 'TMP', 'TMPDIR', 'LANG', 'LC_ALL', 'LC_CTYPE', 'TERM', 'NO_COLOR'])
 const LEDGER_OUTPUT_LIMIT = 20000
 
 function fail(message, code = 1) {
@@ -186,6 +186,7 @@ function validateConfig(config) {
     assertArray(model.roles, `models.${id}.roles`)
     for (const role of model.roles) if (!VALID_ROLES.has(role)) throw new Error(`Invalid role ${role} for ${id}`)
     if (model.adapter === 'command') {
+      if (model.credentialEnv !== undefined && !/^[A-Z_][A-Z0-9_]*$/.test(model.credentialEnv)) throw new Error(`Model ${id} has an invalid credentialEnv`)
       if (!model.commands || typeof model.commands !== 'object') throw new Error(`Model ${id} needs commands`)
       if (model.commands.probe) validateCommand(model.commands.probe, `models.${id}.commands.probe`)
       for (const role of model.roles) validateCommand(model.commands[role === 'reviewer' ? 'review' : 'worker'], `models.${id}.commands.${role === 'reviewer' ? 'review' : 'worker'}`)
@@ -296,7 +297,7 @@ function expandCommand(command, values) {
 }
 
 function sanitizedCliEnvironment(additions) {
-  return { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => !SECRET_ENV_PATTERN.test(key))), ...additions }
+  return { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => CLI_ENV_ALLOWLIST.has(key) || /^LC_[A-Z_]+$/.test(key))), ...additions }
 }
 
 function workerEnvironment(additions) {
@@ -353,11 +354,27 @@ function runProcess(command, { cwd, input = '', timeoutMs = 600000, env = {}, in
 function extractJson(text) {
   const trimmed = text.trim()
   try { return JSON.parse(trimmed) } catch {}
-  for (let start = trimmed.indexOf('{'); start >= 0; start = trimmed.indexOf('{', start + 1)) {
-    for (let end = trimmed.lastIndexOf('}'); end > start; end = trimmed.lastIndexOf('}', end - 1)) {
-      try { return JSON.parse(trimmed.slice(start, end + 1)) } catch {}
+  let start = -1, depth = 0, quoted = false, escaped = false
+  const candidates = []
+  for (let index = 0; index < trimmed.length; index += 1) {
+    const char = trimmed[index]
+    if (start < 0) {
+      if (char === '{') { start = index; depth = 1; quoted = false; escaped = false }
+      continue
+    }
+    if (quoted) {
+      if (escaped) escaped = false
+      else if (char === '\\') escaped = true
+      else if (char === '"') quoted = false
+    } else if (char === '"') quoted = true
+    else if (char === '{') depth += 1
+    else if (char === '}' && --depth === 0) {
+      try { candidates.push(JSON.parse(trimmed.slice(start, index + 1))) } catch {}
+      start = -1
     }
   }
+  if (candidates.length === 1) return candidates[0]
+  if (candidates.length > 1) throw new Error('Ambiguous JSON objects in model output')
   throw new Error('No valid JSON object in model output')
 }
 
@@ -402,7 +419,8 @@ function normalizeFinding(finding) {
 
 function normalizeReview(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Review result must be an object')
-  const unknown = Object.keys(value).filter((key) => !['verdict', 'findings', 'notes'].includes(key))
+  if (value.version !== undefined && value.version !== 1) throw new Error('Review output version must be 1')
+  const unknown = Object.keys(value).filter((key) => !['version', 'verdict', 'findings', 'notes'].includes(key))
   if (unknown.length) throw new Error(`Unknown review fields: ${unknown.join(', ')}`)
   if (!['approve', 'request_changes'].includes(value.verdict)) throw new Error(`Invalid review verdict: ${value.verdict}`)
   if (!Array.isArray(value.findings)) throw new Error('Review findings must be an array')
@@ -583,7 +601,7 @@ function buildReviewPrompt(criteria, subject, lens = null, partial = false) {
 }
 
 async function runCommandAdapter(model, commandKey, { worktree, prompt = '', env, timeoutMs }) {
-  const temp = mkdtempSync(join(tmpdir(), 'om-harness-adapter-'))
+  const temp = mkdtempSync(join(tmpdir(), 'harness-adapter-'))
   try {
     const promptFile = join(temp, 'prompt.md')
     const metadataFile = join(temp, 'invocation-metadata.json')
@@ -603,6 +621,7 @@ async function runCommandAdapter(model, commandKey, { worktree, prompt = '', env
       OM_HARNESS_WORKTREE: worktree,
       OM_HARNESS_METADATA_FILE: metadataFile
     }
+    if (commandKey === 'review' && model.credentialEnv && process.env[model.credentialEnv]) additions[model.credentialEnv] = process.env[model.credentialEnv]
     const result = await runProcess(command, {
       cwd: worktree,
       input: prompt,
@@ -617,11 +636,11 @@ async function runCommandAdapter(model, commandKey, { worktree, prompt = '', env
 }
 
 async function runCommandReviewer(id, model, prompt, worktree, timeoutMs = null) {
-  const before = captureGitState(worktree)
+  const before = captureReviewerState(worktree)
   const { result, provenance } = await runCommandAdapter(model, 'review', { worktree, prompt, timeoutMs: timeoutMs ?? undefined })
-  const after = captureGitState(worktree)
+  const after = captureReviewerState(worktree)
   if (JSON.stringify(before) !== JSON.stringify(after)) {
-    return { status: 'failed', durationMs: result.durationMs, error: 'reviewer changed Git refs or reflogs; reviewer commands must be read-only' }
+    return { status: 'failed', containmentFailure: true, durationMs: result.durationMs, error: 'reviewer changed Git refs or reflogs, index, or worktree content; reviewer commands must be read-only' }
   }
   if (result.timedOut) return { status: 'timed_out', durationMs: result.durationMs, error: 'review timed out' }
   if (result.error) return { status: 'skipped', durationMs: result.durationMs, error: result.error.message }
@@ -737,7 +756,7 @@ async function runHttpReviewerWithCredential(model, prompt, key, timeoutMs = nul
 function locateKimiBinary(model) {
   const candidates = [model.binaryEnv && process.env[model.binaryEnv], join(homedir(), '.kimi', 'bin', 'kimi', 'kimi'), 'kimi'].filter(Boolean)
   for (const candidate of [...new Set(candidates)]) {
-    const result = spawnSync(candidate, ['--version'], { encoding: 'utf8', stdio: 'pipe' })
+    const result = spawnSync(candidate, ['--version'], { encoding: 'utf8', stdio: 'pipe', env: sanitizedCliEnvironment({}), timeout: 5000 })
     if (!result.error && result.status === 0) return candidate
   }
   return null
@@ -746,7 +765,7 @@ function locateKimiBinary(model) {
 async function runKimiPresetReviewer(model, prompt, timeoutMs = null) {
   const binary = locateKimiBinary(model)
   if (!binary) return { status: 'skipped', durationMs: 0, error: `missing Kimi CLI (${model.binaryEnv || 'OM_KIMI_BIN'} or managed subscription install)` }
-  const temp = mkdtempSync(join(tmpdir(), 'om-harness-kimi-'))
+  const temp = mkdtempSync(join(tmpdir(), 'harness-kimi-'))
   try {
     const empty = join(temp, 'worktree')
     const agentFile = join(temp, 'agent.yaml')
@@ -853,12 +872,17 @@ async function invokeReviewerWithRetries(id, model, prompt, worktree, retry) {
       Math.round(baseTimeoutMs * Math.pow(Number(retry?.timeoutEscalation || 1), attempt - 1)),
       Number(retry?.maxTimeoutMs || baseTimeoutMs)
     )
+    const before = captureReviewerState(worktree)
     outcome = model.adapter === 'command'
       ? await runCommandReviewer(id, model, prompt, worktree, timeoutMs)
       : model.adapter === 'preset'
         ? await runPresetReviewer(model, prompt, timeoutMs)
         : await runHttpReviewer(id, model, prompt, timeoutMs)
+    if (JSON.stringify(before) !== JSON.stringify(captureReviewerState(worktree))) {
+      outcome = { status: 'failed', containmentFailure: true, durationMs: outcome.durationMs, error: 'reviewer changed Git refs or reflogs, index, or worktree content' }
+    }
     totalDurationMs += outcome.durationMs || 0
+    if (outcome.containmentFailure) break
     if (NON_RETRYABLE_REVIEWER_STATUSES.has(outcome.status)) break
     if (attempt >= maxAttempts) break
     const backoffMs = Math.round(Number(retry?.backoffMs || 0) * Math.pow(Number(retry?.backoffMultiplier || 1), attempt - 1))
@@ -933,6 +957,8 @@ function evaluatePolicy(profile, reviewers) {
   const eligible = reviewers.filter((reviewer) => reviewer.policyEligible !== false)
   const completed = eligible.filter((reviewer) => reviewer.status === 'completed')
   const independentFamilies = new Set(completed.filter((reviewer) => !reviewer.selfCheck).map((reviewer) => reviewer.family))
+  const containmentFailures = reviewers.filter((reviewer) => reviewer.containmentFailure).map((reviewer) => reviewer.id)
+  if (containmentFailures.length) return { status: 'failed', completed: completed.length, independentFamilies: independentFamilies.size, containmentFailures }
   if (policy.mode === 'advisory') return { status: completed.length ? 'satisfied' : 'degraded', completed: completed.length, independentFamilies: independentFamilies.size }
   if (policy.mode === 'quorum') {
     const satisfied = completed.length >= Number(policy.minimumSuccessful || 1)
@@ -1011,13 +1037,13 @@ function renderMarkdown(result) {
 }
 
 function git(args, cwd, options = {}) {
-  const result = spawnSync('git', args, { cwd, encoding: 'utf8', stdio: options.stdio || 'pipe', env: { ...process.env, ...(options.env || {}) } })
+  const result = spawnSync('git', args, { cwd, encoding: 'utf8', stdio: options.stdio || 'pipe', env: { ...process.env, ...(options.env || {}), GIT_NO_REPLACE_OBJECTS: '1' } })
   if (result.status !== 0) throw new Error((result.stderr || result.stdout || `git ${args[0]} failed`).trim())
   return result.stdout
 }
 
 function buildWorktreeDiff(worktree, paths = []) {
-  const temp = mkdtempSync(join(tmpdir(), 'om-harness-index-'))
+  const temp = mkdtempSync(join(tmpdir(), 'harness-index-'))
   const index = join(temp, 'index')
   const env = { GIT_INDEX_FILE: index }
   try {
@@ -1025,7 +1051,7 @@ function buildWorktreeDiff(worktree, paths = []) {
     const pathspecs = paths.map((path) => `:(literal)${path}`)
     const addArgs = paths.length ? ['add', '-A', '--', ...pathspecs] : ['add', '-A']
     git(addArgs, worktree, { env })
-    return git(['diff', '--cached', '--no-ext-diff', '--binary', 'HEAD', ...(paths.length ? ['--', ...pathspecs] : [])], worktree, { env })
+    return git(['diff', '--cached', '--no-ext-diff', '--no-textconv', '--binary', 'HEAD', ...(paths.length ? ['--', ...pathspecs] : [])], worktree, { env })
   } finally {
     rmSync(temp, { recursive: true, force: true })
   }
@@ -1186,8 +1212,9 @@ function acquirePacketLeases(worktree, manifest) {
       }
     }
     for (const claim of existing) {
+      if (claim?.version !== 1 || typeof claim.packetId !== 'string' || !PACKET_ID_PATTERN.test(claim.packetId) || typeof claim.path !== 'string' || validateStagePath(worktree, claim.path) !== claim.path || !Number.isFinite(Date.parse(claim.acquiredAt))) throw new Error('Unreadable packet lease file: invalid lease fields; inspect and recover it manually')
       for (const path of manifest.allowedPaths) {
-        if (claim.packetId !== manifest.id && typeof claim.path === 'string' && pathsOverlap(path, claim.path)) throw new Error(`Packet path ${path} overlaps active lease ${claim.path} held by ${claim.packetId}`)
+        if (pathsOverlap(path, claim.path)) throw new Error(`Packet path ${path} overlaps active lease ${claim.path} held by ${claim.packetId}`)
       }
     }
     const leases = []
@@ -1268,6 +1295,10 @@ function captureDirtyState(worktree) {
     }
   }
   return state
+}
+
+function captureReviewerState(worktree) {
+  return { git: captureGitState(worktree), files: captureDirtyState(worktree), index: sha256(git(['ls-files', '--stage', '-z'], worktree)), config: sha256(git(['config', '--local', '--null', '--list'], worktree)) }
 }
 
 function isAllowedPath(path, allowedPaths) {
@@ -1759,11 +1790,18 @@ function commandPrepareReview(args, config) {
 
 async function waitForFreshReviewArtifact(path, contract, timeoutMs) {
   const started = Date.now()
-  while (!existsSync(path)) {
+  while (true) {
+    try {
+      const contents = readFileSync(path, 'utf8')
+      let parsed
+      try { parsed = JSON.parse(contents) } catch { parsed = undefined }
+      if (parsed !== undefined) return validateFreshReview(parsed, contract)
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error
+    }
     if (Date.now() - started >= timeoutMs) throw new Error(`Timed out waiting for fresh Claude review artifact: ${path}`)
     await new Promise((resolvePromise) => setTimeout(resolvePromise, 100))
   }
-  return validateFreshReview(readJson(path), contract)
 }
 
 function numericFlag(args, name, fallback) {
@@ -1935,11 +1973,11 @@ async function commandWorker(args, config) {
 
 function captureGitState(worktree) {
   // Remote-tracking refs are excluded: concurrent fetches by other processes
-  // legitimately move them, and they publish nothing. Local heads, tags,
-  // stash, HEAD, and their reflogs are the mutation surface that matters.
+  // legitimately move them. All other namespaces, including replacement and
+  // custom refs, belong to the staged-only mutation surface.
   return {
     head: git(['rev-parse', 'HEAD'], worktree).trim(),
-    refs: git(['for-each-ref', '--format=%(refname)%09%(objectname)', 'refs/heads', 'refs/tags', 'refs/stash'], worktree).trim().split(/\r?\n/).filter(Boolean).sort(),
+    refs: git(['for-each-ref', '--format=%(refname)%09%(objectname)'], worktree).trim().split(/\r?\n/).filter((line) => line && !line.startsWith('refs/remotes/')).sort(),
     reflogs: git(['reflog', 'show', '--all', '--format=%H%x09%gD'], worktree).trim().split(/\r?\n/).filter(Boolean)
       .filter((line) => !(line.split('\t')[1] || '').startsWith('refs/remotes/')).sort()
   }
@@ -1978,10 +2016,19 @@ function commandStage(args) {
   if (!paths.length) throw new Error('Stage allowlist is empty')
   const currentHead = currentState.head
   if (JSON.stringify(currentState) !== JSON.stringify(startState)) throw new Error('Git refs or reflogs changed during staged-only run')
+  if (!args['review-packet'] || args['review-packet'] === true || !args['host-review'] || args['host-review'] === true) throw new Error('Stage requires --review-packet and --host-review for the exact implementation diff')
+  const packetPath = resolve(String(args['review-packet']))
+  const packet = readJson(packetPath)
+  validateReviewPacket(packet, buildWorktreeDiff(worktree, paths))
+  if (packet.subject.kind !== 'implementation') throw new Error('Stage requires an implementation review packet')
+  const host = validateFreshReview(readJson(resolve(String(args['host-review']))), reviewContractFromPacket(packet, sha256(readFileSync(packetPath, 'utf8'))))
+  if (host.review.verdict !== 'approve') throw new Error('Stage requires an approved fresh host review')
   git(['add', '--', ...paths.map((path) => `:(literal)${path}`)], worktree)
   const staged = git(['diff', '--cached', '--name-status'], worktree).trim()
   if (!staged) throw new Error('Staged diff is empty')
   git(['diff', '--cached', '--check'], worktree)
+  const stagedSubject = git(['diff', '--cached', '--no-ext-diff', '--no-textconv', '--binary', 'HEAD', '--', ...paths.map((path) => `:(literal)${path}`)], worktree)
+  if (sha256(stagedSubject) !== packet.subject.sha256) throw new Error('Staged content changed after the reviewed diff was verified')
   const stagedPaths = git(['diff', '--cached', '--name-only'], worktree).trim().split(/\r?\n/).filter(Boolean)
   const allow = new Set(paths)
   const unexpected = stagedPaths.filter((entry) => !allow.has(entry))
@@ -2024,6 +2071,10 @@ async function main() {
     if (command === 'packet-gate') return commandPacketGate(args)
     if (command === 'packet-status') return commandPacketStatus(args)
     if (command === 'packet-release') return commandPacketRelease(args)
+    if (command === 'prepare-review') {
+      if (!args.config || args.config === true) throw new Error('--config <trusted pipeline config> is required')
+      return commandPrepareReview(args, readJson(resolve(String(args.config))))
+    }
     const config = loadConfig(args)
     if (command === 'validate-config') {
       const profiles = Object.keys(config.agentHarness.profiles)
@@ -2041,4 +2092,6 @@ async function main() {
   }
 }
 
-await main()
+export { sanitizedCliEnvironment, workerEnvironment, extractJson, captureGitState, captureReviewerState, captureDirtyState, buildWorktreeDiff, runCommandReviewer, invokeReviewerWithRetries, invokeWorker, runHttpReviewer, waitForFreshReviewArtifact, validateStagePath, acquirePacketLeases, invokeScopedPacketWorker }
+
+if (process.argv[1] && existsSync(process.argv[1]) && realpathSync(resolve(process.argv[1])) === fileURLToPath(import.meta.url)) await main()

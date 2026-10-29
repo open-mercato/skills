@@ -18,9 +18,12 @@ This contract is loaded by both wrapper skills before creating their worktree.
    `high-assurance`, require every packet ledger to reach `gated`; a packet in
    `awaiting_validation`, `blocked`, or `aborted` cannot enter the handoff.
 6. Invoke the runtime `stage` command with the worktree, original start-state
-   artifact, and allowlist.
+   artifact, allowlist, final implementation `--review-packet`, and matching
+   approved `--host-review` artifact. Create these even for `standard`; preparing
+   review packets needs only the pipeline config, not model bindings.
 7. Require all of these checks to pass:
    - current `HEAD`, refs, and reflogs equal the captured starting state;
+   - the working and staged content hashes both match the approved implementation packet;
    - the staged diff is non-empty;
    - the staged diff passes whitespace/error checking;
    - no non-ignored unstaged or untracked files remain;
@@ -29,7 +32,22 @@ This contract is loaded by both wrapper skills before creating their worktree.
    suggested commit message, prepared pull-request body, and issue-claim state.
 
 Worker adapters must also enforce disabled network, remote writes, and ref
-writes. The runtime strips credential-like environment variables and disables
+writes. The runtime passes only an explicit environment allowlist and disables
 Git protocols and credential helpers for worker processes. If any assertion
 fails, stop with a blocked result. Never repair an unexpected commit by
 rewriting history automatically.
+
+## Host permissions and platform support
+
+Before edits, require host tool permissions that deny remote publication through
+shell, network, and tracker tools. Hooks are supplemental lexical checks, not a
+sandbox: arbitrary application code can perform network I/O. If those host
+permissions cannot be established, stop the staged run with that limitation.
+The compatibility hook launchers require Bash and Node on macOS, Linux, or WSL.
+Native PowerShell hook wiring is not supported; do not claim those guards are
+active there. The Node runtime and JSON artifacts remain platform-neutral.
+
+During the fix phase, write the exact regression-test paths as a JSON array to
+`.om-freeze-tests`; an empty legacy sentinel retains conventional test-name
+protection. Install `guard.mjs` with both compatibility launchers and wire
+`Edit|Write|MultiEdit|NotebookEdit`. Invalid hook input fails closed.

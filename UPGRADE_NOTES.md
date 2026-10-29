@@ -595,3 +595,13 @@ that other skills attach to.
 - **Fix:** install/refresh the `om-prepare-test-env` skill; no descriptor change required. If your
   repo ships its own ephemeral-env tooling, the skill discovers and reuses it — document specifics
   in a repo-local `.ai/skills/om-prepare-test-env/SKILL.md` override.
+
+### Staged harness review hardening
+
+The harness now checks reviewer content/index changes, all non-remote ref
+namespaces, and exact reviewed content at staging. Stage commands require the
+final implementation packet and approved host attestation; regenerate old
+unreviewed handoffs instead of bypassing this check. Legacy raw provider JSON
+remains accepted. Hooks are supplemental and require Bash/Node on macOS, Linux,
+or WSL; host permissions must independently deny publication. Recover crashed
+packet leases explicitly after verifying the owning worker stopped.

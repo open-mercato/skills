@@ -54,7 +54,10 @@ paths.
 The lease registry lives under the repository's Git common directory, so
 separate harness run directories and linked worktrees still coordinate path
 ownership. A stale registry mutex may be reclaimed after one minute; packet
-leases themselves are never expired automatically.
+leases themselves are never expired automatically. Inspect the recorded run
+with `packet-status`, establish that its worker has stopped, then use that
+run's `packet-release --reason` for explicit recovery. Malformed lease fields
+fail closed. Equal packet ids in different runs never bypass path exclusion.
 
 Version 1 runs one implementation or fixer packet at a time in an integration
 worktree. Reviewer invocations may run concurrently. Do not increase worker,

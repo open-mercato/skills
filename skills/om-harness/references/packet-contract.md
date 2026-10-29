@@ -28,6 +28,11 @@ and ignored run-artifact directory. The runtime:
 8. stops at `awaiting_validation`, or at `blocked` when review policy,
    isolation, or the fixer loop fails.
 
+When reviewers or split parts report the same fingerprint, retain the strongest
+severity and its supporting evidence. Finding verification may escalate that
+severity but never downgrade it. Apply the blocking-severity gate to this
+merged assessment, independent of reviewer order.
+
 The JSON ledger under `<runDir>/packets/<id>/packet-result.json` is
 authoritative. Do not edit it by hand.
 

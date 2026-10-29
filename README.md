@@ -494,6 +494,11 @@ Built by the [Open Mercato](https://github.com/open-mercato/open-mercato) team, 
 
 ### Staged harness review hardening
 
+Publication hooks activate per worktree at `capture`, then clear on successful
+`stage` or explicit `end-run` after an abort. Ordinary publication remains
+available outside active runs. Hook paths support spaces, staged filenames
+support Unicode, and merged findings preserve their strongest severity.
+
 The harness now checks reviewer content/index changes, all non-remote ref
 namespaces, and exact reviewed content at staging. Stage commands require the
 final implementation packet and approved host attestation; regenerate old

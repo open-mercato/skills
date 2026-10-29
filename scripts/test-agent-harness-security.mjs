@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { createServer } from 'node:http'
-import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, chmodSync, existsSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync, chmodSync, existsSync, cpSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -177,6 +177,27 @@ process.stdout.write(JSON.stringify({...(process.argv.includes('--public-schema'
   assert.throws(() => h.acquirePacketLeases(repo, { id: 'same-id', allowedPaths: ['src/nested'] }), /overlaps active lease/)
   console.log('PASS: out-of-lease worker writes and corrupt/same-id lease exclusion')
 
+  for (const command of ['git push', 'gh pr create', 'curl --head https://example.invalid', 'bash -c "echo ordinary-work"']) {
+    run(process.execPath, [hooks, 'block'], 0, JSON.stringify({ cwd: repo, tool_input: { command } }))
+  }
+  const hookStart = join(fixture, 'hook-start.json')
+  cli(['capture', '--worktree', repo, '--output', hookStart])
+  const hookStartContents = readFileSync(hookStart, 'utf8')
+  const activeGuard = join(repo, '.git', 'om-harness', 'stage-only.json')
+  const activeGuardContents = readFileSync(activeGuard, 'utf8')
+  cli(['capture', '--worktree', repo, '--output', hookStart], 1)
+  assert.equal(readFileSync(hookStart, 'utf8'), hookStartContents, 'A second capture must not overwrite the active run snapshot')
+  const otherStart = join(fixture, 'other-start.json')
+  writeFileSync(otherStart, hookStartContents)
+  cli(['end-run', '--worktree', repo, '--start-state', otherStart, '--reason', 'wrong owner'], 1)
+  assert.equal(readFileSync(activeGuard, 'utf8'), activeGuardContents)
+  const linked = join(fixture, 'linked worktree')
+  git('worktree', 'add', '--detach', linked, 'HEAD')
+  run(process.execPath, [hooks, 'block'], 0, JSON.stringify({ cwd: linked, tool_input: { command: 'git push' } }))
+  git('worktree', 'remove', linked)
+  writeFileSync(activeGuard, '{broken')
+  run(process.execPath, [hooks, 'block'], 2, JSON.stringify({ cwd: repo, tool_input: { command: 'git status' } }))
+  writeFileSync(activeGuard, activeGuardContents)
   writeFileSync(join(repo, '.om-freeze-tests'), JSON.stringify(['custom-regression.fixture']))
   for (const path of ['test_bug.py', 'handler_test.go', 'tests/example.rs', 'src/test/ExampleTest.java', 'foo_spec.rb', 'example.test.js', 'test.ipynb', 'custom-regression.fixture']) {
     run(process.execPath, [hooks, 'freeze'], 2, JSON.stringify({ cwd: repo, tool_input: { file_path: path } }))
@@ -193,14 +214,53 @@ process.stdout.write(JSON.stringify({...(process.argv.includes('--public-schema'
   run(process.execPath, [hooks, 'block'], 0, JSON.stringify({ tool_input: { command: 'node harness.mjs capture --worktree "$WORKTREE"' } }))
   run(process.execPath, [hooks, 'block'], 2, JSON.stringify({ tool_input: { command: '$GIT_BINARY push' } }))
   run(process.execPath, [hooks, 'block'], 2, '{broken')
+  const installedHooks = join(repo, '.claude', 'hooks', 'om-harness')
+  cpSync(join(root, 'skills/om-harness/hooks'), installedHooks, { recursive: true })
+  const settings = JSON.parse(readFileSync(join(installedHooks, 'hooks-settings-snippet.json'), 'utf8'))
+  process.env.CLAUDE_PROJECT_DIR = repo
+  const installedBlock = settings.hooks.PreToolUse[0].hooks[0].command
+  const installedFreeze = settings.hooks.PreToolUse[1].hooks[0].command
+  run('sh', ['-c', installedBlock], 0, JSON.stringify({ cwd: repo, tool_input: { command: 'git status' } }))
+  run('sh', ['-c', installedBlock], 2, JSON.stringify({ cwd: repo, tool_input: { command: 'git push' } }))
+  run('sh', ['-c', installedFreeze], 2, JSON.stringify({ cwd: repo, tool_input: { file_path: 'test_bug.py' } }))
+  run('sh', ['-c', installedFreeze], 0, JSON.stringify({ cwd: repo, tool_input: { file_path: 'app.txt' } }))
+  const ended = JSON.parse(cli(['end-run', '--worktree', repo, '--start-state', hookStart, '--reason', 'fixture abort']))
+  assert.equal(ended.guardReleased, true)
+  assert.equal(existsSync(activeGuard), false)
+  run('sh', ['-c', installedBlock], 0, JSON.stringify({ cwd: repo, tool_input: { command: 'git push' } }))
+  assert.equal(JSON.parse(cli(['end-run', '--worktree', repo, '--start-state', hookStart, '--reason', 'repeat abort'])).guardReleased, false)
+  cli(['capture', '--worktree', repo, '--output', hookStart])
+  const laterStart = readFileSync(hookStart, 'utf8')
+  writeFileSync(hookStart, hookStartContents)
+  cli(['end-run', '--worktree', repo, '--start-state', hookStart, '--reason', 'stale owner'], 1)
+  assert.equal(existsSync(activeGuard), true)
+  writeFileSync(hookStart, laterStart)
+  cli(['end-run', '--worktree', repo, '--start-state', hookStart, '--reason', 'later run complete'])
+  git('worktree', 'add', '--detach', linked, 'HEAD')
+  const linkedStart = join(fixture, 'linked-start.json')
+  cli(['capture', '--worktree', linked, '--output', linkedStart])
+  const linkedGitDir = git('-C', linked, 'rev-parse', '--absolute-git-dir')
+  for (const command of [`git -C "${linked}" push`, `git -C"${linked}" push`, `git --git-dir="${linkedGitDir}" push`, `git --work-tree="${linked}" push`, `cd "${linked}" && git push`, `pushd "${linked}"; git push`, 'git -C "$WORKTREE" push', `sh -c 'git -C "${linked}" push'`]) {
+    run('sh', ['-c', installedBlock], 2, JSON.stringify({ cwd: repo, tool_input: { command } }))
+  }
+  for (const command of ['git push', `git -C "${repo}" push`, 'git status', 'sh -c "echo ordinary-work"', 'rg -C 3 example', 'echo cd example']) {
+    run('sh', ['-c', installedBlock], 0, JSON.stringify({ cwd: repo, tool_input: { command } }))
+  }
+  cli(['end-run', '--worktree', linked, '--start-state', linkedStart, '--reason', 'linked fixture complete'])
+  run('sh', ['-c', installedBlock], 0, JSON.stringify({ cwd: repo, tool_input: { command: `git -C "${linked}" push` } }))
+  git('worktree', 'remove', linked)
+  delete process.env.CLAUDE_PROJECT_DIR
+  rmSync(join(repo, '.claude'), { recursive: true })
   rmSync(join(repo, '.om-freeze-tests'))
-  console.log('PASS: multilingual/manifest test freeze, multi-edit and publication guards')
+  console.log('PASS: scoped guards, cross-directory publication, ownership/abort cleanup, worktree isolation, installed hooks with spaces, and test freeze')
 
   assert.deepEqual(h.extractJson('log\n{"notes":["a } brace"],"nested":{"x":1}}\nlog'), { notes: ['a } brace'], nested: { x: 1 } })
   assert.throws(() => h.extractJson('{}\n{}'), /Ambiguous/)
   assert.throws(() => h.extractJson('{'.repeat(200000)), /No valid JSON/)
   const config = join(fixture, 'config.json'), evidence = join(fixture, 'evidence.json'), paths = join(fixture, 'paths.txt'), packet = join(fixture, 'packet.json'), host = join(fixture, 'host.json'), start = join(fixture, 'start.json')
-  writeFileSync(config, '{}'); writeFileSync(paths, 'app.txt\n')
+  const unusualPaths = ['zażółć.txt', 'quote"file.txt']
+  for (const path of unusualPaths) writeFileSync(join(repo, path), 'reviewed Unicode or quoted path\n')
+  writeFileSync(config, '{}'); writeFileSync(paths, ['app.txt', ...unusualPaths].join('\n') + '\n')
   writeFileSync(evidence, JSON.stringify({ version: 1, status: 'passed', reason: null, checks: [{ command: ['fixture'], status: 'passed', exitCode: 0, evidence: 'Synthetic test evidence' }] }))
   cli(['capture', '--worktree', repo, '--output', start])
   const prepared = JSON.parse(cli(['prepare-review', '--config', config, '--worktree', repo, '--kind', 'implementation', '--paths-file', paths, '--validation-evidence', evidence, '--output', packet]))
@@ -211,6 +271,11 @@ process.stdout.write(JSON.stringify({...(process.argv.includes('--public-schema'
   setTimeout(() => writeFileSync(host, JSON.stringify(attestation)), 25)
   await completed
   const args = ['stage', '--worktree', repo, '--start-state', start, '--paths-file', paths, '--review-packet', packet, '--host-review', host]
+  const legacyStart = join(fixture, 'legacy-start.json')
+  const { publicationGuard, ...legacyState } = JSON.parse(readFileSync(start, 'utf8'))
+  writeFileSync(legacyStart, JSON.stringify(legacyState))
+  cli(args.map(arg => arg === start ? legacyStart : arg), 1)
+  assert.equal(existsSync(activeGuard), true, 'A legacy snapshot must not clear an active run guard')
   const approvedPacket = readFileSync(packet, 'utf8')
   const approvedHost = JSON.stringify(attestation)
   const failedGate = { status: 'failed', reason: 'Synthetic failing test', checks: [{ command: ['fixture'], status: 'failed', exitCode: 1, evidence: 'Observed test failure' }] }
@@ -219,6 +284,7 @@ process.stdout.write(JSON.stringify({...(process.argv.includes('--public-schema'
   writeFileSync(packet, JSON.stringify(packetWithFailedGate))
   writeFileSync(host, JSON.stringify({ ...attestation, contract: { ...contract, packetSha256: digest(readFileSync(packet, 'utf8')) } }))
   cli(args, 1)
+  run(process.execPath, [hooks, 'block'], 2, JSON.stringify({ cwd: repo, tool_input: { command: 'git push' } }))
   writeFileSync(packet, approvedPacket)
   writeFileSync(host, JSON.stringify({ ...attestation, validationGate: failedGate }))
   cli(args, 1)
@@ -249,7 +315,10 @@ process.stdout.write(JSON.stringify({...(process.argv.includes('--public-schema'
   cli(args, 1)
   writeFileSync(join(repo, 'app.txt'), 'unreviewed content\n')
   const staged = JSON.parse(cli(args)); assert.equal(staged.status, 'ready')
-  console.log('PASS: incremental fresh-review writes and exact reviewed-content staging without provider config')
+  assert.deepEqual(staged.stagedPaths.sort(), ['app.txt', ...unusualPaths].sort())
+  run(process.execPath, [hooks, 'block'], 0, JSON.stringify({ cwd: repo, tool_input: { command: 'git push' } }))
+  assert.equal(JSON.parse(cli(args.map(arg => arg === start ? legacyStart : arg))).status, 'ready')
+  console.log('PASS: exact reviewed-content staging of Unicode/quoted paths, handoff guard cleanup, and legacy start-state support')
 
   let observed
   let responseFailures = 0
@@ -290,4 +359,5 @@ process.stdout.write(JSON.stringify({...(process.argv.includes('--public-schema'
   rmSync(fixture, { recursive: true, force: true })
 }
 await import('./test-agent-harness-concurrency.mjs')
+await import('./test-agent-harness-findings.mjs')
 console.log('Agent harness security regressions passed.')

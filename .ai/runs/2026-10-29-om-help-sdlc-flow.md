@@ -70,6 +70,8 @@ Rework `skills/om-help/` so it routes correctly across the ~60-skill collection 
 
 ## Progress
 
+PR: #156
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: New reference files — flow-map.md and setup-state.md

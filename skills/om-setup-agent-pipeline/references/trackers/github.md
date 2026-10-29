@@ -460,6 +460,7 @@ gh label create qa-self-verified  --color c5def5 --description "Self-QA exceptio
 gh label create in-progress       --color c5def5 --description "An automated skill is working on this"
 gh label create ci-monitoring     --color d4c5f9 --description "Work complete and reported; agent is watching CI results"
 gh label create do-not-close      --color c5def5 --description "Humans only: never auto-close this issue"
+gh label create "${AUTOMERGE_LABEL:-automerge}" --color 5319e7 --description "Humans only: drive this PR to merge once every gate is green"
 gh label create priority-low      --color e4e669 --description "Cosmetic or follow-up work"
 gh label create priority-medium   --color fbca04 --description "Ordinary bug or feature"
 gh label create priority-high     --color d93f0b --description "Release-blocking"

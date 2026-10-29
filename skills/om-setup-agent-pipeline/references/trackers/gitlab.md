@@ -850,7 +850,7 @@ EXISTING=$(printf '%s' "$EXISTING" | jq -r '.[].name')
 while IFS='|' read -r name color description; do
   [ -n "$name" ] || continue
   printf '%s\n' "$EXISTING" | grep -Fxq "$name" || gl_create_label "$name" "$color" "$description"
-done <<'EOF'
+done <<EOF
 review|#0366d6|Ready for code review
 changes-requested|#b60205|Reviewer requested changes
 qa|#fbca04|Manual QA in progress
@@ -871,6 +871,7 @@ qa-self-verified|#c5def5|Self-QA exception used
 in-progress|#c5def5|An automated skill is working on this
 ci-monitoring|#d4c5f9|Work complete and reported; agent is watching CI results
 do-not-close|#c5def5|Humans only: never auto-close this issue
+${AUTOMERGE_LABEL:-automerge}|#5319e7|Humans only: drive this PR to merge once every gate is green
 priority-low|#e4e669|Cosmetic or follow-up work
 priority-medium|#fbca04|Ordinary bug or feature
 priority-high|#d93f0b|Release-blocking

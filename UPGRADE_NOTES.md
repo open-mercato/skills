@@ -14,6 +14,11 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-10-30 — Carry-forward labels and unattended continuation
+
+- A carry-forward PR now copies applicable source labels, including custom labels and the configured automerge label, before the original closes. Pipeline state is normalized; priority/risk and human blocks are preserved. QA-approval and transient claim/monitoring labels are not transferred to a new head or run.
+- Upgrade `om-merge-buddy`, `om-auto-review-pr`, and `om-auto-fix-pr` together for the full handoff: the automerge driver follows the replacement PR reference and continues fixes, review, CI, and the guarded merge in the same invocation without waiting for an author recheck or a human restart. Existing QA/review gates, ownership, and CI wait limits remain enforced; standalone review/fix skills still do not merge.
+
 ## 2026-10-30 — PR target branches and the automerge handoff
 
 - Existing PRs now use their own `baseRefName` for base updates, required checks, review diffs, and the merge destination, including release and feature branches. The configured `baseBranch` remains the default for new PRs; missing targets stop the run instead of falling back to that default. Fork replacements preserve the original target.

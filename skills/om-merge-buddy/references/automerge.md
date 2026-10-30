@@ -55,13 +55,47 @@ holds. A skip writes nothing to the PR.
    re-read the claim: if it released this invocation's lock, re-establish it
    before proceeding, unless another run claimed the PR meanwhile (then skip).
    Never treat a shared automation login as proof of re-entry.
-   When the fork flow opened a
-   replacement PR, apply `$AUTOMERGE_LABEL` to the replacement, claim it, and
-   continue this procedure on the replacement number. Verify its `baseRefName`
-   still matches the original target; never silently retarget a carry-forward PR.
+   When the fork flow opens a replacement PR, follow **Carry-forward continuity**
+   below: copy applicable labels, switch the active PR context, and continue this
+   procedure on the replacement through the final merge. Never stop at the
+   replacement's creation or wait for a human to restart the chain.
 5. **Wait for CI, bounded** — after a push, wait for the head's required checks with **watch-run**, within `CI_MAX_WAIT_MINUTES` for this PR. Still pending at the cap → **park** the PR: swap `in-progress` for `ci-monitoring`, restore assignees, update the status comment, and move to the next PR. After the last PR, revisit parked PRs once, from step 2. Red after a fix attempt → one more `om-auto-fix-pr {n} --ci-only` pass, then needs-human.
 6. **Merge** — re-read the head, `baseRefName`, `baseRefOid`, label, claim, and gates. If the target branch or its tip changed since evaluation, return to step 2. When every report-mode gate passes (approved as defined in step 4, required checks genuinely green on the current head against `TARGET_BRANCH`, mergeable, no blocking label, QA gate satisfied, QA head fresh), invoke `om-approve-merge-pr {n} --automerge` with this invocation's claim context (PR number, claim comment id, actor, run identity when available). That skill validates the delegated claim and label independently and merges into this PR's current target branch without retargeting it. The `in-progress` claim this run holds is the one exception to report mode's claim gate; no other run's claim is exempt. A validated handoff answers self-approval rejection alone. Any other ambiguity — stale QA head, `needs-qa` with `skip-qa`, `changes-requested` — returns needs-human and leaves the PR unmerged. Never request merge-when-checks-pass to get around pending checks. If the installed merge skill lacks this handoff mode, stop needs-human and name the required skill upgrade; never fall back to an interactive invocation in an unattended run.
 7. **Finish** — release per `references/claim-pr.md`, then create or update in place the PR's `` 🤖 `om-merge-buddy` — automerge status `` comment (`references/report-templates.md`): merged, parked, or needs-human with the one blocker and the head SHA it was judged at. Then take the next PR.
+
+## Carry-forward continuity
+
+- Immediately before transfer, read the original's current labels through
+  **get-pr**; a removed automerge label cancels this continuation, so do not
+  recreate it from an earlier snapshot. Before the original closes, verify the
+  replacement retains the original `baseRefName`, credit, and supersede link.
+  Copy the original's category, priority, risk, custom labels, QA requirements (`needs-qa` / `skip-qa`),
+  and `$AUTOMERGE_LABEL` through the label guards; preserve human hard blocks.
+  Keep exactly one priority and risk label, preserving the originals unless a
+  documented scope increase requires raising them.
+  Normalize the pipeline label to the replacement's verified state through
+  `set_pipeline_label`, retaining any human block. Never copy `qa-approved`,
+  `qa-self-verified`, `in-progress`, or `ci-monitoring`: QA evidence is tied to
+  a head, and claims/monitoring belong to a run. Missing labels degrade through
+  the guards, but a missing automerge label prevents unattended merging.
+  Conflicting QA requirements remain a blocker, not permission to pick one.
+- Read back the replacement's labels through **get-pr** before accepting the
+  transfer. Establish this run's own claim on it, then release only this run's
+  original claim. A competing live claim stops the transfer. The original may
+  close only after the replacement exists with its required labels verified;
+  label-transfer failure leaves it open with the blocker recorded.
+- Consume the replacement's `PR:` chaining line (accept legacy markers), update
+  the active PR number, URL, branch, target, claim context, and cleanup tracking,
+  then return to per-PR step 2. All later fixes, review, CI, evidence, comments,
+  and the merge act on that replacement. Repeat for any later replacement;
+  never resume work on a superseded PR or open a duplicate.
+- Continue in this invocation until the active replacement merges or a genuine
+  gate, access/claim conflict, or bounded CI wait prevents progress. Do not ask
+  for routine confirmation, wait for the original author's recheck, or hand the
+  user a command to restart. `om-auto-fix-pr` still returns without merging;
+  this driving skill resumes automatically and invokes `om-approve-merge-pr`
+  with the validated automerge handoff. A fresh QA or independent-review gate
+  still needs its required evidence; copying labels never satisfies it.
 
 ## The QA gate stays a human gate
 

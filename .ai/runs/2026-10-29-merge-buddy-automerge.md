@@ -62,6 +62,11 @@ PR: #158
 
 - [x] Post-review fix: include automerge.label in the setup schema and field reference, preserving the skill size budget — ff575f3
 
+### Phase 7: Carry-forward labels and autonomous continuation
+
+- [ ] 7.1 Preserve applicable labels and continue the automerge chain on every replacement PR
+- [ ] 7.2 Validate and re-review the updated PR
+
 ## Follow-up validation and compatibility evidence
 
 - Full configured gate: all seven commands passed on Python 3.14.4 with `TMPDIR=/tmp`. The cockpit normally puts temporary directories under a parent Git checkout; an external temporary root lets the existing no-Git UX fixture exercise its intended condition. No tests or assertions were changed.

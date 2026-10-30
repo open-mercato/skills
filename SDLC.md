@@ -128,7 +128,7 @@ For existing PRs, the PR's `baseRefName` is authoritative for base updates, revi
 Two labels live outside this taxonomy, and only humans apply them:
 
 - `do-not-close` — on issues that housekeeping skills must never auto-close. Skills only ever read it.
-- `automerge` — on a PR the human wants merged as soon as it is genuinely ready. `om-merge-buddy --automerge` works these PRs one at a time: it approves CI runs held for maintainer approval, merges the PR's current target branch in and resolves conflicts, fixes review findings and red CI through `om-auto-fix-pr` (a fork PR is carried forward to a credited replacement PR that keeps the label), and merges through `om-approve-merge-pr` once every gate passes. The label authorizes the work and the merge; it never waives a gate — the QA gate, required checks, and blocking labels still hold, and a PR claimed `in-progress` by another agent is skipped until the claim is released.
+- `automerge` — on a PR the human wants merged as soon as it is genuinely ready. `om-merge-buddy --automerge` works these PRs one at a time: it approves CI runs held for maintainer approval, merges the PR's current target branch in and resolves conflicts, fixes review findings and red CI through `om-auto-fix-pr` (a fork PR is carried forward to a credited replacement PR that copies applicable labels, including the automerge label, and becomes the active PR for the same unattended run through merge), and merges through `om-approve-merge-pr` once every gate passes. The label authorizes the work and the merge; it never waives a gate — the QA gate, required checks, and blocking labels still hold, and a PR claimed `in-progress` by another agent is skipped until the claim is released.
 
 ## The QA gate
 

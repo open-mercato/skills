@@ -6,6 +6,8 @@ Takes one open PR by number and drives it to merge-ready without merging it. It 
 
 For an existing PR, base updates, CI baselines, and required-check lookups use its actual target branch (`baseRefName`), including release and feature branches. Fork replacements preserve that target, and a retargeted PR is evaluated again. The configured `baseBranch` remains a default for creating new PRs.
 
+When a fork becomes a replacement PR, verify copied labels and emit the replacement's PR reference. An active automerge driver then continues on that PR in the same run through the final guarded merge, without a user restart; this fix skill still never merges by itself.
+
 ## Parameters
 
 | Parameter | Required | Description |

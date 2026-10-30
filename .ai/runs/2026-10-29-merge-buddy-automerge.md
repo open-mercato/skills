@@ -56,6 +56,14 @@ PR: #158
 
 ### Phase 6: Requested review and target-branch follow-up
 
-- [ ] 6.1 Fix the automerge self-approval handoff and trim the merge-buddy description
-- [ ] 6.2 Use the PR target branch for base updates, merge gates, and merge destination
+- [x] 6.1 Fix the automerge self-approval handoff and trim the merge-buddy description — c26de23
+- [x] 6.2 Use the PR target branch for base updates, merge gates, and merge destination — c26de23
 - [ ] 6.3 Validate the final branch and complete the review pass
+
+## Follow-up validation and compatibility evidence
+
+- Full configured gate: all seven commands passed on Python 3.14.4 with `TMPDIR=/tmp`. The cockpit normally puts temporary directories under a parent Git checkout; an external temporary root lets the existing no-Git UX fixture exercise its intended condition. No tests or assertions were changed.
+- Real Git branch matrix: ran the documented fetch/merge commands in three disposable repositories targeting `release/1.2`, `feature/integration`, and `maintenance`, each with a divergent configured default. Every target tip became an ancestor of the PR head; default-only commits stayed excluded.
+- Instruction walkthrough: default interactive self-approval still asks; validated automerge self-approval proceeds to the ordinary merge attempt; missing label/claim, another live claim, stale QA, conflicting QA labels, and required independent review all leave the PR unmerged. Retargeting invalidates gate readings; fork replacements preserve the original target. No live automerge was attempted.
+- Standard references were compared with their peers. The self-approval/delegated-claim rules are merge-skill-specific, so they are not synced to other roles. Target-branch handling is synced through merge/fix/resume consumers; both setup SDLC templates stay aligned. Generic safety, markers, labels, and glossary rules are unchanged.
+- Compatibility: optional `--automerge` handoff is additive; caller and callee ship together and an older callee stops with an upgrade blocker. No config keys, tracker operations, skill names, persisted Progress format, or chaining markers changed in this follow-up.

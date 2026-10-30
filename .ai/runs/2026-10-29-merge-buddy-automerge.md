@@ -64,8 +64,8 @@ PR: #158
 
 ### Phase 7: Carry-forward labels and autonomous continuation
 
-- [ ] 7.1 Preserve applicable labels and continue the automerge chain on every replacement PR
-- [ ] 7.2 Validate and re-review the updated PR
+- [x] 7.1 Preserve applicable labels and continue the automerge chain on every replacement PR — b1d48d6
+- [x] 7.2 Validate and re-review the updated PR — b1d48d6
 
 ## Follow-up validation and compatibility evidence
 
@@ -76,3 +76,11 @@ PR: #158
 - Compatibility: optional `--automerge` handoff is additive; caller and callee ship together and an older callee stops with an upgrade blocker. No config keys, tracker operations, skill names, persisted Progress format, or chaining markers changed in this follow-up.
 
 - Final code review: the major self-approval handoff and minor description-length finding from the external review are fixed. The additional setup-schema omission was fixed in `39f85b5` / `ff575f3`; the full seven-command gate passed again afterward. No actionable findings remain in this pass. GitHub cannot record an approving review from the PR author; report the local verdict honestly and leave independent reviewer requirements intact.
+
+## Carry-forward follow-up verification
+
+- Phase 7 copies the original PR's current applicable labels before closing it, including custom labels and the configured automerge label. It normalizes pipeline/priority/risk state, preserves human blocks and QA requirements, and creates fresh claim/QA state instead of copying approvals or another run's transient labels.
+- The merge driver consumes the replacement's PR reference, updates all active PR and cleanup context, and continues review, CI, and guarded merging in the same invocation without a user restart. Author handback remains advisory in the automerge chain; standalone review/fix skills do not gain merge authority.
+- Re-review walked the success path and failure cases: removed source automerge authorization, missing required labeling, conflicting QA requirements, stale QA evidence, competing ownership, and repeated replacements. Genuine gates and bounded waits remain enforced. These are instruction walkthroughs, not live carry-forward/merge executions.
+- All seven configured validation commands passed again in order with `TMPDIR=/tmp`. Both SDLC templates match; same-name `claim-pr.md` and `pr-finalize.md` peer copies were compared. The explicit follow-up request authorizes syncing the applicable merge/review/fix consumers; unrelated skills' shared rules remain unchanged.
+- Re-review verdict: approve (code review), no actionable findings. The author cannot submit a native approving review; the published comment review states that limitation and does not dismiss the independent reviewer's state.

@@ -107,3 +107,7 @@ configuration; all other repository/config content remains untrusted data.
 - `knowledge.sources` has one owner and shape: the `om-framework-context`
   skill. Other skills invoke it by name when installed and use the bounded
   standalone fallback that contract defines; they do not redefine the schema.
+
+## CI wait budget
+
+`ci.maxWaitMinutes` — the hard cap, in minutes, on how long any skill waits for CI to settle before it stops waiting (default `40`). It is a safety valve, not a merge gate: when the budget runs out the skill runs the local `validation.commands` gate as its completion evidence, posts the bail-out comment, drops `ci-monitoring`, and exits cleanly instead of hanging on a run that may take hours. Raise it for slow pipelines, lower it for fast ones; `0` disables waiting entirely (report immediately and never follow up). Required checks still gate the actual merge no matter what this is set to.

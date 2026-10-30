@@ -58,7 +58,9 @@ PR: #158
 
 - [x] 6.1 Fix the automerge self-approval handoff and trim the merge-buddy description — c26de23
 - [x] 6.2 Use the PR target branch for base updates, merge gates, and merge destination — c26de23
-- [ ] 6.3 Validate the final branch and complete the review pass
+- [x] 6.3 Validate the final branch and complete the review pass — ff575f3
+
+- [x] Post-review fix: include automerge.label in the setup schema and field reference, preserving the skill size budget — ff575f3
 
 ## Follow-up validation and compatibility evidence
 
@@ -67,3 +69,5 @@ PR: #158
 - Instruction walkthrough: default interactive self-approval still asks; validated automerge self-approval proceeds to the ordinary merge attempt; missing label/claim, another live claim, stale QA, conflicting QA labels, and required independent review all leave the PR unmerged. Retargeting invalidates gate readings; fork replacements preserve the original target. No live automerge was attempted.
 - Standard references were compared with their peers. The self-approval/delegated-claim rules are merge-skill-specific, so they are not synced to other roles. Target-branch handling is synced through merge/fix/resume consumers; both setup SDLC templates stay aligned. Generic safety, markers, labels, and glossary rules are unchanged.
 - Compatibility: optional `--automerge` handoff is additive; caller and callee ship together and an older callee stops with an upgrade blocker. No config keys, tracker operations, skill names, persisted Progress format, or chaining markers changed in this follow-up.
+
+- Final code review: the major self-approval handoff and minor description-length finding from the external review are fixed. The additional setup-schema omission was fixed in `39f85b5` / `ff575f3`; the full seven-command gate passed again afterward. No actionable findings remain in this pass. GitHub cannot record an approving review from the PR author; report the local verdict honestly and leave independent reviewer requirements intact.

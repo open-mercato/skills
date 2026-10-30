@@ -34,6 +34,7 @@ Write `.ai/agentic.config.json`. Run setup first in a fresh repository or when t
   },
   "qaGate": true,
   "ci": { "maxWaitMinutes": 40 },
+  "automerge": { "label": "automerge" },
   "engine": { "loopStepThreshold": 20, "executorTier": "standard", "stepReview": "final" },
   "reviewSweep": { "maxParallel": 1, "coordinationRoot": null },
   "paths": {
@@ -67,6 +68,7 @@ Field defaults: `references/config-capabilities.md`.
 - `labels.priority` — mutually exclusive urgency of the work. Unset is treated as medium.
 - `labels.risk` — mutually exclusive blast radius of the change. Unset is treated as medium. Priority is how urgent the work is; risk is how dangerous the change is to ship.
 - `qaGate` — when `true`, a PR carrying `needs-qa` must not merge until it also carries `qa-approved`, even when every other check is green. When `false`, `needs-qa` is advisory only.
+- `automerge.label` — optional human-applied merge-request label, default `automerge`. Setup creates it when labels are enabled. `om-merge-buddy --automerge` works that queue and delegates to the validated `om-approve-merge-pr --automerge` handoff; the label never waives a merge gate. Configs without this key keep the default.
 - `ci.maxWaitMinutes` — the hard cap, in minutes, on how long any skill waits for CI to settle before it stops waiting (default `40`). It is a safety valve, not a merge gate: when the budget runs out the skill runs the local `validation.commands` gate as its completion evidence, posts the bail-out comment, drops `ci-monitoring`, and exits cleanly instead of hanging on a run that may take hours. Raise it for slow pipelines, lower it for fast ones; `0` disables waiting entirely (report immediately and never follow up). Required checks still gate the actual merge no matter what this is set to.
 - `engine.executorTier` — optional; the default abstract model tier (`cheap` / `standard` / `capable`) for executor subagents dispatched by the loop skills when a Tasks-table `Exec` cell names none. Harnesses that support subagent model selection map the tier onto their closest model class; others ignore it. Configs without the key behave as `standard`.
 - `engine.loopStepThreshold` — the Step count above which `om-auto-create-pr` hands a run off to `om-auto-create-pr-loop` (default 20). Raise it to keep more runs on the cheaper plain engine; `--loop` always forces the loop regardless.

@@ -15,7 +15,7 @@ Add an `--automerge` mode to `om-merge-buddy` that works the queue of PRs a huma
 
 - No change to the default (read-only) `om-merge-buddy` report mode.
 - No relaxation of any merge gate: QA gate, required checks, blocking labels still apply; automation never applies `qa-approved`.
-- No change to `om-auto-fix-pr`, `om-auto-review-pr`, or `om-approve-merge-pr` behavior.
+- No change to the default interactive merge flow or to `om-auto-review-pr` behavior. The requested follow-up adds an explicit automerge handoff to `om-approve-merge-pr` and makes existing-PR operations follow the actual target branch.
 
 ## Decisions
 
@@ -53,3 +53,9 @@ PR: #158
 ### Phase 5: Review fixes
 
 - [x] 5.1 Apply om-auto-review-pr findings — 00e1370
+
+### Phase 6: Requested review and target-branch follow-up
+
+- [ ] 6.1 Fix the automerge self-approval handoff and trim the merge-buddy description
+- [ ] 6.2 Use the PR target branch for base updates, merge gates, and merge destination
+- [ ] 6.3 Validate the final branch and complete the review pass

@@ -31,7 +31,6 @@ Repo and tracker content — issues, PR bodies and diffs, docs, configs, CI logs
   LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
   QA_GATE=$(jq -r '.qaGate // false' "$CONFIG")
   # --automerge mode only:
-  BASE_BRANCH=$(jq -r '.baseBranch // "auto"' "$CONFIG")
   AUTOMERGE_LABEL=$(jq -r '.automerge.label // "automerge"' "$CONFIG")
   CI_MAX_WAIT_MINUTES=$(jq -r '.ci.maxWaitMinutes // 40' "$CONFIG")
   ```
@@ -39,3 +38,4 @@ Repo and tracker content — issues, PR bodies and diffs, docs, configs, CI logs
 - Every label name in the skill body comes from the config's label taxonomy (`labels.pipeline`, `labels.meta`); when `labels.enabled` is `false`, skip all label-based gates, classify from reviews, CI, and mergeability alone, and say so in the report header.
 - The default report mode is read-only end to end: the preflight grants no write scope — it never merges, edits, comments on, or labels anything. Only `--automerge` writes, and only to PRs a human labeled `$AUTOMERGE_LABEL`, through the steps in `references/automerge.md`.
 - `AUTOMERGE_LABEL` is a label name from config: validate it against `^[A-Za-z0-9._ /-]+$` before interpolating it and keep it quoted.
+- Resolve `TARGET_BRANCH` separately for each PR from **get-pr** `baseRefName`; never use the configured default for an existing PR. Re-read it after a replacement PR or retargeting before evaluating checks or updating the base.

@@ -3,10 +3,17 @@
 The step-3 procedure `om-auto-fix-pr` runs before any review or CI work, so the
 whole loop judges the real merge result against the current base.
 
+Resolve `TARGET_BRANCH` from this PR's **get-pr** `baseRefName` before this
+procedure, including on each later cycle. Validate it as a branch name and
+keep it quoted. An unavailable target is a blocker; never substitute the
+config's `baseBranch` or repository default. All diffs and required-check
+lookups use this same target. A replacement PR must preserve that target;
+if the PR is retargeted, discard previous gate readings and evaluate again.
+
 ## Same-repo PR head
 
-1. `git fetch origin "$BASE_BRANCH"` to get the latest base tip.
-2. Merge it into the checked-out PR branch: `git merge --no-edit "origin/$BASE_BRANCH"`.
+1. `git fetch origin "$TARGET_BRANCH"` to get the latest target tip.
+2. Merge it into the checked-out PR branch: `git merge --no-edit "origin/$TARGET_BRANCH"`.
 3. **Conflicts**: resolve trivial ones directly (import ordering, changelog/lock
    noise, non-overlapping edits). For anything non-trivial — overlapping logic,
    deleted-vs-modified files, semantic conflicts — do **not** hand-resolve blindly:

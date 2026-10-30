@@ -4,6 +4,8 @@
 
 Takes one open PR by number and drives it to merge-ready without merging it. It first brings the branch up to date with the base, then loops review-autofix, built-in CI stabilization, and UI verification until the PR is approvable, green, and QA-evidenced. Non-blocking findings (nits, low-severity, out-of-scope) become tracked follow-up issues rather than blocking the PR, and a `--ci-only` mode drives just CI green on a PR or a plain branch. The PR is left merge-ready with normalized labels and handed off — this skill never merges itself. Use it for "get PR 123 merge-ready".
 
+For an existing PR, base updates, CI baselines, and required-check lookups use its actual target branch (`baseRefName`), including release and feature branches. Fork replacements preserve that target, and a retargeted PR is evaluated again. The configured `baseBranch` remains a default for creating new PRs.
+
 ## Parameters
 
 | Parameter | Required | Description |

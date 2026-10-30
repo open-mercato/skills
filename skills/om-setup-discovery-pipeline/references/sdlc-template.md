@@ -28,7 +28,7 @@
 
 ## Purpose
 
-This file documents how work flows from ticket to merged PR in this repository. The agent skills configured in `.ai/agentic.config.json` enforce the process; humans read it here. PRs target `{{baseBranch}}`; issues and PRs live in {{tracker}}, with every tracker operation the skills run defined in `.ai/trackers/{{tracker}}.md` (edit that file to extend or override tracker behavior).
+This file documents how work flows from ticket to merged PR in this repository. The agent skills configured in `.ai/agentic.config.json` enforce the process; humans read it here. New PRs default to `{{baseBranch}}`; existing PRs use their own current target branch (`baseRefName`) for base updates, reviews, required checks, and merging; issues and PRs live in {{tracker}}, with every tracker operation the skills run defined in `.ai/trackers/{{tracker}}.md` (edit that file to extend or override tracker behavior).
 
 Work enters through two paths: a free-form task brief handed to an agent, or a filed ticket. Both converge on the same review loop, the same validation gate, and the same merge gates.
 
@@ -78,7 +78,7 @@ Before any of that, `om-discover` establishes the product context every later de
 <!-- IF qaGate -->
 | QA | A PR carrying `needs-qa` waits for QA. The reviewer boots the app once with `om-prepare-test-env`, walks the change in a real browser with `om-auto-qa-pr` — which attaches screenshots and a pass/fail report and touches no labels by default — and records the outcome. A flow worth keeping becomes `om-integration-tests` coverage. See the QA gate below. | QA reviewer, with `om-prepare-test-env`, `om-auto-qa-pr`, `om-integration-tests` | `qa-approved` applied by a QA reviewer or the permitted self-QA exception; `qa-failed` routes it back |
 <!-- END IF -->
-| Merge | `om-merge-buddy` reports, read-only, which PRs can merge now and which are close but blocked; with `--automerge` it drives every PR a human labeled `{{automergeLabel}}` to merge. `om-approve-merge-pr` re-checks every gate, approves, and squash-merges. | `om-merge-buddy` + `om-approve-merge-pr`, or a human | PR squash-merged into `{{baseBranch}}` |
+| Merge | `om-merge-buddy` reports, read-only, which PRs can merge now and which are close but blocked; with `--automerge` it drives every PR a human labeled `{{automergeLabel}}` to merge. `om-approve-merge-pr` re-checks every gate, approves, and squash-merges. | `om-merge-buddy` + `om-approve-merge-pr`, or a human | PR squash-merged into its current target branch |
 | Post-merge housekeeping | Close issues the merged PR fixes; comment on issues whose PRs were closed without merging; turn leftover asks or review comments into tracked follow-up issues. | `om-close-fixed-issues`, `om-followup-issue-from-pr` | Tracker reconciled, follow-ups filed |
 
 After merge, this process stops. Deployment, smoke tests, monitoring, and rollback belong to the repository's release process, not to this document: the Maintainer — or a release manager, when the team names one — drafts the changelog with `om-auto-update-changelog` and reconciles the tracker with `om-close-fixed-issues`, and `om-pipeline-retro` reads finished runs to rank what second passes cost. Merge is where this document ends; delivering the change to users is a separate process the team owns.
@@ -165,7 +165,7 @@ When signals conflict, pick the higher label and say why in the label comment. A
 Two labels live outside this taxonomy, and only humans apply them:
 
 - `do-not-close` — on issues that housekeeping skills must never auto-close. Skills only ever read it.
-- `{{automergeLabel}}` — on a PR the human wants merged as soon as it is genuinely ready. `om-merge-buddy --automerge` works these PRs one at a time: it approves CI runs held for maintainer approval, merges `{{baseBranch}}` in and resolves conflicts, fixes review findings and red CI through `om-auto-fix-pr` (a fork PR is carried forward to a credited replacement PR that keeps the label), and merges through `om-approve-merge-pr` once every gate passes. The label authorizes the work and the merge; it never waives a gate — the QA gate, required checks, and blocking labels still hold, and a PR claimed `in-progress` by another agent is skipped until the claim is released.
+- `{{automergeLabel}}` — on a PR the human wants merged as soon as it is genuinely ready. `om-merge-buddy --automerge` works these PRs one at a time: it approves CI runs held for maintainer approval, merges the PR's current target branch in and resolves conflicts, fixes review findings and red CI through `om-auto-fix-pr` (a fork PR is carried forward to a credited replacement PR that keeps the label), and merges through `om-approve-merge-pr` once every gate passes. The label authorizes the work and the merge; it never waives a gate — the QA gate, required checks, and blocking labels still hold, and a PR claimed `in-progress` by another agent is skipped until the claim is released.
 <!-- END IF -->
 
 <!-- IF qaGate -->

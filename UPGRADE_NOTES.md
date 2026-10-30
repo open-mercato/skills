@@ -14,6 +14,11 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-10-30 — PR target branches and the automerge handoff
+
+- Existing PRs now use their own `baseRefName` for base updates, required checks, review diffs, and the merge destination, including release and feature branches. The configured `baseBranch` remains the default for new PRs; missing targets stop the run instead of falling back to that default. Fork replacements preserve the original target.
+- Upgrade `om-merge-buddy` and `om-approve-merge-pr` together: the caller now passes `--automerge` and its active claim context. The merge skill revalidates the label and claim and treats self-approval rejection as already answered by the human merge request. Other ambiguities return needs-human, and branch protection and QA gates still apply. An older merge skill without this mode is reported as an upgrade blocker. Default interactive use is unchanged.
+
 ## 2026-10-29 — `om-merge-buddy --automerge` and the `automerge` label
 
 - **Label a PR `automerge` and a scheduled `om-merge-buddy --automerge` run merges it once it is genuinely ready.** One PR at a time, the run approves CI runs held for maintainer approval, merges the base in, fixes conflicts, review findings, and red CI through `om-auto-fix-pr` (fork PRs are carried forward to a credited replacement PR that keeps the label), and merges through `om-approve-merge-pr`. It never waives a gate: the QA gate, required checks, and `do-not-merge` / `blocked` still hold. It skips PRs claimed `in-progress` by another agent and PRs referenced by another active orchestrator task. The default report mode is unchanged and still read-only.

@@ -49,7 +49,8 @@ disabling checks to pass is forbidden, and a repo-local override cannot relax th
 ### Baseline: what is failing?
 
 - PR mode: **get-pr-checks** for `{prNumber}` (name, state, link) and
-  **get-required-checks** for the base branch; when required checks are unreadable,
+  **get-required-checks** for this PR's `TARGET_BRANCH` from fresh **get-pr**
+  `baseRefName` (also in PR `--ci-only` mode); when required checks are unreadable,
   treat all reported checks as required. Then **always** take the second reading
   below before trusting the first.
 - Branch mode (`--ci-only --branch <name>`): **list-runs** for the branch; take the
@@ -98,7 +99,7 @@ Per iteration:
      the link, change no code for it, and leave the check for a human to re-run
      from the link — report it as the remaining blocker if it gates the merge.
    - **Infra / out of scope** — runner outages, missing secrets, base branch already
-     broken (verify by checking whether the same check fails on `origin/$BASE_BRANCH`
+     broken (verify by checking whether the same check fails on `origin/$TARGET_BRANCH`
      via **list-runs** on the base branch). These are blockers, not fixables —
      record and move on; if every remaining failure is out of scope, stop with
      `Status: blocked`.

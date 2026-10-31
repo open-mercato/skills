@@ -5,7 +5,7 @@ description: One-time pipeline configurator. Inspects the repo (default branch, 
 
 # Setup Agent Pipeline
 
-Write `.ai/agentic.config.json`. Run setup first in a fresh repository or when this config is missing.
+Configure `.ai/agentic.config.json` when missing or when the pipeline changes.
 
 ## Arguments
 
@@ -47,6 +47,7 @@ Write `.ai/agentic.config.json`. Run setup first in a fresh repository or when t
   },
   "designTokens": null,
   "reviewChecklist": null,
+  "agentHarness": null,
   "closeKeywords": [],
   "dependencyAudit": { "minSeverity": "high", "ignore": [] },
   "prTitleTemplate": "{prefix}({area}): {summary}{issueRef}",

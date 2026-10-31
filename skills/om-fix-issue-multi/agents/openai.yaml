@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fix Issue Multi"
+  short_description: "Run staged fix with model council"
+  default_prompt: "Use $om-fix-issue-multi for a staged issue fix with independent reviewers."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fix Issue for Review"
+  short_description: "Fix an issue and leave changes staged"
+  default_prompt: "Use $om-fix-issue to produce a verified staged fix without publishing it."

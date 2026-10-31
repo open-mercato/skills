@@ -2,7 +2,7 @@
   "name": "@open-mercato/skills",
   "version": "1.0.0",
   "private": true,
-  "description": "Agent skills that run a full PR pipeline: plan, implement, review, QA gate, merge.",
+  "description": "Agent skills for full PR delivery or staged-only multi-model handoffs.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -12,6 +12,7 @@
     "install-skills": "node scripts/install-skills.mjs",
     "uninstall-skills": "node scripts/install-skills.mjs --uninstall",
     "lint": "scripts/lint.sh",
+    "test:agent-harness": "node scripts/test-agent-harness.mjs",
     "test:browser-providers": "node scripts/test-browser-providers.mjs",
     "test:tracker-providers": "node scripts/test-tracker-providers.mjs",
     "test:classify-runs": "node scripts/test-classify-runs.mjs",
@@ -24,6 +25,7 @@
     "test:migrated-skill-tools": "node scripts/test-migrated-skill-tools.mjs",
     "test:osv-scan": "node scripts/test-osv-scan.mjs",
     "test:agent-browser-codex": "bash scripts/test-agent-browser-codex.sh",
-    "test:ux-design": "node --test scripts/test-ux-design.mjs scripts/test-ux-design-comments.mjs"
+    "test:ux-design": "node --test scripts/test-ux-design.mjs scripts/test-ux-design-comments.mjs",
+    "test:agent-harness-security": "node scripts/test-agent-harness-security.mjs"
   }
 }

@@ -62,6 +62,8 @@ writes, preventing concurrent local creation of the first status comment.
   "activePrs": [{
     "number": 123,
     "url": "https://tracker.example/pr/123",
+    "title": "Current tracker PR title",
+    "statusCommentUrl": "https://tracker.example/pr/123#comment-456",
     "statusCommentId": "456",
     "instanceId": "uuid",
     "runId": "run-id",
@@ -71,6 +73,12 @@ writes, preventing concurrent local creation of the first status comment.
     "outcome": "waiting-ci",
     "plan": [{"step": "CI", "status": "pending", "evidence": "run-url"}],
     "nextAction": "Read current-head checks, then reconcile signals",
+    "firstStartedAt": "2026-10-31T14:00:00.000Z",
+    "firstReadyAt": null,
+    "readyAt": null,
+    "readyHead": null,
+    "readyPolicy": null,
+    "mergeableDurationMs": null,
     "lastWorkedAt": "2026-10-31T14:00:00.000Z",
     "nextCheckAt": "2026-10-31T14:05:00.000Z",
     "updatedAt": "2026-10-31T14:00:00.000Z"
@@ -108,7 +116,11 @@ carries invocation-only risk/CI waivers.
 Before each actionable step, persist its plan as `working` with `nextAction`;
 after it ends, persist progress, evidence, outcome and `nextCheckAt`. Mirror the
 same plan/progress and `updatedAt` in the existing status comment, updating its
-stored ID only after verifying marker and author. Keep reservation fencing
+stored ID only after verifying marker and author. Persist optional `title` from
+fresh **get-pr** and `statusCommentUrl` from the actual verified comment
+lookup/create/update response on initial admission and later refreshes. Never
+fabricate an anchor from an ID; keep unknown legacy title/link null. After
+first creation, mirror the returned real URL into the same comment/checkpoint. Keep reservation fencing
 tokens and host/PID/process internals private to local ownership state, never
 in public comment checkpoints or merged journals. If the ID is missing/deleted,
 search the full comment history first; create only when no own marker exists.
@@ -172,7 +184,11 @@ function restoreScheduler({ raw, repository, currentUser, now, reset = false, re
   if (state && Array.isArray(state.activePrs) && state.activePrs.some(entry => entry?.reservation != null && !validReservation(entry.reservation))) throw new Error('Invalid scheduler reservation; ownership unknown')
   const validEntry = entry => entry && Number.isInteger(entry.number) && entry.number > 0
     && typeof entry.nextAction === 'string' && typeof entry.outcome === 'string'
+    && ['title', 'statusCommentUrl'].every(key => entry[key] == null || typeof entry[key] === 'string')
     && [entry.nextCheckAt, entry.lastWorkedAt, entry.updatedAt].every(value => utc(value))
+    && ['firstStartedAt', 'firstReadyAt', 'readyAt'].every(key => entry[key] == null || utc(entry[key]))
+    && ['readyHead', 'readyPolicy'].every(key => entry[key] == null || typeof entry[key] === 'string')
+    && (entry.mergeableDurationMs == null || (Number.isFinite(entry.mergeableDurationMs) && entry.mergeableDurationMs >= 0))
     && Array.isArray(entry.plan) && entry.plan.every(step => step && typeof step.step === 'string' && ['pending', 'working', 'done', 'blocked'].includes(step.status))
   const validEntries = entries => Array.isArray(entries) && entries.every(validEntry) && new Set(entries.map(entry => entry.number)).size === entries.length
   if (state && (!utc(state.updatedAt) || !validEntries(state.activePrs))) { corrupt = true; state = null }
@@ -199,14 +215,30 @@ function mayReclaim({ ownerStatus, delegatedStatuses }) {
 }
 function checkpointPlan(previous, update, now, worked = false) {
   const next = { ...previous, ...update }
-  const keys = ['head', 'base', 'outcome', 'plan', 'nextAction', 'nextCheckAt']
+  const keys = ['head', 'base', 'outcome', 'plan', 'nextAction', 'nextCheckAt', 'firstStartedAt', 'firstReadyAt', 'readyAt', 'readyHead', 'readyPolicy', 'mergeableDurationMs']
   const semantic = record => JSON.stringify(keys.map(key => record?.[key]))
   next.updatedAt = semantic(previous) === semantic(next) ? previous.updatedAt : now
   next.lastWorkedAt = worked ? now : previous?.lastWorkedAt ?? now
   return next
 }
 function replaceTracked(activePrs, original, replacement) {
-  return [...activePrs.filter(entry => entry.number !== original && entry.number !== replacement.number), replacement]
+  const previous = activePrs.find(entry => entry.number === original)
+  const carried = { ...replacement, firstStartedAt: previous?.firstStartedAt ?? replacement.firstStartedAt ?? null,
+    firstReadyAt: previous?.firstReadyAt ?? replacement.firstReadyAt ?? null, startedFromPr: previous?.startedFromPr ?? original,
+    readyAt: null, readyHead: null, readyPolicy: null, mergeableDurationMs: null }
+  return [...activePrs.filter(entry => entry.number !== original && entry.number !== replacement.number), carried]
+}
+function readinessTiming({ previous = {}, now, firstAction = false, ready = false, head, policy }) {
+  const validTime = value => typeof value === 'string' && Number.isFinite(Date.parse(value))
+  if (!validTime(now)) throw new Error('UTC checkpoint time required')
+  if (ready && (!head || !policy)) throw new Error('Verified readiness head and policy required')
+  const firstStartedAt = validTime(previous.firstStartedAt) ? previous.firstStartedAt : firstAction ? now : null
+  const retained = ready && previous.readyHead === head && previous.readyPolicy === policy && validTime(previous.readyAt)
+  const readyAt = ready ? retained ? previous.readyAt : now : null
+  const firstReadyAt = validTime(previous.firstReadyAt) ? previous.firstReadyAt : readyAt
+  const elapsed = firstStartedAt && readyAt ? Date.parse(readyAt) - Date.parse(firstStartedAt) : NaN
+  return { firstStartedAt, firstReadyAt, readyAt, readyHead: ready ? head : null, readyPolicy: ready ? policy : null,
+    mergeableDurationMs: Number.isFinite(elapsed) && elapsed >= 0 ? elapsed : null }
 }
 function schedulerDecision({ activePrs, candidates, currentUser, now, ownedComplete = true, onlyPr = null, resetAdmission = false }) {
   const visible = candidates.filter(pr => onlyPr === null || pr.number === onlyPr)
@@ -306,8 +338,15 @@ function upsertMergedJournal({ raw = '', record }) {
   const day = new Date(record.mergedAt).toISOString().slice(0, 10)
   const rows = raw.trim() ? raw.trim().split('\n').map(line => JSON.parse(line)) : []
   if (rows.some(row => !valid(row) || new Date(row.mergedAt).toISOString().slice(0, 10) !== day)) throw new Error('Malformed or wrong-day merged journal')
-  const keys = ['repository', 'number', 'url', 'mergedAt', 'head', 'mergeSha', 'base', 'outcome', 'plan', 'nextAction', 'evidence', 'statusCommentUrl', 'updatedAt']
-  const publicRecord = row => Object.fromEntries(keys.filter(key => row[key] !== undefined).map(key => [key, row[key]]))
+  const keys = ['repository', 'number', 'url', 'title', 'mergedAt', 'head', 'mergeSha', 'base', 'outcome', 'plan', 'nextAction', 'evidence', 'statusCommentUrl', 'updatedAt', 'firstStartedAt', 'firstReadyAt', 'readyAt', 'readyHead', 'readyPolicy', 'mergeableDurationMs', 'mergedDurationMs', 'startedFromPr']
+  const publicRecord = row => {
+    const clean = Object.fromEntries(keys.filter(key => row[key] !== undefined).map(key => [key, row[key]]))
+    const validTime = value => typeof value === 'string' && Number.isFinite(Date.parse(value))
+    const firstStartedAt = validTime(row.firstStartedAt) ? row.firstStartedAt : null
+    const readyAt = row.readyHead === row.head && row.readyPolicy && validTime(row.readyAt) ? row.readyAt : null
+    const elapsed = end => firstStartedAt && validTime(end) && Date.parse(end) >= Date.parse(firstStartedAt) ? Date.parse(end) - Date.parse(firstStartedAt) : null
+    return { ...clean, firstStartedAt, readyAt, mergeableDurationMs: elapsed(readyAt), mergedDurationMs: elapsed(row.mergedAt) }
+  }
   const records = new Map()
   for (const row of [...rows, record]) {
     const key = JSON.stringify([row.repository, row.number])
@@ -323,3 +362,38 @@ head/merge SHA, target, PR URL, final plan/progress, next action, evidence/statu
 comment links and semantic `updatedAt`. This helper does not infer a merge from
 a saved ready state. Parse/validation/write failure stops deletion of the active
 record; successful replay produces exactly one latest row for that PR/day.
+
+## Readiness and merge timing
+
+At the **proven first actionable checkpoint**, set immutable `firstStartedAt`
+once from that actual UTC time. Preserve it across resumes and replacements
+(`startedFromPr` retains the source PR). Legacy work with no recorded start
+stays unknown/null; never infer it from `lastWorkedAt`, file modification time,
+commit dates or a later resume. A reset ignores old admission order but may
+recover trusted historical timing from the existing own status on re-admission;
+it must not reset that PR’s clock or restore its old queue position.
+
+After all three signals and the resolved independent-review policy are freshly
+verified, **before** either prepare/merge action, checkpoint `readyAt` plus
+`readyHead` and a canonical `readyPolicy` identity (target, independent-review
+requirement, risk and CI policies). Set it once while that exact readiness
+holds. Keep `firstReadyAt` as earliest observed readiness. Clear current
+`readyAt`/head/policy/duration on real invalidation; after successful revalidation
+of a changed head/policy, set a new current readiness timestamp. A cheap valid
+revisit never moves it forward. A replacement preserves start/history but gets
+fresh head-specific readiness.
+
+`mergeableDurationMs` is wall-clock `readyAt - firstStartedAt`, including CI
+waits and pauses; current readiness for the final head is the endpoint. On a
+confirmed merge, `mergedDurationMs` is `mergedAt - firstStartedAt`. Unknown or
+negative intervals stay null, never zero. Journal/status checkpoints include
+these additive fields; historical rows without timing remain readable and
+excluded from duration aggregates. Dashboard live elapsed uses only a valid
+recorded start, and average/median denominators include only known valid
+readiness intervals with the known count shown. This is observed readiness,
+not a claim about when a PR might previously have been mergeable.
+
+The optional compact `queue` snapshot described in `references/dashboard.md`
+tracks the latest existing tracker list for display, separate from active
+ownership. Preserve it when updating an owned row; never treat it as a claim
+or proof. Use the top-level repository as row identity when omitted.

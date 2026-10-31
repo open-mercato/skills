@@ -163,3 +163,32 @@ Missing mode now defaults to `prepare-and-merge`, as explicitly requested;
 `prepare-to-merge` remains the opt-out. Stage output, existing signal record and
 standalone review/merge gates stay unchanged. Daily journals and scheduler
 state are local-only. No live automerge was invoked to test these policies.
+
+### Phase 12: Offline React dashboard and readiness measurements
+
+Owner-requested one-file read-only loopback dashboard with embedded real React,
+provided logo, active/queued plans, UTC-day merged journals and safe evidence
+links. Auto-launch on port 5050, explicit port/opt-out flags, five-second refresh
+and last-good error recovery. Dashboard failure warns without changing gates.
+
+- [x] 12.1 Record immutable first action and current-head/policy readiness timing, preserving history across resume/reset/replacement.
+- [x] 12.2 Ship the one-file dashboard, safe launcher and focused regression coverage.
+- [x] 12.3 Complete real-browser fake-data QA, full validation and independent review before publication.
+
+Vendored React/ReactDOM 18.3.1 production browser builds and their MIT notices
+keep runtime offline without production dependencies. The requested branding is
+a scoped owner-authorized exception for this dashboard. No live queue mutation
+or merge is needed for dashboard validation.
+
+Validation: all ten configured local commands PASS (Python 3.12,
+`TMPDIR=/tmp`); final title/status-link metadata corrections passed consuming
+scheduler/journal/HTTP/poll tests and lint again. Parent independent review
+approved the final source and visually inspected desktop/mobile fake-data QA:
+five-second cadence, day/detail preservation, active-to-merged detail refresh,
+malformed-file last-good recovery, escaped text, safe links, private-field
+filtering and 390px responsive layout all PASS without external requests or
+JavaScript errors. Fake/demo screenshot: `docs/images/merge-buddy-dashboard-demo.png`.
+The user accepted the fake-data demo; the parent then switched the visible
+browser to the authorized real project dashboard (7 active and 6 merged
+records). This visual acceptance does not apply native PR QA approval. No
+automerge or tracker mutation workflow was launched for dashboard testing.

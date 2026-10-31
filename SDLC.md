@@ -195,6 +195,15 @@ change risk labels or authorize claim takeover. The buddy passes the separate
 resume, strict gates apply and override-derived review/QA approvals cannot be
 reused as ordinary approvals. Standalone skill defaults are unchanged.
 
+The independent `--skip-pre-existing-ci-errors` flag permits only an individual
+completed CI failure proved identical on the exact current target SHA, using
+matching workflow/job context, unchanged relevant CI definitions and actual
+matching diagnostic/root cause. Record both runs, SHAs and the proof; pending,
+new, unreadable or unknown failures are not waived. The flag is invocation-only,
+never enabled by `--force`; later strict runs and target advances/reruns require
+fresh CI evaluation. A waived failure stays visibly failed, not green. Local
+validation and all other gates remain unchanged.
+
 ## The QA gate
 
 The one hard rule of this process: **a PR carrying `needs-qa` must not merge until it also carries `qa-approved`, even when every other check is green.** `om-merge-buddy` classifies such a PR as blocked; `om-approve-merge-pr` refuses to merge it.
@@ -250,3 +259,13 @@ Any non-zero exit fails the gate and blocks the PR. The implementing skills run 
 ## Amending this process
 
 This document and `.ai/agentic.config.json` describe the same process: change them together, and re-run the `om-setup-agent-pipeline` skill when the toolchain or label taxonomy changes. The design contract the Design and Review stages read is set up the same way, once rather than per ticket: `om-ux-setup` extracts it from the repository, and is re-run when the design system changes. Per-skill deviations — extra review rules, a different PR body template, an added gate step — belong in a repo-local skill of the same name at `.ai/skills/<skill-name>/SKILL.md`, which takes precedence over the installed skill (and can `@`-import or reference it to extend rather than replace it); local rules win, but a repo-local skill cannot grant what the installed skill's safety rules forbid.
+
+## Human-confirmed issue autofix queue
+
+`om-auto-issue-triage` proposes useful open issues with decided scope and bounded
+work. It applies `autofix.label` (default `cez-autofix`) only to issues a human
+confirms after seeing evidence. It skips active/uncertain claims, preserves
+assignees, rechecks current state and verifies label read-back. The label may
+trigger the repository's existing worker; this skill does not install or invoke
+one. Implementation remains `om-auto-fix-issue` or the existing worker, with all
+normal specification, code-review, QA and CI gates unchanged.

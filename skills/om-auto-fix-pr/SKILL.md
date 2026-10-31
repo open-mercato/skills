@@ -34,6 +34,7 @@ A **`--ci-only` mode** drives just CI green — on a PR (`om-auto-fix-pr 123
 - `--no-ui` (optional) — skip UI verification even when the diff touches UI (use when there is no runnable UI surface)
 - `--force` (optional) — bypass the in-progress claim check; use only when intentionally taking over a PR another actor claimed
 - `--skip-risk-checks` (optional, only with `--orchestrated`) — the buddy’s recorded risk override; preserves validation and actual findings. Scope and provenance: `references/orchestrated-mode.md`. Distinct from claim-takeover `--force`.
+- `--skip-pre-existing-ci-errors` (optional, only with `--orchestrated`) — the buddy’s explicit invocation-scoped opt-in; verify exact-target baseline proofs under `references/ci-baseline.md`. No standalone CI waiver.
 - `--orchestrated` (optional) — set only by an orchestrator that already holds this PR's `in-progress` claim and owns its labels (`om-auto-merge-buddy`). This skill then does its core work, skips its own claim, label, handoff and CI-wait steps, and ends with a `RESULT:` line (`references/orchestrated-mode.md`).
 
 ## Chaining

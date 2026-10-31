@@ -131,20 +131,24 @@ jql_escape() {
   printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
 }
 
-escaped_query=$(jql_escape "<query>")
+ISSUE_QUERY="<query>"
+escaped_query=$(jql_escape "$ISSUE_QUERY")
 project_key=${JIRA_PROJECT_OVERRIDE:-$ATLASSIAN_PROJECT}
 case "$project_key" in
   ''|*[!A-Za-z0-9_-]*) echo "Invalid Jira project key: $project_key" >&2; exit 1 ;;
 esac
 
-# open
+query_clause=""
+[ -z "$ISSUE_QUERY" ] || query_clause=" AND text ~ \"${escaped_query}\""
+
+# open; an empty text query enumerates all open issues in this project
 acli jira workitem search \
-  --jql "project = \"${project_key}\" AND statusCategory != Done AND text ~ \"${escaped_query}\"" \
+  --jql "project = \"${project_key}\" AND statusCategory != Done${query_clause}" \
   --paginate --json
 
 # closed
 acli jira workitem search \
-  --jql "project = \"${project_key}\" AND statusCategory = Done AND text ~ \"${escaped_query}\"" \
+  --jql "project = \"${project_key}\" AND statusCategory = Done${query_clause}" \
   --paginate --json
 ```
 
@@ -335,4 +339,4 @@ Delegate to GitHub **list-labels**; this is the PR label taxonomy setup inspects
 Delegate to GitHub **create-label**.
 
 #### ensure-label-taxonomy
-Delegate to GitHub **ensure-label-taxonomy**. Jira issue labels are free-form and need no provisioning step.
+Delegate to GitHub **ensure-label-taxonomy**. Jira issue labels are free-form and need no provisioning step. `autofix.label` (default `cez-autofix`) is applied to the Jira issue through `apply_issue_label`; never send its native issue key to the GitHub companion.

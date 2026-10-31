@@ -67,6 +67,8 @@ on the PR head branch, keep the runs whose `headSha` is the PR head SHA, and cou
 every run whose `status` is not `completed` as PENDING in its own right, whatever the
 check list says.
 
+In orchestrated mode with the explicit `--skip-pre-existing-ci-errors` opt-in only, verify each proposed waiver through `references/ci-baseline.md`; retain the actual failing status in evidence and separate proved baseline failures from failures to fix. Without that opt-in, every failure remains subject to the normal rules.
+
 Classify every check as passing, pending, or failing, and fold in the incomplete
 runs from the guard. Nothing failing and nothing pending **in either reading** →
 report "already green"; the two readings must agree, and when they disagree the run
@@ -100,7 +102,7 @@ Per iteration:
      from the link — report it as the remaining blocker if it gates the merge.
    - **Infra / out of scope** — runner outages, missing secrets, base branch already
      broken (verify by checking whether the same check fails on `origin/$TARGET_BRANCH`
-     via **list-runs** on the base branch). These are blockers, not fixables —
+     via **list-runs** on the base branch). These are blockers, not fixables, except an individual failure freshly proven waivable under the explicit orchestrated baseline opt-in —
      record and move on; if every remaining failure is out of scope, stop with
      `Status: blocked`.
 3. **Reproduce locally** whenever the check maps to a local command — match the

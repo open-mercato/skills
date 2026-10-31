@@ -1173,6 +1173,7 @@ qa-self-verified|#c5def5|Self-QA exception used
 in-progress|#c5def5|An automated skill is working on this
 ci-monitoring|#d4c5f9|Work complete and reported; agent is watching CI results
 do-not-close|#c5def5|Humans only: never auto-close this issue
+${AUTOFIX_LABEL:-cez-autofix}|#5319e7|Human-confirmed issue ready for the configured autofix worker
 ${AUTOMERGE_LABEL:-automerge}|#5319e7|Human-confirmed: drive this PR to merge once every gate is green
 automerge-signal-1-cr|#1d76db|om-auto-merge-buddy: code review signal holds for the current head
 automerge-signal-2-qa|#1d76db|om-auto-merge-buddy: QA signal holds for the current head

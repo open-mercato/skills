@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>🧠 plan · 🔨 implement · 🔍 review · ✅ QA gate · 🚢 merge</b><br/>
-  Seventy-one agent skills for autonomous PR delivery or staged human-review handoffs. Install them into any repo, with any coding agent.
+  Seventy-three agent skills for autonomous PR delivery or staged human-review handoffs. Install them into any repo, with any coding agent.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 npx skills add open-mercato/skills --skill '*'
 ```
 
-Install all seventy-one — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all seventy-three — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
@@ -207,6 +207,7 @@ thin and delegate to the two base wrappers.
 | [`om-auto-create-pr`](docs/skills/om-auto-create-pr.md) | Takes a free-form task brief end-to-end: execution plan, isolated worktree, phase-by-phase commits, validation gate, self-review, labeled PR, then an autofix review loop until clean. Resumable. Hands runs whose plan exceeds the configured step threshold to [`om-auto-create-pr-loop`](docs/skills/om-auto-create-pr-loop.md) automatically. |
 | [`om-auto-create-pr-loop`](docs/skills/om-auto-create-pr-loop.md) | Advanced om-auto-create-pr for long spec implementations: run folder with PLAN/HANDOFF/NOTIFY, one commit per step, checkpoint verification every ~5 steps, plan-driven executor dispatch (per-step placement + model-tier hints in the plan), full gate at completion. |
 | [`om-auto-fix-issue`](docs/skills/om-auto-fix-issue.md) | The single issue-to-PR entry point: classifies the issue first, then routes. A bug drives the autofix chain — triage gate, root-cause analysis, minimal fix with regression tests, a ready labeled PR, autofix review loop. A feature request takes the feature route — claims the issue, resolves its spec (autonomously written via [`om-auto-write-spec`](docs/skills/om-auto-write-spec.md) when none exists, implemented via [`om-auto-implement-spec`](docs/skills/om-auto-implement-spec.md)), and verifies the contract on the same PR — reviewed, UI-verified, fully labeled. For a spec without implementation, run `om-auto-write-spec` directly. Stops cleanly when the issue is already solved or claimed, and on the feature route when the ticket fails `SDLC.md`'s Definition of Ready (the gaps are named on the issue). |
+| [`om-auto-issue-triage`](docs/skills/om-auto-issue-triage.md) | Proposes useful bounded open issues and applies `autofix.label` (default `cez-autofix`) only after human confirmation, with current-state rechecks and label read-back. |
 | [`om-auto-write-spec`](docs/skills/om-auto-write-spec.md) | Turns a brief or FR issue into a finished spec on a ready PR: autonomous Open-Questions defaults posted for override, UI mockups + current-app screenshots attached as PR evidence, full SDLC labels, chain markers for [`om-auto-implement-spec`](docs/skills/om-auto-implement-spec.md). |
 | [`om-auto-implement-spec`](docs/skills/om-auto-implement-spec.md) | Implements an existing spec (by path, name, issue, or spec-PR number; clean stop when not found): reuses the spec PR's branch or runs [`om-auto-create-pr`](docs/skills/om-auto-create-pr.md), then the review autofix loop and UI verification with screenshots on the PR. |
 | [`om-auto-continue-pr`](docs/skills/om-auto-continue-pr.md) | Resumes an in-progress PR from the first unchecked step in its tracking plan and carries it to completion — implementation, validation, review loop, summary comment. A PR with no plan (a human's, another tool's, a crashed run's) is adopted: the goal is reconstructed from its description, comments, review feedback, linked issues and diff, landed as a real plan, then executed. |

@@ -28,10 +28,11 @@ The questions step 3 of `om-setup-agent-pipeline` asks the user (skipped with `-
    - **Window and limits**: `lookbackDays` (default `30` — only PRs opened in the last month; `--from-oldest` covers the oldest month instead), `analyzeLimit` (default `100` PRs gated and label-ranked) and the output `limit` (default `20` — the shortlist AI judgment runs on, and the most PRs proposed).
    Preserve explicit existing tiers and exclusions on reconfiguration unless the user chooses the new policy. To adopt AI rescue, add `ai-judgment` and remove `changes-requested` from exclusions.
    Under `--defaults`, write the defaults with an empty `trustedAuthors`. Never guess logins.
-6. QA gate on or off. Recommend on when the repo ships user-facing changes.
-7. Where specs live (`paths.specs`, default `.ai/specs`) — confirm or point at an existing design-doc directory.
-8. Optional repo-local review checklist path.
-9. Project docs to generate (each only when missing): `SDLC.md` (recommended), `AGENTS.md` with the task-routing table (when no agent instruction file exists), `CODE_REVIEW.md`, and `BACKWARD_COMPATIBILITY.md`.
+6. Issue autofix eligibility (when labels stay enabled): confirm `autofix.label` (default `cez-autofix`) and `autofix.eligibility` (`lookbackDays: 30`, `analyzeLimit: 100`, `limit: 20`, `excludeLabels: ["blocked", "do-not-fix"]`). `om-auto-issue-triage` proposes only useful, still-relevant issues with decided acceptance criteria and bounded implementation; it skips current/uncertain claims and labels only human-confirmed issues. Preserve explicit existing values. Explain that labeling can trigger the repository's existing worker, while this skill never installs or starts one. Under `--defaults`, write the documented defaults without guessing worker integrations.
+7. QA gate on or off. Recommend on when the repo ships user-facing changes.
+8. Where specs live (`paths.specs`, default `.ai/specs`) — confirm or point at an existing design-doc directory.
+9. Optional repo-local review checklist path.
+10. Project docs to generate (each only when missing): `SDLC.md` (recommended), `AGENTS.md` with the task-routing table (when no agent instruction file exists), `CODE_REVIEW.md`, and `BACKWARD_COMPATIBILITY.md`.
 
 Then consult `references/config-capabilities.md`. Ask only for optional
 capabilities the repository already evidences or the user explicitly enables;

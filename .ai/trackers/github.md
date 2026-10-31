@@ -327,6 +327,19 @@ gh pr diff {prNumber} --name-only
 gh api "repos/{owner}/{repo}/pulls/{prNumber}/files" --paginate --jq '.[] | {path: .filename, status: .status}'
 ```
 
+#### get-pr-author-association
+`{prNumber}` → `{login, association}`, normalized from GitHub's `author_association`. GitHub reports `COLLABORATOR` for anyone with explicit repository access who is not an organization member, so on an organization-owned repository that is an `outside-collaborator`. `FIRST_TIMER` (first PR anywhere on GitHub) folds into `first-time-contributor`, and `MANNEQUIN` folds into `none`.
+```bash
+gh api "repos/{owner}/{repo}/pulls/{prNumber}" --jq '{login: .user.login, association: (
+  .author_association as $a | .base.repo.owner.type as $t |
+  if $a == "OWNER" then "owner"
+  elif $a == "MEMBER" then "member"
+  elif $a == "COLLABORATOR" then (if $t == "Organization" then "outside-collaborator" else "collaborator" end)
+  elif $a == "CONTRIBUTOR" then "contributor"
+  elif $a == "FIRST_TIME_CONTRIBUTOR" or $a == "FIRST_TIMER" then "first-time-contributor"
+  else "none" end)}'
+```
+
 #### checkout-pr
 `{prNumber}` → the PR's head available locally (needed for cross-repository fork PRs where the head branch cannot be fetched from `origin`).
 ```bash
@@ -462,7 +475,7 @@ gh label create qa-self-verified  --color c5def5 --description "Self-QA exceptio
 gh label create in-progress       --color c5def5 --description "An automated skill is working on this"
 gh label create ci-monitoring     --color d4c5f9 --description "Work complete and reported; agent is watching CI results"
 gh label create do-not-close      --color c5def5 --description "Humans only: never auto-close this issue"
-gh label create "${AUTOMERGE_LABEL:-automerge}" --color 5319e7 --description "Humans only: drive this PR to merge once every gate is green"
+gh label create "${AUTOMERGE_LABEL:-automerge}" --color 5319e7 --description "Human-confirmed: drive this PR to merge once every gate is green"
 gh label create automerge-signal-1-cr --color 1d76db --description "om-auto-merge-buddy: code review signal holds for the current head"
 gh label create automerge-signal-2-qa --color 1d76db --description "om-auto-merge-buddy: QA signal holds for the current head"
 gh label create automerge-signal-3-ci --color 1d76db --description "om-auto-merge-buddy: CI signal holds for the current head"

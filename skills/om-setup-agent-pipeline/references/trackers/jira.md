@@ -279,6 +279,9 @@ Delegate to GitHub **get-pr-diff**.
 #### get-pr-files
 Delegate to GitHub **get-pr-files**.
 
+#### get-pr-author-association
+Delegate to GitHub **get-pr-author-association**.
+
 #### checkout-pr
 Delegate to GitHub **checkout-pr**.
 

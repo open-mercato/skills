@@ -69,7 +69,7 @@ Field defaults: `references/config-capabilities.md`.
 - `labels.priority` — mutually exclusive urgency of the work. Unset is treated as medium.
 - `labels.risk` — mutually exclusive blast radius of the change. Unset is treated as medium. Priority is how urgent the work is; risk is how dangerous the change is to ship.
 - `qaGate` — when `true`, a PR carrying `needs-qa` must not merge until it also carries `qa-approved`, even when every other check is green. When `false`, `needs-qa` is advisory only.
-- `automerge` — optional `om-auto-merge-buddy` settings: the human-applied `label` (default `automerge`), `mode`, `windowMinutes`, and `maxAttempts`. Setup creates the label and the signal labels. Defaults: `references/config-capabilities.md`.
+- `automerge` — optional `om-auto-merge-buddy` settings (`label`, default `automerge`; `mode`; `windowMinutes`; `maxAttempts`) and `om-auto-merge-triage` `eligibility` rules. Setup creates its labels. Defaults: `references/config-capabilities.md`.
 - `ci.maxWaitMinutes` — CI wait cap in minutes, default `40`; `0` skips waiting. It never relaxes required checks for merging. Wait-budget behavior: `references/config-capabilities.md`.
 - `engine.executorTier` — optional; the default abstract model tier (`cheap` / `standard` / `capable`) for executor subagents dispatched by the loop skills when a Tasks-table `Exec` cell names none. Harnesses that support subagent model selection map the tier onto their closest model class; others ignore it. Configs without the key behave as `standard`.
 - `engine.loopStepThreshold` — the Step count above which `om-auto-create-pr` hands a run off to `om-auto-create-pr-loop` (default 20). Raise it to keep more runs on the cheaper plain engine; `--loop` always forces the loop regardless.
@@ -122,7 +122,7 @@ Every skill in this collection checks, right after loading the config, for a rep
 
    Prefer commands mirroring what CI already runs (`.github/workflows/*.yml`; for `forgejo`, `.forgejo/workflows/` first — see `references/interview-questions.md`).
 
-3. **Ask the user (skip with `--defaults`).** Confirm validation, tracker (`github`, `linear`, `jira`, `gitlab`, `forgejo`, or custom; default per step 2), browser provider, label mode, QA gate, spec path, optional review checklist, and missing project docs. Offer only detected optional capabilities from `references/config-capabilities.md`. Full guidance: `references/interview-questions.md`.
+3. **Ask the user (skip with `--defaults`).** Confirm validation, tracker (`github`, `linear`, `jira`, `gitlab`, `forgejo`, or custom; default per step 2), browser provider, label mode and automerge eligibility, QA gate, spec path, optional review checklist, and missing project docs. Offer only detected optional capabilities from `references/config-capabilities.md`. Full guidance: `references/interview-questions.md`.
 
 4. **Install the tracker descriptor.** Copy the shipped descriptor for the chosen tracker from this skill's `references/trackers/<tracker>.md` to `.ai/trackers/<tracker>.md` (create the directory). Rules:
 

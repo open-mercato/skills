@@ -17,6 +17,7 @@ One card per skill, with its parameters and the companion skills it works with. 
 | [om-auto-review-pr](om-auto-review-pr.md) | 🤖 | Reviews or re-reviews a PR by number, with an autofix loop until merge-ready. |
 | [om-auto-audit-dependencies](om-auto-audit-dependencies.md) | 🤖 | Audits locked dependencies across ecosystems and files deduplicated upgrade issues, reporting incomplete coverage explicitly. |
 | [om-auto-merge-buddy](om-auto-merge-buddy.md) | 🤖 | Works PRs labeled `automerge` in a time window until code review, QA and CI signals hold; marks them ready or squash-merges them. |
+| [om-auto-merge-triage](om-auto-merge-triage.md) | 🤖 | Ranks open PRs by configurable eligibility tiers and labels the human-confirmed ones `automerge`. |
 | [om-auto-qa-pr](om-auto-qa-pr.md) | 🤖 | QAs a PR's UI in a real browser and posts screenshot evidence — no source touched. |
 | [om-auto-manage-issues](om-auto-manage-issues.md) | 🤖 | Brings existing issues up to standard: label sync, screenshot analysis, spec-coverage checks. |
 | [om-auto-update-changelog](om-auto-update-changelog.md) | 🤖 | Drafts a CHANGELOG release entry for merged PRs and ships it as a docs PR. |

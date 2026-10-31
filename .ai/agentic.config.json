@@ -69,7 +69,16 @@
     "label": "automerge",
     "mode": "prepare-to-merge",
     "windowMinutes": 120,
-    "maxAttempts": 3
+    "maxAttempts": 3,
+    "eligibility": {
+      "tiers": [["qa-approved"], ["security", "small"], ["trusted-author"], ["fixes-issue"]],
+      "smallPrFileLimit": 10,
+      "securityLabels": ["security"],
+      "trustedAuthors": [],
+      "excludeAuthorAssociations": ["first-time-contributor", "outside-collaborator", "none"],
+      "excludeLabels": ["do-not-merge", "blocked", "changes-requested", "qa-failed"],
+      "limit": 10
+    }
   },
   "engine": {
     "loopStepThreshold": 20,

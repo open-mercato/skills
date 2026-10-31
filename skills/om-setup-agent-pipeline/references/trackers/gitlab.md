@@ -643,6 +643,28 @@ gl_list_jq "projects/$(gl_project)/merge_requests/{prNumber}/diffs" '[.[] | {pat
   status: (if .new_file then "added" elif .deleted_file then "removed" elif .renamed_file then "renamed" else "modified" end)}]'
 ```
 
+#### get-pr-author-association
+`{prNumber}` → `{login, association}`. GitLab has no per-MR association, so it is derived from the author's effective project membership, including inherited group membership: Owner (50) → `owner`, Developer or Maintainer (30–40) → `member`, Guest or Reporter (10–20) → `collaborator`. For a non-member, a previously merged MR means `contributor`, and otherwise `first-time-contributor`. GitLab cannot tell an outside collaborator apart, so this operation never returns `outside-collaborator` or `none`. A membership lookup that fails reads as "not a member", which only ever makes the author less trusted.
+```bash
+gl_iid {prNumber} || exit 1
+p=$(gl_project) || exit 1
+author=$(gl_get "projects/$p/merge_requests/{prNumber}" -c '{id: .author.id, login: .author.username}') || exit 1
+uid=$(printf '%s' "$author" | jq -r '.id'); login=$(printf '%s' "$author" | jq -r '.login')
+case "$uid" in ''|*[!0-9]*) echo "GitLab returned no author id for MR {prNumber}" >&2; exit 1 ;; esac
+level=0
+if resp=$(glab api "projects/$p/members/all/$uid" 2>/dev/null); then
+  level=$(printf '%s' "$resp" | jq -r '.access_level // 0')
+fi
+if [ "$level" -ge 50 ]; then assoc=owner
+elif [ "$level" -ge 30 ]; then assoc=member
+elif [ "$level" -ge 10 ]; then assoc=collaborator
+else
+  merged=$(gl_get "projects/$p/merge_requests?state=merged&author_id=$uid&per_page=1" 'length') || exit 1
+  if [ "$merged" -gt 0 ]; then assoc=contributor; else assoc=first-time-contributor; fi
+fi
+jq -n --arg login "$login" --arg association "$assoc" '{login: $login, association: $association}'
+```
+
 #### checkout-pr
 `{prNumber}` → the MR head available locally. GitLab publishes every MR head, fork MRs included, as `refs/merge-requests/<iid>/head` on the target project.
 ```bash
@@ -871,7 +893,7 @@ qa-self-verified|#c5def5|Self-QA exception used
 in-progress|#c5def5|An automated skill is working on this
 ci-monitoring|#d4c5f9|Work complete and reported; agent is watching CI results
 do-not-close|#c5def5|Humans only: never auto-close this issue
-${AUTOMERGE_LABEL:-automerge}|#5319e7|Humans only: drive this PR to merge once every gate is green
+${AUTOMERGE_LABEL:-automerge}|#5319e7|Human-confirmed: drive this PR to merge once every gate is green
 automerge-signal-1-cr|#1d76db|om-auto-merge-buddy: code review signal holds for the current head
 automerge-signal-2-qa|#1d76db|om-auto-merge-buddy: QA signal holds for the current head
 automerge-signal-3-ci|#1d76db|om-auto-merge-buddy: CI signal holds for the current head

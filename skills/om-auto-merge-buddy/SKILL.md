@@ -35,7 +35,7 @@ a labeled, explained state, and the next invocation picks up from there.
 
 ## Chaining
 
-Entry point of the merge stage; run it by hand, on a schedule, or from CI. It consumes the tracker's `automerge`-labeled PR queue, not a previous skill's output. It invokes, each by exact name and in `--orchestrated` mode: `om-auto-review-pr` (signal 1, plus fixes for QA failures), `om-auto-qa-pr` (signal 2) and `om-auto-fix-pr` (signal 3). A sub-skill that is missing, or too old to accept `--orchestrated`, parks the PR as `automerge-blocked` and names the skill to install or upgrade. When a sub-skill carries a fork PR forward, it reports the replacement as `replacement=<n>`, and this skill continues on the replacement in the same run (`references/stages.md`). It ends with one report line per PR it touched, followed by `PR: #<n> (link: <url>)` lines for each.
+Entry point of the merge stage; run it by hand, on a schedule, or from CI. It consumes the tracker's `automerge`-labeled PR queue, not a previous skill's output. That label comes from a human, or from `om-auto-merge-triage` for the PRs a human confirmed. It invokes, each by exact name and in `--orchestrated` mode: `om-auto-review-pr` (signal 1, plus fixes for QA failures), `om-auto-qa-pr` (signal 2) and `om-auto-fix-pr` (signal 3). A sub-skill that is missing, or too old to accept `--orchestrated`, parks the PR as `automerge-blocked` and names the skill to install or upgrade. When a sub-skill carries a fork PR forward, it reports the replacement as `replacement=<n>`, and this skill continues on the replacement in the same run (`references/stages.md`). It ends with one report line per PR it touched, followed by `PR: #<n> (link: <url>)` lines for each.
 
 ## Workflow
 

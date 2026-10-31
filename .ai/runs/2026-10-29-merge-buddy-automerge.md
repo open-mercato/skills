@@ -1,5 +1,7 @@
 # Execution plan — om-merge-buddy automerge mode
 
+> 🔁 **Rewritten 2026-10-31 (Phase 8).** On the owner's request the `om-merge-buddy --automerge` mode and the `om-approve-merge-pr --automerge` handoff (Phases 3, 5, 6.1) were reverted. They are replaced by a new `om-auto-merge-buddy` skill driven by three signal labels, plus an `--orchestrated` mode in `om-auto-review-pr`, `om-auto-qa-pr` and `om-auto-fix-pr`. Phases 1, 2, 6.2 and 7 still stand. The Goal and Decisions below describe the original design; Phase 8 records the rewrite.
+
 ## Goal
 
 Add an `--automerge` mode to `om-merge-buddy` that works the queue of PRs a human labeled `automerge` (label name configurable through `om-setup-agent-pipeline`): one PR at a time, approve pending CI workflow runs, merge the latest base in and resolve conflicts, drive review/CI green via `om-auto-fix-pr` / `om-auto-review-pr` (fork PRs through the carry-forward replacement), skip PRs another agent or orchestrator task is working on, and merge through `om-approve-merge-pr` once every gate is genuinely green.
@@ -66,6 +68,18 @@ PR: #158
 
 - [x] 7.1 Preserve applicable labels and continue the automerge chain on every replacement PR — b1d48d6
 - [x] 7.2 Validate and re-review the updated PR — b1d48d6
+
+### Phase 8: Rewrite into om-auto-merge-buddy
+
+Decisions:
+- **Orchestrated mode, not duplication.** Each sub-skill gains one flag plus a `references/orchestrated-mode.md` loaded only when the flag is set. The orchestrator owns the claim, labels and CI waits; the sub-skill keeps its core logic in one place. Rejected alternatives: copying the review, QA and fix logic into the buddy (three-way drift), or extracting shared "core" files across skills (would break standalone installs, Cross-skill contract §4).
+- **Signals are bound to the head SHA** in one status comment per PR, which also serves as the claim, label-rationale and summary comment. Labels alone are never trusted.
+- **Default mode is `prepare-to-merge`**, the most reversible option. `prepare-and-merge` squash-merges with a head-SHA guard and the new `bypass-protection` form of **merge-pr**.
+- **The QA signal reuses `om-auto-qa-pr`'s self-QA eligibility verdict**, so risk-high PRs still need a human. QA failures are fixed through the review autofix as `INHERITED` findings.
+
+- [x] 8.1 Revert the om-merge-buddy automerge mode and the om-approve-merge-pr handoff — 305a59e
+- [x] 8.2 Add the om-auto-merge-buddy skill, orchestrated mode in three sub-skills, the merge-pr bypass, the labels, config and docs — 83cbeda
+- [x] 8.3 Merge the latest main and run the full validation gate — 83cbeda
 
 ## Follow-up validation and compatibility evidence
 

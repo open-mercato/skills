@@ -66,6 +66,53 @@ When `om-discover` has written `.ai/specs/product-brief.md`, its **Non-goals**, 
 - An autonomous assumption a human confirmed on a spec PR (the resolved-assumptions comment) is recorded as a decision on the next `om-discover --refresh`, with the confirmer as owner, so the reason a thing is the way it is survives the people who decided it.
 - Decisions age: an entry past its review-by date is flagged in review as due for a look, not enforced blindly. Which entries block more than they protect is a retro question.
 
+## Optional staged handoff path
+
+The additive agent harness stops between Implement and PR when a human wants to
+review the exact index first. `om-fix-issue` and `om-implement-feature` reuse the
+same specification, validation, integration-test, UI, and code-review gates,
+optionally adding configured implementation workers and independent review
+advisors. A successful run must leave the starting commit unchanged and all
+intended files staged in an isolated worktree. It prepares a PR body but does
+not commit, push, or create a PR.
+
+The `multi` profile adds root-cause/spec and final-diff review councils. The
+`optimized` profile adds bounded implementation workers. The
+`multi-optimized` profile combines them while treating review from the worker's
+model family as a self-check rather than independent confirmation. The optional
+`agentHarness` configuration lives in `.ai/agentic.config.json` and is managed
+separately by `om-setup-agent-harness`.
+
+This repository uses a low-cost harness configuration: Codex `gpt-6-luna` at
+`low` reasoning for implementation and review, plus `claude-haiku-5-5` at
+`low` effort as a tool-free advisor. Both selected advisors are required in
+`multi` and `multi-optimized`; use the same Haiku model and low effort for the
+mandatory genuinely fresh Claude host review. Codex review is marked as a
+self-check when Codex also implemented the change. The reduced model set does
+not enable `high-assurance`; its independent-family requirements remain intact.
+
+Every reviewer selected by a `multi` profile is invoked; quorum is a provider
+readiness threshold, not a fan-out limit. For both the spec/diagnosis checkpoint
+and final diff, the wrapper freezes one `om-code-review` packet, then starts a
+new Claude context and every configured advisor concurrently. All six receive
+the same complete rubric, packet, and subject without inherited implementation
+context or peer findings. The bundled matrix therefore contains fresh Claude,
+Codex, DeepSeek, Kimi, GLM, and MiMo review passes, with Codex marked as a
+same-family self-check when Codex also implemented the change. The runtime
+rejects stale hashes or a non-fresh Claude attestation instead of emitting a
+final council result.
+
+The opt-in `high-assurance` profile further divides implementation into
+manifest-defined, file-disjoint packets. Each packet holds path leases, receives
+risk-scaled blind review and fresh finding verification, uses a separate fixer
+context when needed, and can advance only when trusted acceptance evidence is
+bound to the exact reviewed diff. All packet ledgers must be `gated` before the
+normal final review and staged handoff.
+Fresh setup offers Codex, DeepSeek, Kimi, GLM, and MiMo as independently
+selectable advisors, then permits custom model bindings. Availability and
+subscription health are proven by per-model smoke reviews rather than inferred
+from an installed executable alone.
+
 ## Label state machine
 
 Pipeline labels are mutually exclusive: a PR carries at most one, and it names where the PR sits in the flow.
@@ -144,7 +191,7 @@ Before mutating an issue or PR, an agent claims it with all three signals: it as
 
 `in-progress` means **actively working**. Once an agent's work is finished and fully reported — labels applied, review submitted, comments posted — it swaps `in-progress` for `ci-monitoring` if it still intends to report the CI outcome. `ci-monitoring` is **not** a claim and blocks nobody: it says only that the CI-result follow-up comment is still owed, so another agent or a human may act on the PR freely. That distinction matters because CI runs long: an agent that reported its work and then died while watching a run leaves an honest, self-describing state instead of a lock nobody holds. The label comes off when the follow-up lands, or when the agent gives up waiting at `ci.maxWaitMinutes` and says so.
 
-The claim is released when the work finishes — on success and on failure alike. A stale `in-progress` with no recent activity may be cleared by the maintainer.
+The normal PR flow releases the claim when work finishes, on success and failure alike. A successful staged-only issue handoff instead retains its claim while the human reviews the index; publishing or the wrapper's explicit abort path releases it. A stale `in-progress` with no recent activity may be cleared by the maintainer.
 
 ### Reporting is decoupled from CI
 
@@ -171,6 +218,8 @@ Every PR passes the full validation gate before review sign-off, in this order:
 - `node scripts/test-classify-runs.mjs`
 - `node scripts/test-close-keywords.mjs`
 - `node --test scripts/test-ux-design.mjs scripts/test-ux-design-comments.mjs`
+- `node scripts/test-agent-harness.mjs`
+- `node scripts/test-agent-harness-security.mjs`
 - `node scripts/test-review-sweep.mjs`
 - `node --test scripts/test-skill-eval.mjs scripts/test-skill-eval-portability.mjs`
 - `node --test scripts/test-skill-eval-portability.mjs`

@@ -8,6 +8,7 @@ committed configs keep working.
 
 | Key | Default | Owner / meaning |
 |---|---|---|
+| `agentHarness` | `null` | `om-setup-agent-harness`; optional staged-workflow model registry. Absence keeps host-only `standard` usable; non-standard profiles require validated bindings. |
 | `agentsMd.template` | `null` | `om-create-agents-md`; repo-relative authoring template. |
 | `smartTest.map` | `".ai/test-map.json"` | `om-smart-test`; affected-unit map. |
 | `smartTest.suites` | absent | `om-smart-test`; named test suite definitions; absent derives from `validation.commands`. |
@@ -60,6 +61,7 @@ skills must not read or validate these fields. See `om-review-prs` for that
 mode-specific loader and the lease/storage checks.
 
 ```bash
+AGENT_HARNESS=$(jq -c '.agentHarness // empty' "$CONFIG")
 AGENTS_MD_TEMPLATE=$(jq -r '.agentsMd.template // empty' "$CONFIG")
 SMART_TEST_MAP=$(jq -r '.smartTest.map // ".ai/test-map.json"' "$CONFIG")
 SMART_TEST_SUITES=$(jq -c '.smartTest.suites // empty' "$CONFIG")

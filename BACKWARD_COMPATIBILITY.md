@@ -19,6 +19,18 @@ Written once per consumer repo by `om-setup-agent-pipeline` and read by every sk
 - **Not breaking:** adding a new key with a default in the loading snippet (`jq -r '.newKey // "default"'`).
 - **Required path:** new keys always ship with defaults so existing configs keep working; a genuinely incompatible change needs a `version` bump plus explicit migration handling in `om-setup-agent-pipeline`.
 
+The optional `agentHarness` object is additive and owned by
+`om-setup-agent-harness`. Repositories without it retain the existing pipeline
+behavior. Within that object, model ids and profile names are team-owned stable
+references: removing or renaming one that a committed profile uses is breaking
+for staged-only wrapper runs. Add new models and profiles additively; migrate old
+ids explicitly in the setup skill before removing them.
+
+The bundled jury ids (`codex`, `deepseek`, `kimi`, `glm`, and `mimo`) are
+versioned defaults. Changing a provider's default model is additive for repos
+that already committed their own binding; setup must show and smoke-test the new
+default before replacing an existing configured model.
+
 ### 3. The tracker operations contract
 
 The named operations (**get-issue**, **create-pr**, **comment-pr**, **merge-pr**, …) and label guards (`label_exists`, `apply_label`, `apply_issue_label`, `remove_issue_label`, `set_pipeline_label`) defined by `skills/om-setup-agent-pipeline/references/trackers/TEMPLATE.md`. Consumer repos hold committed, possibly team-edited copies at `.ai/trackers/<tracker>.md`.
@@ -46,6 +58,12 @@ hold committed, possibly team-edited copies at `.ai/browsers/<provider>.md`.
 - **`<paths.qa>/test-env.json`** — written by `om-prepare-test-env`, consumed by `om-auto-qa-pr` and `om-integration-tests`.
 - **Generated launcher scripts in `<paths.scripts>/`** — created by `om-prepare-test-env`, re-run by later runs and other skills.
 - **Chaining reference lines** (`PR: #<number> (link: <url>)`, `Issue: #<number> (link: <url>)`, `Spec: <path>`) — emitted at the end of every PR-producing/-driving skill's final report, parsed by the next skill in a chain and by session orchestrators (e.g. cezar).
+- **Harness review result version 1** (`review-result.json`) — written by `om-harness`, rendered into the reviewer-status table and model-by-finding matrix.
+- **Harness code-review packet version 1** (`code-review-packet.schema.json`) — binds a diagnosis, spec, or implementation subject to the installed `om-code-review` rubric, resolved repository rules, criteria, and host validation evidence.
+- **Harness fresh-review result version 1** (`fresh-review-result.schema.json`) — attests that Claude ran `om-code-review` in a new context without inheriting the implementation transcript and binds that result to the packet and subject hashes.
+- **Harness packet manifest and ledger version 1** (`packet-manifest.schema.json` and `packet-result.json`) — written and consumed by `om-harness` for bounded work ownership, review cycles, leases, budgets, and state transitions.
+- **Harness packet gate evidence version 1** (`packet-gate.schema.json`) — binds acceptance evidence to a packet id and reviewed diff SHA-256.
+- **Staged handoff markers** (`WORKTREE=<absolute path>`, unchanged starting `HEAD`, branch, staged-path list, and issue-claim state) — written by `om-fix-issue` and `om-implement-feature` for a human publication decision.
 - **Routing lines from `om-brainstorm`** (`Next: none` | `Next: om-<skill> <args>`, plus `Brief: <repo-relative path>` when a handoff brief was written) — emitted at the end of its final report, parsed by session orchestrators to route the follow-up run. The `— brief: <path>` suffix inside the args is read by the routed skill (`om-prepare-issue`, `om-auto-write-spec`, `om-spec-writing`, `om-auto-create-pr`), which ingests the brief file and makes its payload durable per the brief lifecycle in `om-brainstorm/references/exit-ramps.md`. Additive; no existing consumer changes.
 
 The product brief written by `om-discover` keeps its existing section headings, ids, source tags, table fields and output markers (`Product brief:`, `Coverage:`, `Collection plan:`, `Next:`). The Decision summary and additional table columns are optional for readers of older briefs. Read canonical sections and follow their id/source references; a recorded scope choice is not evidence of demand. Coverage retains its legacy tagged-line scope, excluding Hypotheses to test. The separate synthetic-hypothesis header note explains that exclusion without changing the counter's meaning or invalidating older briefs that lack the note.
@@ -58,6 +76,22 @@ The 2026-07-21 marker migration (`PR_URL=` / `PR_NUMBER=` / `SPEC_PATH=` → the
 
 Adding the provider-neutral `browser` object to `test-env.json` is additive;
 readers must continue accepting the legacy `playwright` object.
+
+Adding fields to the harness review result is additive. Renaming reviewer
+statuses, matrix semantics, finding severities, resolution values, or staged
+handoff markers requires a result-version bump and tolerant rendering of version
+1 artifacts for at least one release cycle.
+
+Adding fields to the code-review packet or fresh-review result is additive only
+when version 1 readers can ignore them safely. Renaming contract hashes,
+weakening subject/rubric binding, accepting inherited Claude context, or letting
+the host result satisfy provider quorum is breaking and requires a version bump
+plus tolerant handling of version 1 artifacts.
+
+Adding an optional profile or optional packet-policy field is additive. Renaming
+packet states, changing lease ownership semantics, weakening exact-diff gate
+binding, or making packet policy mandatory for an existing profile is breaking
+and requires a version bump plus tolerant handling of version 1 ledgers.
 
 ### 6. The label taxonomy semantics
 
@@ -85,3 +119,26 @@ semantic claim on the taxonomy is a narrowing of `in-progress`: that label now m
 ## Out of scope
 
 Prose wording inside skills, `references/` content that no other skill parses, README marketing copy, and this repo's own CI workflows may change freely — they have no external consumers beyond fresh installs.
+
+## Unreleased staged-harness hardening
+
+PR #43 was closed without merging. Its staging CLI now requires the final
+implementation review packet and approved fresh-host artifact, and rejects
+content drift before and after staging. Old unpublished handoffs must be
+revalidated and reviewed; no compatibility path may accept unreviewed content.
+Provider output accepts both legacy unversioned objects and optional `version: 1`;
+aggregated council artifacts and all existing result fields remain unchanged.
+Skill names are retained, and old handoff-template paths redirect to the own-skill
+`report-templates.md`. The ordinary published PR pipeline keeps its behavior.
+
+Starting-state artifacts may add `publicationGuard.runId`. New captures use it
+to own a publication guard in the worktree-specific Git directory. Successful
+staging clears that guard; the additive `end-run` command clears it on explicit
+abort without modifying files or packet leases. Staging still accepts legacy
+starting-state artifacts when no other run's guard is active. Refresh installed
+hooks together with the runtime to gain this scoped activation behavior.
+
+Codex reviewer invocations derive a strict temporary Structured Outputs schema
+without changing the public provider schema. `version` stays optional for
+legacy command and HTTP adapters; only the Codex-specific invocation schema
+requires integer `version: 1` along with the other declared properties.

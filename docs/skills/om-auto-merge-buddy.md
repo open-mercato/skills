@@ -16,6 +16,8 @@ With all three signals, `prepare-to-merge` (default) marks the PR ready with `me
 
 Intentionally deferred actionable nits, nonblocking findings and out-of-scope work become follow-up issues through [om-followup-issue-from-pr](om-followup-issue-from-pr.md). The buddy deduplicates against open and closed issues and records issue links or pending filing work in the status comment and run handoff. Filing an issue never satisfies a blocked review, QA or CI signal. Missing helpers or failed filing stop that item cleanly and remain visible for retry.
 
+Completed trusted `om-auto-qa-pr` PASS evidence on the unchanged head satisfies signal 2 before stage 2, including evidence-only legacy reports from another write-author and risk-high PRs. A unique Git resolution must link any short `Verified` SHA to the full current head; same-author starter/report/completion history and no newer trusted FAIL/revocation are required. Coverage notes stay visible. No approval label is added and no new QA attempt is counted; standalone QA and other merge tools keep their approval rules.
+
 ## Parameters
 
 | Parameter | Required | Description |

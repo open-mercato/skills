@@ -11,7 +11,7 @@ Read the current head, target, labels, reviews and mergeability through
 **get-pr**, then read the automation-authored signal record and its linked
 review/QA reports. Verify each evidence author, verdict, tested/reviewed SHA,
 target and risk-override provenance under `references/signals.md`. Read current
-comments for revocations or newer failing evidence. A signal label written by a
+comments for revocations or newer failing evidence. Check `references/qa-evidence.md` before treating a legacy same-head report as missing: trusted completed PASS wins without approval labels, risk/self-QA eligibility or complete-scope metadata. Coverage notes remain visible and do not reopen completed same-head QA. A signal label written by a
 human, a missing record, or a copied/foreign marker triggers real-evidence
 bootstrap; none is proof of a pass. Never infer reviewed revisions from commit
 timestamps, label age, or reassuring summary prose.
@@ -24,13 +24,14 @@ diff and `git log`). Use validated SHAs and quote them. The complete PR diff
 against its base is context, not a substitute for this evidence-to-head delta.
 If evidence is not an ancestor, inspect the two trees and relevant history;
 never assume a force-push preserved tested behavior. An unavailable revision,
-truncated diff, unknown tested scope or unprovable merge-only claim means that
+truncated diff, unknown tested scope for changed-head carry-forward, or unprovable merge-only claim means that
 signal is missing and needs fresh production, not a guessed carry-forward.
 
 ## 2. Judge each signal separately
 
 | Evidence and observed change | Decision and next action |
 |---|---|
+| Trusted completed same-head auto-QA PASS, including legacy uniquely resolved short SHA and evidence-only/risk-high | Grant QA from the report without approval labels or another attempt; skip stage 2. Disclosed coverage notes and unknown carry-forward scope do not reject this unchanged-head acceptance. |
 | Same revision, target and risk mode; real approval remains valid | Retain CR/QA only after same-head revocation checks. CI is reread independently. |
 | Every intervening commit only merges the current target and each resulting tree equals the automatic conflict-free merge result | CR may carry forward, with the merge proof and source approval linked. If the merge result cannot be proved, request delta review. Judge QA's tested scope separately; CI always uses the current head. |
 | Any other change after reviewed code: UI, backend, tests, config or metadata | Invalidate CR and run the review stage as a delta re-review against the last valid reviewed SHA, keeping unresolved findings inherited. A small diff or matching labels never substitutes for review. |

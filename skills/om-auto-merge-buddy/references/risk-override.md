@@ -32,6 +32,7 @@ Keep the `RESULT:` grammar unchanged. The review/QA work product named by
 `evidence=` records `Risk checks: skipped` and its run id when the override was
 used. The signal record stores `riskChecks: skipped` or `enforced`; invalidation
 and bootstrap enforce this provenance (`references/signals.md`). A subsequent
-non-force invocation requires strict review and fresh eligible QA or a human
-sign-off instead of reusing override-derived approval. Strict evidence can be
+non-force invocation requires strict review instead of reusing override-derived
+CR approval. QA independently accepts trusted completed same-head PASS under
+`references/qa-evidence.md`, regardless of the self-QA label exception. Strict evidence can be
 reused in force mode when all ordinary validity checks hold.

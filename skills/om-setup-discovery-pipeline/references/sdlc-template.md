@@ -196,6 +196,17 @@ never enabled by `--force`; later strict runs and target advances/reruns require
 fresh CI evaluation. A waived failure stays visibly failed, not green. Local
 validation and all other gates remain unchanged.
 
+For human-authorized automerge PRs, signal 2 also accepts a trusted completed
+`om-auto-qa-pr` PASS on the unchanged head, independently of manual-approval
+labels or self-QA eligibility, including evidence-only and risk-high reports
+with disclosed coverage limitations. Trust requires same-author starter,
+report and completion history from an account with write access; resolve legacy
+short `Verified` SHAs uniquely to the exact current head. Keep limitations
+visible, add no `qa-approved`/`qa-self-verified`, and skip duplicate QA attempts.
+Newer trusted FAIL, revocation/deletion or head changes invalidate this evidence.
+This automerge signal exception leaves standalone QA and other merge skills'
+manual-approval gates unchanged.
+
 ## The QA gate
 
 The one hard rule of this process: **a PR carrying `needs-qa` must not merge until it also carries `qa-approved`, even when every other check is green.** `om-merge-buddy` classifies such a PR as blocked; `om-approve-merge-pr` refuses to merge it.

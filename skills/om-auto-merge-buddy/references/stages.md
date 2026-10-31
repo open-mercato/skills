@@ -42,11 +42,10 @@ signals 2 and 3 are re-evaluated for the new head per `references/signals.md`.
 
 ## Stage 2 — QA (signal 2 missing)
 
-`om-auto-qa-pr {pr} --orchestrated`. It skips its review-first gate, because
+Before invoking QA, use `references/qa-evidence.md`: a trusted completed PASS on the unchanged head (including legacy reports) grants signal 2 and skips this stage with zero attempts, regardless of approval labels or risk-high. Only when neither that evidence nor a valid approval exists run `om-auto-qa-pr {pr} --orchestrated`. It skips its review-first gate, because
 signal 1 already holds.
 
-- `pass` with `selfqa=eligible` → the QA skill has applied `qa-approved` + `qa-self-verified` with its `QA head:` sign-off (the sole automation exception in `SDLC.md`). Verify the labels via **get-pr**, then record the signal with the evidence link.
-- `pass` with `selfqa=ineligible` (risk-high without the explicit risk override) → record `qa: waiting-human <head>` and end the visit `waiting-human`. The evidence is posted for the human QA reviewer.
+- `pass` on the current head with its trusted posted PASS report → grant signal 2 from that completed stage/report, regardless of `selfqa=eligible|ineligible`. The verified invocation and `RESULT:` supply completion provenance for this just-run stage; legacy historical reuse uses the linked comment history in `references/qa-evidence.md`. When self-QA labels were legally applied, verify them, but missing labels or risk-high never reject this report-based signal. Do not add approval labels here.
 - `fail` → the QA evidence comment on the PR names the failing scenarios. Run **stage 1** (`om-auto-review-pr --autofix --orchestrated`), which takes that report in as an `INHERITED` blocker and fixes it. Then re-run QA. Count one QA attempt per QA run.
 - `blocked` because no runnable environment or browser provider exists → end the visit `waiting-human` with that reason. A human QA reviewer can still sign off.
 

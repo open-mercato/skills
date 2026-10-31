@@ -6,7 +6,7 @@ record. This skill links it and never repeats it.
 ## Status comment (one per PR, edited in place)
 
 Marker: `` 🤖 `om-auto-merge-buddy` — status ``. Find it via
-**list-issue-comments**, create it once with **comment-pr**, and rewrite it
+**list-issue-comments**, counting only a comment written by `CURRENT_USER`, create it once with **comment-pr**, and rewrite it
 whole via **update-comment**. It serves as this skill's claim comment, its
 label-rationale comment, and its run summary, so there is never a second
 comment per visit or per round.

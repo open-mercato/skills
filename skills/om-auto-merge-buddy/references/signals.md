@@ -58,13 +58,14 @@ Read **get-pr-checks** for the current head, and `mergeable` from **get-pr**.
 | Reading | Meaning |
 |---|---|
 | every check completed `SUCCESS` / `NEUTRAL` / `SKIPPED`, head not conflicting | **held** |
+| explicit `--skip-pre-existing-ci-errors`, every failing check has a fresh exact-target baseline proof, all other checks pass and all runs completed | **held with baseline waivers**, never reported as all checks green (`references/ci-baseline.md`) |
 | any check `PENDING` / `QUEUED` / `IN_PROGRESS` and none failed | **pending** → `waiting-ci` (no attempt counted). A check that has been pending for more than 4 hours on one head counts as **failing**: a stuck runner is a CI problem, not a reason to wait forever |
 | any check `ACTION_REQUIRED` (runs held for maintainer approval) | approve held runs, then **pending** (below) |
 | any `FAILURE` / `ERROR` / `CANCELLED` / `TIMED_OUT`, or head `CONFLICTING` | **failing** → CI stage |
 | no checks at all | **pending** for the first 10 minutes after the head commit. After that, **held** as "no CI configured" only when **list-runs** on the target branch also shows no workflow runs; otherwise **failing** (CI did not start) |
 
 All checks count, not only the required ones: the three signals replace the host's
-merge rules, so a red optional check is still red.
+merge rules, so a red optional check is still red. The only opt-in exception is a fresh, fully proven baseline waiver under `--skip-pre-existing-ci-errors`; unknown, pending and unproved failures are never waived.
 
 **Held runs.** Call **approve-pending-runs** for the head SHA only when the PR
 carries `AUTOMERGE_LABEL` and its changed files (**get-pr-files**) touch no CI
@@ -103,6 +104,17 @@ strict evidence remains usable; this flag authorizes a waiver, never fabricates
 a passed review or QA. `waiting-human` caused only by the risk-high exclusion
 is reopened when an explicit force invocation enables real self-QA.
 
+## CI baseline-policy provenance
+
+Record `ciPolicy: skip-proven-baseline-errors` only for an explicit
+`--skip-pre-existing-ci-errors` invocation; otherwise record `strict`. A legacy
+record without this field is strict. `ciTarget` stores the exact target SHA used
+for any waiver, or `none` without waivers. A later strict invocation invalidates
+waiver-derived CI before bootstrap or reuse and evaluates every failure
+normally. A policy change, target advance, head change or check rerun discards
+old waiver proofs. Recompute them from fresh source runs/logs and unchanged CI
+configuration before granting CI again, even when old labels still exist.
+
 ## Invalidation when the head moves
 
 Compare the current head with the SHA in each record. When they differ:
@@ -122,6 +134,8 @@ A fenced block with exactly these lines, rewritten whole on every change:
 ```text
 base: <baseRefName>
 riskChecks: <enforced|skipped>
+ciPolicy: <strict|skip-proven-baseline-errors>
+ciTarget: <target-sha|none>
 head: <sha>
 cr: <pass|missing|fail> <sha> <evidence url>
 qa: <n/a|pass|missing|fail|waiting-human> <sha> <evidence url>

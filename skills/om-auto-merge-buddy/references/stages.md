@@ -52,7 +52,7 @@ signal 1 already holds.
 
 ## Stage 3 — CI (signal 3 failing)
 
-`om-auto-fix-pr {pr} --orchestrated` — full mode, not `--ci-only`. It merges the
+`om-auto-fix-pr {pr} --orchestrated` (also `--skip-pre-existing-ci-errors` only when explicitly enabled for this invocation) — full mode, not `--ci-only`. It merges the
 PR's target branch in and resolves conflicts, delegating non-trivial ones to
 `om-auto-review-pr --autofix --orchestrated`. It classifies each failure and
 fixes real ones at the root with tests. It never weakens a test or disables a
@@ -60,7 +60,8 @@ check. It re-runs a suspected flake once, pushes, and returns `pending` without
 waiting. In orchestrated mode it skips its own review and QA stages, because this
 skill re-establishes those signals for the new head itself. An `infra` or
 out-of-scope failure (runner outage, missing secret, target branch already red)
-returns `blocked`.
+returns `blocked`, except a fresh proof satisfying the explicit baseline opt-in
+(`references/ci-baseline.md`). Other failures remain blocking.
 
 ## Following a replacement PR (fork carry-forward)
 
@@ -80,7 +81,7 @@ Recheck evidence). The target must still equal `base` in the record, the head
 must still equal the SHA in all three records, the PR must be open with
 `AUTOMERGE_LABEL`, and not `CONFLICTING`. A changed target or revoked approval
 returns to the ladder just like a changed head. Recheck current CI rather than
-trusting a saved green record.
+trusting a saved green record. If baseline errors were waived, resolve the target tip again and revalidate the exact target SHA, check attempts, logs and CI-definition proof immediately before merge; any change returns to CI evaluation (`references/ci-baseline.md`).
 
 - **`prepare-to-merge`** → `set_pipeline_label {pr} merge-queue`, then **mark-pr-ready** if it is a draft. End `ready`. Later rounds revisit it cheaply: no producing stage runs while the current target and fresh source evidence still support every signal.
 - **`prepare-and-merge`** → **mark-pr-ready** if it is a draft, then **merge-pr** with squash, the checked `headRefOid`, and the descriptor's protection-bypass form. Labels such as `do-not-merge` and host merge rules are deliberately not consulted: the three signals are the gate. End `merged`. Do not delete the head branch unless the repository's config asks for it.

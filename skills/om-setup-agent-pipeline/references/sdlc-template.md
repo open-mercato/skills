@@ -187,6 +187,15 @@ change risk labels or authorize claim takeover. The buddy passes the separate
 resume, strict gates apply and override-derived review/QA approvals cannot be
 reused as ordinary approvals. Standalone skill defaults are unchanged.
 
+The independent `--skip-pre-existing-ci-errors` flag permits only an individual
+completed CI failure proved identical on the exact current target SHA, using
+matching workflow/job context, unchanged relevant CI definitions and actual
+matching diagnostic/root cause. Record both runs, SHAs and the proof; pending,
+new, unreadable or unknown failures are not waived. The flag is invocation-only,
+never enabled by `--force`; later strict runs and target advances/reruns require
+fresh CI evaluation. A waived failure stays visibly failed, not green. Local
+validation and all other gates remain unchanged.
+
 ## The QA gate
 
 The one hard rule of this process: **a PR carrying `needs-qa` must not merge until it also carries `qa-approved`, even when every other check is green.** `om-merge-buddy` classifies such a PR as blocked; `om-approve-merge-pr` refuses to merge it.

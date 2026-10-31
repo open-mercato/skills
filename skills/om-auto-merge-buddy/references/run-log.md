@@ -31,6 +31,7 @@ the step finishes. Never rewrite an earlier row.
 
 **Mode:** <prepare-to-merge | prepare-and-merge>
 **Risk checks:** <enforced | skipped — operator --force>
+**CI baseline policy:** <strict | skip-proven-baseline-errors — explicit operator flag>
 **Started:** <UTC ISO-8601>
 **Status:** <running | finished | resumed-elsewhere>
 
@@ -67,6 +68,8 @@ last action before it stops, including when the window closes (below).
 **Status:** <open | window-ended | closed>
 **Window:** <used>/<window> min, deadline <UTC ISO-8601>
 **Risk checks this session:** <enforced | skipped — operator --force>
+**CI baseline policy this session:** <strict | skip-proven-baseline-errors — explicit operator flag>
+**CI baseline waivers:** <check identity, PR run/job URL, target SHA and run/job URL, diagnostic signature, unchanged CI definitions and verification time | none>
 
 ## In flight
 - <#n — stage 3 CI (`om-auto-fix-pr`) attempt 1/3 since <ts>, head <sha> | none>
@@ -135,7 +138,7 @@ Unless `--fresh` is passed, look for the newest folder under
 
 1. **`window-ended`** → no liveness check is needed: continue that run (steps 3 and 5), starting from its *Next concrete action*.
 2. **`open` — live or dead?** `Last updated` within the last 120 minutes (the same staleness bound as the status-comment heartbeat, `references/claim-pr.md`) → another run is probably still working: do not touch its folder; start a new run folder, and let the per-PR claims keep the two runs apart. Older → the run is dead: resume it.
-3. **Resume in the same folder.** Append a `Sessions` row and a `resume` step, append `run resumed from session <k>` to `NOTIFY.md`, and open a fresh window (`START` = now). Keep the original `RUN_ID`. Record this invocation’s risk mode in the new session and handoff; `--force` is never inherited from a previous session. Append the override decision to `NOTIFY.md` when enabled.
+3. **Resume in the same folder.** Append a `Sessions` row and a `resume` step, append `run resumed from session <k>` to `NOTIFY.md`, and open a fresh window (`START` = now). Keep the original `RUN_ID`. Record this invocation’s risk mode in the new session and handoff; `--force` and `--skip-pre-existing-ci-errors` are never inherited from a previous session. Append the override decision to `NOTIFY.md` when enabled.
 4. **The PR in flight first.** If `In flight` names a PR, start the queue with it. Its `in-progress` claim is this skill's own stale claim, so recover it through `references/claim-pr.md`, then re-read state and re-check signals against the current head before continuing the ladder — a stage that died mid-run may have pushed. Never assume the dead stage's result. The status comment's attempt record is authoritative; the Steps table explains it.
 5. **Then the remaining queue** in the recorded order, merged with a fresh **list-prs** read: drop PRs that lost `AUTOMERGE_LABEL` or were merged or closed, and append newly labeled ones in the usual queue order (`references/window.md`).
 6. A recorded PR that was closed in favor of a replacement (its status comment says `🔁 replaced by #<n>`, or a `Closing in favor of #<n>` comment) resumes on `#<n>` — the handoff move was interrupted, so finish it first.

@@ -29,14 +29,7 @@ and shares one instance with integration tests.
   default branch when `auto`).
 - `--evidence-only` (default) — produce evidence only; do not touch pipeline/meta
   labels. Stated explicitly so the default is obvious.
-- `--self-qa-signoff` (optional, PR mode) — when verification is fully green AND
-  screenshots were attached AND the PR carries `needs-qa` without `skip-qa` AND
-  the PR is not `risk-high` (labeled, or inferred per `SDLC.md` from the diff
-  even when the current risk label is lower: auth, sessions, data scoping,
-  money, schema migrations, shared contracts),
-  additionally apply `qa-approved` + `qa-self-verified` via the self-QA exception
-  documented in `SDLC.md`. On a `risk-high` PR the flag posts the evidence and
-  withholds the sign-off, saying a QA reviewer is required. Off by default.
+- `--self-qa-signoff` (optional, PR mode) — apply `qa-approved` + `qa-self-verified` only for a fully green run with screenshots and `needs-qa` without `skip-qa`. Risk-high (labeled or inferred from the diff even when the current risk label is lower) requires human QA unless the validated orchestrated risk override applies. Step 13 and `references/orchestrated-mode.md` define sign-off evidence and the scoped exception. Off by default.
 - `--apply-failure` (optional, PR mode) — on failure, apply `qa-failed`. Off by
   default (automated UI checks can be flaky; default to reporting, not blocking).
 - `--keep-env` (optional) — leave the environment running on exit even if this run
@@ -46,7 +39,8 @@ and shares one instance with integration tests.
   `<paths.qa>/artifacts_<runId>` (default `.ai/qa/artifacts_<runId>`).
 - `--force` (optional, PR mode) — bypass the in-progress claim check to take over
   a PR another actor claimed.
-- `--orchestrated` (optional) — set only by an orchestrator that already holds this PR's `in-progress` claim and owns its labels (`om-auto-merge-buddy`). This skill then does its core work, skips its own claim, label, handoff and CI-wait steps, and ends with a `RESULT:` line (`references/orchestrated-mode.md`).
+- `--skip-risk-checks` (optional, only with `--orchestrated`) — scoped risk waiver; provenance and limits: `references/orchestrated-mode.md`. Distinct from claim `--force`.
+- `--orchestrated` (optional, PR mode) — run under the buddy’s held claim; follow `references/orchestrated-mode.md` for owned labels, skipped steps, risk override and `RESULT:` output.
 
 ## Chaining
 
@@ -221,7 +215,7 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
       line — the commit this run checked out and tested — and the self-QA
       evidence list `SDLC.md` requires (scenario, environment, test data,
       result, negative cases, head). On a `risk-high` PR (label, or the `SDLC.md`
-      inference on the diff) the sign-off is withheld: post the evidence, say
+      inference on the diff) without the validated orchestrated risk override, the sign-off is withheld: post the evidence, say
       why, and leave `needs-qa` for a QA reviewer. `om-approve-merge-pr`
       and `om-merge-buddy` compare it with the PR head; a later push stales the
       sign-off. Never sign off a partial/environment-limited run.
@@ -280,7 +274,7 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
   PR mode posts them via **attach-image-evidence**, never on the change's branch.
 - Default behavior changes no labels. `qa-approved`/`qa-self-verified` only via
   `--self-qa-signoff` on a fully-green run with screenshots and `needs-qa` (no
-  `skip-qa`), never on a `risk-high` PR; `qa-failed` only via `--apply-failure`. Every label mutation goes
+  `skip-qa`), on `risk-high` only with the validated orchestrated risk override; `qa-failed` only via `--apply-failure`. Every label mutation goes
   through the descriptor's guards, with a comment.
 - Redact sensitive values from screenshots or omit them; never let evidence leak
   tokens, `.env` content, or non-demo credentials.

@@ -177,10 +177,23 @@ Two labels live outside this taxonomy, and only humans decide them (the automerg
 - `do-not-close` — on issues that housekeeping skills must never auto-close. Skills only ever read it.
 - `automerge` — on a PR the human wants merged without further attention. A human applies it directly, or `om-auto-merge-triage` applies it to the PRs a human confirms from its ranked proposal (eligibility rules: `automerge.eligibility`). Its AI judgment prioritizes important fixes close to merge, inspecting older PRs with screenshots and requested changes. Requested changes must be bounded and pass that judgment before any tier can propose the PR; review, QA and CI remain required. `om-auto-merge-buddy` works these PRs one at a time within a time window (default 2 hours). It ignores assignees and skips PRs claimed `in-progress`. Readiness is three signals, each recorded as a label that only this skill applies:
   - `automerge-signal-1-cr` — `om-auto-review-pr`, or a human other than the author, approved the current head.
-  - `automerge-signal-2-qa` — QA is not required (`skip-qa`, or no `needs-qa`), or `qa-approved` is pinned to the current head by its `QA head:` line. Only `om-auto-qa-pr` may apply it through self-QA, and never on a `risk-high` PR.
+  - `automerge-signal-2-qa` — QA is not required (`skip-qa`, or no `needs-qa`), or `qa-approved` is pinned to the current head by its `QA head:` line. Only `om-auto-qa-pr` may apply it through self-QA, on `risk-high` only under the explicit invocation-scoped risk override below.
   - `automerge-signal-3-ci` — every check on the current head finished green, with no conflicts.
 
   On its first visit to a PR, when no signal is recorded yet, the buddy derives the initial signals from the PR's real state: its labels, reviews and comments, and its CI checks on the current head. It then starts from the first signal still missing, so review, QA or CI work already done is not repeated. A missing signal is produced by `om-auto-review-pr --autofix`, `om-auto-qa-pr`, or `om-auto-fix-pr`, each run with `--orchestrated` so the buddy alone owns the claim and the labels. CI that is still running is parked under `ci-monitoring` and checked again later. A PR that cannot be fixed within the attempt limit is parked under `automerge-blocked`; remove that label to retry. A fork PR is carried forward to a credited replacement that keeps the label. In `prepare-to-merge` mode (the default), a PR with all three signals gets `merge-queue`. In `prepare-and-merge` mode it is squash-merged, bypassing other labels and host merge rules, because the three signals are the gate. Removing `automerge` stops the automation.
+
+### Explicit automerge risk override
+
+`om-auto-merge-buddy --force` records the operator’s explicit exception on the
+PR and run for this invocation only. It waives the risk-high integration-evidence
+requirement and risk-high self-QA exclusion; the QA skill must still complete
+real verification, attach screenshots and pin its sign-off to the tested head.
+Full review, actual correctness/security findings, the configured validation
+gate, required QA, CI, conflicts and the merge head guard remain. It does not
+change risk labels or authorize claim takeover. The buddy passes the separate
+`--skip-risk-checks` flag to orchestrated stages. Without `--force`, even on
+resume, strict gates apply and override-derived review/QA approvals cannot be
+reused as ordinary approvals. Standalone skill defaults are unchanged.
 
 ## The QA gate
 
@@ -216,7 +229,7 @@ None of this touches the merge gates. Reporting early is safe; merging early is 
 
 ## The automation contract
 
-The `om-auto-*` skills run this process unattended and are chainable: each accepts the artifact the previous one produced (an issue id, a spec path, or a PR number from the `PR: #<number> (link: <url>)` reference line every PR-producing skill emits), and each detects work already started — an open PR referencing the issue or plan — and continues on it rather than opening a duplicate. A completed autonomous run leaves a **ready** (non-draft), fully labeled PR — one pipeline label, category, QA meta, one priority, one risk — with a run-summary comment and, for user-facing changes, screenshots from the working app attached as PR evidence. Draft PRs are reserved for explicitly incomplete states: spec-only design PRs, interrupted hand-offs, or autonomous defaults flagged for human confirmation. Automation applies `qa-approved` only through the self-QA exception (`om-auto-qa-pr --self-qa-signoff`, always paired with `qa-self-verified`, never on a `risk-high` PR); no authoring, review, or merge skill ever applies it.
+The `om-auto-*` skills run this process unattended and are chainable: each accepts the artifact the previous one produced (an issue id, a spec path, or a PR number from the `PR: #<number> (link: <url>)` reference line every PR-producing skill emits), and each detects work already started — an open PR referencing the issue or plan — and continues on it rather than opening a duplicate. A completed autonomous run leaves a **ready** (non-draft), fully labeled PR — one pipeline label, category, QA meta, one priority, one risk — with a run-summary comment and, for user-facing changes, screenshots from the working app attached as PR evidence. Draft PRs are reserved for explicitly incomplete states: spec-only design PRs, interrupted hand-offs, or autonomous defaults flagged for human confirmation. Automation applies `qa-approved` only through the self-QA exception (`om-auto-qa-pr --self-qa-signoff`, always paired with `qa-self-verified`, on `risk-high` only under the explicit invocation-scoped risk override below); no authoring, review, or merge skill ever applies it.
 
 ## Validation gate
 

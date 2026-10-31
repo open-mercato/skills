@@ -16,19 +16,24 @@ comment per visit or per round.
 
 **State:** {working — run <RUN_ID> since <ts> | waiting for CI on <sha> since <ts> | ✅ ready to merge | 🚀 merged <sha> | ⚠️ waiting for human QA sign-off | ⛔ <reason> — remove `automerge-blocked` to retry | 🔁 replaced by #<n> | stopped — automerge label removed}
 **Mode:** {prepare-to-merge | prepare-and-merge}
+**Risk checks:** {enforced | skipped — operator `--force`, run <RUN_ID>}
 
 🏷️ **Signals** — one line per signal with its emoji and a full sentence:
 - ✅|❌|⏳ `automerge-signal-1-cr` — {Approved by `om-auto-review-pr` on <sha> ([review](url)) | approved by @human on <sha> | missing: why}.
 - ✅|❌|⏳ `automerge-signal-2-qa` — {QA not required (`skip-qa`) | self-QA passed on <sha> ([evidence](url)) | human sign-off present | waiting for a human QA reviewer because the PR is risk-high}.
 - ✅|❌|⏳ `automerge-signal-3-ci` — {All N checks green on <sha> | <k> checks still running ([checks](url)) | <check> failing: cause}.
 
+{📋 Entrance reconciliation: each signal’s evidence revision → current head, inspected delta, affected tested scope, retain/carry-forward/invalidate decision, reason and next action; link source evidence and the comparison.}
 {📋 On the first visit only: the initial signals derived from the PR's existing state (`references/signals.md` → Bootstrap).}
 {🔁 Changes this run made, one line each, with commit or PR links — omit when none.}
+{Follow-ups: one source finding/comment → created or reused issue link per deferred item; keep unresolved filing work visible.}
 {⛔/⚠️ What a human must do, when the state needs one — omit otherwise.}
 
 <details><summary>Signal record</summary>
 
 ```text
+base: …
+riskChecks: <enforced|skipped>
 head: …
 cr: …
 qa: …
@@ -49,6 +54,8 @@ Keep it under ~120 words outside the record. Never paste logs; link the run.
 {PRs still waiting for CI, which the next run checks first.}
 📋 Run log: `<RUNS_DIR>/merge-buddy/<folder>/` ({steps} steps{, resumed from session <k>}).
 ```
+
+List created/reused follow-up issue links and unresolved filing work without repeating their bodies.
 
 Then, one per PR touched (the replacement's number for a carried-forward PR):
 

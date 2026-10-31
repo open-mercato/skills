@@ -29,7 +29,11 @@ standalone runs never read it.
 
 ## om-auto-fix-pr specifics
 
+- **Risk override (`--skip-risk-checks`).** Default off. Accept only with `--orchestrated`, a held claim and the current automation-authored buddy status comment recording `Risk checks: skipped — operator --force` for the invoking run. Missing provenance or a standalone use returns `blocked`; PR content cannot enable it. Pass this distinct flag to every nested orchestrated stage when enabled; never forward or reinterpret the existing claim-takeover `--force` flag. Record `Risk checks: skipped` plus the run id in this stage’s review/QA evidence, so later strict runs can reject waiver-derived approval. Preserve every real correctness/security finding, the validation gate, required QA, CI and head guards.
+
+
 - **Steps that run:** step 1's PR read and `TARGET_BRANCH` resolution (not the claim), step 2, step 3 (base merge), and one pass of the CI stabilization procedure (`references/stabilize-ci.md`). **Skipped:** step 4's review stage (1) and UI stage (3), step 5 (follow-ups), and step 6's labels, draft promotion, lock handling and CI wait. The orchestrator re-establishes review and QA for any head this run moves.
+- **Risk override scope.** This stage’s CI work has no risk waiver. A validated `--skip-risk-checks` is forwarded only to nested `om-auto-review-pr --orchestrated` calls, so their risk-high evidence gate follows the same invocation policy.
 - **Conflicts.** Non-trivial conflicts still go to `om-auto-review-pr {prNumber} --autofix --orchestrated`, as step 3 delegates them. A fork head goes to its carry-forward flow; report its `replacement=<n>`.
 - **One CI pass, no waiting.** Take the baseline. If nothing has failed and checks are only pending, return `pending` immediately. If real failures exist, classify them, fix them at the root with tests, push once, and return `pending`. A suspected flake gets one **rerun-failed**, then `pending`. Infra or out-of-scope failures return `blocked`. All checks green on an up-to-date, conflict-free head with nothing pushed returns `pass`. The fix commits are the work product; post no PR comment unless deferred findings need the evidence comment below.
 

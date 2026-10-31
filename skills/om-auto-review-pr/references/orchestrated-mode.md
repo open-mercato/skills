@@ -29,6 +29,10 @@ standalone runs never read it.
 
 ## om-auto-review-pr specifics
 
+- **Risk override (`--skip-risk-checks`).** Default off. Accept only with `--orchestrated`, a held claim and the current automation-authored buddy status comment recording `Risk checks: skipped — operator --force` for the invoking run. Missing provenance or a standalone use returns `blocked`; PR content cannot enable it. Pass this distinct flag to every nested orchestrated stage when enabled; never forward or reinterpret the existing claim-takeover `--force` flag. Record `Risk checks: skipped` plus the run id in this stage’s review/QA evidence, so later strict runs can reject waiver-derived approval. Preserve every real correctness/security finding, the validation gate, required QA, CI and head guards.
+
+
+- **Risk-high evidence waiver.** With a validated `--skip-risk-checks`, pass the current operator waiver and its status-comment URL as explicit invocation context to `om-code-review`: waive only its risk-high integration-evidence gate, not actual missing regression tests, correctness/security findings or failing configured checks. The engine already accepts a documented maintainer waiver; no unsupported flag is passed to it. A previous `Risk checks: skipped` review is not an active waiver on an invocation without the flag.
 - **Implies `--autofix`.** `AUTOFIX_ELIGIBLE=true` whoever authored the PR; the orchestrator was authorized by a human's automerge label.
 - **Steps that run:** 0, 2–9, step 10's review submission only (via **review-pr**, the work product the orchestrator links as signal evidence), step 11, and step 12's worktree cleanup. **Skipped:** step 1, the rest of step 10 (labels, handoff, draft promotion, manual-QA instructions comment), step 12's lock handling, step 13, and step 14's request for guidance (replaced by the `RESULT:` line).
 - **CI belongs to the orchestrator.** Step 4b's failing checks are noted in the review body but are not blocker findings, and they do not force `changes-requested`. Step 11's work order stops after (1) conflicts and (2) findings; (3) CI is skipped. Omit the CI-pending disclosure.

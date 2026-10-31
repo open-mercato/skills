@@ -23,7 +23,12 @@ Intentionally deferred actionable nits, nonblocking findings and out-of-scope wo
 | `--mode <prepare-to-merge\|prepare-and-merge>` | No | What to do once all three signals hold. Default `automerge.mode` (`prepare-to-merge`). |
 | `--window <minutes>` | No | Wall-clock budget for the run. Default `automerge.windowMinutes` (`120`); `0` = one pass, no idle CI polling. |
 | `--pr <number>` | No | Work only this PR. |
+| `--force` | No | Skip only risk-high review-evidence and self-QA exclusions for this invocation. Full review, required QA, CI and head guard remain. Never takes over another actor’s claim. |
 | `--fresh` | No | Start a new run log instead of resuming a dead run's open handoff. |
+
+Every visit starts by reconciling signal labels with actual review/QA/CI evidence and the changes since each evidence revision. The buddy inspects the delta, judges its effect on the tested behavior, carries forward only supported evidence and runs delta review, QA or current-head CI checks as needed. It logs the scope judgment and next action before launching a stage; unknown scope or untrusted evidence never counts as a pass.
+
+Force mode is recorded in the PR status, review/QA evidence and run log. It is never inherited on resume: run again with `--force` to keep the waiver active. A normal run rejects previous override-derived approvals and applies the strict risk gates.
 
 ## Run log and resume
 

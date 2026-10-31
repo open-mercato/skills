@@ -3,7 +3,7 @@
 ## Running a sub-skill
 
 Each stage is one sub-skill invocation, and it always carries `--orchestrated`.
-That flag is the contract. The sub-skill runs under this skill's claim. It
+That flag is the contract. When `RISK_CHECKS_SKIPPED=true`, also pass `--skip-risk-checks`; otherwise omit it. Never pass the buddy’s `--force` to a child: a child’s existing `--force` means claim takeover. Nested orchestrated calls preserve `--skip-risk-checks`. The sub-skill runs under this skill's claim. It
 skips its own claim, label, assignee, handoff, draft-promotion and CI-wait steps,
 does its core work, and ends with one machine line:
 
@@ -46,7 +46,7 @@ signals 2 and 3 are re-evaluated for the new head per `references/signals.md`.
 signal 1 already holds.
 
 - `pass` with `selfqa=eligible` → the QA skill has applied `qa-approved` + `qa-self-verified` with its `QA head:` sign-off (the sole automation exception in `SDLC.md`). Verify the labels via **get-pr**, then record the signal with the evidence link.
-- `pass` with `selfqa=ineligible` (risk-high) → record `qa: waiting-human <head>` and end the visit `waiting-human`. The evidence is posted for the human QA reviewer.
+- `pass` with `selfqa=ineligible` (risk-high without the explicit risk override) → record `qa: waiting-human <head>` and end the visit `waiting-human`. The evidence is posted for the human QA reviewer.
 - `fail` → the QA evidence comment on the PR names the failing scenarios. Run **stage 1** (`om-auto-review-pr --autofix --orchestrated`), which takes that report in as an `INHERITED` blocker and fixes it. Then re-run QA. Count one QA attempt per QA run.
 - `blocked` because no runnable environment or browser provider exists → end the visit `waiting-human` with that reason. A human QA reviewer can still sign off.
 

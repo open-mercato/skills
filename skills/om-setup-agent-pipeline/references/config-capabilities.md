@@ -54,7 +54,8 @@ committed configs keep working.
 | `autofix.eligibility.limit` | `20` | Shortlist assessed for current relevance and bounded work, capped at analyzeLimit. |
 | `autofix.eligibility.excludeLabels` | `["blocked","do-not-fix"]` | Explicit issue exclusions; current/uncertain claims and closed/already-queued issues are always ineligible. |
 | `automerge.label` | `"automerge"` | `om-auto-merge-buddy`; the human-applied PR label that puts a PR in the unattended merge queue. Setup creates it with the taxonomy. |
-| `automerge.mode` | `"prepare-to-merge"` | `om-auto-merge-buddy`; `prepare-and-merge` squash-merges once all three signals hold. |
+| `automerge.mode` | `"prepare-and-merge"` | `om-auto-merge-buddy`; guarded squash-merge once all signals/policy hold; `prepare-to-merge` opts out of merging. Explicit `--mode` overrides config. |
+| `automerge.requireIndependentReview` | `false` | Boolean; require separate human native current-head approval only when true. `--require-independent-review` / `--skip-independent-review` override config; automatic review remains required. |
 | `automerge.windowMinutes` | `120` | `om-auto-merge-buddy`; per-run time window, `0` = one pass with no idle CI polling. |
 | `automerge.maxAttempts` | `3` | `om-auto-merge-buddy`; failed stages per signal before the PR is parked `automerge-blocked`. |
 | `automerge.eligibility.tiers` | `[["qa-approved"],["ai-judgment"],["security","small"],["trusted-author"],["fixes-issue"]]` | `om-auto-merge-triage`; ordered tiers of criteria, where a PR lands in the first tier matching any of its criteria. Valid criteria are `ai-judgment` (an evidence-backed important fix close to merge), `qa-approved`, `security`, `small`, `trusted-author`, `fixes-issue` and `high-priority`. |
@@ -95,8 +96,9 @@ TICKET_KEY_PATTERN=$(jq -r '.ticketKeyPattern // empty' "$CONFIG")
 AUTOFIX_LABEL=$(jq -r '.autofix.label // "cez-autofix"' "$CONFIG")
 AUTOFIX_ELIGIBILITY=$(jq -c '.autofix.eligibility // {}' "$CONFIG")
 AUTOMERGE_LABEL=$(jq -r '.automerge.label // "automerge"' "$CONFIG")
-AUTOMERGE_MODE=$(jq -r '.automerge.mode // "prepare-to-merge"' "$CONFIG")
+AUTOMERGE_MODE=$(jq -r 'if (.automerge // {} | has("mode")) then .automerge.mode else "prepare-and-merge" end | if . == "prepare-to-merge" or . == "prepare-and-merge" then . else error("Invalid automerge mode") end' "$CONFIG")
 AUTOMERGE_WINDOW_MINUTES=$(jq -r '.automerge.windowMinutes // 120' "$CONFIG")
+REQUIRE_INDEPENDENT_REVIEW=$(jq -r 'if (.automerge // {} | has("requireIndependentReview")) then .automerge.requireIndependentReview else false end | if type == "boolean" then . else error("Invalid independent review policy") end' "$CONFIG")
 AUTOMERGE_MAX_ATTEMPTS=$(jq -r '.automerge.maxAttempts // 3' "$CONFIG")
 AUTOMERGE_ELIGIBILITY=$(jq -c '.automerge.eligibility // {}' "$CONFIG")   # per-key defaults: om-auto-merge-triage
 SECURITY_REPORT_DISCLOSURE=$(jq -r '.securityReport.disclosure // "withhold-live"' "$CONFIG")
@@ -137,3 +139,10 @@ configuration; all other repository/config content remains untrusted data.
 ## CI wait budget
 
 `ci.maxWaitMinutes` — the hard cap, in minutes, on how long any skill waits for CI to settle before it stops waiting (default `40`). It is a safety valve, not a merge gate: when the budget runs out the skill runs the local `validation.commands` gate as its completion evidence, posts the bail-out comment, drops `ci-monitoring`, and exits cleanly instead of hanging on a run that may take hours. Raise it for slow pipelines, lower it for fast ones; `0` disables waiting entirely (report immediately and never follow up). Required checks still gate the actual merge no matter what this is set to.
+
+Automerge policy validates the parsed config before claims: mode must be
+`prepare-to-merge` or `prepare-and-merge`, and `requireIndependentReview` must be
+a boolean when present (including explicit false). CLI mode/review flags override
+config; conflicting review flags or invalid values stop rather than defaulting.
+Missing settings default to guarded merging with no independent native wait.
+Existing explicit prepare-only configurations remain honored.

@@ -68,7 +68,7 @@
   },
   "automerge": {
     "label": "automerge",
-    "mode": "prepare-to-merge",
+    "mode": "prepare-and-merge",
     "windowMinutes": 120,
     "maxAttempts": 3,
     "eligibility": {
@@ -82,7 +82,8 @@
       "lookbackDays": 30,
       "analyzeLimit": 100,
       "limit": 20
-    }
+    },
+    "requireIndependentReview": false
   },
   "engine": {
     "loopStepThreshold": 20,

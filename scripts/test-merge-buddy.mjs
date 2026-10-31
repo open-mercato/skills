@@ -2,7 +2,9 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { runInNewContext } from 'node:vm'
-import { readFileSync } from 'node:fs'
+import { readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8')
 const skill = read('skills/om-auto-merge-buddy/SKILL.md')
@@ -297,4 +299,99 @@ resolveCleanup()
 assert.equal((await waitingFinalization).length, 0)
 assert.match(stages, /child task context \(no new CLI flags\)/)
 console.log('PASS: terminal cleanup is fenced and precedes row removal; malformed ownership stays protected through reset')
+
+const independentPolicy = read('skills/om-auto-merge-buddy/references/independent-review.md')
+const policyCode = independentPolicy.match(/```javascript\n([\s\S]*?)\n```/)[1]
+const { resolveAutomergePolicy, independentReviewDecision } = runInNewContext(`${policyCode}\n({resolveAutomergePolicy, independentReviewDecision})`)
+assert.equal(resolveAutomergePolicy({}).mode, 'prepare-and-merge', 'Missing mode defaults to actual guarded merge')
+assert.equal(resolveAutomergePolicy({}).requireIndependentReview, false)
+assert.equal(resolveAutomergePolicy({ config: { automerge: { mode: 'prepare-to-merge', requireIndependentReview: true } } }).mode, 'prepare-to-merge', 'Explicit configured preparation-only mode stays honored')
+assert.equal(resolveAutomergePolicy({ config: { automerge: { mode: 'prepare-to-merge' } }, mode: 'prepare-and-merge' }).mode, 'prepare-and-merge')
+assert.equal(resolveAutomergePolicy({ config: { automerge: { mode: 'prepare-and-merge' } }, mode: 'prepare-to-merge' }).mode, 'prepare-to-merge')
+assert.equal(resolveAutomergePolicy({ config: { automerge: { requireIndependentReview: true } }, skipReview: true }).requireIndependentReview, false, 'Explicit skip overrides config true')
+assert.equal(resolveAutomergePolicy({ config: { automerge: { requireIndependentReview: false } }, requireReview: true }).requireIndependentReview, true)
+assert.equal(resolveAutomergePolicy({ requireReview: true }).independentReviewSource, 'cli')
+assert.equal(resolveAutomergePolicy({ config: { automerge: { requireIndependentReview: false } } }).independentReviewSource, 'config')
+for (const input of [{ requireReview: true, skipReview: true }, { mode: 'invalid' }, { config: { automerge: { mode: null } } }, { config: { automerge: { requireIndependentReview: 'false' } } }, { config: { automerge: { requireIndependentReview: null } } }, { config: { automerge: { requireIndependentReview: 0 } } }]) {
+  assert.throws(() => resolveAutomergePolicy(input), /Conflicting|Invalid/, 'Invalid or conflicting merge policy never silently falls back')
+}
+const nativeApproval = { author: 'human-reviewer', type: 'User', writeAccess: true, isBot: false, state: 'APPROVED', commit: qaHead, submittedAt: earlierTime, url: 'https://example.invalid/review/1' }
+const nativeInput = { required: false, head: qaHead, author: 'pr-author', currentUser: 'pkarw', automationApproved: true, unresolvedFindings: false }
+const nativeDecision = extra => independentReviewDecision({ ...nativeInput, ...extra })
+assert.equal(nativeDecision({}).outcome, 'pass', 'Author comment code approval holds without a native review by default')
+assert.equal(nativeDecision({ reviews: [{ ...nativeApproval, state: 'CHANGES_REQUESTED' }] }).outcome, 'pass', 'Stale native state alone does not block default after inherited findings are resolved')
+for (const required of [false, true]) {
+  assert.equal(nativeDecision({ required, automationApproved: false, reviews: [nativeApproval] }).outcome, 'review-required', 'Human native review never replaces automatic code review')
+  assert.equal(nativeDecision({ required, unresolvedFindings: true, reviews: [nativeApproval] }).outcome, 'review-required', 'Actual objections always route to autofix')
+}
+assert.equal(nativeDecision({ required: true }).outcome, 'waiting-human', 'A later strict invocation does not reuse a default skip policy')
+assert.equal(nativeDecision({ required: true, reviews: [nativeApproval] }).outcome, 'pass')
+assert.equal(nativeDecision({ required: true, reviews: [nativeApproval], reviewsComplete: false }).outcome, 'waiting-human')
+for (const change of [{ author: 'pr-author' }, { author: 'pkarw' }, { isBot: true }, { type: 'Bot' }, { writeAccess: false }, { state: 'COMMENTED' }, { state: 'DISMISSED' }, { commit: 'b'.repeat(40) }]) {
+  assert.equal(nativeDecision({ required: true, reviews: [{ ...nativeApproval, ...change }] }).outcome, 'waiting-human', 'Strict approval must be fresh native current-head independent human evidence')
+}
+assert.equal(nativeDecision({ required: true, reviews: [nativeApproval, { ...nativeApproval, state: 'DISMISSED', submittedAt: scheduleNow }] }).outcome, 'waiting-human')
+assert.equal(nativeDecision({ required: true, reviews: [nativeApproval, { ...nativeApproval, author: 'another-human', state: 'CHANGES_REQUESTED', submittedAt: scheduleNow }] }).outcome, 'waiting-human')
+assert.equal(nativeDecision({ required: true, reviews: [nativeApproval, { ...nativeApproval, state: 'COMMENTED', submittedAt: scheduleNow }] }).outcome, 'pass', 'Ordinary comments do not revoke a native approval')
+assert.match(stages, /no mode or host bypass may bypass\nthat requirement/)
+assert.match(independentPolicy, /Do not rerun a producing\nstage, consume an attempt/)
+const repoAutomerge = JSON.parse(read('.ai/agentic.config.json')).automerge
+assert.equal(repoAutomerge.mode, 'prepare-and-merge')
+assert.equal(repoAutomerge.requireIndependentReview, false)
+for (const document of [read('skills/om-setup-agent-pipeline/SKILL.md'), read('skills/om-setup-agent-pipeline/references/config-capabilities.md')]) {
+  assert.match(document, /requireIndependentReview/)
+  assert.match(document, /prepare-and-merge/)
+}
+console.log('PASS: config-first mode/native policy defaults to guarded merge without native wait; CLI overrides, strict evidence, new objections, stale status and invalid flags are enforced')
+
+const journalCode = [...scheduler.matchAll(/```javascript\n([\s\S]*?)\n```/g)][1][1]
+const upsertMergedJournal = runInNewContext(`${journalCode}\nupsertMergedJournal`)
+const mergedRecord = { repository: 'open-mercato/skills', number: 1, url: 'https://example.invalid/pr/1', outcome: 'merged', mergedAt: scheduleNow, updatedAt: scheduleNow, head: qaHead, mergeSha: 'c'.repeat(40), base: 'main', plan: [{ step: 'Merge', status: 'done' }], nextAction: 'None', evidence: ['https://example.invalid/review/1'], statusCommentUrl: 'https://example.invalid/status/1', reservation }
+const firstJournal = upsertMergedJournal({ record: mergedRecord })
+assert.equal(firstJournal.day, '2026-10-31')
+assert.equal(firstJournal.jsonl.trim().split('\n').length, 1)
+assert.equal(JSON.parse(firstJournal.jsonl).reservation, undefined, 'Public merge journal excludes owner token/process internals')
+const retryJournal = upsertMergedJournal({ raw: firstJournal.jsonl, record: mergedRecord })
+assert.equal(retryJournal.jsonl, firstJournal.jsonl, 'Retry is exactly idempotent')
+const updatedJournal = upsertMergedJournal({ raw: firstJournal.jsonl, record: { ...mergedRecord, nextAction: 'Follow up issue', updatedAt: '2026-11-01T02:00:00.000Z' } })
+assert.equal(updatedJournal.day, '2026-10-31', 'Late status updates stay in tracker-confirmed mergedAt UTC day')
+assert.equal(updatedJournal.jsonl.trim().split('\n').length, 1)
+assert.equal(JSON.parse(updatedJournal.jsonl).nextAction, 'Follow up issue')
+assert.equal(upsertMergedJournal({ raw: updatedJournal.jsonl, record: mergedRecord }).jsonl, updatedJournal.jsonl, 'Stale retry preserves newest final status')
+const distinctJournal = upsertMergedJournal({ raw: updatedJournal.jsonl, record: { ...mergedRecord, number: 2 } })
+assert.equal(distinctJournal.jsonl.trim().split('\n').length, 2, 'Other merged PR rows survive upsert')
+assert.equal(upsertMergedJournal({ raw: firstJournal.jsonl + firstJournal.jsonl, record: mergedRecord }).jsonl.trim().split('\n').length, 1, 'Preexisting duplicates normalize to one latest row per repo+PR')
+for (const input of [{ raw: '{malformed', record: mergedRecord }, { record: { ...mergedRecord, outcome: 'ready' } }, { record: { ...mergedRecord, outcome: 'closed' } }, { record: { ...mergedRecord, mergedAt: null } }, { raw: firstJournal.jsonl, record: { ...mergedRecord, mergedAt: '2026-11-01T00:00:00.000Z' } }]) {
+  assert.throws(() => upsertMergedJournal(input), /JSON|Confirmed|Malformed/, 'Malformed/unmerged/wrong-day journal input must fail without deleting active state')
+}
+const finalizationOrder = []
+await finalizeTracked({ activePrs: [reservedEntry], number: 1, ownsReservation: true, releaseOwnedClaim: async () => { finalizationOrder.push('status-and-claim') }, mergedRecord, writeMergedJournal: async () => { finalizationOrder.push('journal') } })
+assert.deepEqual(finalizationOrder, ['status-and-claim', 'journal'], 'Confirm/mirror/claim cleanup precedes durable journal and row deletion')
+await assert.rejects(() => finalizeTracked({ activePrs: [reservedEntry], number: 1, ownsReservation: true, releaseOwnedClaim: async () => {}, mergedRecord, writeMergedJournal: async () => { throw new Error('journal write failed') } }), /journal write failed/)
+assert.equal(reservedEntry.number, 1, 'Journal failure retains source row for cleanup retry')
+assert.doesNotMatch(status.match(/```json\n([\s\S]*?)\n```/)[1], /reservation|token|processStartedAt|delegatedHandles/)
+console.log('PASS: daily UTC confirmed-merge JSONL upserts latest status exactly once, preserves other PRs, excludes private ownership and retains cleanup after write failure')
+
+const loaderTemp = mkdtempSync(join(tmpdir(), 'merge-buddy-policy-'))
+try {
+  const configPath = join(loaderTemp, 'config.json')
+  for (const loaderPath of ['skills/om-auto-merge-buddy/references/agentic-setup.md', 'skills/om-setup-agent-pipeline/references/config-capabilities.md']) {
+    const loader = read(loaderPath)
+    for (const [slot, fixtures] of [
+      ['AUTOMERGE_MODE', [[{}, 'prepare-and-merge'], [{ mode: 'prepare-to-merge' }, 'prepare-to-merge'], [{ mode: null }, null], [{ mode: 'invalid' }, null]]],
+      ['REQUIRE_INDEPENDENT_REVIEW', [[{}, 'false'], [{ requireIndependentReview: false }, 'false'], [{ requireIndependentReview: true }, 'true'], [{ requireIndependentReview: null }, null], [{ requireIndependentReview: 'false' }, null], [{ requireIndependentReview: 1 }, null]]],
+    ]) {
+      const line = loader.split('\n').find(value => value.startsWith(slot + '='))
+      assert.ok(line, `Missing shipped policy loader ${slot}`)
+      for (const [automerge, expected] of fixtures) {
+        writeFileSync(configPath, JSON.stringify({ automerge }))
+        const loaded = spawnSync('bash', ['-eu'], { input: `${line}\nprintf '%s' "$${slot}"\n`, env: { ...process.env, CONFIG: configPath }, encoding: 'utf8' })
+        assert.ifError(loaded.error)
+        if (expected === null) assert.notEqual(loaded.status, 0, `${slot}: invalid policy must stop loader`)
+        else { assert.equal(loaded.status, 0, loaded.stderr); assert.equal(loaded.stdout, expected) }
+      }
+    }
+  }
+} finally { rmSync(loaderTemp, { recursive: true, force: true }) }
+console.log('PASS: actual shipped config loaders preserve false, honor explicit prepare mode and reject null/string/number policy values')
 console.log('Merge buddy regressions passed.')

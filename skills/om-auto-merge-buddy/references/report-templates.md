@@ -16,16 +16,17 @@ comment per visit or per round.
 ~~~markdown
 🤖 `om-auto-merge-buddy` — status
 
-**State:** {working — run <RUN_ID> since <ts> | waiting for CI on <sha> since <ts> | ✅ ready to merge | 🚀 merged <sha> | ⚠️ waiting for human QA sign-off | ⛔ <reason> — remove `automerge-blocked` to retry | 🔁 replaced by #<n> | stopped — automerge label removed}
+**State:** {working — run <RUN_ID> since <ts> | waiting for CI on <sha> since <ts> | ✅ ready to merge | 🚀 merged <sha> | ⚠️ waiting for human QA or required independent review | ⛔ <reason> — remove `automerge-blocked` to retry | 🔁 replaced by #<n> | stopped — automerge label removed}
 **Mode:** {prepare-to-merge | prepare-and-merge}
 **updatedAt:** <UTC ISO-8601; semantic plan/progress change, not heartbeat>
 **Next check:** <nextCheckAt UTC ISO-8601>
 **Plan/progress:** <step status, evidence and next action; mirror local scheduler>
+**Independent review:** {skipped | required — evidence link or missing reason}; source {config | CLI | default}, head <sha>, run <RUN_ID>, assessed <UTC>
 **Risk checks:** {enforced | skipped — operator `--force`, run <RUN_ID>}
 **CI baseline policy:** {strict | skip-proven-baseline-errors — operator `--skip-pre-existing-ci-errors`, run <RUN_ID>}
 
 🏷️ **Signals** — one line per signal with its emoji and a full sentence:
-- ✅|❌|⏳ `automerge-signal-1-cr` — {Approved by `om-auto-review-pr` on <sha> ([review](url)) | approved by @human on <sha> | missing: why}.
+- ✅|❌|⏳ `automerge-signal-1-cr` — {Approved by `om-auto-review-pr` on <sha> ([review](url)) | required independent human review also present on <sha> | missing: why}.
 - ✅|❌|⏳ `automerge-signal-2-qa` — {QA not required (`skip-qa`) | self-QA passed on <sha> ([evidence](url)) | trusted completed QA PASS on unchanged head ([report](url)), coverage notes retained | human sign-off present | waiting for a human QA reviewer because the PR is risk-high}.
 - ✅|❌|⏳ `automerge-signal-3-ci` — {All N checks green on <sha> | remaining checks pass; <k> exact-target baseline failures waived ([proof](url)) | <k> checks still running ([checks](url)) | <check> failing: cause}.
 
@@ -39,7 +40,7 @@ comment per visit or per round.
 <details><summary>Scheduler checkpoint</summary>
 
 ```json
-{"version":1,"repository":"owner/repo","currentUser":"login","number":123,"instanceId":"uuid","runId":"run-id","reservation":{"instanceId":"uuid","runId":"run-id","token":"random","host":"host","pid":123,"processStartedAt":"UTC ISO-8601","delegatedHandles":[]},"outcome":"waiting-ci","head":"sha","base":"target","plan":[{"step":"CI","status":"pending","evidence":"run-url"}],"nextAction":"Read current-head checks","lastWorkedAt":"UTC ISO-8601","nextCheckAt":"UTC ISO-8601","updatedAt":"UTC ISO-8601"}
+{"version":1,"repository":"owner/repo","currentUser":"login","number":123,"instanceId":"uuid","runId":"run-id","outcome":"waiting-ci","head":"sha","base":"target","plan":[{"step":"CI","status":"pending","evidence":"run-url"}],"nextAction":"Read current-head checks","lastWorkedAt":"UTC ISO-8601","nextCheckAt":"UTC ISO-8601","updatedAt":"UTC ISO-8601"}
 ```
 </details>
 
@@ -60,7 +61,8 @@ attempts: cr=… qa=… ci=…
 ~~~
 
 Keep it under ~120 words outside the records. Keep the scheduler checkpoint and
-local row semantically identical; the comment ID/URL can be local-only. Existing
+local plan/progress semantically identical; comment ID/URL and private
+reservation/token/process details are local-only. Existing
 signal record fields are unchanged. A heartbeat never advances `updatedAt`. Never paste logs; link the run.
 
 ## Final run report

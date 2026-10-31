@@ -252,3 +252,13 @@ The product-layer blocks between `<!-- discovery:start -->` and `<!-- discovery:
 The design contract the Design and Review stages read is set up once: `om-ux-setup` extracts it from the repository and is re-run when the design system changes.
 
 Per-skill deviations — extra review rules, a different PR body template, an added gate step — belong in a repo-local skill of the same name at `.ai/skills/<skill-name>/SKILL.md`, which takes precedence over the installed skill (and can `@`-import or reference it to extend rather than replace it); local rules win, but a repo-local skill cannot grant what the installed skill's safety rules forbid.
+
+## Human-confirmed issue autofix queue
+
+`om-auto-issue-triage` proposes useful open issues with decided scope and bounded
+work. It applies `autofix.label` (default `cez-autofix`) only to issues a human
+confirms after seeing evidence. It skips active/uncertain claims, preserves
+assignees, rechecks current state and verifies label read-back. The label may
+trigger the repository's existing worker; this skill does not install or invoke
+one. Implementation remains `om-auto-fix-issue` or the existing worker, with all
+normal specification, code-review, QA and CI gates unchanged.

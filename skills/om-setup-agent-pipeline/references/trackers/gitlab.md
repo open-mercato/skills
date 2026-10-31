@@ -414,11 +414,12 @@ gl_issue_json {issueId}
 ```
 
 #### search-issues
-Query and state (`opened`, `closed`, or `all`) → matching issues. Searches title and description.
+Query and state (`open`/`opened`, `closed`, or `all`) → matching issues. Searches title and description; an empty query enumerates issues. Results are paginated.
 ```bash
 Q=$(printf '%s' "<query>" | jq -sRr @uri)
-STATE=opened   # opened | closed | all
-gl_get "projects/$(gl_project)/issues?state=${STATE}&in=title,description&search=${Q}&per_page=100" \
+STATE="{state}"
+case "$STATE" in open) STATE=opened ;; opened|closed|all) ;; *) exit 1 ;; esac
+gl_list_jq "projects/$(gl_project)/issues?state=${STATE}&in=title,description&search=${Q}&per_page=100" \
   '[.[] | {number: .iid, title, url: .web_url, state: (if .state == "opened" then "OPEN" else "CLOSED" end)}]'
 ```
 
@@ -871,6 +872,7 @@ qa-self-verified|#c5def5|Self-QA exception used
 in-progress|#c5def5|An automated skill is working on this
 ci-monitoring|#d4c5f9|Work complete and reported; agent is watching CI results
 do-not-close|#c5def5|Humans only: never auto-close this issue
+${AUTOFIX_LABEL:-cez-autofix}|#5319e7|Human-confirmed issue ready for the configured autofix worker
 ${AUTOMERGE_LABEL:-automerge}|#5319e7|Humans only: drive this PR to merge once every gate is green
 automerge-signal-1-cr|#1d76db|om-auto-merge-buddy: code review signal holds for the current head
 automerge-signal-2-qa|#1d76db|om-auto-merge-buddy: QA signal holds for the current head

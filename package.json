@@ -27,6 +27,7 @@
     "test:osv-scan": "node scripts/test-osv-scan.mjs",
     "test:agent-browser-codex": "bash scripts/test-agent-browser-codex.sh",
     "test:ux-design": "node --test scripts/test-ux-design.mjs scripts/test-ux-design-comments.mjs",
-    "test:agent-harness-security": "node scripts/test-agent-harness-security.mjs"
+    "test:agent-harness-security": "node scripts/test-agent-harness-security.mjs",
+    "test:issue-triage": "node scripts/test-issue-triage.mjs"
   }
 }

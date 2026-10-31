@@ -37,7 +37,7 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 ### Issues
 
 - **get-issue** — id, field list → issue data (title, body, state, author, url, labels/state, assignees, comments).
-- **search-issues** — text query, state → matching issues.
+- **search-issues** — text query, state → matching issues. An empty text query enumerates issues in the selected state; support pagination or disclose the listing cap.
 - **create-issue** — title, body, assignee, labels → created issue URL.
 - **close-issue** — id, reason, closing comment.
 - **comment-issue** — id, body.
@@ -83,4 +83,4 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 
 - **list-labels** — all label/tag names.
 - **create-label** — name, color, description; never delete or rename existing ones.
-- **ensure-label-taxonomy** — create every missing label from the config's taxonomy.
+- **ensure-label-taxonomy** — create every missing label from the config's taxonomy, plus `autofix.label` (default `cez-autofix`) in the issue tracker. Split providers document issue-label provisioning separately from code-host PR labels.

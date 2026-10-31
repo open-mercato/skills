@@ -48,6 +48,11 @@ committed configs keep working.
 | `platform.tierMap` | `[]` | Path-prefix to license-tier mapping. |
 | `ux.healthReport` | `null` | `om-ux-review-pr`; optional repo-relative health snapshot. |
 | `design.provider` | `null` | `om-figma-design-with-ds`; design-tool descriptor name. |
+| `autofix.label` | `"cez-autofix"` | `om-auto-issue-triage`; human-confirmed issue queue label. It does not install or invoke a worker. |
+| `autofix.eligibility.lookbackDays` | `30` | Issue-triage window length; preserve explicit configured values. |
+| `autofix.eligibility.analyzeLimit` | `100` | Most in-window issues gated and ranked. |
+| `autofix.eligibility.limit` | `20` | Shortlist assessed for current relevance and bounded work, capped at analyzeLimit. |
+| `autofix.eligibility.excludeLabels` | `["blocked","do-not-fix"]` | Explicit issue exclusions; current/uncertain claims and closed/already-queued issues are always ineligible. |
 | `automerge.label` | `"automerge"` | `om-auto-merge-buddy`; the human-applied PR label that puts a PR in the unattended merge queue. Setup creates it with the taxonomy. |
 | `automerge.mode` | `"prepare-to-merge"` | `om-auto-merge-buddy`; `prepare-and-merge` squash-merges once all three signals hold. |
 | `automerge.windowMinutes` | `120` | `om-auto-merge-buddy`; per-run time window, `0` = one pass with no idle CI polling. |
@@ -77,6 +82,8 @@ SECURITY_CHECKLIST=$(jq -r '.securityChecklist // empty' "$CONFIG")
 SECURITY_REPORT_PUBLISH=$(jq -r '.securityReport.publish // "local"' "$CONFIG")
 PR_TITLE_TEMPLATE=$(jq -r '.prTitleTemplate // "{prefix}({area}): {summary}{issueRef}"' "$CONFIG")
 TICKET_KEY_PATTERN=$(jq -r '.ticketKeyPattern // empty' "$CONFIG")
+AUTOFIX_LABEL=$(jq -r '.autofix.label // "cez-autofix"' "$CONFIG")
+AUTOFIX_ELIGIBILITY=$(jq -c '.autofix.eligibility // {}' "$CONFIG")
 AUTOMERGE_LABEL=$(jq -r '.automerge.label // "automerge"' "$CONFIG")
 AUTOMERGE_MODE=$(jq -r '.automerge.mode // "prepare-to-merge"' "$CONFIG")
 AUTOMERGE_WINDOW_MINUTES=$(jq -r '.automerge.windowMinutes // 120' "$CONFIG")

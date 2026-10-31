@@ -16,6 +16,12 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-10-31 — Human-confirmed issue autofix triage
+
+- Install `om-auto-issue-triage` to propose useful, still-relevant open issues with bounded work, then mark only human-confirmed issues. Dry runs never mutate the tracker. Active or uncertain claims and already queued issues are skipped; assignees alone are preserved. Scope may include bugs, maintenance and decided features. Existing issue implementation/spec/review/QA/CI gates remain unchanged.
+- New additive config: `autofix.label` defaults to `cez-autofix`; `autofix.eligibility` defaults to `lookbackDays: 30`, `analyzeLimit: 100`, `limit: 20`, `excludeLabels: ["blocked", "do-not-fix"]`. Preserve explicit existing labels and eligibility values. No worker is installed or started.
+- Re-sync tracker descriptors for `search-issues` empty-query enumeration and issue queue-label provisioning. GitHub caps enumeration at 1000 and discloses truncation; GitLab and Forgejo paginate; Linear/Jira omit the text filter for empty searches. Linear team labels require separate issue-tracker provisioning; the GitHub companion does not create them. Jira issue labels remain free-form.
+
 ## 2026-10-31 — `om-auto-merge-buddy`, the `automerge` label, and orchestrated mode
 
 - **Label a PR `automerge`, and a scheduled `om-auto-merge-buddy` run brings it to three signals.** The run works the queue one PR at a time within a time window (default 2 hours). The signals are code review, QA, and CI, each recorded as a label: `automerge-signal-1-cr`, `automerge-signal-2-qa`, `automerge-signal-3-ci`. In the default `prepare-to-merge` mode a PR with all three signals gets `merge-queue`. With `prepare-and-merge` it is squash-merged, guarded by the head SHA and bypassing other labels and host merge rules; the three signals are the gate. Slow CI is parked under `ci-monitoring`, and a PR that cannot be fixed is parked under `automerge-blocked` until a human removes that label. Assignees are ignored. `om-merge-buddy` stays read-only, and `om-approve-merge-pr` is unchanged.

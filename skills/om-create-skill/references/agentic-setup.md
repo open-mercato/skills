@@ -11,8 +11,6 @@ rather than the pipeline config.
    `references/repo-invariants.md` for why that would itself trip the lint):
    - **`scripts/lint.sh`** — the authoritative content gate (frontmatter rules,
      product-agnostic forbidden patterns, the no-direct-tracker-CLI rule).
-   - **`om-filozofia.md`** (repo root) — the layering philosophy this skill
-     operationalizes.
 2. This skill consumes no pipeline config vars and names no tracker operations
    of its own — it runs against the skills repository itself and does not need
    `.ai/agentic.config.json`. The tracker-operation vocabulary and shared

@@ -90,6 +90,11 @@ that requirement. Default policy never waits solely on absent native approval
 or a stale host requested-changes state after inherited findings are resolved. Recheck current CI rather than
 trusting a saved green record. If baseline errors were waived, resolve the target tip again and revalidate the exact target SHA, check attempts, logs and CI-definition proof immediately before merge; any change returns to CI evaluation (`references/ci-baseline.md`).
 
+Before either action, checkpoint current-head/policy `readyAt` and measured
+duration under `references/scheduler.md`; preserve immutable first start and
+never reuse invalidated head/policy readiness. Confirmed merges journal those
+timestamps before active cleanup.
+
 - **`prepare-to-merge`** → `set_pipeline_label {pr} merge-queue`, then **mark-pr-ready** if it is a draft. End `ready`. Retain its active scheduler record with a future cheap check until externally merged. Later rounds revisit it cheaply: no producing stage runs while the current target and fresh source evidence still support every signal.
 - **`prepare-and-merge`** → **mark-pr-ready** if it is a draft, then **merge-pr** with squash, the checked `headRefOid`, and the descriptor's protection-bypass form. Labels such as `do-not-merge` and other host merge rules are deliberately not consulted: the three signals are the gate. End `merged`. Do not delete the head branch unless the repository's config asks for it.
   - **Refused merge** — the head moved (the head-SHA guard), the token lacks the bypass right, or the host has no bypass. Never retry another way. A moved head goes back to the ladder. Any other refusal ends the visit `ready` (`merge-queue` set), with the host's reason in the status comment for a maintainer. The next round tries the merge once more.

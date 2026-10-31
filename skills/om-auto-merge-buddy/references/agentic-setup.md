@@ -43,3 +43,10 @@ boolean false when loading it (the reference decision reads the parsed JSON). `R
 - **Unattended by design.** No user is present, so a missing config runs `om-setup-agent-pipeline --defaults`. Mode follows the current config/explicit CLI policy (missing mode means
   `prepare-and-merge`). Any other decision point takes the most reversible option and records it in the PR's status comment. It never asks.
 - **Sub-skill availability.** Before the first visit, confirm `om-auto-review-pr`, `om-auto-qa-pr` and `om-auto-fix-pr` are installed and that each documents `--orchestrated`. Under `--force`, also check that each needed stage supports `--skip-risk-checks`; a missing flag parks that PR with an upgrade hint, never silently changes the requested policy. A missing or too-old skill does not stop the run: only PRs that need that stage get parked, as `automerge-blocked`, with the install or upgrade hint. Every other stage keeps working.
+
+- **Dashboard arguments.** Before local/tracker mutations, validate optional
+  `--dashboard-port` as an integer 1–65535 (default `5050`). `--no-dashboard`
+  disables launch and probing entirely. Resolve the primary tree from the
+  shared scheduler and use the installed one-file helper under
+  `references/dashboard.md`; startup/identity/occupied-port failures warn and
+  preserve queue processing. No additional production dependency is installed.

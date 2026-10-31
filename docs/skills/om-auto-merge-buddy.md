@@ -29,6 +29,8 @@ Completed trusted `om-auto-qa-pr` PASS evidence on the unchanged head satisfies 
 | `--force` | No | Skip only risk-high review-evidence and self-QA exclusions for this invocation. Full review, required QA, CI and head guard remain. Never takes over another actor’s claim. |
 | `--skip-pre-existing-ci-errors` | No | Invocation-only: waive a completed failure only when exact current-target run/config/logs prove the same pre-existing root cause and the PR leaves relevant CI definitions unchanged. Pending/new/unknown failures remain blocking. |
 | `--fresh` | No | Start a new run log; keep durable active scheduling. |
+| `--dashboard-port <port>` | No | Local React dashboard port, default `5050`; integer 1–65535. |
+| `--no-dashboard` | No | Skip dashboard launch and health probes. |
 | `--reset` | No | Empty local scheduling and ignore old scheduler/handoff queues this invocation; preserve remote claims, assignees and evidence. |
 
 Every visit starts by reconciling signal labels with actual review/QA/CI evidence and the changes since each evidence revision. The buddy inspects the delta, judges its effect on the tested behavior, carries forward only supported evidence and runs delta review, QA or current-head CI checks as needed. It logs the scope judgment and next action before launching a stage; unknown scope or untrusted evidence never counts as a pass.
@@ -74,3 +76,17 @@ target, final plan/progress and evidence/status links. Locked atomic upserts
 replace retry/status duplicates and preserve other PRs; malformed/write failure
 keeps cleanup pending instead of dropping tracking. No unmerged PRs or private
 ownership tokens/process details are logged.
+
+The skill automatically launches/reuses an offline one-file React dashboard at
+`http://127.0.0.1:5050`, unless `--no-dashboard`; `--dashboard-port` overrides
+its port. It displays active/queued PRs, daily processed merges, plan/progress,
+PR/comment links and a day picker. The visible page refreshes every five seconds
+while preserving selection and the last good snapshot on errors. It is read-only,
+loopback-only and never exposes private ownership tokens/process details. A
+foreign occupied port warns without killing anything or blocking queue work.
+
+Timing records immutable first actionable start, current-head/policy verified
+readiness, and confirmed merge time. Per-PR elapsed and average/median readiness
+include CI waits and pauses. Unknown legacy timings remain unknown and outside
+the known-count duration denominator; resumes/reset/replacements do not reset
+known starts.

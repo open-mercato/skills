@@ -20,6 +20,8 @@ comment per visit or per round.
 **Mode:** {prepare-to-merge | prepare-and-merge}
 **updatedAt:** <UTC ISO-8601; semantic plan/progress change, not heartbeat>
 **Next check:** <nextCheckAt UTC ISO-8601>
+**Dashboard:** <loopback URL | disabled | startup warning>
+**Timing:** <firstStartedAt | unknown>; current-head readiness <readyAt | unknown>; elapsed includes CI waits
 **Plan/progress:** <step status, evidence and next action; mirror local scheduler>
 **Independent review:** {skipped | required — evidence link or missing reason}; source {config | CLI | default}, head <sha>, run <RUN_ID>, assessed <UTC>
 **Risk checks:** {enforced | skipped — operator `--force`, run <RUN_ID>}
@@ -40,7 +42,7 @@ comment per visit or per round.
 <details><summary>Scheduler checkpoint</summary>
 
 ```json
-{"version":1,"repository":"owner/repo","currentUser":"login","number":123,"instanceId":"uuid","runId":"run-id","outcome":"waiting-ci","head":"sha","base":"target","plan":[{"step":"CI","status":"pending","evidence":"run-url"}],"nextAction":"Read current-head checks","lastWorkedAt":"UTC ISO-8601","nextCheckAt":"UTC ISO-8601","updatedAt":"UTC ISO-8601"}
+{"version":1,"repository":"owner/repo","currentUser":"login","number":123,"title":null,"statusCommentUrl":null,"instanceId":"uuid","runId":"run-id","outcome":"waiting-ci","head":"sha","base":"target","plan":[{"step":"CI","status":"pending","evidence":"run-url"}],"nextAction":"Read current-head checks","firstStartedAt":null,"firstReadyAt":null,"readyAt":null,"readyHead":null,"readyPolicy":null,"mergeableDurationMs":null,"lastWorkedAt":"UTC ISO-8601","nextCheckAt":"UTC ISO-8601","updatedAt":"UTC ISO-8601"}
 ```
 </details>
 

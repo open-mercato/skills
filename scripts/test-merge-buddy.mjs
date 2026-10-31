@@ -2,9 +2,10 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { runInNewContext } from 'node:vm'
-import { readFileSync, mkdtempSync, writeFileSync, rmSync } from 'node:fs'
+import { readFileSync, mkdtempSync, writeFileSync, rmSync, mkdirSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { createServer as createHttpServer, request as makeHttpRequest } from 'node:http'
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8')
 const skill = read('skills/om-auto-merge-buddy/SKILL.md')
@@ -190,8 +191,8 @@ console.log('PASS: executable PR6786 legacy completed-PASS decision grants same-
 
 const scheduler = read('skills/om-auto-merge-buddy/references/scheduler.md')
 const schedulerCode = scheduler.match(/```javascript\n([\s\S]*?)\n```/)[1]
-const schedulerFunctions = runInNewContext(`${schedulerCode}\n({restoreScheduler, checkpointPlan, replaceTracked, schedulerDecision, nextCiCheck, reservationAllows, mayReclaim, finalizeTracked})`)
-const { restoreScheduler, checkpointPlan, replaceTracked, schedulerDecision, nextCiCheck, reservationAllows, mayReclaim, finalizeTracked } = schedulerFunctions
+const schedulerFunctions = runInNewContext(`${schedulerCode}\n({restoreScheduler, checkpointPlan, replaceTracked, schedulerDecision, nextCiCheck, reservationAllows, mayReclaim, finalizeTracked, readinessTiming})`)
+const { restoreScheduler, checkpointPlan, replaceTracked, schedulerDecision, nextCiCheck, reservationAllows, mayReclaim, finalizeTracked, readinessTiming } = schedulerFunctions
 const scheduleNow = '2026-10-31T14:00:00.000Z'
 const earlierTime = '2026-10-31T13:00:00.000Z'
 const futureTime = '2026-10-31T14:10:00.000Z'
@@ -394,4 +395,122 @@ try {
   }
 } finally { rmSync(loaderTemp, { recursive: true, force: true }) }
 console.log('PASS: actual shipped config loaders preserve false, honor explicit prepare mode and reject null/string/number policy values')
+
+const timingStart = readinessTiming({ now: '2026-10-31T12:00:00.000Z', firstAction: true })
+assert.equal(timingStart.firstStartedAt, '2026-10-31T12:00:00.000Z')
+const timingReady = readinessTiming({ previous: timingStart, now: '2026-10-31T13:30:00.000Z', ready: true, head: qaHead, policy: 'review=skipped;risk=enforced;ci=strict' })
+assert.equal(timingReady.mergeableDurationMs, 5400000, 'Known readiness is 1h30m of wallclock including CI waits')
+assert.equal(readinessTiming({ previous: timingReady, now: futureTime, ready: true, head: qaHead, policy: timingReady.readyPolicy }).readyAt, timingReady.readyAt, 'Valid rechecks never move readiness/start timestamps')
+const invalidatedTiming = readinessTiming({ previous: timingReady, now: scheduleNow })
+assert.equal(invalidatedTiming.readyAt, null)
+assert.equal(invalidatedTiming.firstReadyAt, timingReady.firstReadyAt)
+const rereadyTiming = readinessTiming({ previous: invalidatedTiming, now: scheduleNow, ready: true, head: 'b'.repeat(40), policy: timingReady.readyPolicy })
+assert.equal(rereadyTiming.readyAt, scheduleNow)
+assert.equal(rereadyTiming.mergeableDurationMs, 7200000, 'Re-readiness uses actual new head endpoint and immutable original start')
+assert.equal(readinessTiming({ previous: timingReady, now: scheduleNow, ready: true, head: qaHead, policy: 'review=required;risk=enforced;ci=strict' }).readyAt, scheduleNow, 'Policy change requires fresh readiness time')
+assert.equal(readinessTiming({ now: scheduleNow, ready: true, head: qaHead, policy: 'review=skipped' }).mergeableDurationMs, null, 'Legacy unknown starts never become zero or fabricated elapsed')
+const resetTiming = restoreScheduler({ ...restoreInput, raw: JSON.stringify(oldState), reset: true, recovered: [{ ...tracked(1), ...timingReady }] })
+assert.equal(resetTiming.state.activePrs.length, 0)
+assert.equal(readinessTiming({ previous: timingReady, now: futureTime }).firstStartedAt, timingReady.firstStartedAt, 'Readmitting after reset can preserve authenticated historical start without restoring queue')
+const replacementTiming = replaceTracked([{ ...tracked(1), ...timingReady }], 1, { ...tracked(4), head: 'b'.repeat(40) })[0]
+assert.equal(replacementTiming.firstStartedAt, timingReady.firstStartedAt)
+assert.equal(replacementTiming.readyAt, null)
+assert.equal(replacementTiming.startedFromPr, 1)
+assert.equal(readinessTiming({ previous: { firstStartedAt: futureTime }, now: scheduleNow, ready: true, head: qaHead, policy: 'review=skipped' }).mergeableDurationMs, null, 'Negative timing remains unknown')
+const timedJournal = upsertMergedJournal({ record: { ...mergedRecord, ...timingReady, mergedAt: '2026-10-31T14:00:00.000Z' } })
+assert.equal(JSON.parse(timedJournal.jsonl).mergeableDurationMs, 5400000)
+assert.equal(JSON.parse(timedJournal.jsonl).mergedDurationMs, 7200000)
+assert.equal(JSON.parse(upsertMergedJournal({ record: { ...mergedRecord, title: 'Measured release title' } }).jsonl).title, 'Measured release title', 'Journal history preserves actual tracker PR titles')
+assert.match(scheduler, /statusCommentUrl` from the actual verified comment/)
+assert.equal(JSON.parse(upsertMergedJournal({ record: mergedRecord }).jsonl).mergeableDurationMs, null)
+console.log('PASS: measured wallclock timing preserves first action, invalidates head/policy readiness and keeps legacy/negative durations unknown across resumes/reset/replacement')
+
+const dashboardReference = read('skills/om-auto-merge-buddy/references/dashboard.md')
+const dashboardOptions = runInNewContext(`${dashboardReference.match(/```javascript\n([\s\S]*?)\n```/)[1]}\ndashboardOptions`)
+assert.equal(dashboardOptions().port, 5050)
+assert.equal(dashboardOptions({ noDashboard: true }).enabled, false)
+for (const port of [0, -1, 65536, '5e3', '1.5', 'unknown']) assert.throws(() => dashboardOptions({ port }), /Invalid/)
+assert.match(dashboardReference, /skips startup \*\*and all health\/network probes\*\*/)
+const dashboardModule = await import('../skills/om-auto-merge-buddy/scripts/dashboard.mjs')
+for (const port of [0, -1, 65536, '5e3', '1.5', 'bad']) assert.throws(() => dashboardModule.parsePort(port), /Port/)
+assert.equal(dashboardModule.safeUrl('javascript:alert(1)'), null)
+assert.equal(dashboardModule.safeUrl('https://user:secret@example.invalid'), null)
+assert.equal(dashboardModule.safeUrl('https://github.com/open-mercato/skills/pull/158'), 'https://github.com/open-mercato/skills/pull/158')
+const normalizedTiming = dashboardModule.normalizeRecord({ ...mergedRecord, ...timingReady, mergedAt: '2026-10-31T14:00:00.000Z' })
+assert.equal(normalizedTiming.mergeableDurationMs, 5400000)
+assert.equal(dashboardModule.normalizeRecord({ ...mergedRecord, firstReadyAt: earlierTime, readyAt: null, mergeableDurationMs: 1 }).mergeableDurationMs, null, 'Dashboard must not revive invalidated readiness or trust raw duration')
+const summaryTiming = dashboardModule.summarizeDurations([normalizedTiming, dashboardModule.normalizeRecord(mergedRecord)])
+assert.equal(summaryTiming.total, 2)
+assert.equal(summaryTiming.known, 1)
+assert.equal(summaryTiming.averageMs, 5400000)
+assert.equal(summaryTiming.medianMs, 5400000)
+const dashboardRoot = mkdtempSync(join(tmpdir(), 'merge-buddy-dashboard-'))
+let dashboardServer
+const reservePort = createHttpServer()
+try {
+  await new Promise(resolveListen => reservePort.listen(0, '127.0.0.1', resolveListen))
+  const dashboardPort = reservePort.address().port
+  await new Promise(resolveClose => reservePort.close(resolveClose))
+  const meta = join(dashboardRoot, '.ai', 'meta')
+  mkdirSync(meta, { recursive: true })
+  const publicState = { version: 1, repository: 'open-mercato/skills', currentUser: 'pkarw', updatedAt: scheduleNow, activePrs: [{ ...tracked(1), ...timingReady, head: qaHead, reservation: { token: 'PRIVATE-NEVER-SERVE', host: 'PRIVATE-HOST', pid: 999 } }], queue: [{ number: 1, title: 'Duplicate queued' }, { number: 2, title: '<img src=x onerror=alert(1)>', url: 'javascript:alert(1)', outcome: 'queued', assignees: ['pkarw'] }] }
+  writeFileSync(join(meta, 'merge-buddy.json'), JSON.stringify(publicState))
+  writeFileSync(join(meta, 'merge-buddy-merged-2026-10-31.jsonl'), timedJournal.jsonl)
+  const started = await dashboardModule.startDashboard({ root: dashboardRoot, port: dashboardPort })
+  dashboardServer = started.server
+  const response = await fetch(started.url + '/api/state')
+  const stateData = await response.json()
+  assert.equal(stateData.activePrs[0].repository, 'open-mercato/skills', 'Active rows inherit top-level repository for active-to-merged identity')
+  assert.equal(stateData.queue.length, 1, 'Active rows win queue duplicates')
+  assert.equal(stateData.queue[0].url, null)
+  assert.equal(JSON.stringify(stateData).includes('PRIVATE-'), false, 'Only public whitelisted metadata is exposed')
+  assert.equal((await fetch(started.url + '/api/state', { method: 'POST' })).status, 405)
+  assert.equal((await fetch(started.url + '/.env')).status, 404)
+  assert.equal((await fetch(started.url + '/api/merged?day=../../secret')).status, 400)
+  const foreignHostStatus = await new Promise((resolveStatus, rejectRequest) => {
+    const request = makeHttpRequest(started.url + '/api/state', { headers: { Host: 'attacker.invalid' } }, response => { response.resume(); resolveStatus(response.statusCode) })
+    request.once('error', rejectRequest); request.end()
+  })
+  assert.equal(foreignHostStatus, 403)
+  assert.match(response.headers.get('content-security-policy'), /default-src 'none'/)
+  assert.equal(response.headers.get('x-content-type-options'), 'nosniff')
+  const html = await (await fetch(started.url)).text()
+  const scripts = [...html.matchAll(/<script nonce="[^"]+">([\s\S]*?)<\/script>/g)].map(match => match[1])
+  assert.equal(scripts.length, 3, 'React, ReactDOM and app are embedded in one offline response')
+  const reactContext = {}
+  reactContext.self = reactContext
+  runInNewContext(scripts[0], reactContext)
+  assert.equal(reactContext.React.version, '18.3.1', 'Embedded runtime is real pinned React')
+  assert.equal((await dashboardModule.ensureDashboard({ root: dashboardRoot, port: dashboardPort })).reused, true)
+  const otherRoot = mkdtempSync(join(tmpdir(), 'merge-buddy-other-root-'))
+  try { await assert.rejects(() => dashboardModule.ensureDashboard({ root: otherRoot, port: dashboardPort }), /occupied/); assert.equal((await fetch(started.url + '/api/identity')).status, 200) } finally { rmSync(otherRoot, { recursive: true, force: true }) }
+  writeFileSync(join(meta, 'merge-buddy.json'), '{corrupt')
+  assert.equal((await fetch(started.url + '/api/state')).status, 503)
+  writeFileSync(join(meta, 'merge-buddy.json'), JSON.stringify(publicState))
+  assert.equal((await fetch(started.url + '/api/state')).status, 200, 'Malformed data recovers on next refresh')
+  rmSync(join(meta, 'merge-buddy.json'))
+  writeFileSync(join(dashboardRoot, 'private.json'), JSON.stringify(publicState))
+  symlinkSync(join(dashboardRoot, 'private.json'), join(meta, 'merge-buddy.json'))
+  assert.equal((await fetch(started.url + '/api/state')).status, 503, 'Allowlisted names cannot expose symlink targets')
+  const effects = [], timers = [], pendingResponses = []
+  let requests = 0
+  const reactMock = { createElement: (type, props, ...children) => ({ type, props, children }), useState: initial => [typeof initial === 'function' ? initial() : initial, () => {}], useRef: value => ({ current: value }), useCallback: callback => callback, useEffect: effect => effects.push(effect) }
+  const browserContext = { React: reactMock, ReactDOM: { createRoot: () => ({ render: element => element.type() }) }, document: { hidden: false, getElementById: () => ({}) }, window: { addEventListener: () => {}, removeEventListener: () => {} }, AbortController, setInterval: (callback, milliseconds) => { timers.push({ callback, milliseconds }); return timers.length }, clearInterval: () => {}, setTimeout: () => 1, clearTimeout: () => {}, fetch: () => { requests++; return new Promise(resolveResponse => pendingResponses.push(resolveResponse)) } }
+  runInNewContext(scripts[2], browserContext)
+  const cleanups = effects.map(effect => effect())
+  assert.equal(timers[0].milliseconds, 5000, 'Visible polling interval is exactly five seconds')
+  assert.equal(requests, 3)
+  timers[0].callback(); timers[0].callback()
+  assert.equal(requests, 3, 'Pending fetches never overlap on timer ticks')
+  for (const resolveResponse of pendingResponses.splice(0)) resolveResponse({ ok: true, json: async () => ({ activePrs: [], queue: [], days: [], records: [], statistics: {} }) })
+  await new Promise(resolveTick => setImmediate(resolveTick))
+  timers[0].callback()
+  assert.equal(requests, 6, 'Completed refresh permits the next five-second refresh')
+  cleanups.forEach(cleanup => cleanup?.())
+} finally {
+  dashboardServer?.closeAllConnections?.()
+  if (dashboardServer) await new Promise(resolveClose => dashboardServer.close(resolveClose))
+  rmSync(dashboardRoot, { recursive: true, force: true })
+}
+console.log('PASS: one-file real React dashboard enforces safe loopback/read-only data, private-field stripping, root-scoped reuse, recovery and exact nonoverlapping five-second refresh')
 console.log('Merge buddy regressions passed.')

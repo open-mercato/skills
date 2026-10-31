@@ -47,6 +47,7 @@ Keep it under ~120 words outside the record. Never paste logs; link the run.
 - #<n> {outcome} — {decisive reason}; {next action}.
 …
 {PRs still waiting for CI, which the next run checks first.}
+📋 Run log: `<RUNS_DIR>/merge-buddy/<folder>/` ({steps} steps{, resumed from session <k>}).
 ```
 
 Then, one per PR touched (the replacement's number for a carried-forward PR):

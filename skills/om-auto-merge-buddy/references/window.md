@@ -31,8 +31,10 @@ changed since the last visit.
 
 ## Cadence across runs
 
-Each run picks up where the last one left off, purely from labels and status
-comments. Nothing else carries over. A schedule shorter than the window
+Each run picks up where the last one left off. Per PR, that state is the labels
+and status comments. Per run, a run that died resumes from its open
+`HANDOFF.md`: the PR in flight first, then the queue it had left
+(`references/run-log.md`). A schedule shorter than the window
 (for example `--window 0` every 30 minutes, or the 2-hour default nightly) is
 safe. A second concurrent instance would skip every PR the first holds
 `in-progress`, but it is still wasted work, so schedule one instance per

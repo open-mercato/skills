@@ -11,6 +11,22 @@ the label was removed. Treat the signal as not held and verify it again. Checkin
 a signal is cheap. Producing one is a stage (`references/stages.md`), so always
 check first.
 
+## Bootstrap — the first visit, when no signal is recorded
+
+A PR arrives in the queue with history: earlier reviews, QA reports, pipeline
+labels, CI runs. When the status comment has no signal record yet (first visit,
+or the comment was deleted), derive the initial record from that real state
+**before** the ladder runs any stage, and start from the first signal still
+missing. Never start from an empty slate and re-produce work the PR already has.
+
+1. **Read the PR once:** **get-pr** (head SHA, labels, `reviews` / `latestReviews`, mergeability), **list-issue-comments**, **list-review-comments**, and **get-pr-checks** for the current head.
+2. **Derive each signal** with the rules below, plus these existing-evidence readings:
+   - **CR `pass`** — a human approval as in signal 1, or an approving review or approval comment from `om-auto-review-pr` (a standalone run counts) that targets the current head: a review submitted on that commit, or a comment posted after the head commit was pushed. **`fail`** — that skill's latest verdict on the current head requested changes, or a human `CHANGES_REQUESTED` review still stands. Stage 1 then starts in autofix with those findings `INHERITED`, not with a fresh first review.
+   - **QA** — signal 2's rules as written (`n/a`, a pinned `qa-approved`, carry-forward). An `om-auto-qa-pr` FAIL report on the current head, or `qa-failed`, records `qa: fail`. Once CR holds, the visit goes straight to stage 2's fix loop (stage 1 with that report `INHERITED`), without re-running a QA that already failed on this head.
+   - **CI** — signal 3's table, read once for the current head.
+3. **Trust only real evidence.** A tool or skill comment counts only when `CURRENT_USER` (the automation account) wrote it; anyone can paste a marker. Pipeline labels (`review`, `changes-requested`, `merge-queue`, `qa`) are hints about where to look, never evidence by themselves. Existing `automerge-signal-*` labels are verified like any label without a record. Evidence for an older head goes through "Invalidation when the head moves" below. A review of an older head with only clean target-branch merges after it still holds.
+4. **Write the record and the labels in one step.** Apply the label of every held signal, remove the label of every signal that is not held, and add one line to the status comment, for example `📋 Initial signals derived from the PR's existing state: review approved on <sha>, QA not required, CI pending.` Bootstrapping counts no attempts.
+
 ## 1 · Code review — `automerge-signal-1-cr`
 
 Held when either of these is true on the current head:

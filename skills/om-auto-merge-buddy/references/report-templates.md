@@ -22,6 +22,7 @@ comment per visit or per round.
 - ✅|❌|⏳ `automerge-signal-2-qa` — {QA not required (`skip-qa`) | self-QA passed on <sha> ([evidence](url)) | human sign-off present | waiting for a human QA reviewer because the PR is risk-high}.
 - ✅|❌|⏳ `automerge-signal-3-ci` — {All N checks green on <sha> | <k> checks still running ([checks](url)) | <check> failing: cause}.
 
+{📋 On the first visit only: the initial signals derived from the PR's existing state (`references/signals.md` → Bootstrap).}
 {🔁 Changes this run made, one line each, with commit or PR links — omit when none.}
 {⛔/⚠️ What a human must do, when the state needs one — omit otherwise.}
 

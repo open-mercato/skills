@@ -6,7 +6,7 @@ Takes one open PR by number and drives it to merge-ready without merging it. It 
 
 For an existing PR, base updates, CI baselines, and required-check lookups use its actual target branch (`baseRefName`), including release and feature branches. Fork replacements preserve that target, and a retargeted PR is evaluated again. The configured `baseBranch` remains a default for creating new PRs.
 
-When a fork becomes a replacement PR, verify copied labels and emit the replacement's PR reference. An active automerge driver then continues on that PR in the same run through the final guarded merge, without a user restart; this fix skill still never merges by itself.
+When a fork becomes a replacement PR, verify the copied labels and emit the replacement's PR reference. Under `--orchestrated` (used by [om-auto-merge-buddy](om-auto-merge-buddy.md)), the run is reduced to base merge, conflicts and one CI-repair pass with no waiting, under the orchestrator's claim and with no label changes. It ends with a `RESULT:` line; a replacement is reported as `replacement=<n>`. This skill still never merges by itself.
 
 ## Parameters
 
@@ -19,6 +19,7 @@ When a fork becomes a replacement PR, verify copied labels and emit the replacem
 | `--max-iterations <n>` | No | Outer review→CI→UI cycles before stopping (also caps the inner CI loop). Default `3`. |
 | `--no-ui` | No | Skip UI verification even when the diff touches UI. |
 | `--force` | No | Bypass the in-progress claim check; use only when intentionally taking over a PR another actor claimed. |
+| `--orchestrated` | No | Set only by an orchestrator holding the claim and owning the labels ([om-auto-merge-buddy](om-auto-merge-buddy.md)). Skips this skill's claim, label and CI-wait steps and ends with a `RESULT:` line. |
 
 ## Works with
 

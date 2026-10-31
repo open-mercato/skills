@@ -4,7 +4,7 @@
 
 Reviews or re-reviews a PR by number in an isolated worktree, leaving your current worktree untouched. It fetches the exact PR from the tracker, runs the code-review engine (or a specification review for spec-only design PRs), submits an approve/request-changes verdict, and manages the pipeline labels. When changes are requested it immediately enters an autonomous autofix loop — resolving conflicts, fixing code, adding tests, validating, and re-reviewing — until the PR is genuinely merge-ready or only a non-actionable blocker remains. Usage: `/om-auto-review-pr <PR-number>`.
 
-A fork replacement copies applicable labels, including any configured automerge label, and preserves the target and contributor credit. The caller consumes the replacement's PR reference and continues on it; an active automerge chain keeps working through the final guarded merge without a human restart. QA approvals and transient claim labels do not transfer to the new head, and the author recheck invitation is advisory in that chain. Standalone review does not gain merge authority.
+A fork replacement copies applicable labels, including any configured automerge label, and preserves the target and contributor credit. The caller consumes the replacement's PR reference and continues on it. Under `--orchestrated` (used by [om-auto-merge-buddy](om-auto-merge-buddy.md)), the review implies `--autofix`, leaves claim, labels, handoff and CI to the orchestrator, treats a failed QA report as a blocker, and ends with a `RESULT:` line. QA approvals and transient claim labels do not transfer to the new head. Standalone review does not gain merge authority.
 
 ## Parameters
 
@@ -12,6 +12,7 @@ A fork replacement copies applicable labels, including any configured automerge 
 |---|---|---|
 | `{prNumber}` | Yes | The PR number to review or re-review, e.g. `1234`. |
 | `--force` | No | Bypass the in-progress concurrency check; use when intentionally taking over a PR another auto-skill or human already claimed. |
+| `--orchestrated` | No | Set only by an orchestrator holding the claim and owning the labels ([om-auto-merge-buddy](om-auto-merge-buddy.md)). Implies `--autofix`; skips the claim, labels, handoff and CI follow-up; ends with a `RESULT:` line. |
 
 ## Works with
 

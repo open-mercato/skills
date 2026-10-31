@@ -16,7 +16,7 @@ The questions step 3 of `om-setup-agent-pipeline` asks the user (skipped with `-
    the compatibility choice). Explain that the selected descriptor owns
    autonomous CLI/browser provisioning and that repository-native E2E suites
    remain authoritative.
-4. Labels: install the full taxonomy above (recommended), keep a subset, or disable labels entirely. When labels stay enabled, confirm the name of the human-applied automerge label (`automerge.label`, default `automerge`) that lets `om-merge-buddy --automerge` drive a labeled PR to merge.
+4. Labels: install the full taxonomy above (recommended), keep a subset, or disable labels entirely. When labels stay enabled, confirm the name of the human-applied automerge label (`automerge.label`, default `automerge`) that puts a PR in `om-auto-merge-buddy`'s unattended merge queue.
 5. QA gate on or off. Recommend on when the repo ships user-facing changes.
 6. Where specs live (`paths.specs`, default `.ai/specs`) — confirm or point at an existing design-doc directory.
 7. Optional repo-local review checklist path.

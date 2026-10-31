@@ -24,6 +24,7 @@ const autoFixStabilize = read("skills/om-auto-fix-pr/references/stabilize-ci.md"
 const autoReview = read("skills/om-auto-review-pr/SKILL.md");
 const mergeBuddy = read("skills/om-merge-buddy/SKILL.md");
 const prAutopilot = read("skills/om-pr-autopilot/SKILL.md");
+const mergeTriage = read("skills/om-auto-merge-triage/SKILL.md");
 const ciFollowups = [
   "skills/om-auto-fix-pr/references/ci-followup.md",
   "skills/om-auto-review-pr/references/ci-followup.md",
@@ -165,6 +166,27 @@ for (const shell of shells) {
       "apply merge-queue",
     ],
     `github: set_pipeline_label under ${shell} must remove every competing pipeline label`,
+  );
+}
+
+const triageApply = mergeTriage.match(/For an eligible PR, `(apply_label [^`]+)`/)[1];
+const githubApply = github.match(/^apply_label\(\) \{\n[\s\S]*?^\}$/m)[0];
+for (const shell of shells) {
+  const applied = spawnSync(shell, ["-c", `
+LABELS_ENABLED=true
+AUTOMERGE_LABEL=automerge
+PR_NUMBER=162
+label_exists() { return 0; }
+tracker_repo() { printf 'owner/repo'; }
+gh() { printf '%s\\n' "$*" >&2; }
+${githubApply}
+${triageApply}
+`], { encoding: "utf8" });
+  assert.equal(applied.status, 0, applied.stderr);
+  assert.equal(
+    applied.stderr.trim(),
+    "api -X POST repos/owner/repo/issues/162/labels -f labels[]=automerge",
+    `triage: the shipped apply command must address the confirmed PR under ${shell}`,
   );
 }
 
@@ -628,7 +650,32 @@ const withForgejo = (overrides, script, env) => {
   }
 };
 
+const forgejoAssociation = forgejo.match(/#### get-pr-author-association\n[\s\S]*?```bash\n([\s\S]*?)```/)[1]
+  .replaceAll("{prNumber}", "7");
+
 try {
+  const outsideAuthor = withForgejo({
+    ["GET orgs/o/members/alice"]: { __status: 404, __body: {} },
+    [`GET ${RP}/collaborators/alice`]: { __status: 204, __body: "" },
+  }, forgejoAssociation);
+  assert.equal(outsideAuthor.status, 0, outsideAuthor.stderr);
+  assert.deepEqual(JSON.parse(outsideAuthor.stdout), { login: "alice", association: "outside-collaborator" });
+  const userCollaborator = withForgejo({
+    ["GET orgs/o"]: { __status: 404, __body: {} },
+    [`GET ${RP}/collaborators/alice`]: { __status: 204, __body: "" },
+  }, forgejoAssociation);
+  assert.equal(userCollaborator.status, 0, userCollaborator.stderr);
+  assert.deepEqual(JSON.parse(userCollaborator.stdout), { login: "alice", association: "collaborator" });
+  for (const status of [403, 500]) {
+    const unknownOwner = withForgejo({
+      ["GET orgs/o"]: { __status: status, __body: {} },
+      [`GET ${RP}/collaborators/alice`]: { __status: 204, __body: "" },
+    }, forgejoAssociation);
+    assert.notEqual(unknownOwner.status, 0, `an unreadable organization (HTTP ${status}) must not trust an outside collaborator`);
+    assert.doesNotMatch(unknownOwner.stdout, /"association"/);
+    assert.ok(!unknownOwner.calls.some((call) => call.path.endsWith("/collaborators/alice")));
+  }
+
   // --- host, repository, and token resolution --------------------------------
   const parse = (url) => runForgejo(`fj_parse_remote '${url}'`).stdout.trim();
   assert.equal(parse("https://codeberg.org/o/r.git"), "https://codeberg.org o/r");

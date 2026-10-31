@@ -814,6 +814,37 @@ fj_list_jq "repos/$(fj_repo)/pulls/{prNumber}/files" "" '[.[] | {path: .filename
   status: (if .status == "deleted" then "removed" else .status end)}]'
 ```
 
+#### get-pr-author-association
+`{prNumber}` → `{login, association}`. Forgejo has no per-PR association, so it is derived as follows. The repository owner is `owner`. A member of the owning organization is `member`. A repository collaborator is `outside-collaborator` on an organization-owned repository and `collaborator` on a user-owned one. Anyone else with a previously merged PR in this repository is `contributor`, and otherwise `first-time-contributor`. The owner-type lookup treats only HTTP 404 as a user-owned repository; permission, network and server failures leave the association unreadable. Forgejo answers membership checks with 204 or 404, so a failed membership check reads as "not a member", which makes the author less trusted under the default exclusions. The merged-PR scan re-checks the poster, because older Forgejo versions ignore the `created_by` filter.
+```bash
+fj_num {prNumber} || exit 1
+r=$(fj_repo) || exit 1; owner=${r%%/*}
+login=$(fj_get "repos/$r/pulls/{prNumber}" -r '.user.login') || exit 1
+case "$login" in ''|null|*[!A-Za-z0-9._-]*) echo "Invalid Forgejo author login for PR {prNumber}" >&2; exit 1 ;; esac
+is_org=0; owner_hdr=$(mktemp) || exit 1
+if FJ_HDR="$owner_hdr" fj_http GET "orgs/$owner" >/dev/null 2>&1; then
+  is_org=1
+else
+  owner_status=$(FJ_HDR="$owner_hdr" fj_status)
+  if [ "$owner_status" != 404 ]; then
+    rm -f "$owner_hdr"
+    echo "Could not classify Forgejo repository owner $owner (HTTP $owner_status)" >&2
+    exit 1
+  fi
+fi
+rm -f "$owner_hdr"
+if [ "$login" = "$owner" ]; then assoc=owner
+elif [ "$is_org" = 1 ] && fj_http GET "orgs/$owner/members/$login" >/dev/null 2>&1; then assoc=member
+elif fj_http GET "repos/$r/collaborators/$login" >/dev/null 2>&1; then
+  if [ "$is_org" = 1 ]; then assoc=outside-collaborator; else assoc=collaborator; fi
+else
+  merged=$(fj_list_jq "repos/$r/issues?type=pulls&state=closed&created_by=$login" "" --arg u "$login" \
+    '[.[] | select(.user.login == $u and (.pull_request.merged // false))] | length') || exit 1
+  if [ "$merged" -gt 0 ]; then assoc=contributor; else assoc=first-time-contributor; fi
+fi
+jq -n --arg login "$login" --arg association "$assoc" '{login: $login, association: $association}'
+```
+
 #### checkout-pr
 `{prNumber}` → the PR head available locally. Forgejo publishes every PR head, fork PRs included, as `refs/pull/<n>/head` on the base repository. Here `origin` must be the Forgejo remote.
 ```bash
@@ -1143,7 +1174,7 @@ in-progress|#c5def5|An automated skill is working on this
 ci-monitoring|#d4c5f9|Work complete and reported; agent is watching CI results
 do-not-close|#c5def5|Humans only: never auto-close this issue
 ${AUTOFIX_LABEL:-cez-autofix}|#5319e7|Human-confirmed issue ready for the configured autofix worker
-${AUTOMERGE_LABEL:-automerge}|#5319e7|Humans only: drive this PR to merge once every gate is green
+${AUTOMERGE_LABEL:-automerge}|#5319e7|Human-confirmed: drive this PR to merge once every gate is green
 automerge-signal-1-cr|#1d76db|om-auto-merge-buddy: code review signal holds for the current head
 automerge-signal-2-qa|#1d76db|om-auto-merge-buddy: QA signal holds for the current head
 automerge-signal-3-ci|#1d76db|om-auto-merge-buddy: CI signal holds for the current head

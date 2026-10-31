@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>🧠 plan · 🔨 implement · 🔍 review · ✅ QA gate · 🚢 merge</b><br/>
-  Seventy-two agent skills for autonomous PR delivery or staged human-review handoffs. Install them into any repo, with any coding agent.
+  Seventy-three agent skills for autonomous PR delivery or staged human-review handoffs. Install them into any repo, with any coding agent.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 npx skills add open-mercato/skills --skill '*'
 ```
 
-Install all seventy-two — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all seventy-three — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
@@ -215,6 +215,7 @@ thin and delegate to the two base wrappers.
 | [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md) | Reviews a PR by number in an isolated worktree, approves or requests changes, manages labels. On changes-requested, its autofix loop iterates fixes and re-review until merge-ready. A spec-only design PR gets a **specification review** instead of the code checklist: what can go wrong, backward compatibility, what's missing, how the spec can be improved, and whether it is the simplest possible solution — same severity scale and verdict rule, and the autofix loop amends the spec document (never adds implementation). |
 | [`om-auto-fix-pr`](docs/skills/om-auto-fix-pr.md) | Drives one PR to merge-ready: merges the latest base in first, then loops review-autofix ([`om-auto-review-pr`](docs/skills/om-auto-review-pr.md)), its own CI-stabilization step (classify each failing check as real bug / test bug / flake / infra, fix the real ones with tests, never fake green), and UI QA ([`om-auto-qa-pr`](docs/skills/om-auto-qa-pr.md)), re-merging base whenever it advances. Files follow-up issues for non-blocking nits via [`om-followup-issue-from-pr`](docs/skills/om-followup-issue-from-pr.md), keeps the fork carry-forward supersede/credit rules, normalizes labels, and hands off to [`om-approve-merge-pr`](docs/skills/om-approve-merge-pr.md) — it never merges itself. A `--ci-only [--branch <name>]` mode drives a plain branch or no-PR change to green CI without the rest of the loop. |
 | [`om-auto-merge-buddy`](docs/skills/om-auto-merge-buddy.md) | Works the queue of PRs a human labeled `automerge`, one at a time within a time window (default 2 hours), until three signals hold, each recorded as a label: code review, QA, and CI. It fills a missing signal through [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md), [`om-auto-qa-pr`](docs/skills/om-auto-qa-pr.md) or [`om-auto-fix-pr`](docs/skills/om-auto-fix-pr.md), run with `--orchestrated` so it alone owns the claim and the labels. Slow CI is parked under `ci-monitoring` while it moves on to the next PR. Fork PRs are carried forward to credited replacements. `prepare-to-merge` (default) marks a PR ready; `prepare-and-merge` squash-merges it. |
+| [`om-auto-merge-triage`](docs/skills/om-auto-merge-triage.md) | Picks which open PRs should enter the `automerge` queue. It ranks candidates by configurable eligibility tiers (default: `qa-approved` first, then AI judgment of important fixes close to merge, security or small PRs, trusted authors, then issue fixes), considers age, screenshots and bounded requested changes, orders each tier by priority label, and never proposes PRs from first-time contributors or outside collaborators. It works one window at a time (default the last month, scrollable with `--window`, or oldest first with `--from-oldest`), ranks up to 100 PRs by labels, and runs AI judgment only on the top 20. It labels only the PRs a human confirms (all or a selection), so [`om-auto-merge-buddy`](docs/skills/om-auto-merge-buddy.md) can work them. |
 | [`om-pr-autopilot`](docs/skills/om-pr-autopilot.md) | The single "just finish this PR" entry point: diagnoses what state one open PR is actually in — unfinished plan steps, missing review, unresolved conversations, red CI, base conflicts, missing labels or QA evidence, merge-ready — then maps that onto an ordered chain of the skills above and runs it, re-diagnosing between steps. Dispatch only: [`om-auto-continue-pr`](docs/skills/om-auto-continue-pr.md), [`om-auto-fix-pr`](docs/skills/om-auto-fix-pr.md), [`om-auto-qa-pr`](docs/skills/om-auto-qa-pr.md), [`om-followup-issue-from-pr`](docs/skills/om-followup-issue-from-pr.md) and [`om-approve-merge-pr`](docs/skills/om-approve-merge-pr.md) do the work. Never merges without `--allow-merge`; `--dry-run` diagnoses and mutates nothing. |
 | [`om-review-prs`](docs/skills/om-review-prs.md) | Sweeps all unreviewed open PRs, newest first, through [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md), respecting claim locks. |
 | [`om-close-fixed-issues`](docs/skills/om-close-fixed-issues.md) | Post-merge housekeeping sweep: closes issues that merged PRs fix, comments on issues whose PRs were closed without merging. |
@@ -348,6 +349,7 @@ Sweep open PRs, drive them to merge-ready, and ship — the QA gate stays a huma
 | ▶️ You run | ⚙️ Runs automatically inside | 🎁 You get |
 |---|---|---|
 | `/om-merge-buddy` | tracker scan of labels, reviews, CI, mergeability | a report of which PRs can merge now and which are close but blocked |
+| `/om-auto-merge-triage` | open PRs and `automerge.eligibility` | a ranked proposal of PRs for `automerge` from one window, which stops for confirmation; `--apply all` or `--apply <n,…>` labels the confirmed ones, `--window <n>` scrolls to the next window |
 | `/om-auto-merge-buddy` | open PRs a human labeled `automerge` | within a 2-hour window, each PR brought to three signals (code review, QA, CI) and marked ready, or squash-merged with `--mode prepare-and-merge`; slow CI is parked under `ci-monitoring` for the next pass |
 | `/om-review-prs` | [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md) per PR, claim-lock aware | every unreviewed open PR reviewed, newest first |
 | `/om-review-prs --subagents --parallel 3` | the same full review in a fresh agent and separate worktree per PR, up to three at once; automatically provisions local coordination unless `reviewSweep.coordinationRoot` is configured | the review sweep with isolated contexts, pinned configuration, and a lease excluding overlapping sweeps; omitting the new flags keeps the original sequential workflow |

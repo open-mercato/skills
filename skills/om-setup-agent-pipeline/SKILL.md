@@ -71,7 +71,7 @@ Field defaults: `references/config-capabilities.md`.
 - `labels.risk` — mutually exclusive blast radius of the change. Unset is treated as medium. Priority is how urgent the work is; risk is how dangerous the change is to ship.
 - `qaGate` — when `true`, a PR carrying `needs-qa` must not merge until it also carries `qa-approved`, even when every other check is green. When `false`, `needs-qa` is advisory only.
 - `autofix` — issue-triage queue label and eligibility; defaults and behavior: `references/config-capabilities.md`.
-- `automerge` — queue label, merge mode, boolean `requireIndependentReview`/`defaultToHumanQa`, window and attempt limit. Setup creates queue/signal labels; schema above and defaults in `references/config-capabilities.md`.
+- `automerge` — queue label, merge mode, boolean `requireIndependentReview`/`defaultToHumanQa`, window, attempt limit and triage `eligibility`. Setup creates queue/signal labels; schema above and defaults in `references/config-capabilities.md`.
 - `ci.maxWaitMinutes` — CI wait cap in minutes, default `40`; `0` skips waiting. It never relaxes required checks for merging. Wait-budget behavior: `references/config-capabilities.md`.
 - `engine.executorTier` — optional; the default abstract model tier (`cheap` / `standard` / `capable`) for executor subagents dispatched by the loop skills when a Tasks-table `Exec` cell names none. Harnesses that support subagent model selection map the tier onto their closest model class; others ignore it. Configs without the key behave as `standard`.
 - `engine.loopStepThreshold` — the Step count above which `om-auto-create-pr` hands a run off to `om-auto-create-pr-loop` (default 20). Raise it to keep more runs on the cheaper plain engine; `--loop` always forces the loop regardless.

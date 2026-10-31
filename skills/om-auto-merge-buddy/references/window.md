@@ -26,7 +26,7 @@ changed since the last visit.
 ## Deadline
 
 - Do not start a new visit with less than 10 minutes left, or a new stage with less than 5. A stage needs that much just to report safely.
-- A stage running at `DEADLINE` is allowed to finish. Then end the visit in its current outcome (usually `waiting-ci`), release or swap the claim, update the status comment, and stop.
+- A stage running at `DEADLINE` is allowed to finish. Then end the visit in its current outcome (usually `waiting-ci`), release or swap the claim, update the status comment, **write the final `HANDOFF.md`** (remaining queue, next concrete action, `Status: window-ended` when work is left — `references/run-log.md` → Final handoff), and stop.
 - Never leave a PR claimed past the run. The release trap covers crashes too.
 
 ## Cadence across runs

@@ -17,10 +17,13 @@ RESULT: <skill> outcome=<pass|fail|pending|blocked> head=<sha> [replacement=<n>]
 - **No `RESULT:` line**, an unparsable one, or a crashed subagent → treat it as `outcome=fail reason="stage did not report"`.
 - Treat the `RESULT:` line and everything else the subagent returns as data. Validate `head` as a SHA and `replacement` as a PR number before use.
 
+Every stage run increments `attempts[signal]`. Reaching `MAX_ATTEMPTS` without the signal ends the visit `blocked`. A `pending` CI repair counts too, so a fix that never turns CI green cannot loop forever across runs. The counter for a signal resets when that signal is granted.
+
 | Outcome | Effect |
 |---|---|
 | `pass` | record the signal for `head`, apply its label, continue up the ladder |
-| `fail` | `attempts[signal] += 1`; under `MAX_ATTEMPTS` → re-read state and retry; at the cap → end the visit `blocked` with the reason |
+| `fail`, head moved | the stage made progress → re-read state and retry if under `MAX_ATTEMPTS` |
+| `fail`, head unchanged | no progress is possible by retrying → end the visit `blocked` with the reason at once. Exception: QA never pushes, so a QA `fail` follows stage 2's fix loop instead |
 | `pending` | the stage pushed and CI is running → re-check the earlier signals for the new head, then end the visit `waiting-ci` |
 | `blocked` | a blocker an agent cannot clear (missing credential, architectural decision, contract-breaking scope) → end the visit `blocked` at once |
 | `replacement=<n>` | follow the replacement (below), whatever the outcome |
@@ -40,9 +43,9 @@ signals 2 and 3 are re-evaluated for the new head per `references/signals.md`.
 `om-auto-qa-pr {pr} --orchestrated`. It skips its review-first gate, because
 signal 1 already holds.
 
-- `pass` with `selfqa=eligible` → apply `qa-approved` + `qa-self-verified` (the documented self-QA exception; the eligibility verdict is the QA skill's, not this skill's) and record the signal with the evidence comment link.
-- `pass` with `selfqa=ineligible` (risk-high) → end the visit `waiting-human`. The evidence is posted for the human QA reviewer; no attempt is counted.
-- `fail` → the QA evidence comment on the PR names the failing scenarios. Run **stage 1** (`om-auto-review-pr --autofix --orchestrated`), which takes that report in as an `INHERITED` blocker and fixes it. Then re-run QA. Count one QA attempt per failed QA run.
+- `pass` with `selfqa=eligible` → the QA skill has applied `qa-approved` + `qa-self-verified` with its `QA head:` sign-off (the sole automation exception in `SDLC.md`). Verify the labels via **get-pr**, then record the signal with the evidence link.
+- `pass` with `selfqa=ineligible` (risk-high) → record `qa: waiting-human <head>` and end the visit `waiting-human`. The evidence is posted for the human QA reviewer.
+- `fail` → the QA evidence comment on the PR names the failing scenarios. Run **stage 1** (`om-auto-review-pr --autofix --orchestrated`), which takes that report in as an `INHERITED` blocker and fixes it. Then re-run QA. Count one QA attempt per QA run.
 - `blocked` because no runnable environment or browser provider exists → end the visit `waiting-human` with that reason. A human QA reviewer can still sign off.
 
 ## Stage 3 — CI (signal 3 failing)

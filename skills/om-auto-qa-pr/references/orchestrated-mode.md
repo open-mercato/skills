@@ -17,7 +17,8 @@ standalone runs never read it.
   - every CI wait and CI-result follow-up.
   Never back off from, release, or swap the orchestrator's `in-progress`.
 - **Keep** — everything that makes the work trustworthy: the untrusted-content boundary, worktree isolation, the validation gate, the test rules, no force-push, no history rewrites, never going green by weakening a test or disabling a check, secrets hygiene, and this skill's work-product records listed below.
-- **Pass it down.** Every skill invoked from here also gets `--orchestrated`.
+- **Pass it down.** Every `om-auto-*` skill invoked from here also gets `--orchestrated`. Helpers without the flag, such as `om-code-review` and `om-prepare-test-env`, run as usual.
+- **Never ask.** Nobody is watching the run. Anything that would otherwise be a question to the user, or a request for guidance in the final report, becomes `outcome=blocked` with that question as the reason.
 - **Report.** End the final report with exactly one line, followed by the usual `PR:` line (the replacement's when one was opened):
 
   ```text
@@ -28,7 +29,8 @@ standalone runs never read it.
 
 ## om-auto-qa-pr specifics
 
-- **Steps that run:** PR mode 0–1 and 4–12, and step 13's environment and worktree teardown. **Skipped:** step 2 (claim); step 3 (review-first gate — the orchestrator runs QA only after signal 1 holds); step 13's label changes and lock handling. `--self-qa-signoff` and `--apply-failure` are ignored: labels are the orchestrator's.
-- **Evidence comment (work product).** Post it via **attach-image-evidence** as in step 11. When the run is self-QA eligible (below), add the `QA head: <headRefOid>` line and the self-QA evidence list that `SDLC.md` requires, exactly as step 13's sign-off comment would. The orchestrator then applies `qa-approved` + `qa-self-verified` against this proof.
+- **Steps that run:** PR mode 0–1 and 4–12, and step 13's environment and worktree teardown. **Skipped:** step 2 (claim); step 3 (review-first gate — the orchestrator runs QA only after signal 1 holds); step 13's lock handling and every label change except the self-QA sign-off. `--self-qa-signoff` is implied; `--apply-failure` is ignored.
+- **Evidence comment (work product).** Post it via **attach-image-evidence** as in step 11.
+- **Self-QA sign-off — the one label mutation this mode keeps.** `SDLC.md` names this skill as the only automation allowed to apply `qa-approved`. When the run is eligible (below), apply `qa-approved` + `qa-self-verified` and post the sign-off comment with its `QA head: <headRefOid>` line and evidence list, exactly as step 13 does under `--self-qa-signoff`. Otherwise apply no label.
 - **`selfqa=`** — compute it with the exact `--self-qa-signoff` criteria: verdict PASS, screenshots attached, the PR carries `needs-qa` without `skip-qa`, and the PR is not `risk-high` (labeled, or inferred per `SDLC.md` from the diff). It is `eligible` only when every criterion holds.
 - **Outcome:** `pass` = every required step passed. `fail` = at least one step failed, and the evidence comment names the failing steps, because the orchestrator's fix stage reads it. `blocked` = the app or browser could not be brought up, or the run was environment-limited. Never report `pass` for a partial run.

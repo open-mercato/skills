@@ -17,7 +17,8 @@ standalone runs never read it.
   - every CI wait and CI-result follow-up.
   Never back off from, release, or swap the orchestrator's `in-progress`.
 - **Keep** — everything that makes the work trustworthy: the untrusted-content boundary, worktree isolation, the validation gate, the test rules, no force-push, no history rewrites, never going green by weakening a test or disabling a check, secrets hygiene, and this skill's work-product records listed below.
-- **Pass it down.** Every skill invoked from here also gets `--orchestrated`.
+- **Pass it down.** Every `om-auto-*` skill invoked from here also gets `--orchestrated`. Helpers without the flag, such as `om-code-review` and `om-prepare-test-env`, run as usual.
+- **Never ask.** Nobody is watching the run. Anything that would otherwise be a question to the user, or a request for guidance in the final report, becomes `outcome=blocked` with that question as the reason.
 - **Report.** End the final report with exactly one line, followed by the usual `PR:` line (the replacement's when one was opened):
 
   ```text
@@ -29,8 +30,10 @@ standalone runs never read it.
 ## om-auto-review-pr specifics
 
 - **Implies `--autofix`.** `AUTOFIX_ELIGIBLE=true` whoever authored the PR; the orchestrator was authorized by a human's automerge label.
-- **Steps that run:** 0, 2–9, step 10's review submission only (via **review-pr**, the work product the orchestrator links as signal evidence), step 11, and step 12's worktree cleanup. **Skipped:** step 1, the rest of step 10 (labels, handoff, draft promotion, manual-QA instructions comment), step 12's lock handling, and step 13.
+- **Steps that run:** 0, 2–9, step 10's review submission only (via **review-pr**, the work product the orchestrator links as signal evidence), step 11, and step 12's worktree cleanup. **Skipped:** step 1, the rest of step 10 (labels, handoff, draft promotion, manual-QA instructions comment), step 12's lock handling, step 13, and step 14's request for guidance (replaced by the `RESULT:` line).
 - **CI belongs to the orchestrator.** Step 4b's failing checks are noted in the review body but are not blocker findings, and they do not force `changes-requested`. Step 11's work order stops after (1) conflicts and (2) findings; (3) CI is skipped. Omit the CI-pending disclosure.
-- **QA failures are findings.** An `om-auto-qa-pr` evidence comment reporting FAIL on the current head is an `INHERITED` blocker finding. Fix the failing scenario like any other blocker.
-- **Fork heads.** Run the carry-forward flow (`references/fork-pr-flow.md`) as usual. Its label transfer to the replacement is the one label mutation this mode keeps, because the replacement must carry the human's automerge label. Report `replacement=<n>` with the replacement's head.
+- **Always review when invoked.** The invocation is itself an explicit re-review request. Step 3's "no new commits" stop does not apply: re-check every open finding on the unchanged head.
+- **QA failures are findings.** An `om-auto-qa-pr` evidence comment reporting FAIL on the current head is kept by step 2's comment filter, even though a collection skill wrote it. It is an `INHERITED` blocker finding; fix the failing scenario like any other blocker.
+- **Self-authored PRs.** When the host rejects the approving review because the PR author is `CURRENT_USER`, post the same review body via **comment-pr**. That comment is the approval evidence; report it as `evidence=`.
+- **Fork heads.** Run the carry-forward flow (`references/fork-pr-flow.md`) as usual, including its full label transfer to the replacement (category, priority, risk, QA requirement, custom labels, and the automerge label). That transfer is the one label mutation this mode keeps, because a new PR must start fully labeled. Report `replacement=<n>` with the replacement's head.
 - **Outcome:** `pass` = the final submitted verdict approves `head` after the autofix loop. `fail` = changes are still requested after the loop, with the top blocker as the reason. `blocked` = one of step 11's critical stops. This skill never returns `pending`.

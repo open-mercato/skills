@@ -6,16 +6,16 @@ through the tracker descriptor's operations, and labels go through the guards.
 
 ## Who may be claimed
 
-- **Skip** a PR carrying `in-progress`: another skill or human is working it. **Exception:** this skill's own stale claim. That is `in-progress` with this skill's status comment saying `working`, the comment last updated more than 60 minutes ago, and no commits, comments or label changes on the PR since. Recover it by noting `🔁 recovered a stale claim from a previous run` in the status comment, then claim normally.
+- **Skip** a PR carrying `in-progress`: another skill or human is working it. **Exception:** this skill's own stale claim. That is `in-progress` while this skill's status comment says `working` and its heartbeat (below) is more than 120 minutes old. Activity on the PR since then does not matter, because it is the dead run's own sub-skills. Recover the claim by noting `🔁 recovered a stale claim from a previous run` in the status comment, then claim normally.
 - **Skip** a PR carrying `automerge-blocked`: it is parked until a human clears it.
 - **Ignore the assignee.** Unlike the shared three-signal check, a foreign assignee is not a lock here. The queue is other people's PRs by design. Never assign or unassign anyone.
 - **`ci-monitoring` is not a lock.** A PR carrying it (from this skill or any other) is claimable; for this skill it just means "check CI first".
-- A `🤖` claim comment from another skill within the last 30 minutes, on a PR without `in-progress`, means that skill is between steps of a chain. Skip the PR this round and revisit it later in the window.
+- A `🤖` claim or take-over comment (not a review, evidence or summary comment) from another skill within the last 30 minutes, on a PR without `in-progress`, means that skill is between steps of a chain. Skip the PR this round and revisit it later in the window. Sub-skills running under this skill's `--orchestrated` flag post no claim comments, so they never trigger this rule.
 
 ## Claim (before any other work on the PR)
 
 1. `apply_label "in-progress" {pr}` and `unlabel-pr` `ci-monitoring` (the swap back).
-2. Rewrite the status comment's `State:` line to `working — run <RUN_ID> since <ISO-8601>`, creating the comment on first visit (`references/report-templates.md`). This comment is the claim comment. It is updated in place, never posted again.
+2. Rewrite the status comment's `State:` line to `working — run <RUN_ID> since <ISO-8601>, heartbeat <ISO-8601>`, creating the comment on first visit (`references/report-templates.md`). This comment is the claim comment. It is updated in place, never posted again. Refresh the heartbeat before every stage, so a live run never looks stale.
 3. Register a trap/finally that releases the claim (below) on every exit path: success, a stage failure, the deadline, or a crash of the orchestrating process.
 
 ## Release (the visit's last tracker mutations)

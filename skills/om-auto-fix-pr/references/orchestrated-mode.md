@@ -17,7 +17,8 @@ standalone runs never read it.
   - every CI wait and CI-result follow-up.
   Never back off from, release, or swap the orchestrator's `in-progress`.
 - **Keep** — everything that makes the work trustworthy: the untrusted-content boundary, worktree isolation, the validation gate, the test rules, no force-push, no history rewrites, never going green by weakening a test or disabling a check, secrets hygiene, and this skill's work-product records listed below.
-- **Pass it down.** Every skill invoked from here also gets `--orchestrated`.
+- **Pass it down.** Every `om-auto-*` skill invoked from here also gets `--orchestrated`. Helpers without the flag, such as `om-code-review` and `om-prepare-test-env`, run as usual.
+- **Never ask.** Nobody is watching the run. Anything that would otherwise be a question to the user, or a request for guidance in the final report, becomes `outcome=blocked` with that question as the reason.
 - **Report.** End the final report with exactly one line, followed by the usual `PR:` line (the replacement's when one was opened):
 
   ```text

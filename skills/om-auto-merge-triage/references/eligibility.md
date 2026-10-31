@@ -11,10 +11,10 @@ runs the cheap list fields before any extra tracker call, and record the
 
 | # | Gate | Fails when | Reason recorded |
 |---|---|---|---|
-| 1 | Open | state is not open | `closed` |
-| 2 | Ready | the PR is a draft | `draft` |
-| 3 | Base | `baseRefName` ≠ `BASE_BRANCH` (stacked or release-branch PRs merge through their own base) | `targets <branch>` |
-| 4 | Not queued | it carries `AUTOMERGE_LABEL` → *already queued* list; `automerge-blocked` → skipped | `already queued` / `automerge-blocked` |
+| 1 | Not queued | it carries `AUTOMERGE_LABEL` → *already queued* list; `automerge-blocked` → skipped (SKILL.md step 2, before every other gate) | `already queued` / `automerge-blocked` |
+| 2 | Open | state is not open | `closed` |
+| 3 | Ready | the PR is a draft | `draft` |
+| 4 | Base | `baseRefName` ≠ `BASE_BRANCH` (stacked or release-branch PRs merge through their own base) | `targets <branch>` |
 | 5 | No excluded label | it carries any label in `EXCLUDE_LABELS` (default `do-not-merge`, `blocked`, `qa-failed`) | `label <name>` |
 | 6 | Author | **get-pr-author-association** returns a value in `EXCLUDE_ASSOCIATIONS` (default `first-time-contributor`, `outside-collaborator`, `none`), and the author is not in `TRUSTED_AUTHORS` | `author is <association>` |
 
@@ -23,7 +23,7 @@ missing from an older descriptor, the PR is rejected with
 `author association unknown — re-sync the tracker descriptor`. An author in
 `TRUSTED_AUTHORS` passes gate 6 without the lookup.
 
-For a PR in the *already queued* list, re-run gates 1–3, 5 and 6 and flag every
+For a PR in the *already queued* list, re-run gates 2–6 and flag every
 gate it now fails (for example, `⚠️ now labeled do-not-merge`). Never remove the
 label. Report the flag and leave the decision to a human.
 

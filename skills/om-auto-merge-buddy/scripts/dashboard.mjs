@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import http from 'node:http'
-import { createHash, randomBytes } from 'node:crypto'
-import { readFile, readdir, realpath, open, lstat } from 'node:fs/promises'
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto'
+import { readFile, readdir, realpath, open, lstat, mkdir, rename, unlink } from 'node:fs/promises'
 import { constants } from 'node:fs'
 import { basename, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -55,10 +55,54 @@ export function safeUrl(value) {
     return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password ? url.href : null
   } catch { return null }
 }
+const IMAGE_ORIGINS = ['https://raw.githubusercontent.com', 'https://user-images.githubusercontent.com', 'https://private-user-images.githubusercontent.com', 'https://github.com/user-attachments/assets/']
+export function safeImageUrl(value) {
+  if (typeof value !== 'string' || value.length > 8192) return null
+  try {
+    const url = new URL(value)
+    if (url.protocol !== 'https:' || url.username || url.password || url.port || [...url.searchParams.keys()].some(key => ['jwt','token','access_token','signature'].includes(key.toLowerCase()) || /signature|credential/i.test(key))) return null
+    const imageHosts = ['raw.githubusercontent.com', 'user-images.githubusercontent.com', 'private-user-images.githubusercontent.com']
+    return imageHosts.includes(url.hostname) || (url.hostname === 'github.com' && url.pathname.startsWith('/user-attachments/assets/')) ? url.href : null
+  } catch { return null }
+}
+export function normalizeQaScreenshots(value, head) {
+  return Array.isArray(value) ? value.slice(0, 12).filter(item => !item?.head || (sha(item.head) && sha(item.head) === sha(head))).map(item => ({ url: safeImageUrl(item?.url), caption: text(item?.caption), sourceCommentUrl: safeUrl(item?.sourceCommentUrl), head: sha(item?.head) })).filter(item => item.url) : []
+}
 const text = value => typeof value === 'string' ? value.slice(0, 4000) : null
 const timestamp = value => typeof value === 'string' && Number.isFinite(Date.parse(value)) ? value : null
 const duration = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null
 const sha = value => typeof value === 'string' && /^[a-f0-9]{40}$/i.test(value) ? value : null
+const GATE_ALIASES = { cr: ['cr', 'review', 'codeReview', 'code-review'], qa: ['qa', 'qualityAssurance'], ci: ['ci', 'checks'] }
+export function evidenceLinks(value, depth = 0) {
+  if (depth > 3) return []
+  if (typeof value === 'string') return [safeUrl(value)].filter(Boolean)
+  if (Array.isArray(value)) return [...new Set(value.flatMap(item => evidenceLinks(item, depth + 1)))].slice(0, 50)
+  if (!value || typeof value !== 'object') return []
+  const keys = ['url', 'href', 'link', 'evidence', 'review', 'cr', 'qa', 'ci', 'checks', 'report', 'reviewUrl', 'reportUrl', 'checksUrl']
+  return [...new Set(keys.flatMap(key => evidenceLinks(value[key], depth + 1)))].slice(0, 50)
+}
+export function normalizeSignals(value, evidence, head) {
+  const entries = Array.isArray(value) ? value : null
+  const statuses = { pass: ['pass', 'passed', 'success', 'successful', 'approved'], pending: ['pending', 'queued', 'running', 'in-progress', 'in_progress', 'waiting'], fail: ['fail', 'failed', 'failure', 'error', 'blocked', 'changes-requested'], missing: ['missing'], 'n/a': ['n/a', 'na', 'not-applicable', 'not-required', 'not_required', 'skipped'] }
+  return Object.fromEntries(Object.entries(GATE_ALIASES).map(([gate, aliases]) => {
+    const signal = entries ? entries.find(entry => entry && aliases.some(alias => alias.toLowerCase() === String(entry.gate ?? entry.signal ?? entry.name ?? '').toLowerCase())) : aliases.map(alias => value?.[alias]).find(entry => entry !== undefined)
+    const raw = typeof signal === 'string' ? signal : [signal?.status, signal?.state, signal?.outcome, signal?.verdict].find(entry => typeof entry === 'string')
+    const token = typeof raw === 'string' ? raw.trim().toLowerCase() : ''
+    let status = Object.entries(statuses).find(([, aliases]) => aliases.includes(token))?.[0] ?? 'not-recorded'
+    const signalHead = sha(signal?.head ?? signal?.commit)
+    if (status === 'pass' && signalHead && sha(head) && signalHead !== sha(head)) status = 'missing'
+    const gateEvidence = evidence && !Array.isArray(evidence) && typeof evidence === 'object' ? aliases.flatMap(alias => evidenceLinks(evidence[alias])) : []
+    return [gate, { status, evidence: [...new Set([...evidenceLinks(signal), ...gateEvidence])].slice(0, 50) }]
+  }))
+}
+export function normalizeReason(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || typeof value.summary !== 'string' || !value.summary.trim()) return null
+  return { code: text(value.code), summary: text(value.summary), gate: text(value.gate), head: sha(value.head),
+    requiredAction: text(value.requiredAction), owner: text(value.owner), retryWhen: text(value.retryWhen),
+    humanActionRequired: typeof value.humanActionRequired === 'boolean' ? value.humanActionRequired : null,
+    actionLocation: text(value.actionLocation), actionUrl: safeUrl(value.actionUrl), whyAgentCannotAct: text(value.whyAgentCannotAct),
+    evidence: Array.isArray(value.evidence) ? value.evidence.map(safeUrl).filter(Boolean).slice(0, 50) : [] }
+}
 export function normalizeRecord(row) {
   if (!row || !Number.isInteger(row.number) || row.number < 1) throw new Error('A dashboard record has an invalid PR number')
   const firstStartedAt = timestamp(row.firstStartedAt)
@@ -67,14 +111,18 @@ export function normalizeRecord(row) {
   const elapsed = end => firstStartedAt && end && Date.parse(end) >= Date.parse(firstStartedAt) ? Date.parse(end) - Date.parse(firstStartedAt) : null
   return {
     number: row.number, repository: text(row.repository), title: text(row.title), url: safeUrl(row.url),
-    outcome: text(row.outcome) || 'unknown', nextAction: text(row.nextAction), base: text(row.base), head: sha(row.head), mergeSha: sha(row.mergeSha),
+    outcome: text(row.outcome) || 'unknown', reason: normalizeReason(row.reason), nextAction: text(row.nextAction), base: text(row.base), head: sha(row.head), mergeSha: sha(row.mergeSha),
     updatedAt: timestamp(row.updatedAt), nextCheckAt: timestamp(row.nextCheckAt), mergedAt: timestamp(row.mergedAt),
     firstStartedAt, firstReadyAt: timestamp(row.firstReadyAt), readyAt, latestReadyAt: timestamp(row.latestReadyAt), readyHead: sha(row.readyHead), readyPolicy: text(row.readyPolicy),
     mergeableDurationMs: sha(row.readyHead) && sha(row.readyHead) === sha(row.head) && typeof row.readyPolicy === 'string' && row.readyPolicy.length > 0 ? elapsed(readyAt) : null, mergedDurationMs: elapsed(mergedAt),
     assignees: Array.isArray(row.assignees) ? row.assignees.map(value => text(typeof value === 'string' ? value : value?.login)).filter(Boolean).slice(0, 20) : [],
-    statusCommentUrl: safeUrl(row.statusCommentUrl),
-    evidence: Array.isArray(row.evidence) ? row.evidence.map(item => safeUrl(typeof item === 'string' ? item : item?.url)).filter(Boolean).slice(0, 50) : [],
-    plan: Array.isArray(row.plan) ? row.plan.slice(0, 100).map(step => ({ step: text(step?.step) || 'Step', status: text(step?.status) || 'unknown', evidence: safeUrl(step?.evidence) })) : [],
+    statusCommentUrl: safeUrl(row.statusCommentUrl), qaScreenshots: normalizeQaScreenshots(row.qaScreenshots, row.head), signals: normalizeSignals(row.signals, row.evidence, row.head),
+    evidence: evidenceLinks(row.evidence),
+    plan: Array.isArray(row.plan) ? row.plan.slice(0, 100).map(step => ({ step: text(step?.step) || 'Step', status: text(step?.status) || 'unknown',
+      evidence: evidenceLinks(step?.evidence)[0] ?? null, evidenceLinks: evidenceLinks(step?.evidence),
+      provenance: ['performed', 'reused', 'verified', 'recorded'].includes(step?.provenance) ? step.provenance : null,
+      actor: text(step?.actor), source: text(step?.source), sourceUrl: safeUrl(step?.sourceUrl) || safeUrl(step?.source), head: sha(step?.head), commit: sha(step?.commit),
+      at: timestamp(step?.at), time: timestamp(step?.time), completedAt: timestamp(step?.completedAt), recordedAt: timestamp(step?.recordedAt), performedAt: timestamp(step?.performedAt) })) : [],
   }
 }
 export function summarizeDurations(rows) {
@@ -116,6 +164,110 @@ async function readAllowed(root, name) {
     throw error
   } finally { await handle?.close() }
 }
+const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i
+const REPOSITORY = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/
+export function rowVersion(rootFingerprint, repository, row) {
+  return createHash('sha256').update(JSON.stringify([rootFingerprint, repository, row.number, row.head ?? null, row.updatedAt ?? null, row.outcome ?? null, Boolean(row.reservation)])).digest('hex')
+}
+function busyReason(row) {
+  return row.reservation ? 'Scheduler ownership is active or unknown; wait for the skill to release this PR.'
+    : ['working', 'in-progress', 'cleanup-pending'].includes(row.outcome) ? 'This PR has active work or required cleanup; wait until it is safely parked.' : null
+}
+function validateCommand(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !['operation','repository','number','expectedVersion','undoOf'].includes(key))
+    || !['dismiss','restore'].includes(value.operation) || typeof value.repository !== 'string' || !REPOSITORY.test(value.repository)
+    || !Number.isSafeInteger(value.number) || value.number < 1 || typeof value.expectedVersion !== 'string' || !/^[a-f0-9]{64}$/i.test(value.expectedVersion)
+    || (value.operation === 'dismiss' && value.undoOf !== undefined) || (value.operation === 'restore' && (typeof value.undoOf !== 'string' || !UUID.test(value.undoOf)))) throw Object.assign(new Error('Invalid local command'), { statusCode: 400 })
+  return value
+}
+async function inboxDirectory(root, create = false) {
+  const meta = await metaDirectory(root)
+  if (!meta) return null
+  const directory = join(meta, 'merge-buddy-commands')
+  if (create) { try { await mkdir(directory, { mode: 0o700 }) } catch (error) { if (error.code !== 'EEXIST') throw new Error('Local command inbox cannot be created') } }
+  try {
+    const info = await lstat(directory)
+    if (!info.isDirectory() || info.isSymbolicLink() || await realpath(directory) !== directory) throw new Error('Unsafe local command inbox')
+    return directory
+  } catch (error) { if (error.code === 'ENOENT') return null; throw new Error('Local command inbox is unavailable or unsafe') }
+}
+async function inboxJson(directory, name) {
+  if (!new RegExp('^' + UUID.source.slice(1,-1) + '(?:\\.ack)?\\.json$', 'i').test(name)) throw new Error('Invalid command filename')
+  const path = join(directory, name)
+  let handle
+  try {
+    const info = await lstat(path)
+    if (!info.isFile() || info.isSymbolicLink() || info.size > 8192) throw new Error('Unsafe local command file')
+    handle = await open(path, constants.O_RDONLY | (constants.O_NOFOLLOW || 0))
+    const opened = await handle.stat()
+    if (opened.ino !== info.ino || opened.dev !== info.dev || opened.size > 8192) throw new Error('Local command changed during reading')
+    const raw = await handle.readFile('utf8')
+    if (Buffer.byteLength(raw) > 8192) throw new Error('Local command exceeds its size limit')
+    return JSON.parse(raw)
+  } catch (error) { if (error.code === 'ENOENT') return null; throw new Error('Local command data is malformed or unavailable') }
+  finally { await handle?.close() }
+}
+function normalizedAck(value, command) {
+  return value?.version === 1 && value.requestId === command.requestId && value.operation === command.operation && value.repository === command.repository && value.number === command.number
+    && ['applied','rejected'].includes(value.status) && timestamp(value.processedAt)
+    ? { version: 1, requestId: value.requestId, operation: value.operation, repository: value.repository, number: value.number, status: value.status, processedAt: value.processedAt, message: text(value.message) } : null
+}
+export async function readCommandInbox(root, state = {}) {
+  const directory = await inboxDirectory(root)
+  if (!directory) return []
+  const names = await readdir(directory)
+  if (names.length > 2000) throw new Error('Local command inbox exceeds its safety limit')
+  const commands = []
+  for (const name of names.filter(name => UUID.test(name.replace(/\.json$/, '')) && name.endsWith('.json'))) {
+    const command = await inboxJson(directory, name)
+    if (!command) continue
+    try { validateCommand({ operation: command.operation, repository: command.repository, number: command.number, expectedVersion: command.expectedVersion, ...(command.undoOf === undefined ? {} : { undoOf: command.undoOf }) }) } catch { throw new Error('Local command data has an unsupported shape') }
+    if (command.version !== 1 || command.requestId !== name.slice(0,-5) || !timestamp(command.createdAt)) throw new Error('Local command data has an invalid identity')
+    const receipt = normalizedAck(state.dashboardCommandReceipts?.[command.requestId], command)
+    const ack = receipt || normalizedAck(await inboxJson(directory, command.requestId + '.ack.json'), command)
+    commands.push({ version: 1, requestId: command.requestId, operation: command.operation, repository: command.repository, number: command.number, expectedVersion: command.expectedVersion, createdAt: command.createdAt, undoOf: command.undoOf, ack, receiptConfirmed: Boolean(receipt) })
+  }
+  return commands.sort((left,right) => Date.parse(left.createdAt) - Date.parse(right.createdAt) || left.requestId.localeCompare(right.requestId))
+}
+async function rawState(root) {
+  const raw = await readAllowed(root, 'merge-buddy.json')
+  if (!raw?.trim()) return { version: 1, activePrs: [], queue: [], dismissedPrs: [] }
+  let state
+  try { state = JSON.parse(raw) } catch { throw new Error('Queue JSON is malformed; the next refresh will retry') }
+  if (state?.version !== 1 || !Array.isArray(state.activePrs) || (state.dismissedPrs !== undefined && !Array.isArray(state.dismissedPrs))) throw new Error('Queue data has an unsupported shape')
+  return state
+}
+export async function publishCommand(root, input) {
+  root = await realpath(resolve(root))
+  const body = validateCommand(input)
+  const state = await rawState(root)
+  const matches = row => row.number === body.number && (text(row.repository) || text(state.repository)) === body.repository
+  const active = state.activePrs.find(matches), removed = (state.dismissedPrs || []).find(matches)
+  const row = body.operation === 'dismiss' ? active : removed || active
+  if (!row) throw Object.assign(new Error('This local row is no longer available; refresh the dashboard.'), { statusCode: 409 })
+  const unavailable = busyReason(row)
+  if (unavailable) throw Object.assign(new Error(unavailable), { statusCode: 409 })
+  const fingerprint = createHash('sha256').update(root).digest('hex')
+  if (rowVersion(fingerprint, body.repository, row) !== body.expectedVersion.toLowerCase()) throw Object.assign(new Error('This local row changed; refresh before trying again.'), { statusCode: 409 })
+  if (body.operation === 'restore') {
+    const commands = await readCommandInbox(root, state)
+    const original = commands.find(command => command.requestId === body.undoOf && command.operation === 'dismiss' && command.repository === body.repository && command.number === body.number)
+    if (removed?.dismissal?.requestId !== body.undoOf && !original) throw Object.assign(new Error('Undo does not match a local removal request.'), { statusCode: 409 })
+  }
+  const directory = await inboxDirectory(root, true)
+  if (!directory || (await readdir(directory)).length >= 2000) throw Object.assign(new Error('Local command inbox is unavailable or full; wait for scheduler processing.'), { statusCode: 409 })
+  const requestId = randomUUID()
+  const command = { version: 1, requestId, ...body, expectedVersion: body.expectedVersion.toLowerCase(), createdAt: new Date().toISOString() }
+  const temporary = join(directory, requestId + '.' + randomBytes(6).toString('hex') + '.tmp')
+  let handle
+  try {
+    handle = await open(temporary, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | (constants.O_NOFOLLOW || 0), 0o600)
+    await handle.writeFile(JSON.stringify(command) + '\n'); await handle.sync(); await handle.close(); handle = null
+    if (await inboxDirectory(root) !== directory) throw new Error('Local command inbox changed before publication')
+    await rename(temporary, join(directory, requestId + '.json'))
+  } finally { await handle?.close(); await unlink(temporary).catch(() => {}) }
+  return { requestId, status: 'pending', operation: body.operation }
+}
 export async function readDashboardData(root, kind, day) {
   root = await realpath(resolve(root))
   if (kind === 'days') {
@@ -123,21 +275,41 @@ export async function readDashboardData(root, kind, day) {
     return { days: meta ? (await readdir(meta)).map(name => /^merge-buddy-merged-(\d{4}-\d{2}-\d{2})\.jsonl$/.exec(name)?.[1]).filter(value => value && validDay(value)).sort().reverse() : [] }
   }
   if (kind === 'state') {
-    const raw = await readAllowed(root, 'merge-buddy.json')
-    if (!raw?.trim()) return { activePrs: [], queue: [], updatedAt: null }
-    let state
-    try { state = JSON.parse(raw) } catch { throw new Error('Queue JSON is malformed; the next refresh will retry') }
-    if (state?.version !== 1 || !Array.isArray(state.activePrs)) throw new Error('Queue data has an unsupported shape')
-    if (state.activePrs.length > 1000 || (Array.isArray(state.queue) && state.queue.length > 1000)) throw new Error('Dashboard queue exceeds 1000 records')
+    const state = await rawState(root)
+    if (state.activePrs.length > 1000 || (Array.isArray(state.queue) && state.queue.length > 1000) || (state.dismissedPrs?.length || 0) > 1000) throw new Error('Dashboard queue exceeds 1000 records')
+    const fingerprint = createHash('sha256').update(root).digest('hex')
     const inheritedRepository = row => text(row.repository) || text(state.repository)
     const key = row => JSON.stringify([row.repository, row.number])
-    const activePrs = [...new Map(state.activePrs.map(source => { const row = normalizeRecord({ ...source, repository: inheritedRepository(source) }); return [key(row), row] })).values()]
+    const expose = source => {
+      const repository = inheritedRepository(source)
+      const row = normalizeRecord({ ...source, repository })
+      return { ...row, localVersion: rowVersion(fingerprint, repository, source), localActionDisabledReason: !repository || !REPOSITORY.test(repository) ? 'Repository identity is not recorded; wait for scheduler refresh.' : busyReason(source),
+        dismissal: UUID.test(source.dismissal?.requestId ?? '') ? { requestId: source.dismissal.requestId, dismissedAt: timestamp(source.dismissal.dismissedAt) } : null }
+    }
+    let activePrs = [...new Map(state.activePrs.map(source => { const row = expose(source); return [key(row),row] })).values()]
+    const dismissedPrs = (state.dismissedPrs || []).map(expose)
+    const commands = await readCommandInbox(root, state)
+    const localCommands = commands.map(command => {
+      let status = command.ack?.status || 'pending'
+      const matches = row => row.number === command.number && row.repository === command.repository
+      const reflected = command.operation === 'dismiss' ? dismissedPrs.some(row => matches(row) && row.dismissal?.requestId === command.requestId) : activePrs.some(matches) && !dismissedPrs.some(row => matches(row) && row.dismissal?.requestId === command.undoOf)
+      if (status === 'applied' && !reflected && !command.receiptConfirmed && !commands.some(later => later.operation === 'restore' && later.undoOf === command.requestId && later.ack?.status === 'applied')) status = 'pending'
+      return { requestId: command.requestId, operation: command.operation, repository: command.repository, number: command.number, createdAt: command.createdAt, undoOf: command.undoOf, status, message: command.ack?.message }
+    })
+    const pendingRemovals = []
+    for (const row of activePrs) {
+      const pending = localCommands.filter(command => command.repository === row.repository && command.number === row.number && command.status === 'pending')
+      const dismissal = pending.find(command => command.operation === 'dismiss')
+      if (dismissal) pendingRemovals.push({ ...row, pendingCommand: dismissal, pendingRestore: pending.find(command => command.operation === 'restore' && command.undoOf === dismissal.requestId) || null })
+    }
+    activePrs = activePrs.filter(row => !pendingRemovals.some(pending => key(pending) === key(row)))
+    for (const row of dismissedPrs) row.pendingRestore = localCommands.find(command => command.operation === 'restore' && command.status === 'pending' && command.repository === row.repository && command.number === row.number && command.undoOf === row.dismissal?.requestId) || null
     const queuedRows = Array.isArray(state.queue) ? state.queue.map(source => {
-      const matching = activePrs.filter(active => active.number === source?.number)
+      const matching = [...activePrs,...pendingRemovals].filter(active => active.number === source?.number)
       return normalizeRecord({ ...source, repository: inheritedRepository(source) || (matching.length === 1 ? matching[0].repository : null), outcome: 'queued' })
-    }).filter(row => !activePrs.some(active => key(active) === key(row))) : []
+    }).filter(row => ![...activePrs,...pendingRemovals,...dismissedPrs].some(active => key(active) === key(row))) : []
     const queue = [...new Map(queuedRows.map(row => [key(row), row])).values()]
-    return { activePrs, queue, updatedAt: timestamp(state.updatedAt) }
+    return { activePrs, queue, pendingRemovals, dismissedPrs, localCommands: localCommands.slice(-30), updatedAt: timestamp(state.updatedAt) }
   }
   if (kind !== 'merged' || !validDay(day)) throw new Error('Choose a valid UTC day')
   const raw = await readAllowed(root, `merge-buddy-merged-${day}.jsonl`)
@@ -151,21 +323,65 @@ export async function readDashboardData(root, kind, day) {
     const previous = records.get(key)
     if (!previous || Date.parse(row.updatedAt ?? '') >= Date.parse(previous.updatedAt ?? '')) records.set(key, row)
   }
-  rows = [...records.values()]
+  rows = [...records.values()].sort((left, right) => Date.parse(right.mergedAt) - Date.parse(left.mergedAt) || left.number - right.number)
   return { day, records: rows, statistics: summarizeDurations(rows) }
 }
-const CSS = `:root{color-scheme:light;--ink:#0c0c0c;--muted:#626262;--border:#e7e7e7;--surface:#fff;--canvas:#f7f8f6;--accent:#b4f372;--violet:#bc9aff;--success:#eaf6e3;--success-text:#31501f;--warning:#fff3d6;--warning-text:#785600;--error:#ffe6e6;--error-text:#892424}*{box-sizing:border-box}body{margin:0;background:var(--canvas);color:var(--ink);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}button,select{font:inherit}button,a,select{outline-offset:4px}a{color:inherit;text-underline-offset:3px}button{cursor:pointer}header{height:76px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 40px}.brand{display:flex;gap:12px;align-items:center;font-weight:650;letter-spacing:-.4px}.brand img{height:38px;width:38px}.brand small{display:block;font-size:11px;letter-spacing:1.6px;color:var(--muted);font-weight:500;text-transform:uppercase}.live{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}.dot{height:7px;width:7px;background:var(--accent);border-radius:50%}main{max-width:1440px;margin:auto;padding:32px 40px 48px}h1{font-size:24px;line-height:1.25;letter-spacing:-.7px;margin:0 0 8px}h2{font-size:16px;letter-spacing:-.25px;margin:0}h3{font-size:14px;margin:0}p{margin:0}.muted{color:var(--muted)}.meta{font-size:12px;color:var(--muted)}.heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:24px}.refresh{background:var(--ink);color:white;border:0;border-radius:7px;padding:9px 15px}.refresh:disabled{opacity:.5;cursor:wait}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:28px}.stat,.panel,.detail{background:var(--surface);border:1px solid var(--border);border-radius:10px}.stat{padding:19px 20px}.stat-value{font-size:28px;letter-spacing:-1px;font-weight:650;margin:5px 0 2px}.stat-label{font-size:12px;color:var(--muted)}.grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(340px,1fr);gap:24px}.panel-head{padding:20px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px}.panel-head p{margin-top:4px}.count{background:#f1f2ef;border-radius:5px;font-size:12px;margin-left:8px;padding:2px 6px}.row{padding:18px 22px;border-bottom:1px solid var(--border)}.row:last-child{border-bottom:0}.row-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.pr-title{border:0;background:none;text-align:left;padding:0;font-weight:600;color:var(--ink);font-size:14px}.pr-title:hover{text-decoration:underline}.row-meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:7px;color:var(--muted);font-size:12px}.next{margin-top:10px;font-size:12px;color:var(--muted)}.badge{font-size:11px;border-radius:5px;padding:3px 7px;background:#f0edf8;color:#504269;white-space:nowrap}.badge.success{background:var(--success);color:var(--success-text)}.badge.warning{background:var(--warning);color:var(--warning-text)}.badge.error{background:var(--error);color:var(--error-text)}.empty{padding:48px 24px;text-align:center;color:var(--muted)}.empty strong{display:block;color:var(--ink);font-weight:550;margin-bottom:5px}.error-banner{background:var(--error);color:var(--error-text);border-radius:8px;padding:14px 16px;margin-bottom:18px}.error-banner p+p{margin-top:4px}select{max-width:180px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:white}.detail{margin-top:24px;padding:22px}.detail-head{display:flex;justify-content:space-between;gap:15px;border-bottom:1px solid var(--border);padding-bottom:16px}.close{background:white;border:1px solid var(--border);border-radius:6px;padding:5px 10px}.detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:20px 0}.detail-grid dd{margin:4px 0 0;overflow-wrap:anywhere}.detail-grid dt{font-size:12px;color:var(--muted)}.plan{padding:0;list-style:none}.plan li{display:flex;justify-content:space-between;gap:15px;padding:10px 0;border-bottom:1px solid var(--border)}.links{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;font-size:12px}.footer{display:flex;justify-content:space-between;gap:16px;margin-top:24px;color:var(--muted);font-size:12px}@media(max-width:900px){header{padding:0 20px}.grid{grid-template-columns:1fr}main{padding:24px 20px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){.live span:last-child{display:none}.heading{align-items:flex-start}.stats{gap:10px}.stat{padding:14px}.stat-value{font-size:24px}.panel-head,.row{padding:16px}.detail-grid{grid-template-columns:1fr}.footer{display:block}.brand{font-size:13px}.panel-head{align-items:flex-start}}`
+const CSS = `:root{color-scheme:light;--ink:#0c0c0c;--muted:#626262;--border:#e7e7e7;--surface:#fff;--canvas:#f7f8f6;--accent:#b4f372;--violet:#bc9aff;--success:#eaf6e3;--success-text:#31501f;--warning:#fff3d6;--warning-text:#785600;--error:#ffe6e6;--error-text:#892424}*{box-sizing:border-box}body{margin:0;background:var(--canvas);color:var(--ink);font:14px/1.5 ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}button,select{font:inherit}button,a,select{outline-offset:4px}a{color:inherit;text-underline-offset:3px}button{cursor:pointer}header{height:76px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 40px}.brand{display:flex;gap:12px;align-items:center;font-weight:650;letter-spacing:-.4px}.brand img{height:38px;width:38px}.brand small{display:block;font-size:11px;letter-spacing:1.6px;color:var(--muted);font-weight:500;text-transform:uppercase}.live{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted)}.dot{height:7px;width:7px;background:var(--accent);border-radius:50%}main{max-width:1440px;margin:auto;padding:32px 40px 48px}h1{font-size:24px;line-height:1.25;letter-spacing:-.7px;margin:0 0 8px}h2{font-size:16px;letter-spacing:-.25px;margin:0}h3{font-size:14px;margin:0}p{margin:0}.muted{color:var(--muted)}.meta{font-size:12px;color:var(--muted)}.heading{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:24px}.refresh{background:var(--ink);color:white;border:0;border-radius:7px;padding:9px 15px}.refresh:disabled{opacity:.5;cursor:wait}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:28px}.stat,.panel,.detail{background:var(--surface);border:1px solid var(--border);border-radius:10px}.stat{padding:19px 20px}.stat-value{font-size:28px;letter-spacing:-1px;font-weight:650;margin:5px 0 2px}.stats.compact{grid-template-columns:repeat(2,minmax(0,1fr))}.reason-summary{margin-top:10px;font-weight:550;color:var(--ink);font-size:13px}.reason-detail{margin-top:20px;padding:16px;background:var(--canvas);border:1px solid var(--border);border-radius:8px}.reason-detail>p{margin-top:7px}.action-required,.action-automatic{margin-top:12px;padding:12px 14px;border-radius:7px;font-size:12px;overflow-wrap:anywhere}.action-required{background:var(--warning);color:var(--warning-text)}.action-automatic{background:var(--success);color:var(--success-text)}.action-required p,.action-automatic p{margin-top:4px}.reason-summary{overflow-wrap:anywhere}.stat-label{font-size:12px;color:var(--muted)}.grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(340px,1fr);gap:24px}.panel-head{padding:20px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:16px}.panel-head p{margin-top:4px}.count{background:#f1f2ef;border-radius:5px;font-size:12px;margin-left:8px;padding:2px 6px}.row{padding:18px 22px;border-bottom:1px solid var(--border)}.row:last-child{border-bottom:0}.row-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.pr-title{border:0;background:none;text-align:left;padding:0;font-weight:600;color:var(--ink);font-size:14px}.pr-title:hover{text-decoration:underline}.pr-title{overflow-wrap:anywhere}.row-top>div:first-child{min-width:0;flex:1}.row-actions{display:flex;flex-direction:column;align-items:flex-end;gap:7px}.local-trash,.local-restore{padding:5px 9px;border:1px solid var(--border);background:white;border-radius:6px;font-size:12px}.local-trash:disabled,.local-restore:disabled{opacity:.5;cursor:not-allowed}.local-section{margin:24px 0}.local-controls{padding:0 22px 18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}.local-disabled{font-size:12px;color:var(--muted);margin-top:8px}.action-notice{background:var(--success);color:var(--success-text);border-radius:8px;padding:12px 16px;margin-bottom:16px}.details-button{padding:0;border:0;background:none;color:var(--muted);font-size:12px;text-decoration:underline;text-underline-offset:3px}.qa-gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:16px}.qa-shot{margin:0;border:1px solid var(--border);border-radius:8px;overflow:hidden}.qa-shot img{display:block;width:100%;height:170px;object-fit:contain;background:var(--canvas)}.qa-shot figcaption{padding:12px;font-size:12px;overflow-wrap:anywhere}.qa-shot figcaption a{display:block;margin-top:6px}.qa-unavailable{padding:36px 16px;text-align:center;background:var(--canvas);color:var(--muted);font-size:12px}.signal-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.signal-badges a{text-decoration:none}.checkpoint-summary{display:flex;flex-wrap:wrap;gap:6px 12px;font-size:12px;color:var(--muted);margin-top:10px}.completed-checkpoints{display:flex;flex-wrap:wrap;gap:8px}.completed-checkpoints span{color:var(--success-text)}.checkpoint-name{display:block}.checkpoint-meta{display:flex;flex-wrap:wrap;gap:5px 12px;margin-top:4px;font-size:12px;color:var(--muted)}.plan li>div:first-child{min-width:0;flex:1}.plan li>div:last-child{display:flex;flex-wrap:wrap;gap:7px;align-items:flex-start}.merged-time{color:var(--ink);font-weight:550}.row-meta{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:7px;color:var(--muted);font-size:12px}.next{margin-top:10px;font-size:12px;color:var(--muted)}.badge{font-size:11px;border-radius:5px;padding:3px 7px;background:#f0edf8;color:#504269;white-space:nowrap}.badge.success{background:var(--success);color:var(--success-text)}.badge.warning{background:var(--warning);color:var(--warning-text)}.badge.error{background:var(--error);color:var(--error-text)}.empty{padding:48px 24px;text-align:center;color:var(--muted)}.empty strong{display:block;color:var(--ink);font-weight:550;margin-bottom:5px}.error-banner{background:var(--error);color:var(--error-text);border-radius:8px;padding:14px 16px;margin-bottom:18px}.error-banner p+p{margin-top:4px}select{max-width:180px;padding:7px 10px;border:1px solid var(--border);border-radius:6px;background:white}.detail{margin-top:24px;padding:22px}.detail-head{display:flex;justify-content:space-between;gap:15px;border-bottom:1px solid var(--border);padding-bottom:16px}.close{background:white;border:1px solid var(--border);border-radius:6px;padding:5px 10px}.detail-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:20px 0}.detail-grid dd{margin:4px 0 0;overflow-wrap:anywhere}.detail-grid dt{font-size:12px;color:var(--muted)}.plan{padding:0;list-style:none}.plan li{display:flex;justify-content:space-between;gap:15px;padding:10px 0;border-bottom:1px solid var(--border)}.links{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;font-size:12px}.footer{display:flex;justify-content:space-between;gap:16px;margin-top:24px;color:var(--muted);font-size:12px}@media(max-width:900px){header{padding:0 20px}.grid{grid-template-columns:1fr}main{padding:24px 20px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.detail-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:520px){.live span:last-child{display:none}.heading{align-items:flex-start}.stats{gap:10px}.stat{padding:14px}.stat-value{font-size:24px}.panel-head,.row{padding:16px}.detail-grid{grid-template-columns:1fr}.footer{display:block}.brand{font-size:13px}.panel-head{align-items:flex-start}}`
 const APP = String.raw`const h=React.createElement;
-const formatDuration=value=>{if(typeof value!=='number'||!Number.isFinite(value)||value<0)return 'Unknown';const minutes=Math.floor(value/60000);if(minutes<1)return '<1m';return minutes<60?minutes+'m':Math.floor(minutes/60)+'h '+minutes%60+'m'};
-const time=value=>value?new Date(value).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}):'Unknown';
-const statusClass=value=>['merged','ready','done'].includes(value)?'success':['blocked','fail','failed'].includes(value)?'error':['waiting-ci','waiting-human','pending'].includes(value)?'warning':'';
-const label=value=>(value||'unknown').replaceAll('-',' ');
+const formatDuration=value=>{if(typeof value!=='number'||!Number.isFinite(value)||value<0)return null;const minutes=Math.floor(value/60000);if(minutes<1)return '<1m';return minutes<60?minutes+'m':Math.floor(minutes/60)+'h '+minutes%60+'m'};
+const time=value=>value?new Date(value).toLocaleString(undefined,{dateStyle:'medium',timeStyle:'short'}):null;
+const utcTime=value=>value?new Date(value).toISOString().replace('T',' ').replace(/\.\d{3}Z$/,' UTC'):null;
+const statusClass=value=>['merged','ready','done','pass'].includes(value)?'success':['blocked','fail','failed'].includes(value)?'error':['waiting-ci','waiting-human','pending','queued-qa'].includes(value)?'warning':'';
+const label=value=>value==='queued-qa'?'Queued for automatic QA':(value||'unknown').replaceAll('-',' ');
 function Link({url,children}){return url?h('a',{href:url,target:'_blank',rel:'noopener noreferrer'},children):null}
 function Stat({title,value,note}){return h('div',{className:'stat'},h('p',{className:'stat-label'},title),h('div',{className:'stat-value'},value),h('p',{className:'meta'},note))}
-function Row({row,onSelect,active,now}){const elapsed=row.firstStartedAt?now-Date.parse(row.firstStartedAt):null;return h('div',{className:'row'},h('div',{className:'row-top'},h('div',null,h('button',{className:'pr-title',onClick:()=>onSelect(row),'aria-label':'View PR #'+row.number+' details'},'#'+row.number+' '+(row.title||row.repository||'Pull request')),h('div',{className:'row-meta'},h('span',null,row.base?'Target '+row.base:'Target unknown'),h('span',null,row.mergeableDurationMs!==null?'Ready in '+formatDuration(row.mergeableDurationMs):active?'Elapsed '+formatDuration(elapsed):'Readiness unknown'))),h('span',{className:'badge '+statusClass(row.outcome)},label(row.outcome))),active&&row.nextAction?h('p',{className:'next'},row.nextAction):null,h('div',{className:'links'},h(Link,{url:row.url},'Pull request ↗'),h(Link,{url:row.statusCommentUrl},'Status comment ↗'),active&&row.nextCheckAt?h('span',{className:'meta'},'Next check '+time(row.nextCheckAt)):null))}
-function Detail({row,onClose}){const fields=[['Repository',row.repository||'Unknown'],['Target',row.base||'Unknown'],['First started',time(row.firstStartedAt)],['First ready observed',time(row.firstReadyAt)],['Current readiness verified',time(row.readyAt)],['Readiness duration',formatDuration(row.mergeableDurationMs)],['Merged',time(row.mergedAt)],['Total to merge',formatDuration(row.mergedDurationMs)],['Updated',time(row.updatedAt)],['Next check',time(row.nextCheckAt)]];return h('section',{className:'detail','aria-label':'PR details'},h('div',{className:'detail-head'},h('div',null,h('h2',null,'PR #'+row.number+' details'),h('p',{className:'meta'},row.title||row.repository||'Pull request')),h('button',{className:'close',onClick:onClose},'Close details')),h('dl',{className:'detail-grid'},...fields.map(([name,value])=>h('div',{key:name},h('dt',null,name),h('dd',null,value)))),h('h3',null,'Plan and progress'),row.plan.length?h('ul',{className:'plan'},...row.plan.map((step,index)=>h('li',{key:index},h('span',null,step.step),h('span',null,h('span',{className:'badge '+statusClass(step.status)},label(step.status)),step.evidence?h('span',null,' ',h(Link,{url:step.evidence},'Evidence ↗')):null)))):h('p',{className:'meta'},'No plan recorded.'),h('p',{className:'next'},'Next action: '+(row.nextAction||'None recorded')),h('div',{className:'links'},h(Link,{url:row.url},'Pull request ↗'),h(Link,{url:row.statusCommentUrl},'Status comment ↗'),...row.evidence.map((url,index)=>h(Link,{key:url,url},'Evidence '+(index+1)+' ↗'))))}
+function ActionRequirement({reason,nextAction}){
+  if(!reason||reason.humanActionRequired===null)return null;
+  if(reason.humanActionRequired===false)return h('div',{className:'action-automatic'},h('strong',null,'No human action needed'),reason.requiredAction||nextAction?h('p',null,'Automatic next step: '+(reason.requiredAction||nextAction)):null);
+  return h('div',{className:'action-required'},h('strong',null,'Human action required'),reason.owner?h('p',null,'Who: '+reason.owner):null,reason.requiredAction?h('p',null,'Action: '+reason.requiredAction):null,reason.actionLocation?h('p',null,'Where: '+reason.actionLocation):null,reason.actionUrl?h('p',null,h(Link,{url:reason.actionUrl},'Open action location ↗')):null,reason.whyAgentCannotAct?h('p',null,'Why the agent cannot act: '+reason.whyAgentCannotAct):null,reason.retryWhen?h('p',null,'Resumes when: '+reason.retryWhen):null)
+}
+function QaScreenshot({screenshot,index}){
+  const [broken,setBroken]=React.useState(false),caption=screenshot.caption||'QA screenshot '+(index+1);
+  return h('figure',{className:'qa-shot'},h(Link,{url:screenshot.url},broken?h('div',{className:'qa-unavailable'},'Screenshot unavailable'):h('img',{src:screenshot.url,alt:caption,loading:'lazy',decoding:'async',referrerPolicy:'no-referrer',onError:()=>setBroken(true)})),h('figcaption',null,caption,screenshot.sourceCommentUrl?h(Link,{url:screenshot.sourceCommentUrl},'QA source comment ↗'):null))
+}
+function QaGallery({screenshots}){
+  return screenshots?.length?h('section',{'aria-label':'QA screenshots'},h('h3',null,'QA screenshots'),h('div',{className:'qa-gallery'},...screenshots.map((screenshot,index)=>h(QaScreenshot,{key:screenshot.url,screenshot,index})))):null
+}
+function SignalBadges({signals}){
+  const names={cr:'CR',qa:'QA',ci:'CI'},labels={pass:'Pass',pending:'Pending',fail:'Fail',missing:'Missing','n/a':'N/A','not-recorded':'Not recorded'};
+  return h('div',{className:'signal-badges','aria-label':'Signal states'},...Object.entries(names).map(([gate,name])=>{const signal=signals?.[gate]||{status:'not-recorded',evidence:[]};const badge=h('span',{className:'badge '+statusClass(signal.status)},name+' '+(labels[signal.status]||'Not recorded'));return signal.evidence.length?h(Link,{key:gate,url:signal.evidence[0]},badge):h('span',{key:gate},badge)}))
+}
+function CheckpointSummary({plan}){
+  if(!plan.length)return null;const done=plan.filter(step=>step.status==='done');
+  return h('div',{className:'checkpoint-summary'},h('span',null,done.length+'/'+plan.length+' checkpoints complete'),done.length?h('span',{className:'completed-checkpoints'},...done.slice(0,3).map((step,index)=>h('span',{key:index},'✓ '+step.step))):null)
+}
+function CheckpointList({plan}){
+  return h('ul',{className:'plan'},...plan.map((step,index)=>{const marker={done:'✓',working:'●',pending:'○',blocked:'!'}[step.status]||'·';const stamp=step.performedAt||step.completedAt||step.recordedAt||step.at||step.time;
+    return h('li',{key:index},h('div',null,h('span',{className:'checkpoint-name'},marker+' '+step.step),h('div',{className:'checkpoint-meta'},step.provenance?h('span',null,label(step.provenance)):null,step.actor?h('span',null,'Actor: '+step.actor):null,step.source?h('span',null,'Source: ',step.sourceUrl?h(Link,{url:step.sourceUrl},step.source):step.source):null,step.head?h('span',null,'Head '+step.head.slice(0,8)):null,step.commit?h('span',null,'Commit '+step.commit.slice(0,8)):null,stamp?h('span',null,(step.provenance==='performed'&&step.performedAt?'Performed: ':'Recorded: ')+time(stamp)):null)),h('div',null,h('span',{className:'badge '+statusClass(step.status)},label(step.status)),...(step.evidenceLinks||[]).map((url,evidenceIndex)=>h(Link,{key:url,url},'Evidence '+(evidenceIndex+1)+' ↗'))))}))
+}
+function Row({row,onSelect,onDismiss,controlsBusy,active,now}){
+  const elapsed=row.firstStartedAt?now-Date.parse(row.firstStartedAt):null;
+  const timing=row.mergeableDurationMs!==null?'Ready in '+formatDuration(row.mergeableDurationMs):active&&elapsed!==null&&elapsed>=0?'Elapsed '+formatDuration(elapsed):null;
+  const title='#'+row.number+' '+(row.title||row.repository||'Pull request');
+  return h('div',{className:'row'},h('div',{className:'row-top'},h('div',null,row.url?h('a',{className:'pr-title',href:row.url,target:'_blank',rel:'noopener noreferrer'},title):h('span',{className:'pr-title'},title),h('div',{className:'row-meta'},row.base?h('span',null,'Target '+row.base):null,row.outcome==='merged'&&row.mergedAt?h('span',{className:'merged-time'},'Merged '+utcTime(row.mergedAt)):null,timing?h('span',null,timing):null)),h('div',{className:'row-actions'},h('span',{className:'badge '+statusClass(row.outcome)},label(row.outcome)),h('button',{className:'details-button',onClick:()=>onSelect(row),'aria-label':'View PR #'+row.number+' details'},'View details'),active&&onDismiss?h('button',{className:'local-trash',disabled:controlsBusy||Boolean(row.localActionDisabledReason),title:row.localActionDisabledReason||'Local active work only; does not close this PR or change GitHub','aria-label':'Remove PR #'+row.number+' from local active work',onClick:()=>onDismiss(row)},'Remove locally'):null)),h(SignalBadges,{signals:row.signals}),h(CheckpointSummary,{plan:row.plan}),row.reason?h('p',{className:'reason-summary'},row.reason.summary):null,h(ActionRequirement,{reason:row.reason,nextAction:row.nextAction}),active&&row.nextAction?h('p',{className:'next'},row.nextAction):null,active&&onDismiss&&row.localActionDisabledReason?h('p',{className:'local-disabled'},'Local removal unavailable: '+row.localActionDisabledReason):null,h('div',{className:'links'},h(Link,{url:row.statusCommentUrl},'Status comment ↗'),active&&row.nextCheckAt?h('span',{className:'meta'},'Scheduled recheck '+time(row.nextCheckAt)):null,row.qaScreenshots.length?h('span',{className:'meta'},row.qaScreenshots.length+' QA screenshot'+(row.qaScreenshots.length===1?'':'s')):null))
+}
+function Reason({reason,nextAction}){
+  if(!reason)return null;
+  const fields=[['Gate',reason.gate],['Required action',reason.requiredAction],['Owner',reason.owner],['Action location',reason.actionLocation],['Why the agent cannot act',reason.whyAgentCannotAct],['Resume condition',reason.retryWhen],['Code',reason.code],['Head',reason.head]].filter(([,value])=>value);
+  return h('section',{className:'reason-detail','aria-label':'Status reason'},h('h3',null,'Why this status'),h('p',null,reason.summary),h(ActionRequirement,{reason,nextAction}),fields.length?h('dl',{className:'detail-grid'},...fields.map(([name,value])=>h('div',{key:name},h('dt',null,name),h('dd',null,value)))):null,reason.evidence.length?h('div',{className:'links'},...reason.evidence.map((url,index)=>h(Link,{key:url,url},'Reason evidence '+(index+1)+' ↗'))):null)
+}
+function Detail({row,onClose}){
+  const fields=[['Repository',row.repository],['Target',row.base],['First started',time(row.firstStartedAt)],['First ready observed',time(row.firstReadyAt)],['Current readiness verified',time(row.readyAt)],['Readiness duration',formatDuration(row.mergeableDurationMs)],['Merged',time(row.mergedAt)],['Total to merge',formatDuration(row.mergedDurationMs)],['Updated',time(row.updatedAt)],['Scheduled recheck',time(row.nextCheckAt)]].filter(([,value])=>value!==null&&value!==undefined&&value!=='');
+  return h('section',{className:'detail','aria-label':'PR details'},h('div',{className:'detail-head'},h('div',null,h('h2',null,row.url?h(Link,{url:row.url},'PR #'+row.number+' details'):'PR #'+row.number+' details'),h('p',{className:'meta'},row.title||row.repository||'Pull request')),h('button',{className:'close',onClick:onClose},'Close details')),h(SignalBadges,{signals:row.signals}),h('div',{className:'links'},...['cr','qa','ci'].flatMap(gate=>(row.signals?.[gate]?.evidence||[]).map((url,index)=>h(Link,{key:gate+url,url},gate.toUpperCase()+' evidence '+(index+1)+' ↗')))),h(Reason,{reason:row.reason,nextAction:row.nextAction}),fields.length?h('dl',{className:'detail-grid'},...fields.map(([name,value])=>h('div',{key:name},h('dt',null,name),h('dd',null,value)))):null,h('h3',null,'Plan and progress'),row.plan.length?h(CheckpointList,{plan:row.plan}):h('p',{className:'meta'},'No plan recorded.'),row.nextAction?h('p',{className:'next'},'Next action: '+row.nextAction):null,h(QaGallery,{screenshots:row.qaScreenshots}),h('div',{className:'links'},h(Link,{url:row.url},'Pull request ↗'),h(Link,{url:row.statusCommentUrl},'Status comment ↗'),...row.evidence.map((url,index)=>h(Link,{key:url,url},'Evidence '+(index+1)+' ↗'))))
+}
+function LocalSection({title,rows,onSelect,onRestore,controlsBusy,pending,now}){
+  if(!rows.length)return null;
+  return h('section',{className:'panel local-section','aria-label':title},h('div',{className:'panel-head'},h('div',null,h('h2',null,title,h('span',{className:'count'},rows.length)),h('p',{className:'meta'},pending?'Requested only; the scheduler must acknowledge removal.':'Removed from local work only. These pull requests remain unchanged on GitHub.'))),...rows.map(row=>{const undoOf=row.pendingCommand?.requestId||row.dismissal?.requestId;return h('div',{key:(row.repository||'')+':'+row.number},h(Row,{row,onSelect,active:false,now}),h('div',{className:'local-controls'},h('span',{className:'meta'},row.pendingRestore?'Restore requested — waiting for scheduler':pending?'Pending removal — not yet applied':'Removed locally'),h('button',{className:'local-restore',disabled:controlsBusy||Boolean(row.pendingRestore)||!undoOf||Boolean(row.localActionDisabledReason),title:row.localActionDisabledReason||'Restore local work only','aria-label':(pending?'Undo removal of PR #':'Restore PR #')+row.number,onClick:()=>onRestore(row,undoOf)},row.pendingRestore?'Restore pending':pending?'Undo removal':'Restore')))}))
+}
 function App(){
   const [active,setActive]=React.useState([]),[queue,setQueue]=React.useState([]),[days,setDays]=React.useState([]),[day,setDay]=React.useState(new Date().toISOString().slice(0,10)),[mergedDay,setMergedDay]=React.useState(null),[merged,setMerged]=React.useState([]),[stats,setStats]=React.useState({total:0,known:0,averageMs:null,medianMs:null}),[errors,setErrors]=React.useState([]),[busy,setBusy]=React.useState(false),[updated,setUpdated]=React.useState(null),[selected,setSelected]=React.useState(null),[now,setNow]=React.useState(Date.now());
+  const [pendingRemovals,setPendingRemovals]=React.useState([]),[dismissed,setDismissed]=React.useState([]),[controlsBusy,setControlsBusy]=React.useState(false),[actionNotice,setActionNotice]=React.useState(null),[actionError,setActionError]=React.useState(null);
+  const lastCommand=React.useRef(null);
   const request=React.useRef({sequence:0,busy:false,controller:null});
   const refresh=React.useCallback(async()=>{
     if(request.current.busy)return;
@@ -174,34 +390,54 @@ function App(){
     const timeout=setTimeout(()=>controller.abort(),8000);
     const [stateResult,daysResult,mergedResult]=await Promise.all([load('/api/state'),load('/api/days'),load('/api/merged?day='+encodeURIComponent(day))]);clearTimeout(timeout);
     if(sequence!==request.current.sequence)return;
-    if(stateResult.data){setActive(stateResult.data.activePrs);setQueue(stateResult.data.queue||[])}
+    if(stateResult.data){setActive(stateResult.data.activePrs);setQueue(stateResult.data.queue||[]);setPendingRemovals(stateResult.data.pendingRemovals||[]);setDismissed(stateResult.data.dismissedPrs||[]);const outcome=(stateResult.data.localCommands||[]).find(command=>command.requestId===lastCommand.current);if(outcome?.status==='applied'){setActionNotice(outcome.operation==='dismiss'?'Removed locally. GitHub is unchanged.':'Restored locally. GitHub is unchanged.');setActionError(null)}else if(outcome?.status==='rejected'){setActionError(outcome.message||'The scheduler rejected this local change. Refresh and retry.');setActionNotice(null)}}
     if(daysResult.data)setDays(daysResult.data.days);
     if(mergedResult.data){setMerged(mergedResult.data.records);setStats(mergedResult.data.statistics);setMergedDay(mergedResult.data.day)}
     setErrors([stateResult,daysResult,mergedResult].filter(result=>result.error).map(result=>result.error));
     if([stateResult,daysResult,mergedResult].some(result=>result.data))setUpdated(new Date());
     setNow(Date.now());request.current.busy=false;setBusy(false);
   },[day]);
+  async function sendCommand(operation,row,undoOf){
+    if(controlsBusy)return;setControlsBusy(true);setActionError(null);setActionNotice(null);
+    try{const response=await fetch('/api/commands',{method:'POST',headers:{'Content-Type':'application/json','X-Dashboard-CSRF':window.dashboardCsrf},body:JSON.stringify({operation,repository:row.repository,number:row.number,expectedVersion:row.localVersion,...(undoOf?{undoOf}:{})})});const result=await response.json();if(!response.ok)throw Error(result.error||'Local command failed');lastCommand.current=result.requestId;setActionNotice(operation==='dismiss'?'Removal requested. Waiting for scheduler acknowledgement.':'Restore requested. Waiting for scheduler acknowledgement.');await refresh()}catch(error){setActionError(error.message)}finally{setControlsBusy(false)}
+  }
   React.useEffect(()=>{refresh();const timer=setInterval(()=>{if(!document.hidden)refresh()},5000);return()=>{clearInterval(timer);request.current.sequence++;request.current.controller?.abort();request.current.busy=false}},[refresh]);
   React.useEffect(()=>{const listener=event=>{if(event.key==='Escape')setSelected(null)};window.addEventListener('keydown',listener);return()=>window.removeEventListener('keydown',listener)},[]);
   const choices=[...new Set([day,...days])].sort().reverse();
-  const allRows=[...active,...queue,...merged],matchingRows=selected?allRows.filter(row=>row.number===selected.number):[];
+  const allRows=[...active,...pendingRemovals,...dismissed,...queue,...merged],matchingRows=selected?allRows.filter(row=>row.number===selected.number):[];
   const selectedRow=selected?(matchingRows.find(row=>row.repository===selected.repository)||(!selected.repository&&matchingRows.length===1?matchingRows[0]:selected)):null;
   return h(React.Fragment,null,
-    h('header',null,h('div',{className:'brand'},h('img',{src:window.dashboardLogo,alt:window.dashboardBrand}),h('div',null,window.dashboardBrand,h('small',null,'Merge buddy'))),h('div',{className:'live'},h('span',{className:'dot'}),h('span',null,'Local · read only'))),
+    h('header',null,h('div',{className:'brand'},h('img',{src:window.dashboardLogo,alt:window.dashboardBrand}),h('div',null,window.dashboardBrand,h('small',null,'Merge buddy'))),h('div',{className:'live'},h('span',{className:'dot'}),h('span',null,'Local controls · no GitHub changes'))),
     h('main',null,
       h('div',{className:'heading'},h('div',null,h('h1',null,'Merge queue'),h('p',{className:'muted'},'Active work, completed merges, and the time to readiness.')),h('button',{className:'refresh',onClick:refresh,disabled:busy},busy?'Refreshing…':'Refresh')),
+      actionNotice?h('div',{className:'action-notice',role:'status'},actionNotice):null,actionError?h('div',{className:'error-banner',role:'alert'},actionError):null,
       errors.length?h('div',{className:'error-banner',role:'alert'},...errors.map((error,index)=>h('p',{key:index},error)),h('p',{className:'meta'},'Last readable data remains visible. Refresh retries automatically.')):null,
-      h('div',{className:'stats'},h(Stat,{title:'Active pull requests',value:active.length,note:queue.length+' queued snapshots'}),h(Stat,{title:'Merged on selected day',value:stats.total,note:(mergedDay||day)+' · UTC'}),h(Stat,{title:'Average time to readiness',value:formatDuration(stats.averageMs),note:stats.known+' of '+stats.total+' merged PRs with known timing'}),h(Stat,{title:'Median time to readiness',value:formatDuration(stats.medianMs),note:'Wall clock, including CI waits'})),
+      h('div',{className:'stats'+(stats.known?'':' compact')},h(Stat,{title:'Active pull requests',value:active.length,note:queue.length+' queued snapshots'}),h(Stat,{title:'Merged on selected day',value:stats.total,note:(mergedDay||day)+' · UTC'}),stats.known?h(Stat,{title:'Historical average · selected day',value:formatDuration(stats.averageMs),note:'Readiness · '+stats.known+' of '+stats.total+' historical PRs with recorded timing'}):null,stats.known?h(Stat,{title:'Historical median · selected day',value:formatDuration(stats.medianMs),note:'Readiness · '+stats.known+' historical PRs · includes CI waits'}):null),
+      h('p',{className:'meta'},'Local controls only: removal and undo do not close pull requests or change GitHub.'),
+      h(LocalSection,{title:'Pending removal',rows:pendingRemovals,onSelect:setSelected,onRestore:(row,undoOf)=>sendCommand('restore',row,undoOf),controlsBusy,pending:true,now}),
       h('div',{className:'grid'},
         h('section',{className:'panel','aria-label':'Active work'},h('div',{className:'panel-head'},h('div',null,h('h2',null,'Active work',h('span',{className:'count'},active.length)),h('p',{className:'meta'},'Plans and next actions from the scheduler'))),
-          active.length?active.map(row=>h(Row,{key:(row.repository||'')+':'+row.number,row,onSelect:setSelected,active:true,now})):h('div',{className:'empty'},h('strong',null,'No active pull requests'),'The next run adds actionable work here.'),
+          active.length?active.map(row=>h(Row,{key:(row.repository||'')+':'+row.number,row,onSelect:setSelected,onDismiss:row=>sendCommand('dismiss',row),controlsBusy,active:true,now})):h('div',{className:'empty'},h('strong',null,'No active pull requests'),'The next run adds actionable work here.'),
           queue.length?h(React.Fragment,null,h('div',{className:'panel-head'},h('div',null,h('h2',null,'Queued',h('span',{className:'count'},queue.length)),h('p',{className:'meta'},'Unstarted snapshot · scheduling and evidence are rechecked by the skill'))),...queue.map(row=>h(Row,{key:(row.repository||'')+':'+row.number,row,onSelect:setSelected,active:false,now}))):null),
         h('section',{className:'panel','aria-label':'Merged history'},h('div',{className:'panel-head'},h('div',null,h('h2',null,'Merged history'),h('p',{className:'meta'},mergedDay&&mergedDay!==day?'Last readable data: '+mergedDay:'One latest record per confirmed merge')),h('select',{'aria-label':'Merged UTC day',value:day,onChange:event=>{setDay(event.target.value);setSelected(null)}},...choices.map(value=>h('option',{key:value,value},value)))),
           merged.length?merged.map(row=>h(Row,{key:(row.repository||'')+row.number,row,onSelect:setSelected,active:false,now})):h('div',{className:'empty'},h('strong',null,'No merges recorded'),'Choose another UTC day to explore history.'))),
+      h(LocalSection,{title:'Removed locally',rows:dismissed,onSelect:setSelected,onRestore:(row,undoOf)=>sendCommand('restore',row,undoOf),controlsBusy,pending:false,now}),
       selectedRow?h(Detail,{row:selectedRow,onClose:()=>setSelected(null)}):null,
-      h('div',{className:'footer'},h('span',null,'Auto-refreshes every 5 seconds · '+(updated?'Updated '+updated.toLocaleTimeString():'Loading local data…')),h('span',null,'Timing is unknown until explicitly recorded.'))))};ReactDOM.createRoot(document.getElementById('root')).render(h(App));`
-function document(nonce) {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Merge queue · ${BRAND}</title><style nonce="${nonce}">${CSS}</style></head><body><div id="root"></div><script nonce="${nonce}">${REACT}</script><script nonce="${nonce}">${REACT_DOM}</script><script nonce="${nonce}">window.dashboardLogo=${JSON.stringify(LOGO)};window.dashboardBrand=${JSON.stringify(BRAND)};${APP}</script></body></html>`
+      h('div',{className:'footer'},h('span',null,'Auto-refreshes every 5 seconds · '+(updated?'Updated '+updated.toLocaleTimeString():'Loading local data…')),h('span',null,'Only recorded wall-clock timing is shown.'))))};ReactDOM.createRoot(document.getElementById('root')).render(h(App));`
+async function commandBody(request) {
+  if (!/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(request.headers['content-type'] || '')) throw Object.assign(new Error('Local commands require JSON'), { statusCode: 415 })
+  const raw = await new Promise((resolveBody, reject) => {
+    let size = 0
+    let chunks = []
+    request.on('data', chunk => { size += chunk.length; if (size <= 8192) chunks.push(chunk); else chunks = [] })
+    request.once('end', () => size > 8192 ? reject(Object.assign(new Error('Local command exceeds 8 KB'), { statusCode: 413 })) : resolveBody(Buffer.concat(chunks).toString('utf8')))
+    request.once('aborted', () => reject(Object.assign(new Error('Local command was interrupted'), { statusCode: 400 })))
+    request.once('error', () => reject(Object.assign(new Error('Local command could not be read'), { statusCode: 400 })))
+  })
+  try { return JSON.parse(raw) } catch { throw Object.assign(new Error('Local command JSON is malformed'), { statusCode: 400 }) }
+}
+function document(nonce, csrfToken) {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Merge queue · ${BRAND}</title><style nonce="${nonce}">${CSS}</style></head><body><div id="root"></div><script nonce="${nonce}">${REACT}</script><script nonce="${nonce}">${REACT_DOM}</script><script nonce="${nonce}">window.dashboardCsrf=${JSON.stringify(csrfToken)};window.dashboardLogo=${JSON.stringify(LOGO)};window.dashboardBrand=${JSON.stringify(BRAND)};${APP}</script></body></html>`
 }
 export async function startDashboard({ root, port = 5050 }) {
   root = await realpath(resolve(root))
@@ -209,16 +445,22 @@ export async function startDashboard({ root, port = 5050 }) {
   const fingerprint = createHash('sha256').update(root).digest('hex')
   const nonce = randomBytes(18).toString('base64')
   const identity = { owner: OWNER, version: 1, rootFingerprint: fingerprint, buildFingerprint: BUILD }
-  const html = document(nonce)
+  const csrfToken = randomBytes(32).toString('base64url')
+  const html = document(nonce, csrfToken)
   const server = http.createServer(async (request, response) => {
     const headers = { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer',
-      'Content-Security-Policy': `default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'; img-src data:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'` }
+      'Content-Security-Policy': `default-src 'none'; script-src 'nonce-${nonce}'; style-src 'nonce-${nonce}'; img-src data: ${IMAGE_ORIGINS.join(' ')}; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'` }
     const send = (status, payload, type = 'application/json; charset=utf-8') => { response.writeHead(status, { ...headers, 'Content-Type': type }); response.end(type.startsWith('application/json') ? JSON.stringify(payload) : payload) }
     if (!['127.0.0.1:' + port, 'localhost:' + port].includes(request.headers.host)) return send(403, { error: 'Invalid local dashboard host' })
-    if (request.method !== 'GET') return send(405, { error: 'Dashboard is read only' })
     let url
     try { url = new URL(request.url, `http://127.0.0.1:${port}`) } catch { return send(400, { error: 'Invalid request' }) }
     try {
+      if (request.method === 'POST' && url.pathname === '/api/commands') {
+        const token = request.headers['x-dashboard-csrf']
+        if (request.headers.origin !== `http://${request.headers.host}` || typeof token !== 'string' || Buffer.byteLength(token) !== Buffer.byteLength(csrfToken) || !timingSafeEqual(Buffer.from(token), Buffer.from(csrfToken))) return send(403, { error: 'Local command authorization failed; reload this dashboard and retry.' })
+        return send(202, await publishCommand(root, await commandBody(request)))
+      }
+      if (request.method !== 'GET') return send(405, { error: 'Only reads and the local command endpoint are supported' })
       if (url.pathname === '/') return send(200, html, 'text/html; charset=utf-8')
       if (url.pathname === '/api/identity') return send(200, identity)
       if (url.pathname === '/api/state') return send(200, await readDashboardData(root, 'state'))
@@ -228,7 +470,7 @@ export async function startDashboard({ root, port = 5050 }) {
         return send(200, await readDashboardData(root, 'merged', url.searchParams.get('day')))
       }
       return send(404, { error: 'Not found' })
-    } catch (error) { return send(503, { error: error.message || 'Local data is unavailable; retry shortly' }) }
+    } catch (error) { return send(error.statusCode || 503, { error: error.message || 'Local data is unavailable; retry shortly' }) }
   })
   server.requestTimeout = 5000
   server.headersTimeout = 5000
@@ -241,24 +483,44 @@ async function probe(port) {
     try { return await response.json() } catch { return {} }
   } catch (error) { if (error.cause?.code === 'ECONNREFUSED') return null; return {} }
 }
+const pendingEnsures = new Map()
 export async function ensureDashboard({ root, port = 5050 }) {
   root = await realpath(resolve(root)); port = parsePort(port)
   const rootFingerprint = createHash('sha256').update(root).digest('hex')
+  const key = JSON.stringify([rootFingerprint, port, BUILD])
+  const existingPromise = pendingEnsures.get(key)
+  if (existingPromise) return { url: (await existingPromise).url, reused: true }
+  const operation = ensureInstance(root, port, rootFingerprint)
+  pendingEnsures.set(key, operation)
+  try { return await operation } finally { if (pendingEnsures.get(key) === operation) pendingEnsures.delete(key) }
+}
+async function ensureInstance(root, port, rootFingerprint) {
   const matches = identity => identity?.owner === OWNER && identity.version === 1 && identity.rootFingerprint === rootFingerprint && identity.buildFingerprint === BUILD
+  const url = `http://127.0.0.1:${port}`
   const existing = await probe(port)
   if (existing && !matches(existing)) throw new Error('Dashboard port is occupied by another server, root or version; choose another port. Nothing was stopped.')
-  if (matches(existing)) return { url: `http://127.0.0.1:${port}`, reused: true }
-  const child = spawn(process.execPath, [SCRIPT, '--root', root, '--port', String(port)], { detached: true, stdio: 'ignore', windowsHide: true })
-  let launchError
-  child.once('error', error => { launchError = error })
+  if (matches(existing)) return { url, reused: true }
+  const child = spawn(process.execPath, [SCRIPT, '--root', root, '--port', String(port)], { detached: true, stdio: ['ignore', 'ignore', 'ignore', 'ipc'], windowsHide: true })
+  let owned = false
+  let stopped = false
+  child.on('message', message => { if (message?.type === 'dashboard-ready' && matches(message.identity)) owned = true })
+  child.once('error', () => { stopped = true })
+  child.once('exit', () => { stopped = true })
   child.unref()
-  for (let attempt = 0; attempt < 40; attempt += 1) {
+  child.channel?.unref()
+  const deadline = Date.now() + 5000
+  while (Date.now() < deadline) {
     await new Promise(done => setTimeout(done, 125))
-    if (launchError) break
     const identity = await probe(port)
-    if (matches(identity)) return { url: `http://127.0.0.1:${port}`, reused: false }
+    if (matches(identity)) {
+      if (owned) return { url, reused: false, ownedChild: child }
+      if (stopped) return { url, reused: true }
+      continue
+    }
     if (identity) throw new Error('Dashboard port became occupied by another server; choose another port. Nothing was stopped.')
   }
+  const finalIdentity = await probe(port)
+  if (matches(finalIdentity)) return owned ? { url, reused: false, ownedChild: child } : { url, reused: true }
   throw new Error('Dashboard could not start on the requested local port; run the script directly for diagnostics')
 }
 export function parseArguments(args) {
@@ -279,6 +541,7 @@ if (process.argv[1] && resolve(process.argv[1]) === SCRIPT) {
   try {
     const options = parseArguments(process.argv.slice(2))
     const result = options.ensure ? await ensureDashboard(options) : await startDashboard(options)
+    if (process.send && result.identity) process.send({ type: 'dashboard-ready', identity: result.identity }, () => { if (process.connected) process.disconnect() })
     process.stdout.write(JSON.stringify({ url: result.url, reused: result.reused ?? false }) + '\n')
   } catch (error) {
     process.stderr.write((error.code === 'EADDRINUSE' ? 'Dashboard port is occupied; choose another port. Nothing was stopped.' : error.message) + '\n')

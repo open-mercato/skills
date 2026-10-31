@@ -24,6 +24,7 @@ Completed trusted `om-auto-qa-pr` PASS evidence on the unchanged head satisfies 
 |---|---|---|
 | `--mode <prepare-to-merge\|prepare-and-merge>` | No | What to do once all three signals hold. Config `automerge.mode`, default `prepare-and-merge`; explicit CLI overrides. |
 | `--require-independent-review` / `--skip-independent-review` | No | Mutually exclusive overrides of config `automerge.requireIndependentReview` (boolean, default false). |
+| `--human-qa` / `--auto-qa` | No | Override boolean `automerge.defaultToHumanQa` (default false); missing mandatory approval normally invokes legitimate automatic QA/sign-off. |
 | `--window <minutes>` | No | Wall-clock budget for the run. Default `automerge.windowMinutes` (`120`); `0` = one pass, no idle CI polling. |
 | `--pr <number>` | No | Work only this PR. |
 | `--force` | No | Skip only risk-high review-evidence and self-QA exclusions for this invocation. Full review, required QA, CI and head guard remain. Never takes over another actor’s claim. |
@@ -81,8 +82,7 @@ The skill automatically launches/reuses an offline one-file React dashboard at
 `http://127.0.0.1:5050`, unless `--no-dashboard`; `--dashboard-port` overrides
 its port. It displays active/queued PRs, daily processed merges, plan/progress,
 PR/comment links and a day picker. The visible page refreshes every five seconds
-while preserving selection and the last good snapshot on errors. It is read-only,
-loopback-only and never exposes private ownership tokens/process details. A
+while preserving selection and the last good snapshot on errors. It is loopback-only, has no tracker mutation API and never exposes private ownership tokens/process details. A
 foreign occupied port warns without killing anything or blocking queue work.
 
 Timing records immutable first actionable start, current-head/policy verified
@@ -90,3 +90,35 @@ readiness, and confirmed merge time. Per-PR elapsed and average/median readiness
 include CI waits and pauses. Unknown legacy timings remain unknown and outside
 the known-count duration denominator; resumes/reset/replacements do not reset
 known starts.
+
+Every visit/transition updates the same status comment with a concrete reason,
+missing gate/evidence or failure cause, explicit human-action flag, precise action/owner/location/link, why the agent
+cannot perform any required human interaction, retry condition
+and relevant links—even when the outcome is unchanged but facts changed. The
+same structured reason and semantic update timestamp persist in active state,
+public checkpoints, daily journals and dashboard rows/details. Identical
+rechecks use a separate assessment timestamp instead of faking plan progress.
+
+The dashboard omits unsupported timing placeholders and empty timing fields.
+Readiness average/median cards appear only with known measurements; active
+elapsed appears only with a recorded start. Known averages/medians are labeled historical benchmarks for the selected
+day with sample counts, never a forecast. **Scheduled recheck** is a planned
+inspection, not a merge ETA.
+
+Missing mandatory local QA approval or testable gaps normally queue real
+`om-auto-qa-pr --orchestrated`, even with an existing PASS report. It reuses
+covered current-head evidence and completes missing coverage/eligible sign-off;
+the buddy never fabricates `qa-approved`. Config `automerge.defaultToHumanQa`
+defaults false; `--human-qa` opts into human approval and `--auto-qa` overrides
+true. Only explicit human preference or verified ineligibility/automation
+blockers require exact human interaction. `queued-qa` is unclaimed planned
+automatic work; no attempt is counted before invocation and actual CI state
+stays unchanged.
+
+Main PR titles link to the actual PR. Each row has CR/QA/CI badges with real
+evidence, completed-checkpoint summaries and explicit reasons/actions; details
+show the full checkpoint provenance and optional trusted QA screenshot gallery.
+Historical merged rows show the confirmed merge time in UTC. Concurrent starts
+reuse one exact-root/build listener. Local trash/Undo controls publish protected
+requests for scheduler acknowledgement, never mutate GitHub; a pending removal
+is labeled honestly and persisted dismissal prevents immediate re-add.

@@ -192,3 +192,37 @@ The user accepted the fake-data demo; the parent then switched the visible
 browser to the authorized real project dashboard (7 active and 6 merged
 records). This visual acceptance does not apply native PR QA approval. No
 automerge or tracker mutation workflow was launched for dashboard testing.
+
+### Phase 13: Concrete per-visit reasons and supported timing display
+
+Owner-requested: every visit/status transition must explain the actual missing
+gate/evidence/revision or failure, owner/action, retry condition and links in
+the existing status comment, active/public state, journal and dashboard.
+Unsupported timing placeholders/cards are omitted; next check stays a schedule.
+
+- [x] 13.1 Add structured reason persistence and semantic change detection without duplicate comments.
+- [x] 13.2 Update dashboard reasons, historical timing, signal/checkpoint/image evidence, singleton startup and reversible local controls with consuming tests.
+- [x] 13.3 Complete browser QA, all ten local validation commands and independent review before publication.
+
+Phase 13 follow-ups requested by the owner are included in the same reviewed
+change: `defaultToHumanQa: false` with config/CLI overrides routes missing
+required QA approval to real QA/sign-off; completed evidence is reused without
+fabricated labels. Legacy/generic or contradictory reasons become due for safe
+inspection. Every status uses readable spaced prose and exact human-action
+facts. Per-PR gate badges, linked titles, performed/reused checkpoints, optional
+trusted QA thumbnails and UTC merge times expose actual recorded evidence.
+
+Local trash/Undo publishes strict CSRF/Origin/version-checked command files;
+only the locked scheduler consumer changes canonical state and persists
+reversible tombstones/receipts. Pending removal is explicit, busy/unknown work
+is protected and GitHub is unchanged. Concurrent startup tests prove one
+listener, with no foreign process termination.
+
+All ten configured local commands PASS with Python 3.12 and `TMPDIR=/tmp`.
+Parent browser QA and independent review PASS for links/reasons/signals,
+checklist provenance, thumbnails, historical/unknown timing, UTC merge dates,
+pending/Undo, acknowledged dismiss/restore, CSRF/stale/busy rejection and
+390px layout without JavaScript errors. The refreshed committed screenshot
+uses fake/demo data. The parent safely restarted its owned real dashboard and
+backfilled actual titles/current-head QA screenshots under the shared lock.
+No automerge or tracker-label/approval workflow was invoked for validation.

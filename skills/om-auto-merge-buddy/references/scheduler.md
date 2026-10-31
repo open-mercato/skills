@@ -71,6 +71,8 @@ writes, preventing concurrent local creation of the first status comment.
     "head": "full-sha",
     "base": "target-branch",
     "outcome": "waiting-ci",
+    "reason": {"code":"ci-pending","summary":"lint is running on the recorded head","gate":"ci","head":"full-sha","humanActionRequired":false,"requiredAction":"Read the current-head run at the next check","owner":"automation","whyAgentCannotAct":null,"actionLocation":null,"actionUrl":null,"retryWhen":"The current lint run settles","evidence":["https://tracker.example/run/1"]},
+    "reasonCheckedAt": "2026-10-31T14:00:00.000Z",
     "plan": [{"step": "CI", "status": "pending", "evidence": "run-url"}],
     "nextAction": "Read current-head checks, then reconcile signals",
     "firstStartedAt": "2026-10-31T14:00:00.000Z",
@@ -185,6 +187,12 @@ function restoreScheduler({ raw, repository, currentUser, now, reset = false, re
   const validEntry = entry => entry && Number.isInteger(entry.number) && entry.number > 0
     && typeof entry.nextAction === 'string' && typeof entry.outcome === 'string'
     && ['title', 'statusCommentUrl'].every(key => entry[key] == null || typeof entry[key] === 'string')
+    && (entry.reason == null || (['code', 'summary', 'gate', 'requiredAction', 'owner', 'retryWhen'].every(key => typeof entry.reason[key] === 'string' && entry.reason[key].length > 0)
+      && (entry.reason.head == null || typeof entry.reason.head === 'string')
+      && (entry.reason.humanActionRequired == null || typeof entry.reason.humanActionRequired === 'boolean')
+      && ['whyAgentCannotAct', 'actionLocation', 'actionUrl'].every(key => entry.reason[key] == null || typeof entry.reason[key] === 'string')
+      && (entry.reason.humanActionRequired !== true || (typeof entry.reason.whyAgentCannotAct === 'string' && entry.reason.whyAgentCannotAct.length > 0)) && Array.isArray(entry.reason.evidence) && entry.reason.evidence.every(link => typeof link === 'string')))
+    && (entry.reasonCheckedAt == null || utc(entry.reasonCheckedAt))
     && [entry.nextCheckAt, entry.lastWorkedAt, entry.updatedAt].every(value => utc(value))
     && ['firstStartedAt', 'firstReadyAt', 'readyAt'].every(key => entry[key] == null || utc(entry[key]))
     && ['readyHead', 'readyPolicy'].every(key => entry[key] == null || typeof entry[key] === 'string')
@@ -215,8 +223,9 @@ function mayReclaim({ ownerStatus, delegatedStatuses }) {
 }
 function checkpointPlan(previous, update, now, worked = false) {
   const next = { ...previous, ...update }
-  const keys = ['head', 'base', 'outcome', 'plan', 'nextAction', 'nextCheckAt', 'firstStartedAt', 'firstReadyAt', 'readyAt', 'readyHead', 'readyPolicy', 'mergeableDurationMs']
-  const semantic = record => JSON.stringify(keys.map(key => record?.[key]))
+  const keys = ['head', 'base', 'outcome', 'plan', 'nextAction', 'nextCheckAt', 'firstStartedAt', 'firstReadyAt', 'readyAt', 'readyHead', 'readyPolicy', 'mergeableDurationMs', 'reason']
+  const reasonFields = ['code', 'summary', 'gate', 'head', 'humanActionRequired', 'requiredAction', 'owner', 'actionLocation', 'actionUrl', 'whyAgentCannotAct', 'retryWhen', 'evidence']
+  const semantic = record => JSON.stringify(keys.map(key => key === 'reason' && record?.reason ? reasonFields.map(field => record.reason[field]) : record?.[key]))
   next.updatedAt = semantic(previous) === semantic(next) ? previous.updatedAt : now
   next.lastWorkedAt = worked ? now : previous?.lastWorkedAt ?? now
   return next
@@ -248,13 +257,19 @@ function schedulerDecision({ activePrs, candidates, currentUser, now, ownedCompl
     return !pr || (pr.state === 'open' && pr.authorized) || Boolean(entry.reservation)
   })
   const allowed = pr => pr.state === 'open' && pr.authorized && pr.claimable && pr.actionable
+  const reasonNeedsInspection = entry => !entry.reason || !entry.reason.summary?.trim()
+    || /^(blocked|waiting|pending|missing signal|ready|merged)[.!]?$/i.test(entry.reason.summary.trim())
+    || typeof entry.reason.humanActionRequired !== 'boolean'
+    || (entry.outcome === 'waiting-human' && entry.reason.humanActionRequired === false)
   const due = entry => {
     const pr = facts.get(entry.number)
-    return pr && allowed(pr) && (pr.changed || Date.parse(entry.nextCheckAt) <= Date.parse(now))
+    const inspect = reasonNeedsInspection(entry) || Boolean(pr?.routingPolicyChanged)
+    const canInspect = pr && pr.state === 'open' && pr.authorized && (pr.claimable || (inspect && pr.inspectionAllowed))
+    return canInspect && (pr.actionable || inspect) && (pr.changed || inspect || Date.parse(entry.nextCheckAt) <= Date.parse(now))
   }
   const recent = (left, right) => Date.parse(right.lastWorkedAt) - Date.parse(left.lastWorkedAt) || left.number - right.number
   const tracked = active.filter(due).sort(recent)
-  if (tracked.length) return { activePrs: active, next: tracked[0].number, source: 'tracked' }
+  if (tracked.length) return { activePrs: active, next: tracked[0].number, source: 'tracked', inspectionOnly: !facts.get(tracked[0].number).claimable }
   const available = visible.filter(allowed).filter(pr => !active.some(entry => entry.number === pr.number))
   if (active.length && !resetAdmission) {
     const owned = available.find(pr => pr.assignees.includes(currentUser))
@@ -326,6 +341,38 @@ separate even after active cleanup. Do not log raw tokens, reservation fences
 or local process details: keep only final plan/progress, next action and links.
 
 ```javascript
+function journalLink(value) {
+  if (typeof value !== 'string') return null
+  try { const url = new URL(value); return ['http:', 'https:'].includes(url.protocol) && !url.username && !url.password ? url.href : null } catch { return null }
+}
+function journalEvidence(value) {
+  if (Array.isArray(value)) return value.map(journalLink).filter(Boolean)
+  if (!value || typeof value !== 'object') return []
+  return Object.fromEntries(['cr', 'review', 'qa', 'ci'].filter(key => value[key] !== undefined).map(key => [key,
+    Array.isArray(value[key]) ? value[key].map(journalLink).filter(Boolean) : journalLink(value[key])]).filter(([, links]) => Array.isArray(links) ? links.length : Boolean(links)))
+}
+function journalSignals(value) {
+  if (!value || typeof value !== 'object') return undefined
+  return Object.fromEntries(['cr', 'qa', 'ci'].filter(gate => value[gate] !== undefined).map(gate => {
+    const signal = value[gate]
+    if (typeof signal === 'string') return [gate, signal]
+    return [gate, { status: signal?.status ?? signal?.state ?? signal?.outcome ?? signal?.verdict ?? 'not-recorded',
+      ...(typeof signal?.head === 'string' ? { head: signal.head } : {}), evidence: journalEvidence(signal?.evidence) }]
+  }))
+}
+function journalScreenshots(value, head) {
+  if (!Array.isArray(value)) return []
+  return value.flatMap(item => {
+    try {
+      if (item.head && head && item.head !== head) return []
+      const url = new URL(item.url)
+      const hosts = ['raw.githubusercontent.com', 'user-images.githubusercontent.com', 'private-user-images.githubusercontent.com']
+      if (url.protocol !== 'https:' || url.username || url.password || (!hosts.includes(url.hostname) && !(url.hostname === 'github.com' && url.pathname.startsWith('/user-attachments/assets/')))) return []
+      if (['jwt', 'token', 'access_token', 'signature'].some(key => url.searchParams.has(key))) return []
+      return [{ url: url.href, caption: typeof item.caption === 'string' ? item.caption : '', sourceCommentUrl: journalLink(item.sourceCommentUrl), ...(typeof item.head === 'string' ? { head: item.head } : {}) }]
+    } catch { return [] }
+  })
+}
 function upsertMergedJournal({ raw = '', record }) {
   const valid = row => row && typeof row.repository === 'string' && Number.isInteger(row.number) && row.number > 0
     && row.outcome === 'merged' && typeof row.mergedAt === 'string' && Number.isFinite(Date.parse(row.mergedAt))
@@ -333,14 +380,28 @@ function upsertMergedJournal({ raw = '', record }) {
     && ['url', 'base', 'nextAction', 'statusCommentUrl'].every(key => typeof row[key] === 'string')
     && ['head', 'mergeSha'].every(key => /^[a-f0-9]{40}$/i.test(row[key] ?? ''))
     && Array.isArray(row.plan) && row.plan.every(step => step && typeof step.step === 'string' && ['pending', 'working', 'done', 'blocked'].includes(step.status))
-    && Array.isArray(row.evidence) && row.evidence.every(link => typeof link === 'string')
+    && (Array.isArray(row.evidence) || (row.evidence && typeof row.evidence === 'object'))
   if (!valid(record)) throw new Error('Confirmed merged record required')
   const day = new Date(record.mergedAt).toISOString().slice(0, 10)
   const rows = raw.trim() ? raw.trim().split('\n').map(line => JSON.parse(line)) : []
   if (rows.some(row => !valid(row) || new Date(row.mergedAt).toISOString().slice(0, 10) !== day)) throw new Error('Malformed or wrong-day merged journal')
-  const keys = ['repository', 'number', 'url', 'title', 'mergedAt', 'head', 'mergeSha', 'base', 'outcome', 'plan', 'nextAction', 'evidence', 'statusCommentUrl', 'updatedAt', 'firstStartedAt', 'firstReadyAt', 'readyAt', 'readyHead', 'readyPolicy', 'mergeableDurationMs', 'mergedDurationMs', 'startedFromPr']
+  const keys = ['repository', 'number', 'url', 'title', 'mergedAt', 'head', 'mergeSha', 'base', 'outcome', 'plan', 'nextAction', 'evidence', 'statusCommentUrl', 'updatedAt', 'firstStartedAt', 'firstReadyAt', 'readyAt', 'readyHead', 'readyPolicy', 'mergeableDurationMs', 'mergedDurationMs', 'startedFromPr', 'reason', 'reasonCheckedAt', 'signals', 'qaScreenshots']
   const publicRecord = row => {
     const clean = Object.fromEntries(keys.filter(key => row[key] !== undefined).map(key => [key, row[key]]))
+    clean.evidence = journalEvidence(row.evidence)
+    if (row.signals) clean.signals = journalSignals(row.signals)
+    if (row.qaScreenshots) clean.qaScreenshots = journalScreenshots(row.qaScreenshots, row.head)
+    clean.plan = row.plan.map(step => {
+      const fields = ['step', 'status', 'provenance', 'actor', 'source', 'head', 'commit', 'startedAt', 'completedAt', 'recordedAt']
+      return { ...Object.fromEntries(fields.filter(key => typeof step[key] === 'string').map(key => [key, step[key]])),
+        ...(step.evidence ? { evidence: typeof step.evidence === 'string' ? journalLink(step.evidence) : journalEvidence(step.evidence) } : {}) }
+    })
+    if (clean.reason) {
+      const reasonFields = ['code', 'summary', 'gate', 'head', 'humanActionRequired', 'requiredAction', 'owner', 'actionLocation', 'actionUrl', 'whyAgentCannotAct', 'retryWhen', 'evidence']
+      clean.reason = Object.fromEntries(reasonFields.filter(key => clean.reason[key] !== undefined).map(key => [key, clean.reason[key]]))
+      clean.reason.evidence = journalEvidence(clean.reason.evidence)
+      if (clean.reason.actionUrl) clean.reason.actionUrl = journalLink(clean.reason.actionUrl)
+    }
     const validTime = value => typeof value === 'string' && Number.isFinite(Date.parse(value))
     const firstStartedAt = validTime(row.firstStartedAt) ? row.firstStartedAt : null
     const readyAt = row.readyHead === row.head && row.readyPolicy && validTime(row.readyAt) ? row.readyAt : null
@@ -397,3 +458,91 @@ The optional compact `queue` snapshot described in `references/dashboard.md`
 tracks the latest existing tracker list for display, separate from active
 ownership. Preserve it when updating an owned row; never treat it as a claim
 or proof. Use the top-level repository as row identity when omitted.
+
+## Explain every status from current facts
+
+On **every visit and transition**, recompute a structured `reason` from current
+evidence, even when `outcome` is unchanged. Persist it with `nextAction` and
+semantic `updatedAt` in the owned active row; mirror it in the same existing
+status comment and public checkpoint, and preserve it in the daily merged
+journal. Always update that comment after reconciliation, never create a new
+comment per reason/visit. Legacy missing reasons remain readable, but a visited
+PR must receive a concrete current explanation; do not repeat a generic saved
+`blocked`, `waiting` or `missing signal` label as its reason.
+
+The object contains `code`, a concise `summary`, the affected `gate`, reviewed
+`head` (or null with an explanation why unavailable), `humanActionRequired`,
+`requiredAction`, `owner` (actor/role), `actionLocation`, verified `actionUrl`,
+`whyAgentCannotAct`, `retryWhen` (resume condition) and actual `evidence` links. Name the exact missing gate/evidence,
+revision, failing check/scenario/operation and actionable failure cause. Explain
+who can act, the exact action and location/link, why the agent cannot perform
+it, and what must change before retry; link existing reports/runs or comments,
+never invent a link. For `humanActionRequired: true`, name the precise human
+interaction rather than asking for vague attention; `whyAgentCannotAct` must
+explain the verified authorization, policy or unavailable capability. For false,
+say **No human action needed** and state the automatic next step. Legacy absent
+flags mean unassessed, not false; recompute them from current facts on the visit. Keep secrets and private owner-process details
+out. `nextAction` must agree with this required action/condition.
+
+Examples: waiting CI names the current-head pending workflow and scheduled
+check; a CI block names the failing job/root cause and fix owner; missing QA
+names the untested scenario/provider and required reviewer/setup; missing strict
+review names the absent current-head independent approval. Ready/merged states
+also explain their verified current-head/policy evidence concisely. A changed
+failure, head, owner or retry condition updates the reason even if the outcome
+stays blocked/waiting. A successful recheck must clear an obsolete failure.
+
+`updatedAt` changes when reason/action/progress facts change. An identical reason
+with merely reordered object keys is unchanged. Keep `reasonCheckedAt` (fresh
+UTC assessment time) and heartbeat separate from semantic progress, so each
+visit is visibly fresh without fabricating work. `checkpointPlan` includes
+canonical reason fields in its semantic comparison; changing those facts
+rewrites the existing comment/checkpoint and advances `updatedAt`.
+
+Legacy/generic reasons, contradictory waiting-human with a false human-action
+flag, or a changed QA routing policy make the tracked record due immediately
+for **cheap reason reconciliation**, even if its old `nextCheckAt` is future.
+Normalize this into `changed`/`routingPolicyChanged`; never let a hidden legacy
+blocker wait forever. Respect live/foreign reservations and tracker claims.
+A blocked record may be `inspectionAllowed` solely for read-only reason review
+when no live claim exists; `inspectionOnly` never unblocks or invokes stages.
+No stage attempt is consumed until an actual allowed invocation.
+
+Checkpoint real meaningful work in the existing `plan` array: target sync,
+conflict assessment/resolution, review, fixes, QA and CI only as applicable and
+actually observed. `status: done` is a checked checkpoint; working/pending/blocked
+retain their actual state. Optional `provenance` (`performed`, `reused`,
+`verified`, `recorded`), `actor`, `source`, `head`, `commit`, `startedAt`,
+`completedAt` and `recordedAt` preserve known evidence/time. Never fabricate
+historical completion timestamps or describe reused QA as performed this run.
+A signal reused on the current head can create a verified/reused checkpoint
+with its original evidence, not an invented mutation. Preserve these fields
+in the public status/journal and dashboard checklist; keep ownership tokens out.
+
+Public checkpoints/journals also retain explicit per-gate `signals` and safe
+evidence arrays or gate maps (`cr`/`review`, `qa`, `ci`). Preserve statuses and
+links actually established for that revision; absent historical gates remain
+not recorded, never green. Required formal approval/sign-off gaps remain a
+separate reason even when report-based CR/QA/CI statuses all pass.
+
+While already reading a trusted current-head QA report, optionally collect
+`qaScreenshots: [{url, caption, sourceCommentUrl}]` from its actual image
+evidence. Persist the canonical original attachment URL, never a temporary
+signed/credentialed resolved URL or a fabricated thumbnail. Only HTTPS GitHub
+evidence-image hosts/asset paths allowlisted by the one-file dashboard are
+public; omit unsupported images. Missing thumbnails do not trigger QA or
+change a gate. Runtime performs no authenticated tracker fetch to discover
+images; optional browser image loads use no-referrer and the constrained CSP.
+
+Status formatting uses complete readable sentences and canonical separate
+fields (`references/report-templates.md`). Do not remove spaces, invent compound
+words or preserve unreadable legacy prose. Regenerate explanations from fresh
+structured facts on safe reconciliation, while leaving live foreign claims
+untouched; formatting cleanup never changes a signal, attempt or approval.
+
+Before admission and every stage, consume validated dashboard commands under
+the same transaction lock (`references/dashboard-commands.md`). Persist local
+`dismissedPrs` tombstones and idempotent command receipts with owned-row merging;
+filter dismissed identities from queue snapshots/admission until restore or
+safe reset. Never remove live/unknown/cleanup work, pending follow-up filing or
+tracker state. Pending UI removal is not a completed scheduler action.

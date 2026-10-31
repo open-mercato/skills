@@ -11,7 +11,10 @@ Read the current head, target, labels, reviews and mergeability through
 **get-pr**, then read the automation-authored signal record and its linked
 review/QA reports. Verify each evidence author, verdict, tested/reviewed SHA,
 target and risk-override provenance under `references/signals.md`. Read current
-comments for revocations or newer failing evidence. Recompute independent native
+comments for revocations or newer failing evidence. Recompute mandatory local
+QA approval/gap routing (`references/qa-routing.md`): default false
+`defaultToHumanQa` schedules real automatic QA/sign-off even with existing
+report PASS; old human-wait/evidence-only status does not suppress it. Recompute independent native
 review from current config/explicit CLI and fresh evidence, never persisted
 policy (`references/independent-review.md`). Default skips waiting for native
 approval while automatic review and actionable inherited findings remain required.

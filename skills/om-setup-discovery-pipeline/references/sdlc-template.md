@@ -186,7 +186,12 @@ approval on the current head before either prepare mode finishes, with no
 newer standing requested-changes verdict; missing approval waits without
 repeating automated stages or consuming attempts. Recheck policy/evidence at
 every entrance and final guard; saved status/scheduler policy is never authority.
-Standalone skills keep their existing review gates.
+Standalone skills keep their existing review gates. `automerge.defaultToHumanQa`
+defaults false: missing mandatory local QA approval/testable gaps schedule real
+`om-auto-qa-pr --orchestrated` for coverage/legitimate self-sign-off, reusing
+current covered evidence. True prefers human approval; explicit `--human-qa` or
+`--auto-qa` overrides config. Only verified ineligibility/blockers or explicit
+human routing wait for a human; no preference fabricates approval labels.
 
 ### Explicit automerge risk override
 

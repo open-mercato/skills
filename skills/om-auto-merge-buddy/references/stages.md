@@ -45,10 +45,12 @@ signals 2 and 3 are re-evaluated for the new head per `references/signals.md`.
 
 ## Stage 2 — QA (signal 2 missing)
 
-Before invoking QA, use `references/qa-evidence.md`: a trusted completed PASS on the unchanged head (including legacy reports) grants signal 2 and skips this stage with zero attempts, regardless of approval labels or risk-high. Only when neither that evidence nor a valid approval exists run `om-auto-qa-pr {pr} --orchestrated`. It skips its review-first gate, because
+First apply `references/qa-routing.md`, even when report-based signal 2 holds. A missing mandatory local approval or testable coverage gap defaults to `om-auto-qa-pr --orchestrated`, passing existing PASS evidence and precise missing coverage/sign-off in task context. Reuse covered unchanged-head scenarios. Only a verified blocker/ineligibility or explicit human preference routes to a human.
+
+Otherwise use `references/qa-evidence.md`: a trusted completed PASS on the unchanged head (including legacy reports) grants signal 2 and skips this stage with zero attempts, regardless of approval labels or risk-high, unless the local approval/gap route above still needs action. Only when neither that evidence nor a valid approval exists run `om-auto-qa-pr {pr} --orchestrated`. It skips its review-first gate, because
 signal 1 already holds.
 
-- `pass` on the current head with its trusted posted PASS report → grant signal 2 from that completed stage/report, regardless of `selfqa=eligible|ineligible`. The verified invocation and `RESULT:` supply completion provenance for this just-run stage; legacy historical reuse uses the linked comment history in `references/qa-evidence.md`. When self-QA labels were legally applied, verify them, but missing labels or risk-high never reject this report-based signal. Do not add approval labels here.
+- `pass` on the current head with its trusted posted PASS report → grant signal 2 from that completed stage/report, regardless of `selfqa=eligible|ineligible`. The verified invocation and `RESULT:` supply completion provenance for this just-run stage; legacy historical reuse uses the linked comment history in `references/qa-evidence.md`. When a local rule requires approval, read back the actual eligible child-applied `qa-approved`/sign-off before finishing; an evidence report alone cannot bypass it. A missing write is an explicit sign-off completion/permission issue, not permission to fabricate labels or blindly repeat covered QA. Do not add approval labels here.
 - `fail` → the QA evidence comment on the PR names the failing scenarios. Run **stage 1** (`om-auto-review-pr --autofix --orchestrated`), which takes that report in as an `INHERITED` blocker and fixes it. Then re-run QA. Count one QA attempt per QA run.
 - `blocked` because no runnable environment or browser provider exists → end the visit `waiting-human` with that reason. A human QA reviewer can still sign off.
 
@@ -79,7 +81,7 @@ credited replacement):
 
 Re-read **get-pr** and revalidate every signal's source evidence immediately
 before acting, including same-head revocations (`references/signals.md` →
-Recheck evidence). The target must still equal `base` in the record, the head
+Recheck evidence). Apply `references/qa-routing.md` again: an applicable missing required approval/gap returns to the automatic QA action (or verified human blocker), never merge/prepare. The target must still equal `base` in the record, the head
 must still equal the SHA in all three records, the PR must be open with
 `AUTOMERGE_LABEL`, and not `CONFLICTING`. A changed target or revoked approval
 returns to the ladder just like a changed head. Recompute current config/CLI

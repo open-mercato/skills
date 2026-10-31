@@ -185,7 +185,7 @@ for (const changed of [
   { comments: [...qaHistory, { author: 'adeptofvoltron', createdAt: '2026-10-31T10:20:00Z', url: 'https://example.invalid/revoked', body: 'QA report revoked' }] },
 ]) assert.equal(decideQa({ ...qaInput, ...changed }).held, false, JSON.stringify(changed))
 assert.equal(decideQa({ ...qaInput, comments: [...qaHistory, { author: 'untrusted-outsider', createdAt: '2026-10-31T10:20:00Z', body: 'om-auto-qa-pr completed: FAIL' }] }).held, true, 'Untrusted pasted verdicts do not revoke trusted evidence')
-assert.match(signals, /no QA attempt is counted/)
+assert.match(signals, /no duplicate QA is counted/)
 assert.match(stages, /grants signal 2 and skips this stage with zero attempts/)
 console.log('PASS: executable PR6786 legacy completed-PASS decision grants same-head QA without approval labels and rejects wrong/ambiguous head, missing linkage, untrusted authors, newer FAIL and revoked evidence')
 
@@ -196,7 +196,7 @@ const { restoreScheduler, checkpointPlan, replaceTracked, schedulerDecision, nex
 const scheduleNow = '2026-10-31T14:00:00.000Z'
 const earlierTime = '2026-10-31T13:00:00.000Z'
 const futureTime = '2026-10-31T14:10:00.000Z'
-const tracked = number => ({ number, nextAction: 'Read checks', outcome: 'waiting-ci', plan: [{ step: 'CI', status: 'pending', evidence: 'run-url' }], nextCheckAt: scheduleNow, lastWorkedAt: earlierTime, updatedAt: earlierTime, attempts: 2 })
+const tracked = number => ({ number, reason: { code: 'ci-pending', summary: 'Named lint workflow is pending on the current head', gate: 'ci', head: qaHead, humanActionRequired: false, owner: 'automation', requiredAction: 'Read current-head checks', whyAgentCannotAct: null, retryWhen: 'The current lint run settles', evidence: [] }, nextAction: 'Read checks', outcome: 'waiting-ci', plan: [{ step: 'CI', status: 'pending', evidence: 'run-url' }], nextCheckAt: scheduleNow, lastWorkedAt: earlierTime, updatedAt: earlierTime, attempts: 2 })
 const candidate = (number, extra = {}) => ({ number, state: 'open', authorized: true, claimable: true, actionable: true, assignees: [], ...extra })
 const decide = extra => schedulerDecision({ activePrs: [tracked(1)], candidates: [candidate(1), candidate(2, { assignees: ['pkarw'] }), candidate(3)], currentUser: 'pkarw', now: scheduleNow, ...extra })
 assert.equal(decide({}).next, 1, 'Due tracked CI is inspected before assigned or new queue work')
@@ -212,7 +212,7 @@ for (const extra of [{ claimable: false }, { actionable: false }, { state: 'clos
   assert.notEqual(decide({ candidates: [candidate(1, extra), candidate(2)] }).next, 1)
 }
 for (const outcome of ['ready', 'blocked', 'waiting-human']) {
-  const entry = { ...tracked(1), outcome }
+  const entry = { ...tracked(1), outcome, reason: { ...tracked(1).reason, humanActionRequired: outcome === 'waiting-human' } }
   const inspection = decide({ activePrs: [entry] })
   assert.equal(inspection.next, 1, 'Due inactive state receives a cheap inspection')
   assert.equal(inspection.activePrs[0].attempts, 2, 'Selection/recheck never resets or consumes stage attempts')
@@ -346,7 +346,7 @@ for (const document of [read('skills/om-setup-agent-pipeline/SKILL.md'), read('s
 console.log('PASS: config-first mode/native policy defaults to guarded merge without native wait; CLI overrides, strict evidence, new objections, stale status and invalid flags are enforced')
 
 const journalCode = [...scheduler.matchAll(/```javascript\n([\s\S]*?)\n```/g)][1][1]
-const upsertMergedJournal = runInNewContext(`${journalCode}\nupsertMergedJournal`)
+const upsertMergedJournal = runInNewContext(`${journalCode}\nupsertMergedJournal`, { URL })
 const mergedRecord = { repository: 'open-mercato/skills', number: 1, url: 'https://example.invalid/pr/1', outcome: 'merged', mergedAt: scheduleNow, updatedAt: scheduleNow, head: qaHead, mergeSha: 'c'.repeat(40), base: 'main', plan: [{ step: 'Merge', status: 'done' }], nextAction: 'None', evidence: ['https://example.invalid/review/1'], statusCommentUrl: 'https://example.invalid/status/1', reservation }
 const firstJournal = upsertMergedJournal({ record: mergedRecord })
 assert.equal(firstJournal.day, '2026-10-31')
@@ -380,6 +380,7 @@ try {
     const loader = read(loaderPath)
     for (const [slot, fixtures] of [
       ['AUTOMERGE_MODE', [[{}, 'prepare-and-merge'], [{ mode: 'prepare-to-merge' }, 'prepare-to-merge'], [{ mode: null }, null], [{ mode: 'invalid' }, null]]],
+      ['DEFAULT_TO_HUMAN_QA', [[{}, 'false'], [{ defaultToHumanQa: false }, 'false'], [{ defaultToHumanQa: true }, 'true'], [{ defaultToHumanQa: null }, null], [{ defaultToHumanQa: 'false' }, null]]],
       ['REQUIRE_INDEPENDENT_REVIEW', [[{}, 'false'], [{ requireIndependentReview: false }, 'false'], [{ requireIndependentReview: true }, 'true'], [{ requireIndependentReview: null }, null], [{ requireIndependentReview: 'false' }, null], [{ requireIndependentReview: 1 }, null]]],
     ]) {
       const line = loader.split('\n').find(value => value.startsWith(slot + '='))
@@ -453,7 +454,7 @@ try {
   await new Promise(resolveClose => reservePort.close(resolveClose))
   const meta = join(dashboardRoot, '.ai', 'meta')
   mkdirSync(meta, { recursive: true })
-  const publicState = { version: 1, repository: 'open-mercato/skills', currentUser: 'pkarw', updatedAt: scheduleNow, activePrs: [{ ...tracked(1), ...timingReady, head: qaHead, reservation: { token: 'PRIVATE-NEVER-SERVE', host: 'PRIVATE-HOST', pid: 999 } }], queue: [{ number: 1, title: 'Duplicate queued' }, { number: 2, title: '<img src=x onerror=alert(1)>', url: 'javascript:alert(1)', outcome: 'queued', assignees: ['pkarw'] }] }
+  const publicState = { version: 1, repository: 'open-mercato/skills', currentUser: 'pkarw', updatedAt: scheduleNow, activePrs: [{ ...tracked(1), ...timingReady, head: qaHead, reservation: { token: 'PRIVATE-NEVER-SERVE', host: 'PRIVATE-HOST', pid: 999 } }, { ...tracked(3), head: qaHead }], queue: [{ number: 1, title: 'Duplicate queued' }, { number: 2, title: '<img src=x onerror=alert(1)>', url: 'javascript:alert(1)', outcome: 'queued', assignees: ['pkarw'] }] }
   writeFileSync(join(meta, 'merge-buddy.json'), JSON.stringify(publicState))
   writeFileSync(join(meta, 'merge-buddy-merged-2026-10-31.jsonl'), timedJournal.jsonl)
   const started = await dashboardModule.startDashboard({ root: dashboardRoot, port: dashboardPort })
@@ -481,6 +482,30 @@ try {
   reactContext.self = reactContext
   runInNewContext(scripts[0], reactContext)
   assert.equal(reactContext.React.version, '18.3.1', 'Embedded runtime is real pinned React')
+  const csrfToken = JSON.parse(html.match(/window\.dashboardCsrf=("[A-Za-z0-9_-]+")/)[1])
+  const targetRow = stateData.activePrs.find(row => row.number === 3)
+  const requestBody = { operation: 'dismiss', repository: 'open-mercato/skills', number: 3, expectedVersion: targetRow.localVersion }
+  const commandHeaders = { Origin: started.url, 'Content-Type': 'application/json', 'X-Dashboard-CSRF': csrfToken }
+  const postCommand = (body, headers = commandHeaders) => fetch(started.url + '/api/commands', { method: 'POST', headers, body: JSON.stringify(body) })
+  assert.equal((await postCommand(requestBody, { ...commandHeaders, 'X-Dashboard-CSRF': 'wrong' })).status, 403)
+  assert.equal((await postCommand(requestBody, { ...commandHeaders, Origin: 'https://attacker.invalid' })).status, 403)
+  assert.equal((await postCommand(requestBody, { ...commandHeaders, 'Content-Type': 'text/plain' })).status, 415)
+  assert.equal((await postCommand({ ...requestBody, extra: 'x'.repeat(9000) })).status, 413)
+  assert.equal((await postCommand({ ...requestBody, expectedVersion: '0'.repeat(64) })).status, 409)
+  assert.equal((await postCommand({ ...requestBody, number: 1, expectedVersion: stateData.activePrs[0].localVersion })).status, 409)
+  const beforeCommand = readFileSync(join(meta, 'merge-buddy.json'), 'utf8')
+  const publishedResponse = await postCommand(requestBody)
+  assert.equal(publishedResponse.status, 202)
+  const published = await publishedResponse.json()
+  assert.equal(readFileSync(join(meta, 'merge-buddy.json'), 'utf8'), beforeCommand, 'Dashboard command publication never rewrites canonical scheduler state')
+  const pendingState = await (await fetch(started.url + '/api/state')).json()
+  assert.equal(pendingState.pendingRemovals[0].number, 3)
+  assert.equal(pendingState.activePrs.some(row => row.number === 3), false, 'Pending removal is explicit, not falsely acknowledged as applied')
+  const undoResponse = await postCommand({ ...requestBody, operation: 'restore', undoOf: published.requestId })
+  assert.equal(undoResponse.status, 202)
+  const pendingUndo = await (await fetch(started.url + '/api/state')).json()
+  assert.equal(pendingUndo.pendingRemovals[0].pendingRestore.undoOf, published.requestId)
+
   assert.equal((await dashboardModule.ensureDashboard({ root: dashboardRoot, port: dashboardPort })).reused, true)
   const otherRoot = mkdtempSync(join(tmpdir(), 'merge-buddy-other-root-'))
   try { await assert.rejects(() => dashboardModule.ensureDashboard({ root: otherRoot, port: dashboardPort }), /occupied/); assert.equal((await fetch(started.url + '/api/identity')).status, 200) } finally { rmSync(otherRoot, { recursive: true, force: true }) }
@@ -513,4 +538,125 @@ try {
   rmSync(dashboardRoot, { recursive: true, force: true })
 }
 console.log('PASS: one-file real React dashboard enforces safe loopback/read-only data, private-field stripping, root-scoped reuse, recovery and exact nonoverlapping five-second refresh')
+
+const automaticReason = { code: 'automatic-qa-signoff-pending', summary: 'Current-head QA PASS exists; required approval is absent', gate: 'qa-approval', head: qaHead, humanActionRequired: false, owner: 'om-auto-qa-pr under om-auto-merge-buddy', requiredAction: 'Run orchestrated QA for missing coverage and eligible self-sign-off', whyAgentCannotAct: null, actionLocation: 'Automatic QA stage', actionUrl: 'https://example.invalid/pr/6477', retryWhen: 'Eligible current-head PASS and verified required approval', evidence: ['https://example.invalid/qa/report'] }
+const oldReasonRecord = { ...tracked(1), outcome: 'queued-qa', reason: automaticReason, updatedAt: earlierTime }
+const changedReason = checkpointPlan(oldReasonRecord, { reason: { ...automaticReason, summary: 'Required override scenario has not been verified on the current head' }, reasonCheckedAt: scheduleNow }, scheduleNow)
+assert.equal(changedReason.outcome, 'queued-qa')
+assert.equal(changedReason.updatedAt, scheduleNow, 'Changed facts update semantic time even with unchanged outcome')
+const reorderedReason = Object.fromEntries(Object.entries(automaticReason).reverse())
+assert.equal(checkpointPlan(oldReasonRecord, { reason: reorderedReason, reasonCheckedAt: scheduleNow }, scheduleNow).updatedAt, earlierTime, 'Reason key order and fresh assessment time do not fabricate progress')
+const humanReason = { ...automaticReason, code: 'qa-credentials-unavailable', humanActionRequired: true, owner: 'repository maintainer', requiredAction: 'Grant the QA account access to the named test tenant', whyAgentCannotAct: 'Current test account receives permission denied from the required tenant endpoint', actionLocation: 'Tenant access settings', retryWhen: 'The required fixture endpoint authorizes the QA account' }
+assert.equal(checkpointPlan(oldReasonRecord, { reason: humanReason }, scheduleNow).updatedAt, scheduleNow)
+const reasonJournal = JSON.parse(upsertMergedJournal({ record: { ...mergedRecord, reason: { ...automaticReason, token: 'PRIVATE-DROP' }, reasonCheckedAt: scheduleNow, signals: { cr: 'pass', qa: 'pass', ci: 'pass' }, evidence: { cr: 'https://example.invalid/review', qa: 'https://example.invalid/qa', ci: 'https://example.invalid/ci' }, plan: [{ step: 'QA evidence', status: 'done', provenance: 'reused', actor: 'original reviewer', source: 'QA report', head: qaHead, completedAt: earlierTime, evidence: 'https://example.invalid/qa', token: 'PRIVATE-DROP' }] } }).jsonl)
+assert.equal(reasonJournal.reason.summary, automaticReason.summary)
+assert.equal(reasonJournal.reason.humanActionRequired, false)
+assert.equal(reasonJournal.reason.token, undefined)
+assert.equal(reasonJournal.signals.qa, 'pass')
+assert.equal(reasonJournal.evidence.qa, 'https://example.invalid/qa')
+assert.equal(reasonJournal.plan[0].provenance, 'reused')
+assert.equal(reasonJournal.plan[0].token, undefined)
+assert.match(status, /No human action needed/)
+assert.match(status, /Why|why agent cannot act/)
+const legacyDue = decide({ activePrs: [{ ...tracked(1), reason: undefined, nextCheckAt: futureTime }], candidates: [candidate(1, { actionable: false }), candidate(3)] })
+assert.equal(legacyDue.next, 1, 'Missing reason becomes due for cheap reconciliation before a future estimate')
+const contradictoryDue = decide({ activePrs: [{ ...tracked(1), outcome: 'waiting-human', nextCheckAt: futureTime }], candidates: [candidate(1, { actionable: false }), candidate(3)] })
+assert.equal(contradictoryDue.next, 1, 'Contradictory waiting-human plus no-human flag is immediately inspected')
+const blockedInspection = decide({ activePrs: [{ ...tracked(1), reason: undefined, outcome: 'blocked', nextCheckAt: futureTime }], candidates: [candidate(1, { actionable: false, claimable: false, inspectionAllowed: true })] })
+assert.equal(blockedInspection.inspectionOnly, true, 'Blocked reason inspection never grants stage retry')
+assert.notEqual(decide({ activePrs: [{ ...tracked(1), reason: undefined, nextCheckAt: futureTime }], candidates: [candidate(1, { claimable: false, inspectionAllowed: false }), candidate(3)] }).next, 1, 'Live claims still prevent reason migration takeover')
+const qaRouting = read('skills/om-auto-merge-buddy/references/qa-routing.md')
+const qaRouteCode = qaRouting.match(/```javascript\n([\s\S]*?)\n```/)[1]
+const { resolveQaRoutingPolicy, qaRoutingDecision } = runInNewContext(`${qaRouteCode}\n({resolveQaRoutingPolicy,qaRoutingDecision})`)
+assert.equal(resolveQaRoutingPolicy().defaultToHumanQa, false)
+assert.equal(resolveQaRoutingPolicy({ config: { automerge: { defaultToHumanQa: true } } }).defaultToHumanQa, true)
+assert.equal(resolveQaRoutingPolicy({ config: { automerge: { defaultToHumanQa: true } }, autoQa: true }).defaultToHumanQa, false)
+assert.equal(resolveQaRoutingPolicy({ config: { automerge: { defaultToHumanQa: false } }, humanQa: true }).defaultToHumanQa, true)
+for (const input of [{ humanQa: true, autoQa: true }, { config: { automerge: { defaultToHumanQa: 'false' } } }, { config: { automerge: { defaultToHumanQa: null } } }]) assert.throws(() => resolveQaRoutingPolicy(input), /Conflicting|Invalid/)
+const routeInput = { head: qaHead, reportPass: true, approvalRequired: true, approvalPresent: false, evidence: automaticReason.evidence }
+for (const number of [6477, 6724]) {
+  const route = qaRoutingDecision(routeInput)
+  assert.equal(route.action, 'auto-qa', `PR${number} current PASS plus missing mandatory approval routes to automatic QA`)
+  assert.equal(route.outcome, 'queued-qa')
+  assert.equal(route.reason.humanActionRequired, false)
+}
+assert.equal(qaRoutingDecision({ ...routeInput, coverageGaps: ['Override behavior', 'No-demo fixture path'] }).action, 'auto-qa')
+assert.equal(qaRoutingDecision({ ...routeInput, qaFailure: 'Override scenario returns wrong catalog price on the current head' }).action, 'autofix')
+assert.equal(qaRoutingDecision({ ...routeInput, stagePassed: true, selfSignoffEligible: true }).action, 'verify-signoff', 'Eligible PASS must verify actual applied approval labels')
+assert.equal(qaRoutingDecision({ ...routeInput, approvalPresent: true }).action, 'reuse')
+assert.equal(qaRoutingDecision({ ...routeInput, approvalRequired: false }).action, 'reuse', 'Existing PASS remains reused when no mandatory approval gap exists')
+assert.equal(qaRoutingDecision({ ...routeInput, defaultToHumanQa: true }).reason.humanActionRequired, true)
+assert.equal(qaRoutingDecision({ ...routeInput, selfSignoffEligible: false }).action, 'inspect-eligibility', 'A bare false eligibility flag cannot invent a generic human blocker')
+assert.equal(qaRoutingDecision({ ...routeInput, automationBlocker: humanReason }).reason.whyAgentCannotAct, humanReason.whyAgentCannotAct)
+assert.equal(JSON.parse(read('.ai/agentic.config.json')).automerge.defaultToHumanQa, false)
+console.log('PASS: structured reasons update every current fact without duplicate progress, preserve exact human actions, and default missing approval to real QA rather than false human waits')
+
+const formatCode = [...status.matchAll(/```javascript\n([\s\S]*?)\n```/g)][0][1]
+const formatStatusReason = runInNewContext(`${formatCode}\nformatStatusReason`)
+const readableStatus = formatStatusReason({ reason: automaticReason, nextAction: 'Run a fresh browser QA worker for the recorded scenario.', head: qaHead, signals: { cr: 'pass', qa: 'pass', ci: 'pending' } })
+assert.match(readableStatus, /No human action needed\. Automatic next step: Run a fresh browser QA worker/)
+assert.match(readableStatus, /CR: pass; QA: pass; CI: pending/)
+assert.match(readableStatus, /\*\*Reason:\*\* Current-head QA PASS exists; required approval is absent/)
+assert.match(formatStatusReason({ reason: humanReason, nextAction: 'Wait for the named tenant permission to be granted.', head: qaHead }), /Human action required — repository maintainer\./)
+assert.equal(qaRoutingDecision({ ...routeInput, automationBlocker: { summary: 'Blocked' } }).action, 'inspect-eligibility', 'Incomplete blocker prose cannot invent a human interaction')
+const commandReference = read('skills/om-auto-merge-buddy/references/dashboard-commands.md')
+const commandCode = commandReference.match(/```javascript\n([\s\S]*?)\n```/)[1]
+const { applyDashboardCommand, excludeDismissed } = runInNewContext(`${commandCode}\n({applyDashboardCommand,excludeDismissed})`)
+const commandState = { version: 1, repository: 'open-mercato/skills', currentUser: 'pkarw', activePrs: [{ ...tracked(1), repository: 'open-mercato/skills' }, tracked(2)], queue: [{ number: 1 }, { number: 3 }], updatedAt: earlierTime }
+const dismissRequest = { version: 1, requestId: '11111111-1111-4111-8111-111111111111', operation: 'dismiss', repository: 'open-mercato/skills', number: 1, expectedVersion: 'a'.repeat(64), createdAt: scheduleNow }
+const commandInput = { state: commandState, command: dismissRequest, fresh: { allowed: true, ownershipKnown: true, liveClaim: false }, currentVersion: dismissRequest.expectedVersion, now: scheduleNow }
+const dismissedState = applyDashboardCommand(commandInput)
+assert.equal(dismissedState.ack.status, 'applied')
+assert.equal(dismissedState.state.activePrs.some(row => row.number === 1), false)
+assert.equal(dismissedState.state.activePrs.some(row => row.number === 2), true, 'Other focused work is preserved')
+assert.equal(dismissedState.state.dismissedPrs[0].dismissal.requestId, dismissRequest.requestId)
+assert.equal(excludeDismissed({ candidates: [candidate(1), candidate(3)], dismissedPrs: dismissedState.state.dismissedPrs, repository: commandState.repository }).some(row => row.number === 1), false, 'Dismissed PR never immediately reappears from tracker refresh')
+assert.equal(applyDashboardCommand({ ...commandInput, state: dismissedState.state }).ack, dismissedState.ack, 'Atomic state receipt makes crash-before-ack replay idempotent')
+for (const fresh of [{ allowed: false, ownershipKnown: true }, { allowed: true, ownershipKnown: false }, { allowed: true, ownershipKnown: true, liveClaim: true }]) {
+  const rejected = applyDashboardCommand({ ...commandInput, fresh })
+  assert.equal(rejected.ack.status, 'rejected'); assert.equal(rejected.state.activePrs.length, 2)
+}
+assert.equal(applyDashboardCommand({ ...commandInput, currentVersion: 'b'.repeat(64) }).ack.status, 'rejected')
+for (const outcome of ['working', 'cleanup-pending']) assert.equal(applyDashboardCommand({ ...commandInput, state: { ...commandState, activePrs: [{ ...commandState.activePrs[0], outcome }] } }).ack.status, 'rejected')
+const restored = applyDashboardCommand({ ...commandInput, state: dismissedState.state, command: { ...dismissRequest, requestId: '22222222-2222-4222-8222-222222222222', operation: 'restore', undoOf: dismissRequest.requestId } })
+assert.equal(restored.ack.status, 'applied')
+assert.equal(restored.state.dismissedPrs.length, 0)
+assert.equal(excludeDismissed({ candidates: [candidate(1)], dismissedPrs: restored.state.dismissedPrs, repository: commandState.repository }).length, 1, 'Restore only makes normal re-admission eligible')
+assert.throws(() => applyDashboardCommand({ ...commandInput, command: { ...dismissRequest, requestId: '../path' } }), /Invalid/)
+console.log('PASS: readable status formatting and local removal/restore receipts preserve exact actions, live work, optimistic versions and reversible no-readd tombstones')
+
+const signalRecord = dashboardModule.normalizeRecord({ ...mergedRecord, ...timingReady, outcome: 'queued-qa', reason: automaticReason, signals: { cr: 'pass', qa: 'pass', ci: 'pending' }, evidence: { cr: 'https://example.invalid/review', qa: 'https://example.invalid/qa', ci: 'javascript:alert(1)' }, qaScreenshots: [{ url: 'https://raw.githubusercontent.com/example/repo/main/qa.png', caption: 'Verified scenario', sourceCommentUrl: 'https://example.invalid/qa', head: qaHead }] })
+assert.equal(signalRecord.signals.cr.status, 'pass')
+assert.equal(signalRecord.signals.qa.status, 'pass')
+assert.equal(signalRecord.signals.ci.status, 'pending')
+assert.equal(signalRecord.signals.ci.evidence.length, 0)
+assert.equal(signalRecord.reason.humanActionRequired, false, 'Report-based pass badges do not hide a separate approval-gap reason')
+assert.equal(dashboardModule.normalizeRecord({ number: 1 }).signals.cr.status, 'not-recorded')
+assert.equal(dashboardModule.normalizeRecord({ number: 1, head: qaHead, signals: { cr: { status: 'pass', head: 'b'.repeat(40) } } }).signals.cr.status, 'missing')
+for (const image of ['http://raw.githubusercontent.com/example/x.png', 'https://attacker.invalid/x.png', 'javascript:alert(1)', 'https://github.com/settings/private.png', 'https://raw.githubusercontent.com/example/x.png?jwt=SECRET']) assert.equal(dashboardModule.safeImageUrl(image), null)
+assert.equal(dashboardModule.normalizeQaScreenshots([{ url: 'https://raw.githubusercontent.com/example/repo/main/qa.png', head: 'b'.repeat(40) }], qaHead).length, 0)
+assert.equal(signalRecord.qaScreenshots[0].head, qaHead)
+const screenshotJournal = JSON.parse(upsertMergedJournal({ record: { ...mergedRecord, qaScreenshots: [{ url: 'https://raw.githubusercontent.com/example/repo/main/qa.png', caption: 'Verified scenario', sourceCommentUrl: 'https://example.invalid/qa', head: qaHead }, { url: 'https://attacker.invalid/private.png' }] } }).jsonl)
+assert.equal(screenshotJournal.qaScreenshots.length, 1)
+assert.equal(screenshotJournal.qaScreenshots[0].head, qaHead)
+const concurrencyRoot = mkdtempSync(join(tmpdir(), 'merge-buddy-start-once-'))
+const concurrencyPortProbe = createHttpServer()
+let ownedDashboardChild
+try {
+  await new Promise(resolveListen => concurrencyPortProbe.listen(0, '127.0.0.1', resolveListen))
+  const port = concurrencyPortProbe.address().port
+  await new Promise(resolveClose => concurrencyPortProbe.close(resolveClose))
+  const launches = await Promise.all(Array.from({ length: 5 }, () => dashboardModule.ensureDashboard({ root: concurrencyRoot, port })))
+  assert.equal(new Set(launches.map(result => result.url)).size, 1, 'Concurrent callers all resolve the same dashboard URL')
+  const owners = launches.filter(result => result.ownedChild)
+  assert.equal(owners.length, 1, 'Exactly one listener owner is spawned for same-root concurrent startup')
+  ownedDashboardChild = owners[0].ownedChild
+  const identity = await (await fetch(launches[0].url + '/api/identity')).json()
+  assert.equal(identity.owner, 'om-auto-merge-buddy')
+  assert.equal((await dashboardModule.ensureDashboard({ root: concurrencyRoot, port })).reused, true)
+} finally {
+  if (ownedDashboardChild) { ownedDashboardChild.ref(); const exited = new Promise(done => ownedDashboardChild.once('exit', done)); ownedDashboardChild.kill('SIGTERM'); await exited }
+  rmSync(concurrencyRoot, { recursive: true, force: true })
+}
+console.log('PASS: safe signal/evidence maps and QA thumbnails preserve real provenance; concurrent callers share one dashboard without killing foreign processes')
 console.log('Merge buddy regressions passed.')

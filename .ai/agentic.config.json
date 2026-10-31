@@ -83,7 +83,8 @@
       "analyzeLimit": 100,
       "limit": 20
     },
-    "requireIndependentReview": false
+    "requireIndependentReview": false,
+    "defaultToHumanQa": false
   },
   "engine": {
     "loopStepThreshold": 20,

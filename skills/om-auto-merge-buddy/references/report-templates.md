@@ -24,11 +24,13 @@ comment per visit or per round.
 
 {📋 On the first visit only: the initial signals derived from the PR's existing state (`references/signals.md` → Bootstrap).}
 {🔁 Changes this run made, one line each, with commit or PR links — omit when none.}
+{Follow-ups: one source finding/comment → created or reused issue link per deferred item; keep unresolved filing work visible.}
 {⛔/⚠️ What a human must do, when the state needs one — omit otherwise.}
 
 <details><summary>Signal record</summary>
 
 ```text
+base: …
 head: …
 cr: …
 qa: …
@@ -49,6 +51,8 @@ Keep it under ~120 words outside the record. Never paste logs; link the run.
 {PRs still waiting for CI, which the next run checks first.}
 📋 Run log: `<RUNS_DIR>/merge-buddy/<folder>/` ({steps} steps{, resumed from session <k>}).
 ```
+
+List created/reused follow-up issue links and unresolved filing work without repeating their bodies.
 
 Then, one per PR touched (the replacement's number for a carried-forward PR):
 

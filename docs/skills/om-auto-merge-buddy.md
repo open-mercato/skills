@@ -14,6 +14,8 @@ The buddy alone holds the PR's `in-progress` claim and labels; the sub-skills ru
 
 With all three signals, `prepare-to-merge` (default) marks the PR ready with `merge-queue`; `prepare-and-merge` squash-merges it, guarded by the head SHA and bypassing other labels and host merge rules — the three signals are the gate.
 
+Intentionally deferred actionable nits, nonblocking findings and out-of-scope work become follow-up issues through [om-followup-issue-from-pr](om-followup-issue-from-pr.md). The buddy deduplicates against open and closed issues and records issue links or pending filing work in the status comment and run handoff. Filing an issue never satisfies a blocked review, QA or CI signal. Missing helpers or failed filing stop that item cleanly and remain visible for retry.
+
 ## Parameters
 
 | Parameter | Required | Description |

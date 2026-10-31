@@ -7,14 +7,13 @@ watching a CI run while other work is available.
 ## Queue
 
 Build the queue at the start, then refresh it with **list-prs** / **search-prs**
-each time the run returns to the top of the queue, so PRs labeled mid-run join it.
+each time a positive-window run returns to the top of the queue, so PRs labeled mid-run join it. In one-pass mode (`--window 0`), take one initial snapshot, visit each PR once, and stop; follow a replacement as part of the original visit.
 
 1. **Waiting from earlier** — PRs carrying `ci-monitoring`, oldest wait first. Usually the visit is one checks reading. Then the PR merges, goes ready, or goes to stage 3, or the visit ends again because CI is still running.
 2. **Fresh** — the remaining `AUTOMERGE_LABEL` PRs, oldest first (by creation). A replacement PR is inserted at the head of the queue and continued in the same visit (`references/stages.md`).
 
 Skip `in-progress`, `automerge-blocked`, and PRs another skill is between chain
-steps on (`references/claim-pr.md`). Skip `waiting-human` PRs unless their labels
-changed since the last visit.
+steps on (`references/claim-pr.md`). Recheck `waiting-human` PRs once per round for a changed head or fresh QA evidence, including a new `QA head:` note while the label set stays unchanged. Without new evidence, keep them waiting without running a stage or counting an attempt. Waiting-human PRs alone do not keep the polling loop alive.
 
 ## Keeping busy
 
@@ -25,7 +24,19 @@ changed since the last visit.
 
 ## Deadline
 
-- Do not start a new visit with less than 10 minutes left, or a new stage with less than 5. A stage needs that much just to report safely.
+A zero window is one pass, not an already-expired deadline. Use the same
+start predicate for visits (600-second reserve) and stages (300-second reserve),
+with `NOW` and `DEADLINE` in UTC epoch seconds:
+
+```bash
+merge_buddy_can_start() {
+  [ "$WINDOW_MINUTES" -eq 0 ] && return 0
+  [ "$((DEADLINE - $1))" -ge "$2" ]
+}
+```
+
+- In one-pass mode, do not compare time against `DEADLINE` and do not refresh or poll after the snapshot is visited.
+- For positive windows, do not start a new visit with less than 10 minutes left, or a new stage with less than 5. A stage needs that much just to report safely.
 - A stage running at `DEADLINE` is allowed to finish. Then end the visit in its current outcome (usually `waiting-ci`), release or swap the claim, update the status comment, **write the final `HANDOFF.md`** (remaining queue, next concrete action, `Status: window-ended` when work is left — `references/run-log.md` → Final handoff), and stop.
 - Never leave a PR claimed past the run. The release trap covers crashes too.
 

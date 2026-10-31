@@ -165,7 +165,9 @@ gh issue view {issueId} --repo {owner}/{repo} --json number,title,body,state,aut
 #### search-issues
 Query (text, `in:title,body`, state) → matching issues.
 ```bash
-gh issue list --repo {owner}/{repo} --state open --search "<query> in:title,body" --json number,title,url
+ISSUE_STATE="{state}"
+case "$ISSUE_STATE" in open|closed|all) ;; *) exit 1 ;; esac
+gh issue list --repo {owner}/{repo} --state "$ISSUE_STATE" --search "<query> in:title,body" --json number,title,url
 ```
 
 #### create-issue

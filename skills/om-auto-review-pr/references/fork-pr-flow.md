@@ -12,9 +12,10 @@ Instead:
 3. Implement the fixes there.
 4. Resolve any conflicts against `{baseRefName}` on that carry-forward branch.
 5. Run the autofix loop from `references/review-report.md` until the branch is re-reviewed as approvable or a real blocker remains.
-6. Commit and push the new branch to `origin`.
-7. Open a replacement PR against `{baseRefName}` via **create-pr**. Copy applicable labels and verify them before closing the original, per **Labels and chain continuation** below.
-8. Close the original PR only after the replacement exists with its required labels verified. Switch the active PR context to the replacement and continue the current chain. Under `--orchestrated`, opening the replacement does not end the orchestrator's work; it continues on the new PR.
+6. Commit and push the fixes to the carry branch on `origin`.
+7. Open a replacement PR against `{baseRefName}` via **create-pr** and capture its number and URL. Keep the original open while finalizing the replacement. Copy applicable labels and verify them, per **Labels and chain continuation** below.
+8. Now that the replacement number exists, move any tracked run handoff as described below, commit and push those metadata edits, and re-review the final replacement head. Re-run any validation affected by the metadata edits; never report an approval for the earlier head as approval of this final head.
+9. Close the original PR only after the final replacement head is approved and its required labels are verified. Switch the active PR context to the replacement and continue the current chain. Under `--orchestrated`, opening the replacement does not end the orchestrator's work; it continues on the new PR.
 
 Validation requirements for autofix mode:
 
@@ -39,12 +40,12 @@ PR has a run folder — its body's `Tracking plan:` line, or a
 `<paths.runs>/<run>/HANDOFF.md` on its head (written by `om-auto-create-pr`,
 `om-auto-create-pr-loop` or their continue skills) — the carry branch already
 contains those files, because it starts from the fetched head. Move the handoff
-to the replacement before pushing:
+after **create-pr** returns its number, while the original remains open:
 
 - Rewrite `HANDOFF.md`'s `PR:` and `Branch:` fields to the replacement and the carry branch, refresh `Last updated`, and add `carried forward from #<old> by `om-auto-review-pr` autofix` under *What just happened*. Keep *Next concrete action* pointing at the first unfinished step.
 - Append a UTC `carried forward to #<new>` entry to `NOTIFY.md`; never rewrite earlier entries. Leave `PLAN.md` progress as it is.
 - Copy the `Tracking plan:` line into the replacement's body unchanged, so `om-auto-continue-pr` / `om-auto-continue-pr-loop` resume on the replacement instead of the closed original.
-- Commit these edits with the fixes on the carry branch, and name the moved run folder in the handoff comment.
+- Commit and push these metadata edits on the carry branch after the replacement exists, then re-review that final head before closing the original. Name the moved run folder in the handoff comment.
 
 No run folder → nothing to move. Under `--orchestrated`, the orchestrator moves
 its own run-level handoff when it reads `replacement=<n>`.

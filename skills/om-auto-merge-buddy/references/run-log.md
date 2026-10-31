@@ -79,6 +79,9 @@ last action before it stops, including when the window closes (below).
 ## Next concrete action
 - <e.g. "resume #12: re-read state, then continue the ladder at CI" | "check CI on #9 first">
 
+## Follow-ups
+- <stable finding key> — <source comment URL> — <Issue: #n (link: URL) | pending: reason>
+
 ## Blockers / decisions
 - <or "none">
 ```
@@ -134,7 +137,8 @@ Unless `--fresh` is passed, look for the newest folder under
 4. **The PR in flight first.** If `In flight` names a PR, start the queue with it. Its `in-progress` claim is this skill's own stale claim, so recover it through `references/claim-pr.md`, then re-read state and re-check signals against the current head before continuing the ladder — a stage that died mid-run may have pushed. Never assume the dead stage's result. The status comment's attempt record is authoritative; the Steps table explains it.
 5. **Then the remaining queue** in the recorded order, merged with a fresh **list-prs** read: drop PRs that lost `AUTOMERGE_LABEL` or were merged or closed, and append newly labeled ones in the usual queue order (`references/window.md`).
 6. A recorded PR that was closed in favor of a replacement (its status comment says `🔁 replaced by #<n>`, or a `Closing in favor of #<n>` comment) resumes on `#<n>` — the handoff move was interrupted, so finish it first.
-7. A `HANDOFF.md` that cannot be parsed is reported, left in place, and ignored — start a new run folder; the tracker state still carries every PR forward.
+7. Retry pending follow-up filing from the handoff even if its source PR has merged or closed; reuse recorded or discovered issues and never discard this work when rebuilding the PR queue. A run with unresolved filing work remains `window-ended`.
+8. A `HANDOFF.md` that cannot be parsed is reported, left in place, and ignored — start a new run folder; the tracker state still carries every PR forward.
 
 `--pr <n>` runs also log to a run folder but only resume a dead run whose
 `In flight` PR is `<n>`.

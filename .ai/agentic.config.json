@@ -71,7 +71,8 @@
     "mode": "prepare-and-merge",
     "windowMinutes": 120,
     "maxAttempts": 3,
-    "requireIndependentReview": false
+    "requireIndependentReview": false,
+    "defaultToHumanQa": false
   },
   "engine": {
     "loopStepThreshold": 20,

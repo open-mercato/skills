@@ -76,3 +76,13 @@ signal label, and count **zero QA attempts**. Clear a stale `waiting-human`
 state and skip stage 2. Retain the report's coverage limitations in the audit.
 If the head later changes, this unchanged-head acceptance no longer applies;
 use normal scope reconciliation/carry-forward rules with actual evidence.
+
+## Applicable local formal approval and missing coverage
+
+A reused completed PASS still cannot waive a mandatory local `qa-approved`
+requirement. Before skipping QA or finishing, apply `references/qa-routing.md`.
+Default automatic routing invokes real orchestrated QA to close testable gaps
+and complete eligible self-sign-off while reusing covered current-head evidence.
+Only the QA skill may write legitimate approval labels. Explicit human routing
+or an actual verified automation blocker explains a human wait; a missing label,
+evidence-only report or old waiting-human status alone does not.

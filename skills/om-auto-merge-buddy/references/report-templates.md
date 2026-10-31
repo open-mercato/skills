@@ -16,13 +16,19 @@ comment per visit or per round.
 ~~~markdown
 🤖 `om-auto-merge-buddy` — status
 
-**State:** {working — run <RUN_ID> since <ts> | waiting for CI on <sha> since <ts> | ✅ ready to merge | 🚀 merged <sha> | ⚠️ waiting for human QA or required independent review | ⛔ <reason> — remove `automerge-blocked` to retry | 🔁 replaced by #<n> | stopped — automerge label removed}
+**State:** {working — run <RUN_ID> since <ts> | waiting for CI on <sha> since <ts> | ✅ ready to merge | 🚀 merged <sha> | Queued for automatic QA | ⚠️ waiting for verified human interaction or required independent review | ⛔ <reason> — remove `automerge-blocked` to retry | 🔁 replaced by #<n> | stopped — automerge label removed}
+**Reason:** <specific missing gate/evidence, revision, failure cause, or successful evidence>
+**Human action:** <Human action required — exact actor/role, action and location/link, why agent cannot act | No human action needed — automatic next step>
+**Required action / owner:** <precise action> / <automation | maintainer | named reviewer | none>
+**Retry when:** <observable condition; Next check is a scheduled read, not a merge ETA>
+**Reason assessed:** <reasonCheckedAt UTC>
 **Mode:** {prepare-to-merge | prepare-and-merge}
 **updatedAt:** <UTC ISO-8601; semantic plan/progress change, not heartbeat>
 **Next check:** <nextCheckAt UTC ISO-8601>
 **Dashboard:** <loopback URL | disabled | startup warning>
 **Timing:** <firstStartedAt | unknown>; current-head readiness <readyAt | unknown>; elapsed includes CI waits
 **Plan/progress:** <step status, evidence and next action; mirror local scheduler>
+**QA approval routing:** <automatic | human>; source <config | CLI | default>, current head, assessed UTC
 **Independent review:** {skipped | required — evidence link or missing reason}; source {config | CLI | default}, head <sha>, run <RUN_ID>, assessed <UTC>
 **Risk checks:** {enforced | skipped — operator `--force`, run <RUN_ID>}
 **CI baseline policy:** {strict | skip-proven-baseline-errors — operator `--skip-pre-existing-ci-errors`, run <RUN_ID>}
@@ -42,7 +48,7 @@ comment per visit or per round.
 <details><summary>Scheduler checkpoint</summary>
 
 ```json
-{"version":1,"repository":"owner/repo","currentUser":"login","number":123,"title":null,"statusCommentUrl":null,"instanceId":"uuid","runId":"run-id","outcome":"waiting-ci","head":"sha","base":"target","plan":[{"step":"CI","status":"pending","evidence":"run-url"}],"nextAction":"Read current-head checks","firstStartedAt":null,"firstReadyAt":null,"readyAt":null,"readyHead":null,"readyPolicy":null,"mergeableDurationMs":null,"lastWorkedAt":"UTC ISO-8601","nextCheckAt":"UTC ISO-8601","updatedAt":"UTC ISO-8601"}
+{"version":1,"repository":"owner/repo","currentUser":"login","number":123,"title":null,"statusCommentUrl":null,"instanceId":"uuid","runId":"run-id","outcome":"waiting-ci","reason":{"code":"ci-pending","summary":"Current lint run is pending","gate":"ci","head":"sha","humanActionRequired":false,"requiredAction":"Read current-head checks","owner":"automation","whyAgentCannotAct":null,"actionLocation":null,"actionUrl":null,"retryWhen":"The named run settles","evidence":["run-url"]},"reasonCheckedAt":"UTC ISO-8601","signals":{},"qaScreenshots":[],"head":"sha","base":"target","plan":[{"step":"CI","status":"pending","evidence":"run-url"}],"nextAction":"Read current-head checks","firstStartedAt":null,"firstReadyAt":null,"readyAt":null,"readyHead":null,"readyPolicy":null,"mergeableDurationMs":null,"lastWorkedAt":"UTC ISO-8601","nextCheckAt":"UTC ISO-8601","updatedAt":"UTC ISO-8601"}
 ```
 </details>
 
@@ -62,7 +68,12 @@ attempts: cr=… qa=… ci=…
 </details>
 ~~~
 
-Keep it under ~120 words outside the records. Keep the scheduler checkpoint and
+Update this same comment on every visit/transition with the current reason,
+action/owner, retry condition and evidence, including changed facts under an
+unchanged outcome (`references/scheduler.md`). Do not add a second reason
+comment. Successful states also name their current evidence.
+
+Keep it under ~160 words outside the records; concrete explanations take priority. Keep the scheduler checkpoint and
 local plan/progress semantically identical; comment ID/URL and private
 reservation/token/process details are local-only. Existing
 signal record fields are unchanged. A heartbeat never advances `updatedAt`. Never paste logs; link the run.
@@ -83,4 +94,35 @@ Then, one per PR touched (the replacement's number for a carried-forward PR):
 
 ```text
 PR: #<number> (link: <full PR URL>)
+```
+
+## Readable canonical status text
+
+Write ordinary human sentences with normal spaces. Keep commit/head, flag and
+identifier literals in code spans; do not concatenate words or compress prose
+to save tokens. Regenerate old run-together explanations from current structured
+facts on the next safe visit; do not blindly preserve unreadable legacy prose
+or guess word boundaries with a splitting heuristic. Render fields separately,
+joining complete lines with `\n` and signal readings with `; `.
+
+```javascript
+function formatStatusReason({ reason, nextAction, head, signals = {} }) {
+  if (!reason?.summary || !nextAction) throw new Error('Current structured reason and next action required')
+  const human = reason.humanActionRequired === true
+    ? `Human action required — ${reason.owner}. ${reason.requiredAction}`
+    : reason.humanActionRequired === false
+      ? `No human action needed. Automatic next step: ${nextAction}`
+      : 'Reconcile the human-action requirement from current facts before continuing.'
+  return [
+    `**Reason:** ${reason.summary}`,
+    `**Human action:** ${human}`,
+    reason.actionLocation ? `**Location:** ${reason.actionLocation}` : null,
+    reason.actionUrl ? `**Action link:** ${reason.actionUrl}` : null,
+    reason.humanActionRequired && reason.whyAgentCannotAct ? `**Why the agent cannot act:** ${reason.whyAgentCannotAct}` : null,
+    `**Resume when:** ${reason.retryWhen}`,
+    head ? '**Head:** `' + head + '`' : null,
+    '**Signals:** ' + ['cr', 'qa', 'ci'].map(gate => gate.toUpperCase() + ': ' + (signals[gate] ?? 'not recorded')).join('; '),
+    `**Next action:** ${nextAction}`,
+  ].filter(Boolean).join('\n')
+}
 ```

@@ -25,6 +25,7 @@ Load this skill's slots with these backward-compatible defaults (validate each; 
 AUTOMERGE_LABEL=$(jq -r '.automerge.label // "automerge"' "$CONFIG")
 AUTOMERGE_MODE=$(jq -r 'if (.automerge // {} | has("mode")) then .automerge.mode else "prepare-and-merge" end | if . == "prepare-to-merge" or . == "prepare-and-merge" then . else error("Invalid automerge mode") end' "$CONFIG")
 REQUIRE_INDEPENDENT_REVIEW=$(jq -r 'if (.automerge // {} | has("requireIndependentReview")) then .automerge.requireIndependentReview else false end | if type == "boolean" then . else error("Invalid independent review policy") end' "$CONFIG")
+DEFAULT_TO_HUMAN_QA=$(jq -r 'if (.automerge // {} | has("defaultToHumanQa")) then .automerge.defaultToHumanQa else false end | if type == "boolean" then . else error("Invalid QA routing policy") end' "$CONFIG")
 WINDOW_MINUTES=$(jq -r '.automerge.windowMinutes // 120' "$CONFIG")            # 0 = one pass, no idle polling
 MAX_ATTEMPTS=$(jq -r '.automerge.maxAttempts // 3' "$CONFIG")                  # failed stages per signal before parking
 RUNS_DIR=$(jq -r '.paths.runs // ".ai/runs"' "$CONFIG")                         # run folders live in $RUNS_DIR/merge-buddy/
@@ -50,3 +51,9 @@ boolean false when loading it (the reference decision reads the parsed JSON). `R
   shared scheduler and use the installed one-file helper under
   `references/dashboard.md`; startup/identity/occupied-port failures warn and
   preserve queue processing. No additional production dependency is installed.
+
+- **QA routing policy.** Resolve `automerge.defaultToHumanQa` as a boolean
+  (missing default false), overridden by explicit mutually exclusive
+  `--human-qa`/`--auto-qa`. Reject invalid values/conflicts before claims. Apply
+  `references/qa-routing.md` at entrance/final checks; missing local required
+  approval normally invokes legitimate automatic QA, never a fabricated label.

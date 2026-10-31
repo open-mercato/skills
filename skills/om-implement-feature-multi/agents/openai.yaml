@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implement Feature Multi"
+  short_description: "Build staged feature with model council"
+  default_prompt: "Use $om-implement-feature-multi for a staged feature with independent reviewers."

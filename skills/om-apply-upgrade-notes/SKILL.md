@@ -12,7 +12,9 @@ skill run **installed into this repository** — notably tracker descriptors at
 it does not define. This skill reads the collection's `UPGRADE_NOTES.md`, brings
 installed artifacts up to date, and reports what it changed.
 
-It touches **only** pipeline artifacts under `.ai/` (and documented config files). It never edits
+It touches **only** pipeline artifacts under `.ai/`, documented config files, and
+artifacts explicitly named by an `UPGRADE_NOTES.md` installed-artifact row (for
+example the optional output style and hooks under `.claude/`). It never edits
 application source, never modifies the skills installation itself, and never discards a local
 customization without asking.
 

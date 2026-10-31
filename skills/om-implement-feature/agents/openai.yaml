@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implement Feature for Review"
+  short_description: "Build a feature and leave changes staged"
+  default_prompt: "Use $om-implement-feature to produce a verified staged feature without publishing it."

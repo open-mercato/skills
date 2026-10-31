@@ -63,7 +63,7 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 - **get-pr-files** — number → changed files with per-file status (added/modified/removed).
 - **checkout-pr** — number → PR head available locally (fork PRs included).
 - **review-pr** — number, verdict (approve / request changes), body.
-- **merge-pr** — number; squash by default.
+- **merge-pr** — number; squash by default. Optional head-SHA guard (refuse the merge when the head moved since the caller's gate) and optional `bypass-protection` (merge despite host branch-protection rules, using the caller's admin rights). Callers pass `bypass-protection` only after their own gate has held; `om-auto-merge-buddy` uses it once all three automerge signals hold. A tracker without a bypass documents that it refuses instead.
 - **mark-pr-ready** — promote a draft PR.
 - **get-pr-checks** — number → CI check runs (name, state, link). Document whether this surface can under-report while CI is starting up — on trackers where a queued pipeline registers its jobs lazily, a short result means "not yet known", not "nothing to run", and consumers must cross-check the run level (**list-runs** below, filtered to the PR head SHA) before reading a green verdict out of it.
 - **get-required-checks** — base branch → required status checks; when unreadable, treat all reported checks as required.

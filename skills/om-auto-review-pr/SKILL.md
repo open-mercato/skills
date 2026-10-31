@@ -12,6 +12,7 @@ Review a pull request by number without touching the current worktree. Fetch the
 - `{prNumber}` (required) — the PR number to review or re-review (for example `1234`)
 - `--autofix` (optional) — run the step 11 autofix loop even when the PR belongs to another author (without it, the loop runs only on PRs authored by `$CURRENT_USER` — the automation fixing its own work). Pass it when the user asked for the PR to be fixed; the fixing chains (`om-auto-fix-pr`, `om-auto-fix-issue`) pass it explicitly.
 - `--force` (optional) — bypass the in-progress concurrency check; use when intentionally taking over a PR that another auto-skill or human already claimed
+- `--orchestrated` (optional) — set only by an orchestrator that already holds this PR's `in-progress` claim and owns its labels (`om-auto-merge-buddy`). This skill then does its core work, skips its own claim, label, handoff and CI-wait steps, and ends with a `RESULT:` line (`references/orchestrated-mode.md`). Implies `--autofix`.
 
 ## Chaining
 
@@ -20,6 +21,8 @@ This skill consumes a `{prNumber}` (the `PR:` reference line a PR-producing skil
 ## Workflow
 
 **ALWAYS check first:** Apply `.ai/skills/om-auto-review-pr/SKILL.md` when present; safety rules still win.
+
+**Orchestrated mode (`--orchestrated`).** Read `references/orchestrated-mode.md` first. It lists the steps below that are skipped (the claim, labels, handoff and CI follow-up) and the `RESULT:` line the run must end with. Everything else runs unchanged.
 
 0. **Agentic setup** — follow `references/agentic-setup.md`: load `.ai/agentic.config.json` + tracker descriptor (auto-run `om-setup-agent-pipeline` if missing). This skill uses: `LABELS_ENABLED`, `QA_GATE`, `CI_MAX_WAIT_MINUTES` (`ci.maxWaitMinutes`, default 40 — the cap on the step-13 CI wait), the `validation.commands` gate, and the tracker operations **current-user**, **default-branch**, **get-pr**, **get-pr-diff**, **get-pr-checks**, **get-required-checks**, **list-runs**, **checkout-pr**, **review-pr**, **assign-pr**, **unassign-pr**, **comment-pr**, **list-issue-comments** / **update-comment**, **list-review-comments**, **mark-pr-ready**, **unlabel-pr**, **create-pr**, plus the `apply_label` and `set_pipeline_label` guards. `BASE_BRANCH` informs defaults only — the PR's own `baseRefName` is authoritative for diffs and conflict resolution.
 

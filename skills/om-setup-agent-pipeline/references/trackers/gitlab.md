@@ -697,7 +697,7 @@ jq -n --arg sha "<headRefOid>" '{squash: true, sha: $sha}' \
 jq -n --arg sha "<headRefOid>" '{squash: true, sha: $sha, merge_when_pipeline_succeeds: true}' \
   | gl_write PUT "projects/$(gl_project)/merge_requests/{prNumber}/merge" >/dev/null   # auto-merge
 ```
-A project whose squash setting is "Do not allow" rejects `squash: true`, and a moved head answers 409; surface either rather than merging differently. Recent GitLab versions also accept `auto_merge: true` in place of the older `merge_when_pipeline_succeeds`.
+A project whose squash setting is "Do not allow" rejects `squash: true`, and a moved head answers 409; surface either rather than merging differently. The `sha` field is the head-SHA guard. GitLab's merge API has no `bypass-protection` form, so unmet approval rules or a failed pipeline answer 405 and the merge is refused. Recent GitLab versions also accept `auto_merge: true` in place of the older `merge_when_pipeline_succeeds`.
 
 #### mark-pr-ready
 Promote a draft MR by stripping the draft prefix from its title, then read it back.
@@ -872,6 +872,10 @@ in-progress|#c5def5|An automated skill is working on this
 ci-monitoring|#d4c5f9|Work complete and reported; agent is watching CI results
 do-not-close|#c5def5|Humans only: never auto-close this issue
 ${AUTOMERGE_LABEL:-automerge}|#5319e7|Humans only: drive this PR to merge once every gate is green
+automerge-signal-1-cr|#1d76db|om-auto-merge-buddy: code review signal holds for the current head
+automerge-signal-2-qa|#1d76db|om-auto-merge-buddy: QA signal holds for the current head
+automerge-signal-3-ci|#1d76db|om-auto-merge-buddy: CI signal holds for the current head
+automerge-blocked|#b60205|om-auto-merge-buddy parked this PR; a human removes this label to retry
 priority-low|#e4e669|Cosmetic or follow-up work
 priority-medium|#fbca04|Ordinary bug or feature
 priority-high|#d93f0b|Release-blocking

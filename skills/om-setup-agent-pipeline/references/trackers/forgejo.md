@@ -862,6 +862,12 @@ The merge endpoint answers with an empty body, so the read-back is the proof. Su
 - a 405: required checks or approvals unmet, squash disallowed by the repository settings, or Forgejo still recomputing mergeability right after a change to either branch. Re-read **get-pr** and retry once before surfacing it;
 - a 409: the head moved.
 
+`head_commit_id` is the head-SHA guard. `bypass-protection` adds `force_merge: true`, which skips branch-protection checks for a repository admin. Without admin rights the 405 stands, and the merge is refused:
+```bash
+jq -n --arg sha "<headRefOid>" '{Do: "squash", head_commit_id: $sha, force_merge: true}' \
+  | fj_write POST "repos/$(fj_repo)/pulls/{prNumber}/merge" >/dev/null || exit 1   # bypass-protection
+```
+
 #### mark-pr-ready
 Promote a draft PR by stripping the work-in-progress prefix from its title, then read it back. If Forgejo still reports a draft (the instance uses other prefixes), fail and name the title.
 ```bash
@@ -1137,6 +1143,10 @@ in-progress|#c5def5|An automated skill is working on this
 ci-monitoring|#d4c5f9|Work complete and reported; agent is watching CI results
 do-not-close|#c5def5|Humans only: never auto-close this issue
 ${AUTOMERGE_LABEL:-automerge}|#5319e7|Humans only: drive this PR to merge once every gate is green
+automerge-signal-1-cr|#1d76db|om-auto-merge-buddy: code review signal holds for the current head
+automerge-signal-2-qa|#1d76db|om-auto-merge-buddy: QA signal holds for the current head
+automerge-signal-3-ci|#1d76db|om-auto-merge-buddy: CI signal holds for the current head
+automerge-blocked|#b60205|om-auto-merge-buddy parked this PR; a human removes this label to retry
 priority-low|#e4e669|Cosmetic or follow-up work
 priority-medium|#fbca04|Ordinary bug or feature
 priority-high|#d93f0b|Release-blocking

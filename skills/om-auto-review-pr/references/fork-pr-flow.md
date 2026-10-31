@@ -14,7 +14,7 @@ Instead:
 5. Run the autofix loop from `references/review-report.md` until the branch is re-reviewed as approvable or a real blocker remains.
 6. Commit and push the new branch to `origin`.
 7. Open a replacement PR against `{baseRefName}` via **create-pr**. Copy applicable labels and verify them before closing the original, per **Labels and chain continuation** below.
-8. Close the original PR only after the replacement exists with its required labels verified. Switch the active PR context to the replacement and continue the current chain; opening it is not completion of an automerge request.
+8. Close the original PR only after the replacement exists with its required labels verified. Switch the active PR context to the replacement and continue the current chain. Under `--orchestrated`, opening the replacement does not end the orchestrator's work; it continues on the new PR.
 
 Validation requirements for autofix mode:
 
@@ -35,8 +35,9 @@ Replacement PR requirements:
 ## Labels and chain continuation
 
 Read the original PR's current labels through **get-pr** immediately before
-transfer. In an active automerge chain, a removed automerge label cancels the
-continuation; report it to the driver and never recreate it from an old snapshot.
+transfer. If the automerge label was removed from the original, an orchestrated
+run cancels the continuation and reports it. Never recreate the label from an
+earlier snapshot.
 Through the descriptor's guards, copy category, priority, risk, custom labels, QA requirements (`needs-qa`
 / `skip-qa`), and any configured `automerge.label` (default `automerge`) that
 was present. Keep one priority and risk label, preserving the originals unless
@@ -52,14 +53,12 @@ original, and maintain the marker-idempotent label-rationale comment.
 
 Update the active PR number, URL, head/target branch, and claim/cleanup context;
 emit the replacement's exact `PR:` chaining line so every caller follows it.
-If this skill was invoked by an active automerge chain, explicitly return
-control to that driver on the new PR and continue without asking the user or
-original author to confirm, restart, or recheck first. The driver establishes
-its own replacement claim, then continues fixes, review, CI, and the final
-guarded merge in the same invocation. Repeat on subsequent replacements.
-Reassignment and the author recheck comment are advisory, not a reason to stop
-the chain. A genuine QA/review gate, claim conflict, or bounded CI wait is still
-a blocker; never bypass it or grant new merge authority to a standalone review.
+Under `--orchestrated` (`references/orchestrated-mode.md`), report
+`replacement=<n>` in the `RESULT:` line and hand control straight back. Do not
+wait for the original author's recheck. The orchestrator moves its claim and
+signal labels to the replacement and continues there in the same run.
+Reassignment and the author recheck comment are advisory, not a reason to stop.
+A standalone review never gains merge authority from this transfer.
 
 Replacement PR body — this is the canonical explanation of the carried work,
 so describe the resulting behavior instead of saying only “original changes.”

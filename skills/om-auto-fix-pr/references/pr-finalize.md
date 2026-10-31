@@ -56,11 +56,10 @@ Do **not** use follow-ups to dodge real blockers — a correctness, security, co
 
 Once labels and metadata match the real state, **hand off**: this skill leaves the PR merge-ready and stops. The merge itself belongs to `om-approve-merge-pr` (single PR) or `om-merge-buddy` (sweep), which re-check every gate before squash-merging.
 
-In an active automerge chain, return the current replacement PR's `PR:` line
-directly to the driving skill; do not ask the user to run another command or
-wait for the original author's recheck. The driver resumes on that PR in the
-same invocation through the final guarded merge. This skill still never merges
-by itself, and an independent QA/review gate or real blocker is not waived.
+Under `--orchestrated` this step is skipped (`references/orchestrated-mode.md`).
+A replacement PR is reported as `replacement=<n>` to the orchestrator, which
+continues on it without waiting for the original author's recheck. This skill
+still never merges by itself.
 
 ### Fork supersede/credit
 
@@ -71,7 +70,7 @@ When step 4's `om-auto-review-pr` run carried a fork PR forward (it bases a carr
 - It is reassigned to the original author, with a handoff comment inviting them to do the next recheck from the carried-forward branch.
 - The closed original PR carries a `Closing in favor of #{newPrNumber} ({newPrUrl}).` comment crediting the original author (the fallback detection path for the credit rule).
 - Before the original closes, the replacement copies applicable category, priority, risk, custom labels, QA requirements, and any original `automerge.label` (default `automerge`) through the label guards, verified via **get-pr**. Keep one priority and risk label (preserve or justify raising the originals), preserve human hard blocks, and normalize the pipeline to the verified state; never copy QA approvals (`qa-approved`, `qa-self-verified`) or another run's `in-progress` / `ci-monitoring`. Missing required automerge labeling blocks unattended merging; conflicting QA requirements remain blocked.
-- All subsequent work and emitted PR references use the replacement's number, URL, head/target branch, and fresh claim context. When called by an automerge driver, hand control back automatically for continued review/CI/merge without a human restart; reassignment and the author recheck invitation are advisory in that chain.
-- Transfer labels from a fresh **get-pr** reading of the original; if its automerge label was removed, cancel unattended continuation rather than recreating that authorization from an earlier snapshot.
+- All subsequent work and emitted PR references use the replacement's number, URL, head/target branch, and fresh claim context. Under `--orchestrated`, hand control back to the orchestrator automatically; reassignment and the author recheck invitation are advisory there.
+- Transfer labels from a fresh **get-pr** reading of the original. If its automerge label was removed, cancel the unattended continuation rather than recreating that authorization from an earlier snapshot.
 
 If any of these are missing, fix them here (edit the replacement PR body, post the comments, reassign) before declaring merge-ready.

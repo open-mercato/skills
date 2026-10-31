@@ -15,7 +15,7 @@ runs the cheap list fields before any extra tracker call, and record the
 | 2 | Ready | the PR is a draft | `draft` |
 | 3 | Base | `baseRefName` ≠ `BASE_BRANCH` (stacked or release-branch PRs merge through their own base) | `targets <branch>` |
 | 4 | Not queued | it carries `AUTOMERGE_LABEL` → *already queued* list; `automerge-blocked` → skipped | `already queued` / `automerge-blocked` |
-| 5 | No excluded label | it carries any label in `EXCLUDE_LABELS` (default `do-not-merge`, `blocked`, `changes-requested`, `qa-failed`) | `label <name>` |
+| 5 | No excluded label | it carries any label in `EXCLUDE_LABELS` (default `do-not-merge`, `blocked`, `qa-failed`) | `label <name>` |
 | 6 | Author | **get-pr-author-association** returns a value in `EXCLUDE_ASSOCIATIONS` (default `first-time-contributor`, `outside-collaborator`, `none`), and the author is not in `TRUSTED_AUTHORS` | `author is <association>` |
 
 Gate 6 fails closed. When the association cannot be read, or the operation is
@@ -42,6 +42,17 @@ host calls them:
 | `first-time-contributor` | has never had a change merged in this repository |
 | `none` | no association the host can report |
 
+## Requested changes
+
+`changes-requested` is no longer excluded by default: a nearly finished PR may
+need the buddy to address a small, concrete review backlog. After the hard
+gates, detect requested changes from either the pipeline label or
+`reviewDecision` / latest review feedback. Require `ai-judgment` to match before
+**any** tier can propose such a PR. Unreadable feedback or an unresolved major
+correctness, security, design or scope objection rejects it with a cited reason.
+A configured `excludeLabels` that still includes `changes-requested` continues
+to reject it; judgment never overrides an explicit exclusion.
+
 ## Criteria
 
 Each tier in `TIERS` is a list of criterion names, and a PR matches the tier when
@@ -50,6 +61,7 @@ it matches **any** of them. Only these names are valid:
 | Criterion | Matches when | Data |
 |---|---|---|
 | `qa-approved` | the PR carries `qa-approved` | labels |
+| `ai-judgment` | evidence shows a meaningful, important fix close to merge, with a bounded remaining path | current diff, linked issue, reviews, screenshots / test evidence; see `references/ai-judgment.md` |
 | `security` | the PR carries any label in `SECURITY_LABELS` (default `security`) | labels |
 | `small` | `changedFiles` < `SMALL_PR_FILE_LIMIT` (default 10, so 1–9 files) | `changedFiles`, else the count from **get-pr** |
 | `trusted-author` | the author's login is in `TRUSTED_AUTHORS` (case-insensitive) | `author` |
@@ -59,11 +71,12 @@ it matches **any** of them. Only these names are valid:
 `changedFiles` that is missing or zero counts as unknown. The PR then does not
 match `small`, but it can still match another criterion.
 
-Default tiers: `[["qa-approved"], ["security","small"], ["trusted-author"], ["fixes-issue"]]`.
+Default tiers: `[["qa-approved"], ["ai-judgment"], ["security","small"], ["trusted-author"], ["fixes-issue"]]`.
 A PR lands in the **first** tier it matches. A trusted author's security fix is
-therefore tier 2, not tier 3. A PR matching no tier is reported as
-`no tier matched` and is not proposed. To make every gated PR eligible, add a
-broad last tier such as `["fixes-issue","trusted-author","small"]`.
+therefore tier 3, not tier 4, unless it also matches an earlier tier. A PR
+matching no tier is reported as `no tier matched` and is not proposed. Additional
+final tiers may broaden the proposal, but never bypass the hard gates or the
+requested-changes judgment.
 
 ## Ranking
 

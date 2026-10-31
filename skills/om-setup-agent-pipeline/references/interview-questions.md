@@ -18,12 +18,14 @@ The questions step 3 of `om-setup-agent-pipeline` asks the user (skipped with `-
    remain authoritative.
 4. Labels: install the full taxonomy above (recommended), keep a subset, or disable labels entirely. When labels stay enabled, confirm the name of the human-applied automerge label (`automerge.label`, default `automerge`) that puts a PR in `om-auto-merge-buddy`'s unattended merge queue.
 5. Automerge eligibility (only when labels stay enabled) — which PRs `om-auto-merge-triage` may propose for the automerge label. Show the defaults, then confirm or edit each one, and write the answers to `automerge.eligibility`:
-   - **Priority tiers**, in order. The default is 1 `qa-approved`, 2 `security` or `small`, 3 `trusted-author`, 4 `fixes-issue`. A PR lands in the first tier it matches; one matching no tier is never proposed. Within a tier, PRs are ordered by priority label, then risk, then age.
+   - **Priority tiers**, in order. The default is 1 `qa-approved`, 2 `ai-judgment`, 3 `security` or `small`, 4 `trusted-author`, 5 `fixes-issue`. A PR lands in the first tier it matches; one matching no tier is never proposed. Within a tier, PRs are ordered by priority label, then risk, then age.
+   - **AI judgment** (`aiJudgment.staleAfterDays`, default `7`): prioritize important, still-relevant fixes close to merge, giving older PRs with relevant screenshots and a bounded review backlog extra attention. Judge the diff and feedback rather than trusting labels or the PR pitch. Requested changes require a positive judgment regardless of tier; screenshots do not count as QA approval.
    - **Small PR limit** (`smallPrFileLimit`, default `10`): a PR is `small` when it changes fewer files than this.
    - **Security labels** (`securityLabels`, default the `security` category label).
    - **Trusted authors** (`trustedAuthors`, default none): logins that form their own tier and bypass the author-association exclusion. Suggest the maintainers and any dependency bot the repository uses, but add only the logins the user names.
    - **Excluded author associations** (default `first-time-contributor`, `outside-collaborator`, `none`). Their PRs are never proposed unless the author is trusted.
-   - **Excluded labels** (default `do-not-merge`, `blocked`, `changes-requested`, `qa-failed`) and the **proposal limit** (default `10`).
+   - **Excluded labels** (default `do-not-merge`, `blocked`, `qa-failed`) and the **proposal limit** (default `10`).
+   Preserve explicit existing tiers and exclusions on reconfiguration unless the user chooses the new policy. To adopt AI rescue, add `ai-judgment` and remove `changes-requested` from exclusions.
    Under `--defaults`, write the defaults with an empty `trustedAuthors`. Never guess logins.
 6. QA gate on or off. Recommend on when the repo ships user-facing changes.
 7. Where specs live (`paths.specs`, default `.ai/specs`) — confirm or point at an existing design-doc directory.

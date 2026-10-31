@@ -71,12 +71,13 @@
     "windowMinutes": 120,
     "maxAttempts": 3,
     "eligibility": {
-      "tiers": [["qa-approved"], ["security", "small"], ["trusted-author"], ["fixes-issue"]],
+      "tiers": [["qa-approved"], ["ai-judgment"], ["security", "small"], ["trusted-author"], ["fixes-issue"]],
       "smallPrFileLimit": 10,
+      "aiJudgment": { "staleAfterDays": 7 },
       "securityLabels": ["security"],
       "trustedAuthors": [],
       "excludeAuthorAssociations": ["first-time-contributor", "outside-collaborator", "none"],
-      "excludeLabels": ["do-not-merge", "blocked", "changes-requested", "qa-failed"],
+      "excludeLabels": ["do-not-merge", "blocked", "qa-failed"],
       "limit": 10
     }
   },

@@ -52,12 +52,13 @@ committed configs keep working.
 | `automerge.mode` | `"prepare-to-merge"` | `om-auto-merge-buddy`; `prepare-and-merge` squash-merges once all three signals hold. |
 | `automerge.windowMinutes` | `120` | `om-auto-merge-buddy`; per-run time window, `0` = one pass with no idle CI polling. |
 | `automerge.maxAttempts` | `3` | `om-auto-merge-buddy`; failed stages per signal before the PR is parked `automerge-blocked`. |
-| `automerge.eligibility.tiers` | `[["qa-approved"],["security","small"],["trusted-author"],["fixes-issue"]]` | `om-auto-merge-triage`; ordered tiers of criteria, where a PR lands in the first tier matching any of its criteria. Valid criteria are `qa-approved`, `security`, `small`, `trusted-author`, `fixes-issue` and `high-priority`. |
+| `automerge.eligibility.tiers` | `[["qa-approved"],["ai-judgment"],["security","small"],["trusted-author"],["fixes-issue"]]` | `om-auto-merge-triage`; ordered tiers of criteria, where a PR lands in the first tier matching any of its criteria. Valid criteria are `ai-judgment` (an evidence-backed important fix close to merge), `qa-approved`, `security`, `small`, `trusted-author`, `fixes-issue` and `high-priority`. |
 | `automerge.eligibility.smallPrFileLimit` | `10` | `om-auto-merge-triage`; a PR is `small` when it changes fewer files than this. |
+| `automerge.eligibility.aiJudgment.staleAfterDays` | `7` | `om-auto-merge-triage`; positive integer age in days that marks a waiting PR for extra attention. Age, screenshots and requested changes inform judgment; they never prove readiness. Requested changes require a positive judgment before any tier can propose the PR. |
 | `automerge.eligibility.securityLabels` | `["security"]` | `om-auto-merge-triage`; labels that match the `security` criterion. |
 | `automerge.eligibility.trustedAuthors` | `[]` | `om-auto-merge-triage`; logins for the `trusted-author` tier, which also bypass the author-association exclusion. |
 | `automerge.eligibility.excludeAuthorAssociations` | `["first-time-contributor","outside-collaborator","none"]` | `om-auto-merge-triage`; normalized **get-pr-author-association** values whose PRs are never proposed. |
-| `automerge.eligibility.excludeLabels` | `["do-not-merge","blocked","changes-requested","qa-failed"]` | `om-auto-merge-triage`; labels that keep a PR out of the proposal. |
+| `automerge.eligibility.excludeLabels` | `["do-not-merge","blocked","qa-failed"]` | `om-auto-merge-triage`; labels that keep a PR out of the proposal. |
 | `automerge.eligibility.limit` | `10` | `om-auto-merge-triage`; the most PRs proposed per run. |
 | `prTitleTemplate` | `"{prefix}({area}): {summary}{issueRef}"` | PR-opening skills (`om-open-pr`, `om-auto-create-pr`, `om-auto-create-pr-loop`, `om-auto-fix-issue`, `om-auto-review-pr` fork flow); placeholders `{prefix}`, `{area}`, `{summary}`, `{issue}`, `{issueRef}`, `{ticketKey}`, e.g. `"[{issue}] {prefix}({area}): {summary}"`. |
 | `ticketKeyPattern` | absent | PR-opening skills; ERE whose first match in the head branch name fills `{ticketKey}` (e.g. `"[A-Z][A-Z0-9]+-[0-9]+"`). |

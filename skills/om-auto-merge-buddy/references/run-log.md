@@ -3,9 +3,9 @@
 Every run documents itself in a run folder, like `om-auto-create-pr-loop`'s
 `PLAN.md` / `HANDOFF.md` / `NOTIFY.md`, so a person can see what the run did and
 when, and the next invocation can resume a run that died. The tracker stays the
-source of truth for each PR (labels plus the status comment). The run folder
-holds the run-level state that the tracker does not have: the queue order, the
-PR and stage in flight, attempt history and the window.
+source of truth for each PR (labels plus the status comment). The shared scheduler (`references/scheduler.md`) holds active plans and due
+times; the run folder keeps the audit trail, window, PR/stage in flight and
+pending follow-ups. Scheduler admission overrides old handoff queue order.
 
 ## Layout
 
@@ -132,18 +132,29 @@ reversible default the run chose), `run finished`. No per-step chatter — that 
 
 ## Resume (SKILL.md step 1)
 
-Unless `--fresh` is passed, look for the newest folder under
+Unless `--fresh` or `--reset` is passed, look for the newest folder under
 `${RUNS_DIR}/merge-buddy/` whose `HANDOFF.md` says `Status: open` or
 `Status: window-ended`.
 
 1. **`window-ended`** → no liveness check is needed: continue that run (steps 3 and 5), starting from its *Next concrete action*.
-2. **`open` — live or dead?** `Last updated` within the last 120 minutes (the same staleness bound as the status-comment heartbeat, `references/claim-pr.md`) → another run is probably still working: do not touch its folder; start a new run folder, and let the per-PR claims keep the two runs apart. Older → the run is dead: resume it.
+2. **`open` — live or dead?** `Last updated` within the last 120 minutes (the same staleness bound as the status-comment heartbeat, `references/claim-pr.md`) → another run is probably still working: do not touch its folder; start a new run folder, and let the per-PR claims keep the two runs apart. Older → inspect the scheduler reservation owner and every delegated handle; resume only after positive proof they are dead. Unknown ownership stays protected; heartbeat age alone never authorizes takeover.
 3. **Resume in the same folder.** Append a `Sessions` row and a `resume` step, append `run resumed from session <k>` to `NOTIFY.md`, and open a fresh window (`START` = now). Keep the original `RUN_ID`. Record this invocation’s risk mode in the new session and handoff; `--force` and `--skip-pre-existing-ci-errors` are never inherited from a previous session. Append the override decision to `NOTIFY.md` when enabled.
-4. **The PR in flight first.** If `In flight` names a PR, start the queue with it. Its `in-progress` claim is this skill's own stale claim, so recover it through `references/claim-pr.md`, then re-read state and re-check signals against the current head before continuing the ladder — a stage that died mid-run may have pushed. Never assume the dead stage's result. The status comment's attempt record is authoritative; the Steps table explains it.
-5. **Then the remaining queue** in the recorded order, merged with a fresh **list-prs** read: drop PRs that lost `AUTOMERGE_LABEL` or were merged or closed, and append newly labeled ones in the usual queue order (`references/window.md`).
+4. **Recover the in-flight plan, then schedule it.** If `In flight` names a PR, recover its checkpoint, verify current scheduler reservation ownership and tracker claim guards, and schedule only when due/actionable (`references/scheduler.md`). Never assume its claim is stale: apply `references/claim-pr.md` only after proving the local owner and delegated work dead. Re-read head/evidence before any stage retry; an interrupted stage may have pushed. The status comment's attempt record remains authoritative; an old handoff never overrides admission or evidence.
+5. **Then the remaining queue**, subject to the scheduler's due/owned-work priority and fresh **list-prs** facts: drop PRs that lost `AUTOMERGE_LABEL` or were merged or closed, and append newly labeled ones in the usual queue order (`references/window.md`).
 6. A recorded PR that was closed in favor of a replacement (its status comment says `🔁 replaced by #<n>`, or a `Closing in favor of #<n>` comment) resumes on `#<n>` — the handoff move was interrupted, so finish it first.
 7. Retry pending follow-up filing from the handoff even if its source PR has merged or closed; reuse recorded or discovered issues and never discard this work when rebuilding the PR queue. A run with unresolved filing work remains `window-ended`.
 8. A `HANDOFF.md` that cannot be parsed is reported, left in place, and ignored — start a new run folder; the tracker state still carries every PR forward.
 
 `--pr <n>` runs also log to a run folder but only resume a dead run whose
 `In flight` PR is `<n>`.
+
+## Scheduler checkpoints
+
+At startup, before/after every actionable step and at run close, write the
+active plan/progress and next action to the shared local scheduler and existing
+PR status comment (`references/scheduler.md`). A resumed in-flight stage is
+inspected before retry, never replayed from a log. `--fresh` creates a new log
+only. `--reset` starts empty scheduling and ignores old in-flight/queue ordering
+for admission, while preserving pending follow-up filing and tracker evidence.
+A merged/closed PR is removed from active scheduling, not from the follow-up
+section: retry pending filing independently even after its source PR closes.

@@ -9,18 +9,30 @@ watching a CI run while other work is available.
 Build the queue at the start, then refresh it with **list-prs** / **search-prs**
 each time a positive-window run returns to the top of the queue, so PRs labeled mid-run join it. In one-pass mode (`--window 0`), take one initial snapshot, visit each PR once, and stop; follow a replacement as part of the original visit.
 
-1. **Waiting from earlier** — PRs carrying `ci-monitoring`, oldest wait first. Usually the visit is one checks reading. Then the PR merges, goes ready, or goes to stage 3, or the visit ends again because CI is still running.
-2. **Fresh** — the remaining `AUTOMERGE_LABEL` PRs, oldest first (by creation). A replacement PR is inserted at the head of the queue and continued in the same visit (`references/stages.md`).
+Follow `references/scheduler.md`: due tracked PRs (most recently worked first),
+then current-user assigned actionable work when the active list is nonempty,
+then the existing global order (`ci-monitoring`, then oldest). An empty list or
+reset uses the existing global order without filtering by remote assignee.
+Refresh current-head CI at entrance: newly settled CI/head/evidence makes a
+tracked PR actionable now, even before its old estimate. A future CI check
+must not block admitting new work. Never infer no owned work from an incomplete
+assigned-state reading. A replacement continues in the same visit.
 
-Skip `in-progress`, `automerge-blocked`, and PRs another skill is between chain
-steps on (`references/claim-pr.md`). Recheck `waiting-human` PRs once per round for a changed head or fresh QA evidence, including a new `QA head:` note while the label set stays unchanged. Without new evidence, keep them waiting without running a stage or counting an attempt. Waiting-human PRs alone do not keep the polling loop alive.
+Skip live claims and honor blocks (`references/claim-pr.md`). Due blocked or
+waiting-human entries receive only a cheap inspection. Check for a changed head
+or fresh evidence, including a new `QA head:` note while the label set stays unchanged.
+Without new evidence, keep them waiting without running a stage or counting an attempt.
+Waiting-human PRs alone do not keep the polling loop alive.
 
 ## Keeping busy
 
-- After every visit, take the next actionable PR.
-- **Only waiting PRs left** — and `WINDOW_MINUTES > 0` with time to spare: poll them, never past `DEADLINE`. Read **get-pr-checks** for each waiting PR every 5 minutes, or block on **watch-run** for the run that is most likely to finish first, capped at the time left. Revisit a PR as soon as its CI settles. A new automerge PR appearing during the poll interrupts it.
-- **Nothing actionable and nothing waiting** → stop early; the window is a ceiling, not a target.
-- `--window 0` — one pass over the queue and no polling. Suitable for frequent scheduled runs.
+After every visit checkpoint plan/progress and UTC `nextCheckAt`. Estimate CI
+from recent comparable workflow durations and observed elapsed time, with a
+five-minute fallback. Release the PR claim and select another actionable item.
+When only future checks remain, sleep until the earliest due time in at most
+60-second chunks (refresh admission between chunks), bounded by `DEADLINE`, or
+end and report that timestamp. Never busy poll or hold **watch-run** past the
+window. `--window 0` takes one candidate snapshot and no idle polling.
 
 ## Deadline
 
@@ -42,11 +54,10 @@ merge_buddy_can_start() {
 
 ## Cadence across runs
 
-Each run picks up where the last one left off. Per PR, that state is the labels
-and status comments. Per run, a run that died resumes from its open
-`HANDOFF.md`: the PR in flight first, then the queue it had left
-(`references/run-log.md`). A schedule shorter than the window
-(for example `--window 0` every 30 minutes, or the 2-hour default nightly) is
-safe. A second concurrent instance would skip every PR the first holds
-`in-progress`, but it is still wasted work, so schedule one instance per
-repository.
+The shared `.ai/meta/merge-buddy.json` controls admission and due times across
+runs and linked worktrees; run handoffs retain the audit trail and pending
+follow-ups. `--fresh` changes only the log. `--reset` clears local scheduling,
+never tracker claims/assignees/evidence/attempts, and ignores old handoff queues
+for this invocation. Every signal is reconciled afresh, with no inherited
+invocation waivers. The nonblocking shared OS lock prevents concurrent local
+instances; other clones still obey tracker claims (`references/scheduler.md`).

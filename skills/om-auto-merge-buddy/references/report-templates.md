@@ -7,7 +7,9 @@ record. This skill links it and never repeats it.
 
 Marker: `` 🤖 `om-auto-merge-buddy` — status ``. Find it via
 **list-issue-comments**, counting only a comment written by `CURRENT_USER`, create it once with **comment-pr**, and rewrite it
-whole via **update-comment**. It serves as this skill's claim comment, its
+whole via **update-comment**. The scheduler verifies the stored comment ID and
+falls back to a complete marker/author search before creating; never duplicate
+a status comment on resume, reset or a lost local file (`references/scheduler.md`). It serves as this skill's claim comment, its
 label-rationale comment, and its run summary, so there is never a second
 comment per visit or per round.
 
@@ -16,6 +18,9 @@ comment per visit or per round.
 
 **State:** {working — run <RUN_ID> since <ts> | waiting for CI on <sha> since <ts> | ✅ ready to merge | 🚀 merged <sha> | ⚠️ waiting for human QA sign-off | ⛔ <reason> — remove `automerge-blocked` to retry | 🔁 replaced by #<n> | stopped — automerge label removed}
 **Mode:** {prepare-to-merge | prepare-and-merge}
+**updatedAt:** <UTC ISO-8601; semantic plan/progress change, not heartbeat>
+**Next check:** <nextCheckAt UTC ISO-8601>
+**Plan/progress:** <step status, evidence and next action; mirror local scheduler>
 **Risk checks:** {enforced | skipped — operator `--force`, run <RUN_ID>}
 **CI baseline policy:** {strict | skip-proven-baseline-errors — operator `--skip-pre-existing-ci-errors`, run <RUN_ID>}
 
@@ -30,6 +35,13 @@ comment per visit or per round.
 {CI baseline waivers, when used: each check/workflow/job identity and config, PR head + run/job URL, exact target SHA + run/job URL, failure signature/root cause, compared unchanged definitions, and assessment time. Never call waived red checks green.}
 {Follow-ups: one source finding/comment → created or reused issue link per deferred item; keep unresolved filing work visible.}
 {⛔/⚠️ What a human must do, when the state needs one — omit otherwise.}
+
+<details><summary>Scheduler checkpoint</summary>
+
+```json
+{"version":1,"repository":"owner/repo","currentUser":"login","number":123,"instanceId":"uuid","runId":"run-id","reservation":{"instanceId":"uuid","runId":"run-id","token":"random","host":"host","pid":123,"processStartedAt":"UTC ISO-8601","delegatedHandles":[]},"outcome":"waiting-ci","head":"sha","base":"target","plan":[{"step":"CI","status":"pending","evidence":"run-url"}],"nextAction":"Read current-head checks","lastWorkedAt":"UTC ISO-8601","nextCheckAt":"UTC ISO-8601","updatedAt":"UTC ISO-8601"}
+```
+</details>
 
 <details><summary>Signal record</summary>
 
@@ -47,7 +59,9 @@ attempts: cr=… qa=… ci=…
 </details>
 ~~~
 
-Keep it under ~120 words outside the record. Never paste logs; link the run.
+Keep it under ~120 words outside the records. Keep the scheduler checkpoint and
+local row semantically identical; the comment ID/URL can be local-only. Existing
+signal record fields are unchanged. A heartbeat never advances `updatedAt`. Never paste logs; link the run.
 
 ## Final run report
 

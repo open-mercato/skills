@@ -108,3 +108,32 @@ Decision: on a first visit (no signal record), the buddy derives the initial sig
 - Re-review walked the success path and failure cases: removed source automerge authorization, missing required labeling, conflicting QA requirements, stale QA evidence, competing ownership, and repeated replacements. Genuine gates and bounded waits remain enforced. These are instruction walkthroughs, not live carry-forward/merge executions.
 - All seven configured validation commands passed again in order with `TMPDIR=/tmp`. Both SDLC templates match; same-name `claim-pr.md` and `pr-finalize.md` peer copies were compared. The explicit follow-up request authorizes syncing the applicable merge/review/fix consumers; unrelated skills' shared rules remain unchanged.
 - Re-review verdict: approve (code review), no actionable findings. The author cannot submit a native approving review; the published comment review states that limitation and does not dismiss the independent reviewer's state.
+
+### Phase 10: Durable active scheduling and plan checkpoints
+
+Owner-requested on 2026-10-31: retain active PR plans/progress and UTC next-check
+times across invocations in the primary working tree's local
+`.ai/meta/merge-buddy.json`. Due/recent tracked work precedes owned actionable
+work; only then admit global queue work. Empty/reset admission keeps the old
+queue order. The first actionable step assigns/verifies the current user.
+
+Decisions:
+- Short OS-locked transactions plus instance/run/token reservations coordinate
+  linked worktrees. Never infer owner death from heartbeat age or discard live
+  or unknown delegated work. Status checkpoints update the existing comment.
+- `--fresh` changes only logs; `--reset` clears inactive local scheduling and
+  ignores old scheduling/handoff admission while preserving tracker state and
+  live/unknown reservations. Neither grants signals or inherits gate waivers.
+- These edits specialize the buddy's own scheduler/claim/report behavior;
+  generic shared references and stage output formats stay unchanged. The only
+  SDLC/template edit replaces the now-obsolete assignee policy in all copies.
+
+- [x] 10.1 Implement durable plans, safe recovery/reset, assigned-work priority and estimated CI due times.
+- [x] 10.2 Cover scheduler decisions, semantic checkpoints, replacement, fencing and awaited terminal cleanup with executable regression tests.
+- [x] 10.3 Complete independent code review; resolve its cleanup-order, async-callback and stale-doc findings.
+
+Validation: all ten configured local commands passed before the final focused
+review fixes. The ordered gate was run again, and the final targeted scheduler
+tests plus lint cover the async cleanup and documentation corrections. Parent
+independent review approved the final diff and reran scheduler tests and whitespace
+checks. No live queue, merge or assignment workflow was exercised.

@@ -1,6 +1,6 @@
 # Agent instructions
 
-This repository is the source of the **Open Mercato Skills** collection: seventy agent skills (`skills/<name>/SKILL.md`) that run a full PR pipeline or stop at a staged human-review handoff — plan, implement, review, QA gate, merge — installable into any repo via [skills.sh](https://skills.sh). The deliverables here are markdown skill documents plus a small amount of shell/Node tooling; there is no application code.
+This repository is the source of the **Open Mercato Skills** collection: seventy-two agent skills (`skills/<name>/SKILL.md`) that run a full PR pipeline or stop at a staged human-review handoff — plan, implement, review, QA gate, merge — installable into any repo via [skills.sh](https://skills.sh). The deliverables here are markdown skill documents plus a small amount of shell/Node tooling; there is no application code.
 
 ## Task routing
 

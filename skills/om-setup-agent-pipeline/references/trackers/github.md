@@ -159,13 +159,22 @@ BASE_BRANCH=$(gh repo view --json defaultBranchRef --jq '.defaultBranchRef.name'
 #### get-issue
 `{issueId}`, field list → issue data. Request only the fields the calling skill names.
 ```bash
-gh issue view {issueId} --repo {owner}/{repo} --json number,title,body,state,author,url,labels,assignees,comments
+gh issue view {issueId} --repo {owner}/{repo} --json number,title,body,state,author,url,labels,assignees,comments,createdAt,updatedAt
 ```
 
 #### search-issues
-Query (text, `in:title,body`, state) → matching issues.
+Query (text, `in:title,body`, state) → matching issues. Empty text enumerates issues in that state. The cap defaults to 1000; disclose a result that reaches it as incomplete.
 ```bash
-gh issue list --repo {owner}/{repo} --state open --search "<query> in:title,body" --json number,title,url
+ISSUE_STATE="{state}"
+case "$ISSUE_STATE" in open|closed|all) ;; *) exit 1 ;; esac
+ISSUE_QUERY="<query>"
+ISSUE_SEARCH_LIMIT=${ISSUE_SEARCH_LIMIT:-1000}
+case "$ISSUE_SEARCH_LIMIT" in ''|*[!0-9]*|0) echo "Invalid issue search limit" >&2; exit 1 ;; esac
+if [ -n "$ISSUE_QUERY" ]; then
+  gh issue list --repo {owner}/{repo} --state "$ISSUE_STATE" --search "$ISSUE_QUERY in:title,body" --json number,title,url,createdAt --limit "$ISSUE_SEARCH_LIMIT"
+else
+  gh issue list --repo {owner}/{repo} --state "$ISSUE_STATE" --json number,title,url,createdAt --limit "$ISSUE_SEARCH_LIMIT"
+fi
 ```
 
 #### create-issue
@@ -345,7 +354,9 @@ GitHub rejects self-approval (reviewing your own PR); surface that instead of wo
 `{prNumber}`; squash is the default merge strategy. `--auto` merges when checks pass; `--delete-branch` only when asked.
 ```bash
 gh pr merge {prNumber} --squash
+gh pr merge {prNumber} --squash --match-head-commit "<headRefOid>" --admin   # head-SHA guard + bypass-protection
 ```
+`--match-head-commit` refuses the merge when a newer commit landed after the caller's gate. `--admin` bypasses branch-protection requirements and needs admin rights on the repository. Without those rights GitHub refuses the merge; surface the refusal and never retry another way.
 
 #### mark-pr-ready
 Promote a draft PR.
@@ -408,6 +419,15 @@ Run id → re-execute only the failed jobs of that run. Use to disambiguate flak
 gh run rerun {runId} --failed
 ```
 
+#### approve-pending-runs
+Head SHA → approve every workflow run on that commit that is waiting for maintainer approval (`conclusion` `action_required` — GitHub holds runs from first-time or outside contributors until a maintainer approves them). Prints the approved run ids; an empty result means nothing was waiting. Approving lets the contributor's workflow code run with this repository's CI, so callers approve only on a PR a human has authorized for automation (e.g. an `automerge` label) and read the diff's workflow changes first.
+```bash
+gh api "repos/{owner}/{repo}/actions/runs?head_sha={headSha}&status=action_required&per_page=100" \
+  --jq '.workflow_runs[].id' | while read -r run; do
+  gh api -X POST "repos/{owner}/{repo}/actions/runs/$run/approve" >/dev/null && echo "$run"
+done
+```
+
 #### watch-run
 Run id → block until the run completes, exiting non-zero on failure. Prefer this over sleep-polling; fall back to periodic **get-run** when watching is unavailable.
 ```bash
@@ -451,6 +471,12 @@ gh label create qa-self-verified  --color c5def5 --description "Self-QA exceptio
 gh label create in-progress       --color c5def5 --description "An automated skill is working on this"
 gh label create ci-monitoring     --color d4c5f9 --description "Work complete and reported; agent is watching CI results"
 gh label create do-not-close      --color c5def5 --description "Humans only: never auto-close this issue"
+gh label create "${AUTOFIX_LABEL:-cez-autofix}" --color 5319e7 --description "Human-confirmed issue ready for the configured autofix worker"
+gh label create "${AUTOMERGE_LABEL:-automerge}" --color 5319e7 --description "Humans only: drive this PR to merge once every gate is green"
+gh label create automerge-signal-1-cr --color 1d76db --description "om-auto-merge-buddy: code review signal holds for the current head"
+gh label create automerge-signal-2-qa --color 1d76db --description "om-auto-merge-buddy: QA signal holds for the current head"
+gh label create automerge-signal-3-ci --color 1d76db --description "om-auto-merge-buddy: CI signal holds for the current head"
+gh label create automerge-blocked --color b60205 --description "om-auto-merge-buddy parked this PR; a human removes this label to retry"
 gh label create priority-low      --color e4e669 --description "Cosmetic or follow-up work"
 gh label create priority-medium   --color fbca04 --description "Ordinary bug or feature"
 gh label create priority-high     --color d93f0b --description "Release-blocking"

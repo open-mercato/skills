@@ -37,7 +37,7 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 ### Issues
 
 - **get-issue** — id, field list → issue data (title, body, state, author, url, labels/state, assignees, comments).
-- **search-issues** — text query, state → matching issues.
+- **search-issues** — text query, state → matching issues. An empty text query enumerates issues in the selected state; support pagination or disclose the listing cap.
 - **create-issue** — title, body, assignee, labels → created issue URL.
 - **close-issue** — id, reason, closing comment.
 - **comment-issue** — id, body.
@@ -63,7 +63,7 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 - **get-pr-files** — number → changed files with per-file status (added/modified/removed).
 - **checkout-pr** — number → PR head available locally (fork PRs included).
 - **review-pr** — number, verdict (approve / request changes), body.
-- **merge-pr** — number; squash by default.
+- **merge-pr** — number; squash by default. Optional head-SHA guard (refuse the merge when the head moved since the caller's gate) and optional `bypass-protection` (merge despite host branch-protection rules, using the caller's admin rights). Callers pass `bypass-protection` only after their own gate has held; `om-auto-merge-buddy` uses it once all three automerge signals hold. A tracker without a bypass documents that it refuses instead.
 - **mark-pr-ready** — promote a draft PR.
 - **get-pr-checks** — number → CI check runs (name, state, link). Document whether this surface can under-report while CI is starting up — on trackers where a queued pipeline registers its jobs lazily, a short result means "not yet known", not "nothing to run", and consumers must cross-check the run level (**list-runs** below, filtered to the PR head SHA) before reading a green verdict out of it.
 - **get-required-checks** — base branch → required status checks; when unreadable, treat all reported checks as required.
@@ -76,10 +76,11 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 - **get-run** — run id → status, conclusion, per-job breakdown.
 - **get-run-failed-logs** — run id → log output of the failed steps (the diagnosis input for CI failures).
 - **rerun-failed** — run id → re-execute only the failed jobs (used to disambiguate flakes before code changes).
+- **approve-pending-runs** — PR head SHA (and PR number) → release CI runs the code host holds for maintainer approval (first-time or fork contributors) and return the released run ids; empty when nothing was held. Document what "held" means in this tracker and that releasing runs the contributor's CI code with this repository's runners and secrets. When the tracker has no such gate, implement it as a no-op that returns nothing.
 - **watch-run** — run id → block until the run completes, signaling success/failure; may degrade to polling **get-run**.
 
 ### Labels
 
 - **list-labels** — all label/tag names.
 - **create-label** — name, color, description; never delete or rename existing ones.
-- **ensure-label-taxonomy** — create every missing label from the config's taxonomy.
+- **ensure-label-taxonomy** — create every missing label from the config's taxonomy, plus `autofix.label` (default `cez-autofix`) in the issue tracker. Split providers document issue-label provisioning separately from code-host PR labels.

@@ -414,11 +414,12 @@ gl_issue_json {issueId}
 ```
 
 #### search-issues
-Query and state (`opened`, `closed`, or `all`) → matching issues. Searches title and description.
+Query and state (`open`/`opened`, `closed`, or `all`) → matching issues. Searches title and description; an empty query enumerates issues. Results are paginated.
 ```bash
 Q=$(printf '%s' "<query>" | jq -sRr @uri)
-STATE=opened   # opened | closed | all
-gl_get "projects/$(gl_project)/issues?state=${STATE}&in=title,description&search=${Q}&per_page=100" \
+STATE="{state}"
+case "$STATE" in open) STATE=opened ;; opened|closed|all) ;; *) exit 1 ;; esac
+gl_list_jq "projects/$(gl_project)/issues?state=${STATE}&in=title,description&search=${Q}&per_page=100" \
   '[.[] | {number: .iid, title, url: .web_url, state: (if .state == "opened" then "OPEN" else "CLOSED" end)}]'
 ```
 
@@ -697,7 +698,7 @@ jq -n --arg sha "<headRefOid>" '{squash: true, sha: $sha}' \
 jq -n --arg sha "<headRefOid>" '{squash: true, sha: $sha, merge_when_pipeline_succeeds: true}' \
   | gl_write PUT "projects/$(gl_project)/merge_requests/{prNumber}/merge" >/dev/null   # auto-merge
 ```
-A project whose squash setting is "Do not allow" rejects `squash: true`, and a moved head answers 409; surface either rather than merging differently. Recent GitLab versions also accept `auto_merge: true` in place of the older `merge_when_pipeline_succeeds`.
+A project whose squash setting is "Do not allow" rejects `squash: true`, and a moved head answers 409; surface either rather than merging differently. The `sha` field is the head-SHA guard. GitLab's merge API has no `bypass-protection` form, so unmet approval rules or a failed pipeline answer 405 and the merge is refused. Recent GitLab versions also accept `auto_merge: true` in place of the older `merge_when_pipeline_succeeds`.
 
 #### mark-pr-ready
 Promote a draft MR by stripping the draft prefix from its title, then read it back.
@@ -798,6 +799,17 @@ RETRY=$(glab api -X POST "projects/$(gl_project)/pipelines/{runId}/retry") || { 
 printf '%s' "$RETRY" | jq "$GL_JQ_DEFS"'gl_run'
 ```
 
+#### approve-pending-runs
+Head SHA → start the merge-request pipeline in the parent project when none exists for that commit yet. GitLab's equivalent of approving a held run: pipelines for MRs from forks do not run in the parent project until a member with Developer rights triggers them. Prints the new pipeline id; an empty result means a pipeline already exists. The pipeline runs the contributor's CI configuration with this project's runners and variables, so callers trigger it only on an MR a human has authorized for automation and read the diff's CI-config changes first.
+```bash
+gl_iid {prNumber} || exit 1
+P=$(gl_project)
+EXISTING=$(gl_get "projects/$P/pipelines?sha={headSha}&per_page=1" 'length') || exit 1
+if [ "$EXISTING" = "0" ]; then
+  printf '{}' | gl_write POST "projects/$P/merge_requests/{prNumber}/pipelines" | jq -r '.id'
+fi
+```
+
 #### watch-run
 Pipeline id → block until the pipeline finishes; exit non-zero unless it succeeded. `glab` has no blocking watch for an arbitrary pipeline, so this polls **get-run** within the caller's wait budget (`ci.maxWaitMinutes`, default 40).
 ```bash
@@ -839,7 +851,7 @@ EXISTING=$(printf '%s' "$EXISTING" | jq -r '.[].name')
 while IFS='|' read -r name color description; do
   [ -n "$name" ] || continue
   printf '%s\n' "$EXISTING" | grep -Fxq "$name" || gl_create_label "$name" "$color" "$description"
-done <<'EOF'
+done <<EOF
 review|#0366d6|Ready for code review
 changes-requested|#b60205|Reviewer requested changes
 qa|#fbca04|Manual QA in progress
@@ -860,6 +872,12 @@ qa-self-verified|#c5def5|Self-QA exception used
 in-progress|#c5def5|An automated skill is working on this
 ci-monitoring|#d4c5f9|Work complete and reported; agent is watching CI results
 do-not-close|#c5def5|Humans only: never auto-close this issue
+${AUTOFIX_LABEL:-cez-autofix}|#5319e7|Human-confirmed issue ready for the configured autofix worker
+${AUTOMERGE_LABEL:-automerge}|#5319e7|Humans only: drive this PR to merge once every gate is green
+automerge-signal-1-cr|#1d76db|om-auto-merge-buddy: code review signal holds for the current head
+automerge-signal-2-qa|#1d76db|om-auto-merge-buddy: QA signal holds for the current head
+automerge-signal-3-ci|#1d76db|om-auto-merge-buddy: CI signal holds for the current head
+automerge-blocked|#b60205|om-auto-merge-buddy parked this PR; a human removes this label to retry
 priority-low|#e4e669|Cosmetic or follow-up work
 priority-medium|#fbca04|Ordinary bug or feature
 priority-high|#d93f0b|Release-blocking

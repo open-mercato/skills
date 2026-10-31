@@ -16,8 +16,9 @@ if [ "$GIT_DIR" != "$GIT_COMMON_DIR" ]; then
 else
   WORKTREE_DIR="$WORKTREE_PARENT/pr-${PR_NUMBER}-$(date +%Y%m%d-%H%M%S)"
   mkdir -p "$WORKTREE_PARENT"
-  git fetch origin "$BASE_BRANCH"
-  git worktree add --detach "$WORKTREE_DIR" "origin/$BASE_BRANCH"
+  # In plain --ci-only --branch mode use the requested branch for this initializer.
+  git fetch origin "$TARGET_BRANCH"
+  git worktree add --detach "$WORKTREE_DIR" "origin/$TARGET_BRANCH"
   CREATED_WORKTREE=1
 fi
 
@@ -46,6 +47,7 @@ git worktree prune
 
 ## om-auto-fix-pr specifics
 
+- PR mode resolves `TARGET_BRANCH` from **get-pr** `baseRefName` before creating the worktree, never from config. In plain `--ci-only --branch` mode, set `TARGET_BRANCH` to the requested branch solely for this initializer; there is no PR target or base merge.
 - **Check out the PR head, not a fresh branch.** Instead of creating a task branch off the base, check out the PR head inside the worktree via the tracker operation **checkout-pr** for `{prNumber}`; the whole run continues on the PR's real head branch. (In `--ci-only --branch <name>` mode there is no PR: `git fetch origin "<name>" && git checkout -B "<name>" "origin/<name>"` instead.)
 - **One worktree for the whole loop.** The same worktree serves every outer-loop cycle; sub-skills invoked from inside it reuse it per the never-nest rule. Clean up only what this run created.
 - If the loop switches to a fork carry-forward replacement PR (see `references/base-merge.md`), the carry branch created by `om-auto-review-pr` becomes the checked-out branch for the remaining cycles.

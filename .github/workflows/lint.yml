@@ -28,3 +28,5 @@ jobs:
         run: node scripts/test-agent-harness-security.mjs
       - name: Delegated review isolation regressions
         run: node scripts/test-review-sweep.mjs
+      - name: Issue-autofix triage and confirmation regressions
+        run: node scripts/test-issue-triage.mjs

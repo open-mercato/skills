@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
+import { runInNewContext } from 'node:vm'
 import { readFileSync } from 'node:fs'
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8')
@@ -45,7 +46,7 @@ assert.match(stages, /target must still equal `base`/)
 assert.match(stages, /revalidate every signal's source evidence immediately/)
 assert.match(signals, /dismissed or deleted approval/)
 assert.match(signals, /new changes-requested verdict after that approval reopens CR on the same head/)
-assert.match(signals, /Invalidate a missing `qa-approved`/)
+assert.match(signals, /missing `qa-approved` invalidates only approval-derived QA/)
 assert.match(signals, /rerun can turn an unchanged head pending or red/)
 console.log('PASS: persisted target, legacy-record invalidation and same-head revocations stay in the read/write/final gate contracts')
 
@@ -110,7 +111,7 @@ assert.match(override, /With no flag,[\s\S]*it is `false`, including when resumi
 assert.match(override, /never skips review, actual correctness or security findings, validation/)
 assert.match(override, /required QA, CI, conflict checks, the head-SHA guard/)
 assert.match(override, /existing `--force` remains claim takeover and is never forwarded/)
-assert.match(signals, /do not bootstrap,[\s\S]*carry forward or re-grant CR or high-risk self-QA from evidence marked[\s\S]*`Risk checks: skipped`/)
+assert.match(signals, /do not bootstrap,[\s\S]*carry forward or re-grant CR from evidence marked[\s\S]*`Risk checks: skipped`/)
 assert.match(signals, /legacy record without this field[\s\S]*source evidence[\s\S]*checked for an override marker/)
 assert.match(signals, /`waiting-human` caused only by the risk-high exclusion[\s\S]*reopened/)
 for (const stage of ['om-auto-review-pr', 'om-auto-qa-pr', 'om-auto-fix-pr']) {
@@ -155,4 +156,33 @@ const ciStage = read('skills/om-auto-fix-pr/references/orchestrated-mode.md')
 assert.match(ciStage, /baseline proof and deferred findings coexist[\s\S]*same baseline CI proof comment[\s\S]*single combined comment URL/)
 assert.match(stages, /resolve the target tip again and revalidate/)
 console.log('PASS: CI baseline waiver requires exact current target/context/config/log root cause, rejects unknown/pending/new failures, expires on strict resume, and preserves combined proof/followups')
+const qaEvidence = read('skills/om-auto-merge-buddy/references/qa-evidence.md')
+const decideQa = runInNewContext(`${qaEvidence.match(/```javascript\n([\s\S]*?)\n```/)[1]}\ncompletedQaEvidence`)
+const qaHead = '852eba38bc4706b4939af0ecc1111c3e84df7104'
+const qaHistory = [
+  { author: 'adeptofvoltron', createdAt: '2026-10-31T10:00:00Z', url: 'https://example.invalid/pull/6786#issuecomment-1', body: '🤖 `om-auto-qa-pr` — starting QA in evidence-only mode' },
+  { author: 'adeptofvoltron', createdAt: '2026-10-31T10:10:00Z', url: 'https://example.invalid/pull/6786#issuecomment-2', body: '# UI QA evidence — PASS\n**Verdict:** ✅ PASS\n**Verified:** `branch` @ `852eba38`\nEvidence-only. Restricted admin and parent-child paths untested. Risk-high.' },
+  { author: 'adeptofvoltron', createdAt: '2026-10-31T10:11:00Z', url: 'https://example.invalid/pull/6786#issuecomment-3', body: '🤖 om-auto-qa-pr completed: PASS' },
+]
+const qaInput = { head: qaHead, comments: qaHistory, writeAuthors: ['adeptofvoltron'], resolveRevision: revision => revision === '852eba38' ? qaHead : null }
+const qaPass = decideQa(qaInput)
+assert.equal(qaPass.held, true, 'PR6786 trusted completed evidence-only PASS must grant QA despite risk-high, coverage notes and no approval labels')
+assert.equal(qaPass.sha, qaHead)
+assert.equal(qaPass.author, 'adeptofvoltron', 'Source evidence need not come from CURRENT_USER')
+assert.equal(qaPass.evidence, qaHistory[1].url)
+for (const changed of [
+  { head: 'a'.repeat(40) },
+  { writeAuthors: [] },
+  { resolveRevision: () => null },
+  { resolveRevision: () => { throw new Error('ambiguous object') } },
+  { comments: qaHistory.slice(1) },
+  { comments: qaHistory.slice(0, 2) },
+  { comments: qaHistory.map((comment, index) => index === 2 ? { ...comment, author: 'other-writer' } : comment), writeAuthors: ['adeptofvoltron', 'other-writer'] },
+  { comments: [...qaHistory, { author: 'adeptofvoltron', createdAt: '2026-10-31T10:20:00Z', url: 'https://example.invalid/fail', body: 'om-auto-qa-pr completed: FAIL' }] },
+  { comments: [...qaHistory, { author: 'adeptofvoltron', createdAt: '2026-10-31T10:20:00Z', url: 'https://example.invalid/revoked', body: 'QA report revoked' }] },
+]) assert.equal(decideQa({ ...qaInput, ...changed }).held, false, JSON.stringify(changed))
+assert.equal(decideQa({ ...qaInput, comments: [...qaHistory, { author: 'untrusted-outsider', createdAt: '2026-10-31T10:20:00Z', body: 'om-auto-qa-pr completed: FAIL' }] }).held, true, 'Untrusted pasted verdicts do not revoke trusted evidence')
+assert.match(signals, /no QA attempt is counted/)
+assert.match(stages, /grants signal 2 and skips this stage with zero attempts/)
+console.log('PASS: executable PR6786 legacy completed-PASS decision grants same-head QA without approval labels and rejects wrong/ambiguous head, missing linkage, untrusted authors, newer FAIL and revoked evidence')
 console.log('Merge buddy regressions passed.')

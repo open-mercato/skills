@@ -2,7 +2,7 @@
 
 > 🤖 Autonomous — runs end-to-end without supervision, and stops for human confirmation before labeling
 
-Chooses which open PRs should enter the unattended merge queue. Every open PR is checked against hard gates and placed in the first eligibility tier it matches. Each tier is then ordered by priority label, risk and age. The skill proposes the top PRs and, once a human confirms, labels them `automerge` for [om-auto-merge-buddy](om-auto-merge-buddy.md) to work.
+Chooses which open PRs should enter the unattended merge queue. It looks at one window of open PRs at a time: by default those opened in the last month, or the oldest month with `--from-oldest`, and `--window <n>` scrolls to the next one. Up to 100 PRs from the window are checked against hard gates, placed in the first label-based tier they match, and ordered by tier, priority label, risk and age. The top 20 form a shortlist. AI judgment runs on that shortlist only, and the result is proposed. A human then labels all of it or a selection `automerge`, for [om-auto-merge-buddy](om-auto-merge-buddy.md) to work, or scrolls to the next window.
 
 | Default tier | PRs that… |
 |---|---|
@@ -16,14 +16,18 @@ PRs from first-time contributors, outside collaborators, or authors with no asso
 
 AI judgment reads the current diff, issue, reviews, screenshots and test evidence to check whether the fix makes sense, addresses an important problem and has a bounded path to merge. PRs waiting at least `aiJudgment.staleAfterDays` (default `7`) get extra attention. A `changes-requested` label or review state is eligible only after a positive judgment, regardless of other tier matches; major unresolved objections keep it out. Screenshots and age never substitute for review, QA or CI approval. The proposal cites evidence, remaining work and gaps. Existing explicit exclusions and tier order are preserved; to adopt the rescue path, add `ai-judgment` to the tiers and remove `changes-requested` from exclusions.
 
-A run without `--apply` is a dry run: it shows the proposal and stops at `⚠ NEEDS HUMAN CONFIRMATION`, so it is safe to schedule. Confirmed PRs are re-checked before labeling. Each labeled PR gets one label-rationale comment explaining its tier.
+A run without `--apply` is a dry run: it shows the proposal and stops at `⚠ NEEDS HUMAN CONFIRMATION` with three commands (label all, label selected, next window), so it is safe to schedule. Confirmed PRs are re-checked before labeling. Each labeled PR gets one label-rationale comment explaining its tier.
 
 ## Parameters
 
 | Parameter | Required | Description |
 |---|---|---|
 | `--apply <n,n,…\|all>` | No | The human confirmation. It labels these PRs, or every PR in the current proposal with `all`. |
-| `--limit <n>` | No | The most PRs to propose. Default `automerge.eligibility.limit` (`10`). |
+| `--limit <n>` | No | Output limit: the shortlist AI judgment runs on, and the most PRs proposed. Default `automerge.eligibility.limit` (`20`). |
+| `--analyze-limit <n>` | No | The most in-window PRs gated and label-ranked. Default `automerge.eligibility.analyzeLimit` (`100`). |
+| `--lookback-days <n>` | No | Window length. Default `automerge.eligibility.lookbackDays` (`30`, the last month). |
+| `--window <n>` | No | Scroll to the `n`-th window (default `1`), each `lookbackDays` long, without overlap. Every proposal prints the next-window command. |
+| `--from-oldest` | No | Start the window at the oldest open PR and cover `lookbackDays` from there, oldest first. |
 | `--pr <number>` | No | Evaluate one PR and explain every gate and tier. |
 
 ## Works with

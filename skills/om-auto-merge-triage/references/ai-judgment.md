@@ -1,7 +1,9 @@
 # AI judgment — worthwhile fixes close to merge
 
-Run this assessment after the hard gates when `TIERS` includes `ai-judgment`,
-or whenever a surviving PR has requested changes. This is triage, not an
+Run this assessment only on the shortlist — the top `LIMIT` PRs of the
+label-based ranking (SKILL.md step 5) — when `TIERS` includes `ai-judgment`, or
+for a shortlisted PR with requested changes. Never assess a PR outside the
+shortlist. This is triage, not an
 approving review or QA sign-off. Make the decision yourself from evidence; do
 not ask the author or user to score the PR.
 

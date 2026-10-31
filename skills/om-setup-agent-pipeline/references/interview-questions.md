@@ -24,7 +24,8 @@ The questions step 3 of `om-setup-agent-pipeline` asks the user (skipped with `-
    - **Security labels** (`securityLabels`, default the `security` category label).
    - **Trusted authors** (`trustedAuthors`, default none): logins that form their own tier and bypass the author-association exclusion. Suggest the maintainers and any dependency bot the repository uses, but add only the logins the user names.
    - **Excluded author associations** (default `first-time-contributor`, `outside-collaborator`, `none`). Their PRs are never proposed unless the author is trusted.
-   - **Excluded labels** (default `do-not-merge`, `blocked`, `qa-failed`) and the **proposal limit** (default `10`).
+   - **Excluded labels** (default `do-not-merge`, `blocked`, `qa-failed`).
+   - **Window and limits**: `lookbackDays` (default `30` — only PRs opened in the last month; `--from-oldest` covers the oldest month instead), `analyzeLimit` (default `100` PRs gated and label-ranked) and the output `limit` (default `20` — the shortlist AI judgment runs on, and the most PRs proposed).
    Preserve explicit existing tiers and exclusions on reconfiguration unless the user chooses the new policy. To adopt AI rescue, add `ai-judgment` and remove `changes-requested` from exclusions.
    Under `--defaults`, write the defaults with an empty `trustedAuthors`. Never guess logins.
 6. QA gate on or off. Recommend on when the repo ships user-facing changes.

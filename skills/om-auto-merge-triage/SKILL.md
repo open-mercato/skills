@@ -10,9 +10,12 @@ confirms — label them `automerge` so `om-auto-merge-buddy` works them. This sk
 never submits a review, fixes, or merges anything. It decides **eligibility** and
 **order**, proposes, and labels the confirmed PRs.
 
-The pipeline: classify each open PR → drop the ones failing a hard gate → place
-the rest in the first eligibility tier they match → order each tier by priority
-label → propose → **stop for confirmation** → label the confirmed PRs.
+The pipeline: take the open PRs inside the lookback window (default the last
+month, or the oldest month with `--from-oldest`) → analyze at most
+`ANALYZE_LIMIT` (100) of them → drop the ones failing a hard gate → rank the
+rest by the label-based tiers → keep the top `LIMIT` (20) → run AI judgment on
+that shortlist only → re-rank → propose → **stop for confirmation** → label the
+confirmed PRs.
 
 Every rule comes from `automerge.eligibility` in `.ai/agentic.config.json`, which
 `om-setup-agent-pipeline` writes in its automerge eligibility step. The defaults:
@@ -44,7 +47,11 @@ it runs unattended, so it is safe to schedule.
 ## Arguments
 
 - `--apply <n,n,…|all>` (optional) — the human confirmation. It labels the listed PR numbers, or `all` for every PR the run proposes. Without it the run is a dry run. When a user in the session confirms the proposal in reply, treat the reply as `--apply` with the PRs they named.
-- `--limit <n>` (optional) — the most PRs to propose. Default `automerge.eligibility.limit` (10).
+- `--limit <n>` (optional) — output limit: the shortlist size, and so the most PRs proposed. Default `automerge.eligibility.limit` (20).
+- `--analyze-limit <n>` (optional) — the most in-window PRs put through the gates and label-based ranking. Default `automerge.eligibility.analyzeLimit` (100).
+- `--lookback-days <n>` (optional) — the window length in days. Default `automerge.eligibility.lookbackDays` (30, one month).
+- `--window <n>` (optional) — scroll: analyze the `n`-th window (default `1`). Each window is `LOOKBACK_DAYS` long and starts where the previous one ended — further back in time by default, further forward with `--from-oldest`. Every proposal prints the command for the next window.
+- `--from-oldest` (optional) — start from the oldest open PR instead of today: the window covers PRs created from the oldest open PR's creation date up to `LOOKBACK_DAYS` later, analyzed oldest first. Without it, the window is the last `LOOKBACK_DAYS` days, analyzed newest first.
 - `--pr <number>` (optional) — evaluate only this PR, and explain each gate and tier it passed or failed.
 
 ## Chaining
@@ -55,23 +62,23 @@ Runs before `om-auto-merge-buddy` and consumes no previous skill's output. Its i
 
 **ALWAYS check first:** Apply `.ai/skills/om-auto-merge-triage/SKILL.md` when present; safety rules still win.
 
-0. **Agentic setup** — follow `references/agentic-setup.md`. This skill uses: `BASE_BRANCH`, `LABELS_ENABLED` (`--apply` needs `true`, because the outcome is a label; a dry run works without it), `AUTOMERGE_LABEL`, the `automerge.eligibility` slots (`TIERS`, `SMALL_PR_FILE_LIMIT`, `STALE_AFTER_DAYS`, `SECURITY_LABELS`, `TRUSTED_AUTHORS`, `EXCLUDE_ASSOCIATIONS`, `EXCLUDE_LABELS`, `LIMIT`), the `labels.priority` and `labels.risk` lists, and the tracker operations **current-user**, **default-branch**, **list-prs**, **get-pr**, **get-pr-author-association**, **get-pr-diff**, **get-issue**, **list-review-comments**, **get-pr-checks**, **list-issue-comments**, **comment-pr**, **update-comment**, **create-label**, and the `label_exists` / `apply_label` guards.
+0. **Agentic setup** — follow `references/agentic-setup.md`. This skill uses: `BASE_BRANCH`, `LABELS_ENABLED` (`--apply` needs `true`, because the outcome is a label; a dry run works without it), `AUTOMERGE_LABEL`, the `automerge.eligibility` slots (`TIERS`, `SMALL_PR_FILE_LIMIT`, `STALE_AFTER_DAYS`, `SECURITY_LABELS`, `TRUSTED_AUTHORS`, `EXCLUDE_ASSOCIATIONS`, `EXCLUDE_LABELS`, `LOOKBACK_DAYS`, `ANALYZE_LIMIT`, `LIMIT`), the `labels.priority` and `labels.risk` lists, and the tracker operations **current-user**, **default-branch**, **list-prs**, **get-pr**, **get-pr-author-association**, **get-pr-diff**, **get-issue**, **list-review-comments**, **get-pr-checks**, **list-issue-comments**, **comment-pr**, **update-comment**, **create-label**, and the `label_exists` / `apply_label` guards.
 
-1. **List candidates.** Fetch every open PR with **list-prs** (limit 500, raising the descriptor's default cap; when the result reaches the limit, the proposal discloses that older PRs were not evaluated), requesting `number,title,url,author,labels,isDraft,baseRefName,createdAt,changedFiles,closingIssuesReferences,reviewDecision,latestReviews`. Call **get-pr** for any field the tracker's list leaves out. Establish the review state before deciding whether requested-changes judgment is required; unreadable review state rejects the PR with `review state unknown` rather than being assumed clear. With `--pr`, fetch that PR only.
+1. **List candidates in the window.** Fetch the open PRs with **list-prs** (limit 1000, raising the descriptor's default cap; when the result reaches the limit, the proposal discloses it), requesting `number,title,url,author,labels,isDraft,baseRefName,createdAt,changedFiles,closingIssuesReferences,reviewDecision,latestReviews`. Call **get-pr** for any field the tracker's list leaves out. Establish the review state before deciding whether requested-changes judgment is required; unreadable review state rejects the PR with `review state unknown` rather than being assumed clear. Then apply the window and the analyze limit (`references/eligibility.md` → Window and analyze limit): keep PRs whose `createdAt` falls inside the window, order them newest first (oldest first with `--from-oldest`), and keep the first `ANALYZE_LIMIT`. Count the PRs left outside the window or past the limit for the report. With `--pr`, fetch that PR only and skip the window.
 
 2. **Sort out PRs that are already handled.** A PR already carrying `AUTOMERGE_LABEL` goes to the *already queued* list. Re-check the hard gates for it and flag any it now fails, but never remove the label. A PR carrying `automerge-blocked` is skipped: it is waiting for a human to clear that label. Neither kind is proposed.
 
 3. **Apply the hard gates** (`references/eligibility.md` → Hard gates): open and not a draft, targets `BASE_BRANCH`, no label in `EXCLUDE_LABELS`, and an author association outside `EXCLUDE_ASSOCIATIONS` (read with **get-pr-author-association**) unless the author is in `TRUSTED_AUTHORS`. Run the cheap list-field gates first, so the association lookup runs only for PRs that are still candidates. Record the first gate each rejected PR failed.
 
-4. **Judge and assign a tier.** Follow `references/ai-judgment.md` for surviving PRs when `TIERS` includes `ai-judgment` or when requested changes are present. Read the current diff, discussion, review feedback and evidence; judge whether the change addresses an important, still-relevant problem and is close to merge. A PR with requested changes needs a positive judgment even if it matches another tier. Then evaluate the criteria (`references/eligibility.md` → Criteria) and place each surviving PR in the **first** tier of `TIERS` where it matches any criterion. A PR that matches no tier is not proposed, and is recorded as `no tier matched`.
+4. **Label-based tier and shortlist.** Evaluate the label-based criteria — every criterion except `ai-judgment` (`references/eligibility.md` → Criteria) — and place each surviving PR in the **first** tier of `TIERS` it matches. A PR matching no label-based tier becomes a *judgment-only candidate*, ranked after every tiered PR, when `TIERS` includes `ai-judgment`; otherwise it is recorded as `no tier matched`. Rank (`references/eligibility.md` → Ranking) and keep the first `LIMIT` as the shortlist. PRs past the shortlist are counted for the report and get no AI judgment.
 
-5. **Rank.** Order the PRs by tier, then by priority label (highest first, unlabeled last), then by risk label (lowest first), then by age (oldest first). Keep the first `LIMIT` as the proposal (`references/eligibility.md` → Ranking).
+5. **AI judgment on the shortlist only.** When `TIERS` includes `ai-judgment`, or a shortlisted PR has requested changes, follow `references/ai-judgment.md` for each shortlisted PR — never for PRs outside it. `match` moves the PR to the `ai-judgment` tier when that tier comes earlier than its label-based one. A PR with requested changes, or a judgment-only candidate, is dropped unless the judgment is `match`, with the decisive reason recorded. Re-rank the remaining PRs; they are the proposal (at most `LIMIT`, never backfilled).
 
 6. **Report the proposal** using `references/report-templates.md` → Proposal. It contains the ranked table (tier, matched criteria, priority, risk, files changed, author association), the already-queued list with any flags, and a collapsed list of rejected PRs, each with its decisive gate or judgment. Include the evidence-linked judgment record from `references/ai-judgment.md` for every assessed PR.
 
-7. **Stop for confirmation**, unless `--apply` was given. End with `⚠ NEEDS HUMAN CONFIRMATION` and the exact apply command for the proposed PRs. A scheduled run stops here. With `--apply` (or a confirming reply), continue to step 8.
+7. **Stop for confirmation**, unless `--apply` was given. End with `⚠ NEEDS HUMAN CONFIRMATION` and three exact commands, each carrying this run's window flags (`--window`, `--from-oldest`, `--lookback-days`, `--analyze-limit`, `--limit`) so it reproduces the same shortlist: label **all** proposed PRs (`--apply all`), label **selected** ones (`--apply <n>,<n>`), or **scroll** to the next window (`--window <n+1>`, no `--apply`). A scheduled run stops here. With `--apply` (or a reply choosing all or some PRs), continue to step 8; a reply asking for the next window starts a new dry run with `--window <n+1>`.
 
-8. **Apply the label to confirmed PRs only.** For each confirmed number, re-read the PR with **get-pr** and repeat steps 2–4 on its current state, refreshing the judgment and evidence against its current head. Skip any PR that is no longer eligible or is not in the proposal, and say why. For an eligible PR, `apply_label "$AUTOMERGE_LABEL"` (create it with **create-label** first when `label_exists` says it is missing), then create or update this skill's label-rationale comment (`references/report-templates.md` → Label rationale). Never touch assignees, claims, or other labels.
+8. **Apply the label to confirmed PRs only.** For each confirmed number, re-read the PR with **get-pr** and repeat steps 2–5 on its current state, refreshing the judgment and evidence against its current head. Skip any PR that is no longer eligible or is not in the proposal, and say why. For an eligible PR, `apply_label "$AUTOMERGE_LABEL"` (create it with **create-label** first when `label_exists` says it is missing), then create or update this skill's label-rationale comment (`references/report-templates.md` → Label rationale). Never touch assignees, claims, or other labels.
 
 9. **Report.** Give the outcome per PR (labeled, skipped with reason), then a `PR:` chaining line for each PR labeled (`references/report-templates.md` → Apply report).
 

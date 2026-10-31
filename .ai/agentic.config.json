@@ -78,7 +78,9 @@
       "trustedAuthors": [],
       "excludeAuthorAssociations": ["first-time-contributor", "outside-collaborator", "none"],
       "excludeLabels": ["do-not-merge", "blocked", "qa-failed"],
-      "limit": 10
+      "lookbackDays": 30,
+      "analyzeLimit": 100,
+      "limit": 20
     }
   },
   "engine": {

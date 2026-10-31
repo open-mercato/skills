@@ -8,6 +8,8 @@ would enter the queue and why, and keep the rejected list collapsed.
 ```markdown
 🎯 `om-auto-merge-triage` — {k} PRs proposed for `{AUTOMERGE_LABEL}` ({e} eligible, {r} rejected, {q} already queued).
 
+📋 Window {n}: PRs created {from} → {to} ({last {d} days | oldest {d} days, `--from-oldest`}); {a} analyzed, {s} shortlisted for AI judgment. {o} open PRs outside the window{, {x} in-window PRs past the analyze limit} — reach them with {`--from-oldest` | `--lookback-days <n>` | `--analyze-limit <n>`}. Omit the second sentence when nothing was left out.
+
 Labeling a PR `{AUTOMERGE_LABEL}` lets `om-auto-merge-buddy` bring it to review, QA and CI signals unattended{, and squash-merge it when `automerge.mode` is `prepare-and-merge`}.
 
 | # | PR | Tier | Why | Priority | Risk | Files | Author |
@@ -16,10 +18,10 @@ Labeling a PR `{AUTOMERGE_LABEL}` lets `om-auto-merge-buddy` bring it to review,
 | 2 | #<n> <title> | 2 | `security`, `small` | — | risk-medium | 2 | @login (contributor) |
 …
 
-{Eligible PRs beyond the limit: #a, #b — the next run picks them up. Omit when none.}
-{Open PRs not listed by the tracker: list capped at {N}; older PRs were not evaluated. Omit when the list was complete.}
+{Eligible PRs past the shortlist (not AI-judged): #a, #b — the next run picks them up. Omit when none.}
+{Open-PR list capped at {N} by the tracker; PRs beyond it were not seen. Omit when the list was complete.}
 
-**AI judgment** — one record per assessed PR, in the shape from `references/ai-judgment.md` → Decision record. Omit when no PR was assessed:
+**AI judgment** (shortlist only) — one record per assessed PR, in the shape from `references/ai-judgment.md` → Decision record. Omit when no PR was assessed:
 - #<n> — AI judgment: {match | no match | unknown}; head: <sha>. Value: … Readiness: … Rescue signals: …
 
 **Already queued** — omit when empty:
@@ -32,14 +34,21 @@ Labeling a PR `{AUTOMERGE_LABEL}` lets `om-auto-merge-buddy` bring it to review,
 Records for assessed PRs outside the proposal go here, collapsed.
 </details>
 
-⚠ NEEDS HUMAN CONFIRMATION — labeling lets automation merge these PRs. To confirm, reply with the PR numbers or run:
-`/om-auto-merge-triage --apply <n>,<n>,<n>`
+⚠ NEEDS HUMAN CONFIRMATION — labeling lets automation merge these PRs. Reply "all", the PR numbers, or "next", or run:
+- Label all {k}: `/om-auto-merge-triage {window flags} --apply all`
+- Label selected: `/om-auto-merge-triage {window flags} --apply <n>,<n>`
+- Next window: `/om-auto-merge-triage {window flags with --window <n+1>}`
 ```
+
+`{window flags}` repeats every window flag of this run (`--window <n>`,
+`--from-oldest`, `--lookback-days`, `--analyze-limit`, `--limit`) when set, so
+the apply run rebuilds the same shortlist; omit flags left at their default.
+Drop the next-window line when the next window is empty.
 
 Show titles exactly as data, trimmed to about 60 characters with any markdown
 neutralized. Never let a title change the table's structure. A run with no
-eligible PR reports `No PR qualifies for {AUTOMERGE_LABEL} right now`, followed by
-the rejected summary, and skips the confirmation line.
+eligible PR reports `No PR qualifies for {AUTOMERGE_LABEL} in window {n}`, followed by
+the rejected summary and the next-window command only.
 
 ## Label rationale (one per labeled PR, step 8)
 

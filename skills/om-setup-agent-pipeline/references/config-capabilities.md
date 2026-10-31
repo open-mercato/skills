@@ -59,7 +59,9 @@ committed configs keep working.
 | `automerge.eligibility.trustedAuthors` | `[]` | `om-auto-merge-triage`; logins for the `trusted-author` tier, which also bypass the author-association exclusion. |
 | `automerge.eligibility.excludeAuthorAssociations` | `["first-time-contributor","outside-collaborator","none"]` | `om-auto-merge-triage`; normalized **get-pr-author-association** values whose PRs are never proposed. |
 | `automerge.eligibility.excludeLabels` | `["do-not-merge","blocked","qa-failed"]` | `om-auto-merge-triage`; labels that keep a PR out of the proposal. |
-| `automerge.eligibility.limit` | `10` | `om-auto-merge-triage`; the most PRs proposed per run. |
+| `automerge.eligibility.lookbackDays` | `30` | `om-auto-merge-triage`; window length in days. Default window is the last month; `--from-oldest` starts it at the oldest open PR instead. |
+| `automerge.eligibility.analyzeLimit` | `100` | `om-auto-merge-triage`; the most in-window PRs put through the gates and label-based ranking. |
+| `automerge.eligibility.limit` | `20` | `om-auto-merge-triage`; output limit — the shortlist size from the label-based ranking, which is the only set AI judgment runs on and the most PRs proposed. |
 | `prTitleTemplate` | `"{prefix}({area}): {summary}{issueRef}"` | PR-opening skills (`om-open-pr`, `om-auto-create-pr`, `om-auto-create-pr-loop`, `om-auto-fix-issue`, `om-auto-review-pr` fork flow); placeholders `{prefix}`, `{area}`, `{summary}`, `{issue}`, `{issueRef}`, `{ticketKey}`, e.g. `"[{issue}] {prefix}({area}): {summary}"`. |
 | `ticketKeyPattern` | absent | PR-opening skills; ERE whose first match in the head branch name fills `{ticketKey}` (e.g. `"[A-Z][A-Z0-9]+-[0-9]+"`). |
 

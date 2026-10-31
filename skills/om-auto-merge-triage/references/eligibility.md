@@ -3,6 +3,29 @@
 Every value here comes from `automerge.eligibility` (loaded in
 `references/agentic-setup.md`). The defaults shown apply when a key is absent.
 
+## Window and analyze limit
+
+Applied in SKILL.md step 1, before any gate.
+
+| Mode | Window (by `createdAt`) | Analyze order |
+|---|---|---|
+| default | the last `LOOKBACK_DAYS` days (default 30), ending now | newest first |
+| `--from-oldest` | from the oldest open PR's `createdAt` to `LOOKBACK_DAYS` days later | oldest first |
+| `--window <n>` | the window above shifted by `(n-1) × LOOKBACK_DAYS` days — back in time by default, forward with `--from-oldest` | as above |
+
+Windows never overlap, so scrolling `--window 1`, `2`, `3`, … visits every open
+PR once. A window past the oldest open PR (default) or past today
+(`--from-oldest`) is empty: report `No open PRs in window <n>` and stop with no
+next-window command.
+
+Keep the first `ANALYZE_LIMIT` (default 100) PRs of the window in that order;
+only they go through the hard gates and the label-based ranking. Filter and
+sort on `createdAt` yourself, so it works on any tracker. PRs already carrying
+`AUTOMERGE_LABEL` are listed as *already queued* whatever their age, in window 1 only. The report
+states the window, how many open PRs fell outside it, and how many in-window PRs
+were past the analyze limit, with the flag that reaches the rest (`--from-oldest`
+or a larger `--lookback-days` / `--analyze-limit`).
+
 ## Hard gates
 
 A PR must pass every gate to be proposed. Evaluate them in this order, which
@@ -80,15 +103,21 @@ requested-changes judgment.
 
 ## Ranking
 
-Sort the eligible PRs by these keys, in order:
+Ranking runs twice: first on the label-based tiers to cut the shortlist
+(SKILL.md step 4), then again on the shortlist after AI judgment (step 5). AI
+judgment never runs on a PR outside the shortlist. In the first pass,
+`ai-judgment` matches nothing and judgment-only candidates sort after every
+tiered PR. Sort by these keys, in order:
 
 1. **Tier**, lowest index first.
 2. **Priority label**, highest first. The rank is the label's position in `labels.priority` (lowest → highest), and a PR without one sorts after every labeled PR.
 3. **Risk label**, lowest first. The rank is the label's position in `labels.risk`, and a PR without one sorts after `risk-medium`.
 4. **Age**, oldest `createdAt` first.
 
-Keep the first `LIMIT` as the proposal. Report how many eligible PRs fell
-outside the limit, so the next run can pick them up.
+The first pass keeps the first `LIMIT` (default 20) as the shortlist. The
+second pass orders whatever survives the judgment; dropped PRs are not replaced,
+so the proposal can be shorter than `LIMIT`. Report how many eligible PRs fell
+past the shortlist, so the next run can pick them up.
 
 ## `--pr` explain mode
 

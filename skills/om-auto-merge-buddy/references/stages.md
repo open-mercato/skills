@@ -66,7 +66,7 @@ When a stage reports `replacement=<n>` (it carried a fork PR forward to a
 credited replacement):
 
 1. Re-read the replacement via **get-pr**. It must be open, target the same branch, carry `AUTOMERGE_LABEL` (the fork flow copies it from a fresh reading of the original), and carry its `Supersedes #<old>` + credit lines. Missing label → `apply_label` it **only** when the original still carried it at the moment of transfer. A label a human removed is never re-created.
-2. End the original's visit as `replaced`. Remove its `in-progress`, `ci-monitoring` and `automerge-signal-*` labels, and point its status comment at `#<n>`.
+2. End the original's visit as `replaced`. Remove its `in-progress`, `ci-monitoring` and `automerge-signal-*` labels, and point its status comment at `#<n>`. **Move the run handoff** in the same breath: log a `replaced` step (`#<old> → #<n>`) in `RUN.md`, and rewrite `HANDOFF.md` so *In flight*, the queue and *Next concrete action* name `#<n>`, never the closed original (`references/run-log.md`).
 3. Claim the replacement (`references/claim-pr.md`) and open its status comment with `🔁 carried forward from #<old>`. Reset attempts. Record any signal the stage proved for the replacement's `head` (a review `pass` on that head counts as signal 1).
 4. Continue the ladder on the replacement in the same visit. It is the active PR from here on, in every later stage, report line and chaining line.
 

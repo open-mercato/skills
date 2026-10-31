@@ -26,9 +26,10 @@ AUTOMERGE_LABEL=$(jq -r '.automerge.label // "automerge"' "$CONFIG")
 AUTOMERGE_MODE=$(jq -r '.automerge.mode // "prepare-to-merge"' "$CONFIG")      # or prepare-and-merge
 WINDOW_MINUTES=$(jq -r '.automerge.windowMinutes // 120' "$CONFIG")            # 0 = one pass, no idle polling
 MAX_ATTEMPTS=$(jq -r '.automerge.maxAttempts // 3' "$CONFIG")                  # failed stages per signal before parking
+RUNS_DIR=$(jq -r '.paths.runs // ".ai/runs"' "$CONFIG")                         # run folders live in $RUNS_DIR/merge-buddy/
 ```
 
-`--mode` and `--window` override the config for this run. Accept the mode only as one of the two literal values, and the window and attempt limits only as non-negative decimal integers.
+`--mode` and `--window` override the config for this run. `RUNS_DIR` must be a repo-relative path matching `^[A-Za-z0-9._/-]+$` without `..`; otherwise fall back to `.ai/runs`. Accept the mode only as one of the two literal values, and the window and attempt limits only as non-negative decimal integers.
 
 - **Labels are the state machine.** `labels.enabled: false` → stop before touching any PR and report that this skill needs labels. Missing labels in the taxonomy (`automerge-signal-1-cr`, `automerge-signal-2-qa`, `automerge-signal-3-ci`, `automerge-blocked`, `ci-monitoring`, `in-progress`) are created via **create-label** with the colors the descriptor's **ensure-label-taxonomy** lists. If a label still cannot be created, stop: a signal that cannot be recorded cannot be trusted.
 - **Unattended by design.** No user is present, so a missing config runs `om-setup-agent-pipeline --defaults`. A decision point takes the most reversible option and records it in the PR's status comment. It never asks.

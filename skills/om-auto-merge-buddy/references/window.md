@@ -26,13 +26,15 @@ changed since the last visit.
 ## Deadline
 
 - Do not start a new visit with less than 10 minutes left, or a new stage with less than 5. A stage needs that much just to report safely.
-- A stage running at `DEADLINE` is allowed to finish. Then end the visit in its current outcome (usually `waiting-ci`), release or swap the claim, update the status comment, and stop.
+- A stage running at `DEADLINE` is allowed to finish. Then end the visit in its current outcome (usually `waiting-ci`), release or swap the claim, update the status comment, **write the final `HANDOFF.md`** (remaining queue, next concrete action, `Status: window-ended` when work is left — `references/run-log.md` → Final handoff), and stop.
 - Never leave a PR claimed past the run. The release trap covers crashes too.
 
 ## Cadence across runs
 
-Each run picks up where the last one left off, purely from labels and status
-comments. Nothing else carries over. A schedule shorter than the window
+Each run picks up where the last one left off. Per PR, that state is the labels
+and status comments. Per run, a run that died resumes from its open
+`HANDOFF.md`: the PR in flight first, then the queue it had left
+(`references/run-log.md`). A schedule shorter than the window
 (for example `--window 0` every 30 minutes, or the 2-hour default nightly) is
 safe. A second concurrent instance would skip every PR the first holds
 `in-progress`, but it is still wasted work, so schedule one instance per

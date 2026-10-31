@@ -82,6 +82,15 @@ Decisions:
 - [x] 8.4 Apply independent-review fixes (loop termination, QA head pinning, stale-lock heartbeat, self-authored approval) and re-run the gate — af206d5
 - [x] 8.3 Merge the latest main and run the full validation gate — 83cbeda
 
+### Phase 9: Initial signals from the PR's real state
+
+Decision: on a first visit (no signal record), the buddy derives the initial signals from the PR's existing labels, reviews, comments and CI checks, and starts the ladder at the first signal still missing. Only comments from the automation account count as tool evidence; pipeline labels are hints, never evidence. Requested by the owner on 2026-10-31.
+
+- [x] 9.1 Add the first-visit signal bootstrap to om-auto-merge-buddy and the SDLC docs — cfc1561
+- [x] 9.2 Run the full validation gate and the review pass — 6e11714
+
+- 9.2 evidence: all five configured validation commands passed (lint with Python 3.12, since the default python lacks `tomllib`). An independent delta review of cfc1561 found two majors (timestamp-based head matching, untrusted status-comment authorship) and four minors (approval precedence, `qa-failed` as evidence, human QA note trust, attempt counting); all fixed in 6e11714.
+
 ## Follow-up validation and compatibility evidence
 
 - Full configured gate: all seven commands passed on Python 3.14.4 with `TMPDIR=/tmp`. The cockpit normally puts temporary directories under a parent Git checkout; an external temporary root lets the existing no-Git UX fixture exercise its intended condition. No tests or assertions were changed.

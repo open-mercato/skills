@@ -32,6 +32,23 @@ Replacement PR requirements:
 - Mention that the branch was re-reviewed after autofix and is intended to be merge-ready
 - Reassign the replacement PR to the original PR author when possible, and leave a handoff comment inviting them to do the next recheck from the carried-forward branch
 
+## Moving the run handoff
+
+A carry-forward must not strand the original's resume point. When the original
+PR has a run folder — its body's `Tracking plan:` line, or a
+`<paths.runs>/<run>/HANDOFF.md` on its head (written by `om-auto-create-pr`,
+`om-auto-create-pr-loop` or their continue skills) — the carry branch already
+contains those files, because it starts from the fetched head. Move the handoff
+to the replacement before pushing:
+
+- Rewrite `HANDOFF.md`'s `PR:` and `Branch:` fields to the replacement and the carry branch, refresh `Last updated`, and add `carried forward from #<old> by `om-auto-review-pr` autofix` under *What just happened*. Keep *Next concrete action* pointing at the first unfinished step.
+- Append a UTC `carried forward to #<new>` entry to `NOTIFY.md`; never rewrite earlier entries. Leave `PLAN.md` progress as it is.
+- Copy the `Tracking plan:` line into the replacement's body unchanged, so `om-auto-continue-pr` / `om-auto-continue-pr-loop` resume on the replacement instead of the closed original.
+- Commit these edits with the fixes on the carry branch, and name the moved run folder in the handoff comment.
+
+No run folder → nothing to move. Under `--orchestrated`, the orchestrator moves
+its own run-level handoff when it reads `replacement=<n>`.
+
 ## Labels and chain continuation
 
 Read the original PR's current labels through **get-pr** immediately before

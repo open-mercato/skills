@@ -8,6 +8,9 @@ node_modules/
 # Temporary worktrees created by pipeline skills
 .ai/tmp/
 
+# om-auto-merge-buddy run logs (local, per machine)
+.ai/runs/merge-buddy/
+
 # Serena MCP local tooling state
 .serena/
 .DS_Store

@@ -4,16 +4,11 @@
 
 Given a single PR number, this skill submits an approving review and squash-merges the PR — fast and low-friction, but never faster than the merge gates. It refuses when the QA gate or a blocking label (`qa-failed`, `do-not-merge`, `blocked`, or an in-flight `qa`) forbids the merge, and it routes fixable blockers to automation instead of dead-ending: failing required checks to `om-auto-fix-pr --ci-only`, and conflicts or unresolved review feedback to the full `om-auto-fix-pr` loop. Optionally it can file a follow-up tracking issue in the same run. Use it when you say "approve and merge PR 123", "ship PR 123", or hand it a PR number with intent to merge.
 
-The merge destination and required-check branch come from the PR's own `baseRefName`, including release or feature branches. The skill never retargets an existing PR to the configured default.
-
-`om-merge-buddy --automerge` can pass `--automerge` with its active claim context. This mode revalidates the human-applied label and claim, proceeds past self-approval rejection without asking again, and returns needs-human for every other ambiguity. Independent review requirements and all merge gates still apply.
-
 ## Parameters
 
 | Parameter | Required | Description |
 |---|---|---|
 | PR number | Yes | The PR to approve and merge, e.g. `2805`. |
-| `--automerge` | Optional | Validated unattended handoff from `om-merge-buddy`; the flag alone grants no merge authority. |
 | Repo | Optional | Target repository. Defaults to the repo of the current working directory; asks if not inside a git repo. |
 | Follow-up | Optional | A follow-up to file after the merge — either a free-text ask or a pasted PR/comment link. Triggered by phrasing like "…and add a follow-up" or "follow-up: <ask>". |
 

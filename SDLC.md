@@ -221,6 +221,8 @@ Every PR passes the full validation gate before review sign-off, in this order:
 - `node scripts/test-agent-harness.mjs`
 - `node scripts/test-agent-harness-security.mjs`
 - `node scripts/test-review-sweep.mjs`
+- `node --test scripts/test-skill-eval.mjs scripts/test-skill-eval-portability.mjs`
+- `node --test scripts/test-skill-eval-portability.mjs`
 
 Any non-zero exit fails the gate and blocks the PR. The implementing skills run the gate before opening a PR, and `om-check-and-commit` runs it before pushing a hand-worked branch. The command list lives in `.ai/agentic.config.json`; when it changes, update it there and in this section together.
 

@@ -483,6 +483,13 @@ A PR labeled `needs-qa` cannot merge without `qa-approved`, even with green chec
 
 ## 🚀 Built with this workflow
 
+To compare instruction changes before adopting them, use the local
+[skill evaluation harness](docs/skill-evaluation/README.md). It runs pinned
+baseline/candidate skills against reusable frozen cases and exports paired
+token/tool/time measurements, generated descriptions and blinded artifacts for
+independent quality assessment. The same CLI works for another skill by changing
+the experiment config; [PR replay](docs/skill-evaluation/pr-replay.md) is one adapter.
+
 <!-- PROOF: case studies land here before launch -->
 
 Real production case studies are being added here.

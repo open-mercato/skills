@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "assessments": [
+    {
+      "trialId": "m0-change-001-r1-candidate",
+      "cohort": "cli",
+      "artifactDigest": "REPLACE_WITH_EXACT_ARTIFACT_DIGEST_FROM_REPORT",
+      "qualityScore": 4,
+      "scale": "1-5, reviewer-defined retained-detail rubric",
+      "notes": "Replace with the independent reviewer's judgment of this exact artifact."
+    }
+  ]
+}

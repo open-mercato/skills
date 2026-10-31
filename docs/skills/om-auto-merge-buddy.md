@@ -10,7 +10,7 @@ Works the queue of open PRs a human labeled `automerge`, one at a time, inside a
 | QA | `automerge-signal-2-qa` | not needed without `needs-qa`; otherwise [om-auto-qa-pr](om-auto-qa-pr.md) `--orchestrated`, with failures fixed by the review autofix |
 | CI | `automerge-signal-3-ci` | [om-auto-fix-pr](om-auto-fix-pr.md) `--orchestrated` (base merge, conflicts, root-cause CI fixes) |
 
-The buddy alone holds the PR's `in-progress` claim and labels; the sub-skills run in `--orchestrated` mode and skip their own claim, label and CI-wait steps, so nothing is done twice. When CI is still running, the PR is parked under `ci-monitoring` and the buddy moves to the next PR, returning later in the window or in the next run. A PR that cannot be fixed within `maxAttempts` is parked under `automerge-blocked` until a human removes it. Assignees are ignored, so other people's PRs are in scope; fork PRs are carried forward to a credited replacement PR, which the buddy continues in the same run.
+The buddy alone holds the PR's `in-progress` claim and labels; the sub-skills run in `--orchestrated` mode and skip their own claim, label and CI-wait steps, so nothing is done twice. When CI is still running, the PR is parked under `ci-monitoring` and the buddy moves to the next PR, returning later in the window or in the next run. A PR that cannot be fixed within `maxAttempts` is parked under `automerge-blocked` until a human removes it. Other people's PRs remain in scope; with active plans, owned actionable work takes priority and the current user is assigned/verified at the first actionable step. Fork PRs are carried forward to a credited replacement PR, which the buddy continues in the same run.
 
 With all three signals, `prepare-to-merge` (default) marks the PR ready with `merge-queue`; `prepare-and-merge` squash-merges it, guarded by the head SHA and bypassing other labels and host merge rules — the three signals are the gate.
 
@@ -27,7 +27,8 @@ Completed trusted `om-auto-qa-pr` PASS evidence on the unchanged head satisfies 
 | `--pr <number>` | No | Work only this PR. |
 | `--force` | No | Skip only risk-high review-evidence and self-QA exclusions for this invocation. Full review, required QA, CI and head guard remain. Never takes over another actor’s claim. |
 | `--skip-pre-existing-ci-errors` | No | Invocation-only: waive a completed failure only when exact current-target run/config/logs prove the same pre-existing root cause and the PR leaves relevant CI definitions unchanged. Pending/new/unknown failures remain blocking. |
-| `--fresh` | No | Start a new run log instead of resuming a dead run's open handoff. |
+| `--fresh` | No | Start a new run log; keep durable active scheduling. |
+| `--reset` | No | Empty local scheduling and ignore old scheduler/handoff queues this invocation; preserve remote claims, assignees and evidence. |
 
 Every visit starts by reconciling signal labels with actual review/QA/CI evidence and the changes since each evidence revision. The buddy inspects the delta, judges its effect on the tested behavior, carries forward only supported evidence and runs delta review, QA or current-head CI checks as needed. It logs the scope judgment and next action before launching a stage; unknown scope or untrusted evidence never counts as a pass.
 
@@ -37,7 +38,7 @@ The CI baseline opt-in is independent of force. Every waiver records both check/
 
 ## Run log and resume
 
-Each run writes a local folder, `<paths.runs>/merge-buddy/<date>-<time>-<run id>/`: `RUN.md` lists every executed step with its UTC time, `HANDOFF.md` names the PR and stage in flight, the remaining queue and the next action, and `NOTIFY.md` logs start, resume, blockers and decisions. When the window closes, the run writes a final handoff with the remaining queue and the next action, so the next run continues where it stopped. A run that dies leaves its handoff open, and the next run resumes it: the PR in flight first (re-checked against its current head), then the rest of the queue. The folder is never committed; ignore it in version control, and persist it between CI jobs if you want resume across scheduled runs.
+Each run writes a local folder, `<paths.runs>/merge-buddy/<date>-<time>-<run id>/`: `RUN.md` lists every executed step with its UTC time, `HANDOFF.md` names the PR and stage in flight, the remaining queue and the next action, and `NOTIFY.md` logs start, resume, blockers and decisions. When the window closes, the run writes a final handoff with the remaining queue and the next action, so the next run continues where it stopped. A run that dies leaves its handoff open, and the next run resumes it: recover its in-flight plan and schedule only currently due/actionable work, rechecking its owner, current head and evidence. The shared scheduler’s due/owned priority overrides stale handoff order. The folder is never committed; ignore it in version control, and persist it between CI jobs if you want resume across scheduled runs.
 
 ## Works with
 
@@ -45,3 +46,12 @@ Reads the tracker's `automerge` queue and configuration from `.ai/agentic.config
 
 ---
 *Source: [`skills/om-auto-merge-buddy/SKILL.md`](../../skills/om-auto-merge-buddy/SKILL.md)*
+
+The primary working tree's local `.ai/meta/merge-buddy.json` retains active PRs,
+plan/progress, semantic `updatedAt` and UTC `nextCheckAt` across linked worktrees.
+A shared OS lock and atomic writes protect concurrent instances. Due tracked
+work resumes first; with active records, the current user's assigned actionable
+PRs precede new global work. Future CI checks never block new admission. Empty
+or reset scheduling uses the existing queue order. The first actionable step
+assigns the current user and verifies it. Plan checkpoints update the same
+status comment, including recovery after missing/corrupt local state.

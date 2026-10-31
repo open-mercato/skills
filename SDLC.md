@@ -175,7 +175,7 @@ For existing PRs, the PR's `baseRefName` is authoritative for base updates, revi
 Two labels live outside this taxonomy, and only humans apply them (the automerge signal labels below are applied only by `om-auto-merge-buddy`):
 
 - `do-not-close` — on issues that housekeeping skills must never auto-close. Skills only ever read it.
-- `automerge` — on a PR the human wants merged without further attention. `om-auto-merge-buddy` works these PRs one at a time within a time window (default 2 hours). It ignores assignees and skips PRs claimed `in-progress`. Readiness is three signals, each recorded as a label that only this skill applies:
+- `automerge` — on a PR the human wants merged without further attention. `om-auto-merge-buddy` works these PRs one at a time within a time window (default 2 hours). It resumes due tracked work from local `.ai/meta/merge-buddy.json`, prefers current-user assigned actionable work when tracking is nonempty, and assigns/verifies the current user at the first actionable step. Empty/reset scheduling keeps the global queue; live `in-progress` claims remain protected. Readiness is three signals, each recorded as a label that only this skill applies:
   - `automerge-signal-1-cr` — `om-auto-review-pr`, or a human other than the author, approved the current head.
   - `automerge-signal-2-qa` — QA is not required (`skip-qa`, or no `needs-qa`), or `qa-approved` is pinned to the current head by its `QA head:` line. Only `om-auto-qa-pr` may apply it through self-QA, on `risk-high` only under the explicit invocation-scoped risk override below.
   - `automerge-signal-3-ci` — every check on the current head finished green, with no conflicts.

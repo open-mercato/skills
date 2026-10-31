@@ -185,4 +185,116 @@ assert.equal(decideQa({ ...qaInput, comments: [...qaHistory, { author: 'untruste
 assert.match(signals, /no QA attempt is counted/)
 assert.match(stages, /grants signal 2 and skips this stage with zero attempts/)
 console.log('PASS: executable PR6786 legacy completed-PASS decision grants same-head QA without approval labels and rejects wrong/ambiguous head, missing linkage, untrusted authors, newer FAIL and revoked evidence')
+
+const scheduler = read('skills/om-auto-merge-buddy/references/scheduler.md')
+const schedulerCode = scheduler.match(/```javascript\n([\s\S]*?)\n```/)[1]
+const schedulerFunctions = runInNewContext(`${schedulerCode}\n({restoreScheduler, checkpointPlan, replaceTracked, schedulerDecision, nextCiCheck, reservationAllows, mayReclaim, finalizeTracked})`)
+const { restoreScheduler, checkpointPlan, replaceTracked, schedulerDecision, nextCiCheck, reservationAllows, mayReclaim, finalizeTracked } = schedulerFunctions
+const scheduleNow = '2026-10-31T14:00:00.000Z'
+const earlierTime = '2026-10-31T13:00:00.000Z'
+const futureTime = '2026-10-31T14:10:00.000Z'
+const tracked = number => ({ number, nextAction: 'Read checks', outcome: 'waiting-ci', plan: [{ step: 'CI', status: 'pending', evidence: 'run-url' }], nextCheckAt: scheduleNow, lastWorkedAt: earlierTime, updatedAt: earlierTime, attempts: 2 })
+const candidate = (number, extra = {}) => ({ number, state: 'open', authorized: true, claimable: true, actionable: true, assignees: [], ...extra })
+const decide = extra => schedulerDecision({ activePrs: [tracked(1)], candidates: [candidate(1), candidate(2, { assignees: ['pkarw'] }), candidate(3)], currentUser: 'pkarw', now: scheduleNow, ...extra })
+assert.equal(decide({}).next, 1, 'Due tracked CI is inspected before assigned or new queue work')
+assert.equal(decide({ activePrs: [{ ...tracked(1), nextCheckAt: futureTime }], candidates: [candidate(1, { changed: true }), candidate(2)] }).next, 1, 'Settled CI or new evidence discovered at entrance overrides an old future estimate')
+assert.equal(decide({ activePrs: [{ ...tracked(1), nextCheckAt: futureTime }] }).next, 2, 'Future pending CI permits actionable owned work')
+assert.equal(decide({ activePrs: [{ ...tracked(1), nextCheckAt: futureTime }], candidates: [candidate(1), candidate(3)] }).next, 3, 'Future pending CI permits new global admission when nothing owned is actionable')
+assert.equal(decide({ activePrs: [{ ...tracked(1), nextCheckAt: futureTime }], candidates: [candidate(1), candidate(3)], ownedComplete: false }).source, 'unknown-owned', 'Unreadable owned state never proves no owned work')
+assert.equal(decide({ activePrs: [], candidates: [candidate(3), candidate(2, { assignees: ['pkarw'] })] }).next, 3, 'Empty/reset admission preserves the old queue ordering instead of imposing assigned-only priority')
+const recentDecision = decide({ activePrs: [tracked(1), { ...tracked(4), lastWorkedAt: '2026-10-31T13:59:00.000Z' }], candidates: [candidate(1), candidate(4)] })
+assert.equal(recentDecision.next, 4, 'Most recently worked due record resumes first')
+assert.equal(decide({ activePrs: [tracked(4), tracked(1)], candidates: [candidate(4), candidate(1)] }).next, 1, 'PR number deterministically breaks work-recency ties')
+for (const extra of [{ claimable: false }, { actionable: false }, { state: 'closed' }, { state: 'merged' }, { authorized: false }]) {
+  assert.notEqual(decide({ candidates: [candidate(1, extra), candidate(2)] }).next, 1)
+}
+for (const outcome of ['ready', 'blocked', 'waiting-human']) {
+  const entry = { ...tracked(1), outcome }
+  const inspection = decide({ activePrs: [entry] })
+  assert.equal(inspection.next, 1, 'Due inactive state receives a cheap inspection')
+  assert.equal(inspection.activePrs[0].attempts, 2, 'Selection/recheck never resets or consumes stage attempts')
+  assert.equal(decide({ activePrs: [{ ...entry, nextCheckAt: futureTime }], candidates: [candidate(1), candidate(3)] }).next, 3)
+}
+const filtered = decide({ activePrs: [tracked(1), tracked(4)], candidates: [candidate(1), candidate(4)], onlyPr: 4 })
+assert.equal(filtered.next, 4)
+assert.equal(filtered.activePrs.length, 2, '--pr never discards other active plans')
+assert.equal(decide({ candidates: [candidate(1, { state: 'merged' }), candidate(2)] }).activePrs.length, 0, 'Merged/closed/no-authorization records leave active scheduling')
+assert.equal(nextCiCheck({ now: scheduleNow }), '2026-10-31T14:05:00.000Z')
+assert.equal(nextCiCheck({ now: scheduleNow, elapsedMs: 120000, completedDurationsMs: [240000, 300000, 600000] }), '2026-10-31T14:03:00.000Z')
+assert.equal(nextCiCheck({ now: scheduleNow, elapsedMs: 900000, completedDurationsMs: [300000] }), '2026-10-31T14:01:00.000Z', 'Overdue pending CI gets a future minimum rather than busy polling')
+const restoreInput = { repository: 'open-mercato/skills', currentUser: 'pkarw', now: scheduleNow, recovered: [tracked(1)] }
+for (const raw of [undefined, '', '{corrupt']) {
+  const restored = restoreScheduler({ ...restoreInput, raw })
+  assert.equal(restored.state.activePrs[0].number, 1, 'Missing/deleted/corrupt file recovers plan from authenticated own status checkpoints')
+  assert.equal(restored.quarantine, raw === '{corrupt')
+}
+const oldState = { version: 1, repository: 'open-mercato/skills', currentUser: 'pkarw', updatedAt: earlierTime, activePrs: [tracked(1)] }
+assert.equal(restoreScheduler({ ...restoreInput, raw: JSON.stringify(oldState), reset: true }).state.activePrs.length, 0, 'Reset starts empty without replaying recovered or old handoff queues')
+assert.equal(oldState.activePrs[0].attempts, 2, 'Reset does not mutate source attempt/evidence records')
+for (const change of [{ currentUser: 'foreign-user' }, { repository: 'foreign/repo' }, { version: 2 }]) {
+  assert.throws(() => restoreScheduler({ ...restoreInput, raw: JSON.stringify({ ...oldState, ...change }), reset: true }), /Foreign or unsupported/, 'Reset cannot overwrite foreign state')
+}
+assert.throws(() => restoreScheduler({ ...restoreInput, recovered: [{ ...tracked(1), nextCheckAt: 'invalid' }] }), /Invalid recovered/)
+const heartbeat = checkpointPlan(tracked(1), { heartbeat: scheduleNow, instanceId: 'new-instance' }, scheduleNow)
+assert.equal(heartbeat.updatedAt, earlierTime, 'Heartbeat/instance changes do not masquerade as plan progress')
+assert.equal(heartbeat.lastWorkedAt, earlierTime)
+const progress = checkpointPlan(tracked(1), { nextAction: 'Review fresh head' }, scheduleNow, true)
+assert.equal(progress.updatedAt, scheduleNow)
+assert.equal(progress.lastWorkedAt, scheduleNow)
+const moved = replaceTracked([tracked(1), tracked(3)], 1, { ...progress, number: 4 })
+assert.equal(moved.some(entry => entry.number === 1), false)
+assert.equal(moved.filter(entry => entry.number === 4).length, 1, 'Replacement moves one active record atomically')
+assert.equal(moved.find(entry => entry.number === 4).nextAction, progress.nextAction)
+assert.match(scheduler, /nonblocking OS advisory file lock/)
+assert.match(scheduler, /Never unlink or replace the lock inode/)
+assert.match(scheduler, /contending instance\nleaves the file and tracker untouched/)
+assert.match(scheduler, /Do not leave a lock\nhelper running across model turns/)
+assert.match(scheduler, /Merge \*\*only that owned row\*\*/)
+assert.match(scheduler, /flush it,\nand atomically rename it/)
+assert.match(scheduler, /search the full comment history first; create only when no own marker exists/)
+assert.match(scheduler, /Do not\n  unassign anyone, delete comments, clear `in-progress`\/blocks, reset attempts/)
+assert.match(scheduler, /pending follow-up filing\nin the separate run handoff even after removing its PR/)
+assert.match(skill, /\*\*assign-pr\*\* `CURRENT_USER`, verify the assignment/)
+assert.match(status, /\*\*updatedAt:\*\*/)
+assert.match(status, /Scheduler checkpoint/)
+console.log('PASS: executable durable scheduler resumes due/recent/owned work, avoids future-CI starvation and polling, recovers/reset state safely, preserves attempts/other PRs and checkpoints semantic progress/replacements')
+
+const reservation = { instanceId: 'instance-a', runId: 'run-a', token: 'token-a' }
+const reservationInput = { reservation, ...reservation, ownerStatus: 'live' }
+assert.equal(reservationAllows(reservationInput), true)
+for (const change of [{ instanceId: 'instance-b' }, { runId: 'run-b' }, { token: 'stale-token' }, { ownerStatus: 'dead' }, { ownerStatus: 'unknown' }]) {
+  assert.equal(reservationAllows({ ...reservationInput, ...change }), false, 'Fencing rejects foreign/stale/unknown actors before any mutation')
+}
+assert.equal(mayReclaim({ ownerStatus: 'dead', delegatedStatuses: ['dead'] }), true)
+for (const change of [{ ownerStatus: 'live', delegatedStatuses: ['dead'] }, { ownerStatus: 'unknown', delegatedStatuses: [] }, { ownerStatus: 'dead', delegatedStatuses: ['live'] }, { ownerStatus: 'dead', delegatedStatuses: ['unknown'] }, { ownerStatus: 'dead' }]) {
+  assert.equal(mayReclaim(change), false, 'Heartbeat age or dead parent alone never permits takeover while delegated work may survive')
+}
+const protectedReset = restoreScheduler({ ...restoreInput, raw: JSON.stringify(oldState), reset: true, protectedNumbers: [1] })
+assert.equal(protectedReset.state.activePrs[0].number, 1, 'Reset preserves foreign live/unknown reservations')
+assert.equal(decide({ activePrs: protectedReset.state.activePrs, candidates: [candidate(1, { claimable: false }), candidate(3), candidate(2, { assignees: ['pkarw'] })], resetAdmission: true }).next, 3, 'Reset uses old queue ordering while protecting live reservation')
+assert.match(runLog, /Recover the in-flight plan, then schedule it/)
+assert.doesNotMatch(runLog, /Its `in-progress` claim is this skill's own stale claim/)
+console.log('PASS: short transaction locks and fencing preserve live/unknown reservations through reset and reject stale owner or delegated-work takeover')
+
+const reservedEntry = { ...tracked(1), reservation: { ...reservation, host: 'machine', pid: 123, processStartedAt: earlierTime, delegatedHandles: [] } }
+assert.equal(decide({ activePrs: [reservedEntry], candidates: [candidate(1, { state: 'merged' }), candidate(3)] }).activePrs.length, 1, 'Terminal reserved row survives until final fenced claim cleanup')
+assert.throws(() => restoreScheduler({ ...restoreInput, raw: JSON.stringify({ ...oldState, activePrs: [{ ...tracked(1), reservation: { instanceId: 'partial' } }] }), reset: true }), /ownership unknown/, 'Malformed reservation cannot be wiped by reset/corruption recovery')
+assert.equal(restoreScheduler({ ...restoreInput, raw: JSON.stringify({ ...oldState, activePrs: [reservedEntry] }) }).state.activePrs.length, 1)
+let released = false
+const finalized = await finalizeTracked({ activePrs: [reservedEntry], number: 1, ownsReservation: true, releaseOwnedClaim: () => { released = true } })
+assert.equal(released, true)
+assert.equal(finalized.length, 0, 'Delete only after the final owned tracker cleanup succeeds')
+await assert.rejects(() => finalizeTracked({ activePrs: [reservedEntry], number: 1, ownsReservation: true, releaseOwnedClaim: async () => { throw new Error('tracker unavailable') } }), /tracker unavailable/)
+assert.equal(reservedEntry.number, 1, 'Partial cleanup failure retains the caller state for retry')
+await assert.rejects(() => finalizeTracked({ activePrs: [reservedEntry], number: 1, ownsReservation: false, releaseOwnedClaim: () => { throw new Error('must not call') } }), /verified before cleanup/)
+let resolveCleanup
+const cleanupPending = new Promise(resolve => { resolveCleanup = resolve })
+let cleanupFinished = false
+const waitingFinalization = finalizeTracked({ activePrs: [reservedEntry], number: 1, ownsReservation: true, releaseOwnedClaim: () => cleanupPending }).then(rows => { cleanupFinished = true; return rows })
+await Promise.resolve()
+assert.equal(cleanupFinished, false, 'An unresolved async tracker cleanup must retain the row')
+resolveCleanup()
+assert.equal((await waitingFinalization).length, 0)
+assert.match(stages, /child task context \(no new CLI flags\)/)
+console.log('PASS: terminal cleanup is fenced and precedes row removal; malformed ownership stays protected through reset')
 console.log('Merge buddy regressions passed.')

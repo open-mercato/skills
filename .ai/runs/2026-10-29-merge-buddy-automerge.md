@@ -79,6 +79,7 @@ Decisions:
 
 - [x] 8.1 Revert the om-merge-buddy automerge mode and the om-approve-merge-pr handoff — 305a59e
 - [x] 8.2 Add the om-auto-merge-buddy skill, orchestrated mode in three sub-skills, the merge-pr bypass, the labels, config and docs — 83cbeda
+- [x] 8.4 Apply independent-review fixes (loop termination, QA head pinning, stale-lock heartbeat, self-authored approval) and re-run the gate — af206d5
 - [x] 8.3 Merge the latest main and run the full validation gate — 83cbeda
 
 ## Follow-up validation and compatibility evidence

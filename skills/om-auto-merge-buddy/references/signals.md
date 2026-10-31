@@ -27,7 +27,7 @@ the first signal still missing. Never start from an empty slate and re-produce w
 
 1. **Read the PR once:** **get-pr** (head SHA, labels, `reviews` / `latestReviews`, mergeability), **list-issue-comments**, **list-review-comments**, and **get-pr-checks** for the current head.
 2. **Derive each signal** with the rules below, plus these existing-evidence readings:
-   - **CR `pass`** — a human approval as in signal 1, or an approving review or approval comment from `om-auto-review-pr` (a standalone run counts) that targets the current head: a review whose reviewed commit is that head, or an approval comment that names that head's SHA. Never infer the head from timestamps: commit dates are set by whoever made the commit. An `om-auto-review-pr` approval on the head wins over earlier human `CHANGES_REQUESTED` feedback only when that later review explicitly accounts for it, as in signal 1. **`fail`** — that skill's latest verdict on the current head requested changes, or a human `CHANGES_REQUESTED` review stands with no such approval. Stage 1 then starts in autofix with those findings `INHERITED`, not with a fresh first review.
+   - **CR `pass`** — an approving review or approval comment from `om-auto-review-pr` (a standalone run counts) that targets the current head: a review whose reviewed commit is that head, or an approval comment that names that head's SHA. Never infer the head from timestamps: commit dates are set by whoever made the commit. An `om-auto-review-pr` approval on the head wins over earlier human `CHANGES_REQUESTED` feedback only when that later review explicitly accounts for it, as in signal 1. **`fail`** — that skill's latest verdict on the current head requested changes, or a human `CHANGES_REQUESTED` review stands with no such approval. Stage 1 then starts in autofix with those findings `INHERITED`, not with a fresh first review.
    - **QA** — signal 2's rules as written (`n/a`, trusted completed same-head auto-QA PASS, pinned approval or carry-forward). An `om-auto-qa-pr` FAIL report on the current head records `qa: fail`; a `qa-failed` label without such a report is only a hint and records `qa: missing`. Once CR holds, a `qa: fail` sends the visit straight to stage 2's fix loop (stage 1 with that report `INHERITED`, counted as a CR attempt), without re-running a QA that already failed on this head. The QA re-run after the fix counts as a QA attempt.
    - **CI** — signal 3's table, read once for the current head.
 3. **Trust only real evidence.** A comment carrying a skill marker (`🤖 <skill> —`) counts only when `CURRENT_USER` wrote it, except completed QA source history verified from a write-author under `references/qa-evidence.md`; anyone can paste a marker. A human reviewer's review or QA note counts only from an account with write access to the repository. Pipeline labels (`review`, `changes-requested`, `merge-queue`, `qa`) are hints about where to look, never evidence by themselves. Existing `automerge-signal-*` labels are verified like any label without a record. Evidence for an older head goes through "Invalidation when the head moves" below. A review of an older head with only clean target-branch merges after it still holds.
@@ -35,15 +35,20 @@ the first signal still missing. Never start from an empty slate and re-produce w
 
 ## 1 · Code review — `automerge-signal-1-cr`
 
-Held when either of these is true on the current head:
+Held when automatic code review is valid for the current head and the resolved
+independent-review policy passes (`references/independent-review.md`):
 
 - **`om-auto-review-pr` approved it.** The last orchestrated review stage returned `outcome=pass` for this head, and the record links the review. On a self-authored PR the host rejects an approving review, so the review skill posts the approving body as a comment, and that comment is the evidence.
-- **A human approved it.** An `APPROVED` review on this exact head commit (from **get-pr** `reviews` / `latestReviews`) by someone other than the PR author and other than `CURRENT_USER`. No newer `CHANGES_REQUESTED` review from a human may still stand, and no unresolved blocker may remain from this skill's last review. Bot accounts do not count as human approval.
+- **Native approval policy.** Default config requires no independent native review: an author comment review counts as automatic evidence and host `reviewDecision` alone never blocks after inherited feedback is resolved. When current config/CLI requires independent review, additionally verify fresh native current-head approval under `references/independent-review.md`. Human approval alone does not replace automatic review. Missing only the independent approval ends `waiting-human`, without a producing stage or attempt.
 
 A standing human `CHANGES_REQUESTED` review does not block the signal only when
 a later `om-auto-review-pr` approval on this head explicitly accounts for that
 feedback as `INHERITED` findings and fixes it, or answers it with a reason. A
 new changes-requested verdict after that approval reopens CR on the same head.
+Reconcile its actual actionable objections through autofix; the default policy
+does not wait solely for the native state to change after they are resolved.
+A later strict invocation recomputes native evidence and never trusts a saved
+`skipped` policy or ready record; preserve automated evidence to avoid reruns.
 
 ## 2 · QA — `automerge-signal-2-qa`
 

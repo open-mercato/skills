@@ -30,6 +30,7 @@ the step finishes. Never rewrite an earlier row.
 # Merge buddy run — <RUN_ID>
 
 **Mode:** <prepare-to-merge | prepare-and-merge>
+**Independent review:** <skipped|required; config|CLI|default, current head, assessment UTC>
 **Risk checks:** <enforced | skipped — operator --force>
 **CI baseline policy:** <strict | skip-proven-baseline-errors — explicit operator flag>
 **Started:** <UTC ISO-8601>
@@ -158,3 +159,10 @@ only. `--reset` starts empty scheduling and ignores old in-flight/queue ordering
 for admission, while preserving pending follow-up filing and tracker evidence.
 A merged/closed PR is removed from active scheduling, not from the follow-up
 section: retry pending filing independently even after its source PR closes.
+
+Confirmed merges also update the primary root's daily
+`.ai/meta/merge-buddy-merged-YYYY-MM-DD.jsonl` (tracker-confirmed `mergedAt` UTC
+day). One latest status/plan/evidence row per repository/PR is atomically
+upserted after final status/owned-claim cleanup and before deleting active
+scheduling; journal failure retains cleanup-pending work. Ready or unmerged
+closed PRs are never journaled (`references/scheduler.md`).

@@ -24,7 +24,7 @@ Every stage run increments `attempts[signal]`. Reaching `MAX_ATTEMPTS` without t
 
 | Outcome | Effect |
 |---|---|
-| `pass` | record the signal for `head`, apply its label, continue up the ladder |
+| `pass` | retain the stage evidence for `head`; grant its signal only after all applicable policy checks (including required independent review), then continue |
 | `fail`, head moved | the stage made progress → re-read state and retry if under `MAX_ATTEMPTS` |
 | `fail`, head unchanged | no progress is possible by retrying → end the visit `blocked` with the reason at once. Exception: QA never pushes, so a QA `fail` follows stage 2's fix loop instead |
 | `pending` | the stage pushed and CI is running → re-check the earlier signals for the new head, then end the visit `waiting-ci` |
@@ -38,7 +38,9 @@ Every stage run increments `attempts[signal]`. Reaching `MAX_ATTEMPTS` without t
 It resolves merge conflicts against the target first, then reviews (a delta
 re-review when it has reviewed before), then fixes every actionable finding. That
 includes `INHERITED` feedback from humans, bots and a failed QA report. It pushes
-and re-reviews until it can approve. `pass` = approved on `head`. When it pushed,
+and re-reviews until it can approve. `pass` = automatic approval on `head`.
+Retain that evidence, then check the resolved independent-review policy before
+applying signal 1. A strict native-only wait runs no further stage or attempt. When it pushed,
 signals 2 and 3 are re-evaluated for the new head per `references/signals.md`.
 
 ## Stage 2 — QA (signal 2 missing)
@@ -80,9 +82,14 @@ before acting, including same-head revocations (`references/signals.md` →
 Recheck evidence). The target must still equal `base` in the record, the head
 must still equal the SHA in all three records, the PR must be open with
 `AUTOMERGE_LABEL`, and not `CONFLICTING`. A changed target or revoked approval
-returns to the ladder just like a changed head. Recheck current CI rather than
+returns to the ladder just like a changed head. Recompute current config/CLI
+independent-review policy and native evidence now (`references/independent-review.md`).
+When automatic review holds but required native approval is missing, end
+`waiting-human` without a stage or attempt; no mode or host bypass may bypass
+that requirement. Default policy never waits solely on absent native approval
+or a stale host requested-changes state after inherited findings are resolved. Recheck current CI rather than
 trusting a saved green record. If baseline errors were waived, resolve the target tip again and revalidate the exact target SHA, check attempts, logs and CI-definition proof immediately before merge; any change returns to CI evaluation (`references/ci-baseline.md`).
 
 - **`prepare-to-merge`** → `set_pipeline_label {pr} merge-queue`, then **mark-pr-ready** if it is a draft. End `ready`. Retain its active scheduler record with a future cheap check until externally merged. Later rounds revisit it cheaply: no producing stage runs while the current target and fresh source evidence still support every signal.
-- **`prepare-and-merge`** → **mark-pr-ready** if it is a draft, then **merge-pr** with squash, the checked `headRefOid`, and the descriptor's protection-bypass form. Labels such as `do-not-merge` and host merge rules are deliberately not consulted: the three signals are the gate. End `merged`. Do not delete the head branch unless the repository's config asks for it.
+- **`prepare-and-merge`** → **mark-pr-ready** if it is a draft, then **merge-pr** with squash, the checked `headRefOid`, and the descriptor's protection-bypass form. Labels such as `do-not-merge` and other host merge rules are deliberately not consulted: the three signals are the gate. End `merged`. Do not delete the head branch unless the repository's config asks for it.
   - **Refused merge** — the head moved (the head-SHA guard), the token lacks the bypass right, or the host has no bypass. Never retry another way. A moved head goes back to the ladder. Any other refusal ends the visit `ready` (`merge-queue` set), with the host's reason in the status comment for a maintainer. The next round tries the merge once more.

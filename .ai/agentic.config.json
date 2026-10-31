@@ -68,9 +68,10 @@
   },
   "automerge": {
     "label": "automerge",
-    "mode": "prepare-to-merge",
+    "mode": "prepare-and-merge",
     "windowMinutes": 120,
-    "maxAttempts": 3
+    "maxAttempts": 3,
+    "requireIndependentReview": false
   },
   "engine": {
     "loopStepThreshold": 20,

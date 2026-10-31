@@ -176,11 +176,25 @@ Two labels live outside this taxonomy, and only humans apply them (the automerge
 
 - `do-not-close` — on issues that housekeeping skills must never auto-close. Skills only ever read it.
 - `automerge` — on a PR the human wants merged without further attention. `om-auto-merge-buddy` works these PRs one at a time within a time window (default 2 hours). It resumes due tracked work from local `.ai/meta/merge-buddy.json`, prefers current-user assigned actionable work when tracking is nonempty, and assigns/verifies the current user at the first actionable step. Empty/reset scheduling keeps the global queue; live `in-progress` claims remain protected. Readiness is three signals, each recorded as a label that only this skill applies:
-  - `automerge-signal-1-cr` — `om-auto-review-pr`, or a human other than the author, approved the current head.
+  - `automerge-signal-1-cr` — `om-auto-review-pr` approved the current head; independent native approval is additional only when the resolved policy requires it.
   - `automerge-signal-2-qa` — QA is not required (`skip-qa`, or no `needs-qa`), or `qa-approved` is pinned to the current head by its `QA head:` line. Only `om-auto-qa-pr` may apply it through self-QA, on `risk-high` only under the explicit invocation-scoped risk override below.
   - `automerge-signal-3-ci` — every check on the current head finished green, with no conflicts.
 
-  On its first visit to a PR, when no signal is recorded yet, the buddy derives the initial signals from the PR's real state: its labels, reviews and comments, and its CI checks on the current head. It then starts from the first signal still missing, so review, QA or CI work already done is not repeated. A missing signal is produced by `om-auto-review-pr --autofix`, `om-auto-qa-pr`, or `om-auto-fix-pr`, each run with `--orchestrated` so the buddy alone owns the claim and the labels. CI that is still running is parked under `ci-monitoring` and checked again later. A PR that cannot be fixed within the attempt limit is parked under `automerge-blocked`; remove that label to retry. A fork PR is carried forward to a credited replacement that keeps the label. In `prepare-to-merge` mode (the default), a PR with all three signals gets `merge-queue`. In `prepare-and-merge` mode it is squash-merged, bypassing other labels and host merge rules, because the three signals are the gate. Removing `automerge` stops the automation.
+  On its first visit to a PR, when no signal is recorded yet, the buddy derives the initial signals from the PR's real state: its labels, reviews and comments, and its CI checks on the current head. It then starts from the first signal still missing, so review, QA or CI work already done is not repeated. A missing signal is produced by `om-auto-review-pr --autofix`, `om-auto-qa-pr`, or `om-auto-fix-pr`, each run with `--orchestrated` so the buddy alone owns the claim and the labels. CI that is still running is parked under `ci-monitoring` and checked again later. A PR that cannot be fixed within the attempt limit is parked under `automerge-blocked`; remove that label to retry. A fork PR is carried forward to a credited replacement that keeps the label. In `prepare-to-merge` mode, a PR with all three signals gets `merge-queue`. In `prepare-and-merge` mode (the missing-config default) it is squash-merged, bypassing other labels and host merge rules, because the three signals are the gate. Removing `automerge` stops the automation.
+
+Mode and independent review come from `.ai/agentic.config.json`:
+`automerge.mode` defaults to `prepare-and-merge`, and
+`automerge.requireIndependentReview` defaults to `false`. Explicit `--mode`,
+`--require-independent-review` or `--skip-independent-review` override current
+config; conflicting review flags/invalid values stop. Automatic code review and
+actionable inherited objections remain required. Default mode does not wait
+for native approval or a stale requested-changes state after objections are
+resolved. Strict policy needs fresh nonauthor/nonautomation human native
+approval on the current head before either prepare mode finishes, with no
+newer standing requested-changes verdict; missing approval waits without
+repeating automated stages or consuming attempts. Recheck policy/evidence at
+every entrance and final guard; saved status/scheduler policy is never authority.
+Standalone skills keep their existing review gates.
 
 ### Explicit automerge risk override
 

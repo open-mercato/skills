@@ -28,7 +28,7 @@ First verify the fenced scheduler reservation under its short transaction lock, 
 | `merged` | remove `in-progress` | `🚀 merged <sha>` |
 | `ready` (`prepare-to-merge`) | remove `in-progress`; `set_pipeline_label {pr} merge-queue` | `✅ ready to merge` |
 | `waiting-ci` | swap `in-progress` → `ci-monitoring` | `waiting for CI on <sha> since <ts>` |
-| `waiting-human` | remove `in-progress` | `⚠️ waiting for human QA sign-off` |
+| `waiting-human` | remove `in-progress` | `⚠️ waiting for human QA or required independent review` |
 | `blocked` | remove `in-progress`; `apply_label "automerge-blocked"` | `⛔ <reason> — remove automerge-blocked to retry` |
 | `replaced` | on the original: remove `in-progress`, `ci-monitoring` and every `automerge-signal-*` | `🔁 replaced by #<n>` |
 | stopped (label removed by a human) | remove `in-progress` and `ci-monitoring` | `stopped — automerge label removed` |

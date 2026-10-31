@@ -11,7 +11,11 @@ Read the current head, target, labels, reviews and mergeability through
 **get-pr**, then read the automation-authored signal record and its linked
 review/QA reports. Verify each evidence author, verdict, tested/reviewed SHA,
 target and risk-override provenance under `references/signals.md`. Read current
-comments for revocations or newer failing evidence. Check `references/qa-evidence.md` before treating a legacy same-head report as missing: trusted completed PASS wins without approval labels, risk/self-QA eligibility or complete-scope metadata. Coverage notes remain visible and do not reopen completed same-head QA. A signal label written by a
+comments for revocations or newer failing evidence. Recompute independent native
+review from current config/explicit CLI and fresh evidence, never persisted
+policy (`references/independent-review.md`). Default skips waiting for native
+approval while automatic review and actionable inherited findings remain required.
+Strict missing native evidence alone waits without rerunning automatic review. Check `references/qa-evidence.md` before treating a legacy same-head report as missing: trusted completed PASS wins without approval labels, risk/self-QA eligibility or complete-scope metadata. Coverage notes remain visible and do not reopen completed same-head QA. A signal label written by a
 human, a missing record, or a copied/foreign marker triggers real-evidence
 bootstrap; none is proof of a pass. Never infer reviewed revisions from commit
 timestamps, label age, or reassuring summary prose.

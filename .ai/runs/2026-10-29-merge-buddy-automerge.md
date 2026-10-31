@@ -137,3 +137,29 @@ review fixes. The ordered gate was run again, and the final targeted scheduler
 tests plus lint cover the async cleanup and documentation corrections. Parent
 independent review approved the final diff and reran scheduler tests and whitespace
 checks. No live queue, merge or assignment workflow was exercised.
+
+### Phase 11: Config-first merge/review policy and confirmed-merge journal
+
+Owner-requested on 2026-10-31: default to guarded merging with independent
+native review optional; read mode/review policy from current config and allow
+explicit per-invocation CLI overrides. Automatic review/autofix remains
+mandatory. This supersedes Phase 8's prepare-only default. Existing explicit
+prepare-only config stays honored; standalone skills are unchanged.
+
+- [x] 11.1 Add config/CLI merge and independent-review policy with strict evidence/provenance and no native-only repeated stages.
+- [x] 11.2 Add daily UTC confirmed-merge JSONL upsert before active cleanup, preserving latest status and evidence exactly once.
+- [x] 11.3 Cover current policy/CLI precedence, actual jq loaders, native evidence, JSONL idempotency and async journal failure with executable regressions.
+- [x] 11.4 Run all ten configured validation commands and independent code review; publish the reviewed update.
+
+Validation: full ordered ten-command local gate PASS with Python 3.12 and
+`TMPDIR=/tmp`; executable merge-buddy/policy/loader/journal regressions and
+whitespace checks PASS. Parent independent review approved the final change.
+Final-head CI and requested installation results are recorded in the PR
+completion evidence after publication. No live merge was attempted.
+
+Compatibility: new optional boolean `automerge.requireIndependentReview` defaults
+false; explicit flags override current config and conflicting flags/types stop.
+Missing mode now defaults to `prepare-and-merge`, as explicitly requested;
+`prepare-to-merge` remains the opt-out. Stage output, existing signal record and
+standalone review/merge gates stay unchanged. Daily journals and scheduler
+state are local-only. No live automerge was invoked to test these policies.

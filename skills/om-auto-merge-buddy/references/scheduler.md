@@ -108,7 +108,9 @@ carries invocation-only risk/CI waivers.
 Before each actionable step, persist its plan as `working` with `nextAction`;
 after it ends, persist progress, evidence, outcome and `nextCheckAt`. Mirror the
 same plan/progress and `updatedAt` in the existing status comment, updating its
-stored ID only after verifying marker and author. If the ID is missing/deleted,
+stored ID only after verifying marker and author. Keep reservation fencing
+tokens and host/PID/process internals private to local ownership state, never
+in public comment checkpoints or merged journals. If the ID is missing/deleted,
 search the full comment history first; create only when no own marker exists.
 If duplicates already exist, choose the oldest own marker as canonical, log the
 others, and never add another. Checkpoint both sides before the next stage;
@@ -131,7 +133,9 @@ stay protected. An authorization off switch forbids new producing work; cleanup
 only releases this instance’s existing claim and records the stop. Unreserved
 terminal rows may be removed atomically after confirming no cleanup is owed.
 Retain `ready` until it is externally merged; retain `waiting-human`
-and `blocked` with future cheap checks. A block permits inspection only, never a
+and `blocked` with future cheap checks. Independent-review waiting records
+are reevaluated under this invocation’s current config/CLI, not their saved
+policy; retain automatic evidence so a native-only wait never repeats a stage. A block permits inspection only, never a
 stage retry until the existing unblock rules hold. Keep pending follow-up filing
 in the separate run handoff even after removing its PR from `activePrs`.
 
@@ -178,9 +182,13 @@ function restoreScheduler({ raw, repository, currentUser, now, reset = false, re
   }
   return { state, quarantine: corrupt, reset }
 }
-async function finalizeTracked({ activePrs, number, ownsReservation, releaseOwnedClaim }) {
+async function finalizeTracked({ activePrs, number, ownsReservation, releaseOwnedClaim, mergedRecord, writeMergedJournal }) {
   if (!ownsReservation) throw new Error('Reservation must be verified before cleanup')
   await releaseOwnedClaim()
+  if (mergedRecord) {
+    if (typeof writeMergedJournal !== 'function') throw new Error('Merged journal writer required')
+    await writeMergedJournal(mergedRecord)
+  }
   return activePrs.filter(entry => entry.number !== number)
 }
 function reservationAllows({ reservation, instanceId, runId, token, ownerStatus }) {
@@ -256,5 +264,62 @@ reservation numbers from positive liveness evidence (unknown means protected),
 passes `resetAdmission` only for an explicit reset, and still enforces all
 tracker claim, signal, attempt and final-head guards. Missing/deleted/corrupt state that hides
 reservation ownership must not be rebuilt while any local owner/stage may
-still run: preserve any corrupt bytes, recover owner metadata/handles from the status/run
-log, and stop on unknown ownership instead of admitting duplicate work.
+still run: preserve any corrupt bytes, recover ownership from private local state and live process/session handles
+(the public status supplies plan/progress only), and stop on unknown ownership instead of admitting duplicate work.
+
+## Daily confirmed-merge journal
+
+For every tracker-confirmed merged PR (including an external merge), upsert one
+JSON object per line in the primary root's
+`.ai/meta/merge-buddy-merged-YYYY-MM-DD.jsonl`. Choose the day from the tracker’s
+confirmed `mergedAt` converted to UTC, never the retry/update date. Retain that
+merge date for later updates, so a PR never moves between daily files. No ready
+or closed-but-unmerged PR belongs in this journal. The existing local exclude
+pattern covers these files; never commit them.
+
+Under the same short scheduler transaction lock, read/validate every existing
+JSONL row, upsert by repository plus PR number, preserve other rows, flush a
+unique sibling temporary file and atomically rename it. Repeated confirmations
+or final-status updates replace the row rather than appending duplicates; a
+stale retry never overwrites a newer `updatedAt`. Malformed/unreadable journals
+fail closed with their bytes preserved, never truncated or silently rebuilt.
+
+Finalization order: confirm actual merged state and timestamp through **get-pr**,
+verify ownership, mirror the final status and release the owned tracker claim,
+then durably upsert the merged journal **before** deleting the active row. A
+journal failure retains a cleanup-pending row for idempotent retry. An external
+merged PR without an active row uses the same authorized confirmation/upsert
+transaction; no new producing stage is run. Pending follow-up filing remains
+separate even after active cleanup. Do not log raw tokens, reservation fences
+or local process details: keep only final plan/progress, next action and links.
+
+```javascript
+function upsertMergedJournal({ raw = '', record }) {
+  const valid = row => row && typeof row.repository === 'string' && Number.isInteger(row.number) && row.number > 0
+    && row.outcome === 'merged' && typeof row.mergedAt === 'string' && Number.isFinite(Date.parse(row.mergedAt))
+    && typeof row.updatedAt === 'string' && Number.isFinite(Date.parse(row.updatedAt))
+    && ['url', 'base', 'nextAction', 'statusCommentUrl'].every(key => typeof row[key] === 'string')
+    && ['head', 'mergeSha'].every(key => /^[a-f0-9]{40}$/i.test(row[key] ?? ''))
+    && Array.isArray(row.plan) && row.plan.every(step => step && typeof step.step === 'string' && ['pending', 'working', 'done', 'blocked'].includes(step.status))
+    && Array.isArray(row.evidence) && row.evidence.every(link => typeof link === 'string')
+  if (!valid(record)) throw new Error('Confirmed merged record required')
+  const day = new Date(record.mergedAt).toISOString().slice(0, 10)
+  const rows = raw.trim() ? raw.trim().split('\n').map(line => JSON.parse(line)) : []
+  if (rows.some(row => !valid(row) || new Date(row.mergedAt).toISOString().slice(0, 10) !== day)) throw new Error('Malformed or wrong-day merged journal')
+  const keys = ['repository', 'number', 'url', 'mergedAt', 'head', 'mergeSha', 'base', 'outcome', 'plan', 'nextAction', 'evidence', 'statusCommentUrl', 'updatedAt']
+  const publicRecord = row => Object.fromEntries(keys.filter(key => row[key] !== undefined).map(key => [key, row[key]]))
+  const records = new Map()
+  for (const row of [...rows, record]) {
+    const key = JSON.stringify([row.repository, row.number])
+    const previous = records.get(key)
+    if (!previous || Date.parse(row.updatedAt) >= Date.parse(previous.updatedAt)) records.set(key, publicRecord(row))
+  }
+  return { day, jsonl: [...records.values()].map(row => JSON.stringify(row)).join('\n') + '\n' }
+}
+```
+
+The caller supplies a freshly tracker-confirmed record with merged timestamp,
+head/merge SHA, target, PR URL, final plan/progress, next action, evidence/status
+comment links and semantic `updatedAt`. This helper does not infer a merge from
+a saved ready state. Parse/validation/write failure stops deletion of the active
+record; successful replay produces exactly one latest row for that PR/day.

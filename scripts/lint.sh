@@ -200,6 +200,7 @@ node scripts/test-migrated-skill-tools.mjs || exit 1
 python3 scripts/test-dependency-audit.py || exit 1
 node scripts/test-osv-scan.mjs || exit 1
 
+node scripts/test-merge-buddy.mjs || exit 1
 node scripts/test-pr-titles.mjs || exit 1
 node scripts/test-bump-agent-browser.mjs || exit 1
 

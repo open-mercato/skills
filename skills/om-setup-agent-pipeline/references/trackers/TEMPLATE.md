@@ -37,7 +37,7 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 ### Issues
 
 - **get-issue** — id, field list → issue data (title, body, state, author, url, labels/state, assignees, comments).
-- **search-issues** — text query, state → matching issues.
+- **search-issues** — text query, state → matching issues. An empty text query enumerates issues in the selected state; support pagination or disclose the listing cap.
 - **create-issue** — title, body, assignee, labels → created issue URL.
 - **close-issue** — id, reason, closing comment.
 - **comment-issue** — id, body.
@@ -55,6 +55,7 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 - **search-prs** — free-text query (e.g. an issue reference), state → matching PRs.
 - **create-pr** — base branch, draft flag, title, body → PR URL + number.
 - **update-pr** — number, new title and/or new body → the PR's own title/body rewritten in place (not a comment). For keeping a PR's description in sync with what it actually ships.
+- **close-pr** — number → close without merging, preserving head branch and linked issues. Callers post/update their evidence note first, guard current head/target/authorization, and confirm closed plus unmerged via **get-pr** after the write. Already merged or unknown results are not successful obsolete closures. On older descriptors without this operation, leave open and report the upgrade requirement.
 - **comment-pr** — number, body (multi-line bodies must preserve formatting).
 - **attach-image-evidence** — number, a comment body, a slug (e.g. `pr-<n>`), and a list of local image file paths → post a single comment that embeds the images so they render **inline** in the tracker, and return the comment URL. The mechanism is the tracker's business (an upload/attachment endpoint, a media API, or a pushed evidence branch referenced by raw URLs) — the skills only name the operation and pass image paths. Contract: never mutate the change's own branch to store evidence; when the tracker cannot render uploaded images (e.g. a private repo whose raw URLs need auth), still post the comment with links to the images and say so rather than failing the caller. This is how QA skills post screenshots without any host-specific logic living in the skill.
 - **assign-pr / unassign-pr** — number, user.
@@ -63,7 +64,7 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 - **get-pr-files** — number → changed files with per-file status (added/modified/removed).
 - **checkout-pr** — number → PR head available locally (fork PRs included).
 - **review-pr** — number, verdict (approve / request changes), body.
-- **merge-pr** — number; squash by default.
+- **merge-pr** — number; squash by default. Optional head-SHA guard (refuse the merge when the head moved since the caller's gate) and optional `bypass-protection` (merge despite host branch-protection rules, using the caller's admin rights). Callers pass `bypass-protection` only after their own gate has held; `om-auto-merge-buddy` uses it once all three automerge signals hold. A tracker without a bypass documents that it refuses instead.
 - **mark-pr-ready** — promote a draft PR.
 - **get-pr-checks** — number → CI check runs (name, state, link). Document whether this surface can under-report while CI is starting up — on trackers where a queued pipeline registers its jobs lazily, a short result means "not yet known", not "nothing to run", and consumers must cross-check the run level (**list-runs** below, filtered to the PR head SHA) before reading a green verdict out of it.
 - **get-required-checks** — base branch → required status checks; when unreadable, treat all reported checks as required.
@@ -76,10 +77,11 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 - **get-run** — run id → status, conclusion, per-job breakdown.
 - **get-run-failed-logs** — run id → log output of the failed steps (the diagnosis input for CI failures).
 - **rerun-failed** — run id → re-execute only the failed jobs (used to disambiguate flakes before code changes).
+- **approve-pending-runs** — PR head SHA (and PR number) → release CI runs the code host holds for maintainer approval (first-time or fork contributors) and return the released run ids; empty when nothing was held. Document what "held" means in this tracker and that releasing runs the contributor's CI code with this repository's runners and secrets. When the tracker has no such gate, implement it as a no-op that returns nothing.
 - **watch-run** — run id → block until the run completes, signaling success/failure; may degrade to polling **get-run**.
 
 ### Labels
 
 - **list-labels** — all label/tag names.
 - **create-label** — name, color, description; never delete or rename existing ones.
-- **ensure-label-taxonomy** — create every missing label from the config's taxonomy.
+- **ensure-label-taxonomy** — create every missing label from the config's taxonomy, plus `autofix.label` (default `cez-autofix`) in the issue tracker. Split providers document issue-label provisioning separately from code-host PR labels.

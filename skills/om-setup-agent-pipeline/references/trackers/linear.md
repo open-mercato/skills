@@ -119,12 +119,15 @@ The view command's embedded comment connection is bounded. When the caller needs
 Text query, state, optional team → matching issues. Translate `open` to non-terminal state types and `closed` to terminal types; omit the state flags for all states.
 
 ```bash
-# open
-linear issue query --search "<query>" --all-teams \
+# open; omit --search for an empty query, add --search "$ISSUE_QUERY" otherwise
+ISSUE_QUERY="<query>"
+set -- --all-teams
+[ -z "$ISSUE_QUERY" ] || set -- "$@" --search "$ISSUE_QUERY"
+linear issue query "$@" \
   --state triage --state backlog --state unstarted --state started --limit 0 --json
 
 # closed
-linear issue query --search "<query>" --all-teams \
+linear issue query "$@" \
   --state completed --state canceled --limit 0 --json
 
 # any state
@@ -252,6 +255,9 @@ Delegate to GitHub **create-pr**. Reference the Linear key in the body, then use
 #### update-pr
 Delegate to GitHub **update-pr**.
 
+#### close-pr
+Delegate to GitHub **close-pr**. Keep linked Linear issues unchanged.
+
 #### comment-pr
 Delegate to GitHub **comment-pr**.
 
@@ -308,6 +314,9 @@ Delegate to GitHub **get-run-failed-logs**.
 #### rerun-failed
 Delegate to GitHub **rerun-failed**.
 
+#### approve-pending-runs
+Delegate to GitHub **approve-pending-runs**.
+
 #### watch-run
 Delegate to GitHub **watch-run**.
 
@@ -320,4 +329,4 @@ Delegate to GitHub **list-labels**; this is the PR label taxonomy setup inspects
 Delegate to GitHub **create-label**.
 
 #### ensure-label-taxonomy
-Delegate to GitHub **ensure-label-taxonomy**. Linear issue-label provisioning remains an explicit team-owned setup step described under Label guards.
+Delegate to GitHub **ensure-label-taxonomy**. Linear issue-label provisioning remains an explicit team-owned setup step described under Label guards. Create `autofix.label` (default `cez-autofix`) in the selected issue team before applying issue-triage proposals; GitHub companion labels do not provision it.

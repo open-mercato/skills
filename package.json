@@ -19,6 +19,7 @@
     "test:bump-agent-browser": "node scripts/test-bump-agent-browser.mjs",
     "test:pr-titles": "node scripts/test-pr-titles.mjs",
     "test:close-keywords": "node scripts/test-close-keywords.mjs",
+    "test:merge-buddy": "node scripts/test-merge-buddy.mjs",
     "test:review-sweep": "node scripts/test-review-sweep.mjs",
     "test:discovery-contracts": "node scripts/test-discovery-contracts.mjs",
     "test:spec-writing-data-model": "node scripts/test-spec-writing-data-model.mjs",
@@ -26,6 +27,7 @@
     "test:osv-scan": "node scripts/test-osv-scan.mjs",
     "test:agent-browser-codex": "bash scripts/test-agent-browser-codex.sh",
     "test:ux-design": "node --test scripts/test-ux-design.mjs scripts/test-ux-design-comments.mjs",
-    "test:agent-harness-security": "node scripts/test-agent-harness-security.mjs"
+    "test:agent-harness-security": "node scripts/test-agent-harness-security.mjs",
+    "test:issue-triage": "node scripts/test-issue-triage.mjs"
   }
 }

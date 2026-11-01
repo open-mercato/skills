@@ -11,7 +11,7 @@ Review code changes against the repository's architecture, security, convention,
 
 **Input** — exactly one unit of review:
 
-- a PR number (fetch the diff and metadata via the tracker operations **get-pr-diff** / **get-pr**),
+- a PR number (fetch the diff and metadata via **get-pr-diff** / **get-pr**; the PR's validated `baseRefName` is authoritative for the diff and compatibility review, regardless of configured `BASE_BRANCH`; missing target → report a blocker, never guess),
 - a branch name (review its diff against the merge-base with `$BASE_BRANCH`),
 - an explicit commit range or diff,
 - nothing — default to the current branch's diff against the merge-base with `$BASE_BRANCH`, including uncommitted changes.

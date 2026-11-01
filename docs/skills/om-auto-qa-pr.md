@@ -16,6 +16,7 @@ QAs a PR's UI change in a real browser through the configured browser-provider d
 | `--keep-env` | No | Leave the environment running on exit even if this run started it. |
 | `--artifacts <dir>` | No | Override the artifacts directory. Default `<paths.qa>/artifacts_<runId>`. |
 | `--force` | No (PR mode) | Bypass the in-progress claim check to take over a PR another actor claimed. |
+| `--orchestrated` | No (PR mode) | Set only by an orchestrator holding the claim and owning the labels ([om-auto-merge-buddy](om-auto-merge-buddy.md)). Skips the claim, review-first gate and label changes, reports self-QA eligibility, and ends with a `RESULT:` line. |
 
 ## Works with
 

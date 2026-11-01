@@ -4,6 +4,8 @@ Prefer the explicit `Tracking plan:` line in the PR body (written by `om-auto-cr
 
 Expected value (current format): `Tracking plan: ${RUNS_DIR}/<date>-<slug>/PLAN.md`.
 
+For this existing PR, `BASE_BRANCH` is the validated `baseRefName` from **get-pr**, overriding the config default. Fetch that target before diff-based lookup; a missing target stops the run instead of guessing.
+
 Fallbacks, in order:
 
 1. `Tracking run folder: ${RUNS_DIR}/<date>-<slug>/` — derive `PLAN_PATH` as `${folder}/PLAN.md`.

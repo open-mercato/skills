@@ -12,9 +12,10 @@ Instead:
 3. Implement the fixes there.
 4. Resolve any conflicts against `{baseRefName}` on that carry-forward branch.
 5. Run the autofix loop from `references/review-report.md` until the branch is re-reviewed as approvable or a real blocker remains.
-6. Commit and push the new branch to `origin`.
-7. Open a replacement PR against `{baseRefName}` via the tracker operation **create-pr**.
-8. Close the original PR only after the replacement PR exists successfully.
+6. Commit and push the fixes to the carry branch on `origin`.
+7. Open a replacement PR against `{baseRefName}` via **create-pr** and capture its number and URL. Keep the original open while finalizing the replacement. Copy applicable labels and verify them, per **Labels and chain continuation** below.
+8. Now that the replacement number exists, move any tracked run handoff as described below, commit and push those metadata edits, and re-review the final replacement head. Re-run any validation affected by the metadata edits; never report an approval for the earlier head as approval of this final head.
+9. Close the original PR only after the final replacement head is approved and its required labels are verified. Switch the active PR context to the replacement and continue the current chain. Under `--orchestrated`, opening the replacement does not end the orchestrator's work; it continues on the new PR.
 
 Validation requirements for autofix mode:
 
@@ -31,6 +32,51 @@ Replacement PR requirements:
 - State that the new PR carries forward the original work plus the requested fixes
 - Mention that the branch was re-reviewed after autofix and is intended to be merge-ready
 - Reassign the replacement PR to the original PR author when possible, and leave a handoff comment inviting them to do the next recheck from the carried-forward branch
+
+## Moving the run handoff
+
+A carry-forward must not strand the original's resume point. When the original
+PR has a run folder — its body's `Tracking plan:` line, or a
+`<paths.runs>/<run>/HANDOFF.md` on its head (written by `om-auto-create-pr`,
+`om-auto-create-pr-loop` or their continue skills) — the carry branch already
+contains those files, because it starts from the fetched head. Move the handoff
+after **create-pr** returns its number, while the original remains open:
+
+- Rewrite `HANDOFF.md`'s `PR:` and `Branch:` fields to the replacement and the carry branch, refresh `Last updated`, and add `carried forward from #<old> by `om-auto-review-pr` autofix` under *What just happened*. Keep *Next concrete action* pointing at the first unfinished step.
+- Append a UTC `carried forward to #<new>` entry to `NOTIFY.md`; never rewrite earlier entries. Leave `PLAN.md` progress as it is.
+- Copy the `Tracking plan:` line into the replacement's body unchanged, so `om-auto-continue-pr` / `om-auto-continue-pr-loop` resume on the replacement instead of the closed original.
+- Commit and push these metadata edits on the carry branch after the replacement exists, then re-review that final head before closing the original. Name the moved run folder in the handoff comment.
+
+No run folder → nothing to move. Under `--orchestrated`, the orchestrator moves
+its own run-level handoff when it reads `replacement=<n>`.
+
+## Labels and chain continuation
+
+Read the original PR's current labels through **get-pr** immediately before
+transfer. If the automerge label was removed from the original, an orchestrated
+run cancels the continuation and reports it. Never recreate the label from an
+earlier snapshot.
+Through the descriptor's guards, copy category, priority, risk, custom labels, QA requirements (`needs-qa`
+/ `skip-qa`), and any configured `automerge.label` (default `automerge`) that
+was present. Keep one priority and risk label, preserving the originals unless
+a documented scope increase requires raising them. Preserve human hard blocks;
+normalize one pipeline label to the replacement's actual state via
+`set_pipeline_label` without clearing a human
+block. Never copy `qa-approved`, `qa-self-verified`, `in-progress`, or
+`ci-monitoring`: approval evidence and live claims do not transfer to a new head
+or run. Conflicting QA requirements remain blocked. Honor `labels.enabled` and
+the guards' missing-label behavior; a missing required automerge label blocks
+unattended merging. Read the labels back through **get-pr** before closing the
+original, and maintain the marker-idempotent label-rationale comment.
+
+Update the active PR number, URL, head/target branch, and claim/cleanup context;
+emit the replacement's exact `PR:` chaining line so every caller follows it.
+Under `--orchestrated` (`references/orchestrated-mode.md`), report
+`replacement=<n>` in the `RESULT:` line and hand control straight back. Do not
+wait for the original author's recheck. The orchestrator moves its claim and
+signal labels to the replacement and continues there in the same run.
+Reassignment and the author recheck comment are advisory, not a reason to stop.
+A standalone review never gains merge authority from this transfer.
 
 Replacement PR body — this is the canonical explanation of the carried work,
 so describe the resulting behavior instead of saying only “original changes.”

@@ -16,11 +16,12 @@ The questions step 3 of `om-setup-agent-pipeline` asks the user (skipped with `-
    the compatibility choice). Explain that the selected descriptor owns
    autonomous CLI/browser provisioning and that repository-native E2E suites
    remain authoritative.
-4. Labels: install the full taxonomy above (recommended), keep a subset, or disable labels entirely.
-5. QA gate on or off. Recommend on when the repo ships user-facing changes.
-6. Where specs live (`paths.specs`, default `.ai/specs`) — confirm or point at an existing design-doc directory.
-7. Optional repo-local review checklist path.
-8. Project docs to generate (each only when missing): `SDLC.md` (recommended), `AGENTS.md` with the task-routing table (when no agent instruction file exists), `CODE_REVIEW.md`, and `BACKWARD_COMPATIBILITY.md`.
+4. Labels: install the full taxonomy above (recommended), keep a subset, or disable labels entirely. When labels stay enabled, confirm the name of the human-applied automerge label (`automerge.label`, default `automerge`) that puts a PR in `om-auto-merge-buddy`'s unattended merge queue. Confirm `automerge.mode` (default guarded `prepare-and-merge`; `prepare-to-merge` for preparation only) and `automerge.requireIndependentReview` (boolean, default false; true requires separate native current-head human approval). Also confirm `automerge.defaultToHumanQa` (boolean, default false): automatically run QA/sign-off for missing mandatory approval, or true to prefer human QA. `--human-qa`/`--auto-qa` override it; eligibility/actual coverage still apply. Automatic code review/autofix remains required; explicit CLI policy overrides settings per invocation.
+5. Issue autofix eligibility (when labels stay enabled): confirm `autofix.label` (default `cez-autofix`) and `autofix.eligibility` (`lookbackDays: 30`, `analyzeLimit: 100`, `limit: 20`, `excludeLabels: ["blocked", "do-not-fix"]`). `om-auto-issue-triage` proposes only useful, still-relevant issues with decided acceptance criteria and bounded implementation; it skips current/uncertain claims and labels only human-confirmed issues. Preserve explicit existing values. Explain that labeling can trigger the repository's existing worker, while this skill never installs or starts one. Under `--defaults`, write the documented defaults without guessing worker integrations.
+6. QA gate on or off. Recommend on when the repo ships user-facing changes.
+7. Where specs live (`paths.specs`, default `.ai/specs`) — confirm or point at an existing design-doc directory.
+8. Optional repo-local review checklist path.
+9. Project docs to generate (each only when missing): `SDLC.md` (recommended), `AGENTS.md` with the task-routing table (when no agent instruction file exists), `CODE_REVIEW.md`, and `BACKWARD_COMPATIBILITY.md`.
 
 Then consult `references/config-capabilities.md`. Ask only for optional
 capabilities the repository already evidences or the user explicitly enables;

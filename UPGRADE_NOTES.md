@@ -666,3 +666,20 @@ Command adapters require macOS, Linux, or WSL for process-group cleanup; native
 Windows supports HTTP reviewers and artifact-only operations. Successful command
 evidence must include exit code zero; failed packet or fresh-host validation
 blocks staging regardless of the model verdict.
+
+## Merge buddy — obsolete closure and worker concurrency
+
+`om-auto-merge-buddy` accepts `--concurrency <n>` (positive integer, default `1`).
+Parallel PR workers use separate worktrees and sequential inline stages;
+requested/effective capacity is invocation-local and bounded by runtime support.
+Queued dependency bumps and bug fixes may now close without merging when fresh
+whole-diff evidence proves their entire value is already present on the actual
+target. Both merge modes permit that evidence-backed closure. No merge/QA
+signals are fabricated, and partially useful or uncertain PRs stay open.
+
+Sync the additive **close-pr** operation from the shipped tracker descriptor
+into the committed local descriptor, preserving customizations. Older copies
+without it keep obsolete PRs open with a visible upgrade requirement. Update the
+buddy skill and its references together. The status template omits dashboard
+URLs/startup details, including inside JSON; existing own comments drop the
+legacy Dashboard line on their next safe update. Dashboard access remains local.

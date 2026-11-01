@@ -268,6 +268,15 @@ gh api -X PATCH repos/{owner}/{repo}/pulls/{prNumber} -F body=@<path>
 ```
 `gh pr edit {prNumber} --title … --body-file …` does the same on `gh` >= 2.82.1. On older clients it exits non-zero with the Projects (classic) error and writes nothing (see Prerequisites) — which reads like a no-op, so script the REST form above.
 
+#### close-pr
+`{prNumber}` → close without merging; preserve the head branch, linked issues,
+title and body. Post/update the caller's evidence note before calling. A fresh
+**get-pr** must confirm `CLOSED` and no merge before reporting success; an
+already merged PR is never reported as closed-obsolete.
+```bash
+gh api -X PATCH repos/{owner}/{repo}/pulls/{prNumber} -f state=closed
+```
+
 #### comment-pr
 `{prNumber}`, body. For long structured comments:
 ```bash

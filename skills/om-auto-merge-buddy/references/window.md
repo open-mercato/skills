@@ -1,7 +1,7 @@
 # The time window — queue order, polling, deadline
 
 The goal is to get as many PRs as possible to ready, or merged, within
-`WINDOW_MINUTES`. The run focuses on one PR at a time and never burns time
+`WINDOW_MINUTES`. The run processes at most `--concurrency` PRs at a time (default `1`) and never burns time
 watching a CI run while other work is available.
 
 ## Queue
@@ -59,5 +59,4 @@ runs and linked worktrees; run handoffs retain the audit trail and pending
 follow-ups. `--fresh` changes only the log. `--reset` clears local scheduling,
 never tracker claims/assignees/evidence/attempts, and ignores old handoff queues
 for this invocation. Every signal is reconciled afresh, with no inherited
-invocation waivers. The nonblocking shared OS lock prevents concurrent local
-instances; other clones still obey tracker claims (`references/scheduler.md`).
+invocation waivers. The nonblocking shared OS lock serializes short local state transactions across workers/instances; other clones still obey tracker claims (`references/scheduler.md`).

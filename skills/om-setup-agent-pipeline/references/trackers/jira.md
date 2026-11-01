@@ -265,6 +265,9 @@ Delegate to GitHub **create-pr**. Reference the Jira key in the body, then use *
 #### update-pr
 Delegate to GitHub **update-pr**.
 
+#### close-pr
+Delegate to GitHub **close-pr**. Keep linked Jira issues unchanged.
+
 #### comment-pr
 Delegate to GitHub **comment-pr**.
 

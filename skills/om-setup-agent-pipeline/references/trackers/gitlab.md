@@ -574,6 +574,15 @@ jq -n --arg t "<title>" --argjson draft "$DRAFT" \
 jq -n --rawfile d <body-file> '{description: $d}' | gl_write PUT "projects/$(gl_project)/merge_requests/{prNumber}" >/dev/null
 ```
 
+#### close-pr
+`{prNumber}` → close without merging, deleting the source branch or closing
+linked issues. Update the caller's evidence note first, then confirm closed and
+unmerged through **get-pr**; unknown results require reconciliation.
+```bash
+gl_iid {prNumber} || exit 1
+jq -n '{state_event: "close"}' | gl_write PUT "projects/$(gl_project)/merge_requests/{prNumber}" >/dev/null
+```
+
 #### comment-pr
 `{prNumber}`, body file → the new note's handle.
 ```bash

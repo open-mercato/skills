@@ -25,6 +25,7 @@ First verify the fenced scheduler reservation under its short transaction lock, 
 
 | Outcome | Labels | Status `State:` |
 |---|---|---|
+| `closed-obsolete` | remove owned `in-progress`, `ci-monitoring`, `automerge-signal-*` and `automerge-blocked` via guards after confirmed closure | `closed — no remaining value; already covered on target` |
 | `merged` | remove `in-progress` | `🚀 merged <sha>` |
 | `ready` (`prepare-to-merge`) | remove `in-progress`; `set_pipeline_label {pr} merge-queue` | `✅ ready to merge` |
 | `waiting-ci` | swap `in-progress` → `ci-monitoring` | `waiting for CI on <sha> since <ts>` |

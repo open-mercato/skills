@@ -760,6 +760,15 @@ jq -n --arg t "<title>" --argjson draft "$DRAFT" \
 jq -n --rawfile b <body-file> '{body: $b}' | fj_write PATCH "repos/$(fj_repo)/pulls/{prNumber}" >/dev/null
 ```
 
+#### close-pr
+`{prNumber}` → close without merging; keep the head branch and linked issues.
+Update the caller's evidence note first, then confirm closed and unmerged
+through **get-pr**; unknown results require reconciliation.
+```bash
+fj_num {prNumber} || exit 1
+jq -n '{state: "closed"}' | fj_write PATCH "repos/$(fj_repo)/pulls/{prNumber}" >/dev/null
+```
+
 #### comment-pr
 `{prNumber}`, body file → the new comment's id.
 ```bash

@@ -127,7 +127,7 @@ for (const stage of ['om-auto-review-pr', 'om-auto-qa-pr', 'om-auto-fix-pr']) {
 }
 console.log('PASS: forced risk waiver is explicit, separate from claim takeover, propagated and rejected on strict resume/bootstrap')
 
-assert.match(skill, /Reconcile each signal at the entrance[\s\S]*even when signal labels are already present/)
+assert.match(read('skills/om-auto-merge-buddy/references/entrance.md'), /Reconcile each signal at the entrance[\s\S]*even when signal labels are already present/)
 assert.match(reconcile, /actual delta[\s\S]*git diff --name-status <evidence-sha> <current-sha>/)
 assert.match(reconcile, /same-head revocation checks/)
 assert.match(reconcile, /automatic conflict-free merge result[\s\S]*CR may carry forward/)

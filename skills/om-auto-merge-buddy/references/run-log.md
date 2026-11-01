@@ -166,3 +166,13 @@ day). One latest status/plan/evidence row per repository/PR is atomically
 upserted after final status/owned-claim cleanup and before deleting active
 scheduling; journal failure retains cleanup-pending work. Ready or unmerged
 closed PRs are never journaled (`references/scheduler.md`).
+
+## Skill specifics — parallel visits
+
+With `--concurrency` above `1`, the parent is the sole writer of RUN/HANDOFF/NOTIFY.
+Keep one entry per live/unknown worker under `## In flight` with its PR, handle,
+head, stage and resume point. Workers send checkpoints/results for serialized
+publication and retain isolated per-worker artifacts. Preserve existing headings,
+step names and chaining fields. Final handoff follows completion/parking of all
+in-flight stages, not just the first; never report `none` while a worker is live
+or unknown. See `references/concurrency.md` for dispatch, replacement and drain.

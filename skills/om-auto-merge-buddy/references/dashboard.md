@@ -21,8 +21,7 @@ port or `--no-dashboard`. Dashboard startup failure is observability failure,
 not a review/QA/CI merge gate: log the warning and continue the authorized queue.
 Explicit `--no-dashboard` skips startup **and all health/network probes**.
 
-Record its URL (or startup warning) in `RUN.md`/`NOTIFY.md` and the existing
-status summary; do not add a second comment. The dashboard has no tracker mutation API. Its narrowly protected local
+Record its URL (or startup warning) in local `RUN.md`/`NOTIFY.md` and the local session report only. Never publish the dashboard URL, port, startup warning or local path in tracker status comments, including their collapsible/JSON sections. On the next safe status update remove any legacy Dashboard line; do not add a second comment. The dashboard has no tracker mutation API. Its narrowly protected local
 dismiss/restore command endpoint publishes requests for the scheduler under
 `references/dashboard-commands.md`; ordinary data endpoints read only the allowlisted queue and UTC-day merge journals under
 `.ai/meta`, serves on `127.0.0.1`, strips private reservation/process details,

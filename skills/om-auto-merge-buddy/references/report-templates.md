@@ -3,7 +3,13 @@
 Use `references/rules.md`. A sub-skill's review or QA evidence is the detailed
 record. This skill links it and never repeats it.
 
-## Status comment (one per PR, edited in place)
+## Status comment — skill-specific template (one per PR, edited in place)
+
+> Keep the dashboard URL and startup details local. Never include them in this
+> tracker comment, evidence/action links, or embedded checkpoint; remove legacy
+> Dashboard lines when updating. Lead with the decision, reason, human action
+> and evidence, following the recent status comments. For obsolete PRs explain
+> that the entire change is already covered and no longer provides value.
 
 Marker: `` 🤖 `om-auto-merge-buddy` — status ``. Find it via
 **list-issue-comments**, counting only a comment written by `CURRENT_USER`, create it once with **comment-pr**, and rewrite it
@@ -16,7 +22,7 @@ comment per visit or per round.
 ~~~markdown
 🤖 `om-auto-merge-buddy` — status
 
-**State:** {working — run <RUN_ID> since <ts> | waiting for CI on <sha> since <ts> | ✅ ready to merge | 🚀 merged <sha> | Queued for automatic QA | ⚠️ waiting for verified human interaction or required independent review | ⛔ <reason> — remove `automerge-blocked` to retry | 🔁 replaced by #<n> | stopped — automerge label removed}
+**State:** {working — run <RUN_ID> since <ts> | waiting for CI on <sha> since <ts> | ✅ ready to merge | 🚀 merged <sha> | Queued for automatic QA | ⚠️ waiting for verified human interaction or required independent review | ⛔ <reason> — remove `automerge-blocked` to retry | 🔁 replaced by #<n> | closed — no remaining value; already covered on target | stopped — automerge label removed}
 **Reason:** <specific missing gate/evidence, revision, failure cause, or successful evidence>
 **Human action:** <Human action required — exact actor/role, action and location/link, why agent cannot act | No human action needed — automatic next step>
 **Required action / owner:** <precise action> / <automation | maintainer | named reviewer | none>
@@ -25,7 +31,6 @@ comment per visit or per round.
 **Mode:** {prepare-to-merge | prepare-and-merge}
 **updatedAt:** <UTC ISO-8601; semantic plan/progress change, not heartbeat>
 **Next check:** <nextCheckAt UTC ISO-8601>
-**Dashboard:** <loopback URL | disabled | startup warning>
 **Timing:** <firstStartedAt | unknown>; current-head readiness <readyAt | unknown>; elapsed includes CI waits
 **Plan/progress:** <step status, evidence and next action; mirror local scheduler>
 **QA approval routing:** <automatic | human>; source <config | CLI | default>, current head, assessed UTC
@@ -78,15 +83,43 @@ local plan/progress semantically identical; comment ID/URL and private
 reservation/token/process details are local-only. Existing
 signal record fields are unchanged. A heartbeat never advances `updatedAt`. Never paste logs; link the run.
 
+## Skill-specific closure example
+
+Use real versions, SHAs and evidence links; this is an illustrative completed
+closure. Before confirmation say “Closing” rather than “Closed”. Keep the
+existing scheduler checkpoint and signal record, with no invented passes.
+
+~~~markdown
+🤖 `om-auto-merge-buddy` — status
+
+**State:** Closed — no remaining value.
+**Reason:** This PR bumps `example-lib` to `2.4.0`. The target already uses
+`2.5.1` in all affected manifests and lockfile resolutions, with the intended
+fix preserved ([target commit](https://tracker.example/commit/target-sha)).
+The full diff adds no other changes, so this PR no longer provides value.
+**Human action:** No human action needed.
+**Required action / owner:** None — closed without merging.
+**Retry when:** Reopen if a remaining change is identified.
+**Reason assessed:** <UTC>; PR head `<sha>`, target `<branch>@<sha>`.
+~~~
+
+For an already-fixed bug, replace the package comparison with the original
+failing behavior, the target’s landed fix and regression/reproduction evidence.
+Use `reason.code: "obsolete-pr"`, `gate: "relevance"`,
+`humanActionRequired: false`, `owner: "none"` and `outcome: "closed-obsolete"`
+only after confirmed closure; preserve actual signal evidence and attempts.
+
 ## Final run report
 
 ```markdown
-🚀 `om-auto-merge-buddy` ({mode}, {used}/{window} min): {m} merged · {r} ready · {w} waiting for CI · {h} waiting for a human · {b} blocked.
+🚀 `om-auto-merge-buddy` ({mode}, {used}/{window} min): {m} merged · {c} closed as obsolete · {r} ready · {w} waiting for CI · {h} waiting for a human · {b} blocked.
 - #<n> {outcome} — {decisive reason}; {next action}.
 …
 {PRs still waiting for CI, which the next run checks first.}
 📋 Run log: `<RUNS_DIR>/merge-buddy/<folder>/` ({steps} steps{, resumed from session <k>}).
 ```
+
+Include requested/effective concurrency and evidence links for obsolete closures. Never count closed PRs as merged.
 
 List created/reused follow-up issue links and unresolved filing work without repeating their bodies.
 

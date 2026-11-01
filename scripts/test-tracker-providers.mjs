@@ -955,6 +955,31 @@ try {
   rmSync(fjWork, { recursive: true, force: true });
 }
 
+// Exercise the actual closure snippets without live tracker writes.
+for (const [name, descriptor, setupStub, expectedPath, expectedBody] of [
+  ['github', github, 'gh() { printf "%s\\n" "$@"; }', 'repos/o/r/pulls/17', 'state=closed'],
+  ['gitlab', gitlab, 'gl_iid() { [ "$1" = 17 ]; }; gl_project() { printf 42; }; gl_write() { printf "%s\\n" "$@" > "$CAPTURE"; cat >> "$CAPTURE"; }', 'projects/42/merge_requests/17', '"state_event": "close"'],
+  ['forgejo', forgejo, 'fj_num() { [ "$1" = 17 ]; }; fj_repo() { printf o/r; }; fj_write() { printf "%s\\n" "$@" > "$CAPTURE"; cat >> "$CAPTURE"; }', 'repos/o/r/pulls/17', '"state": "closed"'],
+]) {
+  const snippet = descriptor.split('#### close-pr\n')[1].split('#### ')[0].match(/```bash\n([\s\S]*?)\n```/)[1]
+    .replaceAll('{owner}', 'o').replaceAll('{repo}', 'r').replaceAll('{prNumber}', '17');
+  const dir = mkdtempSync(join(tmpdir(), 'tracker-close-'));
+  try {
+    const capture = join(dir, 'request');
+    const result = spawnSync('bash', ['-eu'], { input: `${setupStub}\n${snippet}`, encoding: 'utf8', env: { ...process.env, CAPTURE: capture } });
+    assert.equal(result.status, 0, `${name}: ${result.stderr}`);
+    const request = name === 'github' ? result.stdout : readFileSync(capture, 'utf8');
+    assert.ok(request.includes(expectedPath), `${name}: PR endpoint, not issue endpoint`);
+    assert.ok(request.includes(expectedBody), `${name}: close-only state transition`);
+    assert.doesNotMatch(request, /delete_branch|remove_source_branch|merge_commit/);
+    if (name !== 'github') {
+      const invalid = spawnSync('bash', ['-eu'], { input: `${setupStub}\n${snippet.replaceAll('17', 'invalid')}`, encoding: 'utf8', env: { ...process.env, CAPTURE: join(dir, 'invalid') } });
+      assert.notEqual(invalid.status, 0);
+      assert.equal(existsSync(join(dir, 'invalid')), false, 'Invalid PR numbers must not write');
+    }
+  } finally { rmSync(dir, { recursive: true, force: true }); }
+}
+
 console.log(
   `Tracker provider contract OK (${githubOperations.length} operations, 2 split providers, 2 stand-alone providers: GitLab, Forgejo).`,
 );

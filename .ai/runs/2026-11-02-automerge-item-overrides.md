@@ -33,10 +33,12 @@ PR: #165
 - [x] 3.1 Lead with fully bold outcome and next action, compact signals and collapsed supporting details; preserve machine records and validate examples. — 27f536f
 
 ### Phase 4: Final merge evidence
-- [ ] 4.1 Add one idempotent whole-process evidence comment immediately before actual merges, with retry/failure recovery and docs.
+- [x] 4.1 Add one idempotent whole-process evidence comment immediately before actual merges, with retry/failure recovery and docs. — cdc63a4
 
 ## Verification
 
 All 10 configured commands passed with Python 3.12 on PATH. The authoritative review fixed child marker compatibility, risk provenance reconciliation and the body budget; no outstanding findings remain. Regression examples cover mixed items, mode precedence, risk gates, label removal and custom queue names. No live queue or merge was exercised. Setup changes are buddy-specific; comparison found no other copies to sync, and the operator confirmed this scope.
 
 Status-format follow-up: all 10 configured commands passed again. Review covered visible human actions, mode-appropriate next steps, missing evidence and CI-waiver wording, and unchanged machine records. The 57 report-template copies were compared; the formatter exists only in this skill. The operator approved this scoped status format.
+
+Merge-summary follow-up: all configured commands pass after fixing the body budget. Final lint includes the new summary-order/history/failure regressions. Review preserves existing gates and records, requires verified whole-process/current-head evidence, and covers retries, uncertain writes/results and post-merge cleanup without duplicate comments or merges. No live queue or merge was exercised.

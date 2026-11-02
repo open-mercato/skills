@@ -1,5 +1,7 @@
 # Entrance reconciliation — judge evidence and the changes since it
 
+Apply `references/human-gates.md` first. Human vetoes stop work; protected-area changes require strict risk checks and pinned human QA. Automatic PASS reuse, `n/a`, self-sign-off and automatic routing below never bypass these gates.
+
 Run this procedure at the entrance of **every visit**, before choosing a stage,
 even when all three signal labels and a same-head status record already exist.
 Repeat it after a stage moves the head, after a replacement or retarget, and at

@@ -2,7 +2,7 @@
 
 > 🤖 Autonomous — runs end-to-end without supervision
 
-Works the queue of open PRs a human labeled `automerge`, one at a time, inside a time window (default 2 hours). A PR is ready when three signals hold on its current head. Each signal is recorded as a label that only this skill applies:
+Works the queue of open PRs a human labeled `automerge`, one at a time, inside a time window (default 2 hours). A PR is ready when no human veto remains, any protected-area human QA requirement is satisfied, and three signals hold on its current head. Each signal is recorded as a label that only this skill applies:
 
 | Signal | Label | Produced, when missing, by |
 |---|---|---|
@@ -12,11 +12,11 @@ Works the queue of open PRs a human labeled `automerge`, one at a time, inside a
 
 The buddy alone holds the PR's `in-progress` claim and labels; the sub-skills run in `--orchestrated` mode and skip their own claim, label and CI-wait steps, so nothing is done twice. When CI is still running, the PR is parked under `ci-monitoring` and the buddy moves to the next PR, returning later in the window or in the next run. A PR that cannot be fixed within `maxAttempts` is parked under `automerge-blocked` until a human removes it. Other people's PRs remain in scope; with active plans, owned actionable work takes priority and the current user is assigned/verified at the first actionable step. Fork PRs are carried forward to a credited replacement PR, which the buddy continues in the same run.
 
-With all three signals, `prepare-to-merge` marks the PR ready with `merge-queue`; `prepare-and-merge` (missing-config default) squash-merges it, guarded by the head SHA and bypassing other labels and host merge rules — the three signals are the gate.
+With all three signals, `prepare-to-merge` marks the PR ready with `merge-queue`; `prepare-and-merge` (missing-config default) squash-merges it, guarded by the head SHA and the human gates below. Host protection bypass cannot override a human veto or protected-area human QA.
 
 Intentionally deferred actionable nits, nonblocking findings and out-of-scope work become follow-up issues through [om-followup-issue-from-pr](om-followup-issue-from-pr.md). The buddy deduplicates against open and closed issues and records issue links or pending filing work in the status comment and run handoff. Filing an issue never satisfies a blocked review, QA or CI signal. Missing helpers or failed filing stop that item cleanly and remain visible for retry.
 
-Completed trusted `om-auto-qa-pr` PASS evidence on the unchanged head satisfies signal 2 before stage 2, including evidence-only legacy reports from another write-author and risk-high PRs. A unique Git resolution must link any short `Verified` SHA to the full current head; same-author starter/report/completion history and no newer trusted FAIL/revocation are required. Coverage notes stay visible. No approval label is added and no new QA attempt is counted; standalone QA and other merge tools keep their approval rules.
+Outside the human veto and protected-area gates, completed trusted `om-auto-qa-pr` PASS evidence on the unchanged head satisfies signal 2 before stage 2, including evidence-only legacy reports from another write-author and risk-high PRs. A unique Git resolution must link any short `Verified` SHA to the full current head; same-author starter/report/completion history and no newer trusted FAIL/revocation are required. Coverage notes stay visible. No approval label is added and no new QA attempt is counted; standalone QA and other merge tools keep their approval rules.
 
 ## Parameters
 
@@ -27,7 +27,7 @@ Completed trusted `om-auto-qa-pr` PASS evidence on the unchanged head satisfies 
 | `--human-qa` / `--auto-qa` | No | Override boolean `automerge.defaultToHumanQa` (default false); missing mandatory approval normally invokes legitimate automatic QA/sign-off. |
 | `--window <minutes>` | No | Wall-clock budget for the run. Default `automerge.windowMinutes` (`120`); `0` = one pass, no idle CI polling. |
 | `--pr <number>` | No | Work only this PR. |
-| `--force` | No | Skip only risk-high review-evidence and self-QA exclusions for this invocation. Full review, required QA, CI and head guard remain. Never takes over another actor’s claim. |
+| `--force` | No | Outside protected areas, skip only risk-high review-evidence and self-QA exclusions for this invocation. Full review, required QA, CI and head guard remain. Never takes over another actor’s claim or bypasses human gates. |
 | `--skip-pre-existing-ci-errors` | No | Invocation-only: waive a completed failure only when exact current-target run/config/logs prove the same pre-existing root cause and the PR leaves relevant CI definitions unchanged. Pending/new/unknown failures remain blocking. |
 | `--fresh` | No | Start a new run log; keep durable active scheduling. |
 | `--dashboard-port <port>` | No | Local React dashboard port, default `5050`; integer 1–65535. |
@@ -122,3 +122,44 @@ Historical merged rows show the confirmed merge time in UTC. Concurrent starts
 reuse one exact-root/build listener. Local trash/Undo controls publish protected
 requests for scheduler acknowledgement, never mutate GitHub; a pending removal
 is labeled honestly and persisted dismissal prevents immediate re-add.
+
+
+## Human vetoes and protected changes
+
+`qa-failed` and `do-not-merge` stop both preparation and merging even after
+`needs-qa` is removed, without an automatic FAIL report. An unresolved explicit
+human QA NO-GO also stops the visit: its author must be verified as a human with
+repository write access. Quoted examples and copied bot markers do not count.
+Only an explicit human release resolves the veto; automatic PASS, new commits,
+self-QA labels and replacement PRs cannot clear it. Remaining hard-stop labels
+must also be removed by a human. Existing SDLC `blocked` and active `qa` stops
+remain effective.
+
+The actual diff determines protected risk: executable migrations, money, and
+permissions/tenant-isolation changes, architecture changes and backward-incompatible changes always retain strict risk checks,
+even with `--force` or missing risk/QA labels. They require explicit human QA
+covering the protected behavior, pinned with `QA head:` and `qa-approved`.
+Automatic PASS and `qa-self-verified` supply evidence but cannot satisfy this
+human gate. Ordinary fixes outside these areas retain their automatic route.
+
+The existing status comment visibly reports `waiting-human`, the exact veto or
+protected behavior with evidence links, enforced risk policy, who must act,
+what they must do, and the resume condition. It does not leave a protected PR
+showing `Risk checks: skipped` or `ready`.
+
+
+Architecture changes and backward-incompatible changes additionally require
+explicit current-head human technical approval from a maintainer or the
+repository's designated architecture/contract owner, even when independent
+native review is disabled. This is separate from the pinned human QA evidence.
+Architecture means substantive boundary, ownership, topology or communication
+changes; routine refactoring within the same boundaries does not qualify alone.
+Backward incompatibility includes broken published APIs, events, CLI/config/data
+formats, integrations or supported behavior. Additive compatible changes remain
+on the ordinary route unless another protected area applies.
+
+A breaking change must document its affected consumers and comply with the
+repository's deprecation, bridge, migration/versioning and rollout requirements.
+Human QA cannot waive a missing required compatibility path. The status names
+the changed boundary or broken contract, required decision owner, missing
+approval/transition evidence and exact resume condition.

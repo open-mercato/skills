@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "packetId", "diffSha256", "status", "checks"],
+  "properties": {
+    "version": { "const": 1 },
+    "packetId": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$"
+    },
+    "diffSha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["passed", "failed"]
+    },
+    "checks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "criteria", "status", "evidence"],
+        "allOf": [{ "if": { "properties": { "status": { "const": "passed" } }, "required": ["command", "status"] }, "then": { "required": ["exitCode"], "properties": { "exitCode": { "const": 0 } } } }],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "criteria": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "command": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 }
+          },
+          "method": { "type": "string", "minLength": 1 },
+          "status": {
+            "type": "string",
+            "enum": ["passed", "failed"]
+          },
+          "exitCode": { "type": ["integer", "null"] },
+          "evidence": { "type": "string", "minLength": 1 }
+        },
+        "anyOf": [
+          { "required": ["command"] },
+          { "required": ["method"] }
+        ]
+      }
+    }
+  }
+}

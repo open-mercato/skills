@@ -1,8 +1,7 @@
 # The layering philosophy, as an operational checklist
 
 How `om-create-skill` decides what stays in the body and what goes to
-`references/`. This is the operational distillation of `om-filozofia.md` (read
-the full document at the repo root for the reasoning). Applies to both modes.
+`references/`. Applies to both modes.
 
 ## The three loading layers dictate the split
 

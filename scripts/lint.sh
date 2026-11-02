@@ -147,7 +147,8 @@ fi
 # Everything else must be a shipped skill or listed here with a reason.
 # The prototype engine's persisted storage keys are not skill invocations.
 # Keep their exact names so existing exported/local feedback remains readable.
-name_allow=" om-skill om-skills om-prototype-comments om-prototype-author "
+# The test-freeze sentinel is a persisted filename, not a skill invocation.
+name_allow=" om-skill om-skills om-prototype-comments om-prototype-author om-freeze-tests "
 shipped_names=" $(ls skills | tr '\n' ' ')"
 name_hits=$(grep -rnoE '(^|[^A-Za-z0-9_-])om-[a-z0-9]+(-[a-z0-9]+)*(-?\*|/|\.[a-z0-9]+)?' skills/ 2>/dev/null | sort -u || true)
 while IFS= read -r line; do
@@ -172,6 +173,9 @@ patterns=(
   '(^|[^[:alnum:]-])develop($|[^[:alnum:]-])'
   '(^|[^[:alnum:]])yarn '
   'findWithDecryption'
+  # om-filozofia.md was never committed to this repo (issue #153) — a reference
+  # to it points past the skill's own canonical copy at a file that cannot be read.
+  'om-filozofia\.md'
 )
 
 for pattern in "${patterns[@]}"; do
@@ -214,6 +218,7 @@ node scripts/test-migrated-skill-tools.mjs || exit 1
 python3 scripts/test-dependency-audit.py || exit 1
 node scripts/test-osv-scan.mjs || exit 1
 
+node scripts/test-merge-buddy.mjs || exit 1
 node scripts/test-pr-titles.mjs || exit 1
 node scripts/test-bump-agent-browser.mjs || exit 1
 

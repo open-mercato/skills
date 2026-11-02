@@ -1,0 +1,4 @@
+interface:
+  display_name: "Fix Issue Optimized"
+  short_description: "Run staged fix with model workers"
+  default_prompt: "Use $om-fix-issue-optimized for a staged issue fix using configured workers."

@@ -24,6 +24,7 @@ const autoFixStabilize = read("skills/om-auto-fix-pr/references/stabilize-ci.md"
 const autoReview = read("skills/om-auto-review-pr/SKILL.md");
 const mergeBuddy = read("skills/om-merge-buddy/SKILL.md");
 const prAutopilot = read("skills/om-pr-autopilot/SKILL.md");
+const mergeTriage = read("skills/om-auto-merge-triage/SKILL.md");
 const ciFollowups = [
   "skills/om-auto-fix-pr/references/ci-followup.md",
   "skills/om-auto-review-pr/references/ci-followup.md",
@@ -165,6 +166,27 @@ for (const shell of shells) {
       "apply merge-queue",
     ],
     `github: set_pipeline_label under ${shell} must remove every competing pipeline label`,
+  );
+}
+
+const triageApply = mergeTriage.match(/For an eligible PR, `(apply_label [^`]+)`/)[1];
+const githubApply = github.match(/^apply_label\(\) \{\n[\s\S]*?^\}$/m)[0];
+for (const shell of shells) {
+  const applied = spawnSync(shell, ["-c", `
+LABELS_ENABLED=true
+AUTOMERGE_LABEL=automerge
+PR_NUMBER=162
+label_exists() { return 0; }
+tracker_repo() { printf 'owner/repo'; }
+gh() { printf '%s\\n' "$*" >&2; }
+${githubApply}
+${triageApply}
+`], { encoding: "utf8" });
+  assert.equal(applied.status, 0, applied.stderr);
+  assert.equal(
+    applied.stderr.trim(),
+    "api -X POST repos/owner/repo/issues/162/labels -f labels[]=automerge",
+    `triage: the shipped apply command must address the confirmed PR under ${shell}`,
   );
 }
 
@@ -628,7 +650,32 @@ const withForgejo = (overrides, script, env) => {
   }
 };
 
+const forgejoAssociation = forgejo.match(/#### get-pr-author-association\n[\s\S]*?```bash\n([\s\S]*?)```/)[1]
+  .replaceAll("{prNumber}", "7");
+
 try {
+  const outsideAuthor = withForgejo({
+    ["GET orgs/o/members/alice"]: { __status: 404, __body: {} },
+    [`GET ${RP}/collaborators/alice`]: { __status: 204, __body: "" },
+  }, forgejoAssociation);
+  assert.equal(outsideAuthor.status, 0, outsideAuthor.stderr);
+  assert.deepEqual(JSON.parse(outsideAuthor.stdout), { login: "alice", association: "outside-collaborator" });
+  const userCollaborator = withForgejo({
+    ["GET orgs/o"]: { __status: 404, __body: {} },
+    [`GET ${RP}/collaborators/alice`]: { __status: 204, __body: "" },
+  }, forgejoAssociation);
+  assert.equal(userCollaborator.status, 0, userCollaborator.stderr);
+  assert.deepEqual(JSON.parse(userCollaborator.stdout), { login: "alice", association: "collaborator" });
+  for (const status of [403, 500]) {
+    const unknownOwner = withForgejo({
+      ["GET orgs/o"]: { __status: status, __body: {} },
+      [`GET ${RP}/collaborators/alice`]: { __status: 204, __body: "" },
+    }, forgejoAssociation);
+    assert.notEqual(unknownOwner.status, 0, `an unreadable organization (HTTP ${status}) must not trust an outside collaborator`);
+    assert.doesNotMatch(unknownOwner.stdout, /"association"/);
+    assert.ok(!unknownOwner.calls.some((call) => call.path.endsWith("/collaborators/alice")));
+  }
+
   // --- host, repository, and token resolution --------------------------------
   const parse = (url) => runForgejo(`fj_parse_remote '${url}'`).stdout.trim();
   assert.equal(parse("https://codeberg.org/o/r.git"), "https://codeberg.org o/r");
@@ -953,6 +1000,31 @@ try {
   assert.notEqual(runForgejo("fj_rerun 900", { FORGEJO_RERUN_MODE: "push" }).status, 0, "unknown rerun modes are refused");
 } finally {
   rmSync(fjWork, { recursive: true, force: true });
+}
+
+// Exercise the actual closure snippets without live tracker writes.
+for (const [name, descriptor, setupStub, expectedPath, expectedBody] of [
+  ['github', github, 'gh() { printf "%s\\n" "$@"; }', 'repos/o/r/pulls/17', 'state=closed'],
+  ['gitlab', gitlab, 'gl_iid() { [ "$1" = 17 ]; }; gl_project() { printf 42; }; gl_write() { printf "%s\\n" "$@" > "$CAPTURE"; cat >> "$CAPTURE"; }', 'projects/42/merge_requests/17', '"state_event": "close"'],
+  ['forgejo', forgejo, 'fj_num() { [ "$1" = 17 ]; }; fj_repo() { printf o/r; }; fj_write() { printf "%s\\n" "$@" > "$CAPTURE"; cat >> "$CAPTURE"; }', 'repos/o/r/pulls/17', '"state": "closed"'],
+]) {
+  const snippet = descriptor.split('#### close-pr\n')[1].split('#### ')[0].match(/```bash\n([\s\S]*?)\n```/)[1]
+    .replaceAll('{owner}', 'o').replaceAll('{repo}', 'r').replaceAll('{prNumber}', '17');
+  const dir = mkdtempSync(join(tmpdir(), 'tracker-close-'));
+  try {
+    const capture = join(dir, 'request');
+    const result = spawnSync('bash', ['-eu'], { input: `${setupStub}\n${snippet}`, encoding: 'utf8', env: { ...process.env, CAPTURE: capture } });
+    assert.equal(result.status, 0, `${name}: ${result.stderr}`);
+    const request = name === 'github' ? result.stdout : readFileSync(capture, 'utf8');
+    assert.ok(request.includes(expectedPath), `${name}: PR endpoint, not issue endpoint`);
+    assert.ok(request.includes(expectedBody), `${name}: close-only state transition`);
+    assert.doesNotMatch(request, /delete_branch|remove_source_branch|merge_commit/);
+    if (name !== 'github') {
+      const invalid = spawnSync('bash', ['-eu'], { input: `${setupStub}\n${snippet.replaceAll('17', 'invalid')}`, encoding: 'utf8', env: { ...process.env, CAPTURE: join(dir, 'invalid') } });
+      assert.notEqual(invalid.status, 0);
+      assert.equal(existsSync(join(dir, 'invalid')), false, 'Invalid PR numbers must not write');
+    }
+  } finally { rmSync(dir, { recursive: true, force: true }); }
 }
 
 console.log(

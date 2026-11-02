@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implement Feature Multi Optimized"
+  short_description: "Build staged feature with workers and council"
+  default_prompt: "Use $om-implement-feature-multi-optimized for configured workers plus independent reviewers."

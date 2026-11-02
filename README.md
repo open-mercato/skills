@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>🧠 plan · 🔨 implement · 🔍 review · ✅ QA gate · 🚢 merge</b><br/>
-  Sixty agent skills that run a full PR pipeline. Install them into any repo, with any coding agent.
+  Seventy-three agent skills for autonomous PR delivery or staged human-review handoffs. Install them into any repo, with any coding agent.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 npx skills add open-mercato/skills --skill '*'
 ```
 
-Install all sixty — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all seventy-three — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
@@ -132,9 +132,71 @@ flowchart LR
     implementSpec --> reviewPR
 ```
 
+## 🧪 Stop before the PR
+
+The agent harness is an additive path for teams that want the same isolated
+implementation, validation, and review discipline but want a human to inspect
+the index before anything is published. It does not alter the autonomous PR
+skills above.
+
+Configure selectable workers and review advisors once:
+
+```
+/om-setup-agent-harness
+```
+
+The setup wizard starts with the bundled `cross-model-jury` preset: Codex,
+DeepSeek V4 Pro, Kimi K3 through its managed subscription, GLM 5.2 through
+OpenCode Zen, and MiMo 2.5 Free through OpenCode Zen. It detects and smoke-tests
+the local bindings, lets users keep any subset, and supports additional custom
+command or OpenAI-compatible models.
+
+Then run either staged-only wrapper:
+
+```
+/om-fix-issue-multi 1234
+/om-implement-feature-multi-optimized "add account export retention controls"
+/om-implement-feature "harden account export retention" --profile high-assurance
+```
+
+Both wrappers stop with an unchanged `HEAD`, a validated staged diff, a prepared
+PR body, and an absolute worktree path. The `multi` axis runs configured review
+advisors and prints a model-by-finding matrix; every selected advisor runs, and
+the quorum only determines whether enough completed successfully. With the
+bundled preset, both the spec/diagnosis checkpoint and final review contain
+fresh Claude plus Codex, DeepSeek, Kimi, GLM, and MiMo. Claude runs
+`om-code-review` in a new context with no inherited implementation transcript;
+all five advisors start concurrently and receive the same complete skill
+rubric, hash-bound packet, and subject in fresh parallel invocations. The
+runtime waits for Claude's matching artifact before finalizing the matrix. The `optimized` axis dispatches
+bounded implementation packets to configured workers. Publishing remains a
+separate explicit user action.
+
+The opt-in `high-assurance` profile adds risk-scaled blind review, fresh
+finding verification, a separate fixer context, path leases, bounded model
+budgets, and trusted acceptance evidence bound to the exact reviewed diff. It
+uses the same selectable model registry and still stops with files staged.
+
+[Explore the interactive harness guide](docs/agent-harness-guide.html) to compare profiles, packet risk, reviewer topology, lifecycle states, and the stage-only boundary. For the maintained deep-dive — the full skill matrix, flow diagrams for the `optimized`/`multi`/`high-assurance` variants, the safety model, and the bring-your-own-reviewer path — read the [harness README](skills/om-harness/README.md).
+
 ## 📦 Skill catalog
 
 📇 Per-skill cards with parameters: [docs/skills/](docs/skills/README.md)
+
+### 🧪 Staged-only harness
+
+These skills never commit, push, or open a pull request. Profile aliases stay
+thin and delegate to the two base wrappers.
+
+| Skill | What it leaves behind |
+|---|---|
+| `om-setup-agent-harness` | Additive model/profile configuration, provider readiness table, and optional Claude output style, staged for review. |
+| `om-fix-issue` | Qualified, tested, reviewed issue fix staged in an isolated worktree. |
+| `om-implement-feature` | Spec-driven, tested, reviewed feature staged in an isolated worktree. |
+| `om-fix-issue-multi` / `om-implement-feature-multi` | Base workflow plus independent diagnosis/spec and final-diff review councils. |
+| `om-fix-issue-optimized` / `om-implement-feature-optimized` | Base workflow plus configured implementation workers. |
+| `om-fix-issue-multi-optimized` / `om-implement-feature-multi-optimized` | Configured workers plus independent review councils. |
+| `om-harness` | Internal provider-neutral runtime, hash-bound `om-code-review` packets, fresh-Claude attestation, evidence-gated packet ledger, model matrix renderer, and staged-handoff verifier. |
 
 ### 🤖 Autonomous skills
 
@@ -145,12 +207,15 @@ flowchart LR
 | [`om-auto-create-pr`](docs/skills/om-auto-create-pr.md) | Takes a free-form task brief end-to-end: execution plan, isolated worktree, phase-by-phase commits, validation gate, self-review, labeled PR, then an autofix review loop until clean. Resumable. Hands runs whose plan exceeds the configured step threshold to [`om-auto-create-pr-loop`](docs/skills/om-auto-create-pr-loop.md) automatically. |
 | [`om-auto-create-pr-loop`](docs/skills/om-auto-create-pr-loop.md) | Advanced om-auto-create-pr for long spec implementations: run folder with PLAN/HANDOFF/NOTIFY, one commit per step, checkpoint verification every ~5 steps, plan-driven executor dispatch (per-step placement + model-tier hints in the plan), full gate at completion. |
 | [`om-auto-fix-issue`](docs/skills/om-auto-fix-issue.md) | The single issue-to-PR entry point: classifies the issue first, then routes. A bug drives the autofix chain — triage gate, root-cause analysis, minimal fix with regression tests, a ready labeled PR, autofix review loop. A feature request takes the feature route — claims the issue, resolves its spec (autonomously written via [`om-auto-write-spec`](docs/skills/om-auto-write-spec.md) when none exists, implemented via [`om-auto-implement-spec`](docs/skills/om-auto-implement-spec.md)), and verifies the contract on the same PR — reviewed, UI-verified, fully labeled. For a spec without implementation, run `om-auto-write-spec` directly. Stops cleanly when the issue is already solved or claimed, and on the feature route when the ticket fails `SDLC.md`'s Definition of Ready (the gaps are named on the issue). |
+| [`om-auto-issue-triage`](docs/skills/om-auto-issue-triage.md) | Proposes useful bounded open issues and applies `autofix.label` (default `cez-autofix`) only after human confirmation, with current-state rechecks and label read-back. |
 | [`om-auto-write-spec`](docs/skills/om-auto-write-spec.md) | Turns a brief or FR issue into a finished spec on a ready PR: autonomous Open-Questions defaults posted for override, UI mockups + current-app screenshots attached as PR evidence, full SDLC labels, chain markers for [`om-auto-implement-spec`](docs/skills/om-auto-implement-spec.md). |
 | [`om-auto-implement-spec`](docs/skills/om-auto-implement-spec.md) | Implements an existing spec (by path, name, issue, or spec-PR number; clean stop when not found): reuses the spec PR's branch or runs [`om-auto-create-pr`](docs/skills/om-auto-create-pr.md), then the review autofix loop and UI verification with screenshots on the PR. |
 | [`om-auto-continue-pr`](docs/skills/om-auto-continue-pr.md) | Resumes an in-progress PR from the first unchecked step in its tracking plan and carries it to completion — implementation, validation, review loop, summary comment. A PR with no plan (a human's, another tool's, a crashed run's) is adopted: the goal is reconstructed from its description, comments, review feedback, linked issues and diff, landed as a real plan, then executed. |
 | [`om-auto-continue-pr-loop`](docs/skills/om-auto-continue-pr-loop.md) | Resumes runs started by [`om-auto-create-pr-loop`](docs/skills/om-auto-create-pr-loop.md): orients from HANDOFF.md, picks up at the first non-done Tasks-table row, keeps the per-step commit and checkpoint discipline to completion. |
 | [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md) | Reviews a PR by number in an isolated worktree, approves or requests changes, manages labels. On changes-requested, its autofix loop iterates fixes and re-review until merge-ready. A spec-only design PR gets a **specification review** instead of the code checklist: what can go wrong, backward compatibility, what's missing, how the spec can be improved, and whether it is the simplest possible solution — same severity scale and verdict rule, and the autofix loop amends the spec document (never adds implementation). |
 | [`om-auto-fix-pr`](docs/skills/om-auto-fix-pr.md) | Drives one PR to merge-ready: merges the latest base in first, then loops review-autofix ([`om-auto-review-pr`](docs/skills/om-auto-review-pr.md)), its own CI-stabilization step (classify each failing check as real bug / test bug / flake / infra, fix the real ones with tests, never fake green), and UI QA ([`om-auto-qa-pr`](docs/skills/om-auto-qa-pr.md)), re-merging base whenever it advances. Files follow-up issues for non-blocking nits via [`om-followup-issue-from-pr`](docs/skills/om-followup-issue-from-pr.md), keeps the fork carry-forward supersede/credit rules, normalizes labels, and hands off to [`om-approve-merge-pr`](docs/skills/om-approve-merge-pr.md) — it never merges itself. A `--ci-only [--branch <name>]` mode drives a plain branch or no-PR change to green CI without the rest of the loop. |
+| [`om-auto-merge-buddy`](docs/skills/om-auto-merge-buddy.md) | Works the queue of PRs a human labeled `automerge`, one at a time within a time window (default 2 hours), until three signals hold, each recorded as a label: code review, QA, and CI. It fills a missing signal through [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md), [`om-auto-qa-pr`](docs/skills/om-auto-qa-pr.md) or [`om-auto-fix-pr`](docs/skills/om-auto-fix-pr.md), run with `--orchestrated` so it alone owns the claim and the labels. Slow CI is parked under `ci-monitoring` while it moves on to the next PR. Fork PRs are carried forward to credited replacements. `prepare-and-merge` (default) squash-merges; `prepare-to-merge` marks ready. Per-PR `automerge-force` applies the risk override, and `automerge-prepare` keeps that item prepare-only even in a merge run. Both require the queue label and preserve protected human gates. |
+| [`om-auto-merge-triage`](docs/skills/om-auto-merge-triage.md) | Picks which open PRs should enter the `automerge` queue. It ranks candidates by configurable eligibility tiers (default: `qa-approved` first, then AI judgment of important fixes close to merge, security or small PRs, trusted authors, then issue fixes), considers age, screenshots and bounded requested changes, orders each tier by priority label, and never proposes PRs from first-time contributors or outside collaborators. It works one window at a time (default the last month, scrollable with `--window`, or oldest first with `--from-oldest`), ranks up to 100 PRs by labels, and runs AI judgment only on the top 20. It labels only the PRs a human confirms (all or a selection), so [`om-auto-merge-buddy`](docs/skills/om-auto-merge-buddy.md) can work them. |
 | [`om-pr-autopilot`](docs/skills/om-pr-autopilot.md) | The single "just finish this PR" entry point: diagnoses what state one open PR is actually in — unfinished plan steps, missing review, unresolved conversations, red CI, base conflicts, missing labels or QA evidence, merge-ready — then maps that onto an ordered chain of the skills above and runs it, re-diagnosing between steps. Dispatch only: [`om-auto-continue-pr`](docs/skills/om-auto-continue-pr.md), [`om-auto-fix-pr`](docs/skills/om-auto-fix-pr.md), [`om-auto-qa-pr`](docs/skills/om-auto-qa-pr.md), [`om-followup-issue-from-pr`](docs/skills/om-followup-issue-from-pr.md) and [`om-approve-merge-pr`](docs/skills/om-approve-merge-pr.md) do the work. Never merges without `--allow-merge`; `--dry-run` diagnoses and mutates nothing. |
 | [`om-review-prs`](docs/skills/om-review-prs.md) | Sweeps all unreviewed open PRs, newest first, through [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md), respecting claim locks. |
 | [`om-close-fixed-issues`](docs/skills/om-close-fixed-issues.md) | Post-merge housekeeping sweep: closes issues that merged PRs fix, comments on issues whose PRs were closed without merging. |
@@ -284,6 +349,8 @@ Sweep open PRs, drive them to merge-ready, and ship — the QA gate stays a huma
 | ▶️ You run | ⚙️ Runs automatically inside | 🎁 You get |
 |---|---|---|
 | `/om-merge-buddy` | tracker scan of labels, reviews, CI, mergeability | a report of which PRs can merge now and which are close but blocked |
+| `/om-auto-merge-triage` | open PRs and `automerge.eligibility` | a ranked proposal of PRs for `automerge` from one window, which stops for confirmation; `--apply all` or `--apply <n,…>` labels the confirmed ones, `--window <n>` scrolls to the next window |
+| `/om-auto-merge-buddy` | open PRs a human labeled `automerge` | within a 2-hour window, each PR brought to three signals (code review, QA, CI) and squash-merged by default or marked ready with `--mode prepare-to-merge`; per-item `automerge-force` and `automerge-prepare` override risk handling and finish mode; slow CI is parked under `ci-monitoring` |
 | `/om-review-prs` | [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md) per PR, claim-lock aware | every unreviewed open PR reviewed, newest first |
 | `/om-review-prs --subagents --parallel 3` | the same full review in a fresh agent and separate worktree per PR, up to three at once; automatically provisions local coordination unless `reviewSweep.coordinationRoot` is configured | the review sweep with isolated contexts, pinned configuration, and a lease excluding overlapping sweeps; omitting the new flags keeps the original sequential workflow |
 | `/om-auto-fix-pr 123` | [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md), its CI-stabilization step, [`om-auto-qa-pr`](docs/skills/om-auto-qa-pr.md), [`om-followup-issue-from-pr`](docs/skills/om-followup-issue-from-pr.md) | one PR driven to approvable, green, QA-evidenced — handed to [`om-approve-merge-pr`](docs/skills/om-approve-merge-pr.md), never self-merged |
@@ -339,6 +406,18 @@ GitHub is the default tracker; a repository whose `origin` is on GitLab (gitlab.
 Agent-browser is the default browser automation provider for fresh setups. It
 installs itself and Chrome for Testing when needed; existing repositories remain
 on Playwright until their config makes a provider explicit.
+
+The staged-only harness adds an optional `agentHarness` object to the same
+config. Team policy selects profiles and stable model ids; secrets remain in
+environment variables, managed provider authentication, or trusted user-local
+configuration. Existing configs and existing skills ignore the object when the
+harness is not used.
+
+Fresh configuration also includes an opt-in `high-assurance` profile. Its
+packet policy is additive, so the original four profiles retain their existing
+semantics. Teams may tune risk reviewer counts, independent-family minimums,
+concurrency, and bounded invocation/input budgets without changing the model
+adapters.
 
 ## 🎨 Make it yours
 
@@ -417,3 +496,22 @@ Real production case studies are being added here.
 
 <!-- PIOTR: rewrite in your voice -->
 Built by the [Open Mercato](https://github.com/open-mercato/open-mercato) team, where these skills ship the product every week. We teach this way of working at [aitechleaders.pl](https://aitechleaders.pl) (an AI engineering course, in Polish).
+
+### Staged harness review hardening
+
+Publication hooks activate per worktree at `capture`, then clear on successful
+`stage` or explicit `end-run` after an abort. Ordinary publication remains
+available outside active runs. Hook paths support spaces, staged filenames
+support Unicode, and merged findings preserve their strongest severity.
+
+The harness now checks reviewer content/index changes, all non-remote ref
+namespaces, and exact reviewed content at staging. Stage commands require the
+final implementation packet and approved host attestation; regenerate old
+unreviewed handoffs instead of bypassing this check. Legacy raw provider JSON
+remains accepted. Hooks are supplemental and require Bash/Node on macOS, Linux,
+or WSL; host permissions must independently deny publication. Recover crashed
+packet leases explicitly after verifying the owning worker stopped.
+Command adapters require macOS, Linux, or WSL for process-group cleanup; native
+Windows supports HTTP reviewers and artifact-only operations. Successful command
+evidence must include exit code zero; failed packet or fresh-host validation
+blocks staging regardless of the model verdict.

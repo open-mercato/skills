@@ -1,8 +1,8 @@
 # Split mode — full procedure (conservative, behavior-preserving)
 
 The full procedure `om-create-skill` follows to refactor an existing oversized
-`SKILL.md` into layered `references/` **without changing behavior**. This is the
-§9 process from `om-filozofia.md`. The body enters this file for split mode.
+`SKILL.md` into layered `references/` **without changing behavior**. The body
+enters this file for split mode.
 
 ## 0. Should it be split at all?
 

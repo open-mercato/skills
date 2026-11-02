@@ -27,4 +27,8 @@ PR: #165
 - [x] 1.2 Update skill card and README; exercise mixed queues, label changes and protected gates. — de09ba3
 
 ### Phase 2: Verification and publication
-- [ ] 2.1 Run configured validation and authoritative PR review; address findings and publish ready.
+- [x] 2.1 Run configured validation and authoritative PR review; address findings and publish ready. — 4b2a655
+
+## Verification
+
+All 10 configured commands passed with Python 3.12 on PATH. The authoritative review fixed child marker compatibility, risk provenance reconciliation and the body budget; no outstanding findings remain. Regression examples cover mixed items, mode precedence, risk gates, label removal and custom queue names. No live queue or merge was exercised. Setup changes are buddy-specific; comparison found no other copies to sync, and the operator confirmed this scope.

@@ -49,5 +49,5 @@ PR: #163
 
 ### Phase 2: Extend protected areas
 
-- [ ] 2.1 Add architecture and backward-incompatible changes to mandatory human gates, including visible reasons and compatibility-policy requirements.
+- [x] 2.1 Add architecture and backward-incompatible changes to mandatory human gates, including visible reasons and compatibility-policy requirements. — 65e54b1
 - [ ] 2.2 Verify the extended contracts and run the full configured validation and review gate.

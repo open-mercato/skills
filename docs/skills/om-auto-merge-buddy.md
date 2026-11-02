@@ -136,7 +136,7 @@ must also be removed by a human. Existing SDLC `blocked` and active `qa` stops
 remain effective.
 
 The actual diff determines protected risk: executable migrations, money, and
-permissions or tenant-isolation changes always retain strict risk checks,
+permissions/tenant-isolation changes, architecture changes and backward-incompatible changes always retain strict risk checks,
 even with `--force` or missing risk/QA labels. They require explicit human QA
 covering the protected behavior, pinned with `QA head:` and `qa-approved`.
 Automatic PASS and `qa-self-verified` supply evidence but cannot satisfy this
@@ -146,3 +146,20 @@ The existing status comment visibly reports `waiting-human`, the exact veto or
 protected behavior with evidence links, enforced risk policy, who must act,
 what they must do, and the resume condition. It does not leave a protected PR
 showing `Risk checks: skipped` or `ready`.
+
+
+Architecture changes and backward-incompatible changes additionally require
+explicit current-head human technical approval from a maintainer or the
+repository's designated architecture/contract owner, even when independent
+native review is disabled. This is separate from the pinned human QA evidence.
+Architecture means substantive boundary, ownership, topology or communication
+changes; routine refactoring within the same boundaries does not qualify alone.
+Backward incompatibility includes broken published APIs, events, CLI/config/data
+formats, integrations or supported behavior. Additive compatible changes remain
+on the ordinary route unless another protected area applies.
+
+A breaking change must document its affected consumers and comply with the
+repository's deprecation, bridge, migration/versioning and rollout requirements.
+Human QA cannot waive a missing required compatibility path. The status names
+the changed boundary or broken contract, required decision owner, missing
+approval/transition evidence and exact resume condition.

@@ -1,6 +1,6 @@
 # Invocation-scoped risk override
 
-`--force` requests `RISK_CHECKS_SKIPPED=true` for this invocation only, **outside protected areas**. Apply `references/human-gates.md` to each PR first: migrations, money and permissions/tenant-isolation changes always set effective `RISK_CHECKS_SKIPPED=false`, require pinned human QA and never receive child `--skip-risk-checks`. A human veto is never overridable. With no flag,
+`--force` requests `RISK_CHECKS_SKIPPED=true` for this invocation only, **outside protected areas**. Apply `references/human-gates.md` to each PR first: migrations, money, permissions/tenant-isolation, architecture and backward-incompatible changes always set effective `RISK_CHECKS_SKIPPED=false`, require the applicable pinned human approvals and never receive child `--skip-risk-checks`. A human veto is never overridable. With no flag,
 it is `false`, including when resuming a run created with force. Do not load it
 from config, PR metadata, a stage result, an old handoff or a prior status note.
 

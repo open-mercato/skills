@@ -594,10 +594,26 @@ console.log('PASS: structured reasons update every current fact without duplicat
 const formatCode = [...status.matchAll(/```javascript\n([\s\S]*?)\n```/g)][0][1]
 const formatStatusReason = runInNewContext(`${formatCode}\nformatStatusReason`)
 const readableStatus = formatStatusReason({ reason: automaticReason, nextAction: 'Run a fresh browser QA worker for the recorded scenario.', head: qaHead, signals: { cr: 'pass', qa: 'pass', ci: 'pending' } })
-assert.match(readableStatus, /No human action needed\. Automatic next step: Run a fresh browser QA worker/)
-assert.match(readableStatus, /CR: pass; QA: pass; CI: pending/)
-assert.match(readableStatus, /\*\*Reason:\*\* Current-head QA PASS exists; required approval is absent/)
-assert.match(formatStatusReason({ reason: humanReason, nextAction: 'Wait for the named tenant permission to be granted.', head: qaHead }), /Human action required — repository maintainer\./)
+assert.match(readableStatus, /^\*\*📋 What happened: Current-head QA PASS exists; required approval is absent\*\*\n\n\*\*🔁 Next: Run a fresh browser QA worker for the recorded scenario\. No human action needed\.\*\*/)
+assert.match(readableStatus, /🔍 Review: ✅ passed · 🧪 QA: ✅ passed · 🧪 CI: 📋 pending/)
+assert.ok(readableStatus.indexOf('**🔁 Next:') < readableStatus.indexOf('<details>'), 'Next action must be visible before collapsed evidence')
+const humanStatus = formatStatusReason({ reason: humanReason, nextAction: 'Wait for the named tenant permission to be granted.', head: qaHead })
+assert.ok(humanStatus.includes(`**⚠️ Next: ${humanReason.owner}: ${humanReason.requiredAction}**`), 'Human owner and exact action belong in the bold opening')
+assert.ok(humanStatus.indexOf(humanReason.requiredAction) < humanStatus.indexOf('<details>'))
+assert.ok(humanStatus.includes(humanReason.whyAgentCannotAct), 'Keep the concrete blocker explanation in details')
+assert.match(humanStatus, /Review: not recorded/)
+const prepareStatus = formatStatusReason({ reason: { ...automaticReason, summary: 'All three signals hold; preparation is complete.' }, nextAction: 'Leave this PR ready for a maintainer to merge; automerge-prepare prevents automatic merging.' })
+assert.match(prepareStatus.split('<details>')[0], /automerge-prepare prevents automatic merging/)
+const unknownStatus = formatStatusReason({ reason: { summary: 'Approval status could not be read.' }, nextAction: 'Inspect approval history.' })
+assert.match(unknownStatus, /reconcile whether human action is required/)
+assert.doesNotMatch(unknownStatus, /No human action needed/)
+assert.doesNotMatch(unknownStatus, /\*\*Resume when:/)
+const waivedStatus = formatStatusReason({ reason: automaticReason, nextAction: 'Recheck the target.', signals: { ci: 'baseline failures waived', cr: 'fail' } })
+assert.match(waivedStatus, /CI: baseline failures waived/)
+assert.doesNotMatch(waivedStatus, /CI: ✅/)
+assert.match(waivedStatus, /Review: ❌ failed/)
+assert.equal((readableStatus.match(/<details>/g) ?? []).length, (readableStatus.match(/<\/details>/g) ?? []).length)
+assert.throws(() => formatStatusReason({ reason: {}, nextAction: 'Inspect.' }), /Current structured reason/)
 assert.equal(qaRoutingDecision({ ...routeInput, automationBlocker: { summary: 'Blocked' } }).action, 'inspect-eligibility', 'Incomplete blocker prose cannot invent a human interaction')
 const commandReference = read('skills/om-auto-merge-buddy/references/dashboard-commands.md')
 const commandCode = commandReference.match(/```javascript\n([\s\S]*?)\n```/)[1]
@@ -707,3 +723,75 @@ assert.match(humanGates, /never automatically carry a technical decision to a ne
 assert.match(humanGates, /changed boundary[\s\S]*or broken contract, missing path and required approval in the status comment/)
 console.log('PASS: architecture and backward-incompatible changes retain human technical/QA gates and the repository compatibility path, with ordinary compatible refactors excluded')
 console.log('Merge buddy regressions passed.')
+
+// Exercise the shipped item-policy decision against mixed queues and fresh reads.
+const itemPolicy = read('skills/om-auto-merge-buddy/references/item-policy.md')
+const itemCode = itemPolicy.match(/```javascript\n([\s\S]*?)\n```/)[1]
+const { resolveAutomergeItemPolicy: item } = runInNewContext(`${itemCode}\n({resolveAutomergeItemPolicy})`)
+const queued = (...modifiers) => ['automerge', ...modifiers]
+assert.equal(item({ labels: queued() }).mode, 'prepare-and-merge')
+assert.equal(item({ labels: queued('automerge-prepare'), mode: 'prepare-and-merge' }).mode, 'prepare-to-merge')
+assert.equal(item({ labels: queued('automerge-force'), mode: 'prepare-to-merge' }).mode, 'prepare-to-merge')
+for (const labels of [queued('automerge-force'), queued('automerge-force', 'automerge-prepare')]) {
+  assert.equal(item({ labels }).riskChecksSkipped, true)
+  assert.equal(item({ labels }).stageFlags.join(' '), '--orchestrated --skip-risk-checks')
+  assert.equal(item({ labels, protectedArea: true }).riskChecksSkipped, false)
+  assert.equal(item({ labels, protectedArea: true }).stageFlags.join(' '), '--orchestrated')
+}
+assert.equal(item({ labels: queued('automerge-force', 'automerge-prepare') }).mode, 'prepare-to-merge')
+for (const flags of [{ force: true }, { skipRiskChecks: true }, { force: true, skipRiskChecks: true }]) {
+  assert.equal(item({ labels: queued(), ...flags }).riskChecksSkipped, true)
+  assert.equal(item({ labels: queued(), protectedArea: true, ...flags }).riskChecksSkipped, false)
+}
+for (const labels of [[], ['automerge-force'], ['automerge-prepare'], ['automerge-force', 'automerge-prepare']]) {
+  const result = item({ labels, force: true })
+  assert.equal(result.authorized, false)
+  assert.equal(result.stageFlags.length, 0)
+}
+assert.equal(item({ labels: ['ship', 'automerge-prepare'], queueLabel: 'ship' }).mode, 'prepare-to-merge')
+assert.equal(item({ labels: ['ship', 'automerge-force'], queueLabel: 'ship' }).riskChecksSkipped, true)
+// Label changes on the same head and a following ordinary worker cannot inherit policy.
+assert.equal(item({ labels: queued('automerge-force') }).riskChecksSkipped, true)
+assert.equal(item({ labels: queued() }).riskChecksSkipped, false)
+assert.equal(item({ labels: queued('automerge-prepare') }).mode, 'prepare-to-merge')
+assert.equal(item({ labels: queued() }).mode, 'prepare-and-merge')
+assert.equal(item({ labels: queued(), force: true }).riskChecksSkipped, true)
+for (const labels of [undefined, null, {}, [null]]) assert.throws(() => item({ labels }), /Incomplete label read/)
+assert.throws(() => item({ labels: queued(), mode: 'automerge-prepare' }), /Invalid invocation mode/)
+assert.match(itemPolicy, /never child `--force`/)
+assert.match(itemPolicy, /block merging\nif transfer cannot be verified/)
+assert.match(stages, /resolve the effective per-item mode\/risk/)
+console.log('PASS: per-item force/prepare precedence, mixed queues, removal, protected gates and child arguments')
+
+// Existing children must still recognize the force marker without upgrades.
+assert.ok(override.includes('`Risk checks: skipped — operator --force`'))
+for (const child of ['om-auto-review-pr', 'om-auto-qa-pr', 'om-auto-fix-pr']) {
+  assert.ok(read(`skills/${child}/references/orchestrated-mode.md`).includes('`Risk checks: skipped — operator --force`'))
+}
+assert.match(signals, /effective per-item force request is enabled/)
+console.log('PASS: per-item overrides preserve child provenance and strict CR invalidation contracts')
+
+// A final evidence comment is an audit artifact, never authorization to merge.
+const mergeSummary = read('skills/om-auto-merge-buddy/references/merge-summary.md')
+const finishMerge = stages.split('- **`prepare-and-merge`**')[1].split('\n  - **Refused merge**')[0]
+assert.match(skill, /one final evidence summary[\s\S]*references\/merge-summary\.md/)
+assert.match(finishMerge, /refresh the status[\s\S]*one additional evidence summary[\s\S]*confirm its write[\s\S]*recheck all final gates\/ownership before \*\*merge-pr\*\*/)
+assert.match(mergeSummary, /Never post it for prepare-only, waiting, blocked, obsolete/)
+assert.match(mergeSummary, /entire process, including[\s\S]*earlier visits\/runs[\s\S]*original\/replacement chain/)
+assert.match(mergeSummary, /distinguish work the buddy performed from pre-existing evidence it reused/)
+assert.match(mergeSummary, /Verification claims[\s\S]*must cover the final head/)
+assert.match(mergeSummary, /legacy bare-skill spelling/)
+assert.match(mergeSummary, /copied[\s\S]*outsider marker is never authoritative/)
+assert.match(mergeSummary, /Search the full comment history/)
+assert.match(mergeSummary, /Incomplete or unreadable history[\s\S]*stops creation and merging/)
+assert.match(mergeSummary, /cannot be updated, do not post a duplicate/)
+assert.match(mergeSummary, /inability to confirm the one summary parks the PR `ready` without[\s\S]*merging/)
+assert.match(mergeSummary, /Immediately after the confirmed summary write, re-read head\/target, queue and[\s\S]*modifier labels, human vetoes\/approvals and signal evidence/)
+assert.match(mergeSummary, /No new[\s\S]*producing stage or unrelated work belongs between summary and merge/)
+assert.match(mergeSummary, /Confirm the merge via \*\*get-pr\*\*/)
+assert.match(mergeSummary, /failed post-merge edit[\s\S]*never a reason to retry a confirmed merge/)
+assert.match(mergeSummary, /2–6 short factual bullets/)
+assert.match(mergeSummary, /Distinguish QA[\s\S]*not required from QA passed/)
+assert.match(mergeSummary, /Never call waived red CI green/)
+assert.match(mergeSummary, /\*\*🚀 Merging now: `<head>` into `<target>` — squash merge\.\*\*/)
+console.log('PASS: one whole-process pre-merge summary follows status, preserves evidence truth and rechecks gates before guarded merge')

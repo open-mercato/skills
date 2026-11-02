@@ -580,3 +580,21 @@ deprecation/bridges, versioning/migration, affected consumers and rollout eviden
 remain review gates. Missing approval or compatibility evidence has an explicit
 owner, reason and resume condition in the existing status comment. No shared
 parsed schema or standard reference file changes.
+
+
+## 2026-11-02: Per-item automerge policy modifiers
+
+The queue can contain items requiring different handling in the same run.
+`automerge-force` applies the buddy’s `--skip-risk-checks --force` request to
+one PR; `--skip-risk-checks` is now an alias of the buddy’s existing risk-only
+`--force`. Child `--force` retains its claim-takeover meaning and is never
+forwarded. `automerge-prepare` restricts an item to existing `prepare-to-merge`
+mode even over explicit merge CLI mode. Both labels combine, require the
+configured queue label, and preserve protected human gates and signal evidence.
+
+Fresh labels resolve policy per worker and at the final guard, including on
+resume and replacement. The existing child-validation force marker and parsed
+signal/result formats remain intact; actual CLI/label provenance is recorded
+separately. Optional modifier labels need no config migration and are created
+by operators when used. Shared setup text stays unchanged: only the buddy’s
+specifics change, after comparison with all other setup copies.

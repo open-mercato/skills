@@ -22,12 +22,13 @@ Outside the human veto and protected-area gates, completed trusted `om-auto-qa-p
 
 | Parameter | Required | Description |
 |---|---|---|
-| `--mode <prepare-to-merge\|prepare-and-merge>` | No | What to do once all three signals hold. Config `automerge.mode`, default `prepare-and-merge`; explicit CLI overrides. |
+| `--mode <prepare-to-merge\|prepare-and-merge>` | No | What to do once all three signals hold. Config `automerge.mode`, default `prepare-and-merge`; explicit CLI overrides, then per-item `automerge-prepare` restricts to preparation. |
 | `--require-independent-review` / `--skip-independent-review` | No | Mutually exclusive overrides of config `automerge.requireIndependentReview` (boolean, default false). |
 | `--human-qa` / `--auto-qa` | No | Override boolean `automerge.defaultToHumanQa` (default false); missing mandatory approval normally invokes legitimate automatic QA/sign-off. |
 | `--window <minutes>` | No | Wall-clock budget for the run. Default `automerge.windowMinutes` (`120`); `0` = one pass, no idle CI polling. |
 | `--pr <number>` | No | Work only this PR. |
 | `--force` | No | Outside protected areas, skip only risk-high review-evidence and self-QA exclusions for this invocation. Full review, required QA, CI and head guard remain. Never takes over another actor’s claim or bypasses human gates. |
+| `--skip-risk-checks` | No | Alias of this buddy’s risk-only `--force`; both may be supplied together. Child `--force` is never forwarded. |
 | `--skip-pre-existing-ci-errors` | No | Invocation-only: waive a completed failure only when exact current-target run/config/logs prove the same pre-existing root cause and the PR leaves relevant CI definitions unchanged. Pending/new/unknown failures remain blocking. |
 | `--fresh` | No | Start a new run log; keep durable active scheduling. |
 | `--dashboard-port <port>` | No | Local React dashboard port, default `5050`; integer 1–65535. |
@@ -36,7 +37,22 @@ Outside the human veto and protected-area gates, completed trusted `om-auto-qa-p
 
 Every visit starts by reconciling signal labels with actual review/QA/CI evidence and the changes since each evidence revision. The buddy inspects the delta, judges its effect on the tested behavior, carries forward only supported evidence and runs delta review, QA or current-head CI checks as needed. It logs the scope judgment and next action before launching a stage; unknown scope or untrusted evidence never counts as a pass.
 
-Force mode is recorded in the PR status, review/QA evidence and run log. It is never inherited on resume: run again with `--force` to keep the waiver active. A normal run rejects previous override-derived approvals and applies the strict risk gates.
+## Per-PR labels
+
+Keep the configured queue label (`automerge` by default) on every item. Add either modifier label to choose different behavior within one run; neither enrolls a PR on its own. Create these optional labels in your tracker before applying them, even when using a custom queue label.
+
+| Labels in addition to the queue label | Behavior |
+|---|---|
+| None | Use the run’s mode and explicit risk flags. |
+| `automerge-force` | Apply `--skip-risk-checks --force` to this item only, preserving protected human gates, claims and all three signals. |
+| `automerge-prepare` | Override even `--mode prepare-and-merge` with `prepare-to-merge`: prepare and leave `merge-queue`, without merging. |
+| Both | Prepare with the force risk override; leave the PR unmerged. |
+
+For example, run `/om-auto-merge-buddy --mode prepare-and-merge` over three queued PRs: a plain item can merge, an item with `automerge-force` uses the risk override, and one with `automerge-prepare` stays ready for a separate merge decision. A global prepare-only mode still prevents every item from merging. The label `automerge-prepare` maps to the existing `prepare-to-merge` mode; it is not an additional CLI mode name.
+
+Labels are read again before stages and immediately before finishing. Adding prepare prevents the next merge; removing it restores current run mode after fresh gate checks. Removing force restores strict review unless the run explicitly supplied a risk flag. Each worker resolves its own policy, including on resume and fork replacement, so one item’s overrides cannot affect another. Queue label removal remains the off switch.
+
+Force mode and its CLI/label source are recorded in the PR status, review/QA evidence and run log. CLI flags are never inherited on resume; current modifier labels are resolved again. A visit without an effective override rejects previous override-derived CR approvals and applies strict risk gates. Protected changes enforce strict checks regardless of either force input.
 
 The CI baseline opt-in is independent of force. Every waiver records both check/run URLs, head and current target SHA, matching failure signature/root cause and unchanged CI-definition proof. A target advance or rerun invalidates that proof; subsequent runs without the flag apply strict CI and reject cached waived records. Waived failing checks remain visibly red in the report; they are never called green.
 
@@ -163,3 +179,27 @@ repository's deprecation, bridge, migration/versioning and rollout requirements.
 Human QA cannot waive a missing required compatibility path. The status names
 the changed boundary or broken contract, required decision owner, missing
 approval/transition evidence and exact resume condition.
+
+
+## Status comment layout
+
+Each PR keeps one updated comment. Two fully bold lines lead: **what happened**
+with the decisive reason, then **next** with the exact action and owner.
+A compact Review / QA / CI line follows. Evidence, policy, timing and
+reconciliation are collapsed beneath it; scheduler and signal records retain
+their existing fields. Human blockers name the required person/action at the
+top. Prepare-only items explicitly say they will remain unmerged.
+
+
+## Final merge evidence
+
+Immediately before an actual merge, the buddy updates its status and posts one
+additional **merge summary** comment. It uses 2–6 concrete bullets covering the
+important fixes and verification across all visits/runs, with evidence links,
+material waivers and tracked follow-ups. It explicitly says **Merging now** and
+names the checked head and target. Prepare-only items never receive this comment.
+
+The same summary is updated on retries, after a confirmed merge, or when a new
+gate/refusal prevents merging. It is never duplicated and cannot replace the
+final gate checks. A summary that cannot be confirmed leaves the PR ready with
+a visible blocker instead of proceeding to merge.

@@ -659,7 +659,6 @@ try {
   rmSync(concurrencyRoot, { recursive: true, force: true })
 }
 console.log('PASS: safe signal/evidence maps and QA thumbnails preserve real provenance; concurrent callers share one dashboard without killing foreign processes')
-console.log('Merge buddy regressions passed.')
 
 // Human gates are skill instructions; lock their placement and precedence across
 // every shortcut that previously admitted a rejected or self-signed protected PR.
@@ -696,3 +695,4 @@ assert.match(humanGates, /Ordinary fixes outside these areas keep the existing a
 assert.match(humanGates, /Human action: <rejecting reviewer/)
 assert.match(humanGates, /Never leave `Risk checks: skipped` or `ready` describing a protected PR/)
 console.log('PASS: human veto and protected-risk gates precede bootstrap, automatic QA reuse, override propagation, replacements and both finish modes')
+console.log('Merge buddy regressions passed.')

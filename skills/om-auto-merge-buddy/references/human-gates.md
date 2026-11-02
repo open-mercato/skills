@@ -83,6 +83,8 @@ A bot or `om-auto-qa-pr` self-sign-off, including one posted under a human accou
 cannot satisfy this gate. Changed heads require a fresh human pin or an explicit
 human scope assessment with a fresh `QA head:`; automatic carry-forward is insufficient.
 
+When this human approval is valid and no veto remains, record `qa: pass <current-head> <human-signoff-url>` and grant signal 2; continue normal strict CR/CI and finish checks.
+
 A completed automatic QA PASS remains useful supporting evidence, but cannot
 grant signal 2 or replace this human approval. Do not invoke orchestrated QA's
 self-sign-off path to obtain it. Strict automated review/CI repair may proceed

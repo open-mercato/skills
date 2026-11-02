@@ -30,8 +30,10 @@ PR: #165
 - [x] 2.1 Run configured validation and authoritative PR review; address findings and publish ready. — 4b2a655
 
 ### Phase 3: Status comment presentation
-- [ ] 3.1 Lead with fully bold outcome and next action, compact signals and collapsed supporting details; preserve machine records and validate examples.
+- [x] 3.1 Lead with fully bold outcome and next action, compact signals and collapsed supporting details; preserve machine records and validate examples. — 27f536f
 
 ## Verification
 
 All 10 configured commands passed with Python 3.12 on PATH. The authoritative review fixed child marker compatibility, risk provenance reconciliation and the body budget; no outstanding findings remain. Regression examples cover mixed items, mode precedence, risk gates, label removal and custom queue names. No live queue or merge was exercised. Setup changes are buddy-specific; comparison found no other copies to sync, and the operator confirmed this scope.
+
+Status-format follow-up: all 10 configured commands passed again. Review covered visible human actions, mode-appropriate next steps, missing evidence and CI-waiver wording, and unchanged machine records. The 57 report-template copies were compared; the formatter exists only in this skill. The operator approved this scoped status format.

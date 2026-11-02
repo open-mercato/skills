@@ -89,7 +89,7 @@ action/owner, retry condition and evidence, including changed facts under an
 unchanged outcome (`references/scheduler.md`). Do not add a second reason
 comment. Successful states also name their current evidence.
 
-Keep the opening to two fully bold sentences, separated by a blank line, followed
+Keep the opening to two fully bold lines, separated by a blank line, followed
 by the compact signal line. Use glossary emojis for their meanings: 📋 working
 or waiting for CI, ✅ ready, 🚀 merged/released, ⚠️ required human action,
 ⛔ blocked/stopped, ❌ failed, 🔁 replacement/resume. Never call missing evidence

@@ -770,3 +770,27 @@ for (const child of ['om-auto-review-pr', 'om-auto-qa-pr', 'om-auto-fix-pr']) {
 }
 assert.match(signals, /effective per-item force request is enabled/)
 console.log('PASS: per-item overrides preserve child provenance and strict CR invalidation contracts')
+
+// A final evidence comment is an audit artifact, never authorization to merge.
+const mergeSummary = read('skills/om-auto-merge-buddy/references/merge-summary.md')
+const finishMerge = stages.split('- **`prepare-and-merge`**')[1].split('\n  - **Refused merge**')[0]
+assert.match(skill, /one final evidence summary[\s\S]*references\/merge-summary\.md/)
+assert.match(finishMerge, /refresh the status[\s\S]*one additional evidence summary[\s\S]*confirm its write[\s\S]*recheck all final gates\/ownership before \*\*merge-pr\*\*/)
+assert.match(mergeSummary, /Never post it for prepare-only, waiting, blocked, obsolete/)
+assert.match(mergeSummary, /entire process, including[\s\S]*earlier visits\/runs[\s\S]*original\/replacement chain/)
+assert.match(mergeSummary, /distinguish work the buddy performed from pre-existing evidence it reused/)
+assert.match(mergeSummary, /Verification claims[\s\S]*must cover the final head/)
+assert.match(mergeSummary, /legacy bare-skill spelling/)
+assert.match(mergeSummary, /copied[\s\S]*outsider marker is never authoritative/)
+assert.match(mergeSummary, /Search the full comment history/)
+assert.match(mergeSummary, /cannot be updated, do not post a duplicate/)
+assert.match(mergeSummary, /inability to confirm the one summary parks the PR `ready` without[\s\S]*merging/)
+assert.match(mergeSummary, /Immediately after the confirmed summary write, re-read head\/target, queue and[\s\S]*modifier labels, human vetoes\/approvals and signal evidence/)
+assert.match(mergeSummary, /No new[\s\S]*producing stage or unrelated work belongs between summary and merge/)
+assert.match(mergeSummary, /Confirm the merge via \*\*get-pr\*\*/)
+assert.match(mergeSummary, /failed post-merge edit[\s\S]*never a reason to retry a confirmed merge/)
+assert.match(mergeSummary, /2–6 short factual bullets/)
+assert.match(mergeSummary, /Distinguish QA[\s\S]*not required from QA passed/)
+assert.match(mergeSummary, /Never call waived red CI green/)
+assert.match(mergeSummary, /\*\*🚀 Merging now: `<head>` into `<target>` — squash merge\.\*\*/)
+console.log('PASS: one whole-process pre-merge summary follows status, preserves evidence truth and rechecks gates before guarded merge')

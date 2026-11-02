@@ -189,3 +189,17 @@ A compact Review / QA / CI line follows. Evidence, policy, timing and
 reconciliation are collapsed beneath it; scheduler and signal records retain
 their existing fields. Human blockers name the required person/action at the
 top. Prepare-only items explicitly say they will remain unmerged.
+
+
+## Final merge evidence
+
+Immediately before an actual merge, the buddy updates its status and posts one
+additional **merge summary** comment. It uses 2–6 concrete bullets covering the
+important fixes and verification across all visits/runs, with evidence links,
+material waivers and tracked follow-ups. It explicitly says **Merging now** and
+names the checked head and target. Prepare-only items never receive this comment.
+
+The same summary is updated on retries, after a confirmed merge, or when a new
+gate/refusal prevents merging. It is never duplicated and cannot replace the
+final gate checks. A summary that cannot be confirmed leaves the PR ready with
+a visible blocker instead of proceeding to merge.

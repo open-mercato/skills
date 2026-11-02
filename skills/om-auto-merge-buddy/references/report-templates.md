@@ -17,7 +17,9 @@ whole via **update-comment**. The scheduler verifies the stored comment ID and
 falls back to a complete marker/author search before creating; never duplicate
 a status comment on resume, reset or a lost local file (`references/scheduler.md`). It serves as this skill's claim comment, its
 label-rationale comment, and its run summary, so there is never a second
-comment per visit or per round.
+status comment per visit or per round. The sole additional pre-merge evidence
+comment is defined in `references/merge-summary.md`; it is created once per PR
+and updated on retries, never posted for prepare-only items.
 
 ~~~markdown
 🤖 `om-auto-merge-buddy` — status

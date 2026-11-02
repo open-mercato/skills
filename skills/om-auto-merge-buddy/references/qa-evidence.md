@@ -1,5 +1,7 @@
 # Reuse completed auto-QA evidence before launching stage 2
 
+Apply `references/human-gates.md` first. Human vetoes stop work; protected-area changes require strict risk checks and pinned human QA. Automatic PASS reuse, `n/a`, self-sign-off and automatic routing below never bypass these gates.
+
 For an automerge PR, a trusted completed `om-auto-qa-pr` PASS on the unchanged
 current head satisfies signal 2 by itself. It does **not** need `qa-approved`,
 `qa-self-verified`, `QA head:`, self-sign-off eligibility or `--force`, including

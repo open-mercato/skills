@@ -1,5 +1,7 @@
 # Automatic QA before a human wait
 
+Apply `references/human-gates.md` first. Human vetoes stop work; protected-area changes require strict risk checks and pinned human QA. Automatic PASS reuse, `n/a`, self-sign-off and automatic routing below never bypass these gates.
+
 Resolve `automerge.defaultToHumanQa` from current `.ai/agentic.config.json`:
 boolean, default **false**. Mutually exclusive `--human-qa` / `--auto-qa` override
 it for this invocation. Reject conflicting flags or invalid types before claims.

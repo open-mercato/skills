@@ -4,6 +4,7 @@
 Prevent `om-auto-merge-buddy` from preparing or merging a PR with `qa-failed`, `do-not-merge`, or an unresolved trusted human QA NO-GO, even without `needs-qa`.
 
 ## Scope
+Also preserve strict risk checks and require pinned human QA for migrations, money and permissions/tenant isolation regardless of `--force`; expose exact stop reasons in the existing status comment.
 Update the skill router, signal/bootstrap rules, reconciliation and finish guards; document trusted human verdict recognition, explicit release and conservative handling of unreadable evidence.
 
 ## Non-goals

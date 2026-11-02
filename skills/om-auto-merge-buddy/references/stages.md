@@ -2,6 +2,8 @@
 
 ## Running a sub-skill
 
+Before and after every stage apply `references/human-gates.md`. An active veto stops without producing work. Recompute protected-area risk from the current diff: effective `RISK_CHECKS_SKIPPED=false` and no child `--skip-risk-checks` for these PRs.
+
 Each stage is one sub-skill invocation, and it always carries `--orchestrated`.
 That flag is the contract. When `RISK_CHECKS_SKIPPED=true`, also pass `--skip-risk-checks`; otherwise omit it. Never pass the buddy’s `--force` to a child: a child’s existing `--force` means claim takeover. Nested orchestrated calls preserve `--skip-risk-checks`. The sub-skill runs under this skill's claim. It
 skips its own claim, label, assignee, handoff, draft-promotion and CI-wait steps,
@@ -46,7 +48,7 @@ signals 2 and 3 are re-evaluated for the new head per `references/signals.md`.
 
 ## Stage 2 — QA (signal 2 missing)
 
-First apply `references/qa-routing.md`, even when report-based signal 2 holds. A missing mandatory local approval or testable coverage gap defaults to `om-auto-qa-pr --orchestrated`, passing existing PASS evidence and precise missing coverage/sign-off in task context. Reuse covered unchanged-head scenarios. Only a verified blocker/ineligibility or explicit human preference routes to a human.
+First apply `references/human-gates.md`: vetoes stop, and missing protected-area human QA ends `waiting-human` without invoking automatic self-sign-off. Then apply `references/qa-routing.md`, even when report-based signal 2 holds. A missing mandatory local approval or testable coverage gap defaults to `om-auto-qa-pr --orchestrated`, passing existing PASS evidence and precise missing coverage/sign-off in task context. Reuse covered unchanged-head scenarios. Only a verified blocker/ineligibility or explicit human preference routes to a human.
 
 Otherwise use `references/qa-evidence.md`: a trusted completed PASS on the unchanged head (including legacy reports) grants signal 2 and skips this stage with zero attempts, regardless of approval labels or risk-high, unless the local approval/gap route above still needs action. Only when neither that evidence nor a valid approval exists run `om-auto-qa-pr {pr} --orchestrated`. It skips its review-first gate, because
 signal 1 already holds.
@@ -73,14 +75,14 @@ returns `blocked`, except a fresh proof satisfying the explicit baseline opt-in
 When a stage reports `replacement=<n>` (it carried a fork PR forward to a
 credited replacement):
 
-1. Re-read the replacement via **get-pr**. It must be open, target the same branch, carry `AUTOMERGE_LABEL` (the fork flow copies it from a fresh reading of the original), and carry its `Supersedes #<old>` + credit lines. Missing label → `apply_label` it **only** when the original still carried it at the moment of transfer. A label a human removed is never re-created.
+1. Recheck the original for vetoes and classify the replacement under `references/human-gates.md`; an unresolved original veto follows the replacement and prevents further work. Re-read the replacement via **get-pr**. It must be open, target the same branch, carry `AUTOMERGE_LABEL` (the fork flow copies it from a fresh reading of the original), and carry its `Supersedes #<old>` + credit lines. Missing label → `apply_label` it **only** when the original still carried it at the moment of transfer. A label a human removed is never re-created.
 2. End the original's visit as `replaced`. Remove its `in-progress`, `ci-monitoring` and `automerge-signal-*` labels, and point its status comment at `#<n>`. **Atomically migrate the scheduler entry** to the verified replacement (never both numbers active), preserving plan/progress and next action under `references/scheduler.md`. **Move the run handoff** in the same breath: log a `replaced` step (`#<old> → #<n>`) in `RUN.md`, and rewrite `HANDOFF.md` so *In flight*, the queue and *Next concrete action* name `#<n>`, never the closed original (`references/run-log.md`).
 3. Assign `CURRENT_USER` on the replacement and verify it, then claim the replacement (`references/claim-pr.md`) and open its status comment with `🔁 carried forward from #<old>`. Reset attempts. Record any signal the stage proved for the replacement's `head` (a review `pass` on that head counts as signal 1).
 4. Continue the ladder on the replacement in the same visit. It is the active PR from here on, in every later stage, report line and chaining line.
 
 ## Finish — all three signals on the current head
 
-Re-read **get-pr** and revalidate every signal's source evidence immediately
+Apply `references/human-gates.md` using fresh labels, complete QA verdict history and current diff before either action; no veto or missing protected-area human approval may remain. Re-read **get-pr** and revalidate every signal's source evidence immediately
 before acting, including same-head revocations (`references/signals.md` →
 Recheck evidence). Apply `references/qa-routing.md` again: an applicable missing required approval/gap returns to the automatic QA action (or verified human blocker), never merge/prepare. The target must still equal `base` in the record, the head
 must still equal the SHA in all three records, the PR must be open with
@@ -99,5 +101,5 @@ never reuse invalidated head/policy readiness. Confirmed merges journal those
 timestamps before active cleanup.
 
 - **`prepare-to-merge`** → `set_pipeline_label {pr} merge-queue`, then **mark-pr-ready** if it is a draft. End `ready`. Retain its active scheduler record with a future cheap check until externally merged. Later rounds revisit it cheaply: no producing stage runs while the current target and fresh source evidence still support every signal.
-- **`prepare-and-merge`** → **mark-pr-ready** if it is a draft, then **merge-pr** with squash, the checked `headRefOid`, and the descriptor's protection-bypass form. Labels such as `do-not-merge` and other host merge rules are deliberately not consulted: the three signals are the gate. End `merged`. Do not delete the head branch unless the repository's config asks for it.
-  - **Refused merge** — the head moved (the head-SHA guard), the token lacks the bypass right, or the host has no bypass. Never retry another way. A moved head goes back to the ladder. Any other refusal ends the visit `ready` (`merge-queue` set), with the host's reason in the status comment for a maintainer. The next round tries the merge once more.
+- **`prepare-and-merge`** → **mark-pr-ready** if it is a draft, then **merge-pr** with squash, the checked `headRefOid`, and the descriptor's protection-bypass form. Immediately before the mutation recheck human gates; `qa-failed`, `do-not-merge`, unresolved human QA NO-GO and the protected-area human approval requirement cannot be bypassed. The host bypass never overrides these gates. End `merged`. Do not delete the head branch unless the repository's config asks for it.
+  - **Refused merge** — the head moved (the head-SHA guard), the token lacks the bypass right, or the host has no bypass. Never retry another way. A moved head goes back to the ladder. Any other refusal rechecks human gates first; a human stop ends `waiting-human` without changing pipeline labels. Otherwise it ends the visit `ready` (`merge-queue` set), with the host's reason in the status comment for a maintainer. The next round tries the merge once more.

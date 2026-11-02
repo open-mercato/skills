@@ -660,3 +660,39 @@ try {
 }
 console.log('PASS: safe signal/evidence maps and QA thumbnails preserve real provenance; concurrent callers share one dashboard without killing foreign processes')
 console.log('Merge buddy regressions passed.')
+
+// Human gates are skill instructions; lock their placement and precedence across
+// every shortcut that previously admitted a rejected or self-signed protected PR.
+const humanGates = read('skills/om-auto-merge-buddy/references/human-gates.md')
+for (const document of [skill, signals, stages, reconcile,
+  read('skills/om-auto-merge-buddy/references/entrance.md'),
+  read('skills/om-auto-merge-buddy/references/qa-routing.md'),
+  read('skills/om-auto-merge-buddy/references/qa-evidence.md'), override]) {
+  assert.match(document, /references\/human-gates\.md/, 'Every signal shortcut must consult human gates')
+}
+assert.doesNotMatch(signals, /qa-failed[^\n]*only a hint/)
+assert.doesNotMatch(stages, /do-not-merge[^\n]*deliberately not consulted/)
+assert.match(humanGates, /`qa-failed` or `do-not-merge` is a hard stop by itself/)
+assert.match(humanGates, /unresolved human QA \*\*NO-GO\*\* is a hard stop without any label/)
+assert.match(humanGates, /case-insensitive explicit verdict/)
+assert.match(humanGates, /Quoted text, code examples, negation, historical references/)
+assert.match(humanGates, /Verify a human[\s\S]*repository write\/maintain\/admin author/)
+assert.match(humanGates, /Each rejecting human must explicitly withdraw\/resolve their own verdict/)
+assert.match(humanGates, /Evaluate all unresolved verdicts/)
+assert.match(humanGates, /deletion, an edit erasing the verdict, or unavailable history is not clearance/)
+assert.match(humanGates, /invalidate QA[\s\S]*clear current `readyAt`\/`readyHead`\/`readyPolicy`/)
+assert.match(humanGates, /count no stage[\s\S]*attempt/)
+assert.match(humanGates, /Do not promote, prepare, merge, close[\s\S]*as obsolete or create a replacement/)
+assert.match(stages, /Recheck the original for vetoes/)
+for (const area of ['Migrations', 'Permissions or tenant isolation', 'Money']) assert.ok(humanGates.includes(area))
+assert.match(humanGates, /effective per-PR[\s\S]*`RISK_CHECKS_SKIPPED=false`/)
+assert.match(humanGates, /Never pass `--skip-risk-checks` to any child/)
+assert.match(humanGates, /QA cannot be `n\/a` here[\s\S]*`qaGate: false`/)
+assert.match(humanGates, /Require `qa-approved` plus a \*\*verified human QA reviewer's explicit sign-off\*\*/)
+assert.match(humanGates, /`QA head: <current-full-sha>`/)
+assert.match(humanGates, /posted under a human account,[\s\S]*cannot satisfy this gate/)
+assert.match(humanGates, /automatic carry-forward is insufficient/)
+assert.match(humanGates, /Ordinary fixes outside these areas keep the existing automatic\/override policy/)
+assert.match(humanGates, /Human action: <rejecting reviewer/)
+assert.match(humanGates, /Never leave `Risk checks: skipped` or `ready` describing a protected PR/)
+console.log('PASS: human veto and protected-risk gates precede bootstrap, automatic QA reuse, override propagation, replacements and both finish modes')

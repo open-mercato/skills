@@ -783,6 +783,7 @@ assert.match(mergeSummary, /Verification claims[\s\S]*must cover the final head/
 assert.match(mergeSummary, /legacy bare-skill spelling/)
 assert.match(mergeSummary, /copied[\s\S]*outsider marker is never authoritative/)
 assert.match(mergeSummary, /Search the full comment history/)
+assert.match(mergeSummary, /Incomplete or unreadable history[\s\S]*stops creation and merging/)
 assert.match(mergeSummary, /cannot be updated, do not post a duplicate/)
 assert.match(mergeSummary, /inability to confirm the one summary parks the PR `ready` without[\s\S]*merging/)
 assert.match(mergeSummary, /Immediately after the confirmed summary write, re-read head\/target, queue and[\s\S]*modifier labels, human vetoes\/approvals and signal evidence/)

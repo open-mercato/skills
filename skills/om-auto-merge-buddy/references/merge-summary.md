@@ -22,7 +22,8 @@ closed or externally merged items. It never grants a signal or approval.
    canonical backticked marker and its legacy bare-skill spelling. Verify authorship
    as this automation account or a trusted prior automation account; a copied
    outsider marker is never authoritative. Search the full comment history on
-   resume/retry, not just a saved comment ID. Create once via **comment-pr** with
+   resume/retry, not just a saved comment ID. Incomplete or unreadable history
+   stops creation and merging; never infer that no prior summary exists. Create once via **comment-pr** with
    a body file; otherwise rewrite the existing comment via **update-comment**.
    If an existing trusted comment cannot be updated, do not post a duplicate.
    Failed/unknown comment writes must be reconciled through a fresh read before
@@ -69,7 +70,9 @@ replacement credit only when material. If nothing was changed, say which existin
 review/QA evidence was verified and reused; never claim a fix. Distinguish QA
 not required from QA passed. Never call waived red CI green. Include material
 risk/CI waivers and required human approvals when used. Link evidence instead
-of copying findings, logs, screenshots or the PR body. Preserve useful bullets
+of copying findings, logs, screenshots or the PR body. If an important deferred
+item has no issue yet, say filing is pending and link its source; never invent
+a tracking link or claim the follow-up was filed. Preserve useful bullets
 from earlier attempts only after verification; update their final-head evidence.
 
 The existing status, scheduler checkpoint and signal-record formats remain

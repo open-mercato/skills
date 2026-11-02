@@ -18,11 +18,13 @@ Force labels must not leak between workers or bypass protected gates. Prepare la
 
 ## Progress
 
+PR: #165
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Policy and documentation
-- [ ] 1.1 Define fresh per-item label resolution, precedence, child arguments, replacement handling and audit.
-- [ ] 1.2 Update skill card and README; exercise mixed queues, label changes and protected gates.
+- [x] 1.1 Define fresh per-item label resolution, precedence, child arguments, replacement handling and audit. — de09ba3
+- [x] 1.2 Update skill card and README; exercise mixed queues, label changes and protected gates. — de09ba3
 
 ### Phase 2: Verification and publication
 - [ ] 2.1 Run configured validation and authoritative PR review; address findings and publish ready.

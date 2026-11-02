@@ -4,6 +4,7 @@
 Prevent `om-auto-merge-buddy` from preparing or merging a PR with `qa-failed`, `do-not-merge`, or an unresolved trusted human QA NO-GO, even without `needs-qa`.
 
 ## Scope
+Resume extension: architecture changes and backward-incompatible changes also require strict risk checks, pinned human QA and explicit current-head human technical approval. Existing compatibility requirements cannot be waived by QA or force.
 Also preserve strict risk checks and require pinned human QA for migrations, money and permissions/tenant isolation regardless of `--force`; expose exact stop reasons in the existing status comment.
 Update the skill router, signal/bootstrap rules, reconciliation and finish guards; document trusted human verdict recognition, explicit release and conservative handling of unreadable evidence.
 
@@ -44,3 +45,9 @@ PR: #163
 
 - [x] 1.1 Add one skill-local veto policy and apply it before signal evaluation, stages, replacements and finish. — 9e43c80
 - [x] 1.2 Review scenario outcomes and run the configured validation gate. — 313c455
+
+
+### Phase 2: Extend protected areas
+
+- [ ] 2.1 Add architecture and backward-incompatible changes to mandatory human gates, including visible reasons and compatibility-policy requirements.
+- [ ] 2.2 Verify the extended contracts and run the full configured validation and review gate.

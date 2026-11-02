@@ -89,3 +89,7 @@ function resolveAutomergeItemPolicy({ labels, queueLabel = 'automerge', mode = '
   }
 }
 ```
+
+## Tracker operations
+
+Step 0 consumes **current-user**, **list-prs** / **search-prs**, **get-pr**, **get-pr-checks**, **get-pr-files**, **get-pr-diff**, **get-pr-comment**, **get-review-comment**, **search-issues**, **list-runs**, **approve-pending-runs**, **comment-pr**, **close-pr** (optional on older descriptors; leave open when unavailable), **list-issue-comments** / **update-comment**, **list-review-comments** (first-visit bootstrap), **mark-pr-ready**, **merge-pr**, **assign-pr**, **unlabel-pr**, the `apply_label` / `label_exists` / `set_pipeline_label` guards, **get-run**, **get-run-failed-logs** (baseline CI comparison), and **create-label** (it creates its own labels when missing).

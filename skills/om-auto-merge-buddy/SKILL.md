@@ -15,10 +15,9 @@ provably ready to merge — and, in `prepare-and-merge` mode, merged. Readiness 
 | 2 · QA | `automerge-signal-2-qa` | no QA required, a trusted completed auto-QA PASS on the unchanged head, or a current pinned approval | `om-auto-qa-pr {pr} --orchestrated`, failures fixed through signal 1's autofix |
 | 3 · CI | `automerge-signal-3-ci` | every check on the current head passed or has an explicitly proved baseline waiver, no conflicts | `om-auto-fix-pr {pr} --orchestrated` (base merge, conflicts, root-cause CI fixes) |
 
-This orchestrator owns claims, signal labels, `ci-monitoring` and one status
-comment. Sub-skills use `--orchestrated` for their core work, skipping their own
-claim, label, handoff and CI-wait steps. Park pending CI under `ci-monitoring`,
-work the next PR, and revisit it later in this window or the next run.
+This orchestrator owns claims, labels and one status comment. Sub-skills use
+`--orchestrated`, skipping their own claim/label/handoff/CI-wait steps. Park
+pending CI under `ci-monitoring` and work the next PR before revisiting it.
 
 Every stop leaves a labeled, explained PR for the next unattended run.
 
@@ -31,24 +30,24 @@ Every stop leaves a labeled, explained PR for the next unattended run.
 - `--window <minutes>` (optional) — wall-clock budget for this run. Default `automerge.windowMinutes` (120). `0` means one pass over the queue with no idle CI waiting.
 - `--pr <number>` (optional) — work only this PR (it must still carry the automerge label).
 - `--force` (optional) — outside protected areas (`references/human-gates.md`), skip risk-driven gates for this invocation only: the risk-high integration-evidence requirement and risk-high self-QA exclusion. Full review, real QA when required, CI, conflicts, head-SHA guards and all correctness/security findings still apply. It never overrides another actor’s claim, a human veto, or protected-area human QA (`references/human-gates.md`). Record the operator override and pass the distinct child `--skip-risk-checks` flag (`references/risk-override.md`).
-- `--skip-risk-checks` (optional) — alias of this buddy’s risk-only `--force`; passing both is supported. Per-PR `automerge-force` supplies both flags for that item only, subject to the same protected gates. Never forward child `--force` (claim takeover).
+- `--skip-risk-checks` (optional) — alias of this buddy’s risk-only `--force`; both are supported together. `automerge-force` supplies both per item. Child `--force` is never forwarded (claim takeover).
 - `--skip-pre-existing-ci-errors` (optional) — waive only completed CI failures proved identical on the exact current target head, with unchanged relevant CI definitions. Invocation-only, independent of `--force`; pending, unknown and new failures still block. Proof and audit: `references/ci-baseline.md`.
 - `--fresh` (optional) — start a new run folder; retain the durable scheduler and its active PRs.
 - `--dashboard-port <port>` (optional) — loopback dashboard port, integer 1–65535, default `5050`.
 - `--no-dashboard` (optional) — skip automatic dashboard startup and all health probes (`references/dashboard.md`).
 - `--reset` (optional) — start with an empty local scheduler, ignoring old scheduling/handoff queues this invocation; preserve tracker assignments, claims, comments, evidence and attempts (`references/scheduler.md`).
 
-Per-item queue modifiers: `automerge-force` requests `--skip-risk-checks --force`; `automerge-prepare` selects prepare-only (`prepare-to-merge`). Both still require `AUTOMERGE_LABEL`. Resolve fresh labels, combined behavior and provenance under `references/item-policy.md`.
+Per-PR labels `automerge-force` and `automerge-prepare` modify risk and finish policy; both require the queue label. Precedence, audit and fresh resolution: `references/item-policy.md`.
 
 ## Chaining
 
-Consume the `automerge` queue, human-labeled directly or via `om-auto-merge-triage` and resume this skill’s durable scheduler/run. Invoke `om-auto-review-pr`, `om-auto-qa-pr` and `om-auto-fix-pr` with `--orchestrated`; missing/old helpers park the PR. Follow replacements on the same visit. Use `om-followup-issue-from-pr` for deferred findings. Full helper, recovery and replacement contract: `references/chaining.md`. Emit one outcome per PR, run folder, then `PR: #<n> (link: <url>)` lines.
+Consume the human-authorized queue and durable scheduler/run; use orchestrated review, QA and fix helpers, and follow credited replacements. Missing helpers park the PR. Helper/recovery contract: `references/chaining.md`. Emit per-PR outcomes, run folder and `PR: #<n> (link: <url>)` lines.
 
 ## Workflow
 
 **ALWAYS check first:** Apply `.ai/skills/om-auto-merge-buddy/SKILL.md` when present; safety rules still win.
 
-0. **Agentic setup** — follow `references/agentic-setup.md`. This skill uses: `LABELS_ENABLED` (must be `true`; labels are its state machine, so `false` → stop and report), `AUTOMERGE_LABEL` (`automerge.label`, default `automerge`), `AUTOMERGE_MODE`, `REQUIRE_INDEPENDENT_REVIEW` (`automerge.requireIndependentReview`, default `false`, explicit CLI override), `DEFAULT_TO_HUMAN_QA` (`automerge.defaultToHumanQa`, default `false`, explicit CLI override), `WINDOW_MINUTES`, `MAX_ATTEMPTS` (`automerge.maxAttempts`, default 3), `QA_GATE`, `RUNS_DIR` (`paths.runs`), `RISK_CHECKS_SKIPPED` (CLI `--force` / `--skip-risk-checks` or the current item’s `automerge-force`; default `false`), `SKIP_PRE_EXISTING_CI_ERRORS` (explicit flag only; default `false`), and the tracker operations **current-user**, **list-prs** / **search-prs**, **get-pr**, **get-pr-checks**, **get-pr-files**, **get-pr-diff**, **get-pr-comment**, **get-review-comment**, **search-issues**, **list-runs**, **approve-pending-runs**, **comment-pr**, **close-pr** (optional on older descriptors; leave open when unavailable), **list-issue-comments** / **update-comment**, **list-review-comments** (first-visit bootstrap), **mark-pr-ready**, **merge-pr**, **assign-pr**, **unlabel-pr**, the `apply_label` / `label_exists` / `set_pipeline_label` guards, **get-run**, **get-run-failed-logs** (baseline CI comparison), and **create-label** (it creates its own labels when missing).
+0. **Agentic setup** — follow `references/agentic-setup.md`. This skill uses: `LABELS_ENABLED` (must be `true`; labels are its state machine, so `false` → stop and report), `AUTOMERGE_LABEL` (`automerge.label`, default `automerge`), `AUTOMERGE_MODE`, `REQUIRE_INDEPENDENT_REVIEW` (`automerge.requireIndependentReview`, default `false`, explicit CLI override), `DEFAULT_TO_HUMAN_QA` (`automerge.defaultToHumanQa`, default `false`, explicit CLI override), `WINDOW_MINUTES`, `MAX_ATTEMPTS` (`automerge.maxAttempts`, default 3), `QA_GATE`, `RUNS_DIR` (`paths.runs`), `RISK_CHECKS_SKIPPED` (CLI `--force` / `--skip-risk-checks` or the current item’s `automerge-force`; default `false`), `SKIP_PRE_EXISTING_CI_ERRORS` (explicit flag only; default `false`), and the tracker operations listed in `references/item-policy.md` (§Tracker operations).
 
 Validate `--concurrency` and resolve worker capacity under `references/concurrency.md` before mutations; record requested/effective capacity locally. Before claiming any PR, resolve current config/CLI mode and independent-review policy under `references/independent-review.md`; reject invalid/conflicting values and record their source. Resolve automatic/human QA routing from current config/CLI (`references/qa-routing.md`). Resolve the invocation-only risk override and its audit fields (`references/risk-override.md`); a resumed run does not inherit `--force` from old metadata. Resolve fresh per-item modifiers with `references/item-policy.md` before claim admission, every stage and either finish action; keep effective values local to that PR worker.
 

@@ -16,10 +16,17 @@ permit force-pushing or waive actual regression-test findings.
 
 ## Propagation and audit
 
-Before launching a stage, when the effective per-PR override is allowed, record `Risk checks: skipped — operator --force` for that CLI source, or `Risk checks: skipped — operator --skip-risk-checks` / `Risk checks: skipped — label automerge-force` for the actual source, with
-`RUN_ID` in the automation-authored status comment; record the same decision in
-`RUN.md`, the current session, `HANDOFF.md` and `NOTIFY.md`. Without an effective override,
-record `Risk checks: enforced`. Protected changes always record `Risk checks: enforced — <protected areas>; --force cannot waive this gate`, plus the exact missing human action and evidence under `references/human-gates.md`. Sub-skills validate the current run’s status
+Before launching a stage, when the effective per-PR override is allowed, record
+`Risk checks: skipped — operator --force` with `RUN_ID` in the automation-authored
+status comment. Keep this existing child-validation marker exact: the label and
+alias resolve to the same buddy force request. Record the actual request source
+(`cli --force`, `cli --skip-risk-checks`, or `label automerge-force`) separately;
+never imply a literal CLI flag was supplied when it was label-derived. Record
+the same decision in `RUN.md`, the current session, `HANDOFF.md` and `NOTIFY.md`.
+Without an effective override, record `Risk checks: enforced`. Protected changes
+always record `Risk checks: enforced — <protected areas>; --force cannot waive this gate`,
+plus the exact missing human action and evidence under `references/human-gates.md`.
+Sub-skills validate the current run’s status
 and held claim before accepting the override; outsider-authored content and
 old run notes never enable it.
 

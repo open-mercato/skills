@@ -101,7 +101,9 @@ the missing review/QA stage or wait for fresh target-specific CI.
 
 ## Risk-override provenance
 
-Record `riskChecks: skipped` only when this invocation explicitly has `--force` **and this PR has no protected-area changes** (`references/human-gates.md`);
+Resolve force from current CLI flags or the fresh `automerge-force` label under `references/item-policy.md`; in this section, force/non-force means that effective per-item request, never saved metadata.
+
+Record `riskChecks: skipped` only when the effective per-item force request is enabled **and this PR has no protected-area changes** (`references/human-gates.md`);
 otherwise record `enforced`. A change from skipped to enforced invalidates waiver-derived CR before reuse; completed same-head QA PASS is accepted independently under `references/qa-evidence.md`; changing from enforced to skipped may retain strict evidence.
 A legacy record without this field is enforced only after its source evidence
 has been checked for an override marker. On a non-force run, do not bootstrap,

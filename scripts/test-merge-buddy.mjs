@@ -746,3 +746,11 @@ assert.match(itemPolicy, /never child `--force`/)
 assert.match(itemPolicy, /block merging\nif transfer cannot be verified/)
 assert.match(stages, /resolve the effective per-item mode\/risk/)
 console.log('PASS: per-item force/prepare precedence, mixed queues, removal, protected gates and child arguments')
+
+// Existing children must still recognize the force marker without upgrades.
+assert.ok(override.includes('`Risk checks: skipped — operator --force`'))
+for (const child of ['om-auto-review-pr', 'om-auto-qa-pr', 'om-auto-fix-pr']) {
+  assert.ok(read(`skills/${child}/references/orchestrated-mode.md`).includes('`Risk checks: skipped — operator --force`'))
+}
+assert.match(signals, /effective per-item force request is enabled/)
+console.log('PASS: per-item overrides preserve child provenance and strict CR invalidation contracts')

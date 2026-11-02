@@ -21,11 +21,26 @@ A historical or quoted NO-GO must not become a new veto; a push or automatic PAS
 ## Assumptions
 Use existing write-access trust rules plus explicit QA-verdict context rather than inventing a QA team list. Humans explicitly release their veto; automation cannot do so. No shared standard-file synchronization is needed because only skill-specific files change.
 
+## Verification
+
+All 10 configured validation commands passed. The lint gate includes the existing
+merge-buddy suite plus the new human-gate contract assertions. After final
+single-skill documentation clarification, lint and its embedded regressions
+passed again. Used Python 3.12 via a temporary PATH shim because the system
+Python lacks `tomllib`; no runtime/dependency files were changed.
+
+Manual review covered labels without needs-qa/report, trusted versus quoted
+NO-GO, multiple reviewers, explicit release, new commits/replacements, protected
+areas with force/missing labels/self-QA, valid human approval, and ordinary fixes.
+These are instruction/contract checks; no live PR merge or real QA was performed.
+No shared parsed interfaces or standard reference copies changed.
+
 ## Progress
+PR: #163
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Preserve vetoes throughout the visit
 
 - [x] 1.1 Add one skill-local veto policy and apply it before signal evaluation, stages, replacements and finish. — 9e43c80
-- [ ] 1.2 Review scenario outcomes and run the configured validation gate.
+- [x] 1.2 Review scenario outcomes and run the configured validation gate. — 313c455

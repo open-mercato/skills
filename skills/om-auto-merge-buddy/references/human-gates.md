@@ -98,8 +98,8 @@ human scope assessment with a fresh `QA head:`; automatic carry-forward is insuf
 For architecture or backward-incompatible changes, require **explicit human
 technical approval** from a verified repository maintainer or designated
 technical/architecture owner, even when independent native review is disabled.
-Accept a current-head native approval or an explicit human approval note naming
-the full current head SHA, the affected architecture/contracts, the decision and
+Accept a current-head native approval or an explicit human approval note; in
+either case the evidence must name the full current head SHA, the affected architecture/contracts, the decision and
 its consequences. A bot, agent-authored approval, `--force`, automatic QA PASS
 or `qa-approved` alone cannot satisfy this decision. Preserve the pinned human
 QA requirement above as well; the same qualified human may provide both only
@@ -129,7 +129,7 @@ grant signal 2 or replace this human approval. Do not invoke orchestrated QA's
 self-sign-off path to obtain it. Strict automated review/CI repair may proceed
 when there is no veto; once human approval is the missing step, end
 `waiting-human`, invalidate QA/readiness as above, and count no QA attempt.
-A human risk waiver alone cannot remove this protected-area human approval requirements.
+A human risk waiver alone cannot remove these protected-area human approval requirements.
 
 ## 3. Make the stop visible in the existing status comment
 
@@ -163,7 +163,7 @@ Never leave `Risk checks: skipped` or `ready` describing a protected PR.
 | Quoted/example NO-GO or an untrusted copied marker | Not a new veto; ordinary evidence rules apply |
 | Migration, money or permission/isolation change, no risk/needs-qa labels, `--force` | Strict risk checks and pinned human QA required |
 | Protected area, same-head automatic PASS and `qa-self-verified` | Human wait; no automated QA approval reuse |
-| Protected area, valid pinned human QA, strict review/CI, no veto | Eligible for normal finish checks |
+| Protected area, all applicable pinned human QA/technical approvals and compatibility evidence, strict review/CI, no veto | Eligible for normal finish checks |
 | Architecture change, automatic CR/QA PASS, independent review disabled | Human QA and explicit current-head technical/architecture-owner approval required |
 | Breaking public contract, `--force`, human QA PASS, missing required deprecation/migration path | Continue human wait; compatibility blocker cannot be waived by QA |
 | Architecture/compatibility change, all pinned human approvals and required compatibility evidence, no veto | Eligible for normal strict CR/CI and finish checks |

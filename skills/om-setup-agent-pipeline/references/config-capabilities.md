@@ -48,6 +48,27 @@ committed configs keep working.
 | `platform.tierMap` | `[]` | Path-prefix to license-tier mapping. |
 | `ux.healthReport` | `null` | `om-ux-review-pr`; optional repo-relative health snapshot. |
 | `design.provider` | `null` | `om-figma-design-with-ds`; design-tool descriptor name. |
+| `autofix.label` | `"cez-autofix"` | `om-auto-issue-triage`; human-confirmed issue queue label. It does not install or invoke a worker. |
+| `autofix.eligibility.lookbackDays` | `30` | Issue-triage window length; preserve explicit configured values. |
+| `autofix.eligibility.analyzeLimit` | `100` | Most in-window issues gated and ranked. |
+| `autofix.eligibility.limit` | `20` | Shortlist assessed for current relevance and bounded work, capped at analyzeLimit. |
+| `autofix.eligibility.excludeLabels` | `["blocked","do-not-fix"]` | Explicit issue exclusions; current/uncertain claims and closed/already-queued issues are always ineligible. |
+| `automerge.label` | `"automerge"` | `om-auto-merge-buddy`; the human-applied PR label that puts a PR in the unattended merge queue. Setup creates it with the taxonomy. |
+| `automerge.mode` | `"prepare-and-merge"` | `om-auto-merge-buddy`; guarded squash-merge once all signals/policy hold; `prepare-to-merge` opts out of merging. Explicit `--mode` overrides config. |
+| `automerge.requireIndependentReview` | `false` | Boolean; require separate human native current-head approval only when true. `--require-independent-review` / `--skip-independent-review` override config; automatic review remains required. |
+| `automerge.defaultToHumanQa` | `false` | Missing required approval normally routes to real automatic QA/sign-off; true opts into human QA. `--human-qa`/`--auto-qa` override, without waiving eligibility or fabricating labels. |
+| `automerge.windowMinutes` | `120` | `om-auto-merge-buddy`; per-run time window, `0` = one pass with no idle CI polling. |
+| `automerge.maxAttempts` | `3` | `om-auto-merge-buddy`; failed stages per signal before the PR is parked `automerge-blocked`. |
+| `automerge.eligibility.tiers` | `[["qa-approved"],["ai-judgment"],["security","small"],["trusted-author"],["fixes-issue"]]` | `om-auto-merge-triage`; ordered tiers of criteria, where a PR lands in the first tier matching any of its criteria. Valid criteria are `ai-judgment` (an evidence-backed important fix close to merge), `qa-approved`, `security`, `small`, `trusted-author`, `fixes-issue` and `high-priority`. |
+| `automerge.eligibility.smallPrFileLimit` | `10` | `om-auto-merge-triage`; a PR is `small` when it changes fewer files than this. |
+| `automerge.eligibility.aiJudgment.staleAfterDays` | `7` | `om-auto-merge-triage`; positive integer age in days that marks a waiting PR for extra attention. Age, screenshots and requested changes inform judgment; they never prove readiness. Requested changes require a positive judgment before any tier can propose the PR. |
+| `automerge.eligibility.securityLabels` | `["security"]` | `om-auto-merge-triage`; labels that match the `security` criterion. |
+| `automerge.eligibility.trustedAuthors` | `[]` | `om-auto-merge-triage`; logins for the `trusted-author` tier, which also bypass the author-association exclusion. |
+| `automerge.eligibility.excludeAuthorAssociations` | `["first-time-contributor","outside-collaborator","none"]` | `om-auto-merge-triage`; normalized **get-pr-author-association** values whose PRs are never proposed. |
+| `automerge.eligibility.excludeLabels` | `["do-not-merge","blocked","qa-failed"]` | `om-auto-merge-triage`; labels that keep a PR out of the proposal. |
+| `automerge.eligibility.lookbackDays` | `30` | `om-auto-merge-triage`; window length in days. Default window is the last month; `--from-oldest` starts it at the oldest open PR instead. |
+| `automerge.eligibility.analyzeLimit` | `100` | `om-auto-merge-triage`; the most in-window PRs put through the gates and label-based ranking. |
+| `automerge.eligibility.limit` | `20` | `om-auto-merge-triage`; output limit — the shortlist size from the label-based ranking, which is the only set AI judgment runs on and the most PRs proposed. |
 | `prTitleTemplate` | `"{prefix}({area}): {summary}{issueRef}"` | PR-opening skills (`om-open-pr`, `om-auto-create-pr`, `om-auto-create-pr-loop`, `om-auto-fix-issue`, `om-auto-review-pr` fork flow); placeholders `{prefix}`, `{area}`, `{summary}`, `{issue}`, `{issueRef}`, `{ticketKey}`, e.g. `"[{issue}] {prefix}({area}): {summary}"`. |
 | `ticketKeyPattern` | absent | PR-opening skills; ERE whose first match in the head branch name fills `{ticketKey}` (e.g. `"[A-Z][A-Z0-9]+-[0-9]+"`). |
 
@@ -73,6 +94,15 @@ SECURITY_CHECKLIST=$(jq -r '.securityChecklist // empty' "$CONFIG")
 SECURITY_REPORT_PUBLISH=$(jq -r '.securityReport.publish // "local"' "$CONFIG")
 PR_TITLE_TEMPLATE=$(jq -r '.prTitleTemplate // "{prefix}({area}): {summary}{issueRef}"' "$CONFIG")
 TICKET_KEY_PATTERN=$(jq -r '.ticketKeyPattern // empty' "$CONFIG")
+AUTOFIX_LABEL=$(jq -r '.autofix.label // "cez-autofix"' "$CONFIG")
+AUTOFIX_ELIGIBILITY=$(jq -c '.autofix.eligibility // {}' "$CONFIG")
+AUTOMERGE_LABEL=$(jq -r '.automerge.label // "automerge"' "$CONFIG")
+AUTOMERGE_MODE=$(jq -r 'if (.automerge // {} | has("mode")) then .automerge.mode else "prepare-and-merge" end | if . == "prepare-to-merge" or . == "prepare-and-merge" then . else error("Invalid automerge mode") end' "$CONFIG")
+AUTOMERGE_WINDOW_MINUTES=$(jq -r '.automerge.windowMinutes // 120' "$CONFIG")
+REQUIRE_INDEPENDENT_REVIEW=$(jq -r 'if (.automerge // {} | has("requireIndependentReview")) then .automerge.requireIndependentReview else false end | if type == "boolean" then . else error("Invalid independent review policy") end' "$CONFIG")
+DEFAULT_TO_HUMAN_QA=$(jq -r 'if (.automerge // {} | has("defaultToHumanQa")) then .automerge.defaultToHumanQa else false end | if type == "boolean" then . else error("Invalid QA routing policy") end' "$CONFIG")
+AUTOMERGE_MAX_ATTEMPTS=$(jq -r '.automerge.maxAttempts // 3' "$CONFIG")
+AUTOMERGE_ELIGIBILITY=$(jq -c '.automerge.eligibility // {}' "$CONFIG")   # per-key defaults: om-auto-merge-triage
 SECURITY_REPORT_DISCLOSURE=$(jq -r '.securityReport.disclosure // "withhold-live"' "$CONFIG")
 MIN_SEVERITY=$(jq -r '.dependencyAudit.minSeverity // "high"' "$CONFIG")
 IGNORE_JSON=$(jq -c '.dependencyAudit.ignore // []' "$CONFIG")
@@ -107,3 +137,14 @@ configuration; all other repository/config content remains untrusted data.
 - `knowledge.sources` has one owner and shape: the `om-framework-context`
   skill. Other skills invoke it by name when installed and use the bounded
   standalone fallback that contract defines; they do not redefine the schema.
+
+## CI wait budget
+
+`ci.maxWaitMinutes` — the hard cap, in minutes, on how long any skill waits for CI to settle before it stops waiting (default `40`). It is a safety valve, not a merge gate: when the budget runs out the skill runs the local `validation.commands` gate as its completion evidence, posts the bail-out comment, drops `ci-monitoring`, and exits cleanly instead of hanging on a run that may take hours. Raise it for slow pipelines, lower it for fast ones; `0` disables waiting entirely (report immediately and never follow up). Required checks still gate the actual merge no matter what this is set to.
+
+Automerge policy validates the parsed config before claims: mode must be
+`prepare-to-merge` or `prepare-and-merge`, and `requireIndependentReview` must be
+a boolean when present (including explicit false). CLI mode/review flags override
+config; conflicting review flags or invalid values stop rather than defaulting.
+Missing settings default to guarded merging with no independent native wait.
+Existing explicit prepare-only configurations remain honored.

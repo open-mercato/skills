@@ -119,12 +119,42 @@ assert.deepEqual(repoConfig.engine, {
 assert.deepEqual(repoConfig.closeKeywords, []);
 assert.ok(repoConfig.labels?.meta?.includes("ci-monitoring"));
 
-const ciCommands = [...lintWorkflow.matchAll(/^\s+run:\s+(.+)$/gm)]
-  .map((match) => match[1].trim());
+// The local gate mirrors the primary job; platform-only jobs exercise subsets
+// independently and must not duplicate commands in every developer's local gate.
+function commandsForJob(workflow, job) {
+  const lines = workflow.split(/\r?\n/u);
+  const start = lines.indexOf(`  ${job}:`);
+  assert.notEqual(start, -1, `workflow must contain the ${job} job`);
+  let end = start + 1;
+  while (end < lines.length && !/^  \S/u.test(lines[end])) end++;
+  return [...lines.slice(start + 1, end).join("\n").matchAll(/^\s+(?:-\s+)?run:\s+(.+)$/gm)]
+    .map((match) => match[1].trim());
+}
+const jobFixture = `jobs:
+  platform-before:
+    steps:
+      - run: platform-only-before
+  lint:
+    steps:
+      - run: first-check
+      - run: second-check
+  platform-after:
+    steps:
+      - run: platform-only-after
+`;
+assert.deepEqual(commandsForJob(jobFixture, "lint"), ["first-check", "second-check"]);
+assert.deepEqual(commandsForJob(jobFixture.replaceAll("\n", "\r\n"), "platform-after"), ["platform-only-after"]);
+assert.throws(() => commandsForJob(jobFixture, "missing"), /must contain the missing job/);
+const ciCommands = commandsForJob(lintWorkflow, "lint");
+assert.deepEqual(
+  commandsForJob(lintWorkflow, "skill-eval-windows"),
+  ["node --test scripts/test-skill-eval-portability.mjs"],
+  "the Windows process-tree regression must remain in its dedicated CI job",
+);
 assert.deepEqual(
   repoConfig.validation?.commands,
   ciCommands,
-  "repository validation.commands must mirror the lint workflow in order",
+  "repository validation.commands must mirror the primary lint job in order",
 );
 assert.equal(
   installedAgentBrowser,

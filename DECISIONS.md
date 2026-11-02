@@ -545,3 +545,38 @@ Hooks supplement independently enforced host permissions and do not claim to
 sandbox arbitrary shell code. Packet leases require explicit recovery after
 owner termination; automatic expiry could release live work and is rejected.
 The configured CI gate includes both integration and security regressions.
+
+
+## 2026-11-02 — Human QA vetoes and protected changes constrain automerge
+
+`om-auto-merge-buddy` previously treated its three signals as sufficient even
+when a human had set `qa-failed` or `do-not-merge`; dropping `needs-qa` could make
+QA `n/a`. Those labels and unresolved trusted human QA NO-GO verdicts now stop
+both preparation and merging independently of QA requirements. Automatic PASS,
+pushes and replacement PRs cannot release a human veto; release is explicit and
+human, and remaining hard-stop labels must also be removed.
+
+The invocation-only risk override remains available for ordinary fixes, but no
+longer waives strict risk checks for executable migrations, money, or changes to
+permissions/tenant isolation. These areas are inferred from the actual diff and
+require human QA pinned to the current head, even without `risk-high`/`needs-qa`
+labels or with `--force`. Automatic PASS/self-QA is supporting evidence only.
+The existing status comment explains the protected behavior or veto, evidence,
+actor, exact release action and resume condition. No config keys, tracker
+operations, parsed signal fields or shared standard references change.
+
+
+## 2026-11-02 — Extend automerge human gates to architecture and compatibility
+
+Architecture changes and backward-incompatible changes join the protected areas
+in `om-auto-merge-buddy`: force cannot waive their risk checks or pinned human QA.
+They additionally require explicit current-head human technical approval from a
+maintainer or designated architecture/contract owner, even under the default
+policy without independent native review. Behavior-preserving local refactors
+and compatible additive contracts do not qualify solely on those grounds.
+
+A human approval cannot waive the repository's required compatibility path:
+deprecation/bridges, versioning/migration, affected consumers and rollout evidence
+remain review gates. Missing approval or compatibility evidence has an explicit
+owner, reason and resume condition in the existing status comment. No shared
+parsed schema or standard reference file changes.

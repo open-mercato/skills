@@ -16,8 +16,8 @@
       "node scripts/test-agent-harness.mjs",
       "node scripts/test-agent-harness-security.mjs",
       "node scripts/test-review-sweep.mjs",
-      "node --test scripts/test-skill-eval.mjs scripts/test-skill-eval-portability.mjs",
-      "node --test scripts/test-skill-eval-portability.mjs"
+      "node scripts/test-issue-triage.mjs",
+      "node --test scripts/test-skill-eval.mjs scripts/test-skill-eval-portability.mjs"
     ]
   },
   "labels": {
@@ -45,7 +45,11 @@
       "qa-approved",
       "qa-self-verified",
       "in-progress",
-      "ci-monitoring"
+      "ci-monitoring",
+      "automerge-signal-1-cr",
+      "automerge-signal-2-qa",
+      "automerge-signal-3-ci",
+      "automerge-blocked"
     ],
     "priority": [
       "priority-low",
@@ -62,6 +66,26 @@
   "qaGate": true,
   "ci": {
     "maxWaitMinutes": 40
+  },
+  "automerge": {
+    "label": "automerge",
+    "mode": "prepare-and-merge",
+    "windowMinutes": 120,
+    "maxAttempts": 3,
+    "eligibility": {
+      "tiers": [["qa-approved"], ["ai-judgment"], ["security", "small"], ["trusted-author"], ["fixes-issue"]],
+      "smallPrFileLimit": 10,
+      "aiJudgment": { "staleAfterDays": 7 },
+      "securityLabels": ["security"],
+      "trustedAuthors": [],
+      "excludeAuthorAssociations": ["first-time-contributor", "outside-collaborator", "none"],
+      "excludeLabels": ["do-not-merge", "blocked", "qa-failed"],
+      "lookbackDays": 30,
+      "analyzeLimit": 100,
+      "limit": 20
+    },
+    "requireIndependentReview": false,
+    "defaultToHumanQa": false
   },
   "engine": {
     "loopStepThreshold": 20,
@@ -251,6 +275,18 @@
           ]
         }
       }
+    }
+  },
+  "autofix": {
+    "label": "cez-autofix",
+    "eligibility": {
+      "lookbackDays": 30,
+      "analyzeLimit": 100,
+      "limit": 20,
+      "excludeLabels": [
+        "blocked",
+        "do-not-fix"
+      ]
     }
   }
 }

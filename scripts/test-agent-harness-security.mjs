@@ -19,7 +19,7 @@ const originalEnv = { ...process.env }
 // or credential stores to the deliberately misbehaving local adapters.
 process.env = { PATH: originalEnv.PATH, HOME: fixture, USER: 'fixture-user', LOGNAME: 'fixture-user', TMPDIR: fixture, GIT_CONFIG_GLOBAL: process.platform === 'win32' ? 'NUL' : '/dev/null', GIT_CONFIG_NOSYSTEM: '1', GIT_AUTHOR_NAME: 'Security Test', GIT_AUTHOR_EMAIL: 'test@example.invalid', GIT_COMMITTER_NAME: 'Security Test', GIT_COMMITTER_EMAIL: 'test@example.invalid' }
 function run(command, args, expected = 0, input) {
-  const result = spawnSync(command, args, { cwd: repo, encoding: 'utf8', timeout: 15000, input })
+  const result = spawnSync(command, args, { cwd: repo, env: { ...process.env }, encoding: 'utf8', timeout: 15000, input })
   assert.equal(result.status, expected, `${args.join(' ')}\n${result.stderr || result.error || result.stdout}`)
   return result.stdout.trim()
 }
@@ -255,6 +255,7 @@ process.stdout.write(JSON.stringify({...(process.argv.includes('--public-schema'
   cpSync(join(root, 'skills/om-harness/hooks'), installedHooks, { recursive: true })
   const settings = JSON.parse(readFileSync(join(installedHooks, 'hooks-settings-snippet.json'), 'utf8'))
   process.env.CLAUDE_PROJECT_DIR = repo
+  assert.equal(run('sh', ['-c', 'printf \'%s\' "$CLAUDE_PROJECT_DIR"']), repo, 'Installed hooks must inherit the isolated fixture environment, including later additions')
   const installedBlock = settings.hooks.PreToolUse[0].hooks[0].command
   const installedFreeze = settings.hooks.PreToolUse[1].hooks[0].command
   run('sh', ['-c', installedBlock], 0, JSON.stringify({ cwd: repo, tool_input: { command: 'git status' } }))

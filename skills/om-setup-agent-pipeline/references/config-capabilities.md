@@ -59,6 +59,16 @@ committed configs keep working.
 | `automerge.defaultToHumanQa` | `false` | Missing required approval normally routes to real automatic QA/sign-off; true opts into human QA. `--human-qa`/`--auto-qa` override, without waiving eligibility or fabricating labels. |
 | `automerge.windowMinutes` | `120` | `om-auto-merge-buddy`; per-run time window, `0` = one pass with no idle CI polling. |
 | `automerge.maxAttempts` | `3` | `om-auto-merge-buddy`; failed stages per signal before the PR is parked `automerge-blocked`. |
+| `automerge.eligibility.tiers` | `[["qa-approved"],["ai-judgment"],["security","small"],["trusted-author"],["fixes-issue"]]` | `om-auto-merge-triage`; ordered tiers of criteria, where a PR lands in the first tier matching any of its criteria. Valid criteria are `ai-judgment` (an evidence-backed important fix close to merge), `qa-approved`, `security`, `small`, `trusted-author`, `fixes-issue` and `high-priority`. |
+| `automerge.eligibility.smallPrFileLimit` | `10` | `om-auto-merge-triage`; a PR is `small` when it changes fewer files than this. |
+| `automerge.eligibility.aiJudgment.staleAfterDays` | `7` | `om-auto-merge-triage`; positive integer age in days that marks a waiting PR for extra attention. Age, screenshots and requested changes inform judgment; they never prove readiness. Requested changes require a positive judgment before any tier can propose the PR. |
+| `automerge.eligibility.securityLabels` | `["security"]` | `om-auto-merge-triage`; labels that match the `security` criterion. |
+| `automerge.eligibility.trustedAuthors` | `[]` | `om-auto-merge-triage`; logins for the `trusted-author` tier, which also bypass the author-association exclusion. |
+| `automerge.eligibility.excludeAuthorAssociations` | `["first-time-contributor","outside-collaborator","none"]` | `om-auto-merge-triage`; normalized **get-pr-author-association** values whose PRs are never proposed. |
+| `automerge.eligibility.excludeLabels` | `["do-not-merge","blocked","qa-failed"]` | `om-auto-merge-triage`; labels that keep a PR out of the proposal. |
+| `automerge.eligibility.lookbackDays` | `30` | `om-auto-merge-triage`; window length in days. Default window is the last month; `--from-oldest` starts it at the oldest open PR instead. |
+| `automerge.eligibility.analyzeLimit` | `100` | `om-auto-merge-triage`; the most in-window PRs put through the gates and label-based ranking. |
+| `automerge.eligibility.limit` | `20` | `om-auto-merge-triage`; output limit — the shortlist size from the label-based ranking, which is the only set AI judgment runs on and the most PRs proposed. |
 | `prTitleTemplate` | `"{prefix}({area}): {summary}{issueRef}"` | PR-opening skills (`om-open-pr`, `om-auto-create-pr`, `om-auto-create-pr-loop`, `om-auto-fix-issue`, `om-auto-review-pr` fork flow); placeholders `{prefix}`, `{area}`, `{summary}`, `{issue}`, `{issueRef}`, `{ticketKey}`, e.g. `"[{issue}] {prefix}({area}): {summary}"`. |
 | `ticketKeyPattern` | absent | PR-opening skills; ERE whose first match in the head branch name fills `{ticketKey}` (e.g. `"[A-Z][A-Z0-9]+-[0-9]+"`). |
 
@@ -92,6 +102,7 @@ AUTOMERGE_WINDOW_MINUTES=$(jq -r '.automerge.windowMinutes // 120' "$CONFIG")
 REQUIRE_INDEPENDENT_REVIEW=$(jq -r 'if (.automerge // {} | has("requireIndependentReview")) then .automerge.requireIndependentReview else false end | if type == "boolean" then . else error("Invalid independent review policy") end' "$CONFIG")
 DEFAULT_TO_HUMAN_QA=$(jq -r 'if (.automerge // {} | has("defaultToHumanQa")) then .automerge.defaultToHumanQa else false end | if type == "boolean" then . else error("Invalid QA routing policy") end' "$CONFIG")
 AUTOMERGE_MAX_ATTEMPTS=$(jq -r '.automerge.maxAttempts // 3' "$CONFIG")
+AUTOMERGE_ELIGIBILITY=$(jq -c '.automerge.eligibility // {}' "$CONFIG")   # per-key defaults: om-auto-merge-triage
 SECURITY_REPORT_DISCLOSURE=$(jq -r '.securityReport.disclosure // "withhold-live"' "$CONFIG")
 MIN_SEVERITY=$(jq -r '.dependencyAudit.minSeverity // "high"' "$CONFIG")
 IGNORE_JSON=$(jq -c '.dependencyAudit.ignore // []' "$CONFIG")

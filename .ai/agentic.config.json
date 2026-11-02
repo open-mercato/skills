@@ -71,6 +71,18 @@
     "mode": "prepare-and-merge",
     "windowMinutes": 120,
     "maxAttempts": 3,
+    "eligibility": {
+      "tiers": [["qa-approved"], ["ai-judgment"], ["security", "small"], ["trusted-author"], ["fixes-issue"]],
+      "smallPrFileLimit": 10,
+      "aiJudgment": { "staleAfterDays": 7 },
+      "securityLabels": ["security"],
+      "trustedAuthors": [],
+      "excludeAuthorAssociations": ["first-time-contributor", "outside-collaborator", "none"],
+      "excludeLabels": ["do-not-merge", "blocked", "qa-failed"],
+      "lookbackDays": 30,
+      "analyzeLimit": 100,
+      "limit": 20
+    },
     "requireIndependentReview": false,
     "defaultToHumanQa": false
   },

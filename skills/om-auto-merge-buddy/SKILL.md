@@ -39,7 +39,7 @@ Every stop leaves a labeled, explained PR for the next unattended run.
 
 ## Chaining
 
-Consume the tracker's human-authorized `automerge` queue and resume this skill’s durable scheduler/run. Invoke `om-auto-review-pr`, `om-auto-qa-pr` and `om-auto-fix-pr` with `--orchestrated`; missing/old helpers park the PR. Follow replacements on the same visit. Use `om-followup-issue-from-pr` for deferred findings. Full helper, recovery and replacement contract: `references/chaining.md`. Emit one outcome per PR, run folder, then `PR: #<n> (link: <url>)` lines.
+Consume the `automerge` queue, human-labeled directly or via `om-auto-merge-triage` and resume this skill’s durable scheduler/run. Invoke `om-auto-review-pr`, `om-auto-qa-pr` and `om-auto-fix-pr` with `--orchestrated`; missing/old helpers park the PR. Follow replacements on the same visit. Use `om-followup-issue-from-pr` for deferred findings. Full helper, recovery and replacement contract: `references/chaining.md`. Emit one outcome per PR, run folder, then `PR: #<n> (link: <url>)` lines.
 
 ## Workflow
 

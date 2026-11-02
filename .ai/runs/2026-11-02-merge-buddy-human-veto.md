@@ -50,4 +50,13 @@ PR: #163
 ### Phase 2: Extend protected areas
 
 - [x] 2.1 Add architecture and backward-incompatible changes to mandatory human gates, including visible reasons and compatibility-policy requirements. — 65e54b1
-- [ ] 2.2 Verify the extended contracts and run the full configured validation and review gate.
+- [x] 2.2 Verify the extended contracts and run the full configured validation and review gate. — fe74c70
+
+
+Phase 2 verification: all 10 configured validation commands passed, and the
+final lint gate passed again after tightening technical-approval wording.
+Regression assertions cover both added areas, ordinary compatible refactors,
+current-head human decision evidence, disabled native-review policy and
+non-waivable compatibility paths. Manual review found no remaining findings;
+parsed config/tracker/signal/status interfaces and shared standard files remain
+unchanged. Verification is instruction/contract/tooling only, with no live merge.

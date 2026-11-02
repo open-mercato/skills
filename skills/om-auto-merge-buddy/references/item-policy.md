@@ -37,7 +37,7 @@ Only children’s documented `--skip-risk-checks --orchestrated` is forwarded;
 never child `--force`, which means claim takeover.
 
 Recompute in each worker from fresh inputs; never mutate invocation defaults or
-share a mutable effective policy between workers. Unknown labels/failed reads
+share a mutable effective policy between workers. Incomplete or failed label reads
 stop the visit before producing work or merging. Never use saved scheduler,
 status, signal, handoff or dashboard policy as authority. Removing force with
 no CLI risk flag requires strict CR reconciliation, including unchanged heads;

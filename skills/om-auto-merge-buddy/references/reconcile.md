@@ -7,6 +7,8 @@ even when all three signal labels and a same-head status record already exist.
 Repeat it after a stage moves the head, after a replacement or retarget, and at
 the final gate for any evidence or revision that changed during the visit.
 
+Resolve fresh per-item mode/risk under `references/item-policy.md` before evaluating evidence, including after label-only changes on an unchanged head.
+
 ## 1. Establish facts before using labels
 
 Read the current head, target, labels, reviews and mergeability through

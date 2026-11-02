@@ -7,7 +7,7 @@ Resolve mode and independent review from the current `.ai/agentic.config.json`:
 config for this invocation. The two review flags conflict; reject both together.
 Reject unknown modes, non-boolean review configuration or invalid arguments
 before claiming work; never silently fall back from an invalid merge policy.
-Existing explicitly configured `prepare-to-merge` remains honored.
+Existing explicitly configured `prepare-to-merge` remains honored. This resolves the invocation baseline only; apply `references/item-policy.md` afterward for each PR. A fresh `automerge-prepare` label always restricts that item to `prepare-to-merge`, even over explicit merge CLI mode; independent-review policy is unchanged.
 
 This policy applies to both modes, independently of `--force`, risk-check waivers
 and CI baseline exceptions. Re-read the config and explicit arguments each

@@ -707,3 +707,42 @@ assert.match(humanGates, /never automatically carry a technical decision to a ne
 assert.match(humanGates, /changed boundary[\s\S]*or broken contract, missing path and required approval in the status comment/)
 console.log('PASS: architecture and backward-incompatible changes retain human technical/QA gates and the repository compatibility path, with ordinary compatible refactors excluded')
 console.log('Merge buddy regressions passed.')
+
+// Exercise the shipped item-policy decision against mixed queues and fresh reads.
+const itemPolicy = read('skills/om-auto-merge-buddy/references/item-policy.md')
+const itemCode = itemPolicy.match(/```javascript\n([\s\S]*?)\n```/)[1]
+const { resolveAutomergeItemPolicy: item } = runInNewContext(`${itemCode}\n({resolveAutomergeItemPolicy})`)
+const queued = (...modifiers) => ['automerge', ...modifiers]
+assert.equal(item({ labels: queued() }).mode, 'prepare-and-merge')
+assert.equal(item({ labels: queued('automerge-prepare'), mode: 'prepare-and-merge' }).mode, 'prepare-to-merge')
+assert.equal(item({ labels: queued('automerge-force'), mode: 'prepare-to-merge' }).mode, 'prepare-to-merge')
+for (const labels of [queued('automerge-force'), queued('automerge-force', 'automerge-prepare')]) {
+  assert.equal(item({ labels }).riskChecksSkipped, true)
+  assert.equal(item({ labels }).stageFlags.join(' '), '--orchestrated --skip-risk-checks')
+  assert.equal(item({ labels, protectedArea: true }).riskChecksSkipped, false)
+  assert.equal(item({ labels, protectedArea: true }).stageFlags.join(' '), '--orchestrated')
+}
+assert.equal(item({ labels: queued('automerge-force', 'automerge-prepare') }).mode, 'prepare-to-merge')
+for (const flags of [{ force: true }, { skipRiskChecks: true }, { force: true, skipRiskChecks: true }]) {
+  assert.equal(item({ labels: queued(), ...flags }).riskChecksSkipped, true)
+  assert.equal(item({ labels: queued(), protectedArea: true, ...flags }).riskChecksSkipped, false)
+}
+for (const labels of [[], ['automerge-force'], ['automerge-prepare'], ['automerge-force', 'automerge-prepare']]) {
+  const result = item({ labels, force: true })
+  assert.equal(result.authorized, false)
+  assert.equal(result.stageFlags.length, 0)
+}
+assert.equal(item({ labels: ['ship', 'automerge-prepare'], queueLabel: 'ship' }).mode, 'prepare-to-merge')
+assert.equal(item({ labels: ['ship', 'automerge-force'], queueLabel: 'ship' }).riskChecksSkipped, true)
+// Label changes on the same head and a following ordinary worker cannot inherit policy.
+assert.equal(item({ labels: queued('automerge-force') }).riskChecksSkipped, true)
+assert.equal(item({ labels: queued() }).riskChecksSkipped, false)
+assert.equal(item({ labels: queued('automerge-prepare') }).mode, 'prepare-to-merge')
+assert.equal(item({ labels: queued() }).mode, 'prepare-and-merge')
+assert.equal(item({ labels: queued(), force: true }).riskChecksSkipped, true)
+for (const labels of [undefined, null, {}, [null]]) assert.throws(() => item({ labels }), /Incomplete label read/)
+assert.throws(() => item({ labels: queued(), mode: 'automerge-prepare' }), /Invalid invocation mode/)
+assert.match(itemPolicy, /never child `--force`/)
+assert.match(itemPolicy, /block merging\nif transfer cannot be verified/)
+assert.match(stages, /resolve the effective per-item mode\/risk/)
+console.log('PASS: per-item force/prepare precedence, mixed queues, removal, protected gates and child arguments')

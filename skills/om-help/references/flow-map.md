@@ -28,6 +28,7 @@ roster):
 | `om-open-pr` | a previous-step block; returns blocked without one | `om-auto-create-pr` (or whichever orchestrator already has the worktree/plan) |
 | `om-auto-create-pr-loop` | invoked by `om-auto-create-pr` itself when `--loop` was passed or the plan exceeds `engine.loopStepThreshold` | `om-auto-create-pr` |
 | `om-auto-continue-pr-loop` | invoked by `om-auto-continue-pr` itself when the tracking artifact is a run folder | `om-auto-continue-pr` |
+| `om-harness` | the shared staged-harness runtime, invoked by the staged entry points and `om-setup-agent-harness` | `om-fix-issue` / `om-implement-feature`, or `om-setup-agent-harness` to configure it |
 
 `om-root-cause` and `om-verify-in-repo` are also chain steps folded into
 `om-auto-fix-issue` — recommend them standalone **only** on an explicit
@@ -46,6 +47,10 @@ read-only ask ("analyse issue N, don't fix it" / "is issue N still real?").
 | `om-auto-sec-report-pr` vs `om-auto-sec-report` | Security report on one unit (a PR, spec, or branch diff) vs a window of merged PRs since a date or PR number (default last 7 days). |
 | `om-qa-buddy` / `om-auto-qa-pr` / `om-ux-review-pr` / `om-integration-tests` / `om-smart-test` | Human-led manual QA with a published runbook / automated browser evidence / advisory design-contract review / writes and runs E2E coverage for a flow worth keeping / re-runs only the tests affected by the diff. |
 | `om-auto-fix-issue` / `om-troubleshooter` / `om-root-cause` | Issue id → unattended PR end to end / a pasted symptom with no issue, interactive / a chain step, never recommended standalone (see (a)). |
+| `om-auto-fix-issue` vs `om-fix-issue` | A ready, labeled PR / a verified **staged** branch left for human review — nothing committed, pushed, or opened. |
+| `om-auto-implement-spec` vs `om-implement-feature` | Build an existing spec into a ready PR / design and build a feature to a verified **staged** branch, unpublished. |
+| `om-fix-issue` / `om-fix-issue-optimized` / `om-fix-issue-multi` / `om-fix-issue-multi-optimized` | The model profile: the session's own model only / configured implementation workers / independent review advisors / both. The three aliases need the model bindings `om-setup-agent-harness` configures; the base skill runs without them. |
+| `om-implement-feature` / `om-implement-feature-optimized` / `om-implement-feature-multi` / `om-implement-feature-multi-optimized` | The same profile split as the issue-fix row above. |
 | `om-app-spec-writing` vs `om-gap-analysis` vs `om-ux-shape` vs `om-discover`/`om-brainstorm` | Business requirements for a whole app / a folder of client docs checked against the platform / a screen, state, or AI-behavior to shape / a product-level question with no brief, or one idea. |
 | `om-create-skill` vs `om-create-agents-md` | Author or split a collection skill (or its overlay) vs write or refresh the repository's own `AGENTS.md`. |
 
@@ -61,6 +66,7 @@ complete list of those gates lives once in `references/setup-state.md`
 |---|---|
 | `om-apply-upgrade-notes` | After an upgrade of the skills collection. Never claim a descriptor is stale (no version stamp exists to prove it) — recommend `--dry-run` and let it report. |
 | `om-eject-and-customize` | Customizing one part of an installed dependency. Hard-gated — see above. |
+| `om-setup-agent-harness` | Configuring or diagnosing the staged multi-model harness — worker models, review advisors, provider probes. The staged alias profiles (see (b)) need it — an autonomous alias run stops without it, an interactive one runs it first; the plain staged skills run without it. |
 
 ### Harness / meta
 

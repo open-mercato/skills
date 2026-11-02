@@ -179,3 +179,13 @@ repository's deprecation, bridge, migration/versioning and rollout requirements.
 Human QA cannot waive a missing required compatibility path. The status names
 the changed boundary or broken contract, required decision owner, missing
 approval/transition evidence and exact resume condition.
+
+
+## Status comment layout
+
+Each PR keeps one updated comment. Two fully bold lines lead: **what happened**
+with the decisive reason, then **next** with the exact action and owner.
+A compact Review / QA / CI line follows. Evidence, policy, timing and
+reconciliation are collapsed beneath it; scheduler and signal records retain
+their existing fields. Human blockers name the required person/action at the
+top. Prepare-only items explicitly say they will remain unmerged.

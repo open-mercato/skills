@@ -22,6 +22,15 @@ comment per visit or per round.
 ~~~markdown
 🤖 `om-auto-merge-buddy` — status
 
+**{📋|✅|❌|⚠️|⛔|🔁|🚀} What happened: {one sentence stating the actual outcome and decisive reason}.**
+
+**{🔁|⚠️} Next: {exact action, owner and time/trigger; say when no human action is needed}.**
+
+🔍 Review: {✅ passed | ❌ failed | 📋 pending | not recorded} · 🧪 QA: {✅ passed | not required | ❌ failed | 📋 pending | not recorded} · 🧪 CI: {✅ passed | ❌ failed | 📋 N pending | baseline failures waived | not recorded}
+
+<details>
+<summary>📋 Evidence and policy details</summary>
+
 **State:** {working — run <RUN_ID> since <ts> | waiting for CI on <sha> since <ts> | ✅ ready to merge | 🚀 merged <sha> | Queued for automatic QA | ⚠️ waiting for verified human interaction or required independent review | ⛔ <reason> — remove `automerge-blocked` to retry | 🔁 replaced by #<n> | closed — no remaining value; already covered on target | stopped — automerge label removed}
 **Reason:** <specific missing gate/evidence, revision, failure cause, or successful evidence>
 **Human action:** <Human action required — exact actor/role, action and location/link, why agent cannot act | No human action needed — automatic next step>
@@ -38,10 +47,10 @@ comment per visit or per round.
 **Risk checks:** {enforced | skipped — operator `--force`, run <RUN_ID>}
 **CI baseline policy:** {strict | skip-proven-baseline-errors — operator `--skip-pre-existing-ci-errors`, run <RUN_ID>}
 
-🏷️ **Signals** — one line per signal with its emoji and a full sentence:
-- ✅|❌|⏳ `automerge-signal-1-cr` — {Approved by `om-auto-review-pr` on <sha> ([review](url)) | required independent human review also present on <sha> | missing: why}.
-- ✅|❌|⏳ `automerge-signal-2-qa` — {QA not required (`skip-qa`) | self-QA passed on <sha> ([evidence](url)) | trusted completed QA PASS on unchanged head ([report](url)), coverage notes retained | human sign-off present | waiting for a human QA reviewer because the PR is risk-high}.
-- ✅|❌|⏳ `automerge-signal-3-ci` — {All N checks green on <sha> | remaining checks pass; <k> exact-target baseline failures waived ([proof](url)) | <k> checks still running ([checks](url)) | <check> failing: cause}.
+🏷️ **Signal evidence** — one line per signal with its emoji and a full sentence:
+- ✅|❌|📋 `automerge-signal-1-cr` — {Approved by `om-auto-review-pr` on <sha> ([review](url)) | required independent human review also present on <sha> | missing: why}.
+- ✅|❌|📋 `automerge-signal-2-qa` — {QA not required (`skip-qa`) | self-QA passed on <sha> ([evidence](url)) | trusted completed QA PASS on unchanged head ([report](url)), coverage notes retained | human sign-off present | waiting for a human QA reviewer because the PR is risk-high}.
+- ✅|❌|📋 `automerge-signal-3-ci` — {All N checks green on <sha> | remaining checks pass; <k> exact-target baseline failures waived ([proof](url)) | <k> checks still running ([checks](url)) | <check> failing: cause}.
 
 {📋 Entrance reconciliation: each signal’s evidence revision → current head, inspected delta, affected tested scope, retain/carry-forward/invalidate decision, reason and next action; link source evidence and the comparison.}
 {📋 On the first visit only: the initial signals derived from the PR's existing state (`references/signals.md` → Bootstrap).}
@@ -49,6 +58,8 @@ comment per visit or per round.
 {CI baseline waivers, when used: each check/workflow/job identity and config, PR head + run/job URL, exact target SHA + run/job URL, failure signature/root cause, compared unchanged definitions, and assessment time. Never call waived red checks green.}
 {Follow-ups: one source finding/comment → created or reused issue link per deferred item; keep unresolved filing work visible.}
 {⛔/⚠️ What a human must do, when the state needs one — omit otherwise.}
+
+</details>
 
 <details><summary>Scheduler checkpoint</summary>
 
@@ -78,7 +89,22 @@ action/owner, retry condition and evidence, including changed facts under an
 unchanged outcome (`references/scheduler.md`). Do not add a second reason
 comment. Successful states also name their current evidence.
 
-Keep it under ~160 words outside the records; concrete explanations take priority. Keep the scheduler checkpoint and
+Keep the opening to two fully bold sentences, separated by a blank line, followed
+by the compact signal line. Use glossary emojis for their meanings: 📋 working
+or waiting for CI, ✅ ready, 🚀 merged/released, ⚠️ required human action,
+⛔ blocked/stopped, ❌ failed, 🔁 replacement/resume. Never call missing evidence
+failed or waived failures green. Name the owner and exact missing human action
+at the top when blocked; keep permission/approval location links there when
+needed to act. An automation next step must respect the effective item mode:
+prepare-only says it will leave the PR ready, never promises a merge. Terminal
+states say who acts next, or “None — complete”; do not invent a scheduled retry.
+A next-check time is a scheduled inspection, not a merge ETA.
+
+Keep the visible opening under ~70 words and the human details under ~160 words
+when practical; concrete explanations take priority. Put evidence, policy,
+timing, label rationale and reconciliation in the collapsed details. Omit empty
+optional fields and repeated explanations. Scheduler and signal records stay
+in their existing separate blocks, with their markers and fields unchanged. Keep the scheduler checkpoint and
 local plan/progress semantically identical; comment ID/URL and private
 reservation/token/process details are local-only. Existing
 signal record fields are unchanged. A heartbeat never advances `updatedAt`. Never paste logs; link the run.
@@ -92,15 +118,20 @@ existing scheduler checkpoint and signal record, with no invented passes.
 ~~~markdown
 🤖 `om-auto-merge-buddy` — status
 
-**State:** Closed — no remaining value.
-**Reason:** This PR bumps `example-lib` to `2.4.0`. The target already uses
-`2.5.1` in all affected manifests and lockfile resolutions, with the intended
-fix preserved ([target commit](https://tracker.example/commit/target-sha)).
-The full diff adds no other changes, so this PR no longer provides value.
-**Human action:** No human action needed.
-**Required action / owner:** None — closed without merging.
-**Retry when:** Reopen if a remaining change is identified.
+**✅ What happened: Closed without merging; the dependency update is already covered on the target.**
+
+**🔁 Next: None — complete. Reopen only if a remaining change is identified.**
+
+<details>
+<summary>📋 Evidence and policy details</summary>
+
+The PR bumps `example-lib` to `2.4.0`; the target already uses `2.5.1` in all
+affected manifests and lockfile resolutions, preserving the intended fix
+([target commit](https://tracker.example/commit/target-sha)). The full diff adds
+no other changes.
+
 **Reason assessed:** <UTC>; PR head `<sha>`, target `<branch>@<sha>`.
+</details>
 ~~~
 
 For an already-fixed bug, replace the package comparison with the original
@@ -136,26 +167,37 @@ identifier literals in code spans; do not concatenate words or compress prose
 to save tokens. Regenerate old run-together explanations from current structured
 facts on the next safe visit; do not blindly preserve unreadable legacy prose
 or guess word boundaries with a splitting heuristic. Render fields separately,
-joining complete lines with `\n` and signal readings with `; `.
+joining complete lines with `\n` and compact signal readings with ` · `.
+The formatter below renders the reason/action section; the full template above
+adds state-specific outcome emojis, policy/evidence and the unchanged records.
 
 ```javascript
 function formatStatusReason({ reason, nextAction, head, signals = {} }) {
   if (!reason?.summary || !nextAction) throw new Error('Current structured reason and next action required')
-  const human = reason.humanActionRequired === true
-    ? `Human action required — ${reason.owner}. ${reason.requiredAction}`
-    : reason.humanActionRequired === false
-      ? `No human action needed. Automatic next step: ${nextAction}`
-      : 'Reconcile the human-action requirement from current facts before continuing.'
+  const human = reason.humanActionRequired
+  const next = human === true
+    ? `${reason.owner}: ${reason.requiredAction}`
+    : human === false
+      ? `${nextAction} No human action needed.`
+      : 'Automation must reconcile whether human action is required before continuing.'
+  const signal = (name, value) => `${name}: ${value === 'pass' ? '✅ passed' : value === 'fail' ? '❌ failed' : value === 'pending' ? '📋 pending' : value ?? 'not recorded'}`
   return [
-    `**Reason:** ${reason.summary}`,
-    `**Human action:** ${human}`,
+    `**${human === true ? '⚠️' : '📋'} What happened: ${reason.summary}**`,
+    '',
+    `**${human === false ? '🔁' : '⚠️'} Next: ${next}**`,
+    reason.actionUrl ? `Action: ${reason.actionUrl}` : null,
+    '',
+    [signal('🔍 Review', signals.cr), signal('🧪 QA', signals.qa), signal('🧪 CI', signals.ci)].join(' · '),
+    '',
+    '<details>',
+    '<summary>📋 Evidence and policy details</summary>',
+    '',
     reason.actionLocation ? `**Location:** ${reason.actionLocation}` : null,
-    reason.actionUrl ? `**Action link:** ${reason.actionUrl}` : null,
-    reason.humanActionRequired && reason.whyAgentCannotAct ? `**Why the agent cannot act:** ${reason.whyAgentCannotAct}` : null,
-    `**Resume when:** ${reason.retryWhen}`,
+    human === true && reason.whyAgentCannotAct ? `**Why the agent cannot act:** ${reason.whyAgentCannotAct}` : null,
+    reason.retryWhen ? `**Resume when:** ${reason.retryWhen}` : null,
     head ? '**Head:** `' + head + '`' : null,
-    '**Signals:** ' + ['cr', 'qa', 'ci'].map(gate => gate.toUpperCase() + ': ' + (signals[gate] ?? 'not recorded')).join('; '),
-    `**Next action:** ${nextAction}`,
-  ].filter(Boolean).join('\n')
+    '',
+    '</details>',
+  ].filter(line => line !== null).join('\n')
 }
 ```

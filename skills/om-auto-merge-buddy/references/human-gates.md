@@ -134,7 +134,10 @@ A human risk waiver alone cannot remove these protected-area human approval requ
 ## 3. Make the stop visible in the existing status comment
 
 Update the same marker-idempotent status comment and scheduler reason; no new
-machine fields or separate status comment are needed. Include these visible lines:
+machine fields or separate status comment are needed. Use the two bold opening
+lines from `references/report-templates.md`: what happened and the exact human
+action/owner next. Keep the following supporting fields in its evidence/policy
+details; never hide the missing human action only in collapsed content:
 
 ```text
 State: waiting-human — <human QA veto | protected-risk human QA or technical approval required>

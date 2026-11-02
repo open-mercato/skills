@@ -27,5 +27,5 @@ Use existing write-access trust rules plus explicit QA-verdict context rather th
 
 ### Phase 1: Preserve vetoes throughout the visit
 
-- [ ] 1.1 Add one skill-local veto policy and apply it before signal evaluation, stages, replacements and finish.
+- [x] 1.1 Add one skill-local veto policy and apply it before signal evaluation, stages, replacements and finish. — 9e43c80
 - [ ] 1.2 Review scenario outcomes and run the configured validation gate.

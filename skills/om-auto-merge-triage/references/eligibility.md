@@ -40,9 +40,9 @@ runs the cheap list fields before any extra tracker call, and record the
 | 4 | Base | `baseRefName` ≠ `BASE_BRANCH` (stacked or release-branch PRs merge through their own base) | `targets <branch>` |
 | 5 | No excluded label | it carries any label in `EXCLUDE_LABELS` (default `do-not-merge`, `blocked`, `qa-failed`) | `label <name>` |
 | 6 | Author | **get-pr-author-association** returns a value in `EXCLUDE_ASSOCIATIONS` (default `first-time-contributor`, `outside-collaborator`, `none`), and the author is not in `TRUSTED_AUTHORS` | `author is <association>` |
-| 7 | Human lane | it carries a label in `HUMAN_ONLY_LABELS`, its author is in `HUMAN_ONLY_AUTHORS`, or its changed files show a protected area as defined in `om-auto-merge-buddy` (its human-gates reference, section 2) | `human lane: <area | label | author>` |
+| 7 | Human lane | it carries a label in `HUMAN_ONLY_LABELS`, its author is in `HUMAN_ONLY_AUTHORS`, or its changed files show a protected area as defined in this skill’s `references/human-lane.md` | `human lane: <area | label | author>` |
 
-Gate 7 reads labels and the changed-file list (**get-pr-diff**). A PR it
+Gate 7 reads fresh labels and the complete diff (**get-pr-diff**), then follows `references/human-lane.md` to inspect affected behavior and consumers. A PR it
 catches is never proposed: list it in the proposal's *Human QA lane*, authors in
 `HUMAN_ONLY_AUTHORS` first, because a human tests it before merge and the buddy
 would only wait for that. A path can over-match; when unsure, list the PR in
@@ -58,7 +58,7 @@ missing from an older descriptor, the PR is rejected with
 `author association unknown — re-sync the tracker descriptor`. An author in
 `TRUSTED_AUTHORS` passes gate 6 without the lookup.
 
-For a PR in the *already queued* list, re-run gates 2–6 and flag every
+For a PR in the *already queued* list, re-run gates 2–7 and flag every
 gate it now fails (for example, `⚠️ now labeled do-not-merge`). Never remove the
 label. Report the flag and leave the decision to a human.
 

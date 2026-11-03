@@ -73,6 +73,124 @@ class RotationTests(unittest.TestCase):
         self.assertEqual(self.rotate(apply=True)['items'], [])
         self.assertFalse((self.runs / '.context-maintenance.lock').exists())
 
+    def test_multiple_runs_share_one_archive_and_restore_as_original_top_levels(self):
+        folder = self.folder('2026-01-01-first', 'Status: complete\n')
+        flat = self.runs / '2026-02-01-second.md'
+        flat.write_text('Status: complete\n')
+        another = self.folder('2026-03-01-third')
+        captured = {}
+        for source in (folder, flat, another):
+            captured.update(rotation.snapshot(source))
+        preview = self.rotate()
+        self.assertEqual(len({item['archive'] for item in preview['items']}), 1)
+        report = self.rotate(apply=True)
+        self.assertTrue(all(item['action'] == 'archived' for item in report['items']))
+        self.assertEqual(len(list(self.runs.iterdir())), 1)
+        archive = Path(report['archive'])
+        rotation.verify(archive, captured)
+        with tempfile.TemporaryDirectory() as staging, tarfile.open(archive) as stream:
+            stream.extractall(staging)
+            restored = {}
+            for source in Path(staging).iterdir():
+                restored.update(rotation.snapshot(source))
+            self.assertEqual(set(restored), set(captured))
+            for name, original in captured.items():
+                actual = restored[name]
+                self.assertEqual(actual[:3], original[:3])
+                self.assertEqual(actual[4], original[4])
+                self.assertLess(abs(actual[3] - original[3]), 10000)
+
+    def test_later_batch_uses_one_new_archive_and_preserves_previous_bytes(self):
+        self.folder('2026-01-01-first')
+        first = Path(self.rotate(apply=True)['archive'])
+        original = first.read_bytes()
+        self.folder('2026-01-01-second')
+        preview = self.rotate()
+        self.assertEqual(Path(preview['archive']).name, 'rotated-before-2026-10-20-2.tgz')
+        second = Path(self.rotate(apply=True)['archive'])
+        self.assertNotEqual(first, second)
+        self.assertEqual(first.read_bytes(), original)
+        self.assertEqual(len(list(self.runs.glob('*.tgz'))), 2)
+
+    def test_batch_verification_failure_preserves_every_original(self):
+        first = self.folder('2026-01-01-first')
+        second = self.folder('2026-01-01-second')
+        before = {source.name: rotation.snapshot(source) for source in (first, second)}
+        with mock.patch.object(rotation, 'verify', side_effect=ValueError('bad batch')):
+            report = self.rotate(apply=True)
+        self.assertEqual([item['action'] for item in report['items']], ['error', 'error'])
+        self.assertEqual({source.name: rotation.snapshot(source) for source in (first, second)}, before)
+        self.assertTrue(first.exists() and second.exists())
+
+    def test_source_change_in_one_run_keeps_entire_batch_unpublished(self):
+        first = self.folder('2026-01-01-first')
+        second = self.folder('2026-01-01-second')
+        verify = rotation.verify
+
+        def change_after_verify(*args):
+            verify(*args)
+            (second / 'new.md').write_text('concurrent work')
+
+        with mock.patch.object(rotation, 'verify', side_effect=change_after_verify):
+            report = self.rotate(apply=True)
+        self.assertTrue(all(item['action'] == 'error' for item in report['items']))
+        self.assertTrue(first.exists() and second.exists())
+        self.assertFalse(list(self.runs.glob('*.tgz')))
+
+    def test_verify_rejects_missing_members_and_corrupt_gzip_trailer(self):
+        source = self.folder()
+        captured = rotation.snapshot(source)
+        missing = self.repo / 'missing.tgz'
+        with tarfile.open(missing, 'w:gz') as stream:
+            stream.add(source / 'binary.dat', arcname=source.name + '/binary.dat')
+        with self.assertRaises(ValueError):
+            rotation.verify(missing, captured)
+        report = self.rotate(apply=True)
+        archive = Path(report['archive'])
+        corrupted = bytearray(archive.read_bytes())
+        corrupted[-8] ^= 0xff
+        archive.write_bytes(corrupted)
+        with self.assertRaises(OSError):
+            rotation.verify(archive, captured)
+
+    def test_corrupt_or_unsafe_existing_batch_prevents_source_mutation(self):
+        source = self.folder()
+        archive = self.runs / 'rotated-before-2026-01-01.tgz'
+        archive.write_bytes(b'invalid gzip')
+        with self.assertRaises((OSError, tarfile.TarError)):
+            self.rotate(apply=True)
+        self.assertTrue(source.exists())
+        with tarfile.open(archive, 'w:gz') as stream:
+            member = tarfile.TarInfo('../outside')
+            member.type = tarfile.DIRTYPE
+            stream.addfile(member)
+        with self.assertRaises(ValueError):
+            self.rotate(apply=True)
+        self.assertTrue(source.exists())
+        self.assertFalse((self.runs / '.context-maintenance.lock').exists())
+
+    def test_partial_batch_deletion_keeps_recovery_and_never_rotates_remnant(self):
+        first = self.folder('2026-01-01-first')
+        second = self.folder('2026-01-01-second')
+        captured = {**rotation.snapshot(first), **rotation.snapshot(second)}
+        remove = rotation.shutil.rmtree
+
+        def fail_second(path):
+            if path.name == second.name:
+                raise OSError('delete denied')
+            remove(path)
+
+        with mock.patch.object(rotation.shutil, 'rmtree', side_effect=fail_second):
+            report = self.rotate(apply=True)
+        self.assertEqual([item['action'] for item in report['items']], ['archived', 'error'])
+        self.assertFalse(first.exists())
+        self.assertTrue(second.exists())
+        rotation.verify(Path(report['archive']), captured)
+        rerun = self.rotate(apply=True)
+        self.assertEqual(rerun['items'][0]['reason'], 'already included in batch archive')
+        self.assertNotIn('archive', rerun)
+        self.assertEqual(len(list(self.runs.glob('*.tgz'))), 1)
+
     def test_configured_path_and_cli_retention(self):
         config = self.repo / '.ai/agentic.config.json'
         config.write_text(json.dumps({'paths': {'runs': 'context/history'}}))
@@ -105,7 +223,12 @@ class RotationTests(unittest.TestCase):
         (self.runs / '2026-01-01-plan.md').write_text('## Progress\n- [x] 1.1 Done\n')
         report = self.rotate(apply=True)
         self.assertTrue(all(item['action'] == 'archived' for item in report['items']))
-        self.assertTrue((self.runs / '2026-01-01-plan.md.tgz').is_file())
+        archives = list(self.runs.glob('*.tgz'))
+        self.assertEqual(len(archives), 1)
+        self.assertEqual({item['archive'] for item in report['items']}, {str(archives[0].resolve())})
+        with tarfile.open(archives[0]) as stream:
+            self.assertIn('2026-01-01-plan.md', stream.getnames())
+            self.assertIn('2026-01-01-loop/PLAN.md', stream.getnames())
 
     def test_exclusions_collisions_archives_and_unrelated_files(self):
         excluded = self.folder('2026-01-01-protected')
@@ -164,7 +287,7 @@ class RotationTests(unittest.TestCase):
 
     def test_publication_race_does_not_replace_archive_or_delete_source(self):
         source = self.folder()
-        archive = source.with_name(source.name + '.tgz')
+        archive = self.runs / 'rotated-before-2026-10-20.tgz'
         link = os.link
 
         def race(temporary, destination):
@@ -183,9 +306,9 @@ class RotationTests(unittest.TestCase):
         with mock.patch.object(rotation.shutil, 'rmtree', side_effect=OSError('delete denied')):
             report = self.rotate(apply=True)
         self.assertEqual(report['items'][0]['action'], 'error')
-        rotation.verify(source.with_name(source.name + '.tgz'), captured)
+        rotation.verify(Path(report['archive']), captured)
         self.assertTrue(source.exists())
-        self.assertEqual(self.rotate(apply=True)['items'][0]['reason'], 'archive already exists')
+        self.assertEqual(self.rotate(apply=True)['items'][0]['reason'], 'already included in batch archive')
 
     def test_lock_invalid_retention_and_invalid_dates(self):
         source = self.folder('2026-02-30-invalid')

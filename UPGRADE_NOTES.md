@@ -16,6 +16,20 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-11-03 — AI context rotation uses one archive per batch
+
+- Refresh `om-ai-context-maintenance` to combine all eligible folders and plans
+  from one invocation into a single `rotated-before-<cutoff>.tgz` archive, rather
+  than leaving one archive per artifact. Later nonempty batches select an unused
+  numeric suffix without replacing prior archives. Empty selections add none.
+- Existing per-artifact archives remain readable and untouched. No installed
+  descriptor or pipeline config change is required. If an unmerged rotation PR
+  used per-artifact output, regenerate that PR from its original tracked sources
+  with the updated helper; do not nest its archives into the new batch.
+- All file hashes and metadata are verified before any source deletion. Restored
+  sources or failed-deletion remnants already included in a recognized batch
+  remain protected on reruns; unreadable/unsafe batches require recovery first.
+
 ## 2026-10-31 — Human-confirmed issue autofix triage
 
 - Install `om-auto-issue-triage` to propose useful, still-relevant open issues with bounded work, then mark only human-confirmed issues. Dry runs never mutate the tracker. Active or uncertain claims and already queued issues are skipped; assignees alone are preserved. Scope may include bugs, maintenance and decided features. Existing issue implementation/spec/review/QA/CI gates remain unchanged.

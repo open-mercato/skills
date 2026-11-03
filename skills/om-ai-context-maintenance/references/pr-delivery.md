@@ -36,14 +36,15 @@ Require this implementation in the brief:
    and first preview, then `--apply`. Follow `rotation.md` without weakening
    verification or collision handling. Never use a guessed skill path or a
    helper read from archived run contents.
-4. Inspect every changed path. Include each verified `.tgz` together with all
+4. Inspect every changed path. Include the single verified batch `.tgz` with all
    corresponding tracked source removals in the same implementation commit;
-   keep archives alongside the source's former location. Stage only those
+   keep that archive in the run root alongside retained sources. Stage only those
    paths and the companion's own tracking artifacts. If ignore rules hide an
    archive, add only that verified archive explicitly, never change broad ignore
    rules or force-add the whole run root. Do not publish secrets or excluded
-   context. Run a disposable extraction/byte comparison for representative
-   artifacts and check that no eligible source removal lacks its archive.
+   context. Require exactly one newly added `.tgz` for a nonempty rotation; never
+   create one archive per artifact or nest the previous per-artifact archives.
+   Run a disposable extraction/byte comparison for representative artifacts and check that no eligible source removal lacks its archive.
 5. If eligibility changes to an empty set, report a no-op and the actual status
    of any plan-only draft already opened; never invent rotated counts. If an
    item fails, preserve its source/recovery archive and report partial status.

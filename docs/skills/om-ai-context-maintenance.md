@@ -1,9 +1,9 @@
 # om-ai-context-maintenance
 
-Archive old AI run context while keeping the last 14 days unpacked. Each eligible
-folder becomes a `.tgz` archive beside the remaining runs; standalone Markdown
-plans are supported too. The skill protects active and uncertain runs, checks
-open PR references, and verifies archive contents before removing originals.
+Archive old AI run context while keeping the last 14 days unpacked. All eligible
+folders and standalone Markdown plans selected by one invocation share a single
+`.tgz` batch archive beside the remaining runs, reducing loose file counts.
+The skill protects active and uncertain runs, checks open PR references, and verifies archive contents before removing originals.
 
 ## Parameters
 
@@ -30,8 +30,11 @@ missing, the skill stops after preview. No schedule is installed. Coordinate
 with workers before applying rotation.
 
 A dated run uses its leading `YYYY-MM-DD`; an undated run uses its newest
-filesystem modification date. Exact boundary dates remain unpacked. Archives
-are never overwritten or expired automatically. Restore an archived run to its
+filesystem modification date. Exact boundary dates remain unpacked. The batch is named
+`rotated-before-<UTC-cutoff>.tgz`; a later batch uses the first unused numeric
+suffix when needed. Archives are never overwritten or expired automatically.
+Restored sources or partial-deletion remnants already present in a batch remain
+unpacked until an operator resolves the collision. Restore an archived run to its
 original path before using an existing resume or retrospective reader; the
 skill includes recovery and safe restoration guidance.
 

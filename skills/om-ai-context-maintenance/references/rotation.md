@@ -58,8 +58,16 @@ fields intact; no new schema field or automatic config rewrite is needed.
 
 ## Archive contract
 
-Each directory `run-name/` becomes `run-name.tgz`; a flat `run-name.md` becomes
-`run-name.md.tgz`. Members retain that top-level name and relative paths, file
+Each nonempty invocation combines **all eligible folders and standalone plans
+into one archive**, `rotated-before-<UTC-cutoff>.tgz`, beside the remaining runs.
+For example, 300 eligible artifacts produce one `.tgz`, not 300 archive files.
+If that filename already exists, select the first unused numeric suffix
+(`-2`, `-3`, and so on); existing archives are never changed. A later invocation
+can create one new batch, and an empty selection creates none. Preview reports
+the selected batch path in `archive`; every eligible item's `archive` points to
+that same path. Recompute eligibility and the destination immediately before apply.
+
+Members retain their original top-level run names and relative paths, file
 bytes, permission modes and mtimes. No absolute member names or traversal are
 written; links and special files anywhere in a candidate cause it to be skipped.
 Archives use gzip-compressed tar and remain alongside unpacked runs forever
@@ -67,27 +75,34 @@ unless the operator separately requests another policy.
 
 On apply, an exclusive `.context-maintenance.lock` directory serializes
 maintenance instances. A temporary `.context-archive-*.tmp` is created on the
-same filesystem, closed, re-read completely (decompression and SHA-256 for each
-file), and compared against the original snapshot. Publication uses an exclusive
-hard link so an existing archive is never replaced. Unsupported publication,
-permissions, or disk-space errors keep the source intact. The helper performs
-no network upload; the delegated PR workflow publishes the verified archives
-and source removals for review. Do not run this helper on filesystems without
-hard-link support.
+same filesystem. Add every eligible artifact, close the archive, re-read it
+completely (decompression and SHA-256 for every file), and compare its exact
+inventory with the union of all original snapshots. Recheck every source before
+publishing anything. A compression, verification, source-change or publication
+failure retains **all batch sources**. Publication uses an exclusive hard link
+so a race cannot replace a pre-existing archive. Only after publication succeeds
+may source deletion begin. Each deletion is reported separately; a failed deletion
+retains the verified batch as the recovery copy and reports partial status.
+The helper performs no network upload; the delegated PR workflow publishes the
+single verified archive and all corresponding source removals for review. Do not
+run this helper on filesystems without hard-link support.
 
 ## Recovery and restoration
 
 Normal completion removes this invocation's lock and temporary files, including
 on caught exceptions. A process kill can leave either behind. Check that no
 maintenance process owns a leftover lock before removing that lock or a temporary
-file; never break a live lock automatically. If both a source and its `.tgz`
-exist, the helper skips the source and reports the collision. Verify the archive
-against that source before any manual cleanup; rerunning never treats the
-collision as permission to delete the source. If deletion failed partway, the
+file; never break a live lock automatically. The helper reads top-level member
+names from existing `rotated-before-<date>[-<number>].tgz` batches and skips any
+source already present in one. This protects restored sources and remnants of a
+partially deleted batch, even when another invocation would choose a new suffix.
+An unreadable or unsafe recognized batch blocks rotation for recovery. The older
+`<run-name>.tgz` collision check also remains supported. Verify the archive against
+the source before manual cleanup; a collision never authorizes deletion. If deletion failed partway, the
 verified archive remains the recovery copy; disclose the failure.
 
 To restore, inspect the member listing and verify it contains only the expected
-top-level name and relative paths, with no links, special files or traversal.
+top-level names and relative paths, with no links, special files or traversal.
 Extract into a fresh empty staging directory, inspect the result, then move the
 restored top-level entry into the runs directory only when that path is absent.
 Keep the `.tgz` until restoration has been verified. Do not extract over a live

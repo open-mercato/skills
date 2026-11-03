@@ -1,12 +1,13 @@
 ---
 name: om-ai-context-maintenance
-description: Rotate old AI run folders and standalone plans into verified .tgz archives beside the remaining runs. Keeps the last 14 days unpacked by default, with configurable retention, exclusions, a preview, and rotation delivered through om-auto-create-pr. Use to archive old .ai/runs context; active or uncertain runs stay unpacked.
+description: Rotate old AI run folders and standalone plans into one verified .tgz batch archive beside the remaining runs. Keeps the last 14 days unpacked by default, with configurable retention, exclusions, a preview, and rotation delivered through om-auto-create-pr. Use to archive old .ai/runs context; active or uncertain runs stay unpacked.
 ---
 
 # AI Context Maintenance
 
-Keep recent run context easy to read and move older, finished runs into one
-`.tgz` per artifact in the same runs directory. Preview locally; deliver authorized
+Keep recent run context easy to read and combine all older, finished runs
+selected by one invocation into a single `.tgz` archive in the same runs directory,
+reducing the number of loose files. Preview locally; deliver authorized
 rotation through the `om-auto-create-pr` skill in an isolated worktree. Run once
 and report; do not install a schedule.
 
@@ -50,12 +51,12 @@ Keep persistent retention/exclusion defaults there; do not invent config keys.
    invoke `om-auto-create-pr` with the resolved retention, run root, exclusions,
    helper location, and archive safeguards as its task brief. It must refresh
    eligibility in its isolated worktree, protect its own tracking plan, archive
-   and verify there, and commit both archives and source removals. Never apply
-   rotation in the caller's checkout. If the companion skill is unavailable,
+   and verify one batch archive there, and commit it with all source removals.
+   Never apply rotation in the caller's checkout. If the companion skill is unavailable,
    stop after preview and name the missing skill; do not fall back to local apply.
 
 4. **Report the result.** Use `references/report-templates.md`: state the cutoff,
-   archived/retained/skipped counts, archive paths, errors, and the delegated
+   archived/retained/skipped counts, the single archive path, errors, and the delegated
    PR's actual status and chaining reference. For restoration or interruption,
    follow `references/rotation.md`. Existing resume and retrospective skills
    read unpacked paths; restore a run before asking those skills to use it.

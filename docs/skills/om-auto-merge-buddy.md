@@ -158,6 +158,8 @@ covering the protected behavior, pinned with `QA head:` and `qa-approved`.
 Automatic PASS and `qa-self-verified` supply evidence but cannot satisfy this
 human gate. Ordinary fixes outside these areas retain their automatic route.
 
+`automerge.humanOnlyLabels` and `automerge.humanOnlyAuthors` add work that needs a human tester by policy, such as features or a design owner's UX fixes. They follow the same pinned human QA rule. `automerge.complexQa` (`always` by default, or explicit `needs-qa` / `never`) decides when QA runs `om-auto-qa-pr --complex`. All gates are listed in one table at the top of `references/human-gates.md`.
+
 The existing status comment visibly reports `waiting-human`, the exact veto or
 protected behavior with evidence links, enforced risk policy, who must act,
 what they must do, and the resume condition. It does not leave a protected PR

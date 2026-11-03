@@ -5,6 +5,25 @@ after a replacement/retarget, and immediately before either finish action.
 They outrank every signal, QA routing preference, `--force`, CI waiver and host
 protection bypass. Read fresh tracker facts; a saved ready record is not permission.
 
+## Gate map
+
+Every gate that can stop or hold an automerge PR is listed here, so a team
+adapting this skill starts in one place. The detail lives where noted.
+
+| Gate | Holds the PR when | Defined in |
+|---|---|---|
+| Human veto | `qa-failed`, `do-not-merge` or an unresolved human QA NO-GO | Section 1 |
+| Protected areas | Migrations, money, permissions or tenant isolation, architecture, backward-incompatible changes | Section 2 |
+| Human-only by policy | A configured label or author | Section 2b |
+| Independent review | Required native approval is missing | `references/independent-review.md` |
+| QA routing | Required approval is missing or coverage has gaps | `references/qa-routing.md` |
+| Risk override limits | What `--force` and `automerge-force` may skip | `references/risk-override.md` |
+| CI | A check is failing or pending; proved baseline waivers | `references/signals.md`, `references/ci-baseline.md` |
+| Off switch | The queue label is gone or `automerge-blocked` is set | `SKILL.md` rules |
+
+To adapt the areas to another product, edit the area table in section 2 and
+the configuration in section 2b. Keep the stop and release rules unchanged.
+
 ## 1. Human veto — stop this visit before producing work
 
 Read current labels, complete conversation and review comments, and review bodies
@@ -130,6 +149,24 @@ self-sign-off path to obtain it. Strict automated review/CI repair may proceed
 when there is no veto; once human approval is the missing step, end
 `waiting-human`, invalidate QA/readiness as above, and count no QA attempt.
 A human risk waiver alone cannot remove these protected-area human approval requirements.
+
+## 2b. Human-only work by policy
+
+Some work needs a human tester although the diff alone does not show it, such
+as new features or UX changes. Two configuration keys name it:
+
+- `automerge.humanOnlyLabels` (default `[]`): a PR carrying any of these labels.
+- `automerge.humanOnlyAuthors` (default `[]`): a PR authored by one of these
+  logins, compared case-insensitively, for example a design owner whose fixes
+  are UX changes by nature.
+
+Such a PR follows section 2's human QA rule: QA cannot be `n/a`, an automatic
+PASS and `qa-self-verified` are supporting evidence only, and it needs
+`qa-approved` with a pinned `QA head:` human sign-off. `--force` and
+`automerge-force` cannot waive it. It needs no technical approval unless
+section 2 also applies. Record `human-only: <label | author>` in the status
+reason. Read labels fresh on every visit; removing the label returns the PR to
+the ordinary route, while an author entry applies for as long as it is configured.
 
 ## 3. Make the stop visible in the existing status comment
 

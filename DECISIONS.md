@@ -613,3 +613,17 @@ opts into the earlier scoped depth. Applicable unexercised checks yield PARTIAL
 and cannot grant automatic QA approval. It never relaxes a gate or the
 self-QA criteria. Product specifics (locales, risk checklist) stay in the
 consuming repo's local extension.
+
+
+## 2026-11-03 — Automerge routes human-lane work away from the queue
+
+Triage proposed PRs that the buddy would then hold for human QA, and policy
+work such as features or a design owner's UX fixes had no gate at all.
+`automerge.humanOnlyLabels` and `automerge.humanOnlyAuthors` now route that
+work to pinned human QA, and triage lists protected and human-only PRs in a
+*Human QA lane* instead of proposing them, plus a *Needs clarification* list
+for changed defaults and conflicts. Both default to empty, so existing setups
+keep their behavior. `automerge.complexQa` (default `always`, per explicit user direction) runs
+`om-auto-qa-pr --complex` where human-style depth matters. A gate map at the
+top of `human-gates.md` lists every gate, so adapting the skill starts in one
+place.

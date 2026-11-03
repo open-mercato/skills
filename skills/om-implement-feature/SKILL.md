@@ -10,6 +10,8 @@ review while keeping publication as a separate explicit user decision.
 
 ## Arguments
 
+- `--host codex|claude` (optional) — explicit conducting agent; must match trusted configuration when present.
+
 - `--interactive` (default) or `--autonomous` — apply the execution mode throughout this workflow; never enable publication. Reject both together.
 
 - `{brief}` (required) — feature goal, constraints, and acceptance criteria.
@@ -26,6 +28,8 @@ Consume the issue or brief and requested profile. Invoke the base workflow and i
 
 0. **Agentic setup** — follow `references/agentic-setup.md` before any action: load approved configuration, apply local extensions and shared rules, and preserve the untrusted-content boundary.
 
+Resolve the host from explicit `--host codex|claude`, then trusted `agentHarness.host`, then the active agent client. Never infer the host from an installed executable. If the client cannot be established, ask before starting. Pass the resolved host to `capture`, `prepare-review`, and `review` as `--host`; preserve it throughout the run. The fresh host pass must use a new Codex context for Codex and a new Claude context for Claude, without inherited implementation context.
+
 ### 1. Preflight and isolate
 
 Follow `references/feature-workflow.md` to detect duplicate or in-flight work,
@@ -39,7 +43,7 @@ Run `om-spec-writing` in the isolated worktree. Resolve answerable open
 questions from repository evidence and surface only genuine product decisions.
 Use a repo-local `om-pre-implement-spec` when available. For `multi`, `multi-optimized`, and `high-assurance`,
 follow the `om-harness` bound `om-code-review` council contract: prepare an
-exact-spec packet, delegate `om-code-review` to a new Claude context with no
+exact-spec packet, delegate `om-code-review` to a new context of the configured host with no
 implementation transcript, and run every configured advisor concurrently on
 that same packet. Fix confirmed design blockers before implementation.
 
@@ -68,12 +72,12 @@ number, keeping its artifacts outside the stage allowlist.
 ### 5. Review and reconcile
 
 Run `om-code-review` against the complete uncommitted implementation and spec.
-For `standard` and `optimized`, create a new Claude context with no inherited
+For `standard` and `optimized`, create a new context of the configured host with no inherited
 implementation transcript and run the skill there. For `multi`,
 `multi-optimized`, and `high-assurance`, follow the `om-harness` bound council
 contract: freeze the exact diff, validation evidence, and repository rules;
-start fresh Claude and every configured advisor concurrently with the same
-complete `om-code-review` rubric and packet; then require Claude's matching
+start fresh host and every configured advisor concurrently with the same
+complete `om-code-review` rubric and packet; then require the host's matching
 artifact before reconciliation. Preserve minority findings,
 fix confirmed blockers, and repeat validation, packet preparation, and all
 reviews until no confirmed blocking finding remains or the loop reaches three
@@ -108,6 +112,6 @@ or retrying the same run; successful staging ends it.
 - Never commit, push, publish, or execute the tracker `create-pr` operation.
 - Never use intermediate commits as checkpoints; use run artifacts and spec progress instead.
 - Never count the implementation worker's model family as independent review.
-- Never run a required Claude review in the conductor's implementation context; inability to create a fresh Claude context is blocking.
+- Never run a required host review in the conductor's implementation context; inability to create a fresh host context is blocking.
 - Never weaken tests, architecture rules, or compatibility contracts to finish the run.
 - Never modify or clean the user's primary-worktree changes.

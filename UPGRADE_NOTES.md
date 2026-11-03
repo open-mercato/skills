@@ -16,6 +16,12 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## Codex as staged-harness host
+
+Refresh `om-harness`, `om-setup-agent-harness`, `om-fix-issue`, `om-implement-feature`, and their installed aliases together. Setup now detects Codex or Claude and records `agentHarness.host`; `--host` may make the choice explicit. Codex setup creates no Claude output styles or settings/hooks. Existing Claude configurations and version 1 artifacts remain supported.
+
+For Codex, regenerate review packets and fresh-host attestations as envelope version 2; do not relabel a Claude artifact. Pass the same resolved `--host` to capture, preparation, and council review. Capture binds the host for stage. Test a bound fresh review and stage in a disposable fixture, not just adapter probes. The Codex host pass is separate from any Codex advisor and never satisfies provider policy. These requirements supersede the historical Claude-only descriptions below.
+
 ## 2026-11-03 — AI context rotation uses one archive per batch
 
 - Refresh `om-ai-context-maintenance` to combine all eligible folders and plans

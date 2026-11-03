@@ -37,9 +37,9 @@ generated packet binds its subject SHA-256 to the installed `om-code-review`
 skill, full checklist, output contract, repository rules, criteria, and host
 validation evidence. Do not hand-edit it.
 
-## Run Claude with genuinely fresh context
+## Run the configured host with genuinely fresh context
 
-Create a new Claude reviewer context through the host's fresh-agent mechanism.
+Create a new reviewer context of the configured host through the host's fresh-agent mechanism.
 Do not fork or copy the conductor's implementation conversation, worker
 transcripts, rationale, previous findings, or proposed fixes. Give the reviewer
 only:
@@ -57,29 +57,29 @@ that per-command gate evidence plus the result without markdown. It must attest 
 packet/preparation result, and report observed model provenance when available.
 Write to a temporary sibling path and rename it to the declared host-review path
 only after the JSON is complete, so the runtime never observes a partial file.
-If the host cannot create a fresh Claude context, stop; never substitute the
+If the host cannot create a fresh host context, stop; never substitute the
 conductor's current context or another model.
 
 ## Run every configured advisor
 
-Predeclare the final host-review path. Launch the new Claude context and the
+Predeclare the final host-review path. Launch the new context of the configured host and the
 runtime `review` command concurrently, passing both `--review-packet` and
-`--host-review`; do not wait for Claude before starting the runtime. The runtime
+`--host-review`; do not wait for the host before starting the runtime. The runtime
 immediately starts every configured advisor and waits up to
-`--host-review-timeout-ms` (ten minutes by default) for Claude's atomically
-completed artifact. It rejects a stale subject, changed rubric, non-Claude host,
+`--host-review-timeout-ms` (ten minutes by default) for the host's atomically
+completed artifact. It rejects a stale subject, changed rubric, mismatched host,
 inherited-context attestation, or mismatched hash instead of producing a final
 council result.
 
 The runtime invokes every reviewer id in the selected profile in parallel up to
-the profile limit while Claude works independently. Each invocation is a new process or API request with
+the profile limit while the host works independently. Each invocation is a new process or API request with
 no implementation transcript and receives the same complete `om-code-review`
 rubric, packet, and subject. Oversized subjects may use multiple fresh parts per
 advisor; the runtime unions their findings without exposing one advisor's
 result to another.
 
-The fresh Claude result appears in the same reviewer table and findings matrix
-as the configured advisors. Claude is mandatory but does not satisfy the
+The fresh host result appears in the same reviewer table and findings matrix
+as the configured advisors. The host is mandatory but does not satisfy the
 provider policy, which applies to the profile's configured reviewers (under
 the shipped `all-required` default, every configured reviewer must complete).
 The runtime retries each failed invocation per the configured `retry` block
@@ -95,3 +95,11 @@ downgrade to a smaller council silently. Re-run the `review` command (the run
 is deterministic over the same packet, so a repeat is cheap and safe); if the
 same reviewer keeps failing, repair its binding via `om-setup-agent-harness`
 or stop and surface the failure to the user for an explicit decision.
+
+## Host identity and compatibility
+
+Resolve the conducting agent as `codex` (family `openai`) or `claude` (family `anthropic`) and pass `--host` to `capture`, `prepare-review`, and `review`. Explicit and configured hosts must agree. Capture records that host, and stage rejects a packet prepared for another host. A Codex run never requires a Claude executable, artifact, settings file, or hook.
+
+Legacy Claude packets and fresh-review artifacts keep version 1. Codex preparation emits packet version 2 with `contract.host: codex`; its fresh review must also be version 2 and include the same host in the copied contract, alongside all six existing fields. The packet SHA-256 includes this identity. New runtimes retain version 1 Claude support; older runtimes reject version 2 rather than accepting a different reviewer. Upgrade the runtime, both schemas, and the wrapper skills together.
+
+Each fresh review artifact uses the same envelope version as its packet and copies the complete contract including `host` when present. The fresh reviewer identifies itself as `codex`/`openai` for Codex or `claude`/`anthropic` for Claude. The aggregate labels the Codex host row `host:codex` to distinguish it from a configured Codex advisor. The host pass never satisfies the provider policy, even when its family matches an advisor.

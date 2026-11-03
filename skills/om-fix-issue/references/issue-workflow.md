@@ -50,7 +50,7 @@ any OpenAI-compatible endpoint or local CLI through the generic adapters, not
 just the bundled jury. When setup finishes, re-probe and continue the
 originally requested profile. Only when the user, told what they would lose,
 explicitly declines to configure any external model may the run continue under
-`standard` (the mandatory fresh Claude `om-code-review` pass needs no external
+`standard` (the mandatory fresh host `om-code-review` pass needs no external
 provider); state in the report that the requested profile was not used and
 why.
 
@@ -79,7 +79,7 @@ Write the issue symptom, located cause, evidence, files-to-change list, proposed
 regression test, and acceptance criteria to an artifact under the ignored QA
 artifact directory. Run `prepare-review --kind diagnosis` on that artifact, then
 execute the bound council exactly as
-the `om-harness` skill's matching contract defines it (fresh Claude context plus the
+the `om-harness` skill's matching contract defines it (fresh host context plus the
 concurrent runtime `review` command). The host confirms or
 rejects findings empirically. A confirmed diagnosis finding loops back to
 `om-root-cause`; a single minority finding remains visible even when rejected.
@@ -107,7 +107,7 @@ the same owning `om-fix` workflow for integration, validation, and self-review.
 
 Write the acceptance criteria and root-cause summary to a criteria file. Build
 the intended-path allowlist and version 1 evidence for the full configured
-validation gate. For `standard` and `optimized`, create a new Claude context
+validation gate. For `standard` and `optimized`, create a new context of the configured host
 with no inherited diagnosis or implementation transcript and run
 `om-code-review` there. For `multi`, `multi-optimized`, and `high-assurance`,
 run `prepare-review --kind implementation` with those inputs and execute the

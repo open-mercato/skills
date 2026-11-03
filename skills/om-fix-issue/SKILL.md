@@ -11,6 +11,8 @@ existing pipeline skills unchanged.
 
 ## Arguments
 
+- `--host codex|claude` (optional) — explicit conducting agent; must match trusted configuration when present.
+
 - `--interactive` (default) or `--autonomous` — apply the execution mode throughout this workflow; never enable publication. Reject both together.
 
 - `{issueId}` (required) — tracker issue identifier.
@@ -29,6 +31,8 @@ Consume the issue or brief and requested profile. Invoke the base workflow and i
 
 0. **Agentic setup** — follow `references/agentic-setup.md` before any action: load approved configuration, apply local extensions and shared rules, and preserve the untrusted-content boundary.
 
+Resolve the host from explicit `--host codex|claude`, then trusted `agentHarness.host`, then the active agent client. Never infer the host from an installed executable. If the client cannot be established, ask before starting. Pass the resolved host to `capture`, `prepare-review`, and `review` as `--host`; preserve it throughout the run. The fresh host pass must use a new Codex context for Codex and a new Claude context for Claude, without inherited implementation context.
+
 ### 1. Preflight and trusted profile
 
 Follow `references/issue-workflow.md` to enforce claim concurrency, resolve a
@@ -45,7 +49,7 @@ evidence. Do not claim the issue before this gate says work is needed.
 Create an isolated worktree and capture the harness start-state artifact. Run `om-root-cause`
 verbatim. For `multi`, `multi-optimized`, and `high-assurance`, review the root-cause brief through the harness
 before implementation using the bound `om-code-review` council contract: a
-fresh Claude context plus every configured advisor receives the same immutable
+fresh host context plus every configured advisor receives the same immutable
 diagnosis packet. Re-investigate any confirmed diagnosis blocker.
 
 ### 4. Implement and verify
@@ -65,12 +69,12 @@ that gate.
 ### 5. Review and preview
 
 Run `om-code-review` on the complete uncommitted diff. For `standard` and
-`optimized`, create a new Claude context with no inherited implementation
+`optimized`, create a new context of the configured host with no inherited implementation
 transcript and run the skill there. For `multi`, `multi-optimized`, and
 `high-assurance`, follow the `om-harness` bound council contract: freeze the
-exact diff, validation evidence, and repository rules; start fresh Claude and
+exact diff, validation evidence, and repository rules; start fresh host and
 every configured advisor concurrently with the same complete `om-code-review`
-rubric and packet; then require Claude's matching artifact before
+rubric and packet; then require the host's matching artifact before
 reconciliation. Reconcile every finding against code or
 runtime evidence. Every configured council reviewer must complete — the runtime retries failures and a council missing any required reviewer yields no verdict; re-run it, repair the binding, or stop for the user's decision. For UI changes, run local verification through
 `om-auto-qa-pr` without a PR number.
@@ -106,6 +110,6 @@ discard staged work unless the user explicitly asks.
 - Never commit, push, publish, or execute the tracker `create-pr` operation.
 - Keep the issue claim only for a successful staged handoff; release it on abort or failed runs.
 - Never count a reviewer from the worker's model family as independent confirmation.
-- Never run a required Claude review in the conductor's implementation context; inability to create a fresh Claude context is blocking.
+- Never run a required host review in the conductor's implementation context; inability to create a fresh host context is blocking.
 - Never weaken tests or validation to obtain a green result.
 - Never modify or clean the user's primary-worktree changes.

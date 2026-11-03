@@ -204,5 +204,6 @@ node scripts/test-merge-buddy.mjs || exit 1
 node scripts/test-complex-qa.mjs || exit 1
 node scripts/test-pr-titles.mjs || exit 1
 node scripts/test-bump-agent-browser.mjs || exit 1
+python3 scripts/test-ai-context-maintenance.py || exit 1
 
 echo "Lint OK."

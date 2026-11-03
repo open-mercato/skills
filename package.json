@@ -15,6 +15,7 @@
     "test:agent-harness": "node scripts/test-agent-harness.mjs",
     "test:browser-providers": "node scripts/test-browser-providers.mjs",
     "test:tracker-providers": "node scripts/test-tracker-providers.mjs",
+    "test:ai-context-maintenance": "python3 scripts/test-ai-context-maintenance.py",
     "test:classify-runs": "node scripts/test-classify-runs.mjs",
     "test:bump-agent-browser": "node scripts/test-bump-agent-browser.mjs",
     "test:pr-titles": "node scripts/test-pr-titles.mjs",

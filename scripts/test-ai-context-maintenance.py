@@ -62,7 +62,7 @@ class RotationTests(unittest.TestCase):
         self.assertEqual(report['items'][0]['action'], 'archived')
         self.assertFalse(source.exists())
         archive = Path(report['items'][0]['archive'])
-        self.assertEqual(archive.parent, self.runs)
+        self.assertEqual(archive.parent, self.runs.resolve())
         rotation.verify(archive, captured)
         with tarfile.open(archive) as stream:
             names = stream.getnames()

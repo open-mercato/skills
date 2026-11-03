@@ -15,10 +15,12 @@ python3 "$SKILL_DIR/scripts/rotate-runs.py" --repo-root "$REPO_ROOT" --keep-days
 ```
 
 The examples use the helper's default read-only mode first. The skill's
-`--dry-run` maps to that mode; normal authorized rotation previews first, then delegates to
+`--dry-run` maps to that mode; normal authorized rotation previews first, then
+delegates to
 `om-auto-create-pr` per `pr-delivery.md`. Only its isolated worktree passes
 `--apply`; the second command above illustrates the helper API, not permission
-to mutate the caller's checkout. Supply `--runs-dir` when explicitly requested or set in
+to mutate the caller's checkout. Supply `--runs-dir` when explicitly requested
+or set in
 the repo-local extension; otherwise the helper loads `paths.runs` from the
 existing pipeline config. A missing runs directory is a successful no-op and
 does not create one. Invalid config, retention, or paths fail before mutation.
@@ -68,8 +70,10 @@ maintenance instances. A temporary `.context-archive-*.tmp` is created on the
 same filesystem, closed, re-read completely (decompression and SHA-256 for each
 file), and compared against the original snapshot. Publication uses an exclusive
 hard link so an existing archive is never replaced. Unsupported publication,
-permissions, or disk-space errors keep the source intact. The helper performs no network upload; the delegated PR workflow publishes
-the verified archives and source removals for review. Do not run this helper on filesystems without hard-link support.
+permissions, or disk-space errors keep the source intact. The helper performs
+no network upload; the delegated PR workflow publishes the verified archives
+and source removals for review. Do not run this helper on filesystems without
+hard-link support.
 
 ## Recovery and restoration
 

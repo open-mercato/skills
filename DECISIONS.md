@@ -600,6 +600,21 @@ by operators when used. Shared setup text stays unchanged: only the buddy’s
 specifics change, after comparison with all other setup copies.
 
 
+## 2026-11-03 — Complex QA is the default depth
+
+A blind run of `om-auto-qa-pr` on four PRs that human QA had already tested found
+6 of 23 human-reported defects. The misses clustered: shared components tested
+only on the screens the PR named, no undo/delete on money and stock, amounts not
+reconciled, no second user or stale write, and data loss accepted because the PR
+text described it. Complex depth adds those checks as required scenario steps in
+`references/complex-mode.md` by default, including orchestrated runs. The user
+explicitly requested this default; `--complex` stays accepted and `--basic`
+opts into the earlier scoped depth. Applicable unexercised checks yield PARTIAL
+and cannot grant automatic QA approval. It never relaxes a gate or the
+self-QA criteria. Product specifics (locales, risk checklist) stay in the
+consuming repo's local extension.
+
+
 ## 2026-11-03 — Automerge routes human-lane work away from the queue
 
 Triage proposed PRs that the buddy would then hold for human QA, and policy

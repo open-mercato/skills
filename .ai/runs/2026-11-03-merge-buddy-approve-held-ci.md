@@ -31,8 +31,10 @@ PR: #169
 ### Phase 1: Recovery instructions
 
 - [x] 1.1 Detect held runs at workflow level, approve safely before CI repair or a human wait, and narrowly recover approval-only blocked PRs.
-- [x] 1.2 Review decision scenarios and run the configured validation gate locally.
+- [x] 1.2 Review decision scenarios and run the configured validation gate locally. — ffc1bbf
 
 ### Phase 2: Publish and review
 
-- [ ] 2.1 Complete authoritative PR review, record evidence, and publish a ready PR.
+- [x] 2.1 Complete authoritative PR review, record evidence, and publish a ready PR.
+
+Authoritative review: PR #169 conversation; approved after ten passing configured commands. Native self-approval is unavailable to the author account.

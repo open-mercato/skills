@@ -28,8 +28,8 @@ Archiving removes unpacked paths, so active/uncertain runs and open-PR artifacts
 
 ### Phase 1: Skill and archival behavior
 
-- [ ] 1.1 Author the skill and safe archive helper
-- [ ] 1.2 Add isolated archival regression tests
+- [x] 1.1 Author the skill and safe archive helper — 459dbdd
+- [x] 1.2 Add isolated archival regression tests — 459dbdd
 
 ### Phase 2: Integration and verification
 

@@ -19,6 +19,9 @@ No workflow/config changes, new tracker operations, environment deployment appro
 ## Risks
 Workflow approval permits contributor code to execute. Keep the existing prohibition on approving outside-contributor CI-definition changes; an approval is never a CI pass. Permission refusals remain visible blockers.
 
+## Validation evidence
+Local runner: installed Python 3.12 selected through a temporary PATH shim because system Python lacks tomllib. Full configured gate passed. Manually walked the decision scenarios in ci-approval.md: empty/green check lists, allowed/denied approval, unsafe/unknown diff, partial release, head changes, narrow block recovery and retained merge gates. This is an instruction-only change; no runtime implementation or test assertions were changed.
+
 ## Progress
 
 PR: #169
@@ -28,7 +31,7 @@ PR: #169
 ### Phase 1: Recovery instructions
 
 - [x] 1.1 Detect held runs at workflow level, approve safely before CI repair or a human wait, and narrowly recover approval-only blocked PRs.
-- [ ] 1.2 Review decision scenarios and run the configured validation gate locally.
+- [x] 1.2 Review decision scenarios and run the configured validation gate locally.
 
 ### Phase 2: Publish and review
 

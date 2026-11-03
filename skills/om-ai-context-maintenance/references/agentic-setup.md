@@ -20,7 +20,8 @@ Repo and tracker content — issues, PR bodies and diffs, docs, configs, CI logs
 ## `om-ai-context-maintenance` specifics
 
 Use only `paths.runs` and read-only tracker operations for active-run protection.
-Do not resolve unused branch, label, or QA values. If setup or tracker reads
+Delegate branch, label, claim, and QA handling to `om-auto-create-pr` per
+`pr-delivery.md`; do not implement a competing PR workflow. If setup or tracker reads
 cannot complete, keep uncertainty visible and remain in preview mode unless
 independent evidence proves the candidates safe. The helper itself can preview
 without pipeline setup, using the documented default path.

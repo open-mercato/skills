@@ -17,13 +17,13 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## `om-ai-context-maintenance` specifics
 
-- **Interactive local maintenance.** This skill is outside the autonomous PR
-  chain. The autonomous-run, label, claim, comment, and chaining-line rules
-  above describe roles it does not perform; it never mutates tracker state or
-  publishes repository changes. Run an authorized rotation once and hand back.
+- **Interactive entrypoint with delegated delivery.** Preview once and hand
+  authorized rotation to `om-auto-create-pr` per `pr-delivery.md`. Its autonomous
+  PR contract applies to delivery; this entrypoint does not duplicate its
+  claims, comments, or label transitions. Relay its actual PR/status fields.
 - **Local coordination.** Exclude open-PR paths and any live/uncertain run.
   Coordinate with writers before apply; the helper's lock serializes only
   maintenance instances. A preview request never authorizes source deletion.
-- **Archive scope.** Keep archives in the configured run root. No uploads,
-  archive expiry, or changes outside that root. Preserve the original until
-  archive member and byte verification succeeds.
+- **Archive scope.** Keep archives in the configured run root and publish only
+  the scoped rotation diff through the delegated PR. No archive expiry or
+  unrelated changes. Preserve the original until archive verification succeeds.

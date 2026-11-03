@@ -14,5 +14,9 @@ Status: {complete | preview | partial | blocked}
 Summarize reasons without copying run contents. State whether originals were
 removed and archive verification passed; a preview never claims either. On any
 failed item, use `partial` (or `blocked` if nothing could run), preserve the
-per-item error, and give the concrete recovery action. This local maintenance
-skill emits no PR/issue/spec chaining lines and posts no tracker comments.
+per-item error, and give the concrete recovery action. For delegated delivery,
+state whether the PR is complete, in progress, or blocked, and relay its exact
+`PR: #<number> (link: <full PR URL>)` line last. Do not emit a PR line for preview
+or no-op runs without a PR. State that source removals occurred only in the
+isolated worktree; the caller's checkout changes after merge and update. Delegate
+tracker comments and label handling to `om-auto-create-pr`.

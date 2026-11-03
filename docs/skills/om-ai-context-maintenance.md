@@ -21,9 +21,12 @@ open PR references, and verifies archive contents before removing originals.
 
 Persist repository-specific defaults in
 `.ai/skills/om-ai-context-maintenance/SKILL.md`. Requires Python 3.9+ and a local
-filesystem that supports hard links. Archive creation is local; it does not
-commit, push, schedule work, or change tracker state. Coordinate with workers
-before applying rotation.
+filesystem that supports hard links. A normal invocation previews locally, then
+uses `om-auto-create-pr` to archive in an isolated worktree and publish the archive
+additions and source removals together for review. The caller's checkout stays
+untouched. Dry runs and no-op runs publish nothing. If the companion skill is
+missing, the skill stops after preview. No schedule is installed. Coordinate
+with workers before applying rotation.
 
 A dated run uses its leading `YYYY-MM-DD`; an undated run uses its newest
 filesystem modification date. Exact boundary dates remain unpacked. Archives

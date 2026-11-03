@@ -1,13 +1,14 @@
 ---
 name: om-ai-context-maintenance
-description: Rotate old AI run folders and standalone plans into verified .tgz archives beside the remaining runs. Keeps the last 14 days unpacked by default, with configurable retention, exclusions, and a preview. Use to archive old .ai/runs context; active or uncertain runs stay unpacked.
+description: Rotate old AI run folders and standalone plans into verified .tgz archives beside the remaining runs. Keeps the last 14 days unpacked by default, with configurable retention, exclusions, a preview, and rotation delivered through om-auto-create-pr. Use to archive old .ai/runs context; active or uncertain runs stay unpacked.
 ---
 
 # AI Context Maintenance
 
 Keep recent run context easy to read and move older, finished runs into one
-`.tgz` per artifact in the same runs directory. Run once and report; do not
-install a schedule or publish repository changes.
+`.tgz` per artifact in the same runs directory. Preview locally; deliver authorized
+rotation through the `om-auto-create-pr` skill in an isolated worktree. Run once
+and report; do not install a schedule.
 
 ## Arguments
 
@@ -28,7 +29,8 @@ Keep persistent retention/exclusion defaults there; do not invent config keys.
 0. **Agentic setup** — read `references/agentic-setup.md` and
    `references/rules.md`. This skill uses `paths.runs`, the configured tracker
    descriptor, and read-only **list-prs**, **get-pr**, **search-prs** operations
-   to protect artifacts still referenced by open PRs. It changes no tracker state.
+   to protect artifacts still referenced by open PRs. The delegated PR skill owns
+   tracker mutations, claims, validation, labels, and review.
 
 1. **Resolve scope and protect live context.** Resolve the repository root and
    arguments per `references/rotation.md`. Inventory top-level run folders and
@@ -44,20 +46,27 @@ Keep persistent retention/exclusion defaults there; do not invent config keys.
    flag it prints JSON only. Follow `references/rotation.md` for age boundaries,
    naming, tool requirements, and blocked paths. Stop here for `--dry-run`.
 
-3. **Archive and verify.** When the request authorizes rotation, rerun the same
-   arguments with `--apply`. The helper locks the runs directory, writes a
-   temporary archive, verifies its exact member set and file hashes, checks the
-   source is unchanged, publishes without overwriting, then removes the original.
-   Failures before deletion preserve the source. If deletion fails partway,
-   retain the verified archive for recovery and report the error; do not fall
-   back to an unchecked archive/delete command. A request for a preview alone
-   authorizes only step 2.
+3. **Deliver the rotation through a PR.** Follow `references/pr-delivery.md`:
+   invoke `om-auto-create-pr` with the resolved retention, run root, exclusions,
+   helper location, and archive safeguards as its task brief. It must refresh
+   eligibility in its isolated worktree, protect its own tracking plan, archive
+   and verify there, and commit both archives and source removals. Never apply
+   rotation in the caller's checkout. If the companion skill is unavailable,
+   stop after preview and name the missing skill; do not fall back to local apply.
 
 4. **Report the result.** Use `references/report-templates.md`: state the cutoff,
-   archived/retained/skipped counts, archive paths, errors, and any next action.
-   For restoration or an interrupted operation, follow `references/rotation.md`.
-   Existing resume and retrospective skills read unpacked paths; restore a run
-   before asking those skills to use it. Leave commits, pushes, and PRs to the caller.
+   archived/retained/skipped counts, archive paths, errors, and the delegated
+   PR's actual status and chaining reference. For restoration or interruption,
+   follow `references/rotation.md`. Existing resume and retrospective skills
+   read unpacked paths; restore a run before asking those skills to use it.
+
+## Chaining
+
+Consume retention, run-root and exclusion arguments and invoke `om-auto-create-pr`
+by name for authorized rotation. Pass its complete brief per
+`references/pr-delivery.md`; reuse a matching maintenance PR instead of opening
+another. Relay its exact `PR:` reference (accept legacy `PR_URL` / `PR_NUMBER`
+when consuming older output). Preview and no-op runs emit no PR reference.
 
 ## Rules
 
@@ -70,5 +79,6 @@ Keep persistent retention/exclusion defaults there; do not invent config keys.
   those exclusions to meet a retention target.
 - Never overwrite or age-delete `.tgz` archives. Delete an unpacked source only
   after verifying its archive and confirming no writers can modify it.
-- Read shared rules from `references/rules.md`; this interactive local skill
-  performs no tracker mutations, labels, claims, commits, or publication.
+- Read shared rules from `references/rules.md`. Delegate publication to
+  `om-auto-create-pr`; preserve its claims, validation, review, QA gates, and
+  report-before-CI behavior. A preview never authorizes publication.

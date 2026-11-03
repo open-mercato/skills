@@ -8,6 +8,9 @@
 
 ## Fixes
 
+- Combine every eligible AI run in a rotation into one verified batch archive,
+  reducing loose files while preserving recovery and active-run safeguards.
+
 - Preserve literal template values and the requested repository root in portable
   design helpers; validate themed extraction tokens and review comment imports.
 - Preserve deleted feedback and earlier-clock replies across reviewer clock

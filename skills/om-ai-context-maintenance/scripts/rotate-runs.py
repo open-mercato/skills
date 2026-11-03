@@ -106,23 +106,51 @@ def verify(archive, captured):
         raise ValueError('archive is missing members')
 
 
-def archive_run(source, captured):
-    destination = source.with_name(source.name + '.tgz')
-    descriptor, temporary = tempfile.mkstemp(prefix='.context-archive-', suffix='.tmp', dir=source.parent)
+def batch_destination(root, cutoff):
+    stem = 'rotated-before-' + cutoff.isoformat()
+    destination = root / (stem + '.tgz')
+    suffix = 2
+    while os.path.lexists(destination):
+        destination = root / (stem + '-' + str(suffix) + '.tgz')
+        suffix += 1
+    return destination
+
+
+def previously_archived(root):
+    names = set()
+    for archive in root.glob('rotated-before-*.tgz'):
+        if not re.fullmatch(r'rotated-before-\d{4}-\d{2}-\d{2}(?:-\d+)?\.tgz', archive.name):
+            continue
+        if archive.is_symlink() or not archive.is_file():
+            raise ValueError('batch archive is not a regular file')
+        with gzip.open(archive, 'rb') as compressed:
+            for _ in iter(lambda: compressed.read(1024 * 1024), b''):
+                pass
+        with tarfile.open(archive, 'r:gz') as stream:
+            for member in stream:
+                parts = Path(member.name).parts
+                if not parts or Path(member.name).is_absolute() or '..' in parts:
+                    raise ValueError('unsafe member in existing batch archive')
+                if not member.isfile() and not member.isdir():
+                    raise ValueError('unsupported member in existing batch archive')
+                names.add(parts[0])
+    return names
+
+
+def archive_runs(sources, destination):
+    captured = {}
+    for source, original in sources:
+        captured.update(original)
+    descriptor, temporary = tempfile.mkstemp(prefix='.context-archive-', suffix='.tmp', dir=destination.parent)
     os.close(descriptor)
     try:
-        # Preserve ordinary file permissions; the temporary/archive itself stays private.
         with tarfile.open(temporary, 'w:gz', dereference=False) as stream:
-            stream.add(source, arcname=source.name)
+            for source, original in sources:
+                stream.add(source, arcname=source.name)
         verify(temporary, captured)
-        if snapshot(source) != captured:
-            raise ValueError('source changed during archival; original retained')
-        # Same-filesystem exclusive publication: never replace a pre-existing archive.
+        if any(snapshot(source) != original for source, original in sources):
+            raise ValueError('source changed during archival; all originals retained')
         os.link(temporary, destination)
-        if source.is_dir():
-            shutil.rmtree(source)
-        else:
-            source.unlink()
         return destination
     finally:
         Path(temporary).unlink(missing_ok=True)
@@ -173,6 +201,9 @@ def rotate(repo, runs_dir=None, keep_days=14, exclude=(), apply=False, today=Non
             owned = True
         elif lock.exists():
             raise ValueError('maintenance lock already exists')
+        archived_names = previously_archived(root)
+        destination = batch_destination(root, cutoff)
+        candidates = []
         for source in sorted(root.iterdir()):
             if source.name.startswith('.') or source.name.endswith('.tgz'):
                 continue
@@ -185,6 +216,8 @@ def rotate(repo, runs_dir=None, keep_days=14, exclude=(), apply=False, today=Non
                     item.update(action='skipped', reason='symlink')
                 elif not source.is_dir() and not (source.is_file() and source.suffix == '.md'):
                     item.update(action='skipped', reason='not a run folder or Markdown plan')
+                elif source.name in archived_names:
+                    item.update(action='skipped', reason='already included in batch archive')
                 elif os.path.lexists(source.with_name(source.name + '.tgz')):
                     item.update(action='skipped', reason='archive already exists')
                 else:
@@ -195,13 +228,31 @@ def rotate(repo, runs_dir=None, keep_days=14, exclude=(), apply=False, today=Non
                         item.update(action='retained', reason='within retention window')
                     elif unfinished(source):
                         item.update(action='skipped', reason='unfinished or uncertain local plan')
-                    elif apply:
-                        destination = archive_run(source, captured)
-                        item.update(action='archived', archive=str(destination))
                     else:
-                        item.update(action='eligible', archive=str(source) + '.tgz')
+                        item.update(action='eligible', archive=str(destination))
+                        candidates.append((source, captured, item))
             except (OSError, ValueError, UnicodeError, EOFError, tarfile.TarError) as error:
                 item.update(action='error', reason=str(error))
+        if candidates:
+            report['archive'] = str(destination)
+        if apply and candidates:
+            try:
+                archive_runs([(source, captured) for source, captured, item in candidates], destination)
+            except (OSError, ValueError, UnicodeError, EOFError, tarfile.TarError) as error:
+                for source, captured, item in candidates:
+                    item.update(action='error', reason=str(error))
+            else:
+                for source, captured, item in candidates:
+                    try:
+                        if snapshot(source) != captured:
+                            raise ValueError('source changed after publication; original retained')
+                        if source.is_dir():
+                            shutil.rmtree(source)
+                        else:
+                            source.unlink()
+                        item.update(action='archived')
+                    except (OSError, ValueError) as error:
+                        item.update(action='error', reason=str(error))
         return report
     finally:
         if owned:
@@ -220,7 +271,7 @@ def main():
     args = parser.parse_args()
     try:
         result = rotate(args.repo_root, args.runs_dir, args.keep_days, args.exclude, args.apply)
-    except (OSError, ValueError, TypeError, AttributeError, OverflowError) as error:
+    except (OSError, ValueError, TypeError, AttributeError, OverflowError, EOFError, tarfile.TarError) as error:
         print(json.dumps({'error': str(error)}))
         return 1
     print(json.dumps(result, indent=2))

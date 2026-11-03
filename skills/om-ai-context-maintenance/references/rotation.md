@@ -34,7 +34,8 @@ fields intact; no new schema field or automatic config rewrite is needed.
   loose files, dot entries, existing `.tgz` files, and temporary files stay put.
 - A valid leading `YYYY-MM-DD` followed by `-`, `.`, or end of name is the run
   date. For names without it, use the newest filesystem modification date in
-  the tree (UTC). An invalid date prefix is skipped. Prefix dates keep old
+  the tree (UTC). An invalid date prefix is retained and reported as an item
+  error. Prefix dates keep old
   committed runs eligible after a fresh checkout; filesystem age is only a
   fallback, and a fresh checkout can therefore retain undated runs longer.
 - Compute `cutoff = UTC today - keepDays`. Archive dates **strictly before**

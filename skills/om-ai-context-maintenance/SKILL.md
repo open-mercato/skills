@@ -48,9 +48,10 @@ Keep persistent retention/exclusion defaults there; do not invent config keys.
    arguments with `--apply`. The helper locks the runs directory, writes a
    temporary archive, verifies its exact member set and file hashes, checks the
    source is unchanged, publishes without overwriting, then removes the original.
-   On any failure preserve the source and report the error; do not fall back to
-   an unchecked archive/delete command. A request for a preview alone authorizes
-   only step 2.
+   Failures before deletion preserve the source. If deletion fails partway,
+   retain the verified archive for recovery and report the error; do not fall
+   back to an unchecked archive/delete command. A request for a preview alone
+   authorizes only step 2.
 
 4. **Report the result.** Use `references/report-templates.md`: state the cutoff,
    archived/retained/skipped counts, archive paths, errors, and any next action.

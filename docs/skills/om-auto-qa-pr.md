@@ -16,7 +16,7 @@ QAs a PR's UI change in a real browser through the configured browser-provider d
 | `--keep-env` | No | Leave the environment running on exit even if this run started it. |
 | `--artifacts <dir>` | No | Override the artifacts directory. Default `<paths.qa>/artifacts_<runId>`. |
 | `--force` | No (PR mode) | Bypass the in-progress claim check to take over a PR another actor claimed. |
-| `--complex` | No | Adds the depth of a human QA pass: every PR comment, consumers of shared code, own fixtures, a second actor and stale write, data integrity over the PR text, whole-record and reverse-path checks, independently reconciled amounts, forced hidden options, messages, locale input, languages and a short exploration. Works with `--orchestrated`. |
+| `--complex` / `--basic` | No | Complex QA is the default, including under `--orchestrated`: consumers, two actors/stale writes, lifecycle, independent amounts and locale checks. `--complex` explicitly selects the default; `--basic` opts into scoped QA. The flags are mutually exclusive. |
 | `--orchestrated` | No (PR mode) | Set only by an orchestrator holding the claim and owning the labels ([om-auto-merge-buddy](om-auto-merge-buddy.md)). Skips the claim, review-first gate and label changes, reports self-QA eligibility, and ends with a `RESULT:` line. |
 
 ## Works with

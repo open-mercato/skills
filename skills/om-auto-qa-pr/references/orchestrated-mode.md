@@ -33,7 +33,7 @@ standalone runs never read it.
 
 
 - **Steps that run:** PR mode 0–1 and 4–12, and step 13's environment and worktree teardown. **Skipped:** step 2 (claim); step 3 (review-first gate — the orchestrator runs QA only after signal 1 holds); step 13's lock handling and every label change except the self-QA sign-off. `--self-qa-signoff` is implied; `--apply-failure` is ignored.
-- **Complex mode.** `--complex` works under `--orchestrated` too: apply `references/complex-mode.md`. Its rules add steps; they never change the claim, label or `RESULT:` contract.
+- **Complex mode.** Complex depth is the default under `--orchestrated` too; `--complex` remains accepted and `--basic` opts out. Apply `references/complex-mode.md` unless basic depth is explicit. Its rules add steps; they never change the claim, label or `RESULT:` contract.
 - **Evidence comment (work product).** Post it via **attach-image-evidence** as in step 11.
 - **Self-QA sign-off — the one label mutation this mode keeps.** `SDLC.md` names this skill as the only automation allowed to apply `qa-approved`. When the run is eligible (below), apply `qa-approved` + `qa-self-verified` and post the sign-off comment with its `QA head: <headRefOid>` line and evidence list, exactly as step 13 does under `--self-qa-signoff`. Otherwise apply no label.
 - **`selfqa=`** — compute it with the exact `--self-qa-signoff` criteria: verdict PASS, screenshots attached, the PR carries `needs-qa` without `skip-qa`, and either the PR is not `risk-high` (labeled or inferred) or the validated `--skip-risk-checks` flag is active. This waives only the risk-high exclusion; every other self-QA criterion remains required. It is `eligible` only when every criterion holds.

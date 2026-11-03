@@ -1,7 +1,7 @@
-# Complex mode (`--complex`)
+# Complex mode (default; `--complex`)
 
-Opt-in depth for changes where a scoped happy-path check misses what a human
-QA reviewer catches. Load this file only when the flag is set. It adds required
+Default depth for changes where a scoped happy-path check misses what a human
+QA reviewer catches. Load this file unless `--basic` is explicit. It adds required
 steps to steps 4–9; it never relaxes a step, a safety rule or the verdict rules.
 Each rule below is a required scenario step: a broken result is a FAIL step,
 and a rule that cannot run goes under "Not exercised" with the concrete reason.
@@ -89,4 +89,28 @@ top (its locale list, its risk checklist, its seeded accounts). Read it first.
 
 Complex mode is evidence for a human gate, never a waiver of one. It does not
 change the self-QA sign-off criteria, protected-area gates or `RESULT:` format.
-A PASS needs every rule above either passed or listed with a concrete reason.
+Classify each rule before execution: applicable, or genuinely inapplicable with
+observable evidence (for example, the product supports only one language).
+Inapplicable rules are not required steps. An unavailable account, permission,
+environment or service makes an applicable rule unexercised, not inapplicable.
+A PASS requires every applicable required step to have passed. Any failed step
+means FAIL; otherwise an applicable unexercised step means PARTIAL, including
+when the second actor or permission check cannot run. Listing a reason never
+turns PARTIAL into PASS. Apply this in standalone and orchestrated runs:
+PARTIAL cannot grant `selfqa=eligible`, `qa-approved` or `qa-self-verified`.
+A fully exercised passing scenario may grant PASS, subject to all existing gates.
+
+## Verdict decision
+
+Use this decision for complex-depth results in either mode; keep the existing
+screenshots, risk, provenance and approval gates after it. Only demonstrated
+inapplicability may be excluded from the required steps.
+
+```javascript
+function complexQaVerdict(steps) {
+  const required = steps.filter(step => step.applicable !== false)
+  if (required.some(step => step.result === 'FAIL')) return 'FAIL'
+  if (!required.length || required.some(step => step.result !== 'PASS')) return 'PARTIAL'
+  return 'PASS'
+}
+```

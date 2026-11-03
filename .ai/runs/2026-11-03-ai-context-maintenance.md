@@ -33,5 +33,5 @@ Archiving removes unpacked paths, so active/uncertain runs and open-PR artifacts
 
 ### Phase 2: Integration and verification
 
-- [ ] 2.1 Register the skill in discovery catalogs
+- [x] 2.1 Register the skill in discovery catalogs — 636b2ee
 - [ ] 2.2 Validate, review, and finalize the PR

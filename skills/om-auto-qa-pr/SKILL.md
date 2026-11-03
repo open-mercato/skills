@@ -36,9 +36,9 @@ and shares one instance with integration tests.
   started it. Default: tear down only an env this run started, via
   `om-prepare-test-env --stop`.
 - `--artifacts <dir>` (optional) — override the artifacts directory. Default:
-  `<paths.qa>/artifacts_<runId>` (default `.ai/qa/artifacts_<runId>`).
-- `--force` (optional, PR mode) — bypass the in-progress claim check to take over
-  a PR another actor claimed.
+  `<paths.qa>/artifacts_<runId>`.
+- `--force` (optional, PR mode) — take over a PR another actor claimed.
+- `--complex` (optional) — human-QA depth for steps 4–9: `references/complex-mode.md`.
 - `--skip-risk-checks` (optional, only with `--orchestrated`) — scoped risk waiver; provenance and limits: `references/orchestrated-mode.md`. Distinct from claim `--force`.
 - `--orchestrated` (optional, PR mode) — run under the buddy’s held claim; follow `references/orchestrated-mode.md` for owned labels, skipped steps, risk override and `RESULT:` output.
 
@@ -156,7 +156,7 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
      the advisory design review; these are the objective checks it would make,
      moved into the pass/fail.
 
-   Keep it scoped to **this change** — not a full-app regression script.
+   Keep it scoped to this change; `--complex` widens it per its reference.
 
 9. **Drive the scenario with the configured provider and capture screenshots.**
    Follow `references/driving-scenario.md`: exercise the scenario against

@@ -598,3 +598,16 @@ signal/result formats remain intact; actual CLI/label provenance is recorded
 separately. Optional modifier labels need no config migration and are created
 by operators when used. Shared setup text stays unchanged: only the buddy’s
 specifics change, after comparison with all other setup copies.
+
+
+## 2026-11-03 — `om-auto-qa-pr --complex` adds human-QA depth
+
+A blind run of `om-auto-qa-pr` on four PRs that human QA had already tested found
+6 of 23 human-reported defects. The misses clustered: shared components tested
+only on the screens the PR named, no undo/delete on money and stock, amounts not
+reconciled, no second user or stale write, and data loss accepted because the PR
+text described it. `--complex` adds those checks as required scenario steps in
+`references/complex-mode.md`, so the default run keeps its cost and an
+orchestrator can request the depth per PR. It never relaxes a gate or the
+self-QA criteria. Product specifics (locales, risk checklist) stay in the
+consuming repo's local extension.

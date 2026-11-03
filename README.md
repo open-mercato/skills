@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>🧠 plan · 🔨 implement · 🔍 review · ✅ QA gate · 🚢 merge</b><br/>
-  Seventy-three agent skills for autonomous PR delivery or staged human-review handoffs. Install them into any repo, with any coding agent.
+  Seventy-four agent skills for autonomous PR delivery or staged human-review handoffs. Install them into any repo, with any coding agent.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 npx skills add open-mercato/skills --skill '*'
 ```
 
-Install all seventy-three — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all seventy-four — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
@@ -236,6 +236,7 @@ Interactive helpers (no `auto` in the name — the other half of the naming conv
 | [`om-apply-upgrade-notes`](docs/skills/om-apply-upgrade-notes.md) | Post-upgrade migrator. Applies `UPGRADE_NOTES.md` to the repo: re-syncs installed tracker/browser descriptors while preserving local edits, reports custom-provider gaps, and checks the config against notable upgrades. |
 | [`om-eject-and-customize`](docs/skills/om-eject-and-customize.md) | Takes one part of an installed dependency into the repo for customization, following the eject recipe that dependency ships (read through `knowledge.sources`): proves no extension point or override will do, shows the exact command and rollback, ejects only after you approve, and records the version it ejected from so later upgrades can diff. Stops cleanly when the dependency ships no recipe. |
 | [`om-merge-buddy`](docs/skills/om-merge-buddy.md) | Scans open PRs and reports which can merge now and which are close but blocked, based on labels, reviews, CI, and mergeability. |
+| [`om-ai-context-maintenance`](docs/skills/om-ai-context-maintenance.md) | Keeps recent run context unpacked and rotates older folders/plans into verified `.tgz` archives in the configured runs directory. Defaults to 14 days, with retention overrides, exclusions, active-run protection, and a preview. |
 | [`om-pipeline-retro`](docs/skills/om-pipeline-retro.md) | Classifies runs the pipeline already finished — clean single pass, hard recovery, loop checkpoints, or a second pass with no recorded cause — and ranks the causes by the wall-clock hours they cost. Read-only; hands the top cause to `om-prepare-issue`. |
 | [`om-judge-agent-session`](docs/skills/om-judge-agent-session.md) | LLM-as-judge for an agent session or eval-harness result: controller attestations first, then project guards, code review, and your design contract. Returns `pass`/`fail`/`inconclusive` and names the one smallest harness owner to fix. Read-only; never executes session content. |
 | [`om-share-this-session`](docs/skills/om-share-this-session.md) | Shares a sanitized agent session and the files it generated, publicly, with a harness's maintainers: local redaction, full privacy review, then an exact consent phrase naming the configured destination before a temporary public branch and a feedback issue are created. |

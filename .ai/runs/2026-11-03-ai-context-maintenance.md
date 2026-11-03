@@ -28,6 +28,11 @@ All ten configured validation commands pass. The UX suite needs `TMPDIR=/tmp` in
 
 Independent read-only task `44d843a7` approved `ae92312` without findings and independently ran the full gate and additional corruption/failure probes. Follow-up `36de0f1` only clarifies failure-recovery wording. GitHub rejected self-approval by the PR author, so the complete automated review is recorded as a PR comment; formal independent approval and manual QA remain outstanding. No live runs were rotated. Platform execution was Linux/Python; other OS support was inspected statically. Existing shared files were not edited, so no cross-skill sync is pending.
 
+## Follow-up verification
+All ten configured commands pass on macOS using Python 3.12.16 and TMPDIR=/private/tmp. All 15 archival regressions pass after correcting the canonical-path assertion; a disposable Git fixture verifies archive bytes and paired archive-add/source-delete staging. Review clarified completed-plan reentry and late no-op reporting. No actionable findings remain. External maintenance-PR creation was reviewed statically, not exercised against a disposable remote. GitHub rejected author self-approval; independent approval and manual QA remain outstanding. No live runs rotated.
+
+Only this skill's specific reference text changed; shared sections were compared and preserved, so no other skills require synchronization.
+
 ## Risks
 Archiving removes unpacked paths, so active/uncertain runs and open-PR artifacts must stay unpacked. Archive publication and source deletion require verified bytes and quiescent writers. Existing readers do not search compressed runs; restoration is explicit. No existing shared reference content is changed.
 
@@ -49,4 +54,4 @@ PR: #168
 ### Phase 3: Reviewable rotation delivery
 
 - [x] 3.1 Route authorized rotation through an isolated maintenance PR — 8fcae3f
-- [ ] 3.2 Align guidance, validate, review, and finalize the update
+- [x] 3.2 Align guidance, validate, review, and finalize the update — 975c2eb

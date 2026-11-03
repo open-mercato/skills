@@ -19,7 +19,7 @@ adapting this skill starts in one place. The detail lives where noted.
 | QA routing | Required approval is missing or coverage has gaps | `references/qa-routing.md` |
 | Risk override limits | What `--force` and `automerge-force` may skip | `references/risk-override.md` |
 | CI | A check is failing or pending; proved baseline waivers | `references/signals.md`, `references/ci-baseline.md` |
-| Off switch | The queue label is gone or `automerge-blocked` is set | `SKILL.md` rules |
+| Off switch | The queue label is gone or `automerge-blocked` is set; only a verified approval-only buddy block permits cheap CI recovery | `SKILL.md` rules, `references/ci-approval.md` |
 
 To adapt the areas to another product, edit the area table in section 2 and
 the configuration in section 2b. Keep the stop and release rules unchanged.

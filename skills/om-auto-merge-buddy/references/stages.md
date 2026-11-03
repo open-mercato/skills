@@ -61,6 +61,12 @@ signal 1 already holds.
 
 ## Stage 3 — CI (signal 3 failing)
 
+Before invoking a repair stage, apply `references/ci-approval.md` to current-head
+workflow runs, including runs with no check jobs. Release eligible approval holds
+and verify them without a repair attempt. If only running CI remains, end
+`waiting-ci`; if approval is refused, record the precise blocker. Invoke the
+repair stage only for actual failures/conflicts after this reconciliation.
+
 `om-auto-fix-pr {pr} --orchestrated` (also `--skip-pre-existing-ci-errors` only when explicitly enabled for this invocation) — full mode, not `--ci-only`. It merges the
 PR's target branch in and resolves conflicts, delegating non-trivial ones to
 `om-auto-review-pr --autofix --orchestrated`. It classifies each failure and

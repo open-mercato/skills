@@ -24,7 +24,8 @@ Persist repository-specific defaults in
 filesystem that supports hard links. A normal invocation previews locally, then
 uses `om-auto-create-pr` to archive in an isolated worktree and publish the archive
 additions and source removals together for review. The caller's checkout stays
-untouched. Dry runs and no-op runs publish nothing. If the companion skill is
+untouched. Dry runs and empty initial previews create no PR; a later empty
+refresh reports any draft already opened. If the companion skill is
 missing, the skill stops after preview. No schedule is installed. Coordinate
 with workers before applying rotation.
 

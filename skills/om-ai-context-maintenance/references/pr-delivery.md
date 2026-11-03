@@ -12,7 +12,9 @@ UTC cutoff and preview inventory, plus the installed helper's absolute path.
 Treat the inventory as provisional, not permission to delete those paths later.
 Use a stable slug derived from the run root and UTC date; search for that branch
 and its `Tracking plan:` before starting, and reuse its existing PR through
-`om-auto-continue-pr`. A later invocation refreshes remaining work on that PR.
+`om-auto-continue-pr`. A later invocation refreshes remaining work on that PR;
+if its earlier plan is complete, append a new unchecked phase and commit it
+before implementing additional rotations.
 Do not mix rotation into an unrelated feature PR merely because it is open.
 
 Require this implementation in the brief:

@@ -48,5 +48,5 @@ PR: #168
 
 ### Phase 3: Reviewable rotation delivery
 
-- [ ] 3.1 Route authorized rotation through an isolated maintenance PR
+- [x] 3.1 Route authorized rotation through an isolated maintenance PR — 8fcae3f
 - [ ] 3.2 Align guidance, validate, review, and finalize the update

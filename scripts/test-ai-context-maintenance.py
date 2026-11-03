@@ -75,6 +75,7 @@ class RotationTests(unittest.TestCase):
 
     def test_multiple_runs_share_one_archive_and_restore_as_original_top_levels(self):
         folder = self.folder('2026-01-01-first', 'Status: complete\n')
+        (folder / '.hidden').chmod(0o664)
         flat = self.runs / '2026-02-01-second.md'
         flat.write_text('Status: complete\n')
         another = self.folder('2026-03-01-third')
@@ -89,7 +90,9 @@ class RotationTests(unittest.TestCase):
         archive = Path(report['archive'])
         rotation.verify(archive, captured)
         with tempfile.TemporaryDirectory() as staging, tarfile.open(archive) as stream:
-            stream.extractall(staging)
+            # This locally generated archive was verified above; preserve its metadata.
+            options = {'filter': 'fully_trusted'} if hasattr(tarfile, 'fully_trusted_filter') else {}
+            stream.extractall(staging, **options)
             restored = {}
             for source in Path(staging).iterdir():
                 restored.update(rotation.snapshot(source))

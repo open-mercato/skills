@@ -19,6 +19,10 @@ Do not rotate this repository's actual runs, change resume parsers, schedule mai
 2.1 Register the skill in the coverage roster and user-facing catalogs.
 2.2 Run the full validation gate and authoritative PR review, address findings, and finalize the ready PR.
 
+### Phase 3: Reviewable rotation delivery
+3.1 Route authorized rotation through `om-auto-create-pr` with isolated execution, refreshed exclusions, and a scoped archive/removal diff.
+3.2 Align supporting guidance and catalogs, validate, review, and update PR #168.
+
 ## Verification
 All ten configured validation commands pass. The UX suite needs `TMPDIR=/tmp` in this cockpit so its no-Git fixture is outside the enclosing repository; all 39 tests pass there. The 15 archival regressions and lint pass again after the final documentation clarification. A 3.84 MB disposable archive round trip and corrupt-gzip rejection also pass.
 
@@ -41,3 +45,8 @@ PR: #168
 
 - [x] 2.1 Register the skill in discovery catalogs — 636b2ee
 - [x] 2.2 Validate, review, and finalize the PR — 36de0f1
+
+### Phase 3: Reviewable rotation delivery
+
+- [ ] 3.1 Route authorized rotation through an isolated maintenance PR
+- [ ] 3.2 Align guidance, validate, review, and finalize the update

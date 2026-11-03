@@ -40,6 +40,18 @@ runs the cheap list fields before any extra tracker call, and record the
 | 4 | Base | `baseRefName` ≠ `BASE_BRANCH` (stacked or release-branch PRs merge through their own base) | `targets <branch>` |
 | 5 | No excluded label | it carries any label in `EXCLUDE_LABELS` (default `do-not-merge`, `blocked`, `qa-failed`) | `label <name>` |
 | 6 | Author | **get-pr-author-association** returns a value in `EXCLUDE_ASSOCIATIONS` (default `first-time-contributor`, `outside-collaborator`, `none`), and the author is not in `TRUSTED_AUTHORS` | `author is <association>` |
+| 7 | Human lane | it carries a label in `HUMAN_ONLY_LABELS`, its author is in `HUMAN_ONLY_AUTHORS`, or its changed files show a protected area as defined in `om-auto-merge-buddy` (its human-gates reference, section 2) | `human lane: <area | label | author>` |
+
+Gate 7 reads labels and the changed-file list (**get-pr-diff**). A PR it
+catches is never proposed: list it in the proposal's *Human QA lane*, authors in
+`HUMAN_ONLY_AUTHORS` first, because a human tests it before merge and the buddy
+would only wait for that. A path can over-match; when unsure, list the PR in
+the lane rather than proposing it.
+
+**Needs clarification.** On the shortlist, a PR that changes documented default
+behavior (an upgrade note, a compatibility document, a changed default value)
+or conflicts with the base is not proposed. List it under *Needs clarification*
+with one question for its author.
 
 Gate 6 fails closed. When the association cannot be read, or the operation is
 missing from an older descriptor, the PR is rejected with

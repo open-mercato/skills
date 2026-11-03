@@ -598,3 +598,17 @@ signal/result formats remain intact; actual CLI/label provenance is recorded
 separately. Optional modifier labels need no config migration and are created
 by operators when used. Shared setup text stays unchanged: only the buddy’s
 specifics change, after comparison with all other setup copies.
+
+
+## 2026-11-03 — Automerge routes human-lane work away from the queue
+
+Triage proposed PRs that the buddy would then hold for human QA, and policy
+work such as features or a design owner's UX fixes had no gate at all.
+`automerge.humanOnlyLabels` and `automerge.humanOnlyAuthors` now route that
+work to pinned human QA, and triage lists protected and human-only PRs in a
+*Human QA lane* instead of proposing them, plus a *Needs clarification* list
+for changed defaults and conflicts. Both default to empty, so existing setups
+keep their behavior. `automerge.complexQa` (default `needs-qa`) runs
+`om-auto-qa-pr --complex` where human-style depth matters. A gate map at the
+top of `human-gates.md` lists every gate, so adapting the skill starts in one
+place.

@@ -27,6 +27,12 @@ Labeling a PR `{AUTOMERGE_LABEL}` lets `om-auto-merge-buddy` bring it to review,
 **Already queued** — omit when empty:
 - #<n> — {still eligible | ⚠️ now fails: <gate>; a human should decide whether to remove `{AUTOMERGE_LABEL}`}.
 
+**Human QA lane** — not proposed; a human tests these before merge. Authors in `HUMAN_ONLY_AUTHORS` first. Omit when empty:
+- #<n> — {protected area: <area> | label <name> | author @login}.
+
+**Needs clarification** — not proposed; one question each. Omit when empty:
+- #<n> — {question for the author}.
+
 <details><summary>Rejected ({r})</summary>
 
 - #<n> — {author is first-time-contributor | draft | label do-not-merge | targets <branch> | automerge-blocked | review state unknown | AI judgment: no match — <decisive reason> | AI judgment: unknown — <missing evidence> | no tier matched | author association unknown — re-sync the tracker descriptor}.

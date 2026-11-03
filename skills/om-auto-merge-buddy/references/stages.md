@@ -50,6 +50,8 @@ signals 2 and 3 are re-evaluated for the new head per `references/signals.md`.
 
 First apply `references/human-gates.md`: vetoes stop, and missing protected-area human QA ends `waiting-human` without invoking automatic self-sign-off. Then apply `references/qa-routing.md`, even when report-based signal 2 holds. A missing mandatory local approval or testable coverage gap defaults to `om-auto-qa-pr --orchestrated`, passing existing PASS evidence and precise missing coverage/sign-off in task context. Reuse covered unchanged-head scenarios. Only a verified blocker/ineligibility or explicit human preference routes to a human.
 
+**QA depth.** Pass `--complex` to every `om-auto-qa-pr` invocation for this PR when `COMPLEX_QA` is `always`, or when it is `needs-qa` and the PR carries `needs-qa` or falls under `references/human-gates.md` section 2 or 2b. `never` keeps the default depth. Record the depth in the status comment. An installed `om-auto-qa-pr` that does not offer the flag runs at default depth; say so in the status comment rather than failing the stage.
+
 Otherwise use `references/qa-evidence.md`: a trusted completed PASS on the unchanged head (including legacy reports) grants signal 2 and skips this stage with zero attempts, regardless of approval labels or risk-high, unless the local approval/gap route above still needs action. Only when neither that evidence nor a valid approval exists run `om-auto-qa-pr {pr} --orchestrated`. It skips its review-first gate, because
 signal 1 already holds.
 

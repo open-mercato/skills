@@ -28,6 +28,9 @@ REQUIRE_INDEPENDENT_REVIEW=$(jq -r 'if (.automerge // {} | has("requireIndepende
 DEFAULT_TO_HUMAN_QA=$(jq -r 'if (.automerge // {} | has("defaultToHumanQa")) then .automerge.defaultToHumanQa else false end | if type == "boolean" then . else error("Invalid QA routing policy") end' "$CONFIG")
 WINDOW_MINUTES=$(jq -r '.automerge.windowMinutes // 120' "$CONFIG")            # 0 = one pass, no idle polling
 MAX_ATTEMPTS=$(jq -r '.automerge.maxAttempts // 3' "$CONFIG")                  # failed stages per signal before parking
+HUMAN_ONLY_LABELS=$(jq -c '.automerge.humanOnlyLabels // []' "$CONFIG")       # human QA by policy (references/human-gates.md 2b)
+HUMAN_ONLY_AUTHORS=$(jq -c '.automerge.humanOnlyAuthors // []' "$CONFIG")     # logins, compared case-insensitively
+COMPLEX_QA=$(jq -r '.automerge.complexQa // "needs-qa"' "$CONFIG")            # needs-qa | always | never
 RUNS_DIR=$(jq -r '.paths.runs // ".ai/runs"' "$CONFIG")                         # run folders live in $RUNS_DIR/merge-buddy/
 ```
 

@@ -31,6 +31,8 @@ SECURITY_LABELS=$(jq -c "$ELIG.securityLabels // [\"security\"]" "$CONFIG")
 TRUSTED_AUTHORS=$(jq -c "$ELIG.trustedAuthors // []" "$CONFIG")            # logins, compared case-insensitively
 EXCLUDE_ASSOCIATIONS=$(jq -c "$ELIG.excludeAuthorAssociations // [\"first-time-contributor\",\"outside-collaborator\",\"none\"]" "$CONFIG")
 EXCLUDE_LABELS=$(jq -c "$ELIG.excludeLabels // [\"do-not-merge\",\"blocked\",\"qa-failed\"]" "$CONFIG")
+HUMAN_ONLY_LABELS=$(jq -c '.automerge.humanOnlyLabels // []' "$CONFIG")      # shared with om-auto-merge-buddy
+HUMAN_ONLY_AUTHORS=$(jq -c '.automerge.humanOnlyAuthors // []' "$CONFIG")    # logins, compared case-insensitively
 LOOKBACK_DAYS=$(jq -r "$ELIG.lookbackDays // 30" "$CONFIG")             # window length in days (one month)
 ANALYZE_LIMIT=$(jq -r "$ELIG.analyzeLimit // 100" "$CONFIG")             # most in-window PRs gated and label-ranked
 LIMIT=$(jq -r "$ELIG.limit // 20" "$CONFIG")                             # output limit: shortlist size = most PRs AI-judged and proposed

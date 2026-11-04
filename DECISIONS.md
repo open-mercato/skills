@@ -627,3 +627,17 @@ keep their behavior. `automerge.complexQa` (default `always`, per explicit user 
 `om-auto-qa-pr --complex` where human-style depth matters. A gate map at the
 top of `human-gates.md` lists every gate, so adapting the skill starts in one
 place.
+
+
+## 2026-11-04 — Narrow protected areas, evidence-review sign-off, clean backports
+
+After the protected-area gate went live, 27 of 65 queued PRs waited for personal
+human QA and 17 also for a technical decision, and merges dropped from 54 to 13
+a day. Most were fail-closed tightening (scoping a read, rejecting invalid input,
+bounding pagination), additive migrations or backports of already approved PRs.
+Protected areas now cover changes that widen access, rewrite data, move money,
+change module boundaries or break published contracts; tightening stays on the
+automatic route with mandatory negative-case QA, and unclear direction still
+counts as protected. A QA reviewer may sign off by reviewing a current-head
+automatic PASS and re-running one negative case. A clean backport inherits the
+merged origin's human sign-off and technical approval; conflict hunks do not.

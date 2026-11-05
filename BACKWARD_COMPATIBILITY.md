@@ -65,6 +65,7 @@ hold committed, possibly team-edited copies at `.ai/browsers/<provider>.md`.
 
 ### 5. Cross-skill file formats
 
+- **Atomic GitHub lock metadata v1** (`refs/om-locks/{kind}-{number}` to a metadata commit with message header `om-claim-v1` and JSON `repo`, `kind`, `item`, `runId`, `actor`; generation is the immutable commit SHA). Readers reject unknown metadata and never delete a different generation. Comments carry additive `Claim-Lock`/`Claim-Lock-SHA` audit fields.
 - **Execution-plan `## Progress` section** (`- [ ]` / `- [x]` checklists with `N.M` step ids and ` — <sha>` suffixes) — written by `om-auto-create-pr`, parsed by `om-auto-continue-pr`.
 - **PR body `Tracking plan:` and `Status:` lines** — written by `om-auto-create-pr`, parsed by `om-auto-continue-pr` and the loop skills.
 - **`<paths.qa>/test-env.json`** — written by `om-prepare-test-env`, consumed by `om-auto-qa-pr` and `om-integration-tests`.

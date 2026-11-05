@@ -41,9 +41,9 @@ Comment visibility is eventually consistent; bounded repeated verification narro
 
 ### Phase 3: Atomic GitHub ownership
 
-- [ ] 3.1 Add atomic acquire/read/release operations and synchronize skill/docs consumers
-- [ ] 3.2 Test acquisition races, owner release and reset fencing locally and live
-- [ ] 3.3 Independent review, full gate and update the existing PR
+- [x] 3.1 Add atomic acquire/read/release operations and synchronize skill/docs consumers — 3e39b5b
+- [x] 3.2 Test acquisition races, owner release and reset fencing locally and live — 3e39b5b
+- [x] 3.3 Independent review, full gate and update the existing PR — 3e39b5b
 
 ## Shared-copy synchronization
 
@@ -68,3 +68,6 @@ Final re-review: cezar task ffa8d6e3 approved root a4847d3 after verifying the p
 
 GitHub uses `refs/om-locks/{kind}-{number}` pointing to a unique metadata commit carrying the authenticated actor, run id, item and server creation time. Create-only ref creation selects one owner. Release and UI/stale recovery compare-and-delete the exact observed SHA through Git lease semantics, so stale cleanup cannot delete a successor. Recovery never bypasses a new create-only race. Keep comment ids/state and verified `in-progress`, all-skill synchronization and split-provider routing. No silent GitHub fallback on permissions/API failure or old descriptors.
 
+Atomic metadata v1 is also recorded as a protected persisted contract. Independent review dispatched as 91c04fb6.
+
+Atomic evidence: https://github.com/open-mercato/skills/issues/178 (closed) records five concurrent same-bot ref-acquisition races, each with one owner/one conflict, audit-comment ids, verified secondary label, clean release and preservation of a successor against stale release. No scratch lock remains. Local tests execute eight races plus an injected replacement between ownership read and Git lease deletion, uncertain POST reconciliation, permission failures, owner mismatch and malformed refs. All ten configured gate commands exit 0 after the atomic change. Independent reviewer 91c04fb6 approved 3e39b5b with no blockers and verified all 27 shared atomic blocks and descriptor copies match. Its optional convention-wording cleanup is applied. Actual human label-reset audit remains fixture-tested, not a live human action.

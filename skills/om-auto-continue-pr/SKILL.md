@@ -1,6 +1,6 @@
 ---
 name: om-auto-continue-pr
-description: Resume any open PR — started by `om-auto-create-pr` or opened outside the pipeline. Claims it, resumes in an isolated worktree from the first unchecked step of its execution plan; a PR with no plan is adopted — the goal is reconstructed from its description, comments, review feedback, linked issues and diff, then executed. Usage - /om-auto-continue-pr <PR-number>
+description: Use when an open PR needs unfinished work resumed, e.g. 'continue PR 123'. Claim it and continue its execution plan in an isolated worktree, or reconstruct a plan from the PR context when none exists. Validate and update the same PR; long plans hand off to om-auto-continue-pr-loop.
 ---
 
 # Auto Continue PR

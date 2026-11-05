@@ -1,6 +1,6 @@
 ---
 name: om-fix
-description: Implements the minimal code change identified by the om-root-cause step, adds regression tests, and runs the configured validation gate. Claims the tracker issue at start (assignee + in-progress label + claim comment) so concurrent automation backs off. Does not commit, push, or open a PR — that is the om-open-pr step's job.
+description: Use when a confirmed issue has an om-root-cause brief ready to implement, e.g. 'apply this issue fix'. Used by om-auto-fix-issue. Claim the issue, make the minimal change, add regression tests, and run configured validation. Leave commit, push, and PR creation to om-open-pr.
 ---
 
 # Apply Fix

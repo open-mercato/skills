@@ -1,6 +1,6 @@
 ---
 name: om-auto-create-pr
-description: Run an arbitrary autonomous task end-to-end and ship it as a PR against the configured base branch. Drafts a Progress-tracked execution plan, commits on a fresh worktree branch, implements phase-by-phase, runs the configured validation gate, applies pipeline labels. Long plans hand off to om-auto-create-pr-loop automatically. Resumable via om-auto-continue-pr.
+description: Use when a task should be implemented autonomously and delivered as a PR, e.g. 'build this and open a PR'. Write a tracked execution plan, implement in an isolated worktree, run configured validation, and apply pipeline labels. Long plans hand off to om-auto-create-pr-loop; resume via om-auto-continue-pr.
 ---
 
 # Auto Create PR

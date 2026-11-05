@@ -113,6 +113,24 @@ else
   fi
 fi
 
+# Help-coverage gate: every skill directory must be named in either the SDLC
+# template (the generator for the ticket-lifecycle "Driven by" column) or
+# om-help's own flow map — otherwise a newly added skill is invisible to
+# om-help's routing and nobody notices until a user asks for it.
+sdlc_template=skills/om-setup-agent-pipeline/references/sdlc-template.md
+flow_map=skills/om-help/references/flow-map.md
+if [ ! -f "$sdlc_template" ]; then
+  err "missing $sdlc_template (help-coverage gate needs it)"
+elif [ ! -f "$flow_map" ]; then
+  err "missing $flow_map (help-coverage gate needs it)"
+else
+  named=" $(grep -ohE 'om-[a-z][a-z-]*' "$sdlc_template" "$flow_map" | sort -u | tr '\n' ' ')"
+  for dir in skills/*/; do
+    name=$(basename "$dir")
+    case "$named" in *" $name "*) ;; *) err "$name is named in neither $sdlc_template nor $flow_map — om-help cannot route to it" ;; esac
+  done
+fi
+
 # Name-reference gate: every `om-<name>` token in shipped skill content must name
 # a skill this collection actually ships. Skills compose by invoking each other by
 # name (Cross-skill contract §4), so a reference left behind by a rename or a merge

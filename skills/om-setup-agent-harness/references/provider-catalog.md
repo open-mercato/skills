@@ -65,9 +65,7 @@ credential resolution and remains review-only.
 ## Bring your own reviewer
 
 The bundled jury is a default, not a requirement. Any model can join the
-council as a reviewer; the only fixed element is Claude as the host, because
-the workflow starts in the Claude app and the mandatory fresh review is a
-Claude artifact.
+council as a reviewer; the conductor may be Codex or Claude. The mandatory fresh review must come from a new context of that selected host.
 
 - **Any OpenAI-compatible endpoint** — bind through the generic
   `openai-compatible` adapter with `endpoint`, `model`, and a `credentialEnv`
@@ -95,14 +93,14 @@ arbitrary `enforcedBy` string is not enforcement.
 
 ## Conservative defaults
 
-- Host: Claude.
+- Host: the active conducting agent, Codex or Claude; setup records the choice explicitly.
 - Worker: Codex when its audited workspace-write command and chosen model pass smoke tests.
 - Reviewers: every ready bundled advisor from a distinct family.
 - `standard`: no external worker or reviewer.
 - `optimized`: selected worker, advisory review policy.
 - `multi`: every selected reviewer, all required to complete — the runtime
   retries failed invocations and a council missing any selected reviewer
-  yields no verdict. The wrapper's fresh Claude `om-code-review` result is
+  yields no verdict. The wrapper's fresh host `om-code-review` result is
   mandatory and hash-bound but sits outside the provider policy. Every advisor
   receives the same full rubric and packet in a fresh invocation.
 - `multi-optimized`: selected worker plus selected reviewers; the worker's family does not count as independent review.

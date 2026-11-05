@@ -4,14 +4,14 @@
   "additionalProperties": false,
   "required": ["version", "reviewer", "freshContext", "implementationContextInherited", "contract", "validationGate", "status", "durationMs", "review"],
   "properties": {
-    "version": { "const": 1 },
+    "version": { "type": "integer", "enum": [1, 2] },
     "reviewer": {
       "type": "object",
       "additionalProperties": false,
       "required": ["id", "family", "requestedModel", "actualModel", "provider", "provenanceStatus", "fallbackReason"],
       "properties": {
-        "id": { "const": "claude" },
-        "family": { "const": "anthropic" },
+        "id": { "type": "string", "enum": ["claude", "codex"] },
+        "family": { "type": "string", "enum": ["anthropic", "openai"] },
         "requestedModel": { "type": "string", "minLength": 1 },
         "actualModel": { "type": ["string", "null"] },
         "provider": { "type": "string", "minLength": 1 },
@@ -29,6 +29,7 @@
         "name": { "const": "om-code-review" },
         "version": { "const": 1 },
         "rubricSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "host": { "type": "string", "enum": ["claude", "codex"] },
         "packetSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
         "subjectSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
         "subjectKind": { "type": "string", "enum": ["spec", "diagnosis", "implementation"] }
@@ -61,5 +62,6 @@
     "status": { "const": "completed" },
     "durationMs": { "type": "integer", "minimum": 0 },
     "review": { "$ref": "review-result.schema.json" }
-  }
+  },
+  "allOf": [{"if":{"properties":{"version":{"const":1}}},"then":{"properties":{"contract":{"not":{"required":["host"]}},"reviewer":{"properties":{"id":{"const":"claude"},"family":{"const":"anthropic"}}}}},"else":{"properties":{"contract":{"required":["host"]}}}},{"if":{"properties":{"version":{"const":2},"contract":{"properties":{"host":{"const":"codex"}},"required":["host"]}}},"then":{"properties":{"reviewer":{"properties":{"id":{"const":"codex"},"family":{"const":"openai"}}}}}},{"if":{"properties":{"version":{"const":2},"contract":{"properties":{"host":{"const":"claude"}},"required":["host"]}}},"then":{"properties":{"reviewer":{"properties":{"id":{"const":"claude"},"family":{"const":"anthropic"}}}}}}]
 }

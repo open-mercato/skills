@@ -1,6 +1,6 @@
 ---
 name: om-setup-agent-harness
-description: Configure or diagnose the staged-only multi-model harness, including selectable implementation workers, review advisors, high-assurance packet policy, provider probes, and optional Claude model-matrix output style. Use when the user says "set up the agent harness", "configure multi-model reviewers", "choose worker models", "check harness setup", "skonfiguruj harness", or "sprawdź modele".
+description: Configure or diagnose the staged-only multi-model harness, including selectable implementation workers, review advisors, high-assurance packet policy, provider probes, and host-specific optional integrations. Use when the user says "set up the agent harness", "configure multi-model reviewers", "choose worker models", "check harness setup", "skonfiguruj harness", or "sprawdź modele".
 ---
 
 # Setup Agent Harness
@@ -11,6 +11,8 @@ secrets, probe every selected adapter, and leave repository-owned setup changes
 staged but uncommitted.
 
 ## Arguments
+
+- `--host codex|claude` (optional) — conducting agent; otherwise use the known active client, not installed executable detection.
 
 - `--check` (optional) — validate and probe the current configuration without writing.
 - `--preset <cross-model-jury|custom>` (optional) — start from the bundled jury or an empty custom registry; default `cross-model-jury`.
@@ -28,7 +30,7 @@ staged but uncommitted.
 
 Read `references/provider-catalog.md` and start from the bundled jury in
 `references/configuration-template.json`: Codex, DeepSeek, Kimi, GLM, and MiMo.
-Detect Claude as the host. Use the harness `probe` operation to check executable
+Determine the conducting host from `--host`, the current client, and the user’s repository requirements. Persist `agentHarness.host` as `codex` or `claude`; never infer Claude from the bundled template or an installed CLI. If the active client is unknown, ask. An explicit host change must migrate the host-bound artifacts rather than reuse a review from another host. Use the harness `probe` operation to check executable
 versions and credential availability without printing or copying credentials.
 The built-in DeepSeek and OpenCode Zen adapters may check their official local
 auth-store entries internally; the setup agent never reads or displays the key.
@@ -36,9 +38,8 @@ auth-store entries internally; the setup agent never reads or displays the key.
 When no bundled provider is detected, say so plainly and lead with the
 bring-your-own-reviewer path from the provider catalog: any OpenAI-compatible
 endpoint or any locally installed CLI can be bound as a reviewer through the
-generic adapters — the bundled jury is a default, not a requirement. The only
-fixed element is Claude as the host. A user with no external provider at all
-still has a working `standard` profile (fresh Claude review only); offer that
+generic adapters — the bundled jury is a default, not a requirement. The conductor is the selected host, Codex or Claude. A user with no external provider at all
+still has a working `standard` profile (fresh review by the selected host only); offer that
 explicitly instead of failing, but only after explaining what the multi-model
 profiles would have added, so choosing it is an informed decision rather than
 a silent default.
@@ -71,7 +72,7 @@ smoke review. Preserve every existing top-level config value. Resolve the
 installed `om-harness` skill (its directory sits beside this skill's own install
 directory; when it is absent, stop and ask the user to install the collection
 with `om-harness` included), then run `node <om-harness>/scripts/harness.mjs
-configure` against the working-tree config. Show the exact diff before staging it.
+configure` against the working-tree config after setting the resolved host on the template. Show the exact diff before staging it.
 Keep portable team bindings in the repository object; put personal executable
 paths or endpoints in the user-local overlay named by
 `OM_AGENT_HARNESS_CONFIG`, and do not stage that overlay.
@@ -89,11 +90,13 @@ reroutes back here instead of running with an empty jury.
 
 ### 4. Validate and smoke-test
 
+In an isolated fixture repository, run `capture --host <host>`, `prepare-review`, a genuinely fresh host review, and content-bound `stage`. For multi profiles also exercise the bound council. Require the expected host identity and reject a wrong host or inherited context. Adapter smoke tests alone do not establish host compatibility or full harness readiness. Do not touch product files in this check.
+
 Run `validate-config`, then `probe` for every selected profile. Run one harmless
 structured review per selected advisor using the complete installed
 `om-code-review` rubric so a valid binary but expired subscription is reported
 correctly. This is an adapter smoke test, not an operational bound council; the
-wrappers supply the required fresh Claude artifact and exact-subject packet.
+wrappers supply the required fresh host artifact and exact-subject packet.
 A
 required unavailable model or failed review policy is blocking; an optional
 unavailable model is reported as skipped with its concrete smoke-test reason.
@@ -103,13 +106,13 @@ repository files during setup.
 
 ### 5. Install the optional Claude output style
 
-Unless disabled, copy `assets/claude-review-output-style.md` to
+For host `codex`, skip this entire step and create no `.claude` files. For host `claude`, unless disabled, copy `assets/claude-review-output-style.md` to
 `.claude/output-styles/om-harness-review.md`. Never overwrite a locally edited
 copy silently; show a diff and ask whether to replace, merge, or keep it.
 
 ### 6. Install the prevention hooks
 
-Offer to install the structural stop-before-PR and test-freeze guards (default
+For host `codex`, skip these Claude-specific hook files and settings; do not claim they enforce Codex permissions. The host must enforce publication restrictions independently before a staged run. For host `claude`, offer to install the structural stop-before-PR and test-freeze guards (default
 yes). Copy `guard.mjs`, `block-push-and-pr.sh`, and `freeze-tests.sh` from the installed
 `om-harness` skill's `hooks/` directory to `.claude/hooks/om-harness/`, keep
 them executable, and merge the `PreToolUse` entries from the sibling
@@ -136,8 +139,8 @@ and the staged paths. With `--check`, write and stage nothing.
 
 - Shared communication, marker, label, and safety rules: `references/rules.md`. They always apply.
 
-- Keep Claude as host, conductor, and final reconciler.
-- Require the operational wrappers to prove a new Claude review context; never configure the conductor's current context as its replacement.
+- Keep the selected active agent (Codex or Claude) as host, conductor, and final reconciler. Never silently switch hosts.
+- Require the operational wrappers to prove a new review context of the selected host; never configure the conductor's current context as its replacement.
 - Keep `delivery.mode` fixed to `stage-only`.
 - Keep secrets out of repository and user-local JSON; store only environment-variable names.
 - Never replace existing pipeline config values that the user did not ask to change.

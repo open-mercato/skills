@@ -2,8 +2,8 @@
 
 This contract is loaded by both wrapper skills before creating their worktree.
 
-1. Work in an isolated worktree and run `capture` before any edits. Keep the
-   resulting starting commit, complete ref snapshot, and reflog snapshot under
+1. Work in an isolated worktree and run `capture --host <resolved-host>` before any edits. Keep the
+   resulting host identity, starting commit, complete ref snapshot, and reflog snapshot under
    the ignored run-artifact directory. Capture also activates the publication
    guard in this worktree's Git directory and records its ownership in the
    start-state artifact. A second capture cannot replace an active run.
@@ -15,8 +15,8 @@ This contract is loaded by both wrapper skills before creating their worktree.
    ignored artifact directory, not in the allowlist.
 5. Run the full configured validation gate and the required review passes. Bind
    each wrapper-level council to an exact-subject `om-code-review` packet, start
-   fresh Claude and every configured advisor concurrently, and require the
-   matching Claude artifact before accepting the final council result. For
+   fresh host and every configured advisor concurrently, and require the
+   matching host artifact before accepting the final council result. For
    `high-assurance`, require every packet ledger to reach `gated`; a packet in
    `awaiting_validation`, `blocked`, or `aborted` cannot enter the handoff.
 6. Invoke the runtime `stage` command with the worktree, original start-state

@@ -13,6 +13,15 @@ const REVIEW_SCHEMA = readFileSync(SCHEMA_FILE, 'utf8')
 const REVIEW_PACKET_SCHEMA_FILE = resolve(HERE, '../references/code-review-packet.schema.json')
 const FRESH_REVIEW_SCHEMA_FILE = resolve(HERE, '../references/fresh-review-result.schema.json')
 const CODE_REVIEW_CONTRACT_VERSION = 1
+const HOST_FAMILIES = { claude: 'anthropic', codex: 'openai' }
+
+function resolveHost(config = {}, args = {}) {
+  const configured = config.agentHarness?.host
+  const host = Object.hasOwn(args, 'host') ? args.host : configured === undefined ? 'claude' : configured
+  if (typeof host !== 'string' || !Object.hasOwn(HOST_FAMILIES, host)) throw new Error('Harness host must be claude or codex')
+  if (configured !== undefined && args.host !== undefined && configured !== args.host) throw new Error('Explicit host does not match configured harness host')
+  return host
+}
 const CODE_REVIEW_FILES = [
   resolve(HERE, '../../om-code-review/SKILL.md'),
   resolve(HERE, '../../om-code-review/references/review-checklist.md'),
@@ -172,7 +181,7 @@ function validateConfig(config) {
   const harness = config.agentHarness
   if (!harness || typeof harness !== 'object') throw new Error('Missing agentHarness configuration; run om-setup-agent-harness to create it (standard-profile runs need no harness configuration)')
   if (harness.version !== 1) throw new Error('agentHarness.version must be 1')
-  if (harness.host !== undefined && harness.host !== 'claude') throw new Error('agentHarness.host must be "claude" in version 1')
+  resolveHost(config)
   if (harness.delivery?.mode !== 'stage-only') throw new Error('agentHarness.delivery.mode must be stage-only')
   if (!harness.models || typeof harness.models !== 'object') throw new Error('agentHarness.models must be an object')
   if (!harness.profiles || typeof harness.profiles !== 'object') throw new Error('agentHarness.profiles must be an object')
@@ -493,12 +502,14 @@ function validateValidationGate(value, subjectKind) {
   return { status: value.status, reason: value.reason ? String(value.reason).trim() : null, checks }
 }
 
-function validateReviewPacket(value, subject) {
+function validateReviewPacket(value, subject, expectedHost = null) {
   assertPlainObject(value, 'Code-review packet')
   assertNoUnknownKeys(value, ['version', 'contract', 'subject', 'criteria', 'validationGate', 'repositoryContext'], 'Code-review packet')
-  if (value.version !== 1) throw new Error('Code-review packet version must be 1')
+  if (![1, 2].includes(value.version)) throw new Error('Code-review packet version must be 1 or 2')
   assertPlainObject(value.contract, 'Code-review packet contract')
-  assertNoUnknownKeys(value.contract, ['name', 'version', 'rubricSha256'], 'Code-review packet contract')
+  assertNoUnknownKeys(value.contract, value.version === 2 ? ['name', 'version', 'rubricSha256', 'host'] : ['name', 'version', 'rubricSha256'], 'Code-review packet contract')
+  const host = value.version === 1 ? 'claude' : resolveHost({}, { host: value.contract.host ?? null })
+  if (expectedHost !== null && host !== expectedHost) throw new Error('Code-review packet host does not match the configured or captured host')
   if (value.contract.name !== 'om-code-review' || value.contract.version !== CODE_REVIEW_CONTRACT_VERSION) throw new Error('Code-review packet must use om-code-review contract version 1')
   if (value.contract.rubricSha256 !== codeReviewRubric().sha256) throw new Error('Code-review packet rubric does not match the installed om-code-review skill')
   assertPlainObject(value.subject, 'Code-review packet subject')
@@ -523,8 +534,8 @@ function validateReviewPacket(value, subject) {
     return { source: entry.source, sha256: entry.sha256, content: entry.content }
   })
   return {
-    version: 1,
-    contract: { name: 'om-code-review', version: CODE_REVIEW_CONTRACT_VERSION, rubricSha256: codeReviewRubric().sha256 },
+    version: value.version,
+    contract: { name: 'om-code-review', version: CODE_REVIEW_CONTRACT_VERSION, rubricSha256: codeReviewRubric().sha256, ...(value.version === 2 ? { host } : {}) },
     subject: { kind: value.subject.kind, sha256: subjectSha256, bytes: value.subject.bytes },
     criteria: value.criteria,
     validationGate,
@@ -539,39 +550,41 @@ function reviewContractFromPacket(packet, packetSha256) {
     rubricSha256: codeReviewRubric().sha256,
     packetSha256,
     subjectSha256: packet.subject.sha256,
-    subjectKind: packet.subject.kind
+    subjectKind: packet.subject.kind,
+    ...(packet.version === 2 ? { host: packet.contract.host } : {})
   }
 }
 
 function validateFreshReview(value, contract) {
-  assertPlainObject(value, 'Fresh Claude review result')
-  assertNoUnknownKeys(value, ['version', 'reviewer', 'freshContext', 'implementationContextInherited', 'contract', 'validationGate', 'status', 'durationMs', 'review'], 'Fresh Claude review result')
-  if (value.version !== 1) throw new Error('Fresh Claude review result version must be 1')
-  assertPlainObject(value.reviewer, 'Fresh Claude reviewer')
-  assertNoUnknownKeys(value.reviewer, ['id', 'family', 'requestedModel', 'actualModel', 'provider', 'provenanceStatus', 'fallbackReason'], 'Fresh Claude reviewer')
-  if (value.reviewer.id !== 'claude' || value.reviewer.family !== 'anthropic') throw new Error('Fresh review must be produced by the Claude host reviewer')
-  if (typeof value.reviewer.requestedModel !== 'string' || !value.reviewer.requestedModel.trim()) throw new Error('Fresh Claude requestedModel is required')
-  if (value.reviewer.actualModel !== null && (typeof value.reviewer.actualModel !== 'string' || !value.reviewer.actualModel.trim())) throw new Error('Fresh Claude actualModel must be a string or null')
-  if (typeof value.reviewer.provider !== 'string' || !value.reviewer.provider.trim()) throw new Error('Fresh Claude provider is required')
-  if (!['observed', 'unverified'].includes(value.reviewer.provenanceStatus)) throw new Error('Fresh Claude provenanceStatus is invalid')
-  if (value.reviewer.fallbackReason !== undefined && value.reviewer.fallbackReason !== null && typeof value.reviewer.fallbackReason !== 'string') throw new Error('Fresh Claude fallbackReason must be a string or null')
-  if (value.freshContext !== true || value.implementationContextInherited !== false) throw new Error('Claude review must attest to a fresh context with no inherited implementation transcript')
-  assertPlainObject(value.contract, 'Fresh Claude review contract')
-  for (const key of ['name', 'version', 'rubricSha256', 'packetSha256', 'subjectSha256', 'subjectKind']) {
-    if (value.contract[key] !== contract[key]) throw new Error(`Fresh Claude review contract mismatch: ${key}`)
+  const host = contract.host || 'claude'
+  assertPlainObject(value, 'Fresh host review result')
+  assertNoUnknownKeys(value, ['version', 'reviewer', 'freshContext', 'implementationContextInherited', 'contract', 'validationGate', 'status', 'durationMs', 'review'], 'Fresh host review result')
+  if (value.version !== (contract.host ? 2 : 1)) throw new Error('Fresh host review result version does not match the packet')
+  assertPlainObject(value.reviewer, 'Fresh host reviewer')
+  assertNoUnknownKeys(value.reviewer, ['id', 'family', 'requestedModel', 'actualModel', 'provider', 'provenanceStatus', 'fallbackReason'], 'Fresh host reviewer')
+  if (value.reviewer.id !== host || value.reviewer.family !== HOST_FAMILIES[host]) throw new Error('Fresh review must be produced by the configured host reviewer')
+  if (typeof value.reviewer.requestedModel !== 'string' || !value.reviewer.requestedModel.trim()) throw new Error('Fresh host requestedModel is required')
+  if (value.reviewer.actualModel !== null && (typeof value.reviewer.actualModel !== 'string' || !value.reviewer.actualModel.trim())) throw new Error('Fresh host actualModel must be a string or null')
+  if (typeof value.reviewer.provider !== 'string' || !value.reviewer.provider.trim()) throw new Error('Fresh host provider is required')
+  if (!['observed', 'unverified'].includes(value.reviewer.provenanceStatus)) throw new Error('Fresh host provenanceStatus is invalid')
+  if (value.reviewer.fallbackReason !== undefined && value.reviewer.fallbackReason !== null && typeof value.reviewer.fallbackReason !== 'string') throw new Error('Fresh host fallbackReason must be a string or null')
+  if (value.freshContext !== true || value.implementationContextInherited !== false) throw new Error('Host review must attest to a fresh context with no inherited implementation transcript')
+  assertPlainObject(value.contract, 'Fresh host review contract')
+  for (const key of Object.keys(contract)) {
+    if (value.contract[key] !== contract[key]) throw new Error(`Fresh host review contract mismatch: ${key}`)
   }
-  assertNoUnknownKeys(value.contract, ['name', 'version', 'rubricSha256', 'packetSha256', 'subjectSha256', 'subjectKind'], 'Fresh Claude review contract')
+  assertNoUnknownKeys(value.contract, ['name', 'version', 'rubricSha256', 'packetSha256', 'subjectSha256', 'subjectKind', ...(contract.host ? ['host'] : [])], 'Fresh host review contract')
   const validationGate = validateValidationGate(value.validationGate, contract.subjectKind)
-  if (value.status !== 'completed') throw new Error('Fresh Claude review must be completed before the provider council runs')
-  if (!Number.isInteger(value.durationMs) || value.durationMs < 0) throw new Error('Fresh Claude durationMs must be a non-negative integer')
+  if (value.status !== 'completed') throw new Error('Fresh host review must be completed before the provider council runs')
+  if (!Number.isInteger(value.durationMs) || value.durationMs < 0) throw new Error('Fresh host durationMs must be a non-negative integer')
   const review = normalizeReview(value.review)
   if (validationGate.status === 'failed') {
     review.verdict = 'request_changes'
     review.notes.push('Validation gate failed; approval is blocked regardless of model verdict.')
   }
   return {
-    id: 'claude',
-    family: 'anthropic',
+    id: host === 'codex' ? 'host:codex' : host,
+    family: HOST_FAMILIES[host],
     requestedModel: value.reviewer.requestedModel,
     actualModel: value.reviewer.actualModel,
     provider: value.reviewer.provider,
@@ -1065,9 +1078,10 @@ function escapeCell(value) {
 
 function renderMarkdown(result) {
   const lines = ['# Multi-model review', '', `Policy: **${result.policy.status}**`, result.verdict ? `Verdict: **${result.verdict}**` : null, result.reviewContract ? `Contract: **${result.reviewContract.name} v${result.reviewContract.version}** · subject \`${result.reviewContract.subjectSha256}\`` : null, ''].filter((line) => line !== null)
-  const hostValidation = result.reviewers.find((reviewer) => reviewer.id === 'claude')?.validationGate
+  const hostReviewer = result.reviewers.find((reviewer) => reviewer.policyEligible === false && reviewer.lens === 'om-code-review host pass')
+  const hostValidation = hostReviewer?.validationGate
   if (hostValidation) {
-    lines.push('## Fresh Claude validation gate', '')
+    lines.push(`## Fresh ${hostReviewer.id === 'claude' ? 'Claude' : 'Codex'} validation gate`, '')
     if (hostValidation.status === 'not_applicable') lines.push(`Not applicable — ${hostValidation.reason}`, '')
     else {
       lines.push('| Command | Status | Exit | Evidence |', '|---|---|---:|---|')
@@ -1843,6 +1857,7 @@ function loadReviewValidationEvidence(args, subjectKind) {
 }
 
 function commandPrepareReview(args, config) {
+  const host = resolveHost(config, args)
   const worktree = resolve(String(args.worktree || process.cwd()))
   const subjectKind = String(args.kind || '')
   if (!['spec', 'diagnosis', 'implementation'].includes(subjectKind)) throw new Error('--kind <spec|diagnosis|implementation> is required')
@@ -1855,8 +1870,8 @@ function commandPrepareReview(args, config) {
     return { source, sha256: sha256(content), content }
   })
   const packet = {
-    version: 1,
-    contract: { name: 'om-code-review', version: CODE_REVIEW_CONTRACT_VERSION, rubricSha256: codeReviewRubric().sha256 },
+    version: host === 'claude' ? 1 : 2,
+    contract: { name: 'om-code-review', version: CODE_REVIEW_CONTRACT_VERSION, rubricSha256: codeReviewRubric().sha256, ...(host === 'claude' ? {} : { host }) },
     subject: { kind: subjectKind, sha256: sha256(subject), bytes: Buffer.byteLength(subject, 'utf8') },
     criteria,
     validationGate: loadReviewValidationEvidence(args, subjectKind),
@@ -1881,7 +1896,7 @@ async function waitForFreshReviewArtifact(path, contract, timeoutMs) {
     } catch (error) {
       if (error.code !== 'ENOENT') throw error
     }
-    if (Date.now() - started >= timeoutMs) throw new Error(`Timed out waiting for fresh Claude review artifact: ${path}`)
+    if (Date.now() - started >= timeoutMs) throw new Error(`Timed out waiting for fresh host review artifact: ${path}`)
     await new Promise((resolvePromise) => setTimeout(resolvePromise, 100))
   }
 }
@@ -1911,7 +1926,7 @@ async function commandReview(args, config) {
     if (!args['host-review'] || args['host-review'] === true) throw new Error('--host-review <path> is required with --review-packet')
     const packetPath = resolve(String(args['review-packet']))
     const packetText = readFileSync(packetPath, 'utf8')
-    const packet = validateReviewPacket(JSON.parse(packetText), subject)
+    const packet = validateReviewPacket(JSON.parse(packetText), subject, resolveHost(config, args))
     reviewContract = reviewContractFromPacket(packet, sha256(packetText))
     hostReviewPath = resolve(String(args['host-review']))
     criteria = JSON.stringify(packet, null, 2)
@@ -1926,7 +1941,7 @@ async function commandReview(args, config) {
       hostReviewer = await waitForFreshReviewArtifact(hostReviewPath, reviewContract, hostTimeoutMs)
     } catch (error) {
       // Preserve the completed provider council before failing on the host artifact,
-      // so a timed-out or invalid Claude pass never discards paid reviewer results.
+      // so a timed-out or invalid host pass never discards paid reviewer results.
       mkdirSync(outputDir, { recursive: true })
       const partialPath = join(outputDir, 'review-result.partial.json')
       const partial = {
@@ -2093,11 +2108,12 @@ function commandEndRun(args) {
 }
 
 function commandCapture(args) {
+  const host = resolveHost(args.config && args.config !== true ? readJson(resolve(String(args.config))) : {}, args)
   const worktree = resolve(String(args.worktree || process.cwd()))
   if (!args.output || args.output === true) throw new Error('--output <path> is required')
   const output = resolve(String(args.output))
   mkdirSync(dirname(output), { recursive: true })
-  const state = { ...captureGitState(worktree), publicationGuard: { runId: randomUUID() } }
+  const state = { ...captureGitState(worktree), host, publicationGuard: { runId: randomUUID() } }
   const guardPath = publicationGuardPath(worktree)
   mkdirSync(dirname(guardPath), { recursive: true })
   try {
@@ -2133,7 +2149,7 @@ function commandStage(args) {
   if (!args['paths-file'] || args['paths-file'] === true) throw new Error('--paths-file <path> is required')
   const startStatePath = resolve(String(args['start-state']))
   const startState = readJson(startStatePath)
-  const { publicationGuard, ...startingGitState } = startState
+  const { publicationGuard, host: capturedHost = 'claude', ...startingGitState } = startState
   const currentState = captureGitState(worktree)
   const startHead = startState.head
   const paths = readFileSync(resolve(String(args['paths-file'])), 'utf8').split(/\r?\n/).map((entry) => validateStagePath(worktree, entry)).filter(Boolean)
@@ -2144,7 +2160,7 @@ function commandStage(args) {
   if (!args['review-packet'] || args['review-packet'] === true || !args['host-review'] || args['host-review'] === true) throw new Error('Stage requires --review-packet and --host-review for the exact implementation diff')
   const packetPath = resolve(String(args['review-packet']))
   const packet = readJson(packetPath)
-  validateReviewPacket(packet, buildWorktreeDiff(worktree, paths))
+  validateReviewPacket(packet, buildWorktreeDiff(worktree, paths), resolveHost({}, { host: capturedHost }))
   if (packet.subject.kind !== 'implementation') throw new Error('Stage requires an implementation review packet')
   if (packet.validationGate.status !== 'passed') throw new Error('Stage requires a passing packet validation gate')
   const host = validateFreshReview(readJson(resolve(String(args['host-review']))), reviewContractFromPacket(packet, sha256(readFileSync(packetPath, 'utf8'))))

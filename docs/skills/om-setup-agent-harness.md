@@ -6,6 +6,7 @@ Configures the optional staged-only harness for one repository: which models act
 
 ## Parameters
 
+- `--host codex|claude` — choose the conductor; otherwise use the known active client. Codex skips all `.claude` integrations.
 - `--check` — validate and probe the current configuration without writing.
 - `--preset <cross-model-jury|custom>` — start from the bundled jury or an empty registry.
 - `--defaults` — enable every detected bundled model without asking.
@@ -18,3 +19,5 @@ Configures the harness that [om-fix-issue](om-fix-issue.md) and [om-implement-fe
 
 ---
 *Source: [`skills/om-setup-agent-harness/SKILL.md`](../../skills/om-setup-agent-harness/SKILL.md)*
+
+Setup verifies a bound fresh-host review and stage in an isolated fixture; provider probes alone do not establish compatibility.

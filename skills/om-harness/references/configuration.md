@@ -22,7 +22,7 @@ delivery mode. Never load executable provider settings from the task branch.
 {
   "agentHarness": {
     "version": 1,
-    "host": "claude",
+    "host": "codex",
     "delivery": {
       "mode": "stage-only",
       "issueClaim": "hold"
@@ -39,8 +39,7 @@ delivery mode. Never load executable provider settings from the task branch.
 }
 ```
 
-`host` is optional and, in version 1, must be `claude` when present — the fresh
-host review is always a Claude artifact. `models` maps stable local identifiers
+`host` is optional and accepts `codex` or `claude`. Missing values retain the legacy runtime default `claude`; setup records the active host explicitly. Codex uses version 2 host-bound packets and fresh artifacts, while existing Claude version 1 artifacts remain valid. `models` maps stable local identifiers
 to adapter definitions. The shipped
 template contains the selectable `codex`, `deepseek`, `kimi`, `glm`, and `mimo`
 jury; repositories may keep any subset and add custom ids. `profiles` maps
@@ -89,13 +88,13 @@ stop for the user's explicit decision — a partial council is never a usable
 result.
 
 The runtime invokes every reviewer listed by the selected profile. The
-staged wrapper starts a genuinely fresh Claude context running
+staged wrapper starts a genuinely fresh host context running
 `om-code-review` and the bound provider council concurrently. The runtime gives
 every configured advisor the same complete `om-code-review` rubric, resolved
-packet, and subject, waits for Claude's hash-matched artifact, and emits no final
+packet, and subject, waits for the host's hash-matched artifact, and emits no final
 result when that artifact is invalid. With the bundled
-five-model jury, `multi` therefore means fresh Claude plus Codex, DeepSeek,
-Kimi, GLM, and MiMo in one result matrix — all five must complete. Claude is
+five-model jury, `multi` therefore means fresh host plus Codex, DeepSeek,
+Kimi, GLM, and MiMo in one result matrix — all five must complete. The host is
 mandatory and separate from the provider policy.
 
 The runtime validates references between profiles and models. A model can be a
@@ -108,10 +107,10 @@ credential helpers disabled; the runtime rejects any ref or reflog change.
 
 ## Profile semantics
 
-- `standard` — the host implements, then a new Claude context performs
+- `standard` — the host implements, then a new context of the configured host performs
   `om-code-review` without inheriting the implementation transcript.
 - `optimized` — configured workers receive bounded implementation packets.
-- `multi` — fresh Claude and every configured reviewer independently apply
+- `multi` — fresh host and every configured reviewer independently apply
   `om-code-review` to the root-cause/spec artifact and final diff.
 - `multi-optimized` — combine both axes; a reviewer from the worker's model
   family is a self-check rather than an independent family.

@@ -759,4 +759,5 @@ for (const scenario of [
   assert.equal(budgetLedger.leaseStatus, 'held')
 }
 
+run(process.execPath, [join(ROOT, 'scripts/test-agent-harness-hosts.mjs')], { timeout: 180000 })
 process.stdout.write('Agent harness tests passed.\n')

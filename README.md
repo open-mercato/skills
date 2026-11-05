@@ -464,7 +464,9 @@ That file is yours, which makes three things easy:
 - **Bring your own tracker** — write `.ai/trackers/<name>.md` from the shipped `TEMPLATE.md` (in `om-setup-agent-pipeline/references/trackers/`), implementing each operation with your tracker's CLI, MCP tools, or API, and set `"tracker": "<name>"` in the config. No skill changes needed — the descriptor is the whole integration surface.
 - **Build another split setup** — implement issue operations against the project tracker and delegate repository/PR/review/CI/PR-label operations to its code-host companion. The template documents the pattern, including how identifiers cross-link (for example, an `ENG-123` ticket referenced from a GitHub PR).
 
-The claim protocol (assignee + `in-progress` + 🤖 comment), the label guards (missing label ⇒ logged skip, `labels.enabled: false` ⇒ no label ops), and the QA gate semantics are part of the contract — a provider must express them, in whatever way its tracker allows.
+The claim protocol elects a run-identified 🤖 comment before assignment and verifies `in-progress` as a mandatory second check. Confirmed unassignable bot accounts omit assignment; parallel runs sharing a login still compete. Providers expose `claim-winner` and `withdraw-claim`, with safe complete-list/edit fallbacks for older descriptors. Missing or disabled claim labels stop acquisition; other label guards retain their logged-skip behavior. QA gates remain unchanged.
+
+For a stalled GitHub run, stop its workers and add the human-only `claim-reset` label in the issue/PR Labels menu. The next invocation uses `get-claim-reset` to verify the human label event and retire only older candidates; fresh contenders still elect one winner. Removing `in-progress` alone does not clear the comment claim. Remove and reapply `claim-reset` to request another recovery. This cooperative reset cannot cancel an in-flight command or bypass a live local lease; providers without authenticated reset history report that limitation. Comment visibility can still cause duplicate work, so election is not an atomic mutex.
 
 ### Browser automation providers
 

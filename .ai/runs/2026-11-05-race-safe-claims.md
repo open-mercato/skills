@@ -37,7 +37,7 @@ Comment visibility is eventually consistent; bounded repeated verification narro
 ### Phase 2: Verification and delivery
 
 - [x] 2.1 Validate races, lifecycle and full configured gate — abf33b8
-- [ ] 2.2 Review and publish the completed PR
+- [x] 2.2 Review and publish the completed PR — a4847d3
 
 ## Shared-copy synchronization
 
@@ -55,3 +55,5 @@ All ten configured validation commands pass (lint rerun after token-budget, role
 ## Review fix
 
 Independent review of 588db96 found a major split-provider cleanup gap: Linear/Jira PR candidates could be elected on GitHub but withdrawn through issue-local operations. Added explicit kind/item-aware PR delegation for withdrawal, ownership verification and read-back, plus code-host-local fallback for older companions. Issue cleanup retains provider-specific handles. Added regression checks for all four routing requirements. No reviewer branch changes were merged (read-only review).
+
+Final re-review: cezar task ffa8d6e3 approved root a4847d3 after verifying the prior major; no remaining blockers. Parent reran all ten configured commands after the routing fix: every command exited 0. Final README/skill-catalog edits document the already-reviewed behavior; manually reviewed. PR #176 contains the full validation/review evidence. Human GitHub UI reset remains a requested manual QA check; no live human reset was performed.

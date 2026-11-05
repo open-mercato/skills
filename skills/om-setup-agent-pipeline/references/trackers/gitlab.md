@@ -541,8 +541,8 @@ that handle, `user` and `body`; retain its parent-qualified handle for withdrawa
 
 #### withdraw-claim
 
-`{commentId}`, full terminal body file, expected authenticated actor and
-`Claim-Run` → rewrite only that run's original candidate through **update-comment**,
+`{kind}`, `{item}`, `{commentId}`, full terminal body file, expected authenticated
+actor and `Claim-Run` → rewrite only that run's original candidate through **update-comment**,
 then read it back through **list-issue-comments**. Retain its legacy first line,
 marker and run id; change `Claim-State: active` to `withdrawn` (loser) or `released`
 (owner after cleanup), with the reason/winner. Before writing, verify exact item,

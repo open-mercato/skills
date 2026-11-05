@@ -119,6 +119,9 @@ never waive live local reservations, QA, review, CI or merge gates.
 
 ### Older descriptors and visibility limits
 
+Always route election/withdrawal and fallback reads/edits by item kind and
+repository: split-provider PRs use the code-host companion, tracker issues use
+the issue provider. Never send a GitHub PR comment id to an issue tracker.
 When **claim-winner** is missing, perform its documented election locally from
 **list-issue-comments**; when **withdraw-claim** is missing, use **update-comment**
 to rewrite the owned candidate with its terminal state. These are named tracker

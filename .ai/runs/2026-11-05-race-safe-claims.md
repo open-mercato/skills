@@ -51,3 +51,7 @@ User requested all skills. Updated claim procedures in: `om-auto-continue-pr`, `
 - Independent read-only review dispatched as cezar task 601ef812-5829-43b6-9c02-7cfb273a8875.
 
 All ten configured validation commands pass (lint rerun after token-budget, role-preservation and standalone SDLC-template sync fixes; nine other commands from the full ordered run). Temporary Git fixtures used TMPDIR/TMP/TEMP=/tmp to avoid nested-worktree contamination.
+
+## Review fix
+
+Independent review of 588db96 found a major split-provider cleanup gap: Linear/Jira PR candidates could be elected on GitHub but withdrawn through issue-local operations. Added explicit kind/item-aware PR delegation for withdrawal, ownership verification and read-back, plus code-host-local fallback for older companions. Issue cleanup retains provider-specific handles. Added regression checks for all four routing requirements. No reviewer branch changes were merged (read-only review).

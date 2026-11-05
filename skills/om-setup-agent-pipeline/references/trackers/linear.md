@@ -275,8 +275,8 @@ visibility race; UUID order is deterministic once both comments are visible.
 
 #### withdraw-claim
 
-`{commentId}`, full terminal body file, expected authenticated actor and
-`Claim-Run` → rewrite only that run's original candidate through **update-comment**,
+`{kind}`, `{item}`, `{commentId}`, full terminal body file, expected authenticated
+actor and `Claim-Run` → rewrite only that run's original candidate through **update-comment**,
 then read it back through **list-issue-comments**. Retain its legacy first line,
 marker and run id; change `Claim-State: active` to `withdrawn` (loser) or `released`
 (owner after cleanup), with the reason/winner. Before writing, verify exact item,
@@ -284,6 +284,16 @@ comment id, authenticated author and run id; a mismatch stops cleanup. Do not
 edit a foreign candidate or delete its label. Return the same id and verified
 terminal state; failed update/read-back is a blocker. Never fall back to a new
 comment leaving the old active candidate in place.
+
+For a PR, delegate to the companion `.ai/trackers/github.md` **withdraw-claim**,
+passing the repository, PR number, GitHub conversation comment id, run identity
+and terminal body unchanged. Perform both ownership verification and read-back
+against GitHub; never pass a GitHub id to this descriptor's issue comment commands.
+For a Linear issue, use this descriptor's own **update-comment** and complete
+**list-issue-comments**, preserving the original issue-specific handle and actor.
+If the companion predates **withdraw-claim**, perform the same checks using its
+GitHub **update-comment** and **list-issue-comments** operations. Missing safe
+listing/editing remains a blocker; do not fall back to the issue tracker.
 
 ### Pull requests
 

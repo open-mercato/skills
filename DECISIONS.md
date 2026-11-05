@@ -683,3 +683,28 @@ Lock metadata transport is a narrow exception to staged publication prohibitions
 no project branch/history is changed. GitHub cannot silently fall back on a
 permission or transport failure. Providers explicitly without an atomic primitive
 retain comment election. Recovery preserves local liveness and human gates.
+
+
+## 2026-11-05 — Extend atomic ownership to GitLab and Forgejo
+
+The operator requested GitLab parity and an audit of other providers. Returning
+`UNSUPPORTED` was an implementation gap for GitLab and Forgejo. Both can use
+Git's absent-value lease for create-only acquisition and expected-SHA deletion.
+GitLab uses a reserved branch namespace because arbitrary refs are not assumed
+portable there; Forgejo accepts custom refs under code-write permission. Temporary
+bare repositories isolate metadata objects from the caller's working tree.
+Metadata uses an empty tree and no parents; the API-verified base is recorded
+as `baseSha`, avoiding a full project-content download on every ownership read.
+No credential, hook, protection or pipeline changes are made automatically.
+Namespace pushes may trigger CI/webhooks and require reviewed filtering.
+
+Locally created commit dates are client-controlled, so these providers return
+unknown server receipt time and do not authorize time-based/UI recovery with
+it. Explicit force recovery still needs stopped workers and exact-generation
+release. Linear/Jira issues do not host repository refs and keep comment election;
+GitHub PR delegation remains atomic. The operator's parity request authorizes
+synchronizing the shared claim consumers in the same change.
+
+Sources: [GitLab branches](https://docs.gitlab.com/api/branches/),
+[Git explicit leases](https://git-scm.com/docs/git-push),
+[Forgejo pre-receive source](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/routers/private/hook_pre_receive.go).

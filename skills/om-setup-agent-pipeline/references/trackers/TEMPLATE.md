@@ -75,6 +75,16 @@ owner/run, and release must conditionally delete the exact expected generation.
 Never map permission/API failures to unsupported. Split providers route PRs and
 issues independently. See GitHub for concrete inputs/outputs and lease deletion.
 
+GitHub, GitLab and Forgejo ship atomic ref ownership; Linear/Jira issues
+explicitly retain comment election while their GitHub PRs delegate. GitLab uses
+reserved `refs/heads/om-locks/{kind}-{number}` branches; GitHub/Forgejo use
+`refs/om-locks/{kind}-{number}`. Bind metadata to the repository including host.
+Acquisition needs an explicit absent-generation condition; release needs the
+expected SHA, not an unconditional API delete. No permission-error fallback.
+Unknown server receipt time is `createdAt: null`, never a guessed commit date;
+optional `metadataCreatedAt` is diagnostic only. Time-based/UI recovery blocks
+without an authenticated server audit. Namespace changes can trigger CI/hooks.
+
 #### get-claim-reset
 
 `{kind}`, `{item}` → latest tracker-audited human `claim-reset` label application

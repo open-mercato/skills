@@ -1,5 +1,29 @@
 # Upgrade notes
 
+## GitLab and Forgejo atomic claims (provider parity)
+
+Refresh GitLab/Forgejo descriptors and all claim consumers together. Both now
+implement **get-lock**, **acquire-lock** and **release-lock** using Git's explicit
+empty-expected-value acquisition lease and expected-SHA release lease. GitLab
+reserves `refs/heads/om-locks/{kind}-{number}` branches; Forgejo reserves
+`refs/om-locks/{kind}-{number}`. Never change namespaces while claims are active.
+Lock metadata has an empty tree and no parents; its API-verified base is only
+a `baseSha` field, so ownership checks do not clone project history/content.
+API reads resolve the target's canonical repository URL, including instance host;
+Git transport must already be authenticated for that target. Repository push
+permissions, protected refs, signing rules and hooks remain enforced; failures
+block acquisition without falling back to comments or changing credentials.
+Review namespace filtering for CI/webhooks; helpers do not disable pipelines.
+
+Client-created Git metadata has no trusted server receipt time. `createdAt` is
+`null`; optional `metadataCreatedAt` is diagnostic only. Do not use it for reset
+cutoffs or time-based stale takeover. Until a server creation-time audit is
+implemented, those recovery paths stop; explicit authorized force recovery still
+requires verified stopped workers/local leases and deletes only the observed SHA.
+Human `claim-reset` audit support remains GitHub-only. Linear/Jira issues retain
+comment election; their GitHub PRs delegate atomic ownership to GitHub.
+
+
 ## Atomic GitHub claims and comment audit ids (issue #127)
 
 Refresh every claiming skill and committed tracker descriptor together. GitHub

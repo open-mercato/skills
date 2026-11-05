@@ -45,6 +45,13 @@ Comment visibility is eventually consistent; bounded repeated verification narro
 - [x] 3.2 Test acquisition races, owner release and reset fencing locally and live — 3e39b5b
 - [x] 3.3 Independent review, full gate and update the existing PR — 3e39b5b
 
+### Phase 4: Git-host provider parity (operator follow-up)
+
+- [x] 4.1 Add GitLab and Forgejo atomic acquisition/read/release with provider-specific targets
+- [x] 4.2 Audit Linear/Jira fallback and synchronize claim contracts and upgrade guidance
+- [x] 4.3 Run provider concurrency regressions, full validation and independent review
+- [ ] 4.4 Publish the reviewed follow-up to PR #176 when authorized
+
 ## Shared-copy synchronization
 
 User requested all skills. Updated claim procedures in: `om-auto-continue-pr`, `om-auto-continue-pr-loop`, `om-auto-create-pr`, `om-auto-create-pr-loop`, `om-auto-fix-issue`, `om-auto-fix-pr`, `om-auto-manage-issues`, `om-auto-merge-buddy`, `om-auto-qa-pr`, `om-auto-review-pr`, `om-auto-write-spec`, `om-close-fixed-issues`, `om-fix`, `om-fix-issue`, `om-fix-issue-multi`, `om-fix-issue-multi-optimized`, `om-fix-issue-optimized`, `om-harness`, `om-implement-feature`, `om-implement-feature-multi`, `om-implement-feature-multi-optimized`, `om-implement-feature-optimized`, `om-open-pr`, `om-pr-autopilot`, `om-review-prs`, `om-setup-agent-harness`, `om-verify-in-repo`. Shared claim-etiquette rules are synchronized in every copy carrying them; no other shared rules changed.
@@ -71,3 +78,31 @@ GitHub uses `refs/om-locks/{kind}-{number}` pointing to a unique metadata commit
 Atomic metadata v1 is also recorded as a protected persisted contract. Independent review dispatched as 91c04fb6.
 
 Atomic evidence: https://github.com/open-mercato/skills/issues/178 (closed) records five concurrent same-bot ref-acquisition races, each with one owner/one conflict, audit-comment ids, verified secondary label, clean release and preservation of a successor against stale release. No scratch lock remains. Local tests execute eight races plus an injected replacement between ownership read and Git lease deletion, uncertain POST reconciliation, permission failures, owner mismatch and malformed refs. All ten configured gate commands exit 0 after the atomic change. Independent reviewer 91c04fb6 approved 3e39b5b with no blockers and verified all 27 shared atomic blocks and descriptor copies match. Its optional convention-wording cleanup is applied. Actual human label-reset audit remains fixture-tested, not a live human action.
+
+## Provider-parity decisions
+
+The operator requested GitLab parity and checking all other providers. GitLab
+uses reserved lock branches; Forgejo supports custom refs. Both use Git's
+explicit absent/expected-SHA leases, standalone descriptor helpers, temporary
+bare object stores and API-resolved target URLs. No credential changes or hook
+bypasses. Namespace pushes can trigger CI/hooks. Client commit timestamps do
+not prove server creation: return `createdAt: null`, expose diagnostic metadata
+time separately, and block time-based/UI recovery without a server audit.
+Linear/Jira issues retain comment election; their GitHub PRs delegate atomic
+operations. Shared-copy synchronization is necessary for the requested parity.
+
+Independent provider review found that reusing the base tree would repeatedly
+fetch the project into temporary repositories. Fixed GitLab/Forgejo metadata to
+use an empty tree and no parents; base SHA is API-verified and recorded in JSON.
+The regression fixture contains project content and checks both empty tree and
+absent parents. GitHub's API-only metadata path remains unchanged.
+
+Provider-parity validation uses the local runner (unpublished head has no hosted
+checks yet), with TMPDIR/TMP/TEMP=/tmp for fixtures outside the cockpit's nested
+Git tree. All ten configured commands pass; final tracker and lint checks repeat
+after the empty-metadata correction. Independent review resolved the original
+fetch-cost major and found no further defects after that correction. Actual
+hosted GitLab/Forgejo behavior is not live-tested here; real-Git transport plus
+mocked target APIs cover the shipped helpers. Human QA remains required.
+
+Final independent review: APPROVE after raw-header parent rejection and empty-tree regressions. All configured validation commands pass. Step 4.4 awaits the cockpit-required approval before pushing to the existing shared PR branch.

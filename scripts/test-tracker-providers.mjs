@@ -55,6 +55,7 @@ assert.match(github, /gh api --paginate repos\/\{owner\}\/\{repo\}\/issues\/\{nu
 execFileSync(process.execPath, [join(root,"scripts/test-claim-protocol.mjs")], {stdio:"inherit",timeout:60000});
 
 execFileSync(process.execPath, [join(root,"scripts/test-atomic-claims.mjs")], {stdio:"inherit",timeout:120000});
+execFileSync(process.execPath, [join(root,"scripts/test-git-provider-locks.mjs")], {stdio:"inherit",timeout:120000});
 
 for (const [name,provider] of [["linear",linear],["jira",jira]]) {
   for (const op of ["get-lock","acquire-lock","release-lock"]) {

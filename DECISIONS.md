@@ -666,3 +666,20 @@ runners cooperatively stop at their next boundary. Recovery cannot cancel an
 in-flight shell command and requires stopping the stalled runner first. GitHub
 audits the event actor and permission; other providers explicitly declare missing
 UI-audit support instead of guessing. Historical cutoff survives label removal.
+
+
+## 2026-11-05 — Prefer atomic GitHub ref locks; comments retain audit ids
+
+The operator clarified issue #127's preferred implementation and superseded the
+comment-only default above. GitHub now acquires create-only refs under
+`refs/om-locks/`, pointing at unique metadata commits so same-login runs have
+separate generation/owner identities. Comment ids/run fields remain additional
+audit evidence and `in-progress` remains the verified secondary guard.
+
+GitHub release and reset/stale/force recovery compare-and-delete the exact SHA
+using a Git explicit lease. REST DELETE alone is rejected because it has no
+expected-generation condition and could delete a successor between read/delete.
+Lock metadata transport is a narrow exception to staged publication prohibitions;
+no project branch/history is changed. GitHub cannot silently fall back on a
+permission or transport failure. Providers explicitly without an atomic primitive
+retain comment election. Recovery preserves local liveness and human gates.

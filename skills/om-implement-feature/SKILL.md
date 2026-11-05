@@ -22,7 +22,7 @@ Consume the issue or brief and requested profile. Invoke the base workflow and i
 
 ## Workflow
 
-**Claims:** `references/claim-pr.md` governs acquisition, reset and release.
+**Claims:** `references/claim-pr.md` governs atomic/fallback ownership and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-implement-feature/SKILL.md` when present; safety rules still win.
 

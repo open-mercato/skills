@@ -236,6 +236,27 @@ The JSON array carries `id`, `body`, `createdAt`, `updatedAt`, `url`, user/exter
 linear issue comment update "{commentId}" --body-file <body-file>
 ```
 
+#### get-lock
+
+For a PR, delegate to the companion `.ai/trackers/github.md` **get-lock**,
+including repository/kind/item, owner identity, exact SHA and failure semantics.
+For a Linear issue, return explicit `UNSUPPORTED`: the shared protocol
+uses comment election for these issues, never for GitHub PRs.
+
+#### acquire-lock
+
+For a PR, delegate to the companion `.ai/trackers/github.md` **acquire-lock**,
+including repository/kind/item, owner identity, exact SHA and failure semantics.
+For a Linear issue, return explicit `UNSUPPORTED`: the shared protocol
+uses comment election for these issues, never for GitHub PRs.
+
+#### release-lock
+
+For a PR, delegate to the companion `.ai/trackers/github.md` **release-lock**,
+including repository/kind/item, owner identity, exact SHA and failure semantics.
+For a Linear issue, return explicit `UNSUPPORTED`: the shared protocol
+uses comment election for these issues, never for GitHub PRs.
+
 #### get-claim-reset
 
 `{kind}`, `{item}` → latest tracker-audited human `claim-reset` label application

@@ -47,7 +47,7 @@ absence never stops a run.
 
 ## Workflow
 
-**Claims:** `references/claim-pr.md` governs acquisition, reset and release.
+**Claims:** `references/claim-pr.md` governs atomic/fallback ownership and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-pr-autopilot/SKILL.md` when present; safety rules still win.
 

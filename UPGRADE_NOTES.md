@@ -1,49 +1,41 @@
 # Upgrade notes
 
-## Run-identified claim election (issue #127)
+## Atomic GitHub claims and comment audit ids (issue #127)
 
-Refresh every claiming skill and the tracker descriptors together. Claims now post
-a candidate before assignment or labels, elect a deterministic winner from complete
-fresh reads, and retain verified `in-progress` as a mandatory second check. Bot
-accounts with confirmed blocked self-assignment omit only the assignment. Another
-run sharing the same login is a competitor, never automatic re-entry.
+Refresh every claiming skill and committed tracker descriptor together. GitHub
+now uses `refs/om-locks/{kind}-{number}` with atomic create-only ownership and a
+unique metadata commit binding owner/run/item. Comments keep their ids, legacy
+prefixes and run/state fields, adding `Claim-Lock` and `Claim-Lock-SHA` for audit.
+Verify `in-progress` as the mandatory second check; missing/disabled labels block
+claims. Confirmed unassignable bots omit only assignment. Same login is never
+proof of the same run.
 
-New additive operations: **get-claim-reset**, **claim-winner** and **withdraw-claim**, implemented or
-delegated by every shipped provider and the template. Update committed custom
-`.ai/trackers/` copies via `om-apply-upgrade-notes`; report gaps without overwriting
-customizations. Older descriptors can elect locally through complete
-**list-issue-comments** and terminate the owned comment through **update-comment**.
-Stop if complete listing or in-place updates cannot be verified. GitHub comment
-listing now paginates and returns creation/update timestamps.
+Additive operations: **get-lock**, **acquire-lock**, **release-lock**, plus the
+previous **get-claim-reset**, **claim-winner**, **withdraw-claim**. Split providers
+route GitHub PR lock operations to the code-host companion; issue providers
+explicitly lacking an atomic primitive retain comment election. GitHub older
+custom descriptors must upgrade before acquisition. Permission/API/transport
+failures never select fallback. Use `om-apply-upgrade-notes` to report gaps and
+preserve customizations. Non-atomic older providers retain complete comment-list
+and safe in-place-edit fallback.
 
-Legacy first lines remain readable; new comments append `Claim-Run`, `Claim-Actor`
-and `Claim-State`. Persist/pass the run id and original comment id during chaining;
-legacy claims with no run id require explicit recovery, not same-login adoption.
-Losing comments remain as withdrawn audit records; release marks the original
-candidate released after owned label cleanup. No new Git refs. Add the optional human-only `claim-reset` meta label (setup now provisions it). Stop the stalled runner, then apply it from GitHub Labels; audited human events retire older candidates while new runs still elect normally. Historical resets survive label removal; remove/reapply for another reset. GitHub UI reset requires the new audit operation; other providers explicitly report unsupported recovery until extended. Local live reservations and other gates remain binding.
-Unlike the previous logged-skip behavior, disabled/missing `in-progress` now blocks
-claim acquisition. Provision/enable that label before autonomous work.
+GitHub requires contents-write and authenticated Git push transport. Lock commits
+reuse the configured base tree and do not alter project branches. Release removes
+owned labels, marks the comment released, then compare-and-deletes the exact ref
+SHA using Git's explicit expected-SHA lease. Do not replace this with REST DELETE:
+it has no generation guard and can erase a new owner after recovery. Never change
+credentials, disable hooks or force-push project branches for lock maintenance.
 
-Comment election retains eventual-consistency and simultaneous-recovery races
-(duplicated work, not data loss). Repeated verification reduces but cannot remove
-those limits; old installed claimers do not participate in election.
+Human UI recovery: stop the runner/workers, add `claim-reset` in GitHub Labels.
+Audit that human event; retire only the exact older lock, then compete for a new
+create-only lock. A successor SHA stops old cleanup. Historical reset cutoffs
+survive label removal; remove/reapply to reset again. Other providers without
+authenticated UI audits report unsupported recovery. Local leases, QA and merge
+gates remain binding; no lock or label can cancel a command already running.
 
-
-Upgrading the skills themselves is easy — re-run `npx skills add open-mercato/skills --skill '*'`
-(or `git pull` in a symlinked local checkout) and the new skill instructions are live on the next
-invocation. What does **not** auto-update is everything a skill previously **installed into your
-repository**. Those files are yours, they may carry your local edits, and the skills execute
-against them — not against the copies shipped in this repo:
-
-| Installed artifact | Installed by | Updated how |
-|--------------------|--------------|-------------|
-| `.ai/trackers/<tracker>.md` (tracker descriptor — the file every tracker operation executes from) | `om-setup-agent-pipeline` | Manual re-sync (see below) |
-| `.ai/browsers/<provider>.md` (browser automation and autonomous provisioning operations) | `om-setup-agent-pipeline` | Manual re-sync (see below) |
-| `.ai/agentic.config.json` | `om-setup-agent-pipeline`; optional `agentHarness` section by `om-setup-agent-harness` | Re-run the owning setup skill; both preserve unrelated values |
-| `.claude/output-styles/om-harness-review.md` (optional) | `om-setup-agent-harness` | Re-run `/om-setup-agent-harness` and review the diff before replacing local edits |
-| `.claude/hooks/om-harness/*.sh` + `PreToolUse` entries in `.claude/settings.json` (optional prevention hooks) | `om-setup-agent-harness` | Re-run `/om-setup-agent-harness` and review the diff before replacing local edits |
-| `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
-| `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
+Normal GitHub acquisition is atomic. Comment fallback retains eventual-visibility
+races; recovery still depends on correct stale/human liveness decisions. Old
+installed claimers ignore refs, so mixed-version runs are not safe concurrency.
 
 ## 2026-11-03 — AI context rotation uses one archive per batch
 

@@ -503,6 +503,27 @@ jq -n --rawfile b <body-file> '{body: $b}' \
   | gl_write PUT "projects/$(gl_project)/${COMMENT_HANDLE%/*}/notes/${COMMENT_HANDLE##*/}" >/dev/null
 ```
 
+#### get-lock
+
+This shipped implementation returns explicit `UNSUPPORTED`; use the shared
+comment-election fallback. A custom implementation may provide an atomic
+create-only primitive and exact-generation conditional release. Permission or
+transport failures are errors, never unsupported/no lock.
+
+#### acquire-lock
+
+This shipped implementation returns explicit `UNSUPPORTED`; use the shared
+comment-election fallback. A custom implementation may provide an atomic
+create-only primitive and exact-generation conditional release. Permission or
+transport failures are errors, never unsupported/no lock.
+
+#### release-lock
+
+This shipped implementation returns explicit `UNSUPPORTED`; use the shared
+comment-election fallback. A custom implementation may provide an atomic
+create-only primitive and exact-generation conditional release. Permission or
+transport failures are errors, never unsupported/no lock.
+
 #### get-claim-reset
 
 `{kind}`, `{item}` → latest tracker-audited human `claim-reset` label application

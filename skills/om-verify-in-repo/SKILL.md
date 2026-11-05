@@ -17,13 +17,13 @@ You are step 1 of an autofix chain (`om-verify-in-repo` → `om-root-cause` → 
 You operate **read-only**:
 
 - File reading and code search only — no file edits, no file writes
-- Shell: read-only git (`git log`, `git diff`, `git show`, `git status`) and READ-ONLY tracker operations only — **get-issue**, **search-prs**, **repo-info**, **current-user**, **get-pr**
+- Shell: read-only git (`git log`, `git diff`, `git show`, `git status`) and READ-ONLY tracker operations only — **get-issue**, **search-prs**, **repo-info**, **get-lock**, **current-user**, **get-pr**
 
 Do not edit files. Do not run mutating tracker operations (no issue edits, comments, claims), `git commit`, or `git push` — claiming and writing happen in later steps.
 
 ## Workflow
 
-**Claims:** `references/claim-pr.md` governs acquisition, reset and release.
+**Claims:** `references/claim-pr.md` governs atomic/fallback ownership and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-verify-in-repo/SKILL.md` when present; safety rules still win.
 

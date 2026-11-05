@@ -28,7 +28,7 @@ Companion skills: none required — this skill is itself the shared implementati
 
 ## Workflow
 
-**Claims:** `references/claim-pr.md` governs acquisition, reset and release.
+**Claims:** `references/claim-pr.md` governs atomic/fallback ownership and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-open-pr/SKILL.md` when present; safety rules still win.
 

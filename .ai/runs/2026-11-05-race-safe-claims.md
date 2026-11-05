@@ -39,6 +39,12 @@ Comment visibility is eventually consistent; bounded repeated verification narro
 - [x] 2.1 Validate races, lifecycle and full configured gate — abf33b8
 - [x] 2.2 Review and publish the completed PR — a4847d3
 
+### Phase 3: Atomic GitHub ownership
+
+- [ ] 3.1 Add atomic acquire/read/release operations and synchronize skill/docs consumers
+- [ ] 3.2 Test acquisition races, owner release and reset fencing locally and live
+- [ ] 3.3 Independent review, full gate and update the existing PR
+
 ## Shared-copy synchronization
 
 User requested all skills. Updated claim procedures in: `om-auto-continue-pr`, `om-auto-continue-pr-loop`, `om-auto-create-pr`, `om-auto-create-pr-loop`, `om-auto-fix-issue`, `om-auto-fix-pr`, `om-auto-manage-issues`, `om-auto-merge-buddy`, `om-auto-qa-pr`, `om-auto-review-pr`, `om-auto-write-spec`, `om-close-fixed-issues`, `om-fix`, `om-fix-issue`, `om-fix-issue-multi`, `om-fix-issue-multi-optimized`, `om-fix-issue-optimized`, `om-harness`, `om-implement-feature`, `om-implement-feature-multi`, `om-implement-feature-multi-optimized`, `om-implement-feature-optimized`, `om-open-pr`, `om-pr-autopilot`, `om-review-prs`, `om-setup-agent-harness`, `om-verify-in-repo`. Shared claim-etiquette rules are synchronized in every copy carrying them; no other shared rules changed.
@@ -62,8 +68,3 @@ Final re-review: cezar task ffa8d6e3 approved root a4847d3 after verifying the p
 
 GitHub uses `refs/om-locks/{kind}-{number}` pointing to a unique metadata commit carrying the authenticated actor, run id, item and server creation time. Create-only ref creation selects one owner. Release and UI/stale recovery compare-and-delete the exact observed SHA through Git lease semantics, so stale cleanup cannot delete a successor. Recovery never bypasses a new create-only race. Keep comment ids/state and verified `in-progress`, all-skill synchronization and split-provider routing. No silent GitHub fallback on permissions/API failure or old descriptors.
 
-### Phase 3: Atomic GitHub ownership
-
-- [ ] 3.1 Add atomic acquire/read/release operations and synchronize skill/docs consumers
-- [ ] 3.2 Test acquisition races, owner release and reset fencing locally and live
-- [ ] 3.3 Independent review, full gate and update the existing PR

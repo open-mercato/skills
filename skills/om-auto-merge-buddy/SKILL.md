@@ -45,7 +45,7 @@ Consume the human-authorized queue and durable scheduler/run; use orchestrated r
 
 ## Workflow
 
-**Claims:** `references/claim-pr.md` governs acquisition, reset and release.
+**Claims:** `references/claim-pr.md` governs atomic/fallback ownership and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-auto-merge-buddy/SKILL.md` when present; safety rules still win.
 

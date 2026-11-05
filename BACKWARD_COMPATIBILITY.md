@@ -38,15 +38,17 @@ The named operations (**get-issue**, **create-pr**, **comment-pr**, **merge-pr**
 - **Breaking:** renaming an operation, changing an operation's inputs/outputs, removing a guard, referencing a new operation from a skill without adding it to the template and shipped descriptors.
 - **Required path:** add new operations to `TEMPLATE.md` and every shipped descriptor in the same PR; skills must degrade gracefully (documented fallback) when running against an older descriptor copy that lacks a newly added operation.
 
-The claim-election additions retain legacy comment prefixes and append run/state
-fields. Consumers must still recognize legacy active claims as foreign/uncertain;
-same-login re-entry requires a verified run id/comment id. New **get-claim-reset**, **claim-winner**
-and **withdraw-claim** operations fall back to complete **list-issue-comments**
-and **update-comment** for older custom descriptors. All claiming skills upgrade
-together; a descriptor without safe listing/editing stops rather than proceeding.
-Verified `in-progress` is the secondary acquisition guard, including when bot
-assignment is unavailable; missing/disabled labels now block acquisition. The optional human-only `claim-reset` meta label adds audited UI recovery; older descriptors block requested recovery until upgraded. Existing
-config keys and stale windows remain unchanged. See `UPGRADE_NOTES.md` for rollout.
+The claim additions retain legacy comment prefixes and append run/state/ref
+fields. GitHub **get-lock**, **acquire-lock** and **release-lock** are additive
+operations required by all shipped descriptors (split PRs delegate). Older GitHub
+custom descriptors stop until upgraded; never silently substitute comment locks
+on permission or operation failure. Providers explicitly lacking an atomic
+primitive retain **claim-winner** / **withdraw-claim** and complete-list/edit
+fallback. Same-login re-entry requires run/comment identity plus exact ref SHA in
+atomic mode. Verified `in-progress` remains mandatory, even when assignment is
+unavailable. The optional human-only `claim-reset` label conditionally retires
+older generations; expected-SHA lease deletion preserves successors. Upgrade all
+claimers together. See `UPGRADE_NOTES.md` for permissions and migration limits.
 
 ### 4. The browser-provider operations contract
 

@@ -22,7 +22,7 @@ A previous skill may already have opened a PR for this work (e.g. `om-auto-write
 
 ## Workflow
 
-**Claims:** `references/claim-pr.md` governs acquisition, reset and release.
+**Claims:** `references/claim-pr.md` governs atomic/fallback ownership and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-auto-create-pr/SKILL.md` when present; safety rules still win.
 

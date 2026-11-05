@@ -15,14 +15,76 @@ wrappers pass the driver's identity and never claim independently.
 
 This procedure overrides inline assign/label/comment ordering and non-fatal claim
 failure instructions elsewhere in the skill. No work product, assignment or label
-mutation is permitted before election succeeds. A claim blocker is a clean stop.
+mutation is permitted before atomic acquisition (or supported fallback election) succeeds. A claim blocker is a clean stop.
+
+## Primary ownership — atomic when supported
+
+Before the three-signal check, call **get-lock** for this repository/kind/item.
+A live ref is an additional authoritative blocker even before its owner posts a
+comment or applies `in-progress`. Read-only/skip-only roles inspect it and back
+off without acquiring or releasing. An absent label/comment never cancels a ref.
+
+GitHub issues and PRs, including PRs under Linear/Jira, MUST use **acquire-lock**:
+create `refs/om-locks/{kind}-{number}` exactly once, pointing to a unique metadata
+commit binding run id, actor and item. A 422 is not itself proof of a conflict;
+read the exact ref to identify the winner. Same-login contenders still have
+different run ids and SHAs. Persist `CLAIM_LOCK_SHA` and pass it with the run id
+and comment id through every chain step. Re-entry requires matching ref SHA,
+actor and run, plus the original comment id once posted. A lost acquisition or
+uncertain read stops before comments, assignment, labels or work.
+
+Only providers explicitly returning `UNSUPPORTED` select comment election below.
+Missing GitHub operations, contents-write permission, authenticated Git transport
+or API availability are upgrade/permission blockers, NEVER permission to run two
+lock protocols against one item. Older custom descriptors must be upgraded first
+for GitHub; non-atomic trackers retain complete-list/edit fallback. Do not invent
+an automatic capability probe that silently changes GitHub to comment mode.
+
+After atomic acquisition, post the normal claim comment once, retaining its
+legacy first line and `Claim-Run`, `Claim-Actor`, `Claim-State` fields. Also record
+`Claim-Lock` (full ref) and `Claim-Lock-SHA`. These ids are audit evidence; the ref
+owns the item. Reconcile a lost comment response by run/SHA before reposting.
+Only then assign when supported, apply/read back `in-progress` as the mandatory
+second check, and re-read the exact lock before work. Comment or label failure
+aborts acquisition with ownership-aware cleanup and exact-SHA release. Register
+cleanup as soon as the ref is acquired, including if comment creation fails.
+
+Hold the ref through every skill hand-off, stage and cleanup. Reverify the exact
+SHA/owner and reset history before each mutation, phase, commit/push or staged
+publication. After owned label/assignment cleanup and marking the comment
+released through **withdraw-claim**, call **release-lock** LAST. It uses Git's
+explicit expected-SHA lease to compare-and-delete; never use unconditional REST
+DELETE or force-update a lock ref. Changed/malformed ownership blocks cleanup.
+No local refs or project branches are changed by metadata lock operations; this
+narrow housekeeping exception does not authorize publishing staged project work.
+
+### Atomic stale/force/UI recovery
+
+Read the exact prior lock and establish the existing stale/force authorization or
+the audited human `claim-reset` cutoff; UI recovery requires the server metadata
+commit time strictly before the reset. Same-second/unknown age stays blocking.
+Check local reservations/delegated workers are stopped, never just old. Record
+the prior owner/run/SHA in the takeover note. Call **release-lock** with that
+observed prior owner record only under this authorized recovery; its SHA lease
+prevents two recovering runs from deleting a newly acquired successor. Then
+compete through create-only **acquire-lock**; recovery does not grant ownership.
+If release sees a different SHA, stop or re-read and report that new owner; never
+retry against the replacement. Old runners whose SHA disappeared stop without
+editing successor comments or labels. Historical resets do not retire newly
+created metadata commits. Reuse an old `in-progress` only after acquiring the
+new ref and proving all previous signals belong to the recovered owner.
+
+Normal acquisition is atomic. Recovery still relies on correct human/stale
+liveness decisions; an already running command cannot be remotely cancelled by
+a ref or label. Stop the stalled runner first. Comment-only trackers retain the
+visibility race below. Upgrade all claimers together: old versions ignore refs.
 
 ## Bot accounts with blocked assignment
 
 When `CURRENT_USER` ends in `[bot]` and assignment is confirmed unavailable (an
 explicit assignability result or assignment-specific rejection), omit assignment.
 A generic 403 does not prove an assignment restriction. Do not change credentials.
-The elected, run-identified comment owns the claim; verified `in-progress` remains
+The atomic ref owns GitHub claims; the elected comment owns fallback claims; verified `in-progress` remains
 the second check. Preserve existing assignees. Do not assign or restore anyone on
 release unless this run changed that assignment. Comment/label failures still
 block work; this exception relaxes only assignment, never foreign-claim checks.
@@ -55,7 +117,7 @@ A claim is **stale** when the newest claim signal is older than the stale window
 
 If a runner stalls, a human with label-management permission first stops that
 runner (including delegated workers), then adds `claim-reset` in the issue/PR's
-GitHub **Labels** menu. Do not merely remove `in-progress`: its active comment
+GitHub **Labels** menu. Do not merely remove `in-progress`: its active ref/comment
 still blocks. No bot ever applies `claim-reset`. The next invocation calls
 **get-claim-reset** and reports the verified human actor/time and retired claim ids.
 A request does not itself restart a runner or clear local scheduler leases.
@@ -71,7 +133,7 @@ Keep the label as a recovery breadcrumb; remove and reapply it for a later reset
 
 Every active owner checks reset history and re-verifies its candidate before
 starting another phase/stage, tracker mutation, commit/push, release or staged
-publication. A reset newer than its candidate revokes ownership: stop, report
+publication. A reset newer than its comment candidate or atomic metadata commit revokes ownership: stop, report
 superseded, and leave the new owner's labels/comments untouched. No cleanup of
 another run's state. This is cooperative fencing, not cancellation of an already
 running shell command; stop the stalled runner before applying the reset. A
@@ -83,7 +145,10 @@ listing/editing fallback. An unsupported provider cannot promise UI recovery;
 never treat failed event/permission reads as no reset. `--force` and UI reset
 never waive live local reservations, QA, review, CI or merge gates.
 
-## Applying the claim — comment first, elect, then verify
+## Applying the fallback claim — only non-atomic providers
+
+Run this section only when the provider explicitly lacks an atomic primitive.
+GitHub uses the primary procedure above and never elects comment candidates.
 
 1. Read **get-claim-reset** and apply the UI recovery rules above, then re-read
    the item and **list-issue-comments**, including every page. Apply the
@@ -151,9 +216,9 @@ operations, never inline provider CLI commands. If the descriptor cannot list al
 comments or rewrite the owned candidate, stop with an upgrade blocker. Posting a
 replacement while leaving an active candidate behind is not a safe fallback.
 
-Comment election is the reversible portable default: it needs no Git refs or
-repository-content write permission. A custom descriptor may implement a stronger
-create-only lock, but must preserve run ownership and release semantics. Comment
+Comment election is the fallback for providers without an atomic primitive.
+GitHub uses create-only refs and contents-write permission; never downgrade
+GitHub claims silently. Comments and their ids remain additional audit evidence. Comment
 reads can miss a competing write through eventual consistency, even after repeated
 verification; simultaneous stale recovery has the same residual race. The failure
 mode is duplicated work, not data loss. Do not advertise this as an atomic mutex.
@@ -167,7 +232,8 @@ When the run finishes or aborts (a live hand-off retains the claim):
   loser or superseded run never removes another owner's secondary label.
 - Keep the owned candidate active while removing the owned label/assignment and
   posting the outcome below; **withdraw-claim** with `Claim-State: released` is
-  the final tracker mutation. Verify the terminal state. Failed cleanup remains
+  the final tracker mutation for fallback claims; on atomic claims delete the
+  exact owned ref through **release-lock** last. Verify both terminal states. Failed cleanup remains
   a reported blocker with the retained claim id, never an asserted release.
 
 - Remove the `in-progress` label via the guard — and when the run intends to follow up with CI results after reporting, **swap** rather than simply remove: `apply_label "ci-monitoring"` in the same breath, so the item is never observably unlabeled and the outstanding follow-up is visible. Remove `ci-monitoring` when the CI-result comment is finally posted, or when the CI wait is abandoned at its `ci.maxWaitMinutes` cap (nobody is monitoring then, and leaving the label would promise a follow-up that never comes). A run that does no CI follow-up at all just removes `in-progress` as before and never applies `ci-monitoring`.
@@ -177,7 +243,7 @@ When the run finishes or aborts (a live hand-off retains the claim):
 
 ## Chained hand-off — a live chain never drops its lock
 
-When the same run (same `CLAIM_RUN_ID` and owned comment id) finishes one skill and continues on the same item with another — `om-open-pr` → `om-auto-review-pr`, review → UI QA, or any flow-runner chain — the lock is **transferred, never released and re-acquired**. A release-then-reclaim seam leaves the item observably unclaimed mid-run: any concurrent actor's three-signal check reads "not in progress" and legitimately starts duplicate work, and humans watching the tracker see no owner and no state.
+When the same run (same `CLAIM_RUN_ID`, owned comment id and `CLAIM_LOCK_SHA` in atomic mode) finishes one skill and continues on the same item with another — `om-open-pr` → `om-auto-review-pr`, review → UI QA, or any flow-runner chain — the lock is **transferred, never released and re-acquired**. A release-then-reclaim seam leaves the item observably unclaimed mid-run: any concurrent actor's three-signal check reads "not in progress" and legitimately starts duplicate work, and humans watching the tracker see no owner and no state.
 
 - **Hand-off (finishing step):** keep the original candidate active with its run id, `in-progress` label and lock assignee in place; instead of the release comment, post a hand-off comment naming the next phase:
 

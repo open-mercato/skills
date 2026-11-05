@@ -21,7 +21,7 @@ This skill consumes a `{prNumber}` (the `PR:` reference line a PR-producing skil
 
 ## Workflow
 
-**Claims:** `references/claim-pr.md` governs acquisition, reset and release.
+**Claims:** `references/claim-pr.md` governs atomic/fallback ownership and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-auto-review-pr/SKILL.md` when present; safety rules still win.
 

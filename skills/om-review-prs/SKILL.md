@@ -19,7 +19,7 @@ This skill is a sweep, not a single-PR step: it finds every unreviewed open PR a
 
 ## Workflow
 
-**Claims:** `references/claim-pr.md` governs acquisition, reset and release.
+**Claims:** `references/claim-pr.md` governs atomic/fallback ownership and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-review-prs/SKILL.md` when present; safety rules still win.
 

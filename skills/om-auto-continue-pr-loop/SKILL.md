@@ -19,7 +19,7 @@ This skill resumes an existing loop run: it consumes a `{prNumber}` and reads th
 
 ## Workflow
 
-**Claims:** `references/claim-pr.md` governs acquisition, reset and release.
+**Claims:** `references/claim-pr.md` governs atomic/fallback ownership and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-auto-continue-pr-loop/SKILL.md` when present; safety rules still win.
 

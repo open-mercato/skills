@@ -48,6 +48,33 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 - **list-issue-comments** — id → conversation comments.
 - **update-comment** — comment id, new body → rewrite an existing conversation comment in place (issue and PR conversation comments alike). Powers marker-idempotent comments: a skill finds its `🤖 …` marker via **list-issue-comments** and updates that comment instead of posting a duplicate. When the tracker cannot edit comments, document that here and skills degrade to posting a replacement that states it supersedes the previous one.
 
+#### get-lock
+
+Implement create-only ownership where the tracker offers an atomic primitive;
+otherwise return explicit `UNSUPPORTED` to select comment election. `get-lock`
+returns null only for a proven absent lock; acquisition identifies the unique
+owner/run, and release must conditionally delete the exact expected generation.
+Never map permission/API failures to unsupported. Split providers route PRs and
+issues independently. See GitHub for concrete inputs/outputs and lease deletion.
+
+#### acquire-lock
+
+Implement create-only ownership where the tracker offers an atomic primitive;
+otherwise return explicit `UNSUPPORTED` to select comment election. `get-lock`
+returns null only for a proven absent lock; acquisition identifies the unique
+owner/run, and release must conditionally delete the exact expected generation.
+Never map permission/API failures to unsupported. Split providers route PRs and
+issues independently. See GitHub for concrete inputs/outputs and lease deletion.
+
+#### release-lock
+
+Implement create-only ownership where the tracker offers an atomic primitive;
+otherwise return explicit `UNSUPPORTED` to select comment election. `get-lock`
+returns null only for a proven absent lock; acquisition identifies the unique
+owner/run, and release must conditionally delete the exact expected generation.
+Never map permission/API failures to unsupported. Split providers route PRs and
+issues independently. See GitHub for concrete inputs/outputs and lease deletion.
+
 #### get-claim-reset
 
 `{kind}`, `{item}` → latest tracker-audited human `claim-reset` label application

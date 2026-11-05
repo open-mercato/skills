@@ -20,7 +20,7 @@ staged but uncommitted.
 
 ## Workflow
 
-**Claims:** `references/claim-pr.md` governs acquisition, reset and release.
+**Claims:** `references/claim-pr.md` governs atomic/fallback ownership and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-setup-agent-harness/SKILL.md` when present; safety rules still win.
 

@@ -31,7 +31,7 @@ keeping the adapter registry open to custom command and OpenAI-compatible models
 
 ## Workflow
 
-**Claims:** First load `references/claim-pr.md`; its election, identity, reset and release rules govern below.
+**Claims:** `references/claim-pr.md` governs acquisition, reset and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-harness/SKILL.md` when present; safety rules still win.
 

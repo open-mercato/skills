@@ -26,7 +26,7 @@ Every run is a folder (never a flat file): `PLAN.md` (Tasks table + plan), `HAND
 
 ## Workflow
 
-**Claims:** First load `references/claim-pr.md`; its election, identity, reset and release rules govern below.
+**Claims:** `references/claim-pr.md` governs acquisition, reset and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-auto-create-pr-loop/SKILL.md` when present; safety rules still win.
 

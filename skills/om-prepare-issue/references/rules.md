@@ -18,5 +18,7 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-prepare-issue specifics
 
+- **Claim role.** This skill claims nothing itself — on the spec-authoring path, `om-auto-write-spec` manages and releases its own claim.
+
 - The explicitly gated cases for this skill are the user confirmations in step 1: posting a comment on a credible duplicate, and choosing reopen-vs-file-fresh when the duplicate is closed. With no user present, take the most-reversible call (comment with the new detail on an open duplicate; file fresh with a link when it is closed) and document it in the report.
 - This skill emits the `Issue:` reference line for the issue it creates (and a `Spec:` line when a spec is linked or authored); it *consumes* the `Spec:` and `PR:` reference lines emitted by `om-auto-write-spec` on the spec-authoring path and surfaces them in its final report.

@@ -25,7 +25,7 @@ Do not run `git commit`, `git push`, or the **create-pr** tracker operation — 
 
 ## Workflow
 
-**Claims:** First load `references/claim-pr.md`; its election, identity, reset and release rules govern below.
+**Claims:** `references/claim-pr.md` governs acquisition, reset and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-fix/SKILL.md` when present; safety rules still win.
 

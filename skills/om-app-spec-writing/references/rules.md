@@ -17,6 +17,8 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-app-spec-writing specifics
 
+- **Claim role.** This skill takes no claim of its own — its tracker access is optional and read-only (**search-prs**, **get-issue**) and it never mutates tracker items.
+
 - **Interactive — user in the loop.** Authoring is a conversation: Phase 0's discovery questions go to the user, later questions are batched per phase, and the Phase 5 confirmation is a hard stop. The "Autonomous run — no user in the loop" rule of the `om-auto-*` skills does not apply. The two non-conversational modes — `--review` and `--stories` — ask nothing and never edit the App Spec.
 - **No markers of its own.** This skill mutates no labels, holds no claims, and emits no chaining reference lines; each feature brief it writes carries its `Routing:` invocation, and `om-spec-writing` (or `om-auto-write-spec`) owns the spec written from it. The label, claim, and marker bullets apply only if a repo-local extension adds such behavior — and it may not relax them.
 - **Never edit code** while writing or reviewing an App Spec — the deliverable is the document.

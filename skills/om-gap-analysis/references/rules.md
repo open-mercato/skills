@@ -17,6 +17,8 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-gap-analysis specifics
 
+- **Claim role.** This skill takes no claim of its own — its tracker access is read-only (**repo-info**, **default-branch**, **list-prs**, **get-pr**, each against the platform repositories) and it never mutates tracker items.
+
 - **Interactive between phases — user in the loop.** The slug, the platform repository, the branch confirmation, client-confirmed `out-of-scope` reasons, and the `/clear` between Phase 1 and Phase 2 involve the user. The "Autonomous run — no user in the loop" rule of the `om-auto-*` skills does not apply; unattended with no user available, stop at the first such point and report what is needed.
 - **Numbers are measured or absent.** Every share is N/M, never a bare percentage; no hedges (approximately, around, roughly); effort is an atomic-commit score 0–5. The gates enforce this on story blocks; apply it equally to the summary, the backlog, and every report.
 - **Client-facing text stays plain.** The summary's executive paragraphs and Open questions are written for a non-technical decision-maker; code identifiers stay in the tree MD.

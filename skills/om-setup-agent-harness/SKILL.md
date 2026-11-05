@@ -20,7 +20,7 @@ staged but uncommitted.
 
 ## Workflow
 
-**Claims:** First load `references/claim-pr.md`; its election, identity, reset and release rules govern below.
+**Claims:** `references/claim-pr.md` governs acquisition, reset and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-setup-agent-harness/SKILL.md` when present; safety rules still win.
 

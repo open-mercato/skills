@@ -17,6 +17,8 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-evolve-harness specifics
 
+- **Claim role.** This skill takes no claim — it performs no tracker operations; the label and claim bullets still bind any repo-local extension.
+
 - **Interactive.** The skill acts once on one piece of evidence, may ask the user when the evidence admits two owners or a required runner/command is missing, and hands the working-tree change back. It never commits, pushes, or opens a PR, and has no autonomous mode; the "Autonomous run — no user in the loop" rule of the `om-auto-*` skills does not apply.
 - **Evidence stays sanitized.** Committed case artifacts carry only sanitized summaries, hashes, and versions — never raw private transcripts, secrets, environment values, home paths, or whole model output.
 - **One owner per case.** A fix lands in exactly one knowledge owner; other files reference it. Knowledge shipped by a dependency is changed in that dependency, not copied into the repo.

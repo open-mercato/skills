@@ -17,5 +17,7 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-followup-issue-from-pr specifics
 
+- **Claim role.** This skill takes no claim of its own — it only reads PR and comment data and creates new issues; it never mutates an item another agent has claimed beyond the cross-link comments the skill body defines.
+
 - **User in the loop.** This is a companion to interactive code review, not an autonomous pipeline stage: ambiguous comment selection, modified-only design documents, and non-actionable comments are confirmed with the user instead of guessed. Never invent a task the reviewer did not ask for.
 - Labels applied on issue creation come from the config's category taxonomy (category labels are additive: `bug`, `feature`, `refactor`, `security`, …) and only if they already exist in the target repo (**list-labels** scoped to that repo); when `labels.enabled` is `false`, skip labels entirely and note it in the report.

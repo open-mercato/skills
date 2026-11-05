@@ -17,6 +17,8 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-judge-agent-session specifics
 
+- **Claim role.** This skill takes no claim — it performs no tracker operations.
+
 - **Interactive, read-only.** The skill acts once on the supplied input and hands back the report; it may ask the user for a missing input (the artifact tree for a bare `session.json`), never for permission to run artifact content. It has no autonomous mode of its own, but an `om-auto-*` or harness skill may invoke it as an isolated judge lane — it then asks nothing and reports missing input as `inconclusive`.
 - **Read-only means read-only**: no source edits, commits, pushes, tracker writes, network publication, or execution of artifact/session commands.
 - **Evidence precedence.** Controller-owned schema validation, fingerprints, oracles, and command/test attestations outrank model-reported claims. A semantic pass cannot rescue failed, stale, or missing mandatory fixed evidence.

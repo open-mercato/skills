@@ -17,4 +17,6 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-approve-merge-pr specifics
 
+- **Claim role.** This skill takes no claim of its own — when it encounters a live claim or an active manual-QA pass (the `qa` pipeline label), it stops and reports per the skill body instead of merging over someone's work.
+
 - **Interactive at the gates — user in the loop.** This is a convenience skill run at a user's explicit request, not an autonomous pipeline run: hard label blocks and the QA gate stop with a report, and ambiguities (`needs-qa` + `skip-qa` together, a lingering `changes-requested` label, a draft PR, self-approval rejection) are confirmed with the user before proceeding. Never resolve a merge gate autonomously.

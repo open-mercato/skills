@@ -17,5 +17,7 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-brainstorm specifics
 
+- **Claim role.** This skill takes no claim of its own — its tracker access is read-only (**search-issues**, **search-prs**, **get-issue**) and it never mutates tracker items.
+
 - **Interactive — user in the loop.** This skill is a conversation: open questions go one at a time, and only trivially closed questions may be batched. It has no autonomous mode and must never be driven by an `om-auto-*` skill; the "Autonomous run — no user in the loop" rule of the `om-auto-*` skills does not apply here.
 - **Additional markers.** Besides the shared chaining lines, this skill emits `Next:` and `Brief:` (exact shapes in the skill body's Output contract) — same exactness rules as `PR:`/`Issue:`/`Spec:`: line-anchored, never renamed, translated, or decorated.

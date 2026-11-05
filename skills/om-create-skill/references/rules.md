@@ -17,4 +17,6 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-create-skill specifics
 
+- **Claim role.** This skill takes no claim of its own — it never mutates tracker items; the claim protocol is one of the shared pipeline protocols it bakes into generated skills (`references/repo-invariants.md`).
+
 - **Interactive — user in the loop.** This skill asks the few questions that change the output before generating (the author-mode interview, borderline-split confirmation, the optional `DECISIONS.md` entry). It is not an autonomous pipeline run; the "Autonomous run — no user in the loop" rule of the `om-auto-*` skills does not apply here, though it must be carried verbatim into any `om-auto-*` skill this skill authors (see `references/shared-boilerplate.md`).

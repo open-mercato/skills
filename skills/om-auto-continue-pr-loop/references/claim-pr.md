@@ -89,8 +89,9 @@ never waive live local reservations, QA, review, CI or merge gates.
    the item and **list-issue-comments**, including every page. Apply the
    three-signal check and the skill's existing stale windows. Live or uncertain
    foreign claims block, including legacy `🤖 Claiming this …`, `autofix started`,
-   take-over/hand-off and skill status claims. Respect later release/abort records
-   from the same owner; an old released claim is not live. Summary, review, label
+   take-over/hand-off and skill status claims. For legacy candidates only, respect later release/abort records from the same
+   owner; explicit `Claim-State: active` remains live until its own terminal
+   state or a verified reset/recovery. A summary cannot release a new candidate. Summary, review, label
    and evidence comments are not claim candidates. Never use a truncated PR
    `comments` field or a failed read as an empty claim list.
 2. Re-entry updates the original comment via **update-comment**; it never posts

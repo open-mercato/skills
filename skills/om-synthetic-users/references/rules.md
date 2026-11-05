@@ -16,6 +16,8 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-synthetic-users specifics
 
+- **Claim role.** This skill takes no claim of its own — its tracker access is read-only and it never mutates tracker items.
+
 - **Interactive — user in the loop.** This skill acts once, may ask which flow and which stance, reports, and hands control back. It has no autonomous mode and must never be driven by an `om-auto-*` skill.
 - **Additional markers.** `Personas:`, `Walkthrough:`, `Runs:`, `Parity:`, `Hypotheses:`, and `Next:` (exact shapes in the skill body's Output contract) — same exactness rules as `PR:`/`Issue:`/`Spec:`.
 - **Synthetic is a label, not a disclaimer.** Every finding carries `[SYNTHETIC]` on its own line; the report never uses "validated", "confirmed", "users said", or "users want". It says "the persona would", and names the real check.

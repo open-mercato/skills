@@ -17,4 +17,6 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-merge-buddy specifics
 
+- **Claim role.** This skill takes no claim of its own — it is read-only and honors other agents' claims by skipping `in-progress` PRs in the classification.
+
 - **Read-only reporting skill — not an autonomous pipeline run.** It classifies and reports merge readiness, and never merges, edits, comments on, or labels anything; the autonomous-run contract of the `om-auto-*` skills does not apply. When the user picks a PR to ship, hand off to `om-approve-merge-pr`, which re-checks the same gates before merging.

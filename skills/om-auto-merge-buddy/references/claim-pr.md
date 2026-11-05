@@ -67,8 +67,9 @@ never waive live local reservations, QA, review, CI or merge gates.
    the item and **list-issue-comments**, including every page. Apply the
    three-signal check and the skill's existing stale windows. Live or uncertain
    foreign claims block, including legacy `🤖 Claiming this …`, `autofix started`,
-   take-over/hand-off and skill status claims. Respect later release/abort records
-   from the same owner; an old released claim is not live. Summary, review, label
+   take-over/hand-off and skill status claims. For legacy candidates only, respect later release/abort records from the same
+   owner; explicit `Claim-State: active` remains live until its own terminal
+   state or a verified reset/recovery. A summary cannot release a new candidate. Summary, review, label
    and evidence comments are not claim candidates. Never use a truncated PR
    `comments` field or a failed read as an empty claim list.
 2. Re-entry updates the original comment via **update-comment**; it never posts
@@ -143,10 +144,10 @@ Old installed versions do not participate in election; upgrade all claimers toge
 
 ## Claim (before any other work on the PR)
 
-First verify the fenced scheduler reservation under its short transaction lock, tracker authorization and claim guards. Persist the plan before an actionable step; elect the candidate first, then assign and verify as above. Use the existing status comment as the candidate, retaining its marker and appending the exact Claim fields. Never overwrite a status comment whose active claim belongs to another run. A later visit may reactivate this skill's released canonical status comment with a fresh run id and Started timestamp only after the preflight; its old creation id does not outrank an already live candidate.
+First verify the fenced scheduler reservation under its short transaction lock, tracker authorization and claim guards. Persist the plan before an actionable step; elect the candidate first, then assign and verify as above. Post a fresh candidate for each visit through the shared election; never reuse an old comment id for a new claim. Keep the one marker-idempotent status comment for plans and heartbeat, referencing the elected run/comment id. It is informational when backed by that candidate; it never competes as a second candidate. A legacy working status with no candidate link remains a blocker. Do not overwrite a status held by another live run.
 
 1. Verify the winning candidate as above, then `apply_label "in-progress" {pr}` and `unlabel-pr` `ci-monitoring` (the swap back).
-2. Rewrite the status comment's `State:` line to `working — run <RUN_ID> since <ISO-8601>, heartbeat <ISO-8601>`, creating the comment on first visit (`references/report-templates.md`). This comment is the claim comment. It is updated in place, never posted again. Refresh the heartbeat before every stage, so a live run never looks stale.
+2. Rewrite the status comment's `State:` line to `working — run <RUN_ID> since <ISO-8601>, heartbeat <ISO-8601>`, creating the comment on first visit (`references/report-templates.md`). The status comment links the elected candidate and is updated in place. The candidate retains its own identity/state fields; refresh its heartbeat in place as needed. Refresh the heartbeat before every stage, so a live run never looks stale.
 3. Checkpoint the same plan/progress, next action, UTC `nextCheckAt` and semantic `updatedAt` in local JSON and this existing comment before and after every stage (`references/scheduler.md`). Heartbeats stay separate.
 4. Register a trap/finally that releases the claim (below) on every exit path: success, a stage failure, the deadline, or a crash of the orchestrating process.
 
@@ -164,7 +165,7 @@ First verify the fenced scheduler reservation under its short transaction lock, 
 | `replaced` | on the original: remove `in-progress`, `ci-monitoring` and every `automerge-signal-*` | `🔁 replaced by #<n>` |
 | stopped (label removed by a human) | remove `in-progress` and `ci-monitoring` | `stopped — automerge label removed` |
 
-Before releasing, prove the exact run/comment ownership and perform label cleanup while the candidate stays active. Set `Claim-State: released` in the same status comment through **withdraw-claim** as the final tracker mutation and verify it. Failed cleanup remains pending; a loser never removes the winner's label.
+Before releasing, prove the exact run/comment ownership and perform label cleanup while the candidate stays active. Set `Claim-State: released` in the owned candidate comment through **withdraw-claim** as the final tracker mutation and verify it. Failed cleanup remains pending; a loser never removes the winner's label.
 
 Before releasing, recompute/persist the current concrete reason, action owner, retry condition, outcome/schedule and evidence, and mirror it in the same status comment on every visit (`references/scheduler.md`). An unchanged outcome does not retain an obsolete reason. For merged/closed/unauthorized entries, verify the reservation, finalize the same comment and release the owned tracker claim before removing the row in the final bounded transaction. Failed cleanup retains its reserved cleanup-pending row (`references/scheduler.md`). Retain ready/human/blocked ones for scheduled inspection. Never delete pending follow-ups from the separate handoff.
 

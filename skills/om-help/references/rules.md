@@ -15,6 +15,8 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-help specifics
 
+- **Claim role.** This skill takes no claim of its own — its tracker access is read-only (**current-user**, **list-prs**, **get-pr**) and it never mutates tracker items.
+
 - **Interactive — user in the loop.** This skill answers once, may ask one clarifying question, and hands control back. It has no autonomous mode and is never invoked by an `om-auto-*` skill; the "Autonomous run — no user in the loop" rule of those skills does not apply here.
 - **Additional marker.** Besides the shared chaining lines (which this skill normally does not emit — it produces no PR, issue, or spec), it ends every answer with one `Next:` line (exact shape in the skill body's Output contract) — same exactness rules as `PR:`/`Issue:`/`Spec:`: line-anchored, never renamed, translated, or decorated.
 - **Skill names come from discovery.** Every skill name in an answer was found on disk in step 3 or quoted from a repository file (and then marked "not installed" when it was not found). Never fill a gap from memory.

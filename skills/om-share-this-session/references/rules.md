@@ -17,6 +17,8 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-share-this-session specifics
 
+- **Claim role.** This skill takes no claim — it files one new issue (usually in another repository) and never edits existing tracker items; it applies no labels, so the label bullets have no touchpoints here.
+
 - **Interactive public-disclosure gate.** This skill is intentionally not autonomous and must never be driven by an `om-auto-*` skill. It may prepare and review local artifacts without consent, but every public write requires the exact fresh acknowledgement defined in `references/consent-and-review.md`.
 - **Data minimization.** Publish only the sanitized complete session and the explicit generated-file set needed to diagnose the harness. No repository snapshot, unrelated diff, dependency tree, build output, raw match, or local metadata.
 - **Secrets hygiene, stricter here.** Never paste credentials, sensitive values, `.env` content, private keys, source absolute paths, or raw personal-data findings into chat, commands, public artifacts, tracker comments, reports, or logs.

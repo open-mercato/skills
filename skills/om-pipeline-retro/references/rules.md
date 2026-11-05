@@ -17,6 +17,8 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-pipeline-retro specifics
 
+- **Claim role.** This skill takes no claim of its own — it is read-only, so it carries no claim procedure.
+
 - **No claim of its own.** This skill is read-only, so it never claims, never releases, and ships no claim procedure at all. A request still carrying the in-progress label belongs to a run that has not finished: the classifier reports it separately and counts it nowhere.
 
 - **Read-only reporting skill — not an autonomous pipeline run.** It classifies finished runs and reports what they cost, and never merges, edits, comments on, or labels anything; the autonomous-run contract of the `om-auto-*` skills does not apply. When the user picks a cause to act on, hand off to `om-prepare-issue`, which re-derives its own deduplication against existing issues and applies labels on creation.

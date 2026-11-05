@@ -17,6 +17,8 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-backlog specifics
 
+- **Claim role.** Run the three-signal in-progress check before touching an existing issue; this skill takes no claim of its own and never edits an issue another actor is actively working on. Record an adopted claimed issue through the marker comment and the parent epic's checklist only; leave the claimed issue's title and body untouched.
+
 - **Interactive — user in the loop.** The tree is shown and confirmed before any write; this skill has no autonomous mode and must never be driven by an `om-auto-*` skill.
 - **Additional markers.** `Backlog:`, `Issues:`, and `Next:` (exact shapes in the skill body's Output contract) — same exactness rules as `PR:`/`Issue:`/`Spec:`.
 - **Adopt, never duplicate.** Re-runs require a matching source and full id per `references/identity.md`, never a title prefix alone. Adopt unmarked issues only after confirmation; link another source's issue as an external reference without rewriting it.

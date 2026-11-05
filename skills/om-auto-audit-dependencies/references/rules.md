@@ -18,5 +18,7 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-auto-audit-dependencies specifics
 
+- **Claim role.** This skill claims nothing itself — it only files or updates issues; whoever picks an issue up (`om-auto-fix-issue`) claims it.
+
 - The run has no explicitly gated cases: it never claims, never edits the repository, and every tracker mutation is a reversible issue create or body update. Ambiguity (an unrated advisory, a fix that needs a major bump, an issue filed by hand that may or may not be a duplicate) is decided with the most-reversible call and recorded in the report.
 - This skill emits one `Issue:` reference line per issue it filed or updated; it consumes no reference lines.

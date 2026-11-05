@@ -18,6 +18,8 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-auto-issue-triage specifics
 
+- **Claim role.** Role-specific no-claim behavior is defined below.
+
 - **No claim of its own.** This skill only marks confirmed issues; it never edits code or acquires/releases a claim. It reads existing claim signals and skips active or uncertain claims, preserving assignees and local worker ownership.
 - A dry run performs no tracker writes. Application changes only `autofix.label` plus this skill's own idempotent rationale comment; never mutate other labels or issue state.
 - `Issue:` output preserves the selected provider's native identifier. It records a successfully queued issue, not an implementation or PR.

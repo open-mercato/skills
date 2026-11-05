@@ -17,6 +17,8 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 
 ## om-eject-and-customize specifics
 
+- **Claim role.** This skill takes no claim of its own — its tracker access is read-only (**search-issues**, **search-prs**, **get-issue**) and it never mutates tracker items.
+
 - **Interactive — user in the loop.** This skill asks before it changes anything: the step-5 plan needs an explicit yes, and every migration or other state-changing recipe step needs its own. It has no autonomous mode and must never be driven by an `om-auto-*` skill; the "Autonomous run — no user in the loop" rule of the `om-auto-*` skills does not apply here.
 - This skill performs no tracker operations, label mutations, or tracker-item claims, and defines no chaining reference lines — the label-discipline, label-commentary, claim-etiquette, and marker bullets have no touchpoints here but still bind any repo-local extension.
 - **Write scope.** The recipe's landing location, the registration file it names, the eject ledger at `paths.ejectLedger`, and the files the requested customization and its tests need. Never the dependency's install location, and never lockfiles or manifests unless the approved recipe procedure itself changes them.

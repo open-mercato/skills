@@ -2,7 +2,7 @@
 
 > 🧑‍💻 Interactive — acts once, may ask questions, hands control back
 
-Writes and reviews feature specifications to staff-engineer standards. It drafts skeleton-first with a hard Open Questions gate (it stops and waits for your answers before designing), researches against open-source market leaders, and breaks delivery down into phases and testable steps that each leave the app working. Specs that add or change entities include a Mermaid data-model graph by default, with an optional interactive local HTML view. It can also produce a severity-ranked architectural review of an existing spec.
+Writes and reviews feature specifications to staff-engineer standards. It drafts skeleton-first with a hard Open Questions gate (it stops and waits for your answers before designing), researches against open-source market leaders, and breaks delivery down into phases and testable steps that each leave the app working. Specs that add or change entities include a Mermaid data-model graph by default, with an optional interactive local HTML view. It can also produce a severity-ranked architectural review of an existing spec. When the change alters observable behavior, the spec carries a **Delta**: ADDED, MODIFIED, and REMOVED requirements with `WHEN`/`THEN` scenarios. Every changed or removed behavior is frozen by a characterization test before the plan changes it.
 
 ## Parameters
 

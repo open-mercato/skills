@@ -132,6 +132,27 @@ flowchart LR
     implementSpec --> reviewPR
 ```
 
+### 📝 Spec-driven flow in seven verbs
+
+Spec-driven frameworks such as [OpenSpec](https://openspec.dev/) work as propose, apply, archive: agree on the change before writing code, then fold it into a living spec. The pipeline above runs the same loop and adds the gates those frameworks leave to you: review, QA, and merge. Read it as seven verbs, each run by skills this collection already ships:
+
+```
+ Explore ──► Propose ──► Agree ──► Apply ──► Verify ──► Ship ──► Archive
+ (optional)  spec PR     go/no-go  impl PR   review+QA  merge   capabilities + tracker
+```
+
+| Verb | Skills | What you get |
+|---|---|---|
+| **Explore** (optional) | [`om-brainstorm`](docs/skills/om-brainstorm.md) | a routing decision and a brief, or a decision to build nothing |
+| **Propose** | [`om-spec-writing`](docs/skills/om-spec-writing.md) (interactive) · [`om-auto-write-spec`](docs/skills/om-auto-write-spec.md) (autonomous spec PR) | a dated spec: the problem, the design, a **Delta** of ADDED / MODIFIED / REMOVED requirements with `WHEN`/`THEN` scenarios, and a phased plan |
+| **Agree** | [`om-pre-implement-spec`](docs/skills/om-pre-implement-spec.md) · [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md) on the spec PR | a go / conditional / no-go verdict, with autonomous assumptions confirmed by a human |
+| **Apply** | [`om-auto-implement-spec`](docs/skills/om-auto-implement-spec.md) → [`om-auto-create-pr`](docs/skills/om-auto-create-pr.md) (resume: [`om-auto-continue-pr`](docs/skills/om-auto-continue-pr.md)) | an implementation PR. Every MODIFIED or REMOVED behavior is frozen first by a characterization test that passes on the unchanged code, then changed. |
+| **Verify** | [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md) · [`om-auto-qa-pr`](docs/skills/om-auto-qa-pr.md) · [`om-auto-fix-pr`](docs/skills/om-auto-fix-pr.md) | an approving review, browser evidence, and the QA gate |
+| **Ship** | [`om-approve-merge-pr`](docs/skills/om-approve-merge-pr.md) | a squash-merge once every gate holds |
+| **Archive** | the archive step of [`om-auto-implement-spec`](docs/skills/om-auto-implement-spec.md) · [`om-close-fixed-issues`](docs/skills/om-close-fixed-issues.md) | the Delta applied to `.ai/specs/capabilities/<capability>.md` in the same PR, so the living spec changes when the code merges. The tracker is reconciled afterwards. |
+
+Bugs take the short path, with no proposal: [`om-auto-fix-issue`](docs/skills/om-auto-fix-issue.md) runs verify, root cause, and fix, then joins at **Verify**. For a feature it runs Propose → Apply → Verify in one command.
+
 ## 🧪 Stop before the PR
 
 The agent harness is an additive path for teams that want the same isolated

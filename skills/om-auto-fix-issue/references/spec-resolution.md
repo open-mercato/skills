@@ -5,7 +5,7 @@ The one procedure for turning a `{spec}` reference into a concrete spec file —
 Try in order; first hit wins:
 
 1. **Path** — `{spec}` is an existing repo-relative file path (under `$SPECS_DIR` or elsewhere): use it directly.
-2. **Name/slug in `$SPECS_DIR`** — case-insensitive match of `{spec}` against filenames (with or without the `YYYY-MM-DD-` prefix and `.md`) and against each spec's `# {Title}` line. One match → use it. Multiple matches → pick the newest by filename date **only** when its title matches unambiguously; otherwise treat as not found and list the matches as candidates.
+2. **Name/slug in `$SPECS_DIR`** — case-insensitive match of `{spec}` against filenames (with or without the `YYYY-MM-DD-` prefix and `.md`) and against each spec's `# {Title}` line. One match → use it. Multiple matches → pick the newest by filename date **only** when its title matches unambiguously; otherwise treat as not found and list the matches as candidates. Files under `$SPECS_DIR/capabilities/` are living capability specs (the Delta archive target), never change specs: exclude them from this match.
 3. **Issue id** — when `{spec}` is numeric, **get-issue**: scan the issue body and comments for links/paths to `$SPECS_DIR` files or spec-PR references. Record `ISSUE_ID` for PR linkage.
 4. **Spec PR** — when `{spec}` is numeric and step 3 found nothing (or points at a PR), **get-pr**: if the PR's branch adds a file under `$SPECS_DIR`, use that file and set `SPEC_PR`. Also run **search-prs** for open PRs referencing the resolved spec path — an open spec PR means the spec is in flight (set `SPEC_PR`; the spec PR stays design-only — implementation ships on its own PR referencing it).
 

@@ -113,6 +113,17 @@ Cross-repository targets need no extra flags: `tracker_repo` resolves `$REPO` wh
 
 Read the labels back (`gh pr view {prNumber} --json labels`) whenever the label state gates a later decision — a mutation the guard logged as skipped is a normal outcome, and a run that assumes it landed will branch wrongly.
 
+## Bot assignment limitations
+
+A GitHub App installation token may be unable to assign its own `[bot]` account.
+A confirmed assignment restriction permits the skill's bot-assignment fallback:
+use the verified `in-progress` label as the claim flag and retain a timestamped
+claim comment identifying the bot and run/chain. A generic HTTP 403 alone does
+not establish this restriction; distinguish endpoint permissions from an
+unassignable account. Do not change authentication or request a user token just
+to self-assign. Existing claims, label/comment permissions and other gates still
+apply; never remove human assignees during bot-claim cleanup.
+
 ## Operations
 
 ### Identity and repository

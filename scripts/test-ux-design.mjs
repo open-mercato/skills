@@ -11,7 +11,7 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, relative, resolve } from 'node:path'
+import { dirname, join, relative, resolve } from 'node:path'
 import { test } from 'node:test'
 
 import {
@@ -216,9 +216,13 @@ test('drift comparison is order-insensitive and catches missing, changed, and st
 test('repository root resolves through git with a stated working-directory fallback', () => {
   assert.equal(resolveRepoRoot(repoRoot), repoRoot)
   const outsideGit = mkdtempSync(join(tmpdir(), 'om-no-git-'))
+  const previousCeilingDirectories = process.env.GIT_CEILING_DIRECTORIES
   try {
+    process.env.GIT_CEILING_DIRECTORIES = dirname(outsideGit)
     assert.equal(resolveRepoRoot(outsideGit), outsideGit)
   } finally {
+    if (previousCeilingDirectories === undefined) delete process.env.GIT_CEILING_DIRECTORIES
+    else process.env.GIT_CEILING_DIRECTORIES = previousCeilingDirectories
     rmSync(outsideGit, { recursive: true, force: true })
   }
 })

@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "skill": {
+    "name": "om-code-review",
+    "repository": "../..",
+    "baseline": "REPLACE_BASELINE_COMMIT",
+    "candidate": "REPLACE_CANDIDATE_COMMIT"
+  },
+  "models": [
+    { "name": "gpt-6.1-sol", "reasoningEffort": "high" },
+    { "name": "gpt-6-luna", "reasoningEffort": "high" }
+  ],
+  "repetitions": 3,
+  "concurrency": 1,
+  "order": "interleaved",
+  "codex": { "executable": "codex", "timeoutSeconds": 1800, "maxOutputBytesPerStream": 16777216 },
+  "cases": [
+    {
+      "id": "change-001",
+      "task": "Review the frozen source change. Return the review description, evidence-backed findings, proposed actions and limitations without publishing or changing files.",
+      "source": {
+        "repository": "../../../project-under-test",
+        "base": "REPLACE_BASE_COMMIT",
+        "head": "REPLACE_HEAD_COMMIT"
+      }
+    }
+  ]
+}

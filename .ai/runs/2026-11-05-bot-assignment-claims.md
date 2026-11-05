@@ -20,4 +20,4 @@ PR: #173
 
 - [x] 1.1 Update shared and inline claim instructions across skills. — 1815edb
 - [x] 1.2 Run configured validation and review the final diff. — 1815edb; 10/10 configured checks and merge-buddy suite passed; independent review approved.
-- [ ] 1.3 Finalize PR and report evidence.
+- [x] 1.3 Finalize PR and report evidence. — PR #173; review, verification and label rationale posted; formal self-approval unavailable.

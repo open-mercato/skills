@@ -50,7 +50,7 @@ Comment visibility is eventually consistent; bounded repeated verification narro
 - [x] 4.1 Add GitLab and Forgejo atomic acquisition/read/release with provider-specific targets
 - [x] 4.2 Audit Linear/Jira fallback and synchronize claim contracts and upgrade guidance
 - [x] 4.3 Run provider concurrency regressions, full validation and independent review
-- [ ] 4.4 Publish the reviewed follow-up to PR #176 when authorized
+- [x] 4.4 Publish the reviewed follow-up to PR #176 when authorized — f04a2a8
 
 ## Shared-copy synchronization
 
@@ -105,4 +105,4 @@ fetch-cost major and found no further defects after that correction. Actual
 hosted GitLab/Forgejo behavior is not live-tested here; real-Git transport plus
 mocked target APIs cover the shipped helpers. Human QA remains required.
 
-Final independent review: APPROVE after raw-header parent rejection and empty-tree regressions. All configured validation commands pass. Step 4.4 awaits the cockpit-required approval before pushing to the existing shared PR branch.
+Final independent review: APPROVE after raw-header parent rejection and empty-tree regressions. All configured validation commands pass. The operator explicitly approved publishing to PR #176; the verified implementation is f04a2a8.

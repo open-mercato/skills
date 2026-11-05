@@ -5,7 +5,7 @@ How `om-pre-implement-spec` turns a `{spec}` reference into exactly one spec fil
 Try in order; first hit wins:
 
 1. **Path** — `{spec}` is an existing repo-relative file (under `$SPECS_DIR` or elsewhere; path-safety rules in `references/agentic-setup.md`): use it directly.
-2. **Name/slug in `$SPECS_DIR`** — case-insensitive match of `{spec}` against filenames (with or without the `YYYY-MM-DD-` prefix and `.md`, subdirectories included) and against each spec's `# {Title}` line. One match → use it. Several → pick the newest by filename date **only** when its title matches unambiguously; otherwise they are candidates.
+2. **Name/slug in `$SPECS_DIR`** — case-insensitive match of `{spec}` against filenames (with or without the `YYYY-MM-DD-` prefix and `.md`, subdirectories included) and against each spec's `# {Title}` line. One match → use it. Several → pick the newest by filename date **only** when its title matches unambiguously; otherwise they are candidates. Files under `$SPECS_DIR/capabilities/` are living capability specs (the Delta archive target), never change specs: exclude them from this match.
 3. **Issue id** — `{spec}` is numeric: **get-issue**, scan the body and comments for links or paths to `$SPECS_DIR` files or spec-PR references. Record `ISSUE_ID` for the report header.
 4. **Spec PR** — `{spec}` is numeric and step 3 found nothing (or pointed at a PR): **get-pr** + **get-pr-files**; when the PR adds or changes a file under `$SPECS_DIR`, audit that file as it stands on the PR head and record `SPEC_PR`. Also run **search-prs** for open PRs referencing the resolved path — an open spec PR means the spec is still in flight; audit its head, not the base copy.
 

@@ -15,7 +15,7 @@ All installed claim procedures and their inline consumers; tracker contracts, SD
 2.2 Review the PR, apply findings, publish evidence and hand off ready for review.
 
 ## Decisions
-Use comment election rather than repository refs: the reversible choice needs no additional contents-write permission or persistent Git objects in consumer repositories. Keep losing comments as explicitly withdrawn audit records. Keep legacy claim prefixes and append machine-readable identity/state fields. User explicitly requested all skills, authorizing shared-reference synchronization.
+Superseded by the operator: use atomic create-only Git ref locks on GitHub. Comments retain run/comment ids as additional audit evidence. Comment election is the fallback only where the tracker has no atomic primitive. Keep losing comments as explicitly withdrawn audit records. Keep legacy claim prefixes and append machine-readable identity/state fields. User explicitly requested all skills, authorizing shared-reference synchronization.
 
 User follow-up: add human-only GitHub UI `claim-reset` recovery with audited cutoff and cooperative revocation; preserve all other gates.
 
@@ -57,3 +57,13 @@ All ten configured validation commands pass (lint rerun after token-budget, role
 Independent review of 588db96 found a major split-provider cleanup gap: Linear/Jira PR candidates could be elected on GitHub but withdrawn through issue-local operations. Added explicit kind/item-aware PR delegation for withdrawal, ownership verification and read-back, plus code-host-local fallback for older companions. Issue cleanup retains provider-specific handles. Added regression checks for all four routing requirements. No reviewer branch changes were merged (read-only review).
 
 Final re-review: cezar task ffa8d6e3 approved root a4847d3 after verifying the prior major; no remaining blockers. Parent reran all ten configured commands after the routing fix: every command exited 0. Final README/skill-catalog edits document the already-reviewed behavior; manually reviewed. PR #176 contains the full validation/review evidence. Human GitHub UI reset remains a requested manual QA check; no live human reset was performed.
+
+## Atomic-lock follow-up (operator correction)
+
+GitHub uses `refs/om-locks/{kind}-{number}` pointing to a unique metadata commit carrying the authenticated actor, run id, item and server creation time. Create-only ref creation selects one owner. Release and UI/stale recovery compare-and-delete the exact observed SHA through Git lease semantics, so stale cleanup cannot delete a successor. Recovery never bypasses a new create-only race. Keep comment ids/state and verified `in-progress`, all-skill synchronization and split-provider routing. No silent GitHub fallback on permissions/API failure or old descriptors.
+
+### Phase 3: Atomic GitHub ownership
+
+- [ ] 3.1 Add atomic acquire/read/release operations and synchronize skill/docs consumers
+- [ ] 3.2 Test acquisition races, owner release and reset fencing locally and live
+- [ ] 3.3 Independent review, full gate and update the existing PR

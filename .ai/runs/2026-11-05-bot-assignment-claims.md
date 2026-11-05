@@ -19,5 +19,5 @@ Bot accounts share an identity across runs: claim comments must identify the run
 PR: #173
 
 - [x] 1.1 Update shared and inline claim instructions across skills. — 1815edb
-- [ ] 1.2 Run configured validation and review the final diff.
+- [x] 1.2 Run configured validation and review the final diff. — 1815edb; 10/10 configured checks and merge-buddy suite passed; independent review approved.
 - [ ] 1.3 Finalize PR and report evidence.

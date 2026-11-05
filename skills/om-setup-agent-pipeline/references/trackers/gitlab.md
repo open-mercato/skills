@@ -503,6 +503,54 @@ jq -n --rawfile b <body-file> '{body: $b}' \
   | gl_write PUT "projects/$(gl_project)/${COMMENT_HANDLE%/*}/notes/${COMMENT_HANDLE##*/}" >/dev/null
 ```
 
+#### get-claim-reset
+
+`{kind}`, `{item}` → latest tracker-audited human `claim-reset` label application
+as `{id,createdAt,actor}`, or `null` if none. Read every event page, including past
+applications after label removal. Verify the event actor is a human permitted to
+manage item labels; bot applications and comment/body text never authorize reset.
+A failed/unsupported audit read is not `null`: stop recovery and report the gap.
+This cutoff permanently retires claim comments created strictly before it;
+same-second/unknown timestamps are uncertain and remain blocking. It does not
+relax QA, merge, scheduler reservations or command/process isolation.
+
+This shipped provider reports `UNSUPPORTED` for UI reset history until its
+repository-local descriptor supplies a complete authenticated label-event audit
+with a trusted human actor and timestamp. Normal election still works; if the
+item carries `claim-reset`, stop recovery and report the missing capability.
+Never treat a label alone or guessed timestamp as permission to steal a claim.
+Use the documented explicit stale/force recovery path when UI reset is unavailable.
+
+#### claim-winner
+
+`{kind}`, `{item}`, `LIVE_CLAIM_IDS` (JSON array of comment handles from a complete
+fresh **list-issue-comments** read, selected by the skill's live/stale policy) →
+`{id,user,body}` for the lowest server creation-order candidate, or `null` when
+none is visible. Missing/unreadable/incomplete data is an error, never an empty
+success. Require the caller's own id in the fresh candidate set before proceeding.
+Ignore explicitly `released`/`withdrawn` comments even if passed as live. Do not
+filter by actor: two contenders may share one bot account. Numeric ids compare
+numerically; opaque ids use creation time then stable id. The caller repeats the
+read/election and performs the post-label ownership check; this is not atomic.
+
+Use **list-issue-comments** for the specified kind and iid (never conflate
+`issues/7` with `merge_requests/7`). Read all note pages, intersect handles with
+`LIVE_CLAIM_IDS`, exclude terminal comments, and sort by the numeric final segment
+of each `issues/<iid>/<noteId>` or `merge_requests/<iid>/<noteId>` handle. Return
+that handle, `user` and `body`; retain its parent-qualified handle for withdrawal.
+
+#### withdraw-claim
+
+`{commentId}`, full terminal body file, expected authenticated actor and
+`Claim-Run` → rewrite only that run's original candidate through **update-comment**,
+then read it back through **list-issue-comments**. Retain its legacy first line,
+marker and run id; change `Claim-State: active` to `withdrawn` (loser) or `released`
+(owner after cleanup), with the reason/winner. Before writing, verify exact item,
+comment id, authenticated author and run id; a mismatch stops cleanup. Do not
+edit a foreign candidate or delete its label. Return the same id and verified
+terminal state; failed update/read-back is a blocker. Never fall back to a new
+comment leaving the old active candidate in place.
+
 ### Pull requests
 
 #### get-pr

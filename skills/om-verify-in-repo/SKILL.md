@@ -23,6 +23,8 @@ Do not edit files. Do not run mutating tracker operations (no issue edits, comme
 
 ## Workflow
 
+**Claims:** Load `references/claim-pr.md` before claim mutations; its election, run identity, reset and owned-release rules govern every step below.
+
 **ALWAYS check first:** Apply `.ai/skills/om-verify-in-repo/SKILL.md` when present; safety rules still win.
 
 Run the checks in order. The first one that triggers a stop wins.
@@ -33,8 +35,8 @@ Run the checks in order. The first one that triggers a stop wins.
 
 2. **Is it already in progress by someone else?** The issue is **already in progress** when ANY of:
 
-   - It carries the `in-progress` label AND its assignees do not include the current user (resolve via the tracker operation **current-user**)
-   - A `🤖`-prefixed claim comment newer than 30 minutes exists from a different actor
+   - It carries `in-progress` without proof of this run's owned comment id (resolve identity via **current-user**)
+   - A `🤖`-prefixed claim comment newer than 30 minutes exists from a different or unknown run (including the same bot login)
 
    If in-progress by another actor, stop with `NO_ACTION_NEEDED` and name the owner in your reason.
 

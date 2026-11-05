@@ -1,5 +1,34 @@
 # Upgrade notes
 
+## Run-identified claim election (issue #127)
+
+Refresh every claiming skill and the tracker descriptors together. Claims now post
+a candidate before assignment or labels, elect a deterministic winner from complete
+fresh reads, and retain verified `in-progress` as a mandatory second check. Bot
+accounts with confirmed blocked self-assignment omit only the assignment. Another
+run sharing the same login is a competitor, never automatic re-entry.
+
+New additive operations: **get-claim-reset**, **claim-winner** and **withdraw-claim**, implemented or
+delegated by every shipped provider and the template. Update committed custom
+`.ai/trackers/` copies via `om-apply-upgrade-notes`; report gaps without overwriting
+customizations. Older descriptors can elect locally through complete
+**list-issue-comments** and terminate the owned comment through **update-comment**.
+Stop if complete listing or in-place updates cannot be verified. GitHub comment
+listing now paginates and returns creation/update timestamps.
+
+Legacy first lines remain readable; new comments append `Claim-Run`, `Claim-Actor`
+and `Claim-State`. Persist/pass the run id and original comment id during chaining;
+legacy claims with no run id require explicit recovery, not same-login adoption.
+Losing comments remain as withdrawn audit records; release marks the original
+candidate released after owned label cleanup. No new Git refs. Add the optional human-only `claim-reset` meta label (setup now provisions it). Stop the stalled runner, then apply it from GitHub Labels; audited human events retire older candidates while new runs still elect normally. Historical resets survive label removal; remove/reapply for another reset. GitHub UI reset requires the new audit operation; other providers explicitly report unsupported recovery until extended. Local live reservations and other gates remain binding.
+Unlike the previous logged-skip behavior, disabled/missing `in-progress` now blocks
+claim acquisition. Provision/enable that label before autonomous work.
+
+Comment election retains eventual-consistency and simultaneous-recovery races
+(duplicated work, not data loss). Repeated verification reduces but cannot remove
+those limits; old installed claimers do not participate in election.
+
+
 Upgrading the skills themselves is easy — re-run `npx skills add open-mercato/skills --skill '*'`
 (or `git pull` in a symlinked local checkout) and the new skill instructions are live on the next
 invocation. What does **not** auto-update is everything a skill previously **installed into your

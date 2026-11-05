@@ -17,6 +17,8 @@ All installed claim procedures and their inline consumers; tracker contracts, SD
 ## Decisions
 Use comment election rather than repository refs: the reversible choice needs no additional contents-write permission or persistent Git objects in consumer repositories. Keep losing comments as explicitly withdrawn audit records. Keep legacy claim prefixes and append machine-readable identity/state fields. User explicitly requested all skills, authorizing shared-reference synchronization.
 
+User follow-up: add human-only GitHub UI `claim-reset` recovery with audited cutoff and cooperative revocation; preserve all other gates.
+
 ## Non-goals
 Change stale windows, QA or merge gates, deploy, merge to base, or add scheduling.
 
@@ -36,3 +38,7 @@ Comment visibility is eventually consistent; bounded repeated verification narro
 
 - [ ] 2.1 Validate races, lifecycle and full configured gate
 - [ ] 2.2 Review and publish the completed PR
+
+## Shared-copy synchronization
+
+User requested all skills. Updated claim procedures in: `om-auto-continue-pr`, `om-auto-continue-pr-loop`, `om-auto-create-pr`, `om-auto-create-pr-loop`, `om-auto-fix-issue`, `om-auto-fix-pr`, `om-auto-manage-issues`, `om-auto-merge-buddy`, `om-auto-qa-pr`, `om-auto-review-pr`, `om-auto-write-spec`, `om-close-fixed-issues`, `om-fix`, `om-fix-issue`, `om-fix-issue-multi`, `om-fix-issue-multi-optimized`, `om-fix-issue-optimized`, `om-harness`, `om-implement-feature`, `om-implement-feature-multi`, `om-implement-feature-multi-optimized`, `om-implement-feature-optimized`, `om-open-pr`, `om-pr-autopilot`, `om-review-prs`, `om-setup-agent-harness`, `om-verify-in-repo`. Shared claim-etiquette rules are synchronized in every copy carrying them; no other shared rules changed.

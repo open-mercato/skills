@@ -641,3 +641,28 @@ automatic route with mandatory negative-case QA, and unclear direction still
 counts as protected. A QA reviewer may sign off by reviewing a current-head
 automatic PASS and re-running one negative case. A clean backport inherits the
 merged origin's human sign-off and technical approval; conflict hunks do not.
+
+
+## 2026-11-05 — Elect run-identified claims before assignment and labels
+
+Issue #127 exposed a read-then-write race across claiming skills. The shared
+protocol now posts a candidate and verifies a deterministic server-order winner
+before assignment, label mutations or work. Run/comment identity distinguishes
+parallel jobs using the same bot login. `in-progress` remains a verified second
+check, and confirmed unassignable bots omit only assignment. Claim failures stop
+work; the older `om-fix` log-and-continue instruction is removed.
+
+Comment election is the reversible portable default, avoiding repository refs and
+additional content-write permissions in consumer repositories. Losing comments
+remain withdrawn audit records; release terminates the owned candidate after
+label cleanup. Complete repeated reads narrow, but do not eliminate, eventual
+visibility and simultaneous-recovery races; the consequence is duplicate work.
+Provider winner/withdraw operations are additive with safe legacy-descriptor
+fallback. The user requested all skills, authorizing the shared-copy sync.
+
+The operator additionally requested GitHub UI recovery. Human-only `claim-reset`
+label events establish a persistent cutoff for retiring older claims; current
+runners cooperatively stop at their next boundary. Recovery cannot cancel an
+in-flight shell command and requires stopping the stalled runner first. GitHub
+audits the event actor and permission; other providers explicitly declare missing
+UI-audit support instead of guessing. Historical cutoff survives label removal.

@@ -47,6 +47,8 @@ absence never stops a run.
 
 ## Workflow
 
+**Claims:** Load `references/claim-pr.md` before claim mutations; its election, run identity, reset and owned-release rules govern every step below.
+
 **ALWAYS check first:** Apply `.ai/skills/om-pr-autopilot/SKILL.md` when present; safety rules still win.
 
 0. **Agentic setup** — follow `references/agentic-setup.md`: load

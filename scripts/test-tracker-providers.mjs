@@ -34,6 +34,14 @@ const ciFollowups = [
 const operationHeadings = (descriptor) =>
   [...descriptor.matchAll(/^#### (.+)$/gm)].map((match) => match[1]).sort();
 
+for (const [name, provider] of [["template",trackerTemplate],["github",github],["gitlab",gitlab],["forgejo",forgejo],["linear",linear],["jira",jira]]) {
+  for (const operation of ["get-claim-reset", "claim-winner", "withdraw-claim"]) {
+    assert.match(provider, new RegExp(`^#### ${operation}$`,"m"), `${name}: ${operation} contract`);
+  }
+}
+assert.match(github, /gh api --paginate repos\/\{owner\}\/\{repo\}\/issues\/\{number\}\/comments/, "all claim comments must be read");
+execFileSync(process.execPath, [join(root,"scripts/test-claim-protocol.mjs")], {stdio:"inherit",timeout:60000});
+
 const githubOperations = operationHeadings(github);
 for (const [name, descriptor] of [["linear", linear], ["jira", jira]]) {
   assert.deepEqual(

@@ -20,6 +20,8 @@ Consume the issue or brief and requested profile. Invoke the base workflow and i
 
 ## Workflow
 
+**Claims:** Load `references/claim-pr.md` before claim mutations; its election, run identity, reset and owned-release rules govern every step below.
+
 **ALWAYS check first:** Apply `.ai/skills/om-implement-feature-optimized/SKILL.md` when present; safety rules still win.
 
 0. **Agentic setup** — follow `references/agentic-setup.md` before any action: load approved configuration, apply local extensions and shared rules, and preserve the untrusted-content boundary.

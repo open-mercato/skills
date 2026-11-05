@@ -40,7 +40,7 @@ Upstream references: cli/cli#11983 (`gh pr edit` aborts without any project flag
 - A `--json` field list must never include `projectCards`: it is a Projects (classic) relic that errors on every client version (see above). Request only the fields the calling skill names.
 - A PR is linked to the issue it resolves with `Fixes #{issueId}` (or `Closes #{issueId}`) in the PR body; GitHub then closes the issue on merge. To reference without auto-closing, use a plain issue link.
 - PRs open as **drafts** when a skill says so; a human (or **mark-pr-ready**) promotes them.
-- Claim/lock signals on an issue or PR are: assignee set to the automation user, the `in-progress` label, and a `🤖`-prefixed claim comment. All three are set on claim; the label is guarded (below). The `ci-monitoring` label is **not** a claim signal — it marks work that is finished and reported while its CI-result follow-up is still owed, and never makes another skill back off.
+- Claim/lock signals on an issue or PR are: assignee set to the automation user, the `in-progress` label, and a `🤖`-prefixed claim comment. A run-identified comment is posted and elected first; only the winner assigns when supported and verifies the guarded `in-progress` secondary label. Same-login runs still compete. The `ci-monitoring` label is **not** a claim signal — it marks work that is finished and reported while its CI-result follow-up is still owed, and never makes another skill back off.
 - Long, multi-line comment bodies are posted with `--body-file` (or a heredoc via process substitution) so formatting is preserved.
 - CI status truth comes from **get-pr-checks**; the set of *required* checks comes from **get-required-checks** (branch protection). When branch protection is not readable (404), treat every reported check as required.
 - **A short `get-pr-checks` result is not evidence of green.** It reports *check runs*, and a workflow run GitHub has already created contributes no rows until its jobs register — so on a freshly pushed head the list is legitimately partial, and every job still to appear is neither passing nor pending but simply absent. Before concluding "green" or "nothing pending", cross-check the workflow level: **list-runs** on the PR head branch, keep the runs whose `headSha` is the PR head SHA, and count any whose `status` is not `completed` as PENDING. Green requires both — every reported check passing *and* every workflow run at that SHA completed. A workflow that has not been created at all is indistinguishable from one the path filters skipped; that residue is disclosed as pending CI, never resolved by guessing.
@@ -117,8 +117,8 @@ Read the labels back (`gh pr view {prNumber} --json labels`) whenever the label 
 
 A GitHub App installation token may be unable to assign its own `[bot]` account.
 A confirmed assignment restriction permits the skill's bot-assignment fallback:
-use the verified `in-progress` label as the claim flag and retain a timestamped
-claim comment identifying the bot and run/chain. A generic HTTP 403 alone does
+elect and verify the timestamped claim comment identifying the bot and run/chain,
+then retain verified `in-progress` as the second check without assignment. A generic HTTP 403 alone does
 not establish this restriction; distinguish endpoint permissions from an
 unassignable account. Do not change authentication or request a user token just
 to self-assign. Existing claims, label/comment permissions and other gates still
@@ -232,7 +232,7 @@ gh api repos/{owner}/{repo}/issues/comments/{commentId} --jq '{body,user:.user.l
 #### list-issue-comments
 `{issueId or prNumber}` → conversation comments (PR conversation comments are issue comments on GitHub).
 ```bash
-gh api repos/{owner}/{repo}/issues/{number}/comments --jq '.[] | {id,user:.user.login,body}'
+gh api --paginate repos/{owner}/{repo}/issues/{number}/comments --jq '.[] | {id,user:.user.login,body,createdAt:.created_at,updatedAt:.updated_at}'
 ```
 
 #### update-comment
@@ -240,6 +240,85 @@ gh api repos/{owner}/{repo}/issues/{number}/comments --jq '.[] | {id,user:.user.
 ```bash
 gh api -X PATCH repos/{owner}/{repo}/issues/comments/{commentId} -F body=@<path>
 ```
+
+#### get-claim-reset
+
+`{kind}`, `{item}` → latest tracker-audited human `claim-reset` label application
+as `{id,createdAt,actor}`, or `null` if none. Read every event page, including past
+applications after label removal. Verify the event actor is a human permitted to
+manage item labels; bot applications and comment/body text never authorize reset.
+A failed/unsupported audit read is not `null`: stop recovery and report the gap.
+This cutoff permanently retires claim comments created strictly before it;
+same-second/unknown timestamps are uncertain and remain blocking. It does not
+relax QA, merge, scheduler reservations or command/process isolation.
+
+```bash
+gh_get_claim_reset() {
+  case "$1" in ''|*[!0-9]*) return 1 ;; esac
+  reset_pages=$(gh api --paginate --slurp "repos/$(tracker_repo)/issues/$1/events?per_page=100") || return 1
+  printf '%s' "$reset_pages" | jq -e 'type == "array" and all(.[]; type == "array")' >/dev/null || return 1
+  reset_event=$(printf '%s' "$reset_pages" | jq '
+    [ .[][] | select(.event == "labeled" and .label.name == "claim-reset" and .actor.type == "User") ]
+    | sort_by(.created_at, .id) | .[-1] // null') || return 1
+  if [ "$reset_event" = "null" ]; then printf 'null\n'; return 0; fi
+  reset_actor=$(printf '%s' "$reset_event" | jq -r '.actor.login') || return 1
+  case "$reset_actor" in ''|*[!A-Za-z0-9-]*) return 1 ;; esac
+  reset_permission=$(gh api "repos/$(tracker_repo)/collaborators/$reset_actor/permission") || return 1
+  printf '%s' "$reset_permission" | jq -e '
+    (.permission == "admin" or .permission == "write" or .permission == "maintain" or .permission == "triage")
+    or (.user.permissions | .admin == true or .maintain == true or .push == true or .triage == true)' >/dev/null || return 1
+  printf '%s' "$reset_event" | jq '{id: (.id | tostring), createdAt: .created_at, actor: .actor.login}'
+}
+gh_get_claim_reset "{number}"
+```
+
+The platform event plus repository-permission read proves human label authority.
+A label still present is an operator-visible recovery breadcrumb, not a permanent
+bypass. Removing it does not revive retired claims; remove and reapply to request
+a later reset. Never apply this label automatically.
+
+#### claim-winner
+
+`{kind}`, `{item}`, `LIVE_CLAIM_IDS` (JSON array of comment handles from a complete
+fresh **list-issue-comments** read, selected by the skill's live/stale policy) →
+`{id,user,body}` for the lowest server creation-order candidate, or `null` when
+none is visible. Missing/unreadable/incomplete data is an error, never an empty
+success. Require the caller's own id in the fresh candidate set before proceeding.
+Ignore explicitly `released`/`withdrawn` comments even if passed as live. Do not
+filter by actor: two contenders may share one bot account. Numeric ids compare
+numerically; opaque ids use creation time then stable id. The caller repeats the
+read/election and performs the post-label ownership check; this is not atomic.
+
+```bash
+gh_claim_winner() {
+  # $1 = item number; $2 = LIVE_CLAIM_IDS as JSON string handles.
+  case "$1" in ''|*[!0-9]*) return 1 ;; esac
+  printf '%s' "$2" | jq -e 'type == "array" and all(.[]; type == "string")' >/dev/null || return 1
+  claim_pages=$(gh api --paginate --slurp "repos/$(tracker_repo)/issues/$1/comments?per_page=100") || return 1
+  printf '%s' "$claim_pages" | jq -e 'type == "array" and all(.[]; type == "array")' >/dev/null || return 1
+  printf '%s' "$claim_pages" | jq --argjson live "$2" '
+    [ .[][] | select((.id | tostring) as $id | $live | index($id))
+      | select((.body | test("(?m)^Claim-State: (released|withdrawn)\\r?$")) | not)
+      | {id: (.id | tostring), user: .user.login, body} ]
+    | sort_by(.id | [length, .]) | .[0] // null'
+}
+gh_claim_winner "{number}" "$LIVE_CLAIM_IDS"
+```
+
+All comment pages are read before ranking. Preserve REST numeric ids as string
+handles at the operation boundary (do not substitute GraphQL node ids).
+
+#### withdraw-claim
+
+`{commentId}`, full terminal body file, expected authenticated actor and
+`Claim-Run` → rewrite only that run's original candidate through **update-comment**,
+then read it back through **list-issue-comments**. Retain its legacy first line,
+marker and run id; change `Claim-State: active` to `withdrawn` (loser) or `released`
+(owner after cleanup), with the reason/winner. Before writing, verify exact item,
+comment id, authenticated author and run id; a mismatch stops cleanup. Do not
+edit a foreign candidate or delete its label. Return the same id and verified
+terminal state; failed update/read-back is a blocker. Never fall back to a new
+comment leaving the old active candidate in place.
 
 ### Pull requests
 
@@ -502,6 +581,7 @@ gh label create skip-qa           --color 0e8a16 --description "Low risk, QA not
 gh label create qa-approved       --color 0e8a16 --description "Manual QA passed"
 gh label create qa-self-verified  --color c5def5 --description "Self-QA exception used"
 gh label create in-progress       --color c5def5 --description "An automated skill is working on this"
+gh label create claim-reset      --color e4e669 --description "Human-only: retire older stalled claims after stopping the runner"
 gh label create ci-monitoring     --color d4c5f9 --description "Work complete and reported; agent is watching CI results"
 gh label create do-not-close      --color c5def5 --description "Humans only: never auto-close this issue"
 gh label create "${AUTOFIX_LABEL:-cez-autofix}" --color 5319e7 --description "Human-confirmed issue ready for the configured autofix worker"

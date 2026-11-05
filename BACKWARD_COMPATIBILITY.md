@@ -38,6 +38,16 @@ The named operations (**get-issue**, **create-pr**, **comment-pr**, **merge-pr**
 - **Breaking:** renaming an operation, changing an operation's inputs/outputs, removing a guard, referencing a new operation from a skill without adding it to the template and shipped descriptors.
 - **Required path:** add new operations to `TEMPLATE.md` and every shipped descriptor in the same PR; skills must degrade gracefully (documented fallback) when running against an older descriptor copy that lacks a newly added operation.
 
+The claim-election additions retain legacy comment prefixes and append run/state
+fields. Consumers must still recognize legacy active claims as foreign/uncertain;
+same-login re-entry requires a verified run id/comment id. New **get-claim-reset**, **claim-winner**
+and **withdraw-claim** operations fall back to complete **list-issue-comments**
+and **update-comment** for older custom descriptors. All claiming skills upgrade
+together; a descriptor without safe listing/editing stops rather than proceeding.
+Verified `in-progress` is the secondary acquisition guard, including when bot
+assignment is unavailable; missing/disabled labels now block acquisition. The optional human-only `claim-reset` meta label adds audited UI recovery; older descriptors block requested recovery until upgraded. Existing
+config keys and stale windows remain unchanged. See `UPGRADE_NOTES.md` for rollout.
+
 ### 4. The browser-provider operations contract
 
 The named browser operations (**ensure-installed**, **doctor**, **open**,

@@ -1,6 +1,6 @@
 ---
 name: om-merge-buddy
-description: Scan open pull requests via the configured tracker, classify merge readiness from labels, reviews, CI, and mergeability, then report which PRs can merge now and which ones are close but blocked.
+description: Use when you need a read-only view of which PRs can merge, e.g. 'what is ready to merge?'. Scan open PRs through the configured tracker, assess labels, reviews, CI, and mergeability, then report ready PRs and those close but blocked.
 ---
 
 # Merge Buddy

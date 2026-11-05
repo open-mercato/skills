@@ -1,6 +1,6 @@
 ---
 name: om-auto-manage-issues
-description: Bring existing tracker issues up to standard without implementing anything — applies missing SDLC labels, clarifies laconic issues (analyzing attached screenshots), posts a read-only implementation-prep analysis, checks each issue against SDLC.md's Definition of Ready (READY_STATUS, not-ready comment), and flags feature issues lacking a covering spec (optionally authoring one with --write-missing-specs). Single issue or a batch (last ~25 open, worst-described first). Idempotent, claim-aware.
+description: Use when existing issues need triage or clearer requirements, e.g. 'clean up these issues'. Apply SDLC labels, clarify issues and screenshots, post prep analysis, check Definition of Ready, and flag missing feature specs; optionally write them with --write-missing-specs. Handle one issue or a batch, respecting claims; do not implement.
 ---
 
 # Auto Manage Issues (enrich existing issues)

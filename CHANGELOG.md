@@ -1,21 +1,78 @@
-# Unreleased
+# 1.2.0 (2026-11-05)
 
-## Features
+## Highlights
 
-- Add `om-ux-design` for detailed screens from specifications, with repository
-  component reuse, optional portable HTML, review feedback and verified handoff.
-  Preserve the separate discovery prototype workflow.
+Expand discovery and design with synthetic-user panels, neutral prototypes and detailed UX screens. Add GitLab, Forgejo, Linear and Jira tracker support, plus an opt-in staged delivery harness with multi-model review. Improve release delivery with an evidence-driven merge queue, human-confirmed triage, complex QA and verified AI-context archives.
 
-## Fixes
+## ✨ Features
+- ✨ Add Linear and Jira tracker descriptors. (#88) *(@pkarw)*
+- ✨ Add `om-discover` for product discovery and a Definition of Ready. (#109) *(@matgren)*
+- ✨ Add discovery setup, synthetic-user panels, neutral prototypes and backlog preparation. (#107) *(@zielivia)*
+- ✨ Add `om-qa-buddy` for guided manual QA. (#115) *(@droalina)*
+- ✨ Add a standalone GitLab tracker provider (supersedes #119). (#122) *(@roszekF, via @pkarw)*
+- ✨ Generate data-model graphs during specification design. (#96) *(@adeptofvoltron)*
+- ✨ Add 16 skills for framework context, specifications, testing, security, session tools and customization (supersedes #131). (#138) *(@adeptofvoltron, via @pkarw)*
+- ✨ Configure PR titles with issue numbers and tracker keys (fixes #143) (supersedes #144). (#146) *(@lchrusciel, via @pkarw)*
+- ✨ Verify and correct PR category labels during review. (#141) *(@patzick)*
+- ✨ Add `om-ux-design` for detailed screens, reusable components and connected, reviewable prototypes. (#106) *(@matgren)*
+- ✨ Add multi-ecosystem dependency auditing with verified upgrade candidates and deduplicated issues (supersedes #142). (#148) *(@Exsilium122, via @pkarw)*
+- ✨ Add a standalone Forgejo tracker provider. (#134) *(@kzmijak)*
+- ✨ Add isolated subagent and parallel modes to `om-review-prs`. (#151) *(@haxiorz)*
+- ✨ Add guarded staged-only delivery, isolated worktrees and multi-model review councils. (#152) *(@haxiorz)*
+- ✨ Add an evidence-driven merge queue, local dashboard and human-confirmed issue triage. (#158) *(@pkarw)*
+- ✨ Rank automerge candidates and queue only human-confirmed selections. (#162) *(@pkarw)*
+- ✨ Support per-PR merge policies and visible pre-merge evidence summaries. (#165) *(@pkarw)*
+- ✨ Route protected and policy-defined work to human QA before queueing. (#167) *(@droalina)*
+- ✨ Make complex QA the default; report incomplete applicable checks as PARTIAL. (#166) *(@droalina)*
+- ✨ Rotate older AI run context into verified archives through reviewable maintenance PRs. (#168) *(@pkarw)*
 
-- Combine every eligible AI run in a rotation into one verified batch archive,
-  reducing loose files while preserving recovery and active-run safeguards.
+## 🐛 Fixes
+- 🐛 Repair stale cross-skill references and reject them in lint. (#108) *(@adeptofvoltron)*
+- 🐛 Load `SDLC.md` during issue-preparation preflight. (#105) *(@matgren)*
+- 🐛 Require repository-local skill override preflight. (#114) *(@pkarw)*
+- 🐛 Keep the installed browser descriptor synchronized with the shipped provider. (#124) *(@adeptofvoltron)*
+- 🐛 Require workflow-run completeness before declaring CI green (supersedes #89). (#123) *(@jtomaszewski, via @pkarw)*
+- 🐛 Split pipeline labels portably, including under zsh (supersedes #116). (#129) *(@rafalwolak, via @pkarw)*
+- 🐛 Keep synthetic-user subject briefs outside the specs directory separate from the project brief. (#139) *(@zielivia)*
+- 🐛 Remove dangling references to an uncommitted skill-authoring document. (#155) *(@adeptofvoltron)*
+- 🐛 Enforce human vetoes and protected-risk approval in the merge queue. (#163) *(@pkarw)*
+- 🐛 Approve eligible held CI runs before parking queued PRs. (#169) *(@pkarw)*
+- 🐛 Combine rotated AI runs into one verified batch archive while preserving recovery safeguards. (#170) *(@pkarw)*
+- 🐛 Limit protected-area escalation to changes that widen access or risk. (#172) *(@droalina)*
+- 🐛 Allow verified bot claims when self-assignment is blocked, preserving ownership and collision guards. (#173)
 
-- Preserve literal template values and the requested repository root in portable
-  design helpers; validate themed extraction tokens and review comment imports.
-- Preserve deleted feedback and earlier-clock replies across reviewer clock
-  differences, and keep screen navigation and Back working in presentation and
-  click-through modes.
+## 🛠️ Improvements
+- 🛠️ Refresh this repository’s pipeline configuration to match the shipped contracts. (#98) *(@matgren)*
+- 🛠️ Update the pinned agent-browser to v0.35.2. (#97)
+- 🛠️ Update the pinned agent-browser to v0.38.2. (#130)
+- 🛠️ Update the pinned agent-browser to v0.41.1. (#164)
+
+## 📝 Specs & Documentation
+- 📝 Specify a portable interactive prototype workflow independent of a particular design system. (#91) *(@matgren)*
+- 📝 Document the QA and design skills used throughout the delivery lifecycle. (#112) *(@matgren)*
+- 📝 Make PR and issue output decision-oriented, with concise findings and evidence. (#110) *(@pat-lewczuk)*
+- 📝 Specify linked spec trees, stable identifiers and a validating resolver. (#103) *(@matgren-challengeen)*
+- 📝 Document the Forgejo tracker-provider specification. (#133) *(@kzmijak)*
+
+## 👥 Contributors
+
+- @pkarw
+- @matgren
+- @zielivia
+- @droalina
+- @roszekF
+- @adeptofvoltron
+- @lchrusciel
+- @patzick
+- @Exsilium122
+- @kzmijak
+- @haxiorz
+- @jtomaszewski
+- @rafalwolak
+- @pat-lewczuk
+- @matgren-challengeen
+
+---
 
 # 1.1.0 (2026-08-13)
 

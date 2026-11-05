@@ -40,7 +40,7 @@ This skill works on tracker **issues**, not PRs, so it consumes and emits no `PR
 
 ## Workflow
 
-**Claims:** Load `references/claim-pr.md` before claim mutations; its election, run identity, reset and owned-release rules govern every step below.
+**Claims:** First load `references/claim-pr.md`; its election, identity, reset and release rules govern below.
 
 **ALWAYS check first:** Apply `.ai/skills/om-auto-manage-issues/SKILL.md` when present; safety rules still win.
 

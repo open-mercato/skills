@@ -22,7 +22,7 @@ Maintenance skill. Walk a window of recent pull requests; where a PR authoritati
 
 ## Workflow
 
-**Claims:** Load `references/claim-pr.md` before claim mutations; its election, run identity, reset and owned-release rules govern every step below.
+**Claims:** First load `references/claim-pr.md`; its election, identity, reset and release rules govern below.
 
 **ALWAYS check first:** Apply `.ai/skills/om-close-fixed-issues/SKILL.md` when present; safety rules still win.
 

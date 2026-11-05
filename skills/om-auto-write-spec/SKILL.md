@@ -33,7 +33,7 @@ Companion skills (all optional, with fallbacks): `om-spec-writing` (required —
 
 3. **Write the spec (autonomous).** Invoke the `om-spec-writing` skill **verbatim, in `--autonomous` mode**, with the brief (or the issue title + body + relevant comments) as input. It writes `${SPECS_DIR}/{YYYY-MM-DD}-${SLUG}.md`, resolving any Open Questions per its Autonomous defaults rules into a `## Resolved assumptions (autonomous defaults)` section, and reports the resolved table back to you. A handoff brief's Resolved-unknowns table pre-answers Open Questions — autonomous defaults apply only to what it leaves open. Keep its output — steps 6 and 7 post it.
 
-4. **Commit the spec.** One commit: `docs(specs): add spec for ${SLUG}${issueId:+ (FR #${issueId})}` — including the copied handoff brief, when one exists.
+4. **Commit the spec.** One commit: `docs(specs): add spec for ${SLUG}${issueId:+ (FR #${issueId})}` — including the copied handoff brief, when one exists, and any one-line `Superseded by` annotation `om-spec-writing` added to a prior spec it supersedes.
 
 5. **UI mockups and screenshots (UI-facing specs).** When the spec's UI/UX section describes user-facing surfaces (and `--no-mockups` was not passed), produce visual evidence per `references/mockups.md`: screenshots of the **current** app screens the feature touches, plus rendered static-HTML mockups of the **proposed** UI. Requires the `om-prepare-test-env` descriptor and a configured browser provider; when either is missing, skip and note in the PR body why (text-only spec). Mockup files live beside the spec in `${SPECS_DIR}/assets/${SLUG}/`; commit them with `docs(specs): add UI mockups for ${SLUG}`.
 

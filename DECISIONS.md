@@ -641,3 +641,70 @@ automatic route with mandatory negative-case QA, and unclear direction still
 counts as protected. A QA reviewer may sign off by reviewing a current-head
 automatic PASS and re-running one negative case. A clean backport inherits the
 merged origin's human sign-off and technical approval; conflict hunks do not.
+
+
+## 2026-11-05 — Elect run-identified claims before assignment and labels
+
+Issue #127 exposed a read-then-write race across claiming skills. The shared
+protocol now posts a candidate and verifies a deterministic server-order winner
+before assignment, label mutations or work. Run/comment identity distinguishes
+parallel jobs using the same bot login. `in-progress` remains a verified second
+check, and confirmed unassignable bots omit only assignment. Claim failures stop
+work; the older `om-fix` log-and-continue instruction is removed.
+
+Comment election is the reversible portable default, avoiding repository refs and
+additional content-write permissions in consumer repositories. Losing comments
+remain withdrawn audit records; release terminates the owned candidate after
+label cleanup. Complete repeated reads narrow, but do not eliminate, eventual
+visibility and simultaneous-recovery races; the consequence is duplicate work.
+Provider winner/withdraw operations are additive with safe legacy-descriptor
+fallback. The user requested all skills, authorizing the shared-copy sync.
+
+The operator additionally requested GitHub UI recovery. Human-only `claim-reset`
+label events establish a persistent cutoff for retiring older claims; current
+runners cooperatively stop at their next boundary. Recovery cannot cancel an
+in-flight shell command and requires stopping the stalled runner first. GitHub
+audits the event actor and permission; other providers explicitly declare missing
+UI-audit support instead of guessing. Historical cutoff survives label removal.
+
+
+## 2026-11-05 — Prefer atomic GitHub ref locks; comments retain audit ids
+
+The operator clarified issue #127's preferred implementation and superseded the
+comment-only default above. GitHub now acquires create-only refs under
+`refs/om-locks/`, pointing at unique metadata commits so same-login runs have
+separate generation/owner identities. Comment ids/run fields remain additional
+audit evidence and `in-progress` remains the verified secondary guard.
+
+GitHub release and reset/stale/force recovery compare-and-delete the exact SHA
+using a Git explicit lease. REST DELETE alone is rejected because it has no
+expected-generation condition and could delete a successor between read/delete.
+Lock metadata transport is a narrow exception to staged publication prohibitions;
+no project branch/history is changed. GitHub cannot silently fall back on a
+permission or transport failure. Providers explicitly without an atomic primitive
+retain comment election. Recovery preserves local liveness and human gates.
+
+
+## 2026-11-05 — Extend atomic ownership to GitLab and Forgejo
+
+The operator requested GitLab parity and an audit of other providers. Returning
+`UNSUPPORTED` was an implementation gap for GitLab and Forgejo. Both can use
+Git's absent-value lease for create-only acquisition and expected-SHA deletion.
+GitLab uses a reserved branch namespace because arbitrary refs are not assumed
+portable there; Forgejo accepts custom refs under code-write permission. Temporary
+bare repositories isolate metadata objects from the caller's working tree.
+Metadata uses an empty tree and no parents; the API-verified base is recorded
+as `baseSha`, avoiding a full project-content download on every ownership read.
+No credential, hook, protection or pipeline changes are made automatically.
+Namespace pushes may trigger CI/webhooks and require reviewed filtering.
+
+Locally created commit dates are client-controlled, so these providers return
+unknown server receipt time and do not authorize time-based/UI recovery with
+it. Explicit force recovery still needs stopped workers and exact-generation
+release. Linear/Jira issues do not host repository refs and keep comment election;
+GitHub PR delegation remains atomic. The operator's parity request authorizes
+synchronizing the shared claim consumers in the same change.
+
+Sources: [GitLab branches](https://docs.gitlab.com/api/branches/),
+[Git explicit leases](https://git-scm.com/docs/git-push),
+[Forgejo pre-receive source](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/routers/private/hook_pre_receive.go).

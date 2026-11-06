@@ -34,6 +34,37 @@ const ciFollowups = [
 const operationHeadings = (descriptor) =>
   [...descriptor.matchAll(/^#### (.+)$/gm)].map((match) => match[1]).sort();
 
+for (const [name, provider] of [["template",trackerTemplate],["github",github],["gitlab",gitlab],["forgejo",forgejo],["linear",linear],["jira",jira]]) {
+  for (const operation of ["get-lock", "acquire-lock", "release-lock", "get-claim-reset", "claim-winner", "withdraw-claim"]) {
+    assert.match(provider, new RegExp(`^#### ${operation}$`,"m"), `${name}: ${operation} contract`);
+  }
+}
+// Split-provider claim cleanup must route its reads AND writes by kind. A PR
+// can win election correctly yet remain permanently active if withdrawal uses
+// the issue tracker with a GitHub conversation id.
+for (const [name, provider] of [["linear",linear],["jira",jira]]) {
+  const withdrawal = provider.split("#### withdraw-claim\n")[1]?.split("\n### Pull requests")[0];
+  assert.ok(withdrawal, `${name}: withdrawal section`);
+  assert.match(withdrawal, /`\{kind\}`, `\{item\}`, `\{commentId\}`/, `${name}: typed withdrawal target`);
+  assert.match(withdrawal, /For a PR, delegate to the companion `\.ai\/trackers\/github\.md` \*\*withdraw-claim\*\*/, `${name}: PR withdrawal delegates to GitHub`);
+  assert.match(withdrawal, /both ownership verification and read-back\nagainst GitHub/, `${name}: PR verification stays on the code host`);
+  assert.match(withdrawal, /For a (Linear|Jira) issue, use this descriptor's own \*\*update-comment\*\*/, `${name}: issue withdrawal stays local`);
+  assert.match(withdrawal, /GitHub \*\*update-comment\*\* and \*\*list-issue-comments\*\*/, `${name}: legacy companion fallback stays on GitHub`);
+}
+assert.match(github, /gh api --paginate repos\/\{owner\}\/\{repo\}\/issues\/\{number\}\/comments/, "all claim comments must be read");
+execFileSync(process.execPath, [join(root,"scripts/test-claim-protocol.mjs")], {stdio:"inherit",timeout:60000});
+
+execFileSync(process.execPath, [join(root,"scripts/test-atomic-claims.mjs")], {stdio:"inherit",timeout:120000});
+execFileSync(process.execPath, [join(root,"scripts/test-git-provider-locks.mjs")], {stdio:"inherit",timeout:120000});
+
+for (const [name,provider] of [["linear",linear],["jira",jira]]) {
+  for (const op of ["get-lock","acquire-lock","release-lock"]) {
+    const section=provider.split(`#### ${op}\n`)[1]?.split("\n#### ")[0];
+    assert.ok(section,`${name}: ${op}`);
+    assert.ok(section.includes(`For a PR, delegate to the companion \`.ai/trackers/github.md\` **${op}**`),`${name}: ${op} PR delegation`);
+    assert.match(section,/issue, return explicit `UNSUPPORTED`/,`${name}: issue fallback is explicit`);
+  }
+}
 const githubOperations = operationHeadings(github);
 for (const [name, descriptor] of [["linear", linear], ["jira", jira]]) {
   assert.deepEqual(

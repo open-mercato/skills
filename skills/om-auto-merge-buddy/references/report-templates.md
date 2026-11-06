@@ -15,7 +15,7 @@ Marker: `` 🤖 `om-auto-merge-buddy` — status ``. Find it via
 **list-issue-comments**, counting only a comment written by `CURRENT_USER`, create it once with **comment-pr**, and rewrite it
 whole via **update-comment**. The scheduler verifies the stored comment ID and
 falls back to a complete marker/author search before creating; never duplicate
-a status comment on resume, reset or a lost local file (`references/scheduler.md`). It serves as this skill's claim comment, its
+a status comment on resume, reset or a lost local file (`references/scheduler.md`). It references the separate elected run/comment id and serves as its
 label-rationale comment, and its run summary, so there is never a second
 status comment per visit or per round. The sole additional pre-merge evidence
 comment is defined in `references/merge-summary.md`; it is created once per PR

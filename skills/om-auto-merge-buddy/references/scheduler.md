@@ -32,6 +32,12 @@ launch/crash result remains protected until its work is proved stopped.
 This prevents stale actors from mutating the same PR, while allowing unrelated
 PR work between instances. Separate clones still honor tracker claims.
 
+At queue startup, apply `references/stalled-claims.md` before admission, and
+repeat its cheap check when a protected claim is due. A dead reservation must
+not indefinitely hide its tracker claim from recovery. Recovery clears only
+the observed dead owner’s reservation after tracker cleanup succeeds; it does
+not reset attempts, findings, human gates or existing work products.
+
 Initialization/admission may create an unreserved row only while locked and
 after confirming no current reservation/claim; reserving an existing row requires
 its own token or the proven-dead recovery rule. Before every subsequent state

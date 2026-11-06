@@ -1,5 +1,15 @@
 # Upgrade notes
 
+## Merge queue startup recovery
+
+Refresh `om-auto-merge-buddy` to enable a startup sweep of stalled claims,
+including queued PRs absent from local scheduling state. Two hours without
+activity makes a claim a candidate; automatic release additionally requires
+positive proof that its owner and all delegated work have stopped. Live, remote
+or unknown owners remain protected. Exact-owner cleanup and expected-SHA lock
+release prevent deleting a successor. No descriptor/schema migration, expiring
+lock, new merge permission or claim-protocol downgrade is introduced.
+
 ## GitLab and Forgejo atomic claims (provider parity)
 
 Refresh GitLab/Forgejo descriptors and all claim consumers together. Both now

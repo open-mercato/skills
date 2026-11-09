@@ -22,3 +22,11 @@ Consumes an `{issueId}` and finishes by emitting the `PR:` / `Issue:` chaining r
 
 ---
 *Source: [`skills/om-auto-fix-issue/SKILL.md`](../../skills/om-auto-fix-issue/SKILL.md)*
+
+
+Bug-route preparation gives every fresh run a persisted UUID and a distinct
+create-only branch/worktree before it reaches the issue claim. Resume verifies
+the saved repository, issue, branch and worktree without resetting unpublished
+work. Preparation itself grants no tracker ownership; only the later atomic
+claim winner can implement or publish. Interrupted work is retained with its
+local state path for a verified resume.

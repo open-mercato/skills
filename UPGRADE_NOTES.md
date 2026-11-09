@@ -16,6 +16,16 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## Per-run autofix branch isolation (issue #183)
+
+Refresh `om-auto-fix-issue` including its own Node.js preparation helper. New bug
+runs persist a UUID and exact local branch/worktree identity before create-only
+Git setup, preventing same-issue runs from sharing or resetting one branch.
+Resume uses the saved state path and verifies the original repository/issue/run,
+current branch and base ancestry without checkout/reset. Keep interrupted state
+and unpublished work; old deterministic branches are not automatically migrated
+or reset. Tracker ownership remains a later atomic gate after triage.
+
 ## Merge queue startup recovery
 
 Refresh `om-auto-merge-buddy` to enable a startup sweep of stalled claims,

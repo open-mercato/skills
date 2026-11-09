@@ -28,6 +28,9 @@ REQUIRE_INDEPENDENT_REVIEW=$(jq -r 'if (.automerge // {} | has("requireIndepende
 DEFAULT_TO_HUMAN_QA=$(jq -r 'if (.automerge // {} | has("defaultToHumanQa")) then .automerge.defaultToHumanQa else false end | if type == "boolean" then . else error("Invalid QA routing policy") end' "$CONFIG")
 WINDOW_MINUTES=$(jq -r '.automerge.windowMinutes // 120' "$CONFIG")            # 0 = one pass, no idle polling
 MAX_ATTEMPTS=$(jq -r '.automerge.maxAttempts // 3' "$CONFIG")                  # failed stages per signal before parking
+HUMAN_ONLY_LABELS=$(jq -c 'if (.automerge // {} | has("humanOnlyLabels")) then .automerge.humanOnlyLabels else [] end | if type == "array" and all(.[]; type == "string" and length > 0) then . else error("Invalid humanOnlyLabels") end' "$CONFIG")       # human QA by policy (references/human-gates.md 2b)
+HUMAN_ONLY_AUTHORS=$(jq -c 'if (.automerge // {} | has("humanOnlyAuthors")) then .automerge.humanOnlyAuthors else [] end | if type == "array" and all(.[]; type == "string" and length > 0) then . else error("Invalid humanOnlyAuthors") end' "$CONFIG")     # logins, compared case-insensitively
+COMPLEX_QA=$(jq -r 'if (.automerge // {} | has("complexQa")) then .automerge.complexQa else "always" end | if . == "always" or . == "needs-qa" or . == "never" then . else error("Invalid complexQa") end' "$CONFIG")            # needs-qa | always | never
 RUNS_DIR=$(jq -r '.paths.runs // ".ai/runs"' "$CONFIG")                         # run folders live in $RUNS_DIR/merge-buddy/
 ```
 
@@ -57,3 +60,6 @@ boolean false when loading it (the reference decision reads the parsed JSON). `R
   `--human-qa`/`--auto-qa`. Reject invalid values/conflicts before claims. Apply
   `references/qa-routing.md` at entrance/final checks; missing local required
   approval normally invokes legitimate automatic QA, never a fabricated label.
+
+Human-only policy arrays must contain nonempty strings; invalid values stop before claims or proposals, never fall back to an empty human gate. Propagate loader errors. Compare author logins case-insensitively.
+Reject invalid complexQa before claims. Missing complexQa defaults to always; preserve explicit needs-qa/never policies.

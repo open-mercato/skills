@@ -50,6 +50,8 @@ signals 2 and 3 are re-evaluated for the new head per `references/signals.md`.
 
 First apply `references/human-gates.md`: vetoes stop, and missing protected-area human QA ends `waiting-human` without invoking automatic self-sign-off. Then apply `references/qa-routing.md`, even when report-based signal 2 holds. A missing mandatory local approval or testable coverage gap defaults to `om-auto-qa-pr --orchestrated`, passing existing PASS evidence and precise missing coverage/sign-off in task context. Reuse covered unchanged-head scenarios. Only a verified blocker/ineligibility or explicit human preference routes to a human.
 
+**QA depth.** Pass `--complex` to every `om-auto-qa-pr` invocation for this PR when `COMPLEX_QA` is `always`, or when it is `needs-qa` and the PR carries `needs-qa` or falls under `references/human-gates.md` section 2 or 2b. `always` is the default. For explicit `never`, or `needs-qa` on a PR outside those conditions, pass `--basic` so the QA skill’s complex default does not override the configured scoped depth. Record the depth in the status comment. If the installed QA skill lacks the selected depth flag, park this PR with an upgrade hint rather than silently changing the requested depth.
+
 Otherwise use `references/qa-evidence.md`: a trusted completed PASS on the unchanged head (including legacy reports) grants signal 2 and skips this stage with zero attempts, regardless of approval labels or risk-high, unless the local approval/gap route above still needs action. Only when neither that evidence nor a valid approval exists run `om-auto-qa-pr {pr} --orchestrated`. It skips its review-first gate, because
 signal 1 already holds.
 
@@ -58,6 +60,12 @@ signal 1 already holds.
 - `blocked` because no runnable environment or browser provider exists → end the visit `waiting-human` with that reason. A human QA reviewer can still sign off.
 
 ## Stage 3 — CI (signal 3 failing)
+
+Before invoking a repair stage, apply `references/ci-approval.md` to current-head
+workflow runs, including runs with no check jobs. Release eligible approval holds
+and verify them without a repair attempt. If only running CI remains, end
+`waiting-ci`; if approval is refused, record the precise blocker. Invoke the
+repair stage only for actual failures/conflicts after this reconciliation.
 
 `om-auto-fix-pr {pr} --orchestrated` (also `--skip-pre-existing-ci-errors` only when explicitly enabled for this invocation) — full mode, not `--ci-only`. It merges the
 PR's target branch in and resolves conflicts, delegating non-trivial ones to

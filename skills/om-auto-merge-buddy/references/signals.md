@@ -61,7 +61,7 @@ First apply `references/human-gates.md`: an active veto records `waiting-human`;
 
 ## 3 · CI — `automerge-signal-3-ci`
 
-Read **get-pr-checks** for the current head, and `mergeable` from **get-pr**.
+Read **get-pr-checks** and **list-runs** for the current head, and `mergeable` from **get-pr**. Before classifying CI as failed, missing or human-blocked, inspect workflow approval holds under `references/ci-approval.md`; a held run may expose no check jobs yet.
 
 | Reading | Meaning |
 |---|---|
@@ -75,11 +75,13 @@ Read **get-pr-checks** for the current head, and `mergeable` from **get-pr**.
 All checks count, not only the required ones: the three signals replace the host's
 merge rules, so a red optional check is still red. The only opt-in exception is a fresh, fully proven baseline waiver under `--skip-pre-existing-ci-errors`; unknown, pending and unproved failures are never waived.
 
-**Held runs.** Call **approve-pending-runs** for the head SHA only when the PR
-carries `AUTOMERGE_LABEL` and its changed files (**get-pr-files**) touch no CI
-or workflow definitions. When an outside contributor's diff changes those files,
-park the PR as `blocked`: a maintainer must approve the runs. An agent never lets
-unreviewed contributor code drive this repository's CI.
+**Held runs.** Follow `references/ci-approval.md` before parking or stage 3:
+call **approve-pending-runs** when eligible, verify actual current-head workflow
+state, and route released running checks to `waiting-ci` without an attempt.
+A host's request for “human approval” is not proof that the current operator
+cannot approve. Only a verified refusal, unsafe diff or unsupported gate requires
+maintainer action. Approval never grants signal 3; all checks and workflow runs
+must still satisfy the normal completeness and passing-CI rules.
 
 ## Recheck evidence on every visit and immediately before finishing
 

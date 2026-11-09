@@ -6,7 +6,7 @@ Detailed procedure for the single automated review loop of `om-auto-create-pr-lo
 
 Before you post the final summary comment, push the last commits, or report back, subject the PR to its authoritative review with the `om-auto-review-pr` skill. Do not run a separate direct `om-code-review` pass first: `om-auto-review-pr` invokes that engine verbatim and applies compatibility, security, contract, breaking-change, and scope checks.
 
-Unlike plain `om-auto-create-pr`, this skill DOES hold the three-signal `in-progress` lock at this point: **release it before invoking `om-auto-review-pr` and reclaim it when it returns**, using the exact sequence and comment strings in `references/claim-pr.md` (PR lock lifecycle). `om-auto-review-pr` re-applies `in-progress` per its own step 0 and releases it per its own workflow — do not second-guess its claim/release protocol.
+This skill holds the outer claim: pass the same run id and original comment id to `om-auto-review-pr` and retain the active candidate plus `in-progress` throughout. The reviewer re-enters and retains that inherited claim; the driver performs the final owned release through `references/claim-pr.md`. Never release and reclaim around review.
 
 Invoke the `om-auto-review-pr` skill against `{prNumber}` in autofix mode:
 

@@ -31,6 +31,8 @@ SECURITY_LABELS=$(jq -c "$ELIG.securityLabels // [\"security\"]" "$CONFIG")
 TRUSTED_AUTHORS=$(jq -c "$ELIG.trustedAuthors // []" "$CONFIG")            # logins, compared case-insensitively
 EXCLUDE_ASSOCIATIONS=$(jq -c "$ELIG.excludeAuthorAssociations // [\"first-time-contributor\",\"outside-collaborator\",\"none\"]" "$CONFIG")
 EXCLUDE_LABELS=$(jq -c "$ELIG.excludeLabels // [\"do-not-merge\",\"blocked\",\"qa-failed\"]" "$CONFIG")
+HUMAN_ONLY_LABELS=$(jq -c 'if (.automerge // {} | has("humanOnlyLabels")) then .automerge.humanOnlyLabels else [] end | if type == "array" and all(.[]; type == "string" and length > 0) then . else error("Invalid humanOnlyLabels") end' "$CONFIG")      # shared with om-auto-merge-buddy
+HUMAN_ONLY_AUTHORS=$(jq -c 'if (.automerge // {} | has("humanOnlyAuthors")) then .automerge.humanOnlyAuthors else [] end | if type == "array" and all(.[]; type == "string" and length > 0) then . else error("Invalid humanOnlyAuthors") end' "$CONFIG")    # logins, compared case-insensitively
 LOOKBACK_DAYS=$(jq -r "$ELIG.lookbackDays // 30" "$CONFIG")             # window length in days (one month)
 ANALYZE_LIMIT=$(jq -r "$ELIG.analyzeLimit // 100" "$CONFIG")             # most in-window PRs gated and label-ranked
 LIMIT=$(jq -r "$ELIG.limit // 20" "$CONFIG")                             # output limit: shortlist size = most PRs AI-judged and proposed
@@ -45,3 +47,5 @@ RISK_LABELS=$(jq -c '.labels.risk // ["risk-low","risk-medium","risk-high"]' "$C
 - **Labels are the outcome.** `labels.enabled: false` → still produce the proposal, but refuse `--apply` and report that the queue label cannot be recorded.
 - **`BASE_BRANCH` of `"auto"`** resolves through **default-branch**.
 - **Dry run by default.** No user may be present on a scheduled run. The run never asks a question. It stops at `⚠ NEEDS HUMAN CONFIRMATION` with the apply command, and changes nothing in the tracker.
+
+Human-only policy arrays must contain nonempty strings; invalid values stop before claims or proposals, never fall back to an empty human gate. Propagate loader errors. Compare author logins case-insensitively.

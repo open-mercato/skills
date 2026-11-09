@@ -710,6 +710,17 @@ assert.match(humanGates, /automatic carry-forward is insufficient/)
 assert.match(humanGates, /Ordinary fixes outside these areas keep the existing automatic\/override policy/)
 assert.match(humanGates, /Human action: <rejecting reviewer/)
 assert.match(humanGates, /Never leave `Risk checks: skipped` or `ready` describing a protected PR/)
+assert.match(humanGates, /## Gate map/)
+assert.match(humanGates, /## 2b\. Human-only work by policy/)
+assert.match(humanGates, /`automerge\.humanOnlyLabels`[\s\S]*`automerge\.humanOnlyAuthors`/)
+assert.match(humanGates, /`--force` and\s+`automerge-force` cannot waive it/)
+assert.match(read('skills/om-auto-merge-buddy/references/stages.md'), /Pass `--complex` to every `om-auto-qa-pr` invocation/)
+assert.match(read('skills/om-auto-merge-triage/references/eligibility.md'), /\| 7 \| Human lane \|/)
+assert.match(humanGates, /\*\*Tightening is not widening\.\*\*/)
+assert.match(humanGates, /When it is unclear whether[\s\S]*treat it as protected/)
+assert.match(humanGates, /\*\*Evidence-review sign-off\.\*\*[\s\S]*re-running at least[\s\S]*one negative case/)
+assert.match(humanGates, /\*\*Clean backports\.\*\*[\s\S]*Conflict resolutions, extra commits or differing hunks/)
+assert.match(humanGates, /A new refusal for input that was already invalid/)
 console.log('PASS: human veto and protected-risk gates precede bootstrap, automatic QA reuse, override propagation, replacements and both finish modes')
 assert.match(humanGates, /behavior-preserving refactor within existing boundaries is not an[\s\S]*architecture change/)
 assert.match(humanGates, /An additive API is not backward-incompatible/)
@@ -795,3 +806,41 @@ assert.match(mergeSummary, /Distinguish QA[\s\S]*not required from QA passed/)
 assert.match(mergeSummary, /Never call waived red CI green/)
 assert.match(mergeSummary, /\*\*🚀 Merging now: `<head>` into `<target>` — squash merge\.\*\*/)
 console.log('PASS: one whole-process pre-merge summary follows status, preserves evidence truth and rechecks gates before guarded merge')
+
+// Execute the shipped policy loaders, including absence and invalid explicit values.
+const buddySetup = read('skills/om-auto-merge-buddy/references/agentic-setup.md')
+const triageSetup = read('skills/om-auto-merge-triage/references/agentic-setup.md')
+const configFields = read('skills/om-setup-agent-pipeline/references/config-capabilities.md')
+const setupSkill = read('skills/om-setup-agent-pipeline/SKILL.md')
+const policyTmp = mkdtempSync(join(tmpdir(), 'human-lane-policy-'))
+try {
+  for (const source of [buddySetup, triageSetup, configFields]) {
+    const names = source === triageSetup ? ['HUMAN_ONLY_LABELS','HUMAN_ONLY_AUTHORS'] : ['HUMAN_ONLY_LABELS','HUMAN_ONLY_AUTHORS','COMPLEX_QA']
+    for (const name of names) {
+      const line = source.split('\n').find(line => line.startsWith(`${name}=`))
+      assert.ok(line, `Missing ${name}`)
+      for (const [policy, expected] of name === 'COMPLEX_QA'
+        ? [[{},'always'],[{complexQa:'never'},'never'],[{complexQa:'needs-qa'},'needs-qa'],[{complexQa:'always'},'always'],[{complexQa:'typo'},null],[{complexQa:null},null],[{complexQa:false},null]]
+        : [[{},'[]'],[{[name === 'HUMAN_ONLY_LABELS' ? 'humanOnlyLabels' : 'humanOnlyAuthors']:['feature']},'["feature"]'],[{[name === 'HUMAN_ONLY_LABELS' ? 'humanOnlyLabels' : 'humanOnlyAuthors']:false},null],[{[name === 'HUMAN_ONLY_LABELS' ? 'humanOnlyLabels' : 'humanOnlyAuthors']:[1]},null]]) {
+        const config = join(policyTmp,'config.json')
+        writeFileSync(config, JSON.stringify({automerge:policy}))
+        const result = spawnSync('bash',['-eu'], {input:`${line}\nprintf '%s' "$${name}"`,env:{...process.env,CONFIG:config},encoding:'utf8'})
+        if (expected === null) assert.notEqual(result.status,0, `${name} rejects ${JSON.stringify(policy)}`)
+        else { assert.equal(result.status,0,result.stderr); assert.equal(result.stdout,expected) }
+      }
+    }
+  }
+} finally { rmSync(policyTmp,{recursive:true,force:true}) }
+for (const key of ['humanOnlyLabels','humanOnlyAuthors','complexQa']) {
+  assert.ok(setupSkill.includes(`"${key}"`))
+  assert.ok(configFields.includes(`automerge.${key}`))
+}
+const humanLane = read('skills/om-auto-merge-triage/references/human-lane.md')
+const eligibility = read('skills/om-auto-merge-triage/references/eligibility.md')
+assert.match(eligibility,/references\/human-lane\.md/)
+assert.doesNotMatch(eligibility,/its human-gates reference/)
+for (const area of ['Migrations','Permissions or tenant isolation','Money','Architecture changes','Backward-incompatible changes']) assert.ok(humanLane.includes(area))
+assert.match(humanLane,/No companion skill or its reference files are required/)
+assert.match(stages,/`always` is the default/)
+assert.match(stages,/pass `--basic`/)
+console.log('PASS: human policy loaders reject invalid settings; complex defaults always; standalone triage owns its classification')

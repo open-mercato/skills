@@ -28,14 +28,14 @@ Configure `.ai/agentic.config.json` when missing or when the pipeline changes.
     "enabled": true,
     "pipeline": ["review", "changes-requested", "qa", "qa-failed", "merge-queue", "blocked", "do-not-merge"],
     "category": ["bug", "feature", "refactor", "security", "dependencies", "documentation"],
-    "meta": ["needs-qa", "skip-qa", "qa-approved", "qa-self-verified", "in-progress", "ci-monitoring"],
+    "meta": ["needs-qa", "skip-qa", "qa-approved", "qa-self-verified", "in-progress", "ci-monitoring", "claim-reset"],
     "priority": ["priority-low", "priority-medium", "priority-high", "priority-extreme"],
     "risk": ["risk-low", "risk-medium", "risk-high"]
   },
   "qaGate": true,
   "ci": { "maxWaitMinutes": 40 },
   "autofix": { "label": "cez-autofix", "eligibility": { "lookbackDays": 30, "analyzeLimit": 100, "limit": 20, "excludeLabels": ["blocked", "do-not-fix"] } },
-  "automerge": { "label": "automerge", "mode": "prepare-and-merge", "requireIndependentReview": false, "defaultToHumanQa": false, "windowMinutes": 120, "maxAttempts": 3 },
+  "automerge": { "label": "automerge", "mode": "prepare-and-merge", "requireIndependentReview": false, "defaultToHumanQa": false, "humanOnlyLabels": [], "humanOnlyAuthors": [], "complexQa": "always", "windowMinutes": 120, "maxAttempts": 3 },
   "engine": { "loopStepThreshold": 20, "executorTier": "standard", "stepReview": "final" },
   "reviewSweep": { "maxParallel": 1, "coordinationRoot": null },
   "paths": {
@@ -66,12 +66,12 @@ Field defaults: `references/config-capabilities.md`.
 - `labels.enabled` — when `false`, skills skip every label operation and note that in their PR summaries. Use this for repos that do not want the label workflow.
 - `labels.pipeline` — mutually exclusive workflow states. A PR carries at most one.
 - `labels.category` — additive kind-of-change labels.
-- `labels.meta` — additive process labels. `needs-qa` requests manual QA; `skip-qa` opts out (never combine the two); `qa-approved` records that QA passed; `qa-self-verified` marks the self-QA exception; `in-progress` is the claim lock automated skills apply while they are **actively working** the item; `ci-monitoring` says the work is finished and fully reported — labels applied, review submitted, comments posted — and the agent is only watching the CI run, so it is **not** a claim and another agent or a human may act on the PR freely (it means one thing only: the CI-result follow-up comment is still owed). One label lives outside the config taxonomy: `do-not-close`, applied by humans to issues that housekeeping skills must never auto-close — skills only ever read it.
+- `labels.meta` — additive process labels. `needs-qa` requests manual QA; `skip-qa` opts out (never combine them); `qa-approved` records passed QA; `qa-self-verified` marks self-QA. `in-progress` claims actively worked items. `ci-monitoring` means work is complete and reported, with only a CI-result follow-up owed; it never blocks another actor. `claim-reset` records a human request to recover a stopped runner; automation only reads its authenticated label-event audit and never applies it. The human-only issue label `do-not-close` is outside this taxonomy; skills only read it to protect issues from auto-closure.
 - `labels.priority` — mutually exclusive urgency of the work. Unset is treated as medium.
 - `labels.risk` — mutually exclusive blast radius of the change. Unset is treated as medium. Priority is how urgent the work is; risk is how dangerous the change is to ship.
 - `qaGate` — when `true`, a PR carrying `needs-qa` must not merge until it also carries `qa-approved`, even when every other check is green. When `false`, `needs-qa` is advisory only.
 - `autofix` — issue-triage queue label and eligibility; defaults and behavior: `references/config-capabilities.md`.
-- `automerge` — queue label, merge mode, boolean `requireIndependentReview`/`defaultToHumanQa`, window, attempt limit and triage `eligibility`. Setup creates queue/signal labels; schema above and defaults in `references/config-capabilities.md`.
+- `automerge` — queue label, merge mode, review/QA policies, human-only arrays, QA depth, queue limits and triage. Schema above; fields/defaults in `references/config-capabilities.md`.
 - `ci.maxWaitMinutes` — CI wait cap in minutes, default `40`; `0` skips waiting. It never relaxes required checks for merging. Wait-budget behavior: `references/config-capabilities.md`.
 - `engine.executorTier` — optional; the default abstract model tier (`cheap` / `standard` / `capable`) for executor subagents dispatched by the loop skills when a Tasks-table `Exec` cell names none. Harnesses that support subagent model selection map the tier onto their closest model class; others ignore it. Configs without the key behave as `standard`.
 - `engine.loopStepThreshold` — the Step count above which `om-auto-create-pr` hands a run off to `om-auto-create-pr-loop` (default 20). Raise it to keep more runs on the cheaper plain engine; `--loop` always forces the loop regardless.

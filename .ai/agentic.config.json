@@ -16,7 +16,8 @@
       "node scripts/test-agent-harness.mjs",
       "node scripts/test-agent-harness-security.mjs",
       "node scripts/test-review-sweep.mjs",
-      "node scripts/test-issue-triage.mjs"
+      "node scripts/test-issue-triage.mjs",
+      "node scripts/test-spec-delta.mjs"
     ]
   },
   "labels": {
@@ -44,6 +45,7 @@
       "qa-approved",
       "qa-self-verified",
       "in-progress",
+      "claim-reset",
       "ci-monitoring",
       "automerge-signal-1-cr",
       "automerge-signal-2-qa",

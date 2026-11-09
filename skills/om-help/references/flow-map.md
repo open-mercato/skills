@@ -74,6 +74,7 @@ complete list of those gates lives once in `references/setup-state.md`
 |---|---|
 | `om-create-skill` | Authoring or splitting a skill; writing an overlay. |
 | `om-evolve-harness` | Turning an agent failure into a harness case. Hard-gated — see above. |
+| `om-ai-context-maintenance` | Previewing or rotating stale agent artifacts and maintaining generated context indexes; use its dry-run before destructive rotation. |
 | `om-judge-agent-session` | Judging a session or an eval-harness result. |
 | `om-share-this-session` | Sharing a session publicly. Hard-gated — see above. |
 

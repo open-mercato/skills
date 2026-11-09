@@ -109,3 +109,19 @@ PR: #156
 - [x] 6.1 Full validation gate green (two pre-existing, unrelated failures documented in the PR body)
 - [x] 6.2 Acceptance-scenario table in PR body
 - [x] 6.3 Self code-review pass — findings fixed in 88422df; PR stays draft per the operator override
+
+
+## 2026-11-09 — current-base conflict repair
+
+Merged the current target (`9513421`, including atomic claim ownership) without
+replacing the router's read-only policy. The only textual conflict was in
+`references/rules.md`: retain the latest atomic claim-etiquette paragraph and
+the router-specific discovery/exception section. Other shared rule copies were
+compared; this is a correction of the lagging router copy, not a new global rule.
+The required synchronization question was presented under AGENTS.md §5.
+
+The merged help-coverage gate found one newly shipped skill with no route:
+`om-ai-context-maintenance`. Added its context-maintenance/rotation use case to
+the flow map. All 11 current configured commands now pass locally, including
+the complete tracker/race and staged-harness gates. The earlier Python/temporary
+fixture environment failures were not reproduced in this environment.

@@ -147,8 +147,9 @@ fi
 # Everything else must be a shipped skill or listed here with a reason.
 # The prototype engine's persisted storage keys are not skill invocations.
 # Keep their exact names so existing exported/local feedback remains readable.
+# The atomic lock commit header is a persisted metadata format, not a skill.
 # The test-freeze sentinel is a persisted filename, not a skill invocation.
-name_allow=" om-skill om-skills om-prototype-comments om-prototype-author om-freeze-tests "
+name_allow=" om-skill om-skills om-prototype-comments om-prototype-author om-freeze-tests om-claim-v1 "
 shipped_names=" $(ls skills | tr '\n' ' ')"
 name_hits=$(grep -rnoE '(^|[^A-Za-z0-9_-])om-[a-z0-9]+(-[a-z0-9]+)*(-?\*|/|\.[a-z0-9]+)?' skills/ 2>/dev/null | sort -u || true)
 while IFS= read -r line; do
@@ -219,7 +220,9 @@ python3 scripts/test-dependency-audit.py || exit 1
 node scripts/test-osv-scan.mjs || exit 1
 
 node scripts/test-merge-buddy.mjs || exit 1
+node scripts/test-complex-qa.mjs || exit 1
 node scripts/test-pr-titles.mjs || exit 1
 node scripts/test-bump-agent-browser.mjs || exit 1
+python3 scripts/test-ai-context-maintenance.py || exit 1
 
 echo "Lint OK."

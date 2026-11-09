@@ -63,6 +63,8 @@ At runtime: `om-setup-agent-pipeline` copies this file into the repository at `.
 - Multi-line bodies are always built into a JSON file with `jq --rawfile`, so formatting survives and nothing large touches a command line.
 - Validate every externally sourced value before interpolation: numbers with `fj_num`, SHAs with `fj_sha`, the repository with `fj_repo`. Branch names are URL-encoded with `jq @uri`.
 
+Git-backed ownership uses **get-lock**/**acquire-lock**/**release-lock** before claim notes, assignment or labels. `in-progress` remains the verified secondary check.
+
 ## Shared helpers
 
 Source this block once before running any operation below. The label guards and operations call these functions. `fj_http` is the only place that calls `curl`.
@@ -656,6 +658,206 @@ fj_num {commentId} || exit 1
 jq -n --rawfile b <body-file> '{body: $b}' \
   | fj_write PATCH "repos/$(fj_repo)/issues/comments/{commentId}" >/dev/null
 ```
+
+#### get-lock
+
+`{kind}` (`issue` or `pr`), `{item}` → `null` for a proven absent lock, or
+`{ref,sha,repo,kind,item,runId,actor,baseSha,createdAt,metadataCreatedAt}`.
+Forgejo supports atomic Git ownership, not comment election. The reserved
+namespace is `refs/om-locks/{kind}-{number}`; issue and PR ids never collide.
+The API resolves the actual target repository and HTTPS Git URL, including
+cross-repository/self-hosted targets; never assume `origin` is the target.
+
+Load the following helpers once (alongside this descriptor's shared helpers).
+Require authenticated HTTPS Git read/write transport configured by the operator,
+plus repository push permission. API authentication alone does not configure Git.
+Permission, protected-ref, hook and transport failures block, never downgrade to
+comments. Do not change credentials or bypass hooks/protection to acquire a lock.
+Metadata pushes can trigger host hooks/CI; reserve/exclude this namespace through
+the repository's reviewed policy rather than disabling checks in the helper.
+No caller-working-tree ref or existing project branch is changed. Temporary bare repositories are
+removed on exit. Metadata commits have an empty tree and no parents, so lock
+reads never clone project content. `baseSha` records the API-verified base only.
+
+`repo` is the canonical repository web URL (including host), not merely a path.
+`createdAt` is deliberately `null`: client Git commit dates are not authenticated
+server receipt times. `metadataCreatedAt` is diagnostic only. UI/time-based
+recovery must stop without an authenticated server creation-time audit; never
+compare the diagnostic date with a reset cutoff. Explicit authorized force
+recovery still requires stopped workers/local leases and exact-SHA deletion.
+
+```bash
+git_lock_repository() {
+  local repository
+  repository=$(fj_repo) || return 1
+  fj_get "repos/$repository" -ce '{repo:.html_url,url:.clone_url}'
+}
+git_lock_validate_base() {
+  local repository
+  repository=$(fj_repo) || return 1
+  fj_get "repos/$repository/git/commits/$1" -er --arg sha "$1" '.sha | select(. == $sha)' >/dev/null
+}
+git_lock_target() {
+  case "$1" in issue|pr) ;; *) return 1 ;; esac
+  case "$2" in ''|*[!0-9]*) return 1 ;; esac
+  GIT_LOCK_TARGET=$(git_lock_repository) || return 1
+  GIT_LOCK_REPO=$(printf '%s' "$GIT_LOCK_TARGET" | jq -er '.repo | select(type == "string" and length > 0)') || return 1
+  GIT_LOCK_URL=$(printf '%s' "$GIT_LOCK_TARGET" | jq -er '.url | select(type == "string" and startswith("https://"))') || return 1
+  GIT_LOCK_REF="refs/om-locks/$1-$2"
+}
+git_get_lock() (
+  git_lock_target "$1" "$2" || exit 1
+  lock_refs=$(git ls-remote --refs "$GIT_LOCK_URL" "$GIT_LOCK_REF") || exit 1
+  if [ -z "$lock_refs" ]; then printf 'null\n'; exit 0; fi
+  lock_sha=$(printf '%s\n' "$lock_refs" | jq -Rer --arg ref "$GIT_LOCK_REF" '
+    split("\t") | select(length == 2 and .[1] == $ref) | .[0] | select(test("^[0-9a-f]{40}$"))') || exit 1
+  lock_temp=$(mktemp -d) || exit 1
+  trap 'rm -rf "$lock_temp"' EXIT
+  git init --bare -q "$lock_temp" || exit 1
+  git -C "$lock_temp" fetch --quiet --no-tags --depth=1 "$GIT_LOCK_URL" "$GIT_LOCK_REF" || exit 1
+  lock_fetched=$(git -C "$lock_temp" rev-parse --verify 'FETCH_HEAD^{commit}') || exit 1
+  [ "$lock_fetched" = "$lock_sha" ] || exit 1
+  lock_commit=$(git -C "$lock_temp" cat-file commit "$lock_sha") || exit 1
+  lock_parents=$(printf '%s\n' "$lock_commit" | sed -n '/^$/q; /^parent /p') || exit 1
+  [ -z "$lock_parents" ] || exit 1
+  lock_tree=$(git -C "$lock_temp" rev-parse --verify "$lock_sha^{tree}") || exit 1
+  lock_empty_tree=$(git -C "$lock_temp" mktree </dev/null) || exit 1
+  [ "$lock_tree" = "$lock_empty_tree" ] || exit 1
+  lock_message=$(git -C "$lock_temp" show -s --format=%B "$lock_sha") || exit 1
+  lock_date=$(git -C "$lock_temp" show -s --format=%cI "$lock_sha") || exit 1
+  printf '%s' "$lock_message" | jq -Rsec --arg repo "$GIT_LOCK_REPO" --arg kind "$1" --arg item "$2" --arg ref "$GIT_LOCK_REF" --arg sha "$lock_sha" --arg date "$lock_date" '
+    select(startswith("om-claim-v1\n")) | ltrimstr("om-claim-v1\n") | fromjson |
+    select(.repo == $repo and .kind == $kind and .item == $item and
+      (.runId | type == "string" and length > 0) and (.actor | type == "string" and length > 0) and
+      (.baseSha | type == "string" and test("^[0-9a-f]{40}$"))) |
+    . + {ref:$ref,sha:$sha,createdAt:null,metadataCreatedAt:$date}'
+)
+git_acquire_lock() (
+  git_lock_target "$1" "$2" || exit 1
+  case "$3" in ''|*[!A-Za-z0-9._-]*) exit 1 ;; esac
+  [ -n "$4" ] || exit 1
+  printf '%s' "$5" | grep -Eq '^[0-9a-f]{40}$' || exit 1
+  lock_before=$(git_get_lock "$1" "$2") || exit 1
+  if [ "$lock_before" != "null" ]; then
+    printf '%s' "$lock_before" | jq --arg run "$3" --arg actor "$4" '
+      {status:(if .runId == $run and .actor == $actor then "owned" else "conflict" end),lock:.}'
+    exit $?
+  fi
+  lock_temp=$(mktemp -d) || exit 1
+  trap 'rm -rf "$lock_temp"' EXIT
+  git init --bare -q "$lock_temp" || exit 1
+  git_lock_validate_base "$5" || exit 1
+  lock_tree=$(git -C "$lock_temp" mktree </dev/null) || exit 1
+  lock_message=$(jq -nr --arg repo "$GIT_LOCK_REPO" --arg kind "$1" --arg item "$2" --arg run "$3" --arg actor "$4" --arg base "$5" '
+    "om-claim-v1\n" + ({repo:$repo,kind:$kind,item:$item,runId:$run,actor:$actor,baseSha:$base}|tojson)') || exit 1
+  lock_proposed=$(printf '%s\n' "$lock_message" |
+    GIT_AUTHOR_NAME='Claim metadata' GIT_AUTHOR_EMAIL='claim@invalid' \
+    GIT_COMMITTER_NAME='Claim metadata' GIT_COMMITTER_EMAIL='claim@invalid' \
+    git -C "$lock_temp" commit-tree "$lock_tree") || exit 1
+  if git -C "$lock_temp" push --porcelain --force-with-lease="$GIT_LOCK_REF:" "$GIT_LOCK_URL" "$lock_proposed:$GIT_LOCK_REF" >/dev/null; then
+    lock_posted=true
+  else
+    lock_posted=false
+  fi
+  lock_after=$(git_get_lock "$1" "$2") || exit 1
+  [ "$lock_after" != "null" ] || exit 1
+  printf '%s' "$lock_after" | jq --arg run "$3" --arg actor "$4" --arg sha "$lock_proposed" --arg posted "$lock_posted" '
+    {status:(if .sha == $sha and .runId == $run and .actor == $actor then "acquired"
+      elif .runId == $run and .actor == $actor then "owned"
+      elif $posted == "false" then "conflict" else error("Lock replaced after creation") end),lock:.}'
+)
+git_release_lock() (
+  git_lock_target "$1" "$2" || exit 1
+  printf '%s' "$3" | grep -Eq '^[0-9a-f]{40}$' || exit 1
+  lock_current=$(git_get_lock "$1" "$2") || exit 1
+  [ "$lock_current" != "null" ] || { printf 'absent\n'; exit 0; }
+  printf '%s' "$lock_current" | jq -e --arg sha "$3" --arg run "$4" --arg actor "$5" '
+    .sha == $sha and .runId == $run and .actor == $actor' >/dev/null || exit 1
+  lock_temp=$(mktemp -d) || exit 1
+  trap 'rm -rf "$lock_temp"' EXIT
+  git init --bare -q "$lock_temp" || exit 1
+  git -C "$lock_temp" push --porcelain --force-with-lease="$GIT_LOCK_REF:$3" "$GIT_LOCK_URL" ":$GIT_LOCK_REF" || exit 1
+  lock_remaining=$(git_get_lock "$1" "$2") || exit 1
+  if [ "$lock_remaining" = "null" ]; then printf 'released\n'
+  elif printf '%s' "$lock_remaining" | jq -e --arg sha "$3" '.sha != $sha' >/dev/null; then
+    printf 'released; successor retained\n'
+  else exit 1; fi
+)
+```
+
+Run `git_get_lock "{kind}" "{number}"`. Failed reads, malformed metadata,
+unknown formats and refs replaced during the read are errors, not absence.
+
+#### acquire-lock
+
+`{kind}`, `{item}`, unique run id, authenticated actor, resolved base SHA →
+`{status: acquired|owned|conflict, lock: <get-lock result>}`.
+Run `git_acquire_lock "{kind}" "{number}" "$CLAIM_RUN_ID" "$CURRENT_USER" "$BASE_SHA"`.
+The explicit empty expected-SHA lease requires the ref to be absent, including
+when another run creates it between advertisement and push. Unique run metadata
+distinguishes same-login contenders. Reconcile an uncertain push by reading the
+exact ref before retrying; only the matching generation owns it. A losing fresh
+run performs no note, assignment, label or work mutations. Persist the returned
+SHA before continuing through the shared claim protocol.
+
+#### release-lock
+
+`{kind}`, `{item}`, expected SHA, expected run id, expected actor → conditional
+release. Run `git_release_lock "{kind}" "{number}" "$CLAIM_LOCK_SHA" "$CLAIM_RUN_ID" "$CURRENT_USER"`.
+Keep ownership through note/label/assignment cleanup; delete the exact ref last.
+The expected-SHA lease preserves a successor even if it replaces the old owner
+between read and deletion. Absent is idempotent; a changed generation blocks.
+Never replace this with unconditional REST branch/ref deletion. These exact
+metadata-ref lease operations are lock housekeeping, not permission to publish
+staged project work or force-push project branches.
+
+#### get-claim-reset
+
+`{kind}`, `{item}` → latest tracker-audited human `claim-reset` label application
+as `{id,createdAt,actor}`, or `null` if none. Read every event page, including past
+applications after label removal. Verify the event actor is a human permitted to
+manage item labels; bot applications and comment/body text never authorize reset.
+A failed/unsupported audit read is not `null`: stop recovery and report the gap.
+This cutoff permanently retires claim comments created strictly before it;
+same-second/unknown timestamps are uncertain and remain blocking. It does not
+relax QA, merge, scheduler reservations or command/process isolation.
+
+This shipped provider reports `UNSUPPORTED` for UI reset history until its
+repository-local descriptor supplies a complete authenticated label-event audit
+with a trusted human actor and timestamp. Normal atomic acquisition still works; if the
+item carries `claim-reset`, stop recovery and report the missing capability.
+Never treat a label alone or guessed timestamp as permission to steal a claim.
+Use explicit authorized force recovery with stopped workers when no audit exists;
+time-based stale recovery also requires an authenticated server creation time.
+
+#### claim-winner
+
+`{kind}`, `{item}`, `LIVE_CLAIM_IDS` (JSON array of comment handles from a complete
+fresh **list-issue-comments** read, selected by the skill's live/stale policy) →
+`{id,user,body}` for the lowest server creation-order candidate, or `null` when
+none is visible. Missing/unreadable/incomplete data is an error, never an empty
+success. Require the caller's own id in the fresh candidate set before proceeding.
+Ignore explicitly `released`/`withdrawn` comments even if passed as live. Do not
+filter by actor: two contenders may share one bot account. Numeric ids compare
+numerically; opaque ids use creation time then stable id. The caller repeats the
+read/election and performs the post-label ownership check; this is not atomic.
+
+Use **list-issue-comments** for the item, reading every page. Intersect comment
+ids (as strings) with `LIVE_CLAIM_IDS`, exclude terminal comments, sort by numeric
+id, and return that id, `user` and `body`. Do not mistake an inline diff comment
+for a conversation claim.
+
+#### withdraw-claim
+
+`{kind}`, `{item}`, `{commentId}`, full terminal body file, expected authenticated
+actor and `Claim-Run` → rewrite only that run's original candidate through **update-comment**,
+then read it back through **list-issue-comments**. Retain its legacy first line,
+marker and run id; change `Claim-State: active` to `withdrawn` (loser) or `released`
+(owner after cleanup), with the reason/winner. Before writing, verify exact item,
+comment id, authenticated author and run id; a mismatch stops cleanup. Do not
+edit a foreign candidate or delete its label. Return the same id and verified
+terminal state; failed update/read-back is a blocker. Never fall back to a new
+comment leaving the old active candidate in place.
 
 ### Pull requests
 

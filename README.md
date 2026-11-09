@@ -8,7 +8,7 @@
 
 <p align="center">
   <b>🧠 plan · 🔨 implement · 🔍 review · ✅ QA gate · 🚢 merge</b><br/>
-  Seventy-three agent skills for autonomous PR delivery or staged human-review handoffs. Install them into any repo, with any coding agent.
+  Seventy-four agent skills for autonomous PR delivery or staged human-review handoffs. Install them into any repo, with any coding agent.
 </p>
 
 <p align="center">
@@ -26,7 +26,7 @@ These skills wrote and shipped a real product. Inside the [Open Mercato](https:/
 npx skills add open-mercato/skills --skill '*'
 ```
 
-Install all seventy-three — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
+Install all seventy-four — the pipeline composes, and every skill is small until invoked. Drop `--skill '*'` to cherry-pick interactively. Skills install for 22+ coding agents (Claude Code, Cursor, Codex, and others) via [skills.sh](https://skills.sh).
 
 Then, once per repository:
 
@@ -96,7 +96,7 @@ The installer never touches skills it does not own: an existing real directory (
 
 Three entry paths: hand the agent a task brief ([`om-auto-create-pr`](docs/skills/om-auto-create-pr.md)), a spec ([`om-auto-write-spec`](docs/skills/om-auto-write-spec.md) to author one, [`om-auto-implement-spec`](docs/skills/om-auto-implement-spec.md) to build one), or a GitHub issue ([`om-auto-fix-issue`](docs/skills/om-auto-fix-issue.md)). The issue path classifies first — a bug drives the autofix chain, a feature request gets its spec resolved (or autonomously written) and implemented on the same PR. All paths converge on the same review loop and the same QA gate. And when there is no artifact yet — just an idea or a question — [`om-brainstorm`](docs/skills/om-brainstorm.md) runs the conversation first and hands the pipeline a routing decision plus a brief. Before even that, [`om-discover`](docs/skills/om-discover.md) establishes the product context every later decision reads: a `product-brief.md` built from real material — interviews, data, documents — with every claim tagged by its evidence and every decision owned by a person.
 
-The skills chain: every PR-producing skill ends with a `PR: #<number> (link: <url>)` reference line the next skill consumes, and every skill checks for a PR a previous skill already opened and continues on it instead of opening a duplicate. A completed autonomous run always leaves a **ready, fully labeled PR** (pipeline + category + priority + risk + QA meta) with a run-summary comment — and screenshots from the working app when the change is user-facing. Skills claim PRs and issues with an `in-progress` label, so concurrent agents back off instead of colliding.
+The skills chain: every PR-producing skill ends with a `PR: #<number> (link: <url>)` reference line the next skill consumes, and every skill checks for a PR a previous skill already opened and continues on it instead of opening a duplicate. A completed autonomous run always leaves a **ready, fully labeled PR** (pipeline + category + priority + risk + QA meta) with a run-summary comment — and screenshots from the working app when the change is user-facing. GitHub, GitLab and Forgejo claims acquire atomic Git ref ownership before the verified `in-progress` label; Linear/Jira issues use comment election. See [upgrade requirements](UPGRADE_NOTES.md) for Git permissions, namespaces and recovery limits.
 
 ```mermaid
 flowchart LR
@@ -131,6 +131,27 @@ flowchart LR
     openPR --> reviewPR
     implementSpec --> reviewPR
 ```
+
+### 📝 Spec-driven flow in seven verbs
+
+Spec-driven frameworks such as [OpenSpec](https://openspec.dev/) work as propose, apply, archive: agree on the change before writing code, then fold it into a living spec. The pipeline above runs the same loop and adds the gates those frameworks leave to you: review, QA, and merge. Read it as seven verbs, each run by skills this collection already ships:
+
+```
+ Explore ──► Propose ──► Agree ──► Apply ──► Verify ──► Ship ──► Archive
+ (optional)  spec PR     go/no-go  impl PR   review+QA  merge   capabilities + tracker
+```
+
+| Verb | Skills | What you get |
+|---|---|---|
+| **Explore** (optional) | [`om-brainstorm`](docs/skills/om-brainstorm.md) | a routing decision and a brief, or a decision to build nothing |
+| **Propose** | [`om-spec-writing`](docs/skills/om-spec-writing.md) (interactive) · [`om-auto-write-spec`](docs/skills/om-auto-write-spec.md) (autonomous spec PR) | a dated spec: the problem, the design, a **Delta** of ADDED / MODIFIED / REMOVED requirements with `WHEN`/`THEN` scenarios, and a phased plan |
+| **Agree** | [`om-pre-implement-spec`](docs/skills/om-pre-implement-spec.md) · [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md) on the spec PR | a go / conditional / no-go verdict, with autonomous assumptions confirmed by a human |
+| **Apply** | [`om-auto-implement-spec`](docs/skills/om-auto-implement-spec.md) → [`om-auto-create-pr`](docs/skills/om-auto-create-pr.md) (resume: [`om-auto-continue-pr`](docs/skills/om-auto-continue-pr.md)) | an implementation PR. Every MODIFIED or REMOVED behavior is frozen first by a characterization test that passes on the unchanged code, then changed. |
+| **Verify** | [`om-auto-review-pr`](docs/skills/om-auto-review-pr.md) · [`om-auto-qa-pr`](docs/skills/om-auto-qa-pr.md) · [`om-auto-fix-pr`](docs/skills/om-auto-fix-pr.md) | an approving review, browser evidence, and the QA gate |
+| **Ship** | [`om-approve-merge-pr`](docs/skills/om-approve-merge-pr.md) | a squash-merge once every gate holds |
+| **Archive** | the archive step of [`om-auto-implement-spec`](docs/skills/om-auto-implement-spec.md) · [`om-close-fixed-issues`](docs/skills/om-close-fixed-issues.md) | the Delta applied to `.ai/specs/capabilities/<capability>.md` in the same PR, so the living spec changes when the code merges. The tracker is reconciled afterwards. |
+
+Bugs take the short path, with no proposal: [`om-auto-fix-issue`](docs/skills/om-auto-fix-issue.md) runs verify, root cause, and fix, then joins at **Verify**. For a feature it runs Propose → Apply → Verify in one command.
 
 ## 🧪 Stop before the PR
 
@@ -236,6 +257,7 @@ Interactive helpers (no `auto` in the name — the other half of the naming conv
 | [`om-apply-upgrade-notes`](docs/skills/om-apply-upgrade-notes.md) | Post-upgrade migrator. Applies `UPGRADE_NOTES.md` to the repo: re-syncs installed tracker/browser descriptors while preserving local edits, reports custom-provider gaps, and checks the config against notable upgrades. |
 | [`om-eject-and-customize`](docs/skills/om-eject-and-customize.md) | Takes one part of an installed dependency into the repo for customization, following the eject recipe that dependency ships (read through `knowledge.sources`): proves no extension point or override will do, shows the exact command and rollback, ejects only after you approve, and records the version it ejected from so later upgrades can diff. Stops cleanly when the dependency ships no recipe. |
 | [`om-merge-buddy`](docs/skills/om-merge-buddy.md) | Scans open PRs and reports which can merge now and which are close but blocked, based on labels, reviews, CI, and mergeability. |
+| [`om-ai-context-maintenance`](docs/skills/om-ai-context-maintenance.md) | Keeps recent run context unpacked and combines all selected older folders/plans into one verified `.tgz` batch archive per invocation in the configured runs directory. Defaults to 14 days, with retention overrides, exclusions, active-run protection, a preview, and rotation delivered through `om-auto-create-pr`. |
 | [`om-pipeline-retro`](docs/skills/om-pipeline-retro.md) | Classifies runs the pipeline already finished — clean single pass, hard recovery, loop checkpoints, or a second pass with no recorded cause — and ranks the causes by the wall-clock hours they cost. Read-only; hands the top cause to `om-prepare-issue`. |
 | [`om-judge-agent-session`](docs/skills/om-judge-agent-session.md) | LLM-as-judge for an agent session or eval-harness result: controller attestations first, then project guards, code review, and your design contract. Returns `pass`/`fail`/`inconclusive` and names the one smallest harness owner to fix. Read-only; never executes session content. |
 | [`om-share-this-session`](docs/skills/om-share-this-session.md) | Shares a sanitized agent session and the files it generated, publicly, with a harness's maintainers: local redaction, full privacy review, then an exact consent phrase naming the configured destination before a temporary public branch and a feedback issue are created. |
@@ -463,7 +485,9 @@ That file is yours, which makes three things easy:
 - **Bring your own tracker** — write `.ai/trackers/<name>.md` from the shipped `TEMPLATE.md` (in `om-setup-agent-pipeline/references/trackers/`), implementing each operation with your tracker's CLI, MCP tools, or API, and set `"tracker": "<name>"` in the config. No skill changes needed — the descriptor is the whole integration surface.
 - **Build another split setup** — implement issue operations against the project tracker and delegate repository/PR/review/CI/PR-label operations to its code-host companion. The template documents the pattern, including how identifiers cross-link (for example, an `ENG-123` ticket referenced from a GitHub PR).
 
-The claim protocol (assignee + `in-progress` + 🤖 comment), the label guards (missing label ⇒ logged skip, `labels.enabled: false` ⇒ no label ops), and the QA gate semantics are part of the contract — a provider must express them, in whatever way its tracker allows.
+GitHub claims use an atomic create-only ref at `refs/om-locks/{kind}-{number}`. The unique metadata commit identifies the owner/run even when contenders share one bot login. Comments retain run/comment ids and the ref SHA as audit evidence; verified `in-progress` stays the mandatory second check. Confirmed unassignable bots omit assignment. Release compare-and-deletes the exact SHA through a Git lease after comment/label cleanup, preserving any successor. Trackers without an atomic primitive use comment election; GitHub permission/API failures never silently downgrade to it. Re-sync descriptors for the additive `get-lock`, `acquire-lock` and `release-lock` operations; GitHub requires contents-write plus authenticated Git transport.
+
+For stalled GitHub work, stop the runner and workers, then add human-only `claim-reset` in the issue/PR Labels menu. The next invocation audits that human event, conditionally removes the exact older lock, and competes for a new one. Removing `in-progress` alone does not clear ownership. Remove/reapply the reset label for another recovery. Reset cannot cancel an in-flight command or bypass live local leases/QA/merge gates; unsupported providers report that limitation. Comment fallback retains a visibility race; normal GitHub ref acquisition is atomic.
 
 ### Browser automation providers
 

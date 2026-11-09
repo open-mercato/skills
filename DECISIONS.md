@@ -643,3 +643,113 @@ signal/result formats remain intact; actual CLI/label provenance is recorded
 separately. Optional modifier labels need no config migration and are created
 by operators when used. Shared setup text stays unchanged: only the buddy’s
 specifics change, after comparison with all other setup copies.
+
+
+## 2026-11-03 — Complex QA is the default depth
+
+A blind run of `om-auto-qa-pr` on four PRs that human QA had already tested found
+6 of 23 human-reported defects. The misses clustered: shared components tested
+only on the screens the PR named, no undo/delete on money and stock, amounts not
+reconciled, no second user or stale write, and data loss accepted because the PR
+text described it. Complex depth adds those checks as required scenario steps in
+`references/complex-mode.md` by default, including orchestrated runs. The user
+explicitly requested this default; `--complex` stays accepted and `--basic`
+opts into the earlier scoped depth. Applicable unexercised checks yield PARTIAL
+and cannot grant automatic QA approval. It never relaxes a gate or the
+self-QA criteria. Product specifics (locales, risk checklist) stay in the
+consuming repo's local extension.
+
+
+## 2026-11-03 — Automerge routes human-lane work away from the queue
+
+Triage proposed PRs that the buddy would then hold for human QA, and policy
+work such as features or a design owner's UX fixes had no gate at all.
+`automerge.humanOnlyLabels` and `automerge.humanOnlyAuthors` now route that
+work to pinned human QA, and triage lists protected and human-only PRs in a
+*Human QA lane* instead of proposing them, plus a *Needs clarification* list
+for changed defaults and conflicts. Both default to empty, so existing setups
+keep their behavior. `automerge.complexQa` (default `always`, per explicit user direction) runs
+`om-auto-qa-pr --complex` where human-style depth matters. A gate map at the
+top of `human-gates.md` lists every gate, so adapting the skill starts in one
+place.
+
+
+## 2026-11-04 — Narrow protected areas, evidence-review sign-off, clean backports
+
+After the protected-area gate went live, 27 of 65 queued PRs waited for personal
+human QA and 17 also for a technical decision, and merges dropped from 54 to 13
+a day. Most were fail-closed tightening (scoping a read, rejecting invalid input,
+bounding pagination), additive migrations or backports of already approved PRs.
+Protected areas now cover changes that widen access, rewrite data, move money,
+change module boundaries or break published contracts; tightening stays on the
+automatic route with mandatory negative-case QA, and unclear direction still
+counts as protected. A QA reviewer may sign off by reviewing a current-head
+automatic PASS and re-running one negative case. A clean backport inherits the
+merged origin's human sign-off and technical approval; conflict hunks do not.
+
+
+## 2026-11-05 — Elect run-identified claims before assignment and labels
+
+Issue #127 exposed a read-then-write race across claiming skills. The shared
+protocol now posts a candidate and verifies a deterministic server-order winner
+before assignment, label mutations or work. Run/comment identity distinguishes
+parallel jobs using the same bot login. `in-progress` remains a verified second
+check, and confirmed unassignable bots omit only assignment. Claim failures stop
+work; the older `om-fix` log-and-continue instruction is removed.
+
+Comment election is the reversible portable default, avoiding repository refs and
+additional content-write permissions in consumer repositories. Losing comments
+remain withdrawn audit records; release terminates the owned candidate after
+label cleanup. Complete repeated reads narrow, but do not eliminate, eventual
+visibility and simultaneous-recovery races; the consequence is duplicate work.
+Provider winner/withdraw operations are additive with safe legacy-descriptor
+fallback. The user requested all skills, authorizing the shared-copy sync.
+
+The operator additionally requested GitHub UI recovery. Human-only `claim-reset`
+label events establish a persistent cutoff for retiring older claims; current
+runners cooperatively stop at their next boundary. Recovery cannot cancel an
+in-flight shell command and requires stopping the stalled runner first. GitHub
+audits the event actor and permission; other providers explicitly declare missing
+UI-audit support instead of guessing. Historical cutoff survives label removal.
+
+
+## 2026-11-05 — Prefer atomic GitHub ref locks; comments retain audit ids
+
+The operator clarified issue #127's preferred implementation and superseded the
+comment-only default above. GitHub now acquires create-only refs under
+`refs/om-locks/`, pointing at unique metadata commits so same-login runs have
+separate generation/owner identities. Comment ids/run fields remain additional
+audit evidence and `in-progress` remains the verified secondary guard.
+
+GitHub release and reset/stale/force recovery compare-and-delete the exact SHA
+using a Git explicit lease. REST DELETE alone is rejected because it has no
+expected-generation condition and could delete a successor between read/delete.
+Lock metadata transport is a narrow exception to staged publication prohibitions;
+no project branch/history is changed. GitHub cannot silently fall back on a
+permission or transport failure. Providers explicitly without an atomic primitive
+retain comment election. Recovery preserves local liveness and human gates.
+
+
+## 2026-11-05 — Extend atomic ownership to GitLab and Forgejo
+
+The operator requested GitLab parity and an audit of other providers. Returning
+`UNSUPPORTED` was an implementation gap for GitLab and Forgejo. Both can use
+Git's absent-value lease for create-only acquisition and expected-SHA deletion.
+GitLab uses a reserved branch namespace because arbitrary refs are not assumed
+portable there; Forgejo accepts custom refs under code-write permission. Temporary
+bare repositories isolate metadata objects from the caller's working tree.
+Metadata uses an empty tree and no parents; the API-verified base is recorded
+as `baseSha`, avoiding a full project-content download on every ownership read.
+No credential, hook, protection or pipeline changes are made automatically.
+Namespace pushes may trigger CI/webhooks and require reviewed filtering.
+
+Locally created commit dates are client-controlled, so these providers return
+unknown server receipt time and do not authorize time-based/UI recovery with
+it. Explicit force recovery still needs stopped workers and exact-generation
+release. Linear/Jira issues do not host repository refs and keep comment election;
+GitHub PR delegation remains atomic. The operator's parity request authorizes
+synchronizing the shared claim consumers in the same change.
+
+Sources: [GitLab branches](https://docs.gitlab.com/api/branches/),
+[Git explicit leases](https://git-scm.com/docs/git-push),
+[Forgejo pre-receive source](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/routers/private/hook_pre_receive.go).

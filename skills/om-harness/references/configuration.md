@@ -13,7 +13,12 @@ the object is absent. Resolve configuration in this order:
 3. explicit invocation choices such as `--profile` or `--model`.
 
 The user-local overlay may bind provider commands, endpoints, model identifiers,
-timeouts, and credential environment-variable names. It must not change the
+timeouts, and credential environment-variable names. Host selection remains
+repository policy: change the shared `agentHarness.host` deliberately when
+switching conductors. Do not use an overlay to change the host; capture and
+packet preparation read the repository configuration, while council loading
+merges provider overlays. An explicit `--host` must match committed host policy.
+Mixed-client per-user host switching is outside this version's scope. It must not change the
 delivery mode. Never load executable provider settings from the task branch.
 
 ## Required shape
@@ -22,7 +27,6 @@ delivery mode. Never load executable provider settings from the task branch.
 {
   "agentHarness": {
     "version": 1,
-    "host": "codex",
     "delivery": {
       "mode": "stage-only",
       "issueClaim": "hold"

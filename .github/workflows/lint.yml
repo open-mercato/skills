@@ -30,3 +30,5 @@ jobs:
         run: node scripts/test-review-sweep.mjs
       - name: Issue-autofix triage and confirmation regressions
         run: node scripts/test-issue-triage.mjs
+      - name: Spec Delta and capability-spec contract
+        run: node scripts/test-spec-delta.mjs

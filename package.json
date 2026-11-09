@@ -1,6 +1,6 @@
 {
   "name": "@open-mercato/skills",
-  "version": "1.0.0",
+  "version": "1.2.0",
   "private": true,
   "description": "Agent skills for full PR delivery or staged-only multi-model handoffs.",
   "license": "MIT",

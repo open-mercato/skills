@@ -1,6 +1,6 @@
 ---
 name: om-auto-create-pr
-description: Run an arbitrary autonomous task end-to-end and ship it as a PR against the configured base branch. Drafts a Progress-tracked execution plan, commits on a fresh worktree branch, implements phase-by-phase, runs the configured validation gate, applies pipeline labels. Long plans hand off to om-auto-create-pr-loop automatically. Resumable via om-auto-continue-pr.
+description: Use when a task should be implemented autonomously and delivered as a PR, e.g. 'build this and open a PR'. Write a tracked execution plan, implement in an isolated worktree, run configured validation, and apply pipeline labels. Long plans hand off to om-auto-create-pr-loop; resume via om-auto-continue-pr.
 ---
 
 # Auto Create PR
@@ -21,6 +21,8 @@ Turn a free-form task brief into a disciplined autonomous run: an execution plan
 A previous skill may already have opened a PR for this work (e.g. `om-auto-write-spec` landing a spec PR): step 1 detects it via the plan path / branch / **search-prs**, and the run continues on that PR through `om-auto-continue-pr` instead of opening a duplicate. This skill ends by reporting the `PR:` / `Issue:` chaining reference lines so the next skill in a chain (`om-auto-review-pr`, `om-auto-qa-pr`) can consume them. Companion skills (all optional, with inline fallbacks): `om-open-pr` (PR opening/labels), `om-auto-review-pr` (the single code-review/autofix pass), and `om-auto-continue-pr` (resume).
 
 ## Workflow
+
+**Claims:** `references/claim-pr.md` governs atomic/fallback ownership and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-auto-create-pr/SKILL.md` when present; safety rules still win.
 

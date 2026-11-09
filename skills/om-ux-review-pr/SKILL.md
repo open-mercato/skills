@@ -1,6 +1,6 @@
 ---
 name: om-ux-review-pr
-description: Evidence-first design review of a PR's UI. Walks the changed screens in a real browser, performs the user's tasks, and posts findings ranked by user impact, each with evidence, a pattern, a trade-off and an acceptance criterion. A --guard mode checks code statically against the design contract, per PR or repository-wide with --health.
+description: Use when a PR's UI needs an evidence-backed design review, e.g. 'review the UX of PR 123'. Walk changed screens in a browser and rank findings by user impact with evidence, patterns, trade-offs, and acceptance criteria. Use --guard for static design-contract checks, or --guard --health for repository-wide checks.
 ---
 
 # UX Review

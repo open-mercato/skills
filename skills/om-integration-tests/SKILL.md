@@ -1,6 +1,6 @@
 ---
 name: om-integration-tests
-description: Run and create integration/E2E tests by exploring the live app with the configured browser provider, preserving repository-native runners, reusing the shared test environment, and diagnosing failures from concrete artifacts.
+description: Use when live-app integration or E2E tests need running, creating, or debugging, e.g. 'add browser coverage for this flow'. Explore with the configured browser provider, preserve repository-native runners, reuse the shared test environment, and diagnose failures from concrete artifacts.
 ---
 
 # Integration Tests

@@ -75,11 +75,11 @@ always treated as `risk-high` for the gates, even without a risk label:
 
 | Area | Examples to inspect |
 |---|---|
-| Migrations | Added/modified executable schema or data migrations, migration runners and destructive/backfill behavior |
-| Permissions or tenant isolation | Authorization policies/checks, roles/grants, scope filters, tenant context propagation, cross-tenant reads/writes and bypass paths |
-| Money | Prices/totals, currencies/rounding, charges/payments, refunds, billing, balances, payouts and financial transaction retry/idempotency |
-| Architecture changes | Substantive changes to service/module boundaries, persistence or state ownership, execution/deployment topology, shared extension contracts, or cross-component communication and dependency direction |
-| Backward-incompatible changes | Removing, renaming or incompatibly changing published APIs/events, CLI flags, config/serialized formats, persisted data contracts, supported integrations, or externally relied-on behavior |
+| Migrations | Migrations that rewrite, delete, backfill or move existing rows, or drop or rename columns and tables, plus changes to migration runners. An additive migration (new table, new nullable column, new index) with up/down evidence is not protected |
+| Permissions or tenant isolation | Changes that widen or remove access control: a new or loosened authorization check, a grant or feature given by default, a new cross-tenant or cross-organization read or write path, a removed or bypassed scope filter, changed tenant context propagation |
+| Money | Changes to how amounts are computed or moved: prices and totals, currencies and rounding, charges and payments, refunds, billing, balances, payouts, financial retry and idempotency. Labels, display formatting and hiding amounts from a role are not money changes |
+| Architecture changes | Substantive changes to service/module boundaries, persistence or state ownership, execution/deployment topology, shared extension contracts, or cross-component communication and dependency direction. New code or refactors inside one module's existing boundaries are not |
+| Backward-incompatible changes | Removing, renaming or changing the shape of published APIs/events, CLI flags, config/serialized formats, persisted data contracts or supported integrations, or changing documented successful behavior. A new refusal for input that was already invalid, a bound on pagination or size, or stricter validation of malformed input is not backward-incompatible |
 
 A local behavior-preserving refactor within existing boundaries is not an
 architecture change by itself. An additive API is not backward-incompatible
@@ -87,6 +87,13 @@ unless existing consumers or supported behavior stop working. Read the repo's
 architecture/design decisions, public contracts and `BACKWARD_COMPATIBILITY.md`
 when present; inspect affected consumers rather than trusting a PR title, label
 or an author's assertion that the change is compatible.
+
+**Tightening is not widening.** A change that only narrows what is allowed
+(fails closed, scopes a read further, rejects more input, removes data from a
+response) is not protected on that ground. It stays on the automatic route with
+strict review and complex QA that must include the negative cases (wrong tenant,
+wrong organization, missing feature, malformed input). When it is unclear whether
+a change widens or narrows access, treat it as protected.
 
 A filename or incidental mention alone is not proof; explain the concrete changed
 behavior and cite paths/lines. Unknown/truncated diff or uncertain impact cannot
@@ -112,6 +119,20 @@ A bot or `om-auto-qa-pr` self-sign-off, including one posted under a human accou
 cannot satisfy this gate. Changed heads require a fresh human pin or an explicit
 human scope assessment with a fresh `QA head:`; automatic carry-forward is insufficient.
 
+**Evidence-review sign-off.** A verified human QA reviewer may sign off by
+reviewing a completed `om-auto-qa-pr` PASS on the current head that covers the
+protected behavior and its negative cases, and by personally re-running at least
+one negative case. The note names the reviewed evidence and the re-run case and
+carries `QA head:`. It is a human sign-off and satisfies this gate; the automatic
+PASS alone still does not.
+
+**Clean backports.** A PR targeting a release branch inherits the human QA
+sign-off and any technical approval of its origin PR when the origin is merged
+into the default branch with that approval, and the backport carries the same
+changes apart from clean context differences. Record the origin PR and the
+inherited sign-off URLs. Conflict resolutions, extra commits or differing hunks
+need fresh human QA for those hunks.
+
 ### Additional architecture and compatibility decision
 
 For architecture or backward-incompatible changes, require **explicit human
@@ -133,7 +154,8 @@ compatibility path remains a blocker under `BACKWARD_COMPATIBILITY.md` and
 When no compatibility policy exists, require a documented transition plan and
 explicit maintainer acceptance rather than silently permitting the break.
 A changed head or target requires fresh applicable human approval/assessment;
-never automatically carry a technical decision to a new revision or target.
+never automatically carry a technical decision to a new revision or target,
+except a clean backport as defined in section 2.
 
 Missing technical approval or required compatibility evidence ends
 `waiting-human`, invalidates QA/current readiness and removes the QA signal as
@@ -208,4 +230,10 @@ Never leave `Risk checks: skipped` or `ready` describing a protected PR.
 | Breaking public contract, `--force`, human QA PASS, missing required deprecation/migration path | Continue human wait; compatibility blocker cannot be waived by QA |
 | Architecture/compatibility change, all pinned human approvals and required compatibility evidence, no veto | Eligible for normal strict CR/CI and finish checks |
 | Ordinary fix, no veto or protected behavior | Existing automatic path remains available |
+| Fail-closed tightening of a scope or permission check, negative cases covered by complex QA | Automatic path; no personal human QA |
+| New 409 or validation error for input that was already invalid | Not backward-incompatible; no technical approval |
+| Additive nullable column migration with up/down evidence | Not protected on migration grounds |
+| Protected area, automatic PASS covering negative cases, human reviewed it and re-ran one negative case with `QA head:` | Human gate satisfied |
+| Clean backport of a merged origin with human sign-off | Inherits the origin's sign-off; record both URLs |
+| Backport with conflict resolution in a protected area | Fresh human QA for the resolved hunks |
 | Veto arrives during a stage or before finish/replacement | Recheck and stop; invalidate QA/readiness |

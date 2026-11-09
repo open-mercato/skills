@@ -10,6 +10,11 @@ The conducting host is configured as Codex or Claude: the conductor context that
 fresh reviewer context both live in the active agent client. Workers and advisors are
 pluggable — the bundled jury is a default, not a requirement.
 
+Host selection is repository policy: setup records Codex or Claude explicitly;
+`--host` must agree with committed `agentHarness.host`. The template omits that
+key to preserve the legacy Claude default until setup selects it. Provider
+overlays do not provide per-user host switching.
+
 - Agent-facing contracts live in [`SKILL.md`](SKILL.md) and [`references/`](references/).
 - The deterministic runtime is [`scripts/harness.mjs`](scripts/harness.mjs).
 - The preventive guards live in [`hooks/`](hooks/).

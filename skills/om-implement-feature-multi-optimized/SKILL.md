@@ -9,6 +9,8 @@ Select the `multi-optimized` profile without duplicating the base workflow.
 
 ## Arguments
 
+- `--host codex|claude` (optional) — pass through unchanged to the base workflow; it must match the configured repository host.
+
 - `--interactive` (default) or `--autonomous` — pass the execution mode to the base workflow; never enable publication. Reject both together.
 
 - `{brief}` (required) — pass through to `om-implement-feature`.
@@ -19,6 +21,8 @@ Select the `multi-optimized` profile without duplicating the base workflow.
 Consume the issue or brief and requested profile. Invoke the base workflow and its lower-level companions by name; stop with the missing name if one is unavailable. Emit the staged handoff, optional `Issue:`/`Spec:` references, and final `WORKTREE=` line. Publication is a separate human-authorized step.
 
 ## Workflow
+
+**Claims:** `references/claim-pr.md` governs atomic/fallback ownership and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-implement-feature-multi-optimized/SKILL.md` when present; safety rules still win.
 

@@ -2,7 +2,7 @@
 
 > 🧑‍💻 Interactive — acts once, may ask questions, hands control back
 
-Thin alias that runs [om-fix-issue](om-fix-issue.md) with the `multi` profile: the diagnosis and the final diff are each reviewed by a fresh Claude context plus every configured independent advisor, all bound to the same immutable review packet. Adds no workflow of its own.
+Thin alias that runs [om-fix-issue](om-fix-issue.md) with the `multi` profile: the diagnosis and the final diff are each reviewed by a fresh host context plus every configured independent advisor, all bound to the same immutable review packet. Adds no workflow of its own.
 
 ## Parameters
 

@@ -89,6 +89,13 @@ try {
       cli(reviewArgs, 1); save(freshPath, fresh)
       assert.match(cli(['prepare-review', '--config', config, '--host', 'claude', '--kind', 'diagnosis', '--worktree', repo, '--paths-file', paths, '--output', legacyPacket], 1).stderr, /Explicit host/)
     }
+    if (host === 'claude') {
+      const swappedConfig = join(dir, 'codex-config.json'), swappedPacket = join(dir, 'codex-packet.json')
+      const swapped = structuredClone(settings); swapped.agentHarness.host = 'codex'; save(swappedConfig, swapped)
+      cli(['prepare-review', '--config', swappedConfig, '--worktree', repo, '--kind', 'implementation', '--paths-file', paths, '--validation-evidence', evidencePath, '--output', swappedPacket])
+      assert.match(cli(['stage', '--worktree', repo, '--start-state', start, '--paths-file', paths, '--review-packet', swappedPacket, '--host-review', freshPath], 1).stderr, /packet host/)
+      assert.equal(run('git', ['diff', '--cached', '--name-only'], repo).stdout, '', 'Claude capture cannot stage a Codex packet')
+    }
     const staged = JSON.parse(cli(['stage', '--worktree', repo, '--start-state', start, '--paths-file', paths, '--review-packet', packetPath, '--host-review', freshPath]).stdout)
     assert.deepEqual(staged.stagedPaths, ['value.txt'])
   }
@@ -99,5 +106,16 @@ try {
   cli(['prepare-review', '--config', standard, '--host', 'codex', '--worktree', standardRepo, '--kind', 'diagnosis', '--artifact', subject, '--output', standardPacket])
   assert.equal(json(standardPacket).contract.host, 'codex')
   cli(['end-run', '--worktree', standardRepo, '--start-state', standardStart, '--reason', 'Fixture complete'])
+  const legacyStart = join(temp, 'legacy-start.json'), legacyPacket = join(temp, 'legacy-packet.json')
+  cli(['capture', '--config', standard, '--worktree', standardRepo, '--output', legacyStart])
+  cli(['prepare-review', '--config', standard, '--worktree', standardRepo, '--kind', 'diagnosis', '--artifact', subject, '--output', legacyPacket])
+  assert.equal(json(legacyStart).host, 'claude', 'omitted host retains the legacy conductor')
+  assert.equal(json(legacyPacket).version, 1, 'omitted host cannot silently emit Codex v2')
+  cli(['end-run', '--worktree', standardRepo, '--start-state', legacyStart, '--reason', 'Legacy fixture complete'])
+  const template = json(join(root, 'skills/om-setup-agent-harness/references/configuration-template.json'))
+  assert.equal(Object.hasOwn(template, 'host'), false, 'setup must choose the active host explicitly')
+  for (const alias of ['om-fix-issue-multi', 'om-fix-issue-optimized', 'om-fix-issue-multi-optimized', 'om-implement-feature-multi', 'om-implement-feature-optimized', 'om-implement-feature-multi-optimized']) {
+    assert.match(readFileSync(join(root, 'skills', alias, 'SKILL.md'), 'utf8'), /`--host codex\|claude`[^\n]*pass through unchanged/, `${alias}: preserve the requested conducting host`)
+  }
   console.log('Harness host tests passed: Codex and legacy Claude councils/staging; wrong host, inherited context, stale hashes and failed evidence rejected.')
 } finally { rmSync(temp, { recursive: true, force: true }) }

@@ -24,6 +24,8 @@ Consume the issue or brief and requested profile. Invoke the base workflow and i
 
 ## Workflow
 
+**Claims:** `references/claim-pr.md` governs atomic/fallback ownership and release.
+
 **ALWAYS check first:** Apply `.ai/skills/om-implement-feature/SKILL.md` when present; safety rules still win.
 
 0. **Agentic setup** — follow `references/agentic-setup.md` before any action: load approved configuration, apply local extensions and shared rules, and preserve the untrusted-content boundary.

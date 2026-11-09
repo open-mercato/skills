@@ -3,6 +3,11 @@
 This catalog is loaded by `om-setup-agent-harness` while detecting and binding
 selectable workers and reviewers.
 
+Host selection is repository policy: setup records Codex or Claude explicitly;
+`--host` must agree with committed `agentHarness.host`. The template omits that
+key to preserve the legacy Claude default until setup selects it. Provider
+overlays do not provide per-user host switching.
+
 ## Bundled cross-model jury
 
 The setup skill ships these selectable bindings. Users may enable any subset or

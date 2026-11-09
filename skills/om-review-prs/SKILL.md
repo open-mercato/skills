@@ -1,6 +1,6 @@
 ---
 name: om-review-prs
-description: Review unreviewed open pull requests, newest first, using om-auto-review-pr and respecting claim locks. Use --subagents for a fresh reviewer per PR and --parallel N for bounded concurrency; without flags, review sequentially in the current session.
+description: Use when open PRs need a review sweep, e.g. 'review the unreviewed PRs'. Review newest first through om-auto-review-pr, respecting claim locks. Run sequentially by default; --subagents selects a fresh reviewer per PR and --parallel N bounds concurrency.
 ---
 
 # Review PRs
@@ -18,6 +18,8 @@ Use this as a day-start review queue. Find unreviewed open PRs, show the queue, 
 This skill is a sweep, not a single-PR step: it finds every unreviewed open PR and dispatches the full `om-auto-review-pr` workflow at each one, newest first, so it consumes no chaining reference lines and emits none — each delegated review reports its own verdict and markers. It respects `in-progress` claim locks and never force-claims in batch mode, skipping any PR another actor owns. Companion skills: `om-auto-review-pr` (required — the run stops if it is missing) and, optionally, `om-merge-buddy`, suggested after the session to show what is now merge-ready.
 
 ## Workflow
+
+**Claims:** `references/claim-pr.md` governs atomic/fallback ownership and release.
 
 **ALWAYS check first:** Apply `.ai/skills/om-review-prs/SKILL.md` when present; safety rules still win.
 

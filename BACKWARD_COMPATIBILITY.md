@@ -38,6 +38,18 @@ The named operations (**get-issue**, **create-pr**, **comment-pr**, **merge-pr**
 - **Breaking:** renaming an operation, changing an operation's inputs/outputs, removing a guard, referencing a new operation from a skill without adding it to the template and shipped descriptors.
 - **Required path:** add new operations to `TEMPLATE.md` and every shipped descriptor in the same PR; skills must degrade gracefully (documented fallback) when running against an older descriptor copy that lacks a newly added operation.
 
+The claim additions retain legacy comment prefixes and append run/state/ref
+fields. Git-host **get-lock**, **acquire-lock** and **release-lock** are additive
+operations required by all shipped descriptors (split PRs delegate). Older Git-host
+custom descriptors stop until upgraded; never silently substitute comment locks
+on permission or operation failure. Providers explicitly lacking an atomic
+primitive retain **claim-winner** / **withdraw-claim** and complete-list/edit
+fallback. Same-login re-entry requires run/comment identity plus exact ref SHA in
+atomic mode. Verified `in-progress` remains mandatory, even when assignment is
+unavailable. The optional human-only `claim-reset` label conditionally retires
+older generations; expected-SHA lease deletion preserves successors. Upgrade all
+claimers together. See `UPGRADE_NOTES.md` for permissions and migration limits.
+
 ### 4. The browser-provider operations contract
 
 The named browser operations (**ensure-installed**, **doctor**, **open**,
@@ -53,6 +65,7 @@ hold committed, possibly team-edited copies at `.ai/browsers/<provider>.md`.
 
 ### 5. Cross-skill file formats
 
+- **Atomic GitHub lock metadata v1** (`refs/om-locks/{kind}-{number}` to a metadata commit with message header `om-claim-v1` and JSON `repo`, `kind`, `item`, `runId`, `actor`; generation is the immutable commit SHA). Readers reject unknown metadata and never delete a different generation. Comments carry additive `Claim-Lock`/`Claim-Lock-SHA` audit fields.
 - **Execution-plan `## Progress` section** (`- [ ]` / `- [x]` checklists with `N.M` step ids and ` — <sha>` suffixes) — written by `om-auto-create-pr`, parsed by `om-auto-continue-pr`.
 - **PR body `Tracking plan:` and `Status:` lines** — written by `om-auto-create-pr`, parsed by `om-auto-continue-pr` and the loop skills.
 - **`<paths.qa>/test-env.json`** — written by `om-prepare-test-env`, consumed by `om-auto-qa-pr` and `om-integration-tests`.
@@ -143,3 +156,14 @@ Codex reviewer invocations derive a strict temporary Structured Outputs schema
 without changing the public provider schema. `version` stays optional for
 legacy command and HTTP adapters; only the Codex-specific invocation schema
 requires integer `version: 1` along with the other declared properties.
+
+GitLab and Forgejo now implement the existing atomic operations instead of
+returning `UNSUPPORTED`; refresh their committed descriptors and every claimer
+together. Names/signatures stay intact. GitLab reserves lock branches under
+`refs/heads/om-locks/`; Forgejo uses `refs/om-locks/`. These providers bind `repo`
+to the canonical web URL including host, add the API-verified `baseSha`, use
+empty-tree/no-parent metadata, and return `createdAt: null` because Git
+commit dates do not prove server receipt. Optional `metadataCreatedAt` is only
+diagnostic; consumers must block time-based/UI recovery without a server audit.
+Explicit authorized force recovery and exact-generation release remain available.
+No permission/transport-error fallback or automatic credential/pipeline changes.

@@ -45,6 +45,7 @@
       "qa-approved",
       "qa-self-verified",
       "in-progress",
+      "claim-reset",
       "ci-monitoring",
       "automerge-signal-1-cr",
       "automerge-signal-2-qa",

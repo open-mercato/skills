@@ -1,0 +1,134 @@
+# Race-aware claims for issue #127
+
+## Goal
+Prevent concurrent skill runs from both claiming an issue or PR, including runs sharing an unassignable bot account; retain `in-progress` as a secondary guard.
+
+## Scope
+All installed claim procedures and their inline consumers; tracker contracts, SDLC template and repository SDLC, upgrade guidance, and behavioral concurrency tests.
+
+## Implementation Plan
+### Phase 1: Protocol and consumers
+1.1 Add comment-first election with run identity, verified ownership, and safe release to every claim reference and inline consumer.
+1.2 Add provider winner/withdraw operations with legacy-descriptor fallback and update SDLC/upgrade contracts.
+### Phase 2: Verification and delivery
+2.1 Exercise interleaved claims, same-bot races, lifecycle and provider operations; run the configured validation gate.
+2.2 Review the PR, apply findings, publish evidence and hand off ready for review.
+
+## Decisions
+Superseded by the operator: use atomic create-only Git ref locks on GitHub. Comments retain run/comment ids as additional audit evidence. Comment election is the fallback only where the tracker has no atomic primitive. Keep losing comments as explicitly withdrawn audit records. Keep legacy claim prefixes and append machine-readable identity/state fields. User explicitly requested all skills, authorizing shared-reference synchronization.
+
+User follow-up: add human-only GitHub UI `claim-reset` recovery with audited cutoff and cooperative revocation; preserve all other gates.
+
+## Non-goals
+Change stale windows, QA or merge gates, deploy, merge to base, or add scheduling.
+
+## Risks
+Comment visibility is eventually consistent; bounded repeated verification narrows but cannot eliminate duplicate work. Legacy active claims remain blockers, never assumed to be this run merely because the login matches. Custom tracker upgrades must preserve operation fallback.
+
+## Progress
+
+> Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
+
+### Phase 1: Protocol and consumers
+
+- [x] 1.1 Add comment-first election and update all claim consumers — abf33b8
+- [x] 1.2 Extend provider and upgrade contracts — abf33b8
+
+### Phase 2: Verification and delivery
+
+- [x] 2.1 Validate races, lifecycle and full configured gate — abf33b8
+- [x] 2.2 Review and publish the completed PR — a4847d3
+
+### Phase 3: Atomic GitHub ownership
+
+- [x] 3.1 Add atomic acquire/read/release operations and synchronize skill/docs consumers — 3e39b5b
+- [x] 3.2 Test acquisition races, owner release and reset fencing locally and live — 3e39b5b
+- [x] 3.3 Independent review, full gate and update the existing PR — 3e39b5b
+
+### Phase 4: Git-host provider parity (operator follow-up)
+
+- [x] 4.1 Add GitLab and Forgejo atomic acquisition/read/release with provider-specific targets
+- [x] 4.2 Audit Linear/Jira fallback and synchronize claim contracts and upgrade guidance
+- [x] 4.3 Run provider concurrency regressions, full validation and independent review
+- [x] 4.4 Publish the reviewed follow-up to PR #176 when authorized — f04a2a8
+
+## Shared-copy synchronization
+
+User requested all skills. Updated claim procedures in: `om-auto-continue-pr`, `om-auto-continue-pr-loop`, `om-auto-create-pr`, `om-auto-create-pr-loop`, `om-auto-fix-issue`, `om-auto-fix-pr`, `om-auto-manage-issues`, `om-auto-merge-buddy`, `om-auto-qa-pr`, `om-auto-review-pr`, `om-auto-write-spec`, `om-close-fixed-issues`, `om-fix`, `om-fix-issue`, `om-fix-issue-multi`, `om-fix-issue-multi-optimized`, `om-fix-issue-optimized`, `om-harness`, `om-implement-feature`, `om-implement-feature-multi`, `om-implement-feature-multi-optimized`, `om-implement-feature-optimized`, `om-open-pr`, `om-pr-autopilot`, `om-review-prs`, `om-setup-agent-harness`, `om-verify-in-repo`. Shared claim-etiquette rules are synchronized in every copy carrying them; no other shared rules changed.
+
+## Verification evidence
+
+- Live scratch issue https://github.com/open-mercato/skills/issues/177 (closed): five concurrent double-claim rounds under `open-mercato-maintenance[bot]`, each with one winner, one withdrawn loser, verified `in-progress`, and terminal release. No assignment required. Candidate pairs began after both initial reads saw no live claim.
+- Mock transport: 12 interleaved races including 6 same-bot pairs; numeric creation order, pagination, withdrawn/released and legacy candidates, stale exclusions, failed reads and reset permission/audit denial cases.
+- Provisioned the optional `claim-reset` label in this repository; never applied it automatically. Live human reset was not performed; audit authorization tested against fixtures.
+- Independent read-only review dispatched as cezar task 601ef812-5829-43b6-9c02-7cfb273a8875.
+
+All ten configured validation commands pass (lint rerun after token-budget, role-preservation and standalone SDLC-template sync fixes; nine other commands from the full ordered run). Temporary Git fixtures used TMPDIR/TMP/TEMP=/tmp to avoid nested-worktree contamination.
+
+## Review fix
+
+Independent review of 588db96 found a major split-provider cleanup gap: Linear/Jira PR candidates could be elected on GitHub but withdrawn through issue-local operations. Added explicit kind/item-aware PR delegation for withdrawal, ownership verification and read-back, plus code-host-local fallback for older companions. Issue cleanup retains provider-specific handles. Added regression checks for all four routing requirements. No reviewer branch changes were merged (read-only review).
+
+Final re-review: cezar task ffa8d6e3 approved root a4847d3 after verifying the prior major; no remaining blockers. Parent reran all ten configured commands after the routing fix: every command exited 0. Final README/skill-catalog edits document the already-reviewed behavior; manually reviewed. PR #176 contains the full validation/review evidence. Human GitHub UI reset remains a requested manual QA check; no live human reset was performed.
+
+## Atomic-lock follow-up (operator correction)
+
+GitHub uses `refs/om-locks/{kind}-{number}` pointing to a unique metadata commit carrying the authenticated actor, run id, item and server creation time. Create-only ref creation selects one owner. Release and UI/stale recovery compare-and-delete the exact observed SHA through Git lease semantics, so stale cleanup cannot delete a successor. Recovery never bypasses a new create-only race. Keep comment ids/state and verified `in-progress`, all-skill synchronization and split-provider routing. No silent GitHub fallback on permissions/API failure or old descriptors.
+
+Atomic metadata v1 is also recorded as a protected persisted contract. Independent review dispatched as 91c04fb6.
+
+Atomic evidence: https://github.com/open-mercato/skills/issues/178 (closed) records five concurrent same-bot ref-acquisition races, each with one owner/one conflict, audit-comment ids, verified secondary label, clean release and preservation of a successor against stale release. No scratch lock remains. Local tests execute eight races plus an injected replacement between ownership read and Git lease deletion, uncertain POST reconciliation, permission failures, owner mismatch and malformed refs. All ten configured gate commands exit 0 after the atomic change. Independent reviewer 91c04fb6 approved 3e39b5b with no blockers and verified all 27 shared atomic blocks and descriptor copies match. Its optional convention-wording cleanup is applied. Actual human label-reset audit remains fixture-tested, not a live human action.
+
+## Provider-parity decisions
+
+The operator requested GitLab parity and checking all other providers. GitLab
+uses reserved lock branches; Forgejo supports custom refs. Both use Git's
+explicit absent/expected-SHA leases, standalone descriptor helpers, temporary
+bare object stores and API-resolved target URLs. No credential changes or hook
+bypasses. Namespace pushes can trigger CI/hooks. Client commit timestamps do
+not prove server creation: return `createdAt: null`, expose diagnostic metadata
+time separately, and block time-based/UI recovery without a server audit.
+Linear/Jira issues retain comment election; their GitHub PRs delegate atomic
+operations. Shared-copy synchronization is necessary for the requested parity.
+
+Independent provider review found that reusing the base tree would repeatedly
+fetch the project into temporary repositories. Fixed GitLab/Forgejo metadata to
+use an empty tree and no parents; base SHA is API-verified and recorded in JSON.
+The regression fixture contains project content and checks both empty tree and
+absent parents. GitHub's API-only metadata path remains unchanged.
+
+Provider-parity validation uses the local runner (unpublished head has no hosted
+checks yet), with TMPDIR/TMP/TEMP=/tmp for fixtures outside the cockpit's nested
+Git tree. All ten configured commands pass; final tracker and lint checks repeat
+after the empty-metadata correction. Independent review resolved the original
+fetch-cost major and found no further defects after that correction. Actual
+hosted GitLab/Forgejo behavior is not live-tested here; real-Git transport plus
+mocked target APIs cover the shipped helpers. Human QA remains required.
+
+Final independent review: APPROVE after raw-header parent rejection and empty-tree regressions. All configured validation commands pass. The operator explicitly approved publishing to PR #176; the verified implementation is f04a2a8.
+
+
+## 2026-11-09 — inherited review corrections
+
+Restored the original upgrade introduction and all installed-artifact rows.
+GitHub exact-SHA release now uses a temporary bare repository, retaining global
+Git policy and server enforcement while working outside a checkout. Tests execute
+release from a non-repository directory and from a checkout with a rejecting hook,
+and verify that global policy can still deny release without losing ownership.
+
+Added the human-only `claim-reset` label to setup defaults and guidance. Compared
+all 27 claim references and synchronized atomic/fallback recovery, final ref
+release and the audit record for retired foreign comments. Shared-copy question
+was presented under AGENTS.md §5; the recommended complete synchronization was
+used after the optional response window.
+
+Startup recovery now explicitly reports claims without a matching reservation
+and authoritative runtime evidence without releasing them. Its contract tests
+cover startup/resume/reset routing, strictly more than 120 minutes of inactivity,
+complete activity reads, stopped owner/delegates, exact-generation release,
+retry checkpoints and preservation of human gates and other work. The tracker
+provider gate executes these checks in local validation and CI.
+
+Reviewer-permitted follow-ups remain separate: #181 covers short ownership for
+housekeeping writes; #183 covers unique create-only branches before issue claims.
+GitLab/Forgejo unknown server creation time remains a conservative design choice.

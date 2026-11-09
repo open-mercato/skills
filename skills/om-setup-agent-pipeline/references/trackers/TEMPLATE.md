@@ -8,7 +8,7 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 - **Split-provider setups are normal.** Many teams track issues in one tool (Linear, Jira) while PRs and CI stay on the code host (GitHub). In that case implement the *Issues* section against the issue tracker and delegate the *Pull requests*, *Labels*, and *Identity* sections, e.g.: "Pull request operations: as in `github.md` (gh CLI)." Map identifiers both ways in the Conventions section (for example, a Linear ticket `ENG-123` referenced from a GitHub PR body, and the PR URL attached back to the ticket).
 - **Preserve the semantics, not the syntax.** A skill saying "close the issue with a comment linking the PR" must end with the ticket in the tracker's done/closed state and a visible cross-link — whatever commands that takes.
 - **Concepts that must map somewhere:** issue/PR identifiers and how they are written in text; how a PR declares which issue it resolves (and whether that auto-closes it); draft PRs (or the nearest equivalent, e.g. a "WIP" state); labels (or the tracker's tags/states — if the tracker models workflow as states instead of labels, say how each pipeline label maps to a state); assignees; comments; CI check status; review verdicts (approve / request changes); merge.
-- **Claim/lock protocol.** Skills coordinate via three claim signals: assignee = automation user, `in-progress` marker, and a `🤖`-prefixed claim comment with a timestamp. Define how each is expressed in this tracker; all three should be readable back by **get-issue**/**get-pr** so concurrent skills detect the lock. For a `CURRENT_USER` ending in `[bot]` whose self-assignment is confirmed blocked, use only the verified `in-progress` marker as the claim flag, retaining the timestamped comment with bot login and run/chain identifier; preserve other assignees and do not bypass unrelated permission failures. The `ci-monitoring` marker is deliberately **not** one of them: it records that a finished, fully reported run still owes a CI-result comment, and must never be read as a lock.
+- **Claim/lock protocol.** Skills coordinate via three claim signals: assignee = automation user, `in-progress` marker, and a `🤖`-prefixed claim comment with a timestamp. Define how each is expressed in this tracker; elect the comment before assignment and verify `in-progress` as the mandatory second check; all three should be readable back by **get-issue**/**get-pr** so concurrent skills detect the lock. For a `CURRENT_USER` ending in `[bot]` whose self-assignment is confirmed blocked, elect the run-identified comment first and verify `in-progress` as the second check without assignment; preserve other assignees and do not bypass unrelated permission failures. The `ci-monitoring` marker is deliberately **not** one of them: it records that a finished, fully reported run still owes a CI-result comment, and must never be read as a lock.
 - **Guards.** Reproduce the label-guard behavior: a label/tag mutation checks existence first and degrades to a logged skip when missing; `labels.enabled: false` in the config skips label operations entirely.
 - **Mutate through the narrowest API surface the tracker offers.** When a tracker exposes both a rich query layer and a plain resource API (GraphQL vs REST, a convenience CLI verb vs the underlying endpoint), write mutations against the plain one. A convenience verb often fetches unrelated fields alongside the write, so an unrelated deprecation or permission gap on one of those fields aborts the whole call — and the caller sees a message about the unrelated field while the label, assignee, or body it asked for was never written. `github.md`'s Prerequisites document one such case in detail (Projects (classic)); the general rule is: mutations must not depend on fields they do not change, and a mutation whose success matters to a later decision is read back.
 - **Cross-repo targets.** Every operation should accept an optional `{repo}` (owner/name, or this tracker's project identifier) and default to the current checkout's repository when omitted — some skills address repositories other than the current one and always pass the target explicitly. `github.md` documents this contract as its blanket `--repo` rule. A provider that cannot support cross-repo targets must say so explicitly here, so dependent skills fail loud instead of silently querying the wrong repository.
@@ -47,6 +47,88 @@ Copy this file to `.ai/trackers/{name}.md`, set `"tracker": "{name}"` in `.ai/ag
 - **get-issue-comment** — comment id → body, author, URL.
 - **list-issue-comments** — id → conversation comments.
 - **update-comment** — comment id, new body → rewrite an existing conversation comment in place (issue and PR conversation comments alike). Powers marker-idempotent comments: a skill finds its `🤖 …` marker via **list-issue-comments** and updates that comment instead of posting a duplicate. When the tracker cannot edit comments, document that here and skills degrade to posting a replacement that states it supersedes the previous one.
+
+#### get-lock
+
+Implement create-only ownership where the tracker offers an atomic primitive;
+otherwise return explicit `UNSUPPORTED` to select comment election. `get-lock`
+returns null only for a proven absent lock; acquisition identifies the unique
+owner/run, and release must conditionally delete the exact expected generation.
+Never map permission/API failures to unsupported. Split providers route PRs and
+issues independently. See GitHub for concrete inputs/outputs and lease deletion.
+
+#### acquire-lock
+
+Implement create-only ownership where the tracker offers an atomic primitive;
+otherwise return explicit `UNSUPPORTED` to select comment election. `get-lock`
+returns null only for a proven absent lock; acquisition identifies the unique
+owner/run, and release must conditionally delete the exact expected generation.
+Never map permission/API failures to unsupported. Split providers route PRs and
+issues independently. See GitHub for concrete inputs/outputs and lease deletion.
+
+#### release-lock
+
+Implement create-only ownership where the tracker offers an atomic primitive;
+otherwise return explicit `UNSUPPORTED` to select comment election. `get-lock`
+returns null only for a proven absent lock; acquisition identifies the unique
+owner/run, and release must conditionally delete the exact expected generation.
+Never map permission/API failures to unsupported. Split providers route PRs and
+issues independently. See GitHub for concrete inputs/outputs and lease deletion.
+
+GitHub, GitLab and Forgejo ship atomic ref ownership; Linear/Jira issues
+explicitly retain comment election while their GitHub PRs delegate. GitLab uses
+reserved `refs/heads/om-locks/{kind}-{number}` branches; GitHub/Forgejo use
+`refs/om-locks/{kind}-{number}`. Bind metadata to the repository including host.
+Acquisition needs an explicit absent-generation condition; release needs the
+expected SHA, not an unconditional API delete. No permission-error fallback.
+Unknown server receipt time is `createdAt: null`, never a guessed commit date;
+optional `metadataCreatedAt` is diagnostic only. Time-based/UI recovery blocks
+without an authenticated server audit. Namespace changes can trigger CI/hooks.
+
+#### get-claim-reset
+
+`{kind}`, `{item}` → latest tracker-audited human `claim-reset` label application
+as `{id,createdAt,actor}`, or `null` if none. Read every event page, including past
+applications after label removal. Verify the event actor is a human permitted to
+manage item labels; bot applications and comment/body text never authorize reset.
+A failed/unsupported audit read is not `null`: stop recovery and report the gap.
+This cutoff permanently retires claim comments created strictly before it;
+same-second/unknown timestamps are uncertain and remain blocking. It does not
+relax QA, merge, scheduler reservations or command/process isolation.
+
+Implement a complete label-event audit with human permission verification, or
+explicitly return `UNSUPPORTED` (never a fabricated empty audit). Split trackers
+must route the issue and PR kinds to their own audit sources. Normal acquisition
+without a reset stays compatible; a requested unsupported reset blocks takeover.
+
+#### claim-winner
+
+`{kind}`, `{item}`, `LIVE_CLAIM_IDS` (JSON array of comment handles from a complete
+fresh **list-issue-comments** read, selected by the skill's live/stale policy) →
+`{id,user,body}` for the lowest server creation-order candidate, or `null` when
+none is visible. Missing/unreadable/incomplete data is an error, never an empty
+success. Require the caller's own id in the fresh candidate set before proceeding.
+Ignore explicitly `released`/`withdrawn` comments even if passed as live. Do not
+filter by actor: two contenders may share one bot account. Numeric ids compare
+numerically; opaque ids use creation time then stable id. The caller repeats the
+read/election and performs the post-label ownership check; this is not atomic.
+
+Implement the read/ranking through this provider's complete comment list. State
+the ordering key, normalize handles and author identity, and document visibility
+limitations. Split providers delegate PR election/withdrawal to the companion
+code-host descriptor while implementing issue election in their issue tracker.
+
+#### withdraw-claim
+
+`{kind}`, `{item}`, `{commentId}`, full terminal body file, expected authenticated
+actor and `Claim-Run` → rewrite only that run's original candidate through **update-comment**,
+then read it back through **list-issue-comments**. Retain its legacy first line,
+marker and run id; change `Claim-State: active` to `withdrawn` (loser) or `released`
+(owner after cleanup), with the reason/winner. Before writing, verify exact item,
+comment id, authenticated author and run id; a mismatch stops cleanup. Do not
+edit a foreign candidate or delete its label. Return the same id and verified
+terminal state; failed update/read-back is a blocker. Never fall back to a new
+comment leaving the old active candidate in place.
 
 ### Pull requests
 

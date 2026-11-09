@@ -43,6 +43,8 @@ This skill consumes a `{prNumber}` (the `PR:` reference line a PR-producing skil
 
 ## Workflow
 
+**Claims:** `references/claim-pr.md` governs atomic/fallback ownership and release.
+
 **ALWAYS check first:** Apply `.ai/skills/om-auto-fix-pr/SKILL.md` when present; safety rules still win.
 
 **CI-only mode (`--ci-only`).** Skip the full merge-ready loop: do step 1 (claim — PR mode when a `{prNumber}` or a branch with an open PR is in scope; plain-branch mode takes no claim, there is nothing to lock) and step 2 (isolated worktree, checking out the PR head or the `--branch` head), then run **only** the CI stabilization procedure in `references/stabilize-ci.md` (baseline → fix→push→re-check loop → CI exit conditions), and report its result using the CI-only variant of the template in `references/report-templates.md`. Do not run review, UI, base-merge, follow-ups, or merge-prep. In plain-branch mode there is no PR comment or label mutation — the branch and the run summary are the deliverable. Everything below is the full PR mode.

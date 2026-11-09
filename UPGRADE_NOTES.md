@@ -1,9 +1,27 @@
 # Upgrade notes
 
+Upgrading the skills themselves is easy — re-run `npx skills add open-mercato/skills --skill '*'`
+(or `git pull` in a symlinked local checkout) and the new skill instructions are live on the next
+invocation. What does **not** auto-update is everything a skill previously **installed into your
+repository**. Those files are yours, they may carry your local edits, and the skills execute
+against them — not against the copies shipped in this repo:
+
+| Installed artifact | Installed by | Updated how |
+|--------------------|--------------|-------------|
+| `.ai/trackers/<tracker>.md` (tracker descriptor — the file every tracker operation executes from) | `om-setup-agent-pipeline` | Manual re-sync (see below) |
+| `.ai/browsers/<provider>.md` (browser automation and autonomous provisioning operations) | `om-setup-agent-pipeline` | Manual re-sync (see below) |
+| `.ai/agentic.config.json` | `om-setup-agent-pipeline`; optional `agentHarness` section by `om-setup-agent-harness` | Re-run the owning setup skill; both preserve unrelated values |
+| `.claude/output-styles/om-harness-review.md` (optional) | `om-setup-agent-harness` | Re-run `/om-setup-agent-harness` and review the diff before replacing local edits |
+| `.claude/hooks/om-harness/*.sh` + `PreToolUse` entries in `.claude/settings.json` (optional prevention hooks) | `om-setup-agent-harness` | Re-run `/om-setup-agent-harness` and review the diff before replacing local edits |
+| `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
+| `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
+
 ## Merge queue startup recovery
 
 Refresh `om-auto-merge-buddy` to enable a startup sweep of stalled claims,
-including queued PRs absent from local scheduling state. Two hours without
+including inspection of queued PRs absent from local scheduling state. Claims
+without a matching reservation and authoritative owner/delegate evidence are
+reported only, never automatically released. Two hours without
 activity makes a claim a candidate; automatic release additionally requires
 positive proof that its owner and all delegated work have stopped. Live, remote
 or unknown owners remain protected. Exact-owner cleanup and expected-SHA lock

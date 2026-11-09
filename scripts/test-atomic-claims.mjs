@@ -9,7 +9,7 @@ import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const source=readFileSync(join(root,'skills/om-setup-agent-pipeline/references/trackers/github.md'),'utf8');
 const functions=['gh_lock_target','gh_get_lock','gh_acquire_lock','gh_release_lock'].map(name=>{
- const match=source.match(new RegExp('^'+name+'\\(\\) \\{\\n[\\s\\S]*?^\\}','m'));
+ const match=source.match(new RegExp('^'+name+'\\(\\) [({]\\n[\\s\\S]*?^[)}]','m'));
  assert.ok(match,`shipped ${name}`);return match[0];
 }).join('\n');
 const temp=mkdtempSync(join(tmpdir(),'atomic-claims-'));
@@ -68,18 +68,18 @@ else: raise RuntimeError(path)
  writeFileSync(join(temp,'git'),`#!/usr/bin/env python3
 import os,sys,subprocess
 args=sys.argv[1:];git=os.environ['REAL_GIT']
-if args[0]=='push' and os.environ.get('CLAIM_SWAP_SHA'):
+if 'push' in args and os.environ.get('CLAIM_SWAP_SHA'):
  subprocess.run([git,'--git-dir',os.environ['CLAIM_REMOTE'],'update-ref','refs/om-locks/issue-7',os.environ['CLAIM_SWAP_SHA']],check=True)
 os.execv(git,[git,*args])
 `);
  chmodSync(join(temp,'git'),0o755);
  const env={...baseEnv,PATH:temp+':'+process.env.PATH,REAL_GIT:realGit,CLAIM_REMOTE:remote};
- function invoke(args,extra={}) {
-  return execFileSync('bash',[join(temp,'helpers.sh'),...args],{env:{...env,...extra},encoding:'utf8',timeout:15000,stdio:['pipe','pipe','pipe']}).trim();
+ function invoke(args,extra={},cwd=root) {
+  return execFileSync('bash',[join(temp,'helpers.sh'),...args],{cwd,env:{...env,...extra},encoding:'utf8',timeout:15000,stdio:['pipe','pipe','pipe']}).trim();
  }
  const acquire=(run,extra={})=>JSON.parse(invoke(['gh_acquire_lock','issue','7',run,'shared[bot]',base],extra));
  const read=()=>JSON.parse(invoke(['gh_get_lock','issue','7']));
- const release=(lock,extra={})=>invoke(['gh_release_lock','issue','7',lock.sha,lock.runId,lock.actor],extra);
+ const release=(lock,extra={},cwd=root)=>invoke(['gh_release_lock','issue','7',lock.sha,lock.runId,lock.actor],extra,cwd);
  function concurrent(run,barrier) {
   return new Promise((resolve,reject)=>{
    const child=spawn('bash',[join(temp,'helpers.sh'),'gh_acquire_lock','issue','7',run,'shared[bot]',base],{env:{...env,CLAIM_BARRIER:barrier,CLAIM_WORKER:run}});
@@ -100,6 +100,25 @@ os.execv(git,[git,*args])
   assert.equal(read().sha,lock.sha);
   release(lock);assert.equal(read(),null);
  }
+ // Release must not depend on the caller's checkout or worktree hooks.
+ const outside=acquire('outside-checkout').lock;
+ release(outside,{},temp);assert.equal(read(),null,'release from a non-repository directory');
+ const checkout=join(temp,'hooked checkout');
+ git('-c','init.defaultBranch=fixture','init',checkout);
+ const hook=join(checkout,'.git','hooks','pre-push');
+ writeFileSync(hook,'#!/bin/sh\nexit 1\n');chmodSync(hook,0o755);
+ const hooked=acquire('worktree-hook').lock;
+ assert.throws(()=>execFileSync(realGit,['-C',checkout,'push',remote,':refs/om-locks/issue-7'],{env:baseEnv,stdio:'pipe'}),'fixture hook actually rejects pushes');
+ assert.equal(read().sha,hooked.sha);
+ release(hooked,{},checkout);assert.equal(read(),null,'release does not invoke caller worktree hooks');
+ // Global policy remains effective even though the caller hooks are unrelated.
+ const globalHooks=join(temp,'global-hooks');mkdirSync(globalHooks);
+ writeFileSync(join(globalHooks,'pre-push'),'#!/bin/sh\nexit 1\n');chmodSync(join(globalHooks,'pre-push'),0o755);
+ const policy=join(temp,'policy.gitconfig');writeFileSync(policy,'[core]\n  hooksPath = "'+globalHooks+'"\n');
+ const protectedLock=acquire('global-policy').lock;
+ assert.throws(()=>release(protectedLock,{GIT_CONFIG_GLOBAL:policy},temp),'configured global pre-push policy remains enforced');
+ assert.equal(read().sha,protectedLock.sha,'failed release retains the lock');
+ release(protectedLock,{},temp);
  const uncertain=acquire('lost-response',{CLAIM_POST_LOST:'1'});
  assert.equal(uncertain.status,'acquired','uncertain POST reconciles exact owner');release(uncertain.lock);
  assert.throws(()=>acquire('denied',{CLAIM_POST_DENIED:'1'}),'permission denial is not comment fallback or conflict');

@@ -106,3 +106,29 @@ hosted GitLab/Forgejo behavior is not live-tested here; real-Git transport plus
 mocked target APIs cover the shipped helpers. Human QA remains required.
 
 Final independent review: APPROVE after raw-header parent rejection and empty-tree regressions. All configured validation commands pass. The operator explicitly approved publishing to PR #176; the verified implementation is f04a2a8.
+
+
+## 2026-11-09 — inherited review corrections
+
+Restored the original upgrade introduction and all installed-artifact rows.
+GitHub exact-SHA release now uses a temporary bare repository, retaining global
+Git policy and server enforcement while working outside a checkout. Tests execute
+release from a non-repository directory and from a checkout with a rejecting hook,
+and verify that global policy can still deny release without losing ownership.
+
+Added the human-only `claim-reset` label to setup defaults and guidance. Compared
+all 27 claim references and synchronized atomic/fallback recovery, final ref
+release and the audit record for retired foreign comments. Shared-copy question
+was presented under AGENTS.md §5; the recommended complete synchronization was
+used after the optional response window.
+
+Startup recovery now explicitly reports claims without a matching reservation
+and authoritative runtime evidence without releasing them. Its contract tests
+cover startup/resume/reset routing, strictly more than 120 minutes of inactivity,
+complete activity reads, stopped owner/delegates, exact-generation release,
+retry checkpoints and preservation of human gates and other work. The tracker
+provider gate executes these checks in local validation and CI.
+
+Reviewer-permitted follow-ups remain separate: #181 covers short ownership for
+housekeeping writes; #183 covers unique create-only branches before issue claims.
+GitLab/Forgejo unknown server creation time remains a conservative design choice.

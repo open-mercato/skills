@@ -134,5 +134,20 @@ else: print((p/'events.json').read_text())
     const rules=read(`skills/${name}/references/rules.md`);
     if (rules.includes('**Claim etiquette.**')) assert.match(rules,/elect the deterministic winner/,name);
   }
+  const intro=read('UPGRADE_NOTES.md').split('\n## ')[0];
+  assert.match(intro,/What does \*\*not\*\* auto-update/,'installed descriptors require deliberate upgrades');
+  for(const artifact of ['.ai/trackers/<tracker>.md','.ai/browsers/<provider>.md','.ai/agentic.config.json','.claude/output-styles/om-harness-review.md','.claude/hooks/om-harness/*.sh','SDLC.md','.ai/skills/<name>/SKILL.md']) {
+    assert.ok(intro.includes(artifact),`installed-artifact migration row: ${artifact}`);
+  }
+  const setup=read('skills/om-setup-agent-pipeline/SKILL.md');
+  assert.ok(JSON.parse(setup.match(/```json\n([\s\S]*?)\n```/)[1]).labels.meta.includes('claim-reset'),'setup provisions the human recovery label');
+  assert.match(setup,/`claim-reset` records a human request/,'field guidance explains recovery authorization');
+  for(const name of readdirSync(join(root,'skills'))) {
+    let claim;
+    try { claim=read(`skills/${name}/references/claim-pr.md`); } catch(error) { if(error.code==='ENOENT') continue; throw error; }
+    assert.doesNotMatch(claim,/then elect a new candidate|then acquire a new candidate through the election/,`${name}: Git hosts never recover by comment election`);
+    assert.match(claim,/Retired foreign comments remain unchanged/,`${name}: retirement is recorded by cutoff, not foreign comment edits`);
+    if(claim.includes('Specific completion/abort notices')) assert.match(claim,/\*\*withdraw-claim\*\*[\s\S]*then call \*\*release-lock\*\* LAST/,`${name}: atomic release completes after comment cleanup`);
+  }
   console.log('Claim protocol OK: 12 interleaved double-claims (6 shared-bot), numeric order, all pages, terminal/legacy/stale candidates, failed reads, audited human UI reset and all rule copies.');
 } finally {rmSync(temp,{recursive:true,force:true});}

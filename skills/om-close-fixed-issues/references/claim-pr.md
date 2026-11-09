@@ -114,11 +114,11 @@ Decision:
 
 ## Stale-lock recovery
 
-A claim is **stale** when the newest claim signal is older than the stale window (24 h) and the claimant has produced no commits, comments, or label changes on the item since. Recover by posting a takeover note first — `🤖 Previous claim by {owner} appears stale ({age}); taking over.` — then elect a new candidate normally. Record the exact stale comment ids being superseded; exclude only those verified stale ids from the election, never another recovering run's new candidate. Never silently overwrite a live claim.
+A claim is **stale** when the newest claim signal is older than the stale window (24 h) and the claimant has produced no commits, comments, or label changes on the item since. Recover by posting a takeover note first — `🤖 Previous claim by {owner} appears stale ({age}); taking over.` — then acquire (Git hosts) / elect (fallback) a new claim through the ownership procedure above. Record the exact stale comment ids being superseded; on fallback providers exclude only those verified stale ids from the election, never another recovering run's new candidate. Never silently overwrite a live claim.
 
 ## `--force` override
 
-`--force` bypasses the conflict stop, never the transparency: post an override comment naming the previous owner and why the override happened (`🤖 --force override: taking over from {owner} — {reason}.`), then elect a new candidate. Name the exact prior comment ids superseded in the override; `--force` does not bypass election against new contenders. Never overwrite another run's comment. Document the override in the run's plan/report.
+`--force` bypasses the conflict stop, never the transparency: post an override comment naming the previous owner and why the override happened (`🤖 --force override: taking over from {owner} — {reason}.`), then acquire (Git hosts) / elect (fallback) a new claim through the ownership procedure above. Name the exact prior comment ids superseded in the override; `--force` does not bypass create-only acquisition or fallback election against new contenders. Never overwrite another run's comment. Document the override in the run's plan/report.
 
 ## GitHub UI recovery — `claim-reset`
 
@@ -128,6 +128,8 @@ GitHub **Labels** menu. Do not merely remove `in-progress`: its active ref/comme
 still blocks. No bot ever applies `claim-reset`. The next invocation calls
 **get-claim-reset** and reports the verified human actor/time and retired claim ids.
 A request does not itself restart a runner or clear local scheduler leases.
+Retired foreign comments remain unchanged, even if they still say
+`Claim-State: active`; the audited cutoff and takeover note record retirement.
 
 Use the latest audited reset cutoff even if the label was later removed. Claims
 created strictly before that cutoff are retired, including old legacy claims;
@@ -261,7 +263,7 @@ When the same run (same `CLAIM_RUN_ID`, owned comment id and `CLAIM_LOCK_SHA` in
   `` 🤖 `{next-skill}` taking over the chain lock — {phase}. Started: {ISO-8601 timestamp}. ``
 
 - **Ownership:** a skill releases only a lock its own run opened. An inherited (handed-off) lock is annotated in the completion comment (`Lock retained — chain continues.`) and released by the chain's driving skill at the end of the run, or by its failure path — "the claimant releases their own claim" applies to the chain as a whole.
-- **Crash recovery (adoption):** a hand-off lock is live only while its chain is running. A **standalone** run (one not invoked as a chain step) that re-enters a same-login lock (not proof of re-entry) whose newest 🤖 claim/take-over/hand-off comment is older than the stale window treats the chain as dead: post an adoption note — `` 🤖 Adopting a stale chain lock ({age}) — previous run presumed dead. `` — then acquire a new candidate through the election above, releasing it at the end. Never rewrite another run's candidate. Record the specifically recovered stale comment ids in the takeover note; concurrent recovering candidates must still elect one winner. Chained invocations never adopt; their driver owns release.
+- **Crash recovery (adoption):** a hand-off lock is live only while its chain is running. A **standalone** run (one not invoked as a chain step) that re-enters a same-login lock (not proof of re-entry) whose newest 🤖 claim/take-over/hand-off comment is older than the stale window treats the chain as dead: post an adoption note — `` 🤖 Adopting a stale chain lock ({age}) — previous run presumed dead. `` — then acquire (Git hosts) / elect (fallback) a new claim through the ownership procedure above, releasing it at the end. Never rewrite another run's candidate. Record the specifically recovered stale comment ids in the takeover note; concurrent recovering runs must still acquire one atomic owner or elect one fallback winner. Chained invocations never adopt; their driver owns release.
 - **Invariant:** an item under active automation is never observably unclaimed — the claim or take-over comment precedes any work product, and the hand-off or release is the step's last tracker mutation.
 
 ## om-close-fixed-issues specifics
@@ -284,4 +286,4 @@ Missing/disabled labels block acquisition; skip-only readers still inspect all l
 
 Always remove `in-progress` (via the guarded helper) from issues the run added it to, even on error. Wrap the mutation block in a `trap`/finally so a crash or early stop still clears the lock.
 
-Specific completion/abort notices do not terminate the candidate by themselves: finish owned cleanup with **withdraw-claim** setting `Claim-State: released`. Failed cleanup is reported, never silently tolerated as a successful release. Skip-only roles take no release action.
+Specific completion/abort notices do not terminate the candidate by themselves: finish owned label/assignment cleanup and **withdraw-claim** setting `Claim-State: released`, then call **release-lock** LAST on atomic claims with the exact expected SHA and owner identity. Failed cleanup is reported, never silently tolerated as a successful release. Skip-only roles take no release action.

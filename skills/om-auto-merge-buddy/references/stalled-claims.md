@@ -39,6 +39,9 @@ Only positive stopped/dead proof permits automatic cleanup. A live process,
 remote owner without authoritative runtime access, missing reservation, legacy
 unknown owner or unreadable runtime remains protected; report the exact owner
 and missing proof. Never kill a live worker or infer death from inactivity.
+Claims missing from local scheduling state are inspected and reported only;
+without a matching reservation and authoritative owner/delegate runtime evidence,
+they are never automatically released. Losing the state file does not prove death.
 Explicit operator recovery follows the existing authorized recovery protocol.
 
 ## Release once, then compete normally

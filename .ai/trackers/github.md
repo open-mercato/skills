@@ -341,30 +341,35 @@ authorization checks. Keep the lock while cleaning up owned labels and marking
 the comment released; delete the ref last. A loser never calls this operation.
 
 ```bash
-gh_release_lock() {
+gh_release_lock() (
   # kind, item, expected SHA, expected owner's run id and actor
-  gh_lock_target "$1" "$2" || return 1
-  printf '%s' "$3" | grep -Eq '^[0-9a-f]{40}$' || return 1
-  lock_current=$(gh_get_lock "$1" "$2") || return 1
-  [ "$lock_current" != "null" ] || { printf 'absent\n'; return 0; }
+  gh_lock_target "$1" "$2" || exit 1
+  printf '%s' "$3" | grep -Eq '^[0-9a-f]{40}$' || exit 1
+  lock_current=$(gh_get_lock "$1" "$2") || exit 1
+  [ "$lock_current" != "null" ] || { printf 'absent\n'; exit 0; }
   printf '%s' "$lock_current" | jq -e --arg sha "$3" --arg run "$4" --arg actor "$5" '
-    .sha == $sha and .runId == $run and .actor == $actor' >/dev/null || return 1
-  lock_url=$(gh repo view "$LOCK_REPO" --json url --jq .url) || return 1
+    .sha == $sha and .runId == $run and .actor == $actor' >/dev/null || exit 1
+  lock_url=$(gh repo view "$LOCK_REPO" --json url --jq .url) || exit 1
   # Git's explicit expected-SHA lease is atomic compare-and-delete. REST DELETE
   # has no expected-SHA condition and can remove a successor during recovery.
-  git push --porcelain --force-with-lease="$LOCK_REF:$3" "$lock_url.git" ":$LOCK_REF" || return 1
-  lock_remaining=$(gh_get_lock "$1" "$2") || return 1
+  lock_temp=$(mktemp -d) || exit 1
+  trap 'rm -rf "$lock_temp"' EXIT
+  git init --bare -q "$lock_temp" || exit 1
+  git -C "$lock_temp" push --porcelain --force-with-lease="$LOCK_REF:$3" "$lock_url.git" ":$LOCK_REF" || exit 1
+  lock_remaining=$(gh_get_lock "$1" "$2") || exit 1
   if [ "$lock_remaining" = "null" ]; then printf 'released\n'
   elif printf '%s' "$lock_remaining" | jq -e --arg sha "$3" '.sha != $sha' >/dev/null; then
     printf 'released; successor retained\n'
-  else return 1; fi
-}
+  else exit 1; fi
+)
 gh_release_lock "{kind}" "{number}" "$CLAIM_LOCK_SHA" "$CLAIM_RUN_ID" "$CURRENT_USER"
 ```
 
 This narrowly scoped lease-deletion is authorized lock housekeeping, never a
 force-push of project branches. Resolve the target repository's GitHub URL as
-above rather than assuming `origin` is the target. Do not change credentials,
+above rather than assuming `origin` is the target. Use a temporary bare repository
+so release works outside a checkout and does not invoke the caller's worktree hooks.
+Global Git policy, transport authentication and server hooks still apply. Do not change credentials,
 remove hooks or retry with an unconditional REST DELETE when Git transport fails.
 Absent is idempotent; a changed SHA/owner blocks and preserves the successor.
 

@@ -106,6 +106,8 @@ GitHub **Labels** menu. Do not merely remove `in-progress`: its active ref/comme
 still blocks. No bot ever applies `claim-reset`. The next invocation calls
 **get-claim-reset** and reports the verified human actor/time and retired claim ids.
 A request does not itself restart a runner or clear local scheduler leases.
+Retired foreign comments remain unchanged, even if they still say
+`Claim-State: active`; the audited cutoff and takeover note record retirement.
 
 Use the latest audited reset cutoff even if the label was later removed. Claims
 created strictly before that cutoff are retired, including old legacy claims;

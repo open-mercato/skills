@@ -28,7 +28,7 @@ Configure `.ai/agentic.config.json` when missing or when the pipeline changes.
     "enabled": true,
     "pipeline": ["review", "changes-requested", "qa", "qa-failed", "merge-queue", "blocked", "do-not-merge"],
     "category": ["bug", "feature", "refactor", "security", "dependencies", "documentation"],
-    "meta": ["needs-qa", "skip-qa", "qa-approved", "qa-self-verified", "in-progress", "ci-monitoring"],
+    "meta": ["needs-qa", "skip-qa", "qa-approved", "qa-self-verified", "in-progress", "ci-monitoring", "claim-reset"],
     "priority": ["priority-low", "priority-medium", "priority-high", "priority-extreme"],
     "risk": ["risk-low", "risk-medium", "risk-high"]
   },
@@ -66,7 +66,7 @@ Field defaults: `references/config-capabilities.md`.
 - `labels.enabled` — when `false`, skills skip every label operation and note that in their PR summaries. Use this for repos that do not want the label workflow.
 - `labels.pipeline` — mutually exclusive workflow states. A PR carries at most one.
 - `labels.category` — additive kind-of-change labels.
-- `labels.meta` — additive process labels. `needs-qa` requests manual QA; `skip-qa` opts out (never combine the two); `qa-approved` records that QA passed; `qa-self-verified` marks the self-QA exception; `in-progress` is the claim lock automated skills apply while they are **actively working** the item; `ci-monitoring` says the work is finished and fully reported — labels applied, review submitted, comments posted — and the agent is only watching the CI run, so it is **not** a claim and another agent or a human may act on the PR freely (it means one thing only: the CI-result follow-up comment is still owed). One label lives outside the config taxonomy: `do-not-close`, applied by humans to issues that housekeeping skills must never auto-close — skills only ever read it.
+- `labels.meta` — additive process labels. `needs-qa` requests manual QA; `skip-qa` opts out (never combine them); `qa-approved` records passed QA; `qa-self-verified` marks self-QA. `in-progress` claims actively worked items. `ci-monitoring` means work is complete and reported, with only a CI-result follow-up owed; it never blocks another actor. `claim-reset` records a human request to recover a stopped runner; automation only reads its authenticated label-event audit and never applies it. The human-only issue label `do-not-close` is outside this taxonomy; skills only read it to protect issues from auto-closure.
 - `labels.priority` — mutually exclusive urgency of the work. Unset is treated as medium.
 - `labels.risk` — mutually exclusive blast radius of the change. Unset is treated as medium. Priority is how urgent the work is; risk is how dangerous the change is to ship.
 - `qaGate` — when `true`, a PR carrying `needs-qa` must not merge until it also carries `qa-approved`, even when every other check is green. When `false`, `needs-qa` is advisory only.

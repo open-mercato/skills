@@ -1,15 +1,19 @@
 # The staged-only multi-model harness
 
 This folder is the shared runtime behind the staged-only wrapper skills. The
-idea in one sentence: **you start a task in the Claude app, optional external
+idea in one sentence: **you start a task in the active agent client, optional external
 models implement and review it under deterministic contracts, and the run
 always ends with a verified staged diff on an unchanged `HEAD` — never a
 commit, push, or pull request.** Publication is a human decision.
 
-Everything model-specific is configuration. The only fixed element is Claude
-as the host: the conductor context that orchestrates the run and the mandatory
-fresh reviewer context both live in the Claude app. Workers and advisors are
+The conducting host is configured as Codex or Claude: the conductor context that orchestrates the run and the mandatory
+fresh reviewer context both live in the active agent client. Workers and advisors are
 pluggable — the bundled jury is a default, not a requirement.
+
+Host selection is repository policy: setup records Codex or Claude explicitly;
+`--host` must agree with committed `agentHarness.host`. The template omits that
+key to preserve the legacy Claude default until setup selects it. Provider
+overlays do not provide per-user host switching.
 
 - Agent-facing contracts live in [`SKILL.md`](SKILL.md) and [`references/`](references/).
 - The deterministic runtime is [`scripts/harness.mjs`](scripts/harness.mjs).
@@ -24,9 +28,9 @@ variants.
 
 | You invoke | Profile selected | Who implements | Review gate |
 |---|---|---|---|
-| `om-fix-issue` / `om-implement-feature` | `standard` | Claude host | Fresh Claude context runs `om-code-review` |
-| `om-fix-issue-optimized` / `om-implement-feature-optimized` | `optimized` | Configured worker (audited Codex sandbox) in bounded packets | Fresh Claude context |
-| `om-fix-issue-multi` / `om-implement-feature-multi` | `multi` | Claude host | Fresh Claude **plus** every configured advisor, one hash-bound packet |
+| `om-fix-issue` / `om-implement-feature` | `standard` | configured host | Fresh host context runs `om-code-review` |
+| `om-fix-issue-optimized` / `om-implement-feature-optimized` | `optimized` | Configured worker (audited Codex sandbox) in bounded packets | Fresh host context |
+| `om-fix-issue-multi` / `om-implement-feature-multi` | `multi` | configured host | Fresh host **plus** every configured advisor, one hash-bound packet |
 | `om-fix-issue-multi-optimized` / `om-implement-feature-multi-optimized` | `multi-optimized` | Configured worker | Full council; the worker's model family counts as a self-check, never an independent vote |
 | any base skill with `--profile high-assurance` | `high-assurance` | Worker per packet manifest, under path leases | Blind risk-scaled council + fresh finding verification + deterministic evidence gate |
 
@@ -40,7 +44,7 @@ adds model topology without forking the workflow.
 
 | Profile | Workers | Reviewers | Review policy |
 |---|---|---|---|
-| `standard` | none | none | Fresh Claude pass only — needs **no** `agentHarness` config at all |
+| `standard` | none | none | Fresh host pass only — needs **no** `agentHarness` config at all |
 | `optimized` | 1 | none | Advisory |
 | `multi` | none | all selected | All-required: every selected reviewer must complete |
 | `multi-optimized` | 1 | all selected | All-required; worker family excluded from independence |
@@ -77,7 +81,7 @@ adapter (version 1: `codex-workspace-write-sandbox`).
 
 ```mermaid
 flowchart TD
-    U[User asks in the Claude app] --> P{Requested profile ready?}
+    U[User asks in the active agent client] --> P{Requested profile ready?}
     P -- "standard: no config needed" --> Q
     P -- "missing or unready" --> S["om-setup-agent-harness (interactive):<br/>bind the models you actually have"]
     S --> P
@@ -88,7 +92,7 @@ flowchart TD
     C1 --> I
     D -- "standard / optimized" --> I["Implement<br/>(host, or worker packets)"]
     I --> V["Full configured validation gate<br/>+ regression / integration tests"]
-    V --> C2["Final review<br/>(fresh Claude, plus council when multi)"]
+    V --> C2["Final review<br/>(fresh host, plus council when multi)"]
     C2 -- "confirmed blockers (≤3 loops)" --> I
     C2 --> ST["stage: allowlisted paths only,<br/>HEAD/refs/reflogs must equal start state"]
     ST --> R["Handoff report + publish checklist<br/>(human commits, pushes, opens the PR)"]
@@ -102,8 +106,8 @@ rationale.
 
 ```mermaid
 sequenceDiagram
-    participant H as Conductor (Claude host)
-    participant F as Fresh Claude context
+    participant H as Conductor (configured host)
+    participant F as Fresh host context
     participant R as harness.mjs review
     participant A as Advisors (Codex, DeepSeek, Kimi, GLM, MiMo, custom)
 
@@ -120,7 +124,7 @@ sequenceDiagram
     H->>H: confirm findings against code/runtime evidence,<br/>fix, re-validate, re-run council (≤3 iterations)
 ```
 
-The runtime rejects a stale subject, changed rubric, non-Claude host artifact,
+The runtime rejects a stale subject, changed rubric, mismatched host artifact,
 or inherited-context attestation instead of producing a council result. If the
 host artifact fails, completed provider results are persisted to
 `review-result.partial.json` rather than discarded.
@@ -132,7 +136,7 @@ bounded, file-disjoint packets in an audited sandbox.
 
 ```mermaid
 flowchart LR
-    O["Claude orchestrator:<br/>plan, ground, split into packets"] --> PK["Packet: exact files, signatures,<br/>reference patterns, acceptance checks"]
+    O["Host orchestrator:<br/>plan, ground, split into packets"] --> PK["Packet: exact files, signatures,<br/>reference patterns, acceptance checks"]
     PK --> WK["Worker (codex exec):<br/>workspace-write sandbox, network off,<br/>ref writes off, secret-stripped env"]
     WK --> B{"Boundary check:<br/>refs unchanged? only allowed paths?<br/>acceptance passes?"}
     B -- fail --> RD["Redispatch once<br/>with concrete failure evidence"]
@@ -218,7 +222,7 @@ resolve-profile  print a profile exactly as the runtime will execute it
 probe            readiness-check the profile's workers and reviewers
 worker           run one bounded implementation packet
 prepare-review   freeze subject + rubric + evidence into an immutable packet
-review           run the advisor council and await the fresh Claude artifact
+review           run the advisor council and await the fresh host artifact
 packet-run       claim, implement, blind-review, and fix one manifest packet
 packet-gate      bind trusted evidence to the reviewed diff, release leases
 packet-status    report packet state, usage, leases, diff identity
@@ -234,7 +238,7 @@ stage            stage the allowlisted handoff and assert nothing else changed
 |---|---|
 | Config shape, profiles, quorum semantics | [`references/configuration.md`](references/configuration.md) |
 | Adapters, placeholders, worker security | [`references/adapter-contract.md`](references/adapter-contract.md) |
-| Council procedure and fresh-Claude attestation | [`references/code-review-contract.md`](references/code-review-contract.md) |
+| Council procedure and fresh-host attestation | [`references/code-review-contract.md`](references/code-review-contract.md) |
 | Packet lifecycle, leases, budgets | [`references/packet-contract.md`](references/packet-contract.md) |
 | Staging assertions | [`references/stage-only-contract.md`](references/stage-only-contract.md) |
 | Reporting and reconciliation | [`references/reporting.md`](references/reporting.md) |

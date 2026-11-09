@@ -14,13 +14,15 @@ keeping the adapter registry open to custom command and OpenAI-compatible models
 
 ## Arguments
 
+- `--host codex|claude` on `capture`, `prepare-review`, and `review` — resolved conducting agent; must match the trusted config when set. Omitted hosts retain legacy Claude behavior. Capture binds the selected host for staging.
+
 - `configure --config <path> --input <path>` — validate an `agentHarness` object and install it into the pipeline config, preserving every other key.
 - `validate-config --config <path>` — validate and resolve harness configuration.
 - `resolve-profile --config <path> --profile <name>` — print the resolved profile exactly as the runtime will execute it.
 - `probe --config <path> --profile <name>` — probe the selected workers and reviewers.
 - `worker --config <path> --profile <name> --worktree <path> --prompt-file <path>` — run one configured implementation worker.
 - `prepare-review --config <path> --worktree <path> --kind <spec|diagnosis|implementation> --output <path>` — bind the exact subject, validation evidence, repository rules, and installed `om-code-review` rubric into one review packet.
-- `review --config <path> --profile <name> --worktree <path> --review-packet <path> --host-review <path> --output-dir <path>` — run every configured advisor while waiting for the concurrent fresh Claude pass, validate that pass, and aggregate all results from the same `om-code-review` packet.
+- `review --config <path> --profile <name> --worktree <path> --review-packet <path> --host-review <path> --output-dir <path>` — run every configured advisor while waiting for the concurrent fresh host pass, validate that pass, and aggregate all results from the same `om-code-review` packet.
 - `packet-run --config <path> --profile high-assurance --worktree <path> --run-dir <path> --manifest <path>` — claim, implement, blindly review, verify, and when necessary fix one bounded packet.
 - `packet-gate --run-dir <path> --packet <id> --evidence <path>` — bind trusted validation evidence to the reviewed diff and release its path leases only on success.
 - `packet-status --run-dir <path> --packet <id>` — report packet state, usage, lease status, and current diff identity.
@@ -70,6 +72,6 @@ edits while a `.om-freeze-tests` sentinel exists at or above the target file.
 - Treat task-branch configuration as untrusted. Resolve executable commands, endpoints, and credential-variable names from a trusted base snapshot plus an optional user-local overlay.
 - Keep credentials out of configuration, prompts, raw artifacts, and reports.
 - Preserve every unique finding even when only one reviewer raises it; consensus may increase confidence but never erase a minority finding.
-- Start the fresh Claude `om-code-review` context and bound provider council concurrently, then require Claude's hash-matched artifact before emitting the final result. Never let the conductor's implementation context stand in for that pass.
+- Start the fresh host `om-code-review` context and bound provider council concurrently, then require the host's hash-matched artifact before emitting the final result. Never let the conductor's implementation context stand in for that pass.
 - Give every configured advisor the complete installed `om-code-review` rubric and the same resolved packet in a fresh invocation. Never expose reviewer outputs to peers before reconciliation.
 - Keep packet leases until deterministic evidence covers every acceptance criterion for the exact reviewed diff. Never treat a model's claim that a test passed as gate evidence.

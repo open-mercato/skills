@@ -1,7 +1,6 @@
 {
   "version": 1,
   "preset": "cross-model-jury",
-  "host": "claude",
   "delivery": {
     "mode": "stage-only",
     "issueClaim": "hold"

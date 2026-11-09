@@ -4,7 +4,7 @@
   "additionalProperties": false,
   "required": ["version", "contract", "subject", "criteria", "validationGate", "repositoryContext"],
   "properties": {
-    "version": { "const": 1 },
+    "version": { "type": "integer", "enum": [1, 2] },
     "contract": {
       "type": "object",
       "additionalProperties": false,
@@ -12,7 +12,8 @@
       "properties": {
         "name": { "const": "om-code-review" },
         "version": { "const": 1 },
-        "rubricSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        "rubricSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "host": { "type": "string", "enum": ["claude", "codex"] }
       }
     },
     "subject": {
@@ -67,5 +68,6 @@
         }
       }
     }
-  }
+  },
+  "allOf": [{"if":{"properties":{"version":{"const":1}}},"then":{"properties":{"contract":{"not":{"required":["host"]}}}},"else":{"properties":{"contract":{"required":["host"]}}}}]
 }

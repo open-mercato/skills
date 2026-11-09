@@ -147,7 +147,7 @@ the conductor or worker transcript, implementer rationale, proposed fixes, or
 another reviewer's output. The runtime records `freshContext: true` and the
 `om-code-review` rubric and packet hashes on each result.
 
-Wrapper-level councils also require a completed fresh Claude artifact matching
+Wrapper-level councils also require a completed fresh host artifact matching
 `fresh-review-result.schema.json`. That artifact is created by the host outside
 the provider adapter pool, validated before fan-out, and rendered in the same
 matrix. It cannot satisfy the provider review policy.

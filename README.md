@@ -160,6 +160,11 @@ implementation, validation, and review discipline but want a human to inspect
 the index before anything is published. It does not alter the autonomous PR
 skills above.
 
+Host selection is repository policy: setup records Codex or Claude explicitly;
+`--host` must agree with committed `agentHarness.host`. The template omits that
+key to preserve the legacy Claude default until setup selects it. Provider
+overlays do not provide per-user host switching.
+
 Configure selectable workers and review advisors once:
 
 ```
@@ -185,11 +190,11 @@ PR body, and an absolute worktree path. The `multi` axis runs configured review
 advisors and prints a model-by-finding matrix; every selected advisor runs, and
 the quorum only determines whether enough completed successfully. With the
 bundled preset, both the spec/diagnosis checkpoint and final review contain
-fresh Claude plus Codex, DeepSeek, Kimi, GLM, and MiMo. Claude runs
+fresh host plus Codex, DeepSeek, Kimi, GLM, and MiMo. The selected host runs
 `om-code-review` in a new context with no inherited implementation transcript;
 all five advisors start concurrently and receive the same complete skill
 rubric, hash-bound packet, and subject in fresh parallel invocations. The
-runtime waits for Claude's matching artifact before finalizing the matrix. The `optimized` axis dispatches
+runtime waits for the host's matching artifact before finalizing the matrix. The `optimized` axis dispatches
 bounded implementation packets to configured workers. Publishing remains a
 separate explicit user action.
 
@@ -217,7 +222,7 @@ thin and delegate to the two base wrappers.
 | `om-fix-issue-multi` / `om-implement-feature-multi` | Base workflow plus independent diagnosis/spec and final-diff review councils. |
 | `om-fix-issue-optimized` / `om-implement-feature-optimized` | Base workflow plus configured implementation workers. |
 | `om-fix-issue-multi-optimized` / `om-implement-feature-multi-optimized` | Configured workers plus independent review councils. |
-| `om-harness` | Internal provider-neutral runtime, hash-bound `om-code-review` packets, fresh-Claude attestation, evidence-gated packet ledger, model matrix renderer, and staged-handoff verifier. |
+| `om-harness` | Internal provider-neutral runtime, hash-bound `om-code-review` packets, fresh-host attestation, evidence-gated packet ledger, model matrix renderer, and staged-handoff verifier. |
 
 ### 🤖 Autonomous skills
 

@@ -2,7 +2,7 @@
 
 > 🧑‍💻 Interactive — acts once, may ask questions, hands control back
 
-Thin alias that runs [om-implement-feature](om-implement-feature.md) with the `multi` profile: the specification and the final diff are each reviewed by a fresh Claude context plus every configured independent advisor on one immutable packet.
+Thin alias that runs [om-implement-feature](om-implement-feature.md) with the `multi` profile: the specification and the final diff are each reviewed by a fresh host context plus every configured independent advisor on one immutable packet.
 
 ## Parameters
 

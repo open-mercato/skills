@@ -36,7 +36,7 @@ any OpenAI-compatible endpoint or local CLI through the generic adapters, not
 just the bundled jury. When setup finishes, re-probe and continue the
 originally requested profile. Only when the user, told what they would lose,
 explicitly declines to configure any external model may the run continue under
-`standard` (the mandatory fresh Claude `om-code-review` pass needs no external
+`standard` (the mandatory fresh host `om-code-review` pass needs no external
 provider); state in the report that the requested profile was not used and
 why.
 
@@ -93,7 +93,7 @@ abort. Only a `gated` packet may be integrated.
 Build a newline-delimited allowlist of intended spec, production, test,
 migration, generated, and documentation paths. Exclude raw reviewer artifacts.
 Run the configured validation commands in order and the repository's
-integration tests. For `standard` and `optimized`, create a new Claude context
+integration tests. For `standard` and `optimized`, create a new context of the configured host
 with no inherited planning or implementation transcript and run
 `om-code-review` there. For `multi`, `multi-optimized`, and `high-assurance`,
 write version 1 validation evidence with the actual command arrays, exit codes,

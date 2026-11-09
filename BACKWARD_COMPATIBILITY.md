@@ -73,8 +73,8 @@ hold committed, possibly team-edited copies at `.ai/browsers/<provider>.md`.
 - **Spec `## 📝 Delta` section and capability specs** (`### Capability: <slug>` blocks with `#### ADDED|MODIFIED|REMOVED Requirement: <name>`, `##### Scenario:` + `WHEN`/`THEN`, `Frozen by:` lines; living files `<paths.specs>/capabilities/<slug>.md` with `## Requirement:` sections ending in `Source: <spec path>`) — written by `om-spec-writing` (and `om-auto-write-spec` through it), applied by `om-auto-implement-spec`'s archive step, excluded from spec name matching by every `spec-resolution.md` copy. The section is optional: specs without it stay implementable.
 - **Chaining reference lines** (`PR: #<number> (link: <url>)`, `Issue: #<number> (link: <url>)`, `Spec: <path>`) — emitted at the end of every PR-producing/-driving skill's final report, parsed by the next skill in a chain and by session orchestrators (e.g. cezar).
 - **Harness review result version 1** (`review-result.json`) — written by `om-harness`, rendered into the reviewer-status table and model-by-finding matrix.
-- **Harness code-review packet version 1** (`code-review-packet.schema.json`) — binds a diagnosis, spec, or implementation subject to the installed `om-code-review` rubric, resolved repository rules, criteria, and host validation evidence.
-- **Harness fresh-review result version 1** (`fresh-review-result.schema.json`) — attests that Claude ran `om-code-review` in a new context without inheriting the implementation transcript and binds that result to the packet and subject hashes.
+- **Harness code-review packet versions 1 and 2** (`code-review-packet.schema.json`) — binds a diagnosis, spec, or implementation subject to the installed `om-code-review` rubric, resolved repository rules, criteria, and host validation evidence.
+- **Harness fresh-review result versions 1 and 2** (`fresh-review-result.schema.json`) — attests that the selected host (legacy Claude in v1, Codex in v2) ran `om-code-review` in a new context without inheriting the implementation transcript and binds that result to the packet and subject hashes.
 - **Harness packet manifest and ledger version 1** (`packet-manifest.schema.json` and `packet-result.json`) — written and consumed by `om-harness` for bounded work ownership, review cycles, leases, budgets, and state transitions.
 - **Harness packet gate evidence version 1** (`packet-gate.schema.json`) — binds acceptance evidence to a packet id and reviewed diff SHA-256.
 - **Staged handoff markers** (`WORKTREE=<absolute path>`, unchanged starting `HEAD`, branch, staged-path list, and issue-claim state) — written by `om-fix-issue` and `om-implement-feature` for a human publication decision.
@@ -98,7 +98,7 @@ handoff markers requires a result-version bump and tolerant rendering of version
 
 Adding fields to the code-review packet or fresh-review result is additive only
 when version 1 readers can ignore them safely. Renaming contract hashes,
-weakening subject/rubric binding, accepting inherited Claude context, or letting
+weakening subject/rubric binding, accepting inherited host context, or letting
 the host result satisfy provider quorum is breaking and requires a version bump
 plus tolerant handling of version 1 artifacts.
 
@@ -167,3 +167,9 @@ commit dates do not prove server receipt. Optional `metadataCreatedAt` is only
 diagnostic; consumers must block time-based/UI recovery without a server audit.
 Explicit authorized force recovery and exact-generation release remain available.
 No permission/transport-error fallback or automatic credential/pipeline changes.
+
+## Codex host review envelopes
+
+`agentHarness.host` additionally accepts `codex`; existing explicit `claude` and omitted-host configurations preserve legacy runtime behavior. New setup detects the active client rather than using the template host as a requirement.
+
+Codex emits code-review packet and fresh-review result envelope version 2, with `contract.host` included in the packet hash and matching attestation. The inner `om-code-review` rubric contract remains version 1. Version 1 Claude envelopes remain accepted only for Claude runs. Old runtimes reject version 2; upgrade runtime, schemas, and wrapper instructions together before selecting Codex. Capture records host identity, and stage enforces it. The Codex host row is `host:codex`, separate from the `codex` advisor and excluded from provider quorum. No inheritance, hash, validation, ref, lease, or publication boundary is weakened.

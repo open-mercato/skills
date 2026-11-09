@@ -9,6 +9,8 @@ Select the `multi` profile without duplicating the base workflow.
 
 ## Arguments
 
+- `--host codex|claude` (optional) — pass through unchanged to the base workflow; it must match the configured repository host.
+
 - `--interactive` (default) or `--autonomous` — pass the execution mode to the base workflow; never enable publication. Reject both together.
 
 - `{issueId}` (required) — pass through to `om-fix-issue`.

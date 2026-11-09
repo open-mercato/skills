@@ -42,21 +42,21 @@ Harness policy is an optional `agentHarness` object in the existing
 general pipeline. Executable provider commands, endpoints, and credential
 environment-variable names come only from a trusted base-revision snapshot plus
 an optional user-local overlay, never from the task branch. Reviewers emit a
-versioned JSON result; Claude-facing Markdown, including the model-by-finding
+versioned JSON result; host-facing Markdown, including the model-by-finding
 matrix, is rendered deterministically from that artifact.
 
 Profile reviewer lists define fan-out: every selected reviewer is invoked.
 Quorum fields define the minimum successful evidence required when a provider
 is unavailable; they never sample or cap that list. Wrapper-level review starts
-in a new Claude context with no inherited implementation transcript. The
+in a new host context with no inherited implementation transcript. The
 runtime prepares the exact subject, validation evidence, repository rules, and
-installed `om-code-review` rubric as one SHA-256-bound packet. Fresh Claude and
+installed `om-code-review` rubric as one SHA-256-bound packet. Fresh host and
 the provider council start concurrently; the runtime waits for and validates
-Claude's matching artifact before it emits the final result. Every advisor
+the host's matching artifact before it emits the final result. Every advisor
 receives the same full rubric and packet in a fresh process or API invocation.
 The bundled `multi` result therefore contains
-Claude plus all five configured model passes in one matrix, while provider
-quorum remains separate from the mandatory Claude pass.
+the host plus all five configured model passes in one matrix, while provider
+quorum remains separate from the mandatory host pass.
 
 The bundled jury also exposes an opt-in `high-assurance` profile without
 changing the four original profiles. It adds a versioned packet manifest and
@@ -74,6 +74,12 @@ than a closed list. Users may enable any subset or add generic command and
 OpenAI-compatible bindings. Provider authentication remains local: environment
 variables, managed CLI login, or official local provider auth stores; secrets
 are never copied into repository configuration or reports.
+
+### Codex host extension
+
+Setup records the selected conducting agent, Codex or Claude, as repository host policy. Explicit `--host` must agree with that configured host; a repository without a host retains the runtime legacy default Claude. Switching a mixed-client team requires a deliberate shared configuration change, not a user-local provider overlay. The mandatory fresh reviewer uses that same host in a new context; installation of another CLI never selects the conductor. Codex must not depend on Claude styles, hooks, executables, or artifacts. Setup exercises host-bound review/staging in an isolated fixture before reporting readiness.
+
+Strict version 1 readers reject additional contract keys, so Codex uses version 2 packet and attestation envelopes with a hash-bound host identity. Legacy Claude envelopes and omitted-host configuration keep their existing behavior. Capture binds the host before edits; review and stage reject mismatched host/family, inherited context, stale hashes, and unsuccessful evidence.
 
 ## Product-agnosticism gate
 

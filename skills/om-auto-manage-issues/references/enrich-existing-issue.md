@@ -10,16 +10,21 @@ and claim-aware.
 **get-issue** for the issue, requesting `number,title,body,state,author,url,labels,assignees,comments`.
 Skip the issue (record the reason for the report, mutate nothing) when:
 
-- A **different actor holds an active claim**: it carries `in-progress` with an
-  assignee who is not `$CURRENT_USER` (resolve via **current-user**), or a fresh
-  `🤖` claim comment (< ~30 min) from another actor. This is the three-signal
+- A **different or unknown run holds an active claim**: an atomic ref,
+  `in-progress` without exact run/comment ownership, or a fresh `🤖` claim
+  comment (< ~30 min), even when it shares `$CURRENT_USER` (resolve via
+  **current-user**). This is the three-signal
   check of `references/claim-pr.md`, used skip-only. Never collide with active
   work.
 - It carries a repo-defined **human-hold** label (e.g. `do-not-close`, or any
   hold label the repo's `SDLC.md` / labels config marks as agent-off-limits).
 
-This skill does **not** take its own `in-progress` lock — it is a fast, additive
-housekeeping pass.
+Compute sections 2–6 as read-only proposals first; their write instructions are
+applied only inside `references/write-transaction.md`. Scans, screenshot/code
+analysis, spec searches, dry runs and unchanged issues take no claim. Acquire a
+short per-issue claim for a nonempty write batch, re-read the issue and every
+comment, and recompute the actual delta before writes. Never apply a proposal
+from a stale snapshot or reuse a pre-acquisition marker/label check.
 
 ## 2. Apply missing SDLC labels
 
@@ -94,10 +99,12 @@ The `missing` status plus the comment outcome (posted / updated / skipped) is
 carried into the report. Under `--dry-run`, record the intent and post nothing.
 
 **With `--write-missing-specs`** the comment above is not posted — the gap is closed
-instead of announced: delegate to
+instead of announced: finish and release the housekeeping transaction, then delegate to
 **`om-auto-write-spec {issueId}`** verbatim — it claims the issue, writes the spec
 via `om-spec-writing --autonomous`, opens the spec PR (`Refs #{issueId}`), and emits
-the `Spec:` and `PR:` reference lines. Then link the result back on the issue via
+the `Spec:` and `PR:` reference lines. After the delegated skill releases its own claim, acquire a fresh short
+housekeeping transaction, re-read the issue/spec links and all claim signals,
+then link the result back on the issue via
 **comment-issue** (spec path + spec-PR link), idempotently (skip when a spec-PR link
 from this skill already exists). Under `--dry-run`, record the intent and mutate
 nothing. This is the one place this housekeeping pass produces a PR — a design-only

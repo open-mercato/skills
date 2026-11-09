@@ -2,7 +2,7 @@
 
 > 🤖 Autonomous — runs end-to-end without supervision
 
-Takes an existing spec and returns an implemented, code-reviewed, UI-verified, ready PR with screenshots of the working app in its comments. It resolves the spec by path, name, linked issue, or spec-PR number (stopping cleanly with candidate suggestions when not found), reuses an existing spec-PR branch when one is present, then delegates the actual implementation to the create/continue engine before running the review loop and UI verification. It is deliberately thin — resolution and routing only. Use it for "implement the spec X" or "build spec from issue 123".
+Takes an existing spec and returns an implemented, code-reviewed, UI-verified, ready PR with screenshots of the working app in its comments. It resolves the spec by path, name, linked issue, or spec-PR number (stopping cleanly with candidate suggestions when not found), reuses an existing spec-PR branch when one is present, then delegates the actual implementation to the create/continue engine before running the review loop and UI verification. When the spec carries a Delta, the implementation PR first freezes each changed behavior with a characterization test, then archives the Delta into the living capability specs under `.ai/specs/capabilities/`, so they change in the same merge as the code. It is deliberately thin — resolution and routing only. Use it for "implement the spec X" or "build spec from issue 123".
 
 ## Parameters
 

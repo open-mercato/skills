@@ -1,6 +1,6 @@
 ---
 name: om-auto-review-pr
-description: Review or re-review a PR by number in an isolated worktree. Runs the `om-code-review` skill — or, for spec-only design PRs, a specification review — submits approve/request-changes, manages pipeline labels. On changes-requested, the autofix loop (fix/test/validate/re-review until merge-ready) runs on the automation's own PRs or with --autofix; other authors' PRs get review + handoff only. Usage - /om-auto-review-pr <PR-number> [--autofix]
+description: Use when a PR needs review or re-review, e.g. 'review PR 123'. Review code or a spec-only design in an isolated worktree, submit approve/request-changes, and manage pipeline labels. Fix/test/re-review automatically for the automation's own PRs or with --autofix; hand other authors the findings.
 ---
 
 # Auto Review PR

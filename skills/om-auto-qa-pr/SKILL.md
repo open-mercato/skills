@@ -1,6 +1,6 @@
 ---
 name: om-auto-qa-pr
-description: QA a PR's UI change in a real browser through the configured browser-provider descriptor — first ensuring the PR has been reviewed (invoking om-auto-review-pr when it has not), then capturing screenshots and a pass/fail report, and optionally posting tracker evidence or self-QA labels without modifying source. Also runs in a local, tracker-less mode against the current worktree.
+description: Use when a PR's UI needs browser QA, e.g. 'test PR 123 in the browser'. Ensure review first, capture screenshots and a pass/fail report through the configured browser provider, and optionally post evidence or self-QA labels without changing source. Also supports local QA without a tracker.
 ---
 
 # Auto QA PR (UI verification)

@@ -1,6 +1,6 @@
 ---
 name: om-apply-upgrade-notes
-description: Apply the skills collection's UPGRADE_NOTES.md after an upgrade. Re-syncs installed tracker and browser-provider descriptors while preserving local edits, reports custom-provider gaps, checks pipeline config and installed artifacts, and summarizes exactly what changed.
+description: Use when upgrading the skills collection, e.g. 'apply the upgrade notes'. Sync installed tracker and browser descriptors while preserving local edits, check pipeline config and installed artifacts, and report custom-provider gaps and changes.
 ---
 
 # Apply Upgrade Notes

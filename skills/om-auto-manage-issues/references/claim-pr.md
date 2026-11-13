@@ -268,9 +268,21 @@ When the same run (same `CLAIM_RUN_ID`, owned comment id and `CLAIM_LOCK_SHA` in
 
 ## om-auto-manage-issues specifics
 
-- This skill runs only the **three-signal check** side of the procedure, to decide whether to *skip* an issue: `in-progress` without verified run/comment ownership, or a fresh `🤖` claim comment (< ~30 min) from a different or unknown run (including the same login), means someone else is actively working — skip that issue, record the reason in the report, and mutate nothing. Never collide with active work.
-- It never claims for itself: this is a fast, additive housekeeping pass, so it takes no long-lived `in-progress` lock — the "Applying the claim", stale-lock takeover, `--force` override, and release/handback sections do not apply (the skill has no `--force` flag).
-- Also skip any issue carrying a repo-defined **human-hold** label (e.g. `do-not-close`, or any hold label the repo's `SDLC.md` / labels config marks as agent-off-limits).
-- The only claiming in this skill's orbit happens inside the delegated `om-auto-write-spec {issueId}` run (under `--write-missing-specs`): that skill claims the issue, opens the design-only spec PR, and owns its own release — do not second-guess it.
-
-Specific completion/abort notices do not terminate the candidate by themselves: finish owned label/assignment cleanup and **withdraw-claim** setting `Claim-State: released`, then call **release-lock** LAST on atomic claims with the exact expected SHA and owner identity. Failed cleanup is reported, never silently tolerated as a successful release. Skip-only roles take no release action.
+- Scan and prepare proposals read-only. Apply the atomic/three-signal checks only
+  to skip claimed or uncertain items; human-hold labels always skip. Dry runs and
+  unchanged issues never acquire a claim or write audit comments.
+- For a nonempty per-issue write batch, follow `references/write-transaction.md`
+  and the ownership protocol above. Git hosts acquire the exact issue lock;
+  explicitly unsupported issue providers use the documented fallback election.
+  Never downgrade a Git-host failure to comment election.
+- The claim lasts only for fresh-read/recompute/write/cleanup. Preserve existing
+  assignees and human labels; skip foreign assignment signals. Assign only as
+  required by the shared protocol, record the original assignee set, and undo
+  only an assignment this run added. Never remove a human's assignment.
+- Release owned secondary state, mark the original claim comment released and
+  call **release-lock** LAST with the expected SHA/run/actor on atomic providers.
+  A successor or uncertain read stops cleanup without touching its state.
+- Release before `om-auto-write-spec {issueId}`. That skill owns its own claim
+  and release; linking its result requires a new short housekeeping transaction
+  and fresh idempotency checks. No `--force`, stale takeover or human-hold bypass
+  is added to housekeeping.

@@ -16,6 +16,17 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-11-09 — GitHub CI diagnostics when Checks access is denied
+
+Re-sync the GitHub tracker descriptor, including the companion used by split
+providers. `get-pr-checks` preserves ordinary Checks results; the specific
+personal-access-token denial now produces exact-head Actions diagnostics with
+an explicit pending visibility guard. Workflow success cannot certify unseen
+third-party checks or replace required job contexts. Full merge verification
+still requires readable Checks; no credential changes or automatic waiver occur.
+Unrelated errors, failed reads and a moving head still fail closed. Existing
+`{name,state,link}` fields and named operations remain unchanged.
+
 ## 2026-11-09 — Serialize housekeeping writes per issue
 
 Refresh `om-auto-manage-issues` to acquire a short per-issue ownership claim for

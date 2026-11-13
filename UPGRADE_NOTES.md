@@ -16,6 +16,21 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-11-09 — Serialize housekeeping writes per issue
+
+Refresh `om-auto-manage-issues` to acquire a short per-issue ownership claim for
+labels, body changes and comments. Scanning, analysis, dry runs and unchanged
+issues remain read-only. Re-read the issue and every comment after acquisition,
+then recompute the delta so a previous winner's changes are not repeated. Release
+on every exit and before delegated spec authoring; linking its result takes a
+fresh short claim. Existing assignees, human holds and foreign claims remain
+protected. Use the atomic Git-host descriptors introduced with issue #127. Git-host writes
+require authenticated repository-write transport and a verified `in-progress`
+label; disabled/missing claim labels and permission/missing-operation failures
+block writes instead of selecting fallback.
+Linear/Jira issues retain explicit comment election and its documented visibility
+limits. No new tracker operations or configuration keys are introduced.
+
 ## Merge queue startup recovery
 
 Refresh `om-auto-merge-buddy` to enable a startup sweep of stalled claims,

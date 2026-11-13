@@ -8,6 +8,13 @@ import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const source=readFileSync(join(root,'skills/om-setup-agent-pipeline/references/trackers/github.md'),'utf8');
+const housekeeping=readFileSync(join(root,'skills/om-auto-manage-issues/SKILL.md'),'utf8');
+const transaction=readFileSync(join(root,'skills/om-auto-manage-issues/references/write-transaction.md'),'utf8');
+const housekeepingClaim=readFileSync(join(root,'skills/om-auto-manage-issues/references/claim-pr.md'),'utf8');
+assert.match(housekeeping,/apply every issue mutation through the short owned transaction/);
+assert.doesNotMatch(housekeepingClaim,/It never claims for itself/);
+for(const guard of [/A losing fresh run\n   writes no issue comment/,/Re-read and recompute/,/complete fresh list/,/disabled\/missing\/unverifiable/,/release, recompute outside/,/\*\*release-lock\*\* LAST/,/first verify the housekeeping claim is released/,/Comment\n   election retains its documented visibility race/]) assert.match(transaction,guard);
+
 const functions=['gh_lock_target','gh_get_lock','gh_acquire_lock','gh_release_lock'].map(name=>{
  const match=source.match(new RegExp('^'+name+'\\(\\) [({]\\n[\\s\\S]*?^[)}]','m'));
  assert.ok(match,`shipped ${name}`);return match[0];
@@ -33,6 +40,20 @@ if os.environ.get('CLAIM_API_FAIL')=='1': sys.exit(1)
 if a[:2]==['repo','view']:
  assert a[2]=='fixture/repo'; print(remote[:-4]);sys.exit(0)
 path=next(x for x in a if x.startswith('repos/'))
+if '/issues/7' in path:
+ state_path=Path(os.environ['HOUSEKEEP_STATE']);data=json.loads(state_path.read_text())
+ method=arg('-X') if '-X' in a else 'GET'
+ if method!='GET':
+  sha=g('rev-parse','refs/om-locks/issue-7')
+  owner=json.loads(g('show','-s','--format=%B',sha).split('\\n',1)[1])
+  assert owner['runId']==os.environ['CLAIM_WORKER'], 'only the exact owner may mutate'
+  if os.environ.get('HOUSEKEEP_FAIL')=='1': sys.exit(1)
+  data['writers'].append(owner['runId'])
+  value=next(x[5:] for x in a if x.startswith('body='))
+  if path.endswith('/comments'): data['comments'].append(value)
+  else: data['body']=value
+  state_path.write_text(json.dumps(data))
+ print(json.dumps(data['comments'] if path.endswith('/comments') else data));sys.exit(0)
 if '/git/matching-refs/' in path:
  prefix='refs/'+path.split('/git/matching-refs/')[1]
  refs=[]
@@ -89,6 +110,63 @@ os.execv(git,[git,*args])
   });
  }
  assert.equal(read(),null);
+ // Two housekeeping runs share a bot identity, but only the ref owner may write.
+ const houseState=join(temp,'housekeeping.json');
+ const emptyHouse=()=>writeFileSync(houseState,JSON.stringify({body:'thin',comments:[],writers:[],hold:false}));
+ emptyHouse();
+ writeFileSync(join(temp,'housekeeping.sh'),`set -eu
+tracker_repo() { echo fixture/repo; }
+${functions}
+run="$CLAIM_WORKER"
+# Analysis produced proposals already. Fresh reads under ownership decide writes.
+before=$(gh api repos/fixture/repo/issues/7)
+[ "$(printf '%s' "$before" | jq -r .hold)" != true ] || { echo skipped-hold; exit 0; }
+result=$(gh_acquire_lock issue 7 "$run" 'shared[bot]' "$HOUSEKEEP_BASE")
+[ "$(printf '%s' "$result" | jq -r .status)" != conflict ] || { touch "$HOUSEKEEP_DONE/loser"; echo skipped-owner; exit 0; }
+sha=$(printf '%s' "$result" | jq -r .lock.sha)
+trap 'gh_release_lock issue 7 "$sha" "$run" "shared[bot]" >/dev/null' EXIT
+if [ -n "\${CLAIM_BARRIER:-}" ]; then
+ attempts=0
+ while [ ! -f "$HOUSEKEEP_DONE/loser" ]; do
+  attempts=$((attempts + 1)); [ "$attempts" -lt 300 ] || exit 1
+  sleep .01
+ done
+fi
+fresh=$(gh api repos/fixture/repo/issues/7)
+[ "$(printf '%s' "$fresh" | jq -r .body)" = clarified ] || gh api -X PATCH repos/fixture/repo/issues/7 -f body=clarified >/dev/null
+for marker in labels understanding prep readiness; do
+ comments=$(gh api repos/fixture/repo/issues/7/comments)
+ if ! printf '%s' "$comments" | jq -e --arg marker "$marker" 'index($marker) != null' >/dev/null; then
+  owner=$(gh_get_lock issue 7)
+  printf '%s' "$owner" | jq -e --arg sha "$sha" --arg run "$run" '.sha==$sha and .runId==$run' >/dev/null
+  gh api -X POST repos/fixture/repo/issues/7/comments -f "body=$marker" >/dev/null
+ fi
+done
+echo wrote-or-unchanged
+`);
+ const houseEnv={HOUSEKEEP_STATE:houseState,HOUSEKEEP_BASE:base,HOUSEKEEP_DONE:temp};
+ const houseRun=(run,extra={})=>execFileSync('bash',[join(temp,'housekeeping.sh')],{env:{...env,...houseEnv,CLAIM_WORKER:run,...extra},encoding:'utf8',timeout:15000,stdio:'pipe'}).trim();
+ const houseBarrier=join(temp,'housekeeping-barrier');mkdirSync(houseBarrier);
+ const houseWorker=run=>new Promise((resolve,reject)=>{
+  const child=spawn('bash',[join(temp,'housekeeping.sh')],{env:{...env,...houseEnv,CLAIM_WORKER:run,CLAIM_BARRIER:houseBarrier}});
+  let out='',err='';child.stdout.on('data',v=>out+=v);child.stderr.on('data',v=>err+=v);
+  const timer=setTimeout(()=>child.kill('SIGTERM'),15000);
+  child.on('error',reject);child.on('exit',code=>{clearTimeout(timer);code===0?resolve(out.trim()):reject(Error(err||'exit '+code));});
+ });
+ const houseResults=await Promise.all([houseWorker('house-a'),houseWorker('house-b')]);
+ assert.equal(houseResults.filter(v=>v==='skipped-owner').length,1);
+ const houseData=JSON.parse(readFileSync(houseState,'utf8'));
+ assert.equal(new Set(houseData.writers).size,1,'one same-login mutation owner');
+ assert.equal(houseData.body,'clarified');assert.deepEqual(houseData.comments,['labels','understanding','prep','readiness']);
+ assert.equal(read(),null,'successful housekeeping releases ownership');
+ houseRun('house-repeat');
+ assert.deepEqual(JSON.parse(readFileSync(houseState,'utf8')),houseData,'fresh reads prevent duplicate writes after a previous winner');
+ emptyHouse();assert.throws(()=>houseRun('house-failure',{HOUSEKEEP_FAIL:'1'}));
+ assert.equal(read(),null,'failed writes release exact ownership in finally');
+ assert.deepEqual(JSON.parse(readFileSync(houseState,'utf8')).writers,[]);
+ writeFileSync(houseState,JSON.stringify({...houseData,hold:true}));
+ assert.equal(houseRun('house-hold'),'skipped-hold');assert.equal(read(),null,'human hold is skip-only');
+ console.log('Housekeeping claims OK: two same-login runs produce one writer, four idempotent comments, no stale replay, human-hold skip and exact-ref finally cleanup.');
  for(let round=0;round<8;round++) {
   const barrier=join(temp,'barrier-'+round);mkdirSync(barrier);
   const results=await Promise.all([concurrent('a-'+round,barrier),concurrent('b-'+round,barrier)]);

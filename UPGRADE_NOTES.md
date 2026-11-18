@@ -16,6 +16,18 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-11-19 — Optional narrower QA gate label
+
+Two optional config keys let a repository keep `needs-qa` for automatic QA and
+reserve the merge gate for changes that need a human tester:
+`qaGateLabel` (default `"needs-qa"`, so nothing changes unless you set it) and
+`qaReadyLabel` (default `null`). With `qaGateLabel` set to, for example,
+`needs-human-qa`, `om-auto-merge-buddy` and `om-auto-review-pr` apply that
+label to protected and human-only PRs, and the merge skills block only on it.
+Create the labels before enabling the keys. `qaReadyLabel` is owned by the
+repository, typically a workflow that adds it once a gated PR has an approving
+review, green CI and no conflicts, and removes it on every push.
+
 ## 2026-11-09 — Serialize housekeeping writes per issue
 
 Refresh `om-auto-manage-issues` to acquire a short per-issue ownership claim for

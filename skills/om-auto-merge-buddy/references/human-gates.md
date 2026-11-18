@@ -15,6 +15,7 @@ adapting this skill starts in one place. The detail lives where noted.
 | Human veto | `qa-failed`, `do-not-merge` or an unresolved human QA NO-GO | Section 1 |
 | Protected areas | Migrations, money, permissions or tenant isolation, architecture, backward-incompatible changes | Section 2 |
 | Human-only by policy | A configured label or author | Section 2b |
+| Human-QA marker | `qaGateLabel` names a narrower label than `needs-qa` | Section 2c |
 | Independent review | Required native approval is missing | `references/independent-review.md` |
 | QA routing | Required approval is missing or coverage has gaps | `references/qa-routing.md` |
 | Risk override limits | What `--force` and `automerge-force` may skip | `references/risk-override.md` |
@@ -189,6 +190,20 @@ PASS and `qa-self-verified` are supporting evidence only, and it needs
 section 2 also applies. Record `human-only: <label | author>` in the status
 reason. Read labels fresh on every visit; removing the label returns the PR to
 the ordinary route, while an author entry applies for as long as it is configured.
+
+## 2c. Mark human-QA work with the gate label
+
+When `qaGateLabel` names a label other than `needs-qa`, that label is how human
+testers find the work sections 2 and 2b reserve for them. On every visit, after
+classifying the current head, apply it through the guarded `apply_label` to a PR
+that falls under section 2 or 2b, and add the reason to the existing status
+comment (`human-qa label: <area | human-only label | author>`). Remove it only
+when this skill applied it and a later classification of the current head finds
+that neither section applies; never remove one a human applied.
+
+The label is a marker, not a gate input: a missing label never waives sections
+2 and 2b, and a present one adds nothing beyond them. Never apply or remove
+`qaReadyLabel`; the repository keeps it current.
 
 ## 3. Make the stop visible in the existing status comment
 

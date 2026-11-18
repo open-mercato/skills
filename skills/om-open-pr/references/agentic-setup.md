@@ -37,6 +37,7 @@ BASE_BRANCH=$(jq -r '.baseBranch // "auto"' "$CONFIG")
 # "auto" resolves via the tracker descriptor's default-branch operation.
 LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
 QA_GATE=$(jq -r '.qaGate // false' "$CONFIG")
+QA_GATE_LABEL=$(jq -r '.qaGateLabel // "needs-qa"' "$CONFIG")
 ```
 
 Every label mutation in this skill goes through the `label_exists` / `apply_label` guards; when `labels.enabled` is `false`, skip every label operation and note that in the closing issue comment.

@@ -34,3 +34,7 @@ Use the review to explain the failure rather than restate it:
 On an **autofix-eligible pass**, failing checks are stage 3 of the step 11 work order — fixed once neither conflicts nor review findings remain, because resolving those changes what CI does on the next run anyway.
 
 **Pending is not failing, and pending never delays the review.** A required check still queued or running is not a reason to wait, and never a reason to hold back the verdict, the labels, or the review body. Review the code that is in front of you, submit, label, and report — then let `references/ci-followup.md` handle the CI outcome afterwards. Record which required checks were pending at review time, in `PENDING_CHECKS`, so step 10 can disclose them in the review body and the follow-up knows what it is waiting on. Waiting for green before reporting is the failure this skill must not reproduce: a monitoring process that dies mid-wait leaves a PR with no labels, no review, and no record that any work happened.
+
+## Held CI runs
+
+Some hosts hold CI for fork or first-time contributors until a maintainer releases it, so a PR can show an empty or partial check list while nothing runs. Read **list-runs** for the exact head SHA and record runs held for approval in `HELD_RUNS`. They are neither failing nor pending and never become findings. With `ci.approveHeldRunsOnReview` on, step 8 releases them once the diff has been reviewed; otherwise the review body discloses them. Procedure: `references/ci-approval.md`.

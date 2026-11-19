@@ -16,6 +16,19 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-11-19 — Opt-in release of held CI during review
+
+`om-auto-review-pr` can now release CI that the code host holds for fork or
+first-time contributors (GitHub `action_required` workflow runs), so a reviewed
+PR gets CI results without a separate manual approval. It is **off by default**:
+add `"approveHeldRunsOnReview": true` under `ci` in `.ai/agentic.config.json` to
+enable it. With it on, the skill releases runs only after reviewing the diff, only
+for that exact head SHA, and never when the diff touches CI, build, dependency or
+tooling definitions; it uses the existing **approve-pending-runs** operation.
+Re-sync `.ai/trackers/github.md` for the updated caller rule on that operation
+(wording only — the command is unchanged). Repositories that leave the key unset
+see no behavior change.
+
 ## 2026-11-19 — Optional narrower QA gate label
 
 Two optional config keys let a repository keep `needs-qa` for automatic QA and

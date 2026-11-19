@@ -35,7 +35,7 @@ Configure `.ai/agentic.config.json` when missing or when the pipeline changes.
   "qaGate": true,
   "qaGateLabel": "needs-qa",
   "qaReadyLabel": null,
-  "ci": { "maxWaitMinutes": 40 },
+  "ci": { "maxWaitMinutes": 40, "approveHeldRunsOnReview": false },
   "autofix": { "label": "cez-autofix", "eligibility": { "lookbackDays": 30, "analyzeLimit": 100, "limit": 20, "excludeLabels": ["blocked", "do-not-fix"] } },
   "automerge": { "label": "automerge", "mode": "prepare-and-merge", "requireIndependentReview": false, "defaultToHumanQa": false, "humanOnlyLabels": [], "humanOnlyAuthors": [], "complexQa": "always", "windowMinutes": 120, "maxAttempts": 3 },
   "engine": { "loopStepThreshold": 20, "executorTier": "standard", "stepReview": "final" },
@@ -76,6 +76,7 @@ Field defaults: `references/config-capabilities.md`.
 - `autofix` — issue-triage queue label and eligibility; defaults and behavior: `references/config-capabilities.md`.
 - `automerge` — queue label, merge mode, review/QA policies, human-only arrays, QA depth, queue limits and triage. Schema above; fields/defaults in `references/config-capabilities.md`.
 - `ci.maxWaitMinutes` — CI wait cap in minutes, default `40`; `0` skips waiting. It never relaxes required checks for merging. Wait-budget behavior: `references/config-capabilities.md`.
+- `ci.approveHeldRunsOnReview` — default `false`; `true` lets `om-auto-review-pr` release held fork CI. See `references/config-capabilities.md`.
 - `engine.executorTier` — optional; the default abstract model tier (`cheap` / `standard` / `capable`) for executor subagents dispatched by the loop skills when a Tasks-table `Exec` cell names none. Harnesses that support subagent model selection map the tier onto their closest model class; others ignore it. Configs without the key behave as `standard`.
 - `engine.loopStepThreshold` — the Step count above which `om-auto-create-pr` hands a run off to `om-auto-create-pr-loop` (default 20). Raise it to keep more runs on the cheaper plain engine; `--loop` always forces the loop regardless.
 - `engine.stepReview` — optional; how often the loop skills code-review landed work mid-run: `final` (default — only the authoritative end-of-run review), `checkpoint` (review the diff at every checkpoint pass), or `per-step` (review each Step's commit as it lands). Blocker/major findings are fixed immediately as `X.Y-review-fix` Steps; minors defer to the final review, which runs in every mode.

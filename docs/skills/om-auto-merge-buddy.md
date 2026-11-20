@@ -63,6 +63,12 @@ ordinary approval policy and triggers fresh reconciliation. CLI risk flags
 apply only to the current invocation. For ordinary policy, the separate CI
 baseline waiver still requires matching failure proof on the exact target SHA.
 
+Both labels drive the visit through a guarded squash when the actor configured
+in the tracker descriptor can merge. GitHub still applies its native review
+rules and checks the actor's bypass rights. If GitHub explicitly refuses the
+squash for a required review, the buddy records the reviewer or maintainer
+action and waits for a relevant review or merge-authority change before retrying.
+
 ## Run log and resume
 
 Each run writes a local folder, `<paths.runs>/merge-buddy/<date>-<time>-<run id>/`: `RUN.md` lists every executed step with its UTC time, `HANDOFF.md` names the PR and stage in flight, the remaining queue and the next action, and `NOTIFY.md` logs start, resume, blockers and decisions. When the window closes, the run writes a final handoff with the remaining queue and the next action, so the next run continues where it stopped. A run that dies leaves its handoff open, and the next run resumes it: recover its in-flight plan and schedule only currently due/actionable work, rechecking its owner, current head and evidence. The shared scheduler’s due/owned priority overrides stale handoff order. The folder is never committed; ignore it in version control, and persist it between CI jobs if you want resume across scheduled runs.

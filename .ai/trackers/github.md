@@ -600,7 +600,19 @@ GitHub rejects self-approval (reviewing your own PR); surface that instead of wo
 gh pr merge {prNumber} --squash
 gh pr merge {prNumber} --squash --match-head-commit "<headRefOid>" --admin   # head-SHA guard + bypass-protection
 ```
-`--match-head-commit` refuses the merge when a newer commit landed after the caller's gate. `--admin` bypasses branch-protection requirements and needs admin rights on the repository. Without those rights GitHub refuses the merge; surface the refusal. The only permitted retry is one plain guarded squash (`--match-head-commit` without `--admin`) when the caller's documented flow allows it (an immediate buddy visit); it succeeds only when the host's own requirements already hold. Never retry any other way.
+`--match-head-commit` refuses the merge when a newer commit landed after the caller's gate.
+`--admin` requests a bypass as the authenticated actor. The actor must have
+bypass rights for the applicable repository branch protection and rulesets.
+A repository ruleset can grant bypass to selected roles, teams or GitHub Apps.
+An installation token acts as the app, even when an administrator launched the
+run. Use the verified configured merge actor and surface GitHub's reason if
+it refuses. Consult [GitHub's ruleset bypass documentation](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-rulesets/creating-rulesets-for-a-repository).
+The only permitted retry is one plain guarded squash (`--match-head-commit`
+without `--admin`) after a missing-bypass-permission refusal when the caller's
+documented flow allows it and the host's requirements can hold. A refusal that
+identifies an outstanding required review must be surfaced as a host review
+blocker for the caller. A fresh guarded attempt after a verified change in the
+blocking facts is evaluated under the caller's normal finish gates.
 
 #### mark-pr-ready
 Promote a draft PR.

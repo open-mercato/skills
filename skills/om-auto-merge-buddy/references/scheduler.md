@@ -159,6 +159,13 @@ policy; retain automatic evidence so a native-only wait never repeats a stage. A
 stage retry until the existing unblock rules hold. Keep pending follow-up filing
 in the separate run handoff even after removing its PR from `activePrs`.
 
+For a `host-review-required` reason, keep the saved head, target and refusal
+evidence. At a due check, compare the relevant native review and effective
+merge authority under `references/automerge-now.md` → Host review protection.
+Elapsed time alone does not make this item actionable. If no relevant change
+can be verified, keep the wait. A change in head, target or item policy goes
+back through the applicable gates and evidence reconciliation.
+
 With a nonempty active list (except this invocation’s explicit reset admission), check due tracked PRs first, most recently worked
 first (PR number breaks ties), including completed CI found at entrance. Then
 prefer **current user's assigned actionable PRs** before admitting a new global

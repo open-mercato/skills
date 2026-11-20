@@ -141,6 +141,53 @@ prepare-only policy, foreign claims and host protection. Never weaken a check
 or treat pending work, an incomplete local run or a readiness-only report as
 a completed merge.
 
+## Host review protection
+
+The two labels select the buddy's approval policy. The tracker still applies
+its own review rules to the merge actor. When all final gates pass, use the
+current descriptor's authorized guarded squash in the same visit. If applicable,
+use its documented bypass form with the configured actor. Local rules and
+repository overrides can restrict that operation to a plain squash.
+
+After a refusal, refresh the live PR and recheck the final gates, including newer
+human feedback. If the host expressly reports a required review or an active
+change request as the merge refusal, record **waiting-human** for the host review
+gate (`code: host-review-required`, `gate: merge`). Aggregate review state
+alone is insufficient to classify a refusal. Preserve the exact-head automated
+signals that still apply and release the owned claim. Leave pipeline labels
+as they are and avoid adding `automerge-blocked` or charging a repair attempt
+solely for this host result. Keep the existing merge summary as evidence of
+the attempt and correct the status comment to show the refusal.
+
+- Record the verified head and target, sanitized host reason, the merge actor
+  when available from trusted configuration or host evidence, and the blocking
+  review and rule links when verified. If the host requires re-review, name
+  the reviewer and link the request. An authorized re-review request may be
+  sent once for the same reviewer and head. When the refusal identifies only a
+  missing approval, name the eligible reviewer role.
+- Name the reviewer or authorized repository maintainer as the next owner.
+  The reviewer can update the review. A maintainer may separately authorize or
+  configure the merge actor under the repository's protection rules. Keep the
+  review intact and use only the configured tracker operation and identity.
+- Resume through the final gates after a relevant host review change or a
+  verified authorized change to the merge actor or target's applicable
+  protection. Recheck the entire policy on a head or target change. An
+  unchanged refusal gets a cheap inspection and no new merge attempt. The
+  plain-squash fallback is reserved for a bypass-permission refusal where the
+  host's own requirements can hold. A verified host review refusal already
+  explains why a plain squash would fail.
+- If the host reason cannot be established, preserve the sanitized refusal
+  and report the missing evidence. Keep the existing bounded recovery for
+  conflicts, changed heads, workflow holds and other concrete causes.
+
+| Live facts | Expected decision |
+|---|---|
+| Current signals, both labels, and an authorized actor whose configured squash succeeds | Confirm merged in the same visit |
+| Current signals, addressed feedback, and the host rejects the squash for an outstanding review | Record the host review wait with reviewer or owner and evidence |
+| Same review and merge authority on the next visit | Inspect and keep waiting without retrying the squash |
+| Reviewer updates the blocking review or an authorized merge configuration change is verified | Recheck all final gates and retry the guarded squash if eligible |
+| Unresolved human feedback, explicit veto, or prepare-only mode | Apply the corresponding internal gate before attempting a merge |
+
 ## Local CI mirror for an immediate visit
 
 If hosted CI passes, use it. When no host check has failed and the hosted

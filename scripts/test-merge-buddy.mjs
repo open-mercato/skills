@@ -1040,3 +1040,26 @@ console.log('PASS: qa-verdicts copies stay in sync; automerge arming honors the 
   assert.match(stages, /recheck the confirmed PR notice and actual automation evidence/)
 }
 console.log('PASS: immediate label handoffs and two-label policy enforce revocation, prepare-only, CR provenance, auto-QA and real CI')
+
+{
+  const stages = read('skills/om-auto-merge-buddy/references/stages.md')
+  const now = read('skills/om-auto-merge-buddy/references/automerge-now.md')
+  const scheduler = read('skills/om-auto-merge-buddy/references/scheduler.md')
+  const hostReview = now.split('## Host review protection')[1].split('## Local CI mirror')[0]
+  assert.match(stages, /End `merged` only after the tracker confirms the PR merged/)
+  assert.match(stages, /Refused merge[\s\S]*?verified host review refusal under[\s\S]*?Host review protection/)
+  assert.match(hostReview, /all final gates pass, use the\s+current descriptor's authorized guarded squash in the same visit/)
+  assert.match(hostReview, /required review or an active\s+change request as the merge refusal, record \*\*waiting-human\*\*/)
+  assert.match(hostReview, /Aggregate review state\s+alone is insufficient/)
+  assert.match(hostReview, /Preserve the exact-head automated\s+signals that still apply and release the owned claim/)
+  assert.match(hostReview, /unchanged refusal gets a cheap inspection and no new merge attempt/)
+  assert.match(hostReview, /A verified host review refusal already\s+explains why a plain squash would fail/)
+  assert.match(scheduler, /For a `host-review-required` reason[\s\S]*?If no relevant change\s+can be verified, keep the wait/)
+  for (const path of ['.ai/trackers/github.md', 'skills/om-setup-agent-pipeline/references/trackers/github.md']) {
+    const merge = read(path).split('#### merge-pr\n')[1].split('#### mark-pr-ready')[0]
+    assert.match(merge, /actor must have\s+bypass rights for the applicable repository branch protection and rulesets/)
+    assert.match(merge, /installation token acts as the app/)
+    assert.match(merge, /outstanding required review must be surfaced as a host review\s+blocker/)
+  }
+}
+console.log('PASS: two-label merges distinguish host review refusals from retryable merge failures')

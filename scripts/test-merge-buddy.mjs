@@ -908,6 +908,8 @@ console.log('PASS: qa-verdicts copies stay in sync; automerge arming honors the 
     return read(`skills/${name}/references/direct-merge-summary.md`)
   })
   const [summary, prSummary] = summaries
+  const fixPRSkill = read('skills/om-auto-fix-pr/SKILL.md')
+  assert.match(fixPRSkill, /stop before claiming it.*reconcile an existing unfinished summary per `references\/direct-merge-summary\.md`/)
   assert.equal(summary, prSummary, 'Both direct merge paths ship the same standalone procedure')
   for (const name of directMergeSkills) {
     assert.ok(summary.includes(`🤖 \`${name}\` — merge summary`), `Recognize the ${name} marker across routes`)

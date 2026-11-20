@@ -18,8 +18,8 @@ A4 status comment remains the machine-readable signal record.
 2. Refresh the A4 status prose with the current readiness and next action. Use
    **list-issue-comments** to search the full PR conversation for either direct
    merge summary marker: `` 🤖 `om-auto-fix-issue` — merge summary `` or
-   `` 🤖 `om-auto-fix-pr` — merge summary ``. Accept legacy bare-skill
-   spelling for lookup. Require the current automation account or an explicitly
+   `` 🤖 `om-auto-fix-pr` — merge summary ``. Match the first nonempty line
+   exactly, accepting legacy bare-skill spelling for lookup. Require the current automation account or an explicitly
    trusted prior automation author. A copied outsider marker has no authority.
    If one trusted summary exists, keep its skill name and use **update-comment**.
    If none exists, create it via **comment-pr** using the invoking skill's
@@ -54,7 +54,10 @@ interruption, reconcile its existing unfinished summary from tracker state
 before attempting any merge. Reuse the comment and revalidate its evidence for
 any new attempt. Never create a summary retroactively for an external merge.
 If a post-merge edit fails, report the outstanding comment update with its link
-and proceed with claim release.
+and proceed with claim release. On a confirmed merged PR, a later explicit
+`om-auto-fix-pr {prNumber} --automerge-force` can reconcile either route's
+unfinished summary. Read the tracker result and edit only the existing trusted
+summary and its status prose. A finished or missing summary needs no action.
 
 ## Comment template
 

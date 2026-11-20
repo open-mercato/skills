@@ -38,12 +38,15 @@ For **new or materially changed** screens without an accepted detailed design,
 first honor the spec's mockup decision. When its UI/UX section says
 `Mockups: skipped — opted out` or `Mockups: skipped — declined in the request`,
 draw no proposed-UI visuals at all — no static fallback — and carry the line
-into the PR body. When `Proposed prototype:` holds anything other than a
-repository-relative `index.html` path (a design-tool link, `described in UI/UX`),
-it is supplied material: reference it in the evidence table, capture nothing
-from it, and generate nothing competing.
+into the PR body. When the authoring step reused supplied material, reference
+it in the evidence table. This applies to design links, prose and supplied
+local HTML. Generate no competing mockup.
 
-Otherwise use the spec's `Proposed prototype:` path when it exists:
+Use a generated prototype only when the authoring step returned its revision
+as built by this run. Confirm that its canonical `index.html` path stays within
+the configured spec prototype root and that the revision manifest identifies
+the current spec. If the spec marks the prototype as predating the current
+UI/UX, report that gap and omit proposed-UI screenshots.
 
 1. Reuse the screenshots in the prototype revision's `evidence/` when they cover
    the screens. Otherwise open its `index.html` with the browser provider

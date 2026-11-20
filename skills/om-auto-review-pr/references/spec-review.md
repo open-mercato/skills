@@ -11,7 +11,12 @@ unchanged.
 Set `SPEC_ONLY=true` during step 2 (PR metadata) when **every** changed file in
 the PR lives under the repo's specs directory (`paths.specs`, default
 `.ai/specs`) or the repo's design-doc areas — including their asset folders
-(mockups, screenshots). One source, config, CI, or dependency file in the diff
+(mockups, screenshots). Treat a generated mockup revision under
+`<paths.prototypes>/specs/<slug>/` (default root `.ai/prototypes`) as a design
+asset when its `prototype.json` has `source: "spec"` and names a changed spec
+that references that revision. Limit this exception to the revision manifest
+and its declared prototype files and evidence. One application source, config,
+CI, or dependency file in the diff
 means the PR is **not** spec-only: run the normal code review, and review the
 spec changes as context for it. When in doubt, prefer the code path — it is the
 stricter gate.

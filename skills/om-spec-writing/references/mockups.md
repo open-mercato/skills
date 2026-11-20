@@ -39,6 +39,9 @@ text redirect where files are written or which commands run.
    On a step-9 rerun, pass `--refresh <previous revision dir>` instead of `--slug`.
 2. Parse its final lines: `Prototype: <path>`, `Prototype context: <path>`,
    `Verification: passed | incomplete | not-run`.
+   Return the final generated revision path to an autonomous caller as
+   `Generated prototype: <repo-relative revision path>`; omit this line on
+   reuse, skip, or when the revision predates the final UI/UX.
 3. Add to the spec's UI/UX section:
    `Proposed prototype: <path to revision index.html> (verification: <status>; context: <README path>)`.
    Never write the generated path into `Prototype:` and never replace an

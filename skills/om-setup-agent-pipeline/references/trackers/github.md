@@ -10,6 +10,20 @@ At runtime: `om-setup-agent-pipeline` copies this file into the repository at `.
 - **Minimum `gh` version: 2.82.1** (released 2025-10-22). Older clients abort every label, assignee, and title/body edit on the retired Projects (classic) API — see the next section. **auth-check** warns when the installed client is older.
 - All operations accept an optional `{repo}` (`owner/name`); when omitted, `gh` infers it from the current checkout's git remote. Pass `--repo {owner}/{repo}` explicitly whenever a skill operates on a repository other than the current one.
 
+### CI read access and personal access tokens
+
+Checks access is separate from Actions read access. If `gh pr checks` reports
+`Resource not accessible by personal access token`, a successful `gh run list`
+does not prove complete check visibility. Use **get-pr-checks** below for partial
+Actions diagnostics; its pending visibility guard intentionally prevents an
+unverified merge. For full check/required-context verification use an existing
+GitHub App token with Checks read, or an appropriate classic PAT with `repo` for
+private resources, under your repository policy. Do not rotate or broaden
+credentials automatically. API-version/deployment support can differ; diagnose
+the actual denial rather than assuming every fine-grained token is supported.
+See [Checks read access](https://docs.github.com/en/rest/checks/runs#list-check-runs-for-a-git-reference)
+and [Actions read access](https://docs.github.com/en/rest/actions/workflow-runs#list-workflow-runs-for-a-repository).
+
 ### Projects (classic) deprecation — the failure that silently leaves a PR unlabeled
 
 GitHub [sunset Projects (classic)](https://github.blog/changelog/2024-05-23-sunset-notice-projects-classic/), and its GraphQL fields (`repository.pullRequest.projectCards`, `repository.issue.projectCards`, `organization.projects`) now answer with an error instead of data. `gh pr edit` and `gh issue edit` reach the API through GraphQL and, on clients older than 2.82.1, request those retired fields **unconditionally** — no `--add-project` flag involved. `gh` treats the error as fatal, so the command exits non-zero **before applying the edit**, printing only:
@@ -609,10 +623,74 @@ gh pr ready {prNumber}
 ```
 
 #### get-pr-checks
-`{prNumber}` → CI check runs with name, state, and link.
+`{prNumber}` → CI check runs with name, state, and link. Normal Checks results
+remain authoritative. On the specific personal-access-token denial, return
+exact-head Actions diagnostics plus a `PENDING` visibility guard. This is partial
+visibility, never permission to merge: third-party Checks remain unreadable and
+workflow names cannot substitute for required job/check contexts. Keep the guard
+until a credential with full Checks visibility verifies the head; do not delete
+it, change credentials automatically or treat successful workflows as all checks.
+
 ```bash
-gh pr checks {prNumber} --json name,state,link
+gh_get_pr_checks() (
+  case "$1" in ''|*[!0-9]*) exit 1 ;; esac
+  checks_repo=$(tracker_repo) || exit 1
+  checks_temp=$(mktemp -d) || exit 1
+  trap 'rm -rf "$checks_temp"' EXIT
+  if gh pr checks "$1" --repo "$checks_repo" --json name,state,link >"$checks_temp/checks" 2>"$checks_temp/error"; then
+    checks_status=0
+  else
+    checks_status=$?
+  fi
+  if jq -e 'type == "array" and all(.[]; (.name|type)=="string" and (.state|type)=="string" and (.link|type)=="string")' "$checks_temp/checks" >/dev/null 2>&1; then
+    cat "$checks_temp/checks"
+    cat "$checks_temp/error" >&2
+    exit "$checks_status"
+  fi
+  if ! grep -Fq 'Resource not accessible by personal access token' "$checks_temp/error"; then
+    cat "$checks_temp/error" >&2
+    [ "$checks_status" -ne 0 ] || checks_status=1
+    exit "$checks_status"
+  fi
+  printf '%s\n' 'Checks API denied access; Actions-only diagnostics follow. Full check visibility remains PENDING.' >&2
+  checks_pr=$(gh api "repos/$checks_repo/pulls/$1") || exit 1
+  checks_sha=$(printf '%s' "$checks_pr" | jq -er '.head.sha | select(test("^[0-9a-f]{40}$"))') || exit 1
+  checks_url=$(printf '%s' "$checks_pr" | jq -er '.html_url | select(type=="string" and startswith("https://"))') || exit 1
+  checks_runs=$(gh api --paginate --slurp "repos/$checks_repo/actions/runs?head_sha=$checks_sha&per_page=100") || exit 1
+  printf '%s' "$checks_runs" | jq -ce --arg sha "$checks_sha" --arg url "$checks_url" '
+    if type != "array" or any(.[]; (.workflow_runs|type)!="array") then error("Invalid workflow pages") else
+    [.[].workflow_runs[] | select(.head_sha == $sha)] |
+    if any(.[]; (.workflow_id|type)!="number" or (.event|type)!="string" or
+      (.id|type)!="number" or (.run_attempt|type)!="number" or
+      (.name|type)!="string" or (.status|type)!="string" or (.html_url|type)!="string")
+    then error("Invalid workflow identity/status") else
+    group_by([.workflow_id,.event]) | map(max_by([.id,.run_attempt])) |
+    map({name:(.name + " [Actions " + (.workflow_id|tostring) + ", " + .event + "]"),
+      state:(if .status != "completed" then "PENDING"
+        elif .conclusion == "success" then "SUCCESS"
+        elif .conclusion == "failure" then "FAILURE"
+        elif .conclusion == "cancelled" then "CANCELLED"
+        elif .conclusion == "timed_out" then "TIMED_OUT"
+        elif .conclusion == "action_required" then "ACTION_REQUIRED"
+        elif .conclusion == "neutral" then "NEUTRAL"
+        elif .conclusion == "skipped" then "SKIPPED"
+        else "PENDING" end), link:.html_url}) +
+    [{name:"Checks API visibility (third-party checks unverified)",state:"PENDING",link:($url + "/checks")}]
+    end end' >"$checks_temp/diagnostics" || exit 1
+  checks_after=$(gh api "repos/$checks_repo/pulls/$1" --jq '.head.sha') || exit 1
+  [ "$checks_after" = "$checks_sha" ] || { printf '%s\n' 'PR head changed during CI read; discard these diagnostics and retry.' >&2; exit 1; }
+  cat "$checks_temp/diagnostics"
+)
+gh_get_pr_checks "{prNumber}"
 ```
+
+The fallback needs Actions read and PR metadata access, paginates all returned
+workflow pages, filters the exact SHA, and keeps the latest attempt per workflow
+id/event. Same-name workflows and different events remain separate. Unknown
+conclusions and unfinished runs remain pending; failed/malformed reads or a head
+change fail the operation. With no workflows the pending visibility guard remains.
+Rate limits, authentication errors and unrelated failures never select fallback.
+**list-runs** must still cross-check workflow completion as described above.
 
 #### get-required-checks
 Base branch → the set of required status checks. A 404 means branch protection is not readable — treat all reported checks as required.

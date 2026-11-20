@@ -14,8 +14,10 @@ A status write can succeed while a label write fails. Read back both before mark
 
 ## Progress
 
+PR: #199
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Unify reporting
 
-- [ ] 1.1 Define and verify common automerge signal publication
+- [x] 1.1 Define and verify common automerge signal publication — b5a0630

@@ -116,11 +116,12 @@ View every image first; drop and name any that shows a credential, a token or
 real-looking personal data. Prototype data is fictitious by contract, but
 current-app screenshots can show seeded or local data.
 
-**Already posted.** A live marker comment means an earlier run on this PR posted
-one. **attach-image-evidence** can only post, so rewrite the old comment first
-via **update-comment** to the single line
-`Superseded by the next 📸 UI mockups comment on this PR.`, then post the new
-one — never two live mockup comments.
+**Already posted.** Before posting, look for a live marker comment
+(**list-issue-comments**) and record its id: an earlier run on this PR posted
+it. **attach-image-evidence** can only post, so post the new comment first, then
+rewrite the recorded one via **update-comment** to the single line
+`Superseded by the next 📸 UI mockups comment on this PR.` — a failed post never
+leaves the PR without mockups, and never two live mockup comments remain.
 
 The tracker descriptor owns making images render inline; when it cannot (a
 private repository, no write access to the evidence branch), it posts links or

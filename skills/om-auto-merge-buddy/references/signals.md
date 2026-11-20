@@ -24,7 +24,7 @@ holds on the current head. Always re-read **get-pr-checks** and **list-runs**
 (see "Recheck evidence" below). The seed then counts as the first-visit record,
 so no bootstrap is needed.
 
-Before bootstrap or retaining any recorded signal, apply `references/human-gates.md`; vetoes stop the visit and protected-area human QA outranks every `n/a`/automatic PASS rule below. Then run the entrance reconciliation in `references/reconcile.md`; labels alone never establish evidence or the scope of later changes.
+Before bootstrap or retaining any recorded signal, apply `references/human-gates.md`; vetoes stop the visit and protected-area human QA governs ordinary policy. Then run the entrance reconciliation in `references/reconcile.md`; labels alone never establish evidence or the scope of later changes.
 
 ## Bootstrap — the first visit, when no signal is recorded
 
@@ -61,7 +61,7 @@ A later strict invocation recomputes native evidence and never trusts a saved
 
 ## 2 · QA — `automerge-signal-2-qa`
 
-First apply `references/human-gates.md`: an active veto records `waiting-human`; protected changes, and a PR carrying a QA gate label narrower than `needs-qa` (section 2c), need valid pinned human QA before signal 2 can hold. The following automatic/`n/a` paths apply only outside those gates.
+First apply `references/human-gates.md`: an active veto records `waiting-human`. For the automation-only pair use `references/automerge-now.md`. Otherwise protected changes and a narrower human QA gate label need pinned human QA before signal 2 can hold.
 
 - **`n/a`** — the PR carries `skip-qa`, or carries neither `needs-qa` nor the QA gate label (`qaGateLabel`, default `needs-qa`), or `qaGate` is `false`, and in every case carries neither `qa-approved` nor `qa-failed`. A human verdict removes `needs-qa` (`references/qa-verdicts.md` §1); such a PR stays QA-required under the approval or veto rules. Record `qa: n/a` and apply the label: the signal is satisfied.
 - **Completed auto-QA PASS — check first.** Trusted same-author starter/report/completion history with explicit PASS on the unchanged current head grants signal 2 under `references/qa-evidence.md`, including legacy `Verified` short-SHA reports uniquely resolved through Git. This works without `qa-approved`, `QA head:`, self-QA eligibility or `--force`, even on `risk-high`. Keep coverage notes visible; no approval labels are fabricated and no duplicate QA is counted. This report reuse does not satisfy a mandatory local approval label: check `references/qa-routing.md` for missing formal approval/testable gaps, which default to real orchestrated QA/sign-off even when the report-based signal holds.
@@ -69,6 +69,11 @@ First apply `references/human-gates.md`: an active veto records `waiting-human`;
 - **Missing after completed-PASS and approval checks** — the QA stage produces it. When the PR is `risk-high` (labeled, or inferred per `SDLC.md`) without `RISK_CHECKS_SKIPPED=true`, the self-QA exception does not apply. An explicit override still requires a real PASS with screenshots and the sign-off; it never turns required QA into `n/a`. Only without that validated override does the visit end `waiting-human` with `qa: waiting-human <head>` recorded. An old `waiting-human` record is never routing authority: recompute current `defaultToHumanQa`, runnable coverage and legitimate self-sign-off eligibility under `references/qa-routing.md`. Missing required approval defaults to queued automatic QA/sign-off, not a human wait; only a real blocker/ineligibility or explicit human preference waits. Count attempts only on actual invocation.
 
 ## 3 · CI — `automerge-signal-3-ci`
+
+Under the two-label policy, the baseline-waiver and no-CI-configured rows do
+not grant a signal. Use a real hosted pass or the local mirror. If the immediate
+label is present and CI is pending or missing, try the eligible local mirror
+before settling on a waiting outcome.
 
 Read **get-pr-checks** and **list-runs** for the current head, and `mergeable` from **get-pr**. Before classifying CI as failed, missing or human-blocked, inspect workflow approval holds under `references/ci-approval.md`; a held run may expose no check jobs yet.
 
@@ -96,8 +101,7 @@ Pending, queued or missing host checks do not block this alternative, so the
 visit does not end `waiting-ci`. Record `ci:` with what the host actually shows
 and never call it green. A failed host check invalidates the alternative: remove
 the label and record `localCi: fail`, then route to the CI stage as usual. A moved
-head invalidates it like any CI evidence. Only `om-auto-fix-issue` / `om-auto-fix-pr` in
-automerge mode produce this signal; this skill never re-runs the local mirror to grant it.
+head invalidates it like any CI evidence. The fixers can seed it in ordinary queue preparation, and the buddy can produce it for `automerge-now` under `references/automerge-now.md`.
 
 All checks count, not only the required ones: the three signals replace the host's
 merge rules, so a red optional check is still red. The only opt-in exception is a fresh, fully proven baseline waiver under `--skip-pre-existing-ci-errors`; unknown, pending and unproved failures are never waived.
@@ -132,7 +136,7 @@ the missing review/QA stage or wait for fresh target-specific CI.
 
 Resolve force from current CLI flags or the fresh `automerge-force` label under `references/item-policy.md`; in this section, force/non-force means that effective per-item request, never saved metadata.
 
-Record `riskChecks: skipped` only when the effective per-item force request is enabled **and this PR has no protected-area changes** (`references/human-gates.md`);
+Record `riskChecks: skipped` only when the effective risk override is eligible under the current item policy (`references/human-gates.md`);
 otherwise record `enforced`. A change from skipped to enforced invalidates waiver-derived CR before reuse; completed same-head QA PASS is accepted independently under `references/qa-evidence.md`; changing from enforced to skipped may retain strict evidence.
 A legacy record without this field is enforced only after its source evidence
 has been checked for an override marker. On a non-force run, do not bootstrap,

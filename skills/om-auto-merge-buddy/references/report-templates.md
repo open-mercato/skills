@@ -30,6 +30,8 @@ and updated on retries, never posted for prepare-only items.
 
 🔍 Review: {✅ passed | ❌ failed | 📋 pending | not recorded} · 🧪 QA: {✅ passed | not required | ❌ failed | 📋 pending | not recorded} · 🧪 CI: {✅ passed | ❌ failed | 📋 N pending | baseline failures waived | not recorded}
 
+{When both labels hold, place the notice from `references/automerge-now.md` here.}
+
 <details>
 <summary>📋 Evidence and policy details</summary>
 
@@ -47,6 +49,7 @@ and updated on retries, never posted for prepare-only items.
 **QA approval routing:** <automatic | human>; source <config | CLI | default>, current head, assessed UTC
 **Independent review:** {skipped | required — evidence link or missing reason}; source {config | CLI | default}, head <sha>, run <RUN_ID>, assessed <UTC>
 **Risk checks:** {enforced | skipped — operator `--force`, run <RUN_ID>}
+{Record the approval policy and its run/head/target provenance.}
 **CI baseline policy:** {strict | skip-proven-baseline-errors — operator `--skip-pre-existing-ci-errors`, run <RUN_ID>}
 
 🏷️ **Signal evidence** — one line per signal with its emoji and a full sentence:
@@ -125,6 +128,8 @@ existing scheduler checkpoint and signal record, with no invented passes.
 **✅ What happened: Closed without merging; the dependency update is already covered on the target.**
 
 **🔁 Next: None — complete. Reopen only if a remaining change is identified.**
+
+
 
 <details>
 <summary>📋 Evidence and policy details</summary>

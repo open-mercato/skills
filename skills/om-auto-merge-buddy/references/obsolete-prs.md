@@ -1,7 +1,7 @@
 # Close a PR whose entire value is already on its target
 
 Use this check after claiming and reading the PR, before review/QA/CI work.
-Authorization comes from the PR's current `AUTOMERGE_LABEL`; you may close an
+Authorization comes from the PR's current queue labels; you may close an
 obsolete queued PR autonomously in either merge mode. This is closure without
 merging, not approval, and does not need three passing merge signals.
 
@@ -32,7 +32,7 @@ merging, not approval, and does not need three passing merge signals.
 5. Immediately before closure, verify fenced ownership and stopped delegated
    stages under the scheduler lock, then re-read **get-pr** and resolve the
    target tip again. Require open state, the same head/target/tip and current
-   `AUTOMERGE_LABEL`; any changed fact invalidates the assessment. Update the
+   queue authorization; any changed fact invalidates the assessment. Update the
    existing status comment with the proposed closure reason/evidence using the
    template in `references/report-templates.md`. If that write fails, do not
    close. Invoke **close-pr** once, preserving the head branch and linked issues.

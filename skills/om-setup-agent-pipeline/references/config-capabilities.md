@@ -53,14 +53,14 @@ committed configs keep working.
 | `autofix.eligibility.analyzeLimit` | `100` | Most in-window issues gated and ranked. |
 | `autofix.eligibility.limit` | `20` | Shortlist assessed for current relevance and bounded work, capped at analyzeLimit. |
 | `autofix.eligibility.excludeLabels` | `["blocked","do-not-fix"]` | Explicit issue exclusions; current/uncertain claims and closed/already-queued issues are always ineligible. |
-| `automerge.label` | `"automerge"` | `om-auto-merge-buddy`; the human-applied PR label that puts a PR in the unattended merge queue. Setup creates it with the taxonomy. |
+| `automerge.label` | `"automerge"` | `om-auto-merge-buddy`; the human-applied PR label that puts a PR in the unattended merge queue. Setup creates it with the taxonomy. The optional `automerge-now` label also admits a PR. |
 | `automerge.mode` | `"prepare-and-merge"` | `om-auto-merge-buddy`; guarded squash-merge once all signals/policy hold; `prepare-to-merge` opts out of merging. Explicit `--mode` overrides config. |
-| `automerge.requireIndependentReview` | `false` | Boolean; require separate human native current-head approval only when true. `--require-independent-review` / `--skip-independent-review` override config; automatic review remains required. |
+| `automerge.requireIndependentReview` | `false` | Boolean; require separate human native current-head approval only when true. `--require-independent-review` / `--skip-independent-review` override config; automatic review remains required. The live `automerge-now` + `automerge-force` pair skips separate native approval. |
 | `automerge.defaultToHumanQa` | `false` | Missing required approval normally routes to real automatic QA/sign-off; true opts into human QA. `--human-qa`/`--auto-qa` override, without waiving eligibility or fabricating labels. |
-| `automerge.humanOnlyLabels` | `[]` | Array of nonempty label strings; any match requires pinned human QA regardless of override flags. Invalid values stop before claims/proposals. |
+| `automerge.humanOnlyLabels` | `[]` | Array of nonempty label strings; matches require pinned human QA under ordinary policy and auto-QA under the two-label policy. Invalid values stop before claims/proposals. |
 | `qaGateLabel` | `"needs-qa"` | Nonempty label the QA gate keys on. A narrower label (for example `needs-human-qa`) leaves `needs-qa` as a request for automatic QA only; automation applies the narrower label to protected and human-only PRs and never removes a human-applied one. |
 | `qaReadyLabel` | `null` | Optional label meaning "ready for a human tester now". Owned by the repository (typically a workflow); skills only read it. |
-| `automerge.humanOnlyAuthors` | `[]` | Array of nonempty logins, compared case-insensitively; matches require pinned human QA. Invalid values stop before claims/proposals. |
+| `automerge.humanOnlyAuthors` | `[]` | Array of nonempty logins, compared case-insensitively; matches require pinned human QA under ordinary policy and auto-QA under the two-label policy. Invalid values stop before claims/proposals. |
 | `automerge.complexQa` | `"always"` | `always` requests complex QA on every invocation; `needs-qa` only for needs-qa/protected/human-only work; `never` requests basic depth. Preserve explicit settings; invalid enums stop. |
 | `automerge.windowMinutes` | `120` | `om-auto-merge-buddy`; per-run time window, `0` = one pass with no idle CI polling. |
 | `automerge.maxAttempts` | `3` | `om-auto-merge-buddy`; failed stages per signal before the PR is parked `automerge-blocked`. |

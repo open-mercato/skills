@@ -600,7 +600,7 @@ GitHub rejects self-approval (reviewing your own PR); surface that instead of wo
 gh pr merge {prNumber} --squash
 gh pr merge {prNumber} --squash --match-head-commit "<headRefOid>" --admin   # head-SHA guard + bypass-protection
 ```
-`--match-head-commit` refuses the merge when a newer commit landed after the caller's gate. `--admin` bypasses branch-protection requirements and needs admin rights on the repository. Without those rights GitHub refuses the merge; surface the refusal. The only permitted retry is one plain guarded squash (`--match-head-commit` without `--admin`) when the caller's documented flow allows it (automerge force); it succeeds only when the host's own requirements already hold. Never retry any other way.
+`--match-head-commit` refuses the merge when a newer commit landed after the caller's gate. `--admin` bypasses branch-protection requirements and needs admin rights on the repository. Without those rights GitHub refuses the merge; surface the refusal. The only permitted retry is one plain guarded squash (`--match-head-commit` without `--admin`) when the caller's documented flow allows it (an immediate buddy visit); it succeeds only when the host's own requirements already hold. Never retry any other way.
 
 #### mark-pr-ready
 Promote a draft PR.

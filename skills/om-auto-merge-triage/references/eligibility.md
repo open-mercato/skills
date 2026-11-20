@@ -34,7 +34,7 @@ runs the cheap list fields before any extra tracker call, and record the
 
 | # | Gate | Fails when | Reason recorded |
 |---|---|---|---|
-| 1 | Not queued | it carries `AUTOMERGE_LABEL` → *already queued* list; `automerge-blocked` → skipped (SKILL.md step 2, before every other gate) | `already queued` / `automerge-blocked` |
+| 1 | Not queued | it carries `AUTOMERGE_LABEL` or `automerge-now` → *already queued* list; `automerge-blocked` → skipped (SKILL.md step 2, before every other gate) | `already queued` / `automerge-blocked` |
 | 2 | Open | state is not open | `closed` |
 | 3 | Ready | the PR is a draft | `draft` |
 | 4 | Base | `baseRefName` ≠ `BASE_BRANCH` (stacked or release-branch PRs merge through their own base) | `targets <branch>` |

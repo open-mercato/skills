@@ -1,6 +1,6 @@
 # Entrance state reconciliation
 
-Apply `references/human-gates.md` first. Human vetoes stop work; protected-area changes require strict risk checks and pinned human QA. Automatic PASS reuse, `n/a`, self-sign-off and automatic routing below never bypass these gates.
+Resolve the live item policy before applying `references/human-gates.md`. Human vetoes stop work. Protected-area approvals apply under ordinary policy. For the exact two-label pair, follow `references/automerge-now.md` and publish the notice before producing stages.
 
 Resolve fresh per-item mode/risk inputs under `references/item-policy.md`, then apply protected gates to the effective risk request. Reconcile changed policy even on unchanged heads.
 

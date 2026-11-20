@@ -9,8 +9,7 @@ Reject unknown modes, non-boolean review configuration or invalid arguments
 before claiming work; never silently fall back from an invalid merge policy.
 Existing explicitly configured `prepare-to-merge` remains honored. This resolves the invocation baseline only; apply `references/item-policy.md` afterward for each PR. A fresh `automerge-prepare` label always restricts that item to `prepare-to-merge`, even over explicit merge CLI mode; independent-review policy is unchanged.
 
-This policy applies to both modes, independently of `--force`, risk-check waivers
-and CI baseline exceptions. Re-read the config and explicit arguments each
+This policy applies to both finish modes, independently of `--force` alone and CI baseline exceptions. The live `automerge-now` + `automerge-force` pair is the only item-policy exception to the native approval requirement. It still requires automatic CR and resolution of actionable findings. Re-read the config and explicit arguments each
 invocation; never inherit a previous resolved policy from the scheduler, status
 comment, run handoff, `--fresh` or `--reset`.
 
@@ -28,7 +27,7 @@ native approval alone does not replace the automated code-review evidence.
 
 ## Opt in: require independent approval
 
-When the resolved policy requires review (config or explicit
+When the resolved item policy requires review (config or explicit
 `--require-independent-review`), signal 1 additionally needs a native
 `APPROVED` review pinned to the exact current head, from a write-authorized
 human other than the PR author and the current automation account. Bot reviews,

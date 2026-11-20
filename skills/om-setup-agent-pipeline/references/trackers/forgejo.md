@@ -1104,7 +1104,7 @@ The merge endpoint answers with an empty body, so the read-back is the proof. Su
 - a 405: required checks or approvals unmet, squash disallowed by the repository settings, or Forgejo still recomputing mergeability right after a change to either branch. Re-read **get-pr** and retry once before surfacing it;
 - a 409: the head moved.
 
-`head_commit_id` is the head-SHA guard. `bypass-protection` adds `force_merge: true`, which skips branch-protection checks for a repository admin. Without admin rights the 405 stands, and the merge is refused; a caller whose documented flow allows it (automerge force) may retry once with the plain guarded form above (no `force_merge`), never any other way:
+`head_commit_id` is the head-SHA guard. `bypass-protection` adds `force_merge: true`, which skips branch-protection checks for a repository admin. Without admin rights the 405 stands, and the merge is refused; a caller whose documented flow allows it (an immediate buddy visit) may retry once with the plain guarded form above (no `force_merge`), never any other way:
 ```bash
 jq -n --arg sha "<headRefOid>" '{Do: "squash", head_commit_id: $sha, force_merge: true}' \
   | fj_write POST "repos/$(fj_repo)/pulls/{prNumber}/merge" >/dev/null || exit 1   # bypass-protection

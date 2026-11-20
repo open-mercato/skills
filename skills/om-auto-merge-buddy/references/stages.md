@@ -32,8 +32,8 @@ Every stage run increments `attempts[signal]`. Reaching `MAX_ATTEMPTS` without t
 |---|---|
 | `pass` | retain the stage evidence for `head`; grant its signal only after all applicable policy checks (including required independent review), then continue |
 | `fail`, head moved | the stage made progress → re-read state and retry if under `MAX_ATTEMPTS` |
-| `fail`, head unchanged | no progress is possible by retrying → end the visit `blocked` with the reason at once. Exception: QA never pushes, so a QA `fail` follows stage 2's fix loop instead |
-| `pending` | the stage pushed and CI is running → re-check the earlier signals for the new head, then end the visit `waiting-ci` |
+| `fail`, head unchanged | no progress is possible by retrying → end the visit `blocked` with the reason at once. For the two-label policy, continue when a concrete, distinct in-scope remedy remains, subject to the attempt cap. QA never pushes, so a QA `fail` follows stage 2's fix loop instead |
+| `pending` | the stage pushed and CI is running → re-check the earlier signals for the new head, then apply the local mirror and same-run loop for the two-label policy, or end an ordinary visit `waiting-ci` |
 | `blocked` | a blocker an agent cannot clear (missing credential, architectural decision, contract-breaking scope) → end the visit `blocked` at once |
 | `replacement=<n>` | follow the replacement (below), whatever the outcome |
 
@@ -76,8 +76,12 @@ record the actionable blocker before parking, even if local validation passed.
 For a PR carrying `automerge-now`, try the current-head local CI mirror under
 `references/automerge-now.md` when the complete host read shows pending or missing
 CI and no unresolved hold. If only running CI remains without a valid local
-pass, end `waiting-ci`. Invoke the repair stage only for actual failures/conflicts
-after this reconciliation.
+pass, ordinary visits end `waiting-ci`. For the two-label policy apply the
+same-run loop in `references/automerge-now.md`. Invoke repair for confirmed
+hosted or local failures and conflicts after this reconciliation. Pass the
+confirmed failing command and evidence to the repair helper for local failures.
+If the helper cannot consume local-only findings, route actionable findings
+through stage 1, then rebuild CI evidence on the resulting head.
 
 `om-auto-fix-pr {pr} --orchestrated` (also `--skip-pre-existing-ci-errors` only when explicitly enabled for this invocation and the two-label policy is inactive) — full mode, not `--ci-only`. It merges the
 PR's target branch in and resolves conflicts, delegating non-trivial ones to
@@ -140,4 +144,4 @@ timestamps before active cleanup.
 
 - **`prepare-to-merge`** → `set_pipeline_label {pr} merge-queue`, then **mark-pr-ready** if it is a draft. End `ready`. Retain its active scheduler record with a future cheap check until externally merged. Later rounds revisit it cheaply: no producing stage runs while the current target and fresh source evidence still support every signal.
 - **`prepare-and-merge`** → **mark-pr-ready** if it is a draft, then follow `references/merge-summary.md`: refresh the status, create/update the one additional evidence summary across the whole process, confirm its write, and recheck all final gates/ownership before **merge-pr** with squash, the checked `headRefOid`, and the descriptor's protection-bypass form. Immediately before the mutation recheck human gates; `qa-failed`, `do-not-merge` and unresolved human QA NO-GO remain vetoes. Protected-area approval applies under ordinary policy. The host bypass never overrides these gates. End `merged`. Do not delete the head branch unless the repository's config asks for it.
-  - **Refused merge** — the head moved (the head-SHA guard), the token lacks the bypass right, or the host has no bypass. Only for `automerge-now`, a refusal specifically for missing bypass rights may fall back once to a plain squash with the same head guard, if supported by the tracker and after repeating the complete gate and summary check. A moved head goes back to the ladder. Any other refusal rechecks human gates first; a human stop ends `waiting-human` without changing pipeline labels. Otherwise it ends the visit `ready` (`merge-queue` set), with the host's reason in the status comment for a maintainer. The next round tries the merge once more.
+  - **Refused merge** — the head moved (the head-SHA guard), the token lacks the bypass right, or the host has no bypass. Only for `automerge-now`, a refusal specifically for missing bypass rights may fall back once to a plain squash with the same head guard, if supported by the tracker and after repeating the complete gate and summary check. A moved head goes back to the ladder. Any other refusal rechecks human gates first; a human stop ends `waiting-human` without changing pipeline labels. For the two-label policy, diagnose the refusal and continue when a concrete remedy remains under `references/automerge-now.md`. Otherwise it ends the visit `ready` (`merge-queue` set), with the host's reason in the status comment for a maintainer. The next round tries the merge once more.

@@ -35,25 +35,26 @@ from recent comparable workflow durations and observed elapsed time, with a
 five-minute fallback. Release the PR claim and select another actionable item.
 When only future checks remain, sleep until the earliest due time in at most
 60-second chunks (refresh admission between chunks), bounded by `DEADLINE`, or
-end and report that timestamp. Never busy poll or hold **watch-run** past the
-window. `--window 0` takes one candidate snapshot and no idle polling.
+end and report that timestamp. Never busy poll. The queue-level wait ends at the window. `--window 0` takes one candidate snapshot and no idle polling.
 
 ## Deadline
 
-A zero window is one pass, not an already-expired deadline. Use the same
-start predicate for visits (600-second reserve) and stages (300-second reserve),
-with `NOW` and `DEADLINE` in UTC epoch seconds:
+A zero window is one admission pass, with same-run completion for admitted
+two-label visits. Use this predicate for visits (600-second reserve) and
+stages (300-second reserve), with UTC epoch seconds and current policy:
 
 ```bash
 merge_buddy_can_start() {
   [ "$WINDOW_MINUTES" -eq 0 ] && return 0
+  [ "${3:-}" = "admitted-two-label-stage" ] && return 0
   [ "$((DEADLINE - $1))" -ge "$2" ]
 }
 ```
 
-- In one-pass mode, do not compare time against `DEADLINE` and do not refresh or poll after the snapshot is visited.
-- For positive windows, do not start a new visit with less than 10 minutes left, or a new stage with less than 5. A stage needs that much just to report safely.
-- A stage running at `DEADLINE` is allowed to finish. Then end the visit in its current outcome (usually `waiting-ci`), release or swap the claim, update the status comment, **write the final `HANDOFF.md`** (remaining queue, next concrete action, `Status: window-ended` when work is left — `references/run-log.md` → Final handoff), and stop.
+- Pass `admitted-two-label-stage` only for stages of an already admitted visit whose fresh policy still has both labels. All new visits use the admission reserve.
+- In one-pass mode, take no new queue snapshot and do no queue-level idle polling. Continue work within each admitted two-label visit.
+- For positive windows, do not start a new visit with less than 10 minutes left, or an ordinary stage with less than 5. A stage needs that much just to report safely.
+- A stage running at `DEADLINE` is allowed to finish. Admitted two-label visits continue under `references/automerge-now.md`. For ordinary visits, end the visit in its current outcome (usually `waiting-ci`), release or swap the claim, update the status comment, **write the final `HANDOFF.md`** (remaining queue, next concrete action, `Status: window-ended` when work is left — `references/run-log.md` → Final handoff), and stop.
 - Never leave a PR claimed past the run. The release trap covers crashes too.
 
 ## Cadence across runs

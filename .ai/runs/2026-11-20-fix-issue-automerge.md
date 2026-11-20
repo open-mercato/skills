@@ -48,6 +48,14 @@ Let `om-auto-fix-issue` finish a PR that `om-auto-merge-buddy` can merge without
 
 1. Run the full validation gate.
 
+### Phase 4: Scope added mid-run by the user
+
+1. Add the `automerge-signal-3-passes-local-ci-checks` signal, which the buddy accepts as an alternative to host CI.
+2. Add `--automerge-force` / the `automerge-force` label: a direct merge that bypasses host requirements when the user has the rights.
+3. Add automerge and automerge-force modes to `om-auto-fix-pr`, enabled by flags or PR labels.
+4. Human QA verdicts drop `needs-qa`, and autofix fixes QA findings (review-pr, fix-pr, merge-buddy).
+5. Re-run the full validation gate and a fresh review.
+
 ## Progress
 
 PR: #194
@@ -68,3 +76,11 @@ PR: #194
 ### Phase 3: Validation
 
 - [x] 3.1 Run the full validation gate — 5764303
+
+### Phase 4: Scope added mid-run by the user
+
+- [x] 4.1 Add local-CI signal 3 alternative — 144f6da
+- [x] 4.2 Add automerge-force direct merge with bypass — 144f6da
+- [x] 4.3 Add om-auto-fix-pr automerge modes — 4bedc7c
+- [x] 4.4 Human QA verdicts drop needs-qa; autofix fixes QA findings — 7bfdbc5
+- [ ] 4.5 Re-run full gate and fresh review

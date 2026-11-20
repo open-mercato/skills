@@ -83,4 +83,4 @@ PR: #194
 - [x] 4.2 Add automerge-force direct merge with bypass — 144f6da
 - [x] 4.3 Add om-auto-fix-pr automerge modes — 4bedc7c
 - [x] 4.4 Human QA verdicts drop needs-qa; autofix fixes QA findings — 7bfdbc5
-- [ ] 4.5 Re-run full gate and fresh review
+- [x] 4.5 Re-run full gate and fresh review — 6ecfc09

@@ -23,5 +23,5 @@ Treat incomplete host evidence conservatively and preserve human vetoes, prepare
 
 ### Phase 1: Handle host review refusals
 
-- [ ] 1.1 Define and test the merge refusal policy
+- [x] 1.1 Define and test the merge refusal policy — d801bf4
 - [ ] 1.2 Run validation and review the final change

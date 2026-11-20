@@ -224,9 +224,12 @@ the buddy posts a PR comment stating that it skipped human QA and the
 protected-area check. The merge requires automated code review with actionable
 findings resolved, a real host CI pass or a complete local CI mirror, and
 current-head auto-QA PASS with coverage when QA applies. This policy skips
-ordinary human sign-offs, including separate native approval. Completed host
-failures block the local CI alternative. An explicit veto or block still
-stops the run. The active finish mode and `automerge-prepare` still control
+ordinary human sign-offs, including separate native approval. A covered
+current-head auto-QA PASS satisfies `needs-qa` without `qa-approved` when the
+QA gate applies. Active `qa` stops preparation and merge under either policy
+until the QA reviewer removes it. Unresolved workflow approval holds block
+both CI pass paths, and completed host failures block the local CI alternative.
+Explicit vetoes and blocks still stop the run. The active finish mode and `automerge-prepare` still control
 whether the buddy prepares or merges. Removing either label restores the
 ordinary approval rules before the next merge decision.
 
@@ -265,13 +268,13 @@ manual-approval gates unchanged.
 
 ## The QA gate
 
-The one hard rule of this process: **a PR carrying `needs-qa` must not merge until it also carries `qa-approved`, even when every other check is green.** `om-merge-buddy` classifies such a PR as blocked; `om-approve-merge-pr` refuses to merge it.
+Under ordinary policy, **a PR carrying `needs-qa` requires `qa-approved` to merge**, even when every other check is green. `om-merge-buddy` classifies such a PR as blocked and `om-approve-merge-pr` refuses to merge it. Only the immediate two-label policy in `om-auto-merge-buddy` can satisfy this requirement with a covered current-head auto-QA PASS. Active `qa` blocks both policies.
 
 - Apply `needs-qa` to UI changes, new features, and other user-facing behavior that needs manual exercise.
 - For a UI change, QA covers more than "it works": the state matrix (default, empty, loading, error, no-permission, long content, narrow viewport) is part of the pass/fail, and so is conformance to the design contract in `.uxproof/` when the repository has one. A missing state fails QA. `om-ux-review-pr` remains the advisory design review; its objective checks are the ones QA runs.
 - `skip-qa` is the explicit opt-out for docs-only, dependency-only, CI-only, test-only, and similarly low-risk non-user-facing changes. Never combine it with `needs-qa`.
 - `qa-failed`, `do-not-merge`, and `blocked` are hard blocks regardless of every other signal. An active `qa` pipeline label means a tester is on the PR right now — never merge under an active tester.
-- The gate is satisfied when a QA reviewer tests the PR and applies `qa-approved`.
+- Under ordinary policy, a QA reviewer satisfies the gate by testing the PR and applying `qa-approved`. The immediate two-label policy uses the automated evidence described above.
 - **A human verdict answers the request.** When a human applies `qa-approved` or `qa-failed`, the automation removes `needs-qa` (`om-auto-review-pr`, `om-auto-fix-pr`, `om-auto-merge-buddy`). QA stays required: `qa-approved` stays pinned by `QA head:`, and `qa-failed` stays a hard block until a human removes it. Autofix runs fix QA findings, from human QA notes and from `om-auto-qa-pr` FAIL reports, like review findings. After a fix they re-apply `needs-qa` to request a re-test; they never clear `qa-failed`.
 - **`qa-approved` is pinned to a commit.** The comment that grants it — the QA reviewer's note, or the self-QA evidence comment — carries the line `QA head: <sha>` for the head that was tested. A push after that line leaves the label in place but stales it: `om-merge-buddy` reports "QA evidence older than head", and `om-approve-merge-pr` asks for confirmation before merging. The way back is a QA reviewer re-testing, or stating on the PR that the new commits do not touch the tested scope, with a fresh `QA head:` line.
 - **Self-QA exception**: when no QA reviewer has capacity in time, any engineer — or `om-auto-qa-pr --self-qa-signoff` — may sign off instead, on a `risk-low` or `risk-medium` PR only. The evidence attached to the PR names the scenario exercised, the environment, the test data, the observed result, the negative cases tried, and the `QA head:` line. Then apply both `qa-approved` (so the gate passes) and `qa-self-verified` (so the exception is auditable). No evidence, no `qa-approved`.

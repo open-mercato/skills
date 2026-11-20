@@ -61,16 +61,15 @@ signal 1 already holds.
 
 ## Stage 3 — CI (signal 3 missing or failing)
 
+First apply `references/ci-approval.md` to current-head workflow runs, including
+runs with no check jobs. Release eligible approval holds and verify them without
+a repair attempt. An unresolved hold is `approval-held`: withhold signal 3 and
+record the actionable blocker before parking, even if local validation passed.
 For a PR carrying `automerge-now`, try the current-head local CI mirror under
-`references/automerge-now.md` when host CI is pending or missing and eligible.
-Apply that check before parking for a workflow hold or pending CI. For actual
-host failures, continue through the CI repair rules below.
-
-Before invoking a repair stage, apply `references/ci-approval.md` to current-head
-workflow runs, including runs with no check jobs. Release eligible approval holds
-and verify them without a repair attempt. If only running CI remains, end
-`waiting-ci`; if approval is refused, record the precise blocker. Invoke the
-repair stage only for actual failures/conflicts after this reconciliation.
+`references/automerge-now.md` when the complete host read shows pending or missing
+CI and no unresolved hold. If only running CI remains without a valid local
+pass, end `waiting-ci`. Invoke the repair stage only for actual failures/conflicts
+after this reconciliation.
 
 `om-auto-fix-pr {pr} --orchestrated` (also `--skip-pre-existing-ci-errors` only when explicitly enabled for this invocation and the two-label policy is inactive) — full mode, not `--ci-only`. It merges the
 PR's target branch in and resolves conflicts, delegating non-trivial ones to
@@ -104,7 +103,11 @@ When automatic review holds but required native approval is missing, end
 `waiting-human` without a stage or attempt; no mode or host bypass may bypass
 that requirement. Default policy never waits solely on absent native approval
 or a stale host requested-changes state after inherited findings are resolved. Recheck current CI rather than
-trusting a saved green record; a local-CI signal 3 (`references/signals.md`) still requires no failed host check at this moment. If baseline errors were waived, resolve the target tip again and revalidate the exact target SHA, check attempts, logs and CI-definition proof immediately before merge; any change returns to CI evaluation (`references/ci-baseline.md`).
+trusting a saved green record. Read current-head checks and workflow runs again,
+including runs with zero jobs. An unresolved workflow approval hold returns
+`approval-held` and prevents either finish action, including after the summary
+write and before any plain-squash fallback. A local-CI signal 3
+(`references/signals.md`) also requires no failed host check at this moment. If baseline errors were waived, resolve the target tip again and revalidate the exact target SHA, check attempts, logs and CI-definition proof immediately before merge; any change returns to CI evaluation (`references/ci-baseline.md`).
 
 Before either action, checkpoint current-head/policy `readyAt` and measured
 duration under `references/scheduler.md`; preserve immutable first start and

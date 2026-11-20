@@ -925,7 +925,8 @@ console.log('PASS: qa-verdicts copies stay in sync; automerge arming honors the 
     `${decisionCode}\n({ immediateQaDecision, immediateCiDecision })`
   )
   assert.equal(immediateQaDecision({ labels: ['skip-qa'] }), 'n/a')
-  for (const labels of [['qa'], ['needs-qa'], ['qa-approved'], ['needs-human-qa', 'skip-qa']]) {
+  assert.equal(immediateQaDecision({ labels: ['qa', 'needs-qa'], coveredAutoPass: true }), 'waiting-human')
+  for (const labels of [['needs-qa'], ['qa-approved'], ['needs-human-qa', 'skip-qa']]) {
     assert.equal(immediateQaDecision({ labels, qaGateLabel: 'needs-human-qa' }), 'missing')
     assert.equal(immediateQaDecision({ labels, qaGateLabel: 'needs-human-qa', coveredAutoPass: true }), 'pass')
   }
@@ -934,6 +935,16 @@ console.log('PASS: qa-verdicts copies stay in sync; automerge arming honors the 
   assert.equal(immediateQaDecision({ labels: ['needs-qa'], qaGate: false }), 'n/a')
   assert.equal(immediateCiDecision({ hostReadComplete: true, hostedPassed: true }), 'host')
   assert.equal(immediateCiDecision({ hostReadComplete: true, localMirrorPassed: true }), 'local')
+  const heldWorkflowWithNoJobs = {
+    hostReadComplete: true,
+    unresolvedWorkflowApprovalHold: true,
+    currentHostFailure: false,
+    hostedPassed: false,
+    localMirrorPassed: true,
+  }
+  assert.equal(immediateCiDecision(heldWorkflowWithNoJobs), 'approval-held')
+  assert.equal(immediateCiDecision({ ...heldWorkflowWithNoJobs, hostedPassed: true }), 'approval-held')
+  assert.equal(immediateCiDecision({ ...heldWorkflowWithNoJobs, unresolvedWorkflowApprovalHold: false }), 'local')
   assert.equal(immediateCiDecision({ hostReadComplete: true, currentHostFailure: true, localMirrorPassed: true }), 'missing')
   assert.equal(immediateCiDecision({ hostReadComplete: false, localMirrorPassed: true }), 'missing')
   assert.equal(immediateCiDecision({ hostReadComplete: true }), 'missing')
@@ -953,6 +964,16 @@ console.log('PASS: qa-verdicts copies stay in sync; automerge arming honors the 
   assert.match(issueMode, /pre-existing lone PR\s+force label/)
   assert.match(issueMode, /Release the PR claim and its local ownership before invoking/)
   assert.match(stages, /including same-head revocations/)
+  assert.match(stages, /An unresolved workflow approval hold returns\s+`approval-held` and prevents either finish action/)
+  for (const policyPath of [
+    'SDLC.md',
+    'skills/om-setup-agent-pipeline/references/sdlc-template.md',
+    'skills/om-setup-discovery-pipeline/references/sdlc-template.md',
+  ]) {
+    const policy = read(policyPath)
+    assert.match(policy, /auto-QA PASS satisfies `needs-qa` without `qa-approved`/)
+    assert.match(policy, /Active `qa` blocks both policies/)
+  }
   assert.match(stages, /recheck the confirmed PR notice and actual automation evidence/)
 }
 console.log('PASS: immediate label handoffs and two-label policy enforce revocation, prepare-only, CR provenance, auto-QA and real CI')

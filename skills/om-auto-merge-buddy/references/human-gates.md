@@ -36,7 +36,8 @@ relevant author identity/permission means `waiting-human`, never guessed clearan
 
 - `qa-failed` or `do-not-merge` is a hard stop by itself. No automatic FAIL report,
   `needs-qa`, current-head pin or author lookup is required for these labels.
-  Preserve `blocked` in both policies. Under ordinary policy active manual-testing `qa` also stops the visit. Under the two-label policy it requires auto-QA.
+  Preserve `blocked` in both policies. Active manual-testing `qa` stops the visit
+  under both policies, even with current automated QA evidence.
 - An unresolved human QA **NO-GO** is a hard stop without any label. Accept a
   case-insensitive explicit verdict such as `QA verdict: NO-GO` or an unambiguous
   human QA rejection of this PR with `NO-GO` (also `NO GO`/`NO_GO`). Verify a human

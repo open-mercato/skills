@@ -75,14 +75,14 @@ not grant a signal. Use a real hosted pass or the local mirror. If the immediate
 label is present and CI is pending or missing, try the eligible local mirror
 before settling on a waiting outcome.
 
-Read **get-pr-checks** and **list-runs** for the current head, and `mergeable` from **get-pr**. Before classifying CI as failed, missing or human-blocked, inspect workflow approval holds under `references/ci-approval.md`; a held run may expose no check jobs yet.
+Read **get-pr-checks** and **list-runs** for the current head, and `mergeable` from **get-pr**. Before using any row below, resolve any workflow approval holds under `references/ci-approval.md`; a held run may expose no check jobs yet.
 
 | Reading | Meaning |
 |---|---|
+| any current-head workflow still awaiting approval after reconciliation, including a run with zero jobs | **approval-held** → withhold signal 3 and record the actionable blocker (below) |
 | every check completed `SUCCESS` / `NEUTRAL` / `SKIPPED`, head not conflicting | **held** |
 | explicit `--skip-pre-existing-ci-errors`, every failing check has a fresh exact-target baseline proof, all other checks pass and all runs completed | **held with baseline waivers**, never reported as all checks green (`references/ci-baseline.md`) |
 | any check `PENDING` / `QUEUED` / `IN_PROGRESS` and none failed | **pending** → `waiting-ci` (no attempt counted). A check that has been pending for more than 4 hours on one head counts as **failing**: a stuck runner is a CI problem, not a reason to wait forever |
-| any check `ACTION_REQUIRED` (runs held for maintainer approval) | approve held runs, then **pending** (below) |
 | any `FAILURE` / `ERROR` / `CANCELLED` / `TIMED_OUT`, or head `CONFLICTING` | **failing** → CI stage |
 | no checks at all | **pending** for the first 10 minutes after the head commit. After that, **held** as "no CI configured" only when **list-runs** on the target branch also shows no workflow runs; otherwise **failing** (CI did not start) |
 
@@ -94,6 +94,7 @@ also holds when all of these are true:
   linking the comment that lists every `validation.commands` entry and its exit
   code;
 - the head is not conflicting;
+- the current-head host read is complete and no workflow approval hold is unresolved;
 - no host check on the current head completed `FAILURE` / `ERROR` / `CANCELLED` /
   `TIMED_OUT`.
 
@@ -123,7 +124,7 @@ any signal, even when the head did not move:
 - **CR** — invalidate a dismissed or deleted approval, a newer changes-requested verdict, or newly unresolved blocker feedback. Re-establish the signal through signal 1's rules; a saved record never overrides a new verdict.
 - **Human gates** — re-read hard-stop labels and complete human QA verdict history before all signals. Reclassify protected changes; invalidate QA/readiness for an unresolved veto or missing protected-area human sign-off (`references/human-gates.md`).
 - **QA** — recompute whether QA is required from current labels and `qaGate`. Check completed same-head auto-QA evidence first. A missing `qa-approved` invalidates only approval-derived QA, never a valid completed-PASS report. A deleted/revoked qualifying report, removed or superseded sign-off, wrong head or newer trusted FAIL invalidates its respective evidence. A new QA requirement reopens `n/a`. Read new notes even when the label set is unchanged.
-- **CI** — always re-read checks and current-head workflow runs; a rerun can turn an unchanged head pending or red. Never preserve `ci: pass` from the record alone. Apply the tracker descriptor's completeness guard before granting CI.
+- **CI** — always re-read checks and current-head workflow runs; a rerun can turn an unchanged head pending or red. Never preserve `ci: pass` from the record alone. Apply the tracker descriptor's completeness guard before granting CI. Reconcile workflow approval holds before either pass path. While any hold is unresolved, withhold signal 3 and remove both signal 3 labels if present, retaining verified local results as evidence for re-evaluation after release.
 - **Target** — compare current `baseRefName` with `base` in the record. A missing or different `base` invalidates all three signals, even when the head is unchanged. Older records without `base` are re-evaluated once rather than guessed compatible.
 
 Rewrite invalidated records and remove their signal labels before proceeding.

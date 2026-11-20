@@ -33,7 +33,10 @@ even if the head is unchanged. Record the approval policy and run id that produc
   require a separate native approval under this policy, including when
   `automerge.requireIndependentReview` is true. Pass the existing validated
   `--skip-risk-checks` to children. Keep the ordinary provenance marker.
-- **QA.** QA is required by active `qa`, `qa-approved`, an active narrower
+- **QA.** Active `qa` stops the visit even with a current auto-QA PASS. Once
+  the QA reviewer removes it, `needs-qa` can be satisfied by a covered auto-QA
+  PASS without `qa-approved` when the QA gate applies. QA is also required by
+  `qa-approved`, an active narrower
   `qaGateLabel`, a matching configured human-only label/author, mandatory
   local test coverage, or the ordinary `qaGate`/`needs-qa` combination. The
   protected-area classification is skipped. Determine applicable coverage
@@ -54,9 +57,10 @@ even if the head is unchanged. Record the approval policy and run id that produc
 - **CI.** Require a real current-head hosted pass or the validated local mirror
   below. A missing host workflow is not a CI pass. This policy does not use
   baseline waivers or the no-CI-configured shortcut. A current failed host
-  check invalidates the local alternative.
+  check invalidates the local alternative. An unresolved workflow approval hold
+  prevents either pass from granting signal 3.
 - **Merge controls.** Keep explicit vetoes (`do-not-merge`, `blocked`,
-  `qa-failed`, unresolved human QA NO-GO and `automerge-blocked`), queue
+  `qa`, `qa-failed`, unresolved human QA NO-GO and `automerge-blocked`), queue
   authorization, ownership, mergeability and the head/target guards.
   `automerge-prepare` and an effective `prepare-to-merge` mode still limit
   the result to preparation.
@@ -68,8 +72,9 @@ function immediateQaDecision({
   labels, qaGate = true, qaGateLabel = 'needs-qa', humanOnly = false,
   localCoverageRequired = false, coveredAutoPass = false
 }) {
+  if (labels.includes('qa')) return 'waiting-human'
   const required = humanOnly || localCoverageRequired
-    || labels.some(label => ['qa', 'qa-approved'].includes(label))
+    || labels.includes('qa-approved')
     || (qaGateLabel !== 'needs-qa' && labels.includes(qaGateLabel))
     || (qaGate && labels.includes('needs-qa'))
   if (!required) return 'n/a'
@@ -82,9 +87,12 @@ input against the exact head and target:
 
 ```javascript
 function immediateCiDecision({
-  hostReadComplete, currentHostFailure, hostedPassed, localMirrorPassed
+  hostReadComplete, unresolvedWorkflowApprovalHold, currentHostFailure,
+  hostedPassed, localMirrorPassed
 }) {
-  if (!hostReadComplete || currentHostFailure) return 'missing'
+  if (!hostReadComplete) return 'missing'
+  if (unresolvedWorkflowApprovalHold) return 'approval-held'
+  if (currentHostFailure) return 'missing'
   if (hostedPassed) return 'host'
   return localMirrorPassed ? 'local' : 'missing'
 }
@@ -95,9 +103,9 @@ function immediateCiDecision({
 If hosted CI passes, use it. When no host check has failed and the hosted
 read is complete but pending or missing, an immediate PR may produce
 `automerge-signal-3-passes-local-ci-checks`. Use a verified existing local
-signal first. When a workflow is held, preserve the workflow approval safety
-checks for any decision to approve it. Running a local mirror does not release
-a held workflow.
+signal first after checking current workflow runs. Resolve approval holds under
+`references/ci-approval.md` before selecting either CI pass path. An unresolved
+hold returns `approval-held` even with a complete read and passing local mirror.
 
 1. Validate the PR number and expected head/target, and require a complete,
    nonempty `validation.commands` from operator-vouched repository config.
@@ -110,7 +118,8 @@ a held workflow.
    attempt cap. Always clean up the worktree this step created.
 3. Re-read head, target, queue policy, ownership, checks and workflow runs.
    Record every command and exit code in the automation-authored status
-   comment, with the head/target and actual host state. A complete pass on
+   comment, with the head/target and actual host state. Reapply the CI decision
+   with fresh workflow approval state before granting a signal. A complete pass on
    the unchanged head can grant the local CI label and `localCi:` record under
    `references/signals.md`; do not mark host CI green. Failed or incomplete
    local validation grants no signal. Leave it for CI repair or a fresh

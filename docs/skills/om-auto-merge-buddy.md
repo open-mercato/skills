@@ -9,7 +9,7 @@ Works the queue of open PRs authorized by the configured queue label or `automer
 | Code review | `automerge-signal-1-cr` | [om-auto-review-pr](om-auto-review-pr.md) `--autofix --orchestrated`; separate human native approval only when required |
 | QA | `automerge-signal-2-qa` | not needed without `needs-qa`; otherwise [om-auto-qa-pr](om-auto-qa-pr.md) `--orchestrated`, with failures fixed by the review autofix |
 | CI | `automerge-signal-3-ci` | [om-auto-fix-pr](om-auto-fix-pr.md) `--orchestrated` (base merge, conflicts, root-cause CI fixes) |
-| CI (local alternative) | `automerge-signal-3-passes-local-ci-checks` | produced by the buddy for `automerge-now` or seeded by [om-auto-fix-issue](om-auto-fix-issue.md) / [om-auto-fix-pr](om-auto-fix-pr.md) in automerge mode; holds while no host check has failed |
+| CI (local alternative) | `automerge-signal-3-passes-local-ci-checks` | produced by the buddy for `automerge-now` or seeded by [om-auto-fix-issue](om-auto-fix-issue.md) / [om-auto-fix-pr](om-auto-fix-pr.md) in automerge mode; requires a complete host read with no failed check or unresolved workflow approval hold |
 
 The buddy alone holds the PR's `in-progress` claim and labels; the sub-skills run in `--orchestrated` mode and skip their own claim, label and CI-wait steps, so nothing is done twice. When CI is still running, the PR is parked under `ci-monitoring` and the buddy moves to the next PR, returning later in the window or in the next run. A PR that cannot be fixed within `maxAttempts` is parked under `automerge-blocked` until a human removes it. Other people's PRs remain in scope; with active plans, owned actionable work takes priority and the current user is assigned/verified at the first actionable step. Fork PRs are carried forward to a credited replacement PR, which the buddy continues in the same run.
 
@@ -150,7 +150,7 @@ repository write access. Quoted examples and copied bot markers do not count.
 Only an explicit human release resolves the veto; automatic PASS, new commits,
 self-QA labels and replacement PRs cannot clear it. Remaining hard-stop labels
 must also be removed by a human. The SDLC `blocked` label still stops the visit. Active `qa` stops ordinary
-processing and requires auto-QA under the two-label policy.
+processing under both approval policies, even with a current auto-QA PASS.
 
 Under ordinary policy, the actual diff determines protected risk: executable migrations, money, and
 permissions/tenant-isolation changes, architecture changes and backward-incompatible changes always retain strict risk checks,

@@ -91,6 +91,9 @@ const executable = [
   'tsconfig.json', 'tsconfig.build.json', 'jest.config.ts', 'vitest.config.mts', 'playwright.config.ts', 'babel.config.js', '.babelrc', 'webpack.config.cjs', 'eslint.config.mjs', '.eslintrc.json', '.prettierrc', 'turbo.json',
   'jest.setup.ts', 'vitest.setup.ts', 'src/setupTests.ts', 'tests/setup.ts', 'e2e/global-setup.ts',
   '.gitattributes', '.gitmodules', '.pre-commit-config.yaml', '.husky/pre-commit',
+  'src/makefile',
+  '.ai/agentic.config.json', '.ai/trackers/github.md', '.ai/trackers/gitlab.md', '.ai/skills/om-auto-review-pr/SKILL.md',
+  '.agents/skills/om-auto-review-pr/references/ci-approval.md', '.claude/settings.json',
 ]
 for (const path of executable) {
   const decision = refusal({ changedFiles: ['src/cart.ts', path] }, 'executable-change')
@@ -316,6 +319,8 @@ const procedure = readFileSync(join(root, 'skills/om-auto-review-pr/references/c
 assert.match(procedure, /scripts\/held-ci-gate\.mjs/)
 assert.match(procedure, /exactly \*\*once\*\*/)
 assert.match(procedure, /Reviewed-SHA binding: sha-bound/)
+assert.match(procedure, /never from the PR worktree/, 'gate inputs come from the trusted checkout')
+assert.match(procedure, /step 8 review raised no security finding/, 'review security findings block release')
 assert.match(readFileSync(join(root, 'skills/om-auto-review-pr/SKILL.md'), 'utf8'), /scripts\/held-ci-gate\.mjs/)
 assert.match(readFileSync(join(trackers, 'TEMPLATE.md'), 'utf8'), /Reviewed-SHA binding:/)
 console.log('PASS: the procedure, SKILL.md and tracker template reference the gate and the binding declaration')

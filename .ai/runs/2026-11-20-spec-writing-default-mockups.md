@@ -62,3 +62,7 @@ PR: #195
 ### Phase 4: Documentation
 
 - [x] 4.1 Update docs, upgrade notes and decisions — fa698ae
+
+### Review fixes
+
+- [x] R.1 Apply om-auto-review-pr findings — 060ea8e, 447efed

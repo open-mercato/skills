@@ -55,7 +55,10 @@ relevant author identity/permission means `waiting-human`, never guessed clearan
   deletion, an edit erasing the verdict, or unavailable history is not clearance.
 - Labels must also be removed by a human before resuming; resolving a comment
   cannot bypass a remaining hard-stop label. Never remove those labels, use
-  `set_pipeline_label`, or invoke autofix/QA to clear a veto. Do not add an extra
+  `set_pipeline_label`, or invoke autofix/QA to clear a veto. Fixing the reported
+  QA findings is allowed and expected, because it does not clear the veto. Run
+  stage 1 once on that head with the QA findings `INHERITED`, request a re-test,
+  and still end `waiting-human` (`references/qa-verdicts.md`). Do not add an extra
   `automerge-blocked` label merely for this human wait.
 
 On a veto, invalidate QA, remove `automerge-signal-2-qa`, record

@@ -23,7 +23,7 @@ Let `om-auto-fix-issue` finish a PR that `om-auto-merge-buddy` can merge without
 
 ## Decisions
 
-- `baseBranch` in `.ai/agentic.config.json` is `auto`, but no such branch exists on the remote. This PR targets the tracker's default branch (`main`).
+- `baseBranch` is `"auto"`, which resolves to the tracker's default branch (`main`) through **default-branch**.
 - The issue label is honored only as a tracker label. Applying a label requires repository triage permission. Issue or brief prose asking for automerge never enables the mode.
 - The signal record is written in the buddy's status-comment format by the same automation account, so the buddy's existing trust rule accepts it. The buddy still re-reads CI and re-checks every other signal on its visit.
 
@@ -50,19 +50,21 @@ Let `om-auto-fix-issue` finish a PR that `om-auto-merge-buddy` can merge without
 
 ## Progress
 
+PR: #194
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: om-auto-fix-issue automerge mode
 
-- [ ] 1.1 Add the argument, activation and step wiring in SKILL.md
-- [ ] 1.2 Add references/automerge-mode.md
-- [ ] 1.3 Update the report template and rules
+- [x] 1.1 Add the argument, activation and step wiring in SKILL.md — 48959cc
+- [x] 1.2 Add references/automerge-mode.md — 48959cc
+- [x] 1.3 Update the report template and rules — 5764303
 
 ### Phase 2: Contract consumers
 
-- [ ] 2.1 Update merge-buddy so it accepts the seeded signal record
-- [ ] 2.2 Update the SDLC.md label ownership text
+- [x] 2.1 Update merge-buddy so it accepts the seeded signal record — f8ff112
+- [x] 2.2 Update the SDLC.md label ownership text — f8ff112
 
 ### Phase 3: Validation
 
-- [ ] 3.1 Run the full validation gate
+- [x] 3.1 Run the full validation gate — 5764303

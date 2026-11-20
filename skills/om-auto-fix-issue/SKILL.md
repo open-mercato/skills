@@ -15,7 +15,7 @@ Take a tracker issue end to end without disturbing the user's active worktree. R
 - `--slug <kebab-case>` (optional, feature route) — override the derived slug (passed through to the delegated skills)
 - `--no-ui` (optional) — skip UI verification (bug route: skip step 10; feature route: passed through)
 - `--loop` (optional, feature route) — forwarded verbatim to `om-auto-implement-spec` **only when the user passed it to this skill**; the route never adds it on its own. Without it the engine self-routes by its configured Step threshold.
-- `--automerge` (optional) — **automerge mode** (also enabled by the `automerge.label` issue label): it arms the PR for `om-auto-merge-buddy` (`references/automerge-mode.md`).
+- `--automerge` (optional) — **automerge mode** (also enabled by the `automerge.label` issue label): it arms the PR for `om-auto-merge-buddy` (`references/automerge-mode.md`). `--automerge-force` / `automerge-force` issue label: also merge it once the signals hold.
 - `--force` (optional) — bypass the in-progress concurrency check; use only when intentionally taking over an issue another actor already claimed
 
 ## Chaining
@@ -36,7 +36,7 @@ This skill consumes an `{issueId}` — or, in brief mode, a problem description 
 
    **Concurrency check.** Read identity, issue state, assignees, labels and complete claim comments through named tracker operations. Apply `references/claim-pr.md`, including audited UI resets and same-login run conflicts. An open implementing PR is an extra blocker. This step decides only; `om-fix` acquires after triage. Keep the skill's 30-minute recent-comment and 60-minute inactive-label windows; stale/force overrides still require election and transparency.
 
-   **Automerge mode** is on with `--automerge` or the issue's `AUTOMERGE_LABEL` tracker label, never prose (`references/automerge-mode.md` §Activation).
+   **Automerge mode:** `--automerge(-force)` or the issue's tracker label, never prose (`references/automerge-mode.md`).
 
 2. **Classify: bug vs feature request.** The bug route's triage gate asks "is this defect real and still unfixed?" — the wrong question for a feature request, which it would wrongly stop with `NO_ACTION_NEEDED`. Classify the issue you already fetched, conservatively and label-first:
 
@@ -50,7 +50,7 @@ This skill consumes an `{issueId}` — or, in brief mode, a problem description 
    1. **FR triage gate** (`references/fr-triage.md`) — already built / in flight → stop with `NO_ACTION_NEEDED`; when `SDLC.md` carries a Definition of Ready and the ticket fails its ticket-level tier (no problem or user, no expected outcome, a blocking question unanswered) → post the idempotent not-ready comment naming the gaps and stop with `NOT_READY` (no section, no check). A spec-level gap is not a stop: step 3c authors the spec. Nothing claimed yet, so either stop leaves no lock.
    2. **Claim / resume** — the step-1 three-signal lock applies. An open PR already referencing the issue → stop and point at `om-auto-continue-pr {prNumber}`, **unless** it is a spec-only design PR (draft, `Refs #{issueId}`, spec but no implementation), which resumes at step 3b as `SPEC_PR`.
    3. **Resolve the spec and implement** — (a) resolve via `references/spec-resolution.md` (`{spec}` = the issue id); (b) **spec found** (path or `SPEC_PR`) → `om-auto-implement-spec {SPEC_PATH-or-SPEC_PR} [--no-ui] [--force]` verbatim, ensuring the PR body carries `Closes #{issueId}`; (c) **no spec** → `om-auto-write-spec {issueId} [--slug …] [--force]` (interactive spec-writing when `--interactive`), then chain `om-auto-implement-spec {SPEC_PATH}`. The spec PR stays design-only; implementation ships on its own PR referencing it. For a spec without implementation, users run `om-auto-write-spec` directly.
-   4. **Confirm the contract, report** — automerge mode first runs A1–A4 on the implementation PR; then exactly one implementation PR references the issue (a spec PR may additionally `Refs` it); ready unless a `⚠ NEEDS HUMAN CONFIRMATION` guard; full label set (re-run the `references/pr-finalize.md` normalization on gaps); linkage matches what ships (`Closes` implementing, `Refs` spec-only). End with the chaining reference lines passed through. Then stop — do not continue to step 4.
+   4. **Confirm the contract, report** — automerge mode first runs A1–A6 on the implementation PR; then exactly one implementation PR references the issue (a spec PR may additionally `Refs` it); ready unless a `⚠ NEEDS HUMAN CONFIRMATION` guard; full label set (re-run the `references/pr-finalize.md` normalization on gaps); linkage matches what ships (`Closes` implementing, `Refs` spec-only). End with the chaining reference lines passed through. Then stop — do not continue to step 4.
 
 4. **Triage gate (bug route): run `om-verify-in-repo`.** Invoke the `om-verify-in-repo` skill with `{issueId}` (and `{repo}`) in the current checkout — it is read-only, so no worktree is needed yet. Follow its workflow verbatim. If its output contains the `NO_ACTION_NEEDED` token, stop the whole run: report its reason and evidence (PR links, commit hashes, file paths) instead of duplicating work — nothing was claimed, so there is no lock to release. If it says proceed, keep its one-paragraph confirmation — the report at the end references it.
 
@@ -76,7 +76,7 @@ This skill consumes an `{issueId}` — or, in brief mode, a problem description 
 
    `om-open-pr` commits, pushes, opens a ready PR against `$BASE_BRANCH` (`--draft` only for spec-only or incomplete hand-offs), normalizes labels, and — because of `--handoff` — **transfers the chain lock onto the PR** before releasing the issue's `in-progress` lock, so the work is never observably unclaimed. Capture the PR number and URL from the `PR:` reference line in its output. Reuse guard, inline fallback when `om-open-pr` is absent, and the full label contract: `references/pr-finalize.md`. If it ends with `Status: blocked`, the issue lock is already released and no PR lock exists — go to step 12 and report the blocker.
 
-   **Automerge mode** replaces steps 9–10 with `references/automerge-mode.md` A1–A4: fresh-subagent review/autofix, mandatory fresh-subagent QA with failures fixed, local CI, labels and signal record; then step 12.
+   **Automerge mode** replaces steps 9–10 with `references/automerge-mode.md` A1–A6: fresh-subagent review/autofix and mandatory QA (failures fixed), local CI, signal labels, force merge; then step 12.
 
 9. **Review loop: run `om-auto-review-pr PR_NUMBER --autofix`**, following its entire workflow verbatim (`--autofix` is explicit — the chain owns this PR and was instructed to fix it). That one engine owns the work order — **merge conflicts resolved against the latest base first, always, then the code-review findings, and CI only once neither remains** — so never re-implement conflict resolution or fixing here, and never let this chain reach CI on a branch that is still conflicted or still carries actionable findings. Its claim check re-enters the PR lock inherited from step 8 (take-over comment before any review work) and keeps it when it finishes — this run releases the PR lock exactly once, in step 12. Apply fixes in the same worktree as new commits — never rewrite history — re-running targeted validation after each batch (the full gate when a fix reaches beyond a single module/test file), and loop until a clean verdict or only documented non-actionable findings remain. If it cannot run, skip the loop, release the chain's PR lock with a comment explaining why (an idle locked PR blocks the later sweep), note it in the final report, and leave the PR in the `review` pipeline state for a human or a later `om-review-prs` sweep. Full procedure and verdict handling: `references/review-report.md`.
 
@@ -106,8 +106,8 @@ This skill consumes an `{issueId}` — or, in brief mode, a problem description 
 - The base branch always comes from the config (`baseBranch`, resolved via the standard snippet); never hard-code it.
 - Branches use `fix/issue-{issueId}-{slug}` for corrective work or `feat/issue-{issueId}-{slug}` for enhancements.
 - Stop cleanly on `NO_ACTION_NEEDED` and cite the evidence instead of duplicating an existing fix.
-- Never merge the PR or add `qa-approved` from this skill; the pipeline's review and QA gates own that.
-- Automerge arms, never merges. Fresh subagent per review/QA pass; `qa-approved` only via `om-auto-qa-pr --self-qa-signoff`; signal labels need final-head evidence. No CI wait, reviewer requests or added holds.
+- Never merge (except automerge force, A6) or add `qa-approved` from this skill; the pipeline's review and QA gates own that.
+- Automerge: fresh subagent per review/QA pass; `qa-approved` only via self-QA sign-off; signals need final-head evidence; no CI wait or holds.
 
 ## Security boundaries
 

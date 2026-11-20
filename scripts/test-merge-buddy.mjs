@@ -41,7 +41,9 @@ function recordFields(document) {
   assert.ok(record, 'Signal record must carry its evaluation target')
   return record[1].split('\n').map(line => line.split(':')[0])
 }
-assert.deepEqual(recordFields(signals), ['base', 'riskChecks', 'ciPolicy', 'ciTarget', 'head', 'cr', 'qa', 'ci', 'attempts'])
+assert.deepEqual(recordFields(signals), ['base', 'riskChecks', 'ciPolicy', 'ciTarget', 'head', 'cr', 'qa', 'ci', 'localCi', 'attempts'])
+assert.match(signals, /Local-CI alternative[\s\S]*?no host check on the current head completed `FAILURE`/)
+assert.match(signals, /A failed host check invalidates the alternative/)
 assert.deepEqual(recordFields(status), recordFields(signals), 'Written status and consumed signal schema must agree')
 assert.match(signals, /missing or different `base` invalidates all three signals, even when the head is unchanged/)
 assert.match(signals, /Older records without `base` are re-evaluated once/)

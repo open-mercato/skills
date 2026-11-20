@@ -15,6 +15,7 @@ Takes a tracker issue (a GitHub issue by default) from a single command all the 
 | `--no-ui` | No | Feature route only: skip end-of-run UI verification. |
 | `--loop` | No | Feature route only: forwarded verbatim to `om-auto-implement-spec` when the user passed it; the route never adds it on its own. |
 | `--automerge` | No | Arm the PR for `om-auto-merge-buddy`. This mode is also enabled by the `automerge` label on the issue. Each review/autofix pass and each mandatory QA pass runs in a fresh-context subagent, and QA findings are fixed. The full CI mirror runs locally instead of the run waiting for host CI. The PR ends with `automerge` and the evidence-backed `automerge-signal-*` labels. No reviewer requests, no holds. |
+| `--automerge-force` | No | Implies `--automerge`. This mode is also enabled by the `automerge-force` issue label. Once all three signals hold, including `automerge-signal-3-passes-local-ci-checks`, the skill squash-merges the PR itself, without waiting for host CI. Human holds, protected-area QA and a failed host check still block. |
 | `--force` | No | Bypass the in-progress concurrency check; use only when intentionally taking over an issue another actor claimed. |
 
 ## Works with

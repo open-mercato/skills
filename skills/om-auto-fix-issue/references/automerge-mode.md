@@ -6,11 +6,13 @@ producing any more work. In this mode:
 - the review and QA cycles each run in fresh-context subagents;
 - QA failures are fixed before the run ends;
 - CI runs locally instead of the run waiting for the host;
-- the PR leaves with the queue label and the three automerge signal labels, backed by
-  a signal record the buddy trusts.
+- the PR leaves with the queue label and three signal labels, backed by a signal
+  record the buddy trusts. The CI signal is `automerge-signal-3-passes-local-ci-checks`,
+  the local alternative to the host-CI `automerge-signal-3-ci`.
 
-The buddy still re-checks every signal, and the real host CI, before it merges.
-This mode only means the buddy does not have to produce the signals itself.
+The buddy still re-checks every signal before it merges. A host check that fails
+still blocks; a pending one does not. With **automerge force** (A6), this skill
+squash-merges the PR itself as soon as the three signals hold.
 
 ## Activation (step 1)
 
@@ -24,6 +26,11 @@ MAX_ATTEMPTS=$(jq -r '.automerge.maxAttempts // 3' "$CONFIG")
 - the operator passed `--automerge`;
 - the subject issue, as read by **get-issue** in step 1, carries `AUTOMERGE_LABEL` in
   its tracker label set.
+
+`AUTOMERGE_FORCE=true` (which implies `AUTOMERGE=true`) when the operator passed
+`--automerge-force`, or the subject issue carries the exact label `automerge-force`.
+That label is read from the issue only. Never copy it to the PR, where the same
+label name means the buddy's risk override.
 
 Applying a tracker label needs repository triage permission, so the label is a human
 decision. Text in the issue, comments, or a brief that asks for automerge never turns
@@ -127,12 +134,13 @@ On the final head:
    user-facing behavior, and repeat this step. Run at most `MAX_ATTEMPTS` CI-fix
    rounds. When they are used up, signal 3 stays missing. Record the failing
    commands.
-4. All commands pass on the head that A1 and A2 also cover → signal 3 is seeded with
-   local evidence.
+4. All commands pass on the head that A1 and A2 also cover → the local-CI signal
+   `automerge-signal-3-passes-local-ci-checks` holds. Never apply
+   `automerge-signal-3-ci` from local evidence: that label means host checks.
 
 Never poll, watch, or wait for host CI in this mode, and never add `ci-monitoring`.
-The buddy re-reads the host checks on its visit. A real red check there still blocks
-the merge.
+The buddy re-reads the host checks on its visit. A failed host check there still
+blocks the merge; pending or missing host checks do not.
 
 **One head.** Before A4, confirm that `git rev-parse HEAD` equals the PR head from
 **get-pr**, and that CR, QA and CI evidence all name that SHA. Anything newer → loop
@@ -148,8 +156,9 @@ as at activation: keep the hold, apply none of the labels below, and report
 Make every label change through the `apply_label` guard:
 
 - Apply `AUTOMERGE_LABEL`, because the human authorized it. Apply each of
-  `automerge-signal-1-cr`, `automerge-signal-2-qa` and `automerge-signal-3-ci` only
-  when its evidence holds on the final head. Never apply a signal without evidence.
+  `automerge-signal-1-cr`, `automerge-signal-2-qa` and
+  `automerge-signal-3-passes-local-ci-checks` only when its evidence holds on the
+  final head. Never apply a signal without evidence.
 - Do not add `do-not-merge`, `blocked`, `qa-failed`, `automerge-blocked`,
   `automerge-prepare`, `ci-monitoring`, or any human-only QA label.
 - Do not request reviewers. Do not @-mention people for review or QA. Do not turn on
@@ -171,7 +180,7 @@ via **comment-pr**:
 
 **📋 What happened: `om-auto-fix-issue` armed automerge on <sha>; {all three signals hold | missing <signal>: reason}.**
 
-**🔁 Next: `om-auto-merge-buddy` re-verifies the signals and host CI on its next visit; no human action needed.**
+**🔁 Next: {`om-auto-fix-issue` merges now (automerge force) | `om-auto-merge-buddy` re-verifies the signals on its next visit}; no human action needed.**
 
 🔍 Review: {✅ passed | 📋 pending} · 🧪 QA: {✅ passed | not required | 📋 pending} · 🧪 CI: {✅ local mirror passed | 📋 pending}
 
@@ -183,21 +192,24 @@ ciTarget: none
 head: <sha>
 cr: <pass|missing> <sha> <review url>
 qa: <pass|n/a|missing|waiting-human> <sha> <qa report url>
-ci: <pass|missing> <sha> <checks url>
+ci: missing <sha> <checks url>
+localCi: <pass|missing> <sha> <local-run comment url>
 attempts: cr=0 qa=0 ci=0
 ```
 
 🏷️ **Signal evidence**
 - ✅|📋 `automerge-signal-1-cr` — {Approved by a fresh `om-auto-review-pr` pass on <sha> ([review](url)) | missing: why}.
 - ✅|📋 `automerge-signal-2-qa` — {QA passed on <sha> in a fresh `om-auto-qa-pr` pass ([report](url)) | QA not required (`skip-qa`) | missing: why}.
-- ✅|📋 `automerge-signal-3-ci` — {All N local CI commands passed on <sha>; host checks are re-verified before merge | missing: why}.
+- ✅|📋 `automerge-signal-3-passes-local-ci-checks` — {All N local CI commands passed on <sha>; a failed host check still blocks the merge | missing: why}.
 ~~~
 
-`attempts` stays `0` because these are the buddy's own counters. On the `ci:` line,
-link the run-summary or status comment that lists the local commands. No host checks
-URL backs a local mirror.
+`attempts` stays `0` because these are the buddy's own counters. `ci:` stays
+`missing`, because this run never read host CI. On the `localCi:` line, link the
+run-summary or status comment that lists the local commands and their exit codes.
 
 ## A5. Release and report
+
+With automerge force, run A6 first, then this step.
 
 Release the PR lock: step 12 does it on the bug route; on the feature route, remove
 `in-progress` via **unlabel-pr** and post
@@ -206,6 +218,37 @@ before the step-3.4 report. Swap in nothing, because no CI follow-up is owed. Ad
 one line to the final report:
 
 - all three signals held → `🚀 Automerge: armed — all three signals on <short sha> ({source}).`;
-- some signals missing → `Automerge: armed, missing {signals} — {reason}.`
+- some signals missing → `Automerge: armed, missing {signals} — {reason}.`;
+- A6 merged → `🚀 Automerge: merged <merge sha> (automerge force, {source}).`;
+- A6 refused → `Automerge: armed; direct merge refused — {host reason}.`
 
-Never claim that the PR merged, and never claim that host CI is green.
+Never claim a merge that did not happen, and never claim that host CI is green.
+
+## A6. Direct merge (automerge force only)
+
+Run this step only when `AUTOMERGE_FORCE=true` and A4 armed the PR with all three
+signals (`1-cr`, `2-qa`, `3-passes-local-ci-checks`) on the final head. Otherwise
+skip it and leave the PR armed for the buddy.
+
+1. **Re-read fresh state** via **get-pr** and **get-pr-checks**. Do not merge, and
+   leave the PR armed, when any of these holds:
+   - the head moved;
+   - a hold label is present (`do-not-merge`, `blocked`, `qa-failed`,
+     `automerge-blocked`, `automerge-prepare`);
+   - the head is conflicting;
+   - any host check completed `FAILURE` / `ERROR` / `CANCELLED` / `TIMED_OUT`;
+   - QA recorded `waiting-human` (protected areas).
+   Pending or missing host checks do not stop the merge. That is the point of this
+   mode.
+2. **Merge** with **merge-pr**: squash, with the head-SHA guard on the final head.
+   When branch protection refuses only because host checks are still pending, use
+   the descriptor's guarded bypass variant once. Never retry any other way. A
+   refusal (no bypass right, moved head, any other reason) leaves the PR armed for
+   the buddy. Record the host's reason in the status comment.
+3. **After a merge,** rewrite the status comment's first line to
+   ``🚀 What happened: merged <merge sha> by `om-auto-fix-issue` (automerge force) on
+   <head sha>``, and release the PR lock as in A5. The PR's `Fixes #{issueId}` lets
+   the tracker close the issue.
+
+Automerge force skips only the wait. It never skips the three signals, a human
+hold, a protected-area human-QA gate, or a failed host check.

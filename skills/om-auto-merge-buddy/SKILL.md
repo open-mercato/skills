@@ -13,7 +13,7 @@ provably ready to merge — and, in `prepare-and-merge` mode, merged. Readiness 
 |---|---|---|---|
 | 1 · code review | `automerge-signal-1-cr` | automatic code review approved the current head; independent native approval only when required | `om-auto-review-pr {pr} --autofix --orchestrated` |
 | 2 · QA | `automerge-signal-2-qa` | no QA required, a trusted completed auto-QA PASS on the unchanged head, or a current pinned approval | `om-auto-qa-pr {pr} --orchestrated`, failures fixed through signal 1's autofix |
-| 3 · CI | `automerge-signal-3-ci` | every check on the current head passed or has an explicitly proved baseline waiver, no conflicts | `om-auto-fix-pr {pr} --orchestrated` (base merge, conflicts, root-cause CI fixes) |
+| 3 · CI | `automerge-signal-3-ci`, or `-3-passes-local-ci-checks` | every check on the current head passed or has a proved baseline waiver, no conflicts; or the seeded local CI passed and no host check failed | `om-auto-fix-pr {pr} --orchestrated` (base merge, conflicts, root-cause CI fixes) |
 
 This orchestrator owns claims, labels and one status comment. Sub-skills use
 `--orchestrated`, skipping their own claim/label/handoff/CI-wait steps. Park

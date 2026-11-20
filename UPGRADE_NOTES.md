@@ -16,6 +16,13 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-11-20 — `om-auto-fix-issue` automerge mode and local-CI signal
+
+- **New label `automerge-signal-3-passes-local-ci-checks`.** Create it in repos that use automerge: re-sync the tracker descriptor's label taxonomy, or run `om-auto-merge-buddy`, which creates missing signal labels. Add it to `labels.meta` next to the other signal labels.
+- **`om-auto-fix-issue --automerge`** (or an `automerge` label on the issue) arms the fix PR. It runs fresh-context review/autofix and a mandatory QA pass, then the local `validation.commands`. It applies `automerge` plus the signal labels, and seeds the buddy's status-comment record with a new `localCi:` line.
+- **`--automerge-force`** (or an `automerge-force` label on the issue) additionally squash-merges the PR once all three signals hold, without waiting for host CI. A failed host check, a human hold or a protected-area QA gate still blocks it.
+- **`om-auto-merge-buddy`** accepts the local-CI signal as an alternative to `automerge-signal-3-ci` while no host check has failed. Pending host checks no longer park such a PR in `waiting-ci`.
+
 ## 2026-11-09 — Serialize housekeeping writes per issue
 
 Refresh `om-auto-manage-issues` to acquire a short per-issue ownership claim for

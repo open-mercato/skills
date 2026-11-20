@@ -19,8 +19,9 @@ A4 status comment remains the machine-readable signal record.
    **list-issue-comments** to search the full PR conversation for either direct
    merge summary marker: `` 🤖 `om-auto-fix-issue` — merge summary `` or
    `` 🤖 `om-auto-fix-pr` — merge summary ``. Match the first nonempty line
-   exactly, accepting legacy bare-skill spelling for lookup. Require the current automation account or an explicitly
-   trusted prior automation author. A copied outsider marker has no authority.
+   exactly, accepting legacy bare-skill spelling for lookup. Accept the current
+   automation account or an explicitly trusted prior automation author. A copied
+   outsider marker has no authority.
    If one trusted summary exists, keep its skill name and use **update-comment**.
    If none exists, create it via **comment-pr** using the invoking skill's
    canonical marker. Use a body file for both writes. Incomplete history,
@@ -39,9 +40,9 @@ A4 status comment remains the machine-readable signal record.
 
 Use **get-pr** after each mutation to resolve its outcome. Confirm
 the merged state, target, head and merge commit. On confirmation, update the
-same summary with the commit link and the merge method that succeeded. Attribute
-the merge to this run only if the mutation response or tracker evidence proves
-it. If it merged elsewhere, record the observed merge and describe the bullets
+same summary with the commit link. Name the actor and method only when the
+mutation response or tracker evidence proves them. If the merge cannot be
+attributed to this run, record the observed merge and describe the bullets
 as the earlier attempt's evidence. On a definite refusal or a newly blocked
 gate, record the exact reason and the next action. If the result is still
 unknown, say confirmation is pending and leave it for reconciliation. Retry

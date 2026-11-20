@@ -268,7 +268,8 @@ skip it and leave the PR armed for the buddy.
      armed when applicable. Record the specific reason. Do not request reviewers.
 4. **Confirm the outcome and update the same summary** as directed by
    `references/direct-merge-summary.md`. Update the A4 status prose with the
-   result and release the PR lock in A5. The PR's `Fixes #{issueId}` lets the tracker close the issue.
+   result and release the PR lock in A5. The PR's
+   `Fixes #{issueId}` lets the tracker close the issue.
 
 Automerge force skips only the wait. It never skips the three signals, a human
 hold, a protected-area human-QA gate, or a failed host check.

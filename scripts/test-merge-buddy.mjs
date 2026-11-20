@@ -844,3 +844,33 @@ assert.match(humanLane,/No companion skill or its reference files are required/)
 assert.match(stages,/`always` is the default/)
 assert.match(stages,/pass `--basic`/)
 console.log('PASS: human policy loaders reject invalid settings; complex defaults always; standalone triage owns its classification')
+
+// Optional narrower QA gate label (`qaGateLabel`): every loader validates it the
+// same way, and no automated path can clear a PR carrying it.
+{
+  const loaderFiles = ['om-approve-merge-pr','om-merge-buddy','om-open-pr','om-setup-agent-pipeline']
+    .map(name => `skills/${name}/references/agentic-setup.md`)
+    .concat('skills/om-setup-agent-pipeline/references/config-capabilities.md')
+  const gateTmp = mkdtempSync(join(tmpdir(), 'qa-gate-label-'))
+  try {
+    for (const file of loaderFiles) {
+      const line = read(file).split('\n').map(text => text.trim()).find(text => text.startsWith('QA_GATE_LABEL='))
+      assert.ok(line, `${file} loads QA_GATE_LABEL`)
+      for (const [config, expected] of [[{}, 'needs-qa'], [{qaGateLabel:'needs-human-qa'}, 'needs-human-qa'], [{qaGateLabel:''}, null], [{qaGateLabel:null}, null], [{qaGateLabel:7}, null]]) {
+        const path = join(gateTmp, 'config.json')
+        writeFileSync(path, JSON.stringify(config))
+        const result = spawnSync('bash', ['-eu'], {input:`${line}\nprintf '%s' "$QA_GATE_LABEL"`, env:{...process.env, CONFIG:path}, encoding:'utf8'})
+        if (expected === null) assert.notEqual(result.status, 0, `${file} rejects ${JSON.stringify(config)}`)
+        else { assert.equal(result.status, 0, result.stderr); assert.equal(result.stdout, expected, file) }
+      }
+    }
+  } finally { rmSync(gateTmp, {recursive:true, force:true}) }
+  assert.match(humanGates, /A present one is a human-QA\s+request whoever applied it/)
+  assert.match(humanGates, /self-sign-off never satisfies it/)
+  assert.match(signals, /QA gate label narrower than `needs-qa` \(section 2c\), need valid pinned human QA/)
+  assert.match(read('skills/om-auto-qa-pr/SKILL.md'), /run or a PR\s+carrying a narrower QA gate label \(`qaGateLabel` ≠ `needs-qa`\)/)
+  assert.match(read('skills/om-auto-qa-pr/references/orchestrated-mode.md'), /does not carry a QA gate label narrower than `needs-qa`/)
+  const reviewLabels = read('skills/om-auto-review-pr/references/verdict-and-labels.md')
+  assert.doesNotMatch(reviewLabels, /as defined in the `om-auto-merge-buddy`/, 'The review skill classifies protected areas without another skill')
+}
+console.log('PASS: qaGateLabel loaders validate; a narrower gate label is never cleared by automatic QA or self-sign-off')

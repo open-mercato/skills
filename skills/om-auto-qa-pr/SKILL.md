@@ -24,7 +24,7 @@ and shares one instance with integration tests.
   detection. Default: the pipeline config's `baseBranch` (resolved to the repo's
   default branch when `auto`).
 - `--evidence-only` (default) — produce evidence only; do not touch pipeline/meta
-  labels. Stated explicitly so the default is obvious.
+  labels.
 - `--self-qa-signoff` (optional, PR mode) — apply `qa-approved` + `qa-self-verified` only for a fully green run with screenshots and `needs-qa` without `skip-qa`. Risk-high (labeled or inferred from the diff even when the current risk label is lower) requires human QA unless the validated orchestrated risk override applies. Step 13 and `references/orchestrated-mode.md` define sign-off evidence and the scoped exception. Off by default.
 - `--apply-failure` (optional, PR mode) — on failure, apply `qa-failed`. Off by
   default (automated UI checks can be flaky; default to reporting, not blocking).
@@ -214,7 +214,8 @@ In PR mode this skill consumes a `{prNumber}` (the `PR:` reference line a PR-pro
       inference on the diff) without the validated orchestrated risk override, the sign-off is withheld: post the evidence, say
       why, and leave `needs-qa` for a QA reviewer. `om-approve-merge-pr`
       and `om-merge-buddy` compare it with the PR head; a later push stales the
-      sign-off. Never sign off a partial/environment-limited run.
+      sign-off. Never sign off a partial/environment-limited run or a PR
+      carrying a narrower QA gate label (`qaGateLabel` ≠ `needs-qa`).
     - `--apply-failure` AND verdict FAIL: apply `qa-failed` and comment why.
       Never combine with `qa-approved`.
     - Route every label mutation through the descriptor's guards; skip all label

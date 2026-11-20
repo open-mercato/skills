@@ -405,6 +405,8 @@ Nothing here assumes JavaScript, or any particular product. The base branch, the
     "risk": ["risk-low", "risk-medium", "risk-high"]
   },
   "qaGate": true,
+  "qaGateLabel": "needs-qa",
+  "qaReadyLabel": null,
   "reviewSweep": { "maxParallel": 1, "coordinationRoot": null },
   "paths": {
     "runs": ".ai/runs",

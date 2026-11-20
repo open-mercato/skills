@@ -58,6 +58,8 @@ committed configs keep working.
 | `automerge.requireIndependentReview` | `false` | Boolean; require separate human native current-head approval only when true. `--require-independent-review` / `--skip-independent-review` override config; automatic review remains required. |
 | `automerge.defaultToHumanQa` | `false` | Missing required approval normally routes to real automatic QA/sign-off; true opts into human QA. `--human-qa`/`--auto-qa` override, without waiving eligibility or fabricating labels. |
 | `automerge.humanOnlyLabels` | `[]` | Array of nonempty label strings; any match requires pinned human QA regardless of override flags. Invalid values stop before claims/proposals. |
+| `qaGateLabel` | `"needs-qa"` | Nonempty label the QA gate keys on. A narrower label (for example `needs-human-qa`) leaves `needs-qa` as a request for automatic QA only; automation applies the narrower label to protected and human-only PRs and never removes a human-applied one. |
+| `qaReadyLabel` | `null` | Optional label meaning "ready for a human tester now". Owned by the repository (typically a workflow); skills only read it. |
 | `automerge.humanOnlyAuthors` | `[]` | Array of nonempty logins, compared case-insensitively; matches require pinned human QA. Invalid values stop before claims/proposals. |
 | `automerge.complexQa` | `"always"` | `always` requests complex QA on every invocation; `needs-qa` only for needs-qa/protected/human-only work; `never` requests basic depth. Preserve explicit settings; invalid enums stop. |
 | `automerge.windowMinutes` | `120` | `om-auto-merge-buddy`; per-run time window, `0` = one pass with no idle CI polling. |
@@ -105,6 +107,8 @@ AUTOMERGE_WINDOW_MINUTES=$(jq -r '.automerge.windowMinutes // 120' "$CONFIG")
 REQUIRE_INDEPENDENT_REVIEW=$(jq -r 'if (.automerge // {} | has("requireIndependentReview")) then .automerge.requireIndependentReview else false end | if type == "boolean" then . else error("Invalid independent review policy") end' "$CONFIG")
 DEFAULT_TO_HUMAN_QA=$(jq -r 'if (.automerge // {} | has("defaultToHumanQa")) then .automerge.defaultToHumanQa else false end | if type == "boolean" then . else error("Invalid QA routing policy") end' "$CONFIG")
 HUMAN_ONLY_LABELS=$(jq -c 'if (.automerge // {} | has("humanOnlyLabels")) then .automerge.humanOnlyLabels else [] end | if type == "array" and all(.[]; type == "string" and length > 0) then . else error("Invalid humanOnlyLabels") end' "$CONFIG")       # human QA by configured policy
+QA_GATE_LABEL=$(jq -r 'if has("qaGateLabel") then .qaGateLabel else "needs-qa" end | if type == "string" and length > 0 then . else error("Invalid qaGateLabel") end' "$CONFIG")   # label the QA gate keys on
+QA_READY_LABEL=$(jq -r 'if (.qaReadyLabel // null) == null then empty elif (.qaReadyLabel | type) == "string" and (.qaReadyLabel | length) > 0 then .qaReadyLabel else error("Invalid qaReadyLabel") end' "$CONFIG")   # optional, repository-owned
 HUMAN_ONLY_AUTHORS=$(jq -c 'if (.automerge // {} | has("humanOnlyAuthors")) then .automerge.humanOnlyAuthors else [] end | if type == "array" and all(.[]; type == "string" and length > 0) then . else error("Invalid humanOnlyAuthors") end' "$CONFIG")     # logins, compared case-insensitively
 COMPLEX_QA=$(jq -r 'if (.automerge // {} | has("complexQa")) then .automerge.complexQa else "always" end | if . == "always" or . == "needs-qa" or . == "never" then . else error("Invalid complexQa") end' "$CONFIG")            # needs-qa | always | never
 AUTOMERGE_MAX_ATTEMPTS=$(jq -r '.automerge.maxAttempts // 3' "$CONFIG")

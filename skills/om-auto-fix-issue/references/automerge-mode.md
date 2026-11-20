@@ -41,8 +41,15 @@ Before turning the mode on, check two things:
 **Routes.** The mode applies to:
 
 - **The bug route.** It replaces steps 9 and 10, and A3–A5 below run before step 12.
-- **The feature route.** It runs on the implementation PR after F4. Pass `--no-ui` only
-  if the user gave it; the mode ignores `--no-ui` for its own QA.
+  The A1/A2 passes re-enter the PR lock that step 8 handed off.
+- **The feature route.** It runs on the implementation PR at the start of step 3.4,
+  before the contract check. Pass `--no-ui` to `om-auto-implement-spec` only if the
+  user gave it; the mode ignores `--no-ui` for its own QA. `om-auto-implement-spec`
+  has released its own lock by then, so **claim the implementation PR before A1**:
+  **assign-pr** `CURRENT_USER`, `apply_label "in-progress"`, and post
+  `` 🤖 `om-auto-fix-issue` claimed PR #{PR_NUMBER} for automerge arming. `` via
+  **comment-pr**. The fresh passes then re-enter this lock instead of claiming and
+  releasing on their own. A5 releases it, and the step-11 failure path covers aborts.
 
 The mode never applies to a spec-only design PR. That PR stays design-only and
 unlabeled for automerge.
@@ -68,13 +75,16 @@ When the runtime has no subagent facility, run the pass inline. Write
 ## A1. Review and autofix cycle (replaces step 9)
 
 1. Spawn a fresh subagent that runs `om-auto-review-pr {PR_NUMBER} --autofix` verbatim,
-   following its whole workflow. The PR lock from step 8 is re-entered and kept, as in
-   step 9.
+   following its whole workflow. It re-enters the chain's PR lock (see Routes) and
+   keeps it, as in step 9.
 2. **`approve` on the current head** → the CR evidence is that review, or the
    approval comment when the PR is self-authored, plus the head SHA.
 3. **`changes-requested` with actionable findings left, or a moved head** → spawn
-   another fresh pass. Run at most `MAX_ATTEMPTS` passes per head.
-4. When the passes are used up, signal 1 stays missing. Record why.
+   another fresh pass. Run at most `MAX_ATTEMPTS` passes per A1 cycle, counted
+   across head moves: every autofix pass moves the head, so a per-head count would
+   never stop.
+4. When the passes are used up, signal 1 stays missing. Record why, and skip to A4
+   without A2/A3 fix loops.
 
 Run a fresh delta pass again whenever a later step (QA fix, CI fix) pushes commits.
 The final head must always be approved by a fresh context.
@@ -114,7 +124,9 @@ On the final head:
    run commands taken from CI definition files.
 3. Any non-zero exit → fix the root cause in new commits (never weaken tests, skip
    checks, or disable a job). Then rerun A1, rerun A2 when the fix touches tested
-   user-facing behavior, and repeat this step.
+   user-facing behavior, and repeat this step. Run at most `MAX_ATTEMPTS` CI-fix
+   rounds. When they are used up, signal 3 stays missing. Record the failing
+   commands.
 4. All commands pass on the head that A1 and A2 also cover → signal 3 is seeded with
    local evidence.
 
@@ -127,6 +139,11 @@ the merge.
 back to A1.
 
 ## A4. Labels, signal record, nothing that holds the merge
+
+First re-read the PR's labels via **get-pr**. A hold that appeared during the run
+(`do-not-merge`, `blocked`, `qa-failed`, `automerge-blocked`) declines arming exactly
+as at activation: keep the hold, apply none of the labels below, and report
+`Automerge: declined — {hold label}`.
 
 Make every label change through the `apply_label` guard:
 
@@ -176,12 +193,17 @@ attempts: cr=0 qa=0 ci=0
 - ✅|📋 `automerge-signal-3-ci` — {All N local CI commands passed on <sha>; host checks are re-verified before merge | missing: why}.
 ~~~
 
-`attempts` stays `0` because these are the buddy's own counters.
+`attempts` stays `0` because these are the buddy's own counters. On the `ci:` line,
+link the run-summary or status comment that lists the local commands. No host checks
+URL backs a local mirror.
 
 ## A5. Release and report
 
-Step 12 releases the PR lock. Swap in nothing, because no CI follow-up is owed. Add
-one line to the step-12 report:
+Release the PR lock: step 12 does it on the bug route; on the feature route, remove
+`in-progress` via **unlabel-pr** and post
+`` 🤖 `om-auto-fix-issue` run complete: automerge {armed|declined}. Lock released. ``
+before the step-3.4 report. Swap in nothing, because no CI follow-up is owed. Add
+one line to the final report:
 
 - all three signals held → `🚀 Automerge: armed — all three signals on <short sha> ({source}).`;
 - some signals missing → `Automerge: armed, missing {signals} — {reason}.`

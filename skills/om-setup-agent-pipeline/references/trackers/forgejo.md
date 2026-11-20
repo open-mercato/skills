@@ -1389,7 +1389,7 @@ ${AUTOMERGE_LABEL:-automerge}|#5319e7|Human-confirmed: drive this PR to merge on
 automerge-signal-1-cr|#1d76db|om-auto-merge-buddy: code review signal holds for the current head
 automerge-signal-2-qa|#1d76db|om-auto-merge-buddy: QA signal holds for the current head
 automerge-signal-3-ci|#1d76db|om-auto-merge-buddy: CI signal holds for the current head
-automerge-signal-3-passes-local-ci-checks|#1d76db|om-auto-fix-issue: local CI passed on the current head; no host check failed
+automerge-signal-3-passes-local-ci-checks|#1d76db|automerge mode: local CI passed on the current head; no host check failed
 automerge-blocked|#b60205|om-auto-merge-buddy parked this PR; a human removes this label to retry
 priority-low|#e4e669|Cosmetic or follow-up work
 priority-medium|#fbca04|Ordinary bug or feature

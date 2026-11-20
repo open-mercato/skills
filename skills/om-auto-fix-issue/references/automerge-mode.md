@@ -47,7 +47,7 @@ Before turning the mode on, check two things:
 
 **Routes.** The mode applies to:
 
-- **The bug route.** It replaces steps 9 and 10, and A3–A5 below run before step 12.
+- **The bug route.** It replaces steps 9 and 10, and A3–A6 below run before step 12.
   The A1/A2 passes re-enter the PR lock that step 8 handed off.
 - **The feature route.** It runs on the implementation PR at the start of step 3.4,
   before the contract check. Pass `--no-ui` to `om-auto-implement-spec` only if the
@@ -240,11 +240,21 @@ skip it and leave the PR armed for the buddy.
    - QA recorded `waiting-human` (protected areas).
    Pending or missing host checks do not stop the merge. That is the point of this
    mode.
-2. **Merge** with **merge-pr**: squash, with the head-SHA guard on the final head.
-   When branch protection refuses only because host checks are still pending, use
-   the descriptor's guarded bypass variant once. Never retry any other way. A
-   refusal (no bypass right, moved head, any other reason) leaves the PR armed for
-   the buddy. Record the host's reason in the status comment.
+2. **Merge, bypassing host merge requirements when allowed.** Call **merge-pr**
+   with squash, the head-SHA guard on the final head, and `bypass-protection` (the
+   descriptor's admin form). That form lets `CURRENT_USER` merge past the host's
+   remaining requirements: a required separate/independent approving review,
+   still-pending required checks, and other branch-protection rules. The host
+   decides whether `CURRENT_USER` has that right; a pre-read of permissions is
+   only a hint.
+   - Refused for missing bypass rights → try the plain guarded squash once. It
+     succeeds only when the host's own requirements already hold.
+   - Any other refusal (moved head, conflict, a host without a bypass), or the
+     plain form also refused → stop. Never retry any other way, and never request
+     reviewers to satisfy the rule. Leave the PR armed for the buddy and record
+     the host's reason in the status comment.
+   The bypass covers host rules only. The gates in A6 step 1 (holds, failed
+   host checks, protected-area QA) are never bypassed.
 3. **After a merge,** rewrite the status comment's first line to
    ``🚀 What happened: merged <merge sha> by `om-auto-fix-issue` (automerge force) on
    <head sha>``, and release the PR lock as in A5. The PR's `Fixes #{issueId}` lets

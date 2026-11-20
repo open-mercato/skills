@@ -9,7 +9,7 @@ Works the queue of open PRs a human labeled `automerge`, one at a time, inside a
 | Code review | `automerge-signal-1-cr` | [om-auto-review-pr](om-auto-review-pr.md) `--autofix --orchestrated`; separate human native approval only when required |
 | QA | `automerge-signal-2-qa` | not needed without `needs-qa`; otherwise [om-auto-qa-pr](om-auto-qa-pr.md) `--orchestrated`, with failures fixed by the review autofix |
 | CI | `automerge-signal-3-ci` | [om-auto-fix-pr](om-auto-fix-pr.md) `--orchestrated` (base merge, conflicts, root-cause CI fixes) |
-| CI (local alternative) | `automerge-signal-3-passes-local-ci-checks` | seeded only by [om-auto-fix-issue](om-auto-fix-issue.md) in automerge mode; holds while no host check has failed |
+| CI (local alternative) | `automerge-signal-3-passes-local-ci-checks` | seeded only by [om-auto-fix-issue](om-auto-fix-issue.md) / [om-auto-fix-pr](om-auto-fix-pr.md) in automerge mode; holds while no host check has failed |
 
 The buddy alone holds the PR's `in-progress` claim and labels; the sub-skills run in `--orchestrated` mode and skip their own claim, label and CI-wait steps, so nothing is done twice. When CI is still running, the PR is parked under `ci-monitoring` and the buddy moves to the next PR, returning later in the window or in the next run. A PR that cannot be fixed within `maxAttempts` is parked under `automerge-blocked` until a human removes it. Other people's PRs remain in scope; with active plans, owned actionable work takes priority and the current user is assigned/verified at the first actionable step. Fork PRs are carried forward to a credited replacement PR, which the buddy continues in the same run.
 

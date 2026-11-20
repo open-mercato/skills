@@ -44,7 +44,9 @@ same summary with the commit link. Name the actor and method only when the
 mutation response or tracker evidence proves them. If the merge cannot be
 attributed to this run, record the observed merge and describe the bullets
 as the earlier attempt's evidence. On a definite refusal or a newly blocked
-gate, record the exact reason and the next action. If the result is still
+gate, record the exact reason and the next action. If ownership was lost,
+report the reason without editing the PR and leave reconciliation to the
+claim owner. If the result is still
 unknown, say confirmation is pending and leave it for reconciliation. Retry
 only for the documented missing-bypass-rights refusal, after confirming the PR
 is still open. A confirmed merge ends all merge attempts.
@@ -57,8 +59,10 @@ any new attempt. Never create a summary retroactively for an external merge.
 If a post-merge edit fails, report the outstanding comment update with its link
 and proceed with claim release. On a confirmed merged PR, a later explicit
 `om-auto-fix-pr {prNumber} --automerge-force` can reconcile either route's
-unfinished summary. Read the tracker result and edit only the existing trusted
-summary and its status prose. A finished or missing summary needs no action.
+unfinished summary after any active claim ends. Check ownership through the
+claim procedure, read the tracker result and edit only the existing trusted
+summary and the matching status prose. A finished or missing summary needs no
+action.
 
 ## Comment template
 

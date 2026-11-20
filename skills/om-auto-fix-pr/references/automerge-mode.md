@@ -211,7 +211,8 @@ comment. Add one line to the result comment and the final report:
 
 - all three signals held → `🚀 Automerge: armed — all three signals on <short sha> ({source}).`;
 - some signals missing → `Automerge: armed, missing {signals} — {reason}.`;
-- A6 merged → `🚀 Automerge: merged <merge sha> (automerge force, {source}).`;
+- A6 confirmed this run merged → `🚀 Automerge: merged <merge sha> (automerge force, {source}).`;
+- A6 observed an existing merge → `🚀 Automerge: tracker confirms merge <merge sha>.`;
 - A6 stopped → `Automerge: direct merge stopped — {reason}; {next action}.`;
 - A6 outcome unconfirmed → `Automerge: merge confirmation pending — {reason}.`
 

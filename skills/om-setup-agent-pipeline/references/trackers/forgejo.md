@@ -1316,6 +1316,8 @@ fj_rerun {runId}
 
 #### approve-pending-runs
 Head SHA → release workflow runs held for maintainer approval. Forgejo can hold runs from fork or first-time contributors until a maintainer approves them, but this descriptor documents no API endpoint for that approval, so the operation does not guess one: it prints `APPROVAL_UNAVAILABLE` and exits 3. The caller records the PR as waiting on a maintainer to approve its runs from the web UI and moves on. Replace the body in the repository's committed copy when your Forgejo version exposes an approval endpoint.
+
+**Reviewed-SHA binding:** `unavailable` — there is no programmatic approval to bind. A committed copy that adds one declares `sha-bound` only when the endpoint approves a run id created for `{headSha}`.
 ```bash
 echo "APPROVAL_UNAVAILABLE {headSha}"
 exit 3

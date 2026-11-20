@@ -92,10 +92,19 @@ credited replacement):
 ## Finish — all three signals on the current head
 
 For a verified fork carry-forward, re-read the original before completing the
-visit. If its closure is pending, invoke `om-auto-review-pr` in orchestrated
-mode on the replacement to reconcile the recorded pair under its fork handoff
-rules. Preserve all existing gates. If closure cannot be verified, record the
-specific blocker and keep the visit resumable on the same replacement.
+visit. If closure is pending, the parent keeps the replacement reservation
+and claim. Under the scheduler lock, check that the original has no foreign
+or unknown reservation, then acquire and verify a temporary tracker claim on
+the original using the claim protocol. Recheck the replacement reservation
+and claim before acquiring the original claim. If either check fails, record
+the blocker and keep the same replacement scheduled.
+
+Delegate both verified claims and the existing replacement reservation to
+`om-auto-review-pr` in orchestrated mode on the replacement. The parent releases
+its temporary original claim when the delegated stage has settled. Revalidate
+all stage evidence if reconciliation moved the replacement head. If closure
+cannot be verified, record the specific blocker and keep the visit resumable on
+the same replacement.
 
 Apply `references/human-gates.md` using fresh labels, complete QA verdict history and current diff before either action; no veto or missing protected-area human approval may remain. Re-read **get-pr**, resolve the effective per-item mode/risk under `references/item-policy.md`, and revalidate every signal's source evidence immediately
 before acting, including same-head revocations (`references/signals.md` →

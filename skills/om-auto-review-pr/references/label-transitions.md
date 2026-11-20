@@ -59,7 +59,7 @@ Exactly **one** marker-idempotent comment from this skill per PR describes the w
 ```markdown
 🤖 `om-auto-review-pr` — 🏷️ label rationale
 
-- 🚀 `merge-queue` — code review passed; `needs-qa` stays on, so the QA-approval gate holds the merge until a QA reviewer adds `qa-approved`.
+- 🚀 `merge-queue` — code review passed; the QA gate label (`qaGateLabel`, default `needs-qa`) stays on, so the QA-approval gate holds the merge until a QA reviewer adds `qa-approved`.
 - 🧪 `needs-qa` — the change alters user-facing behavior that a human should exercise.
 - 🐛 `bug` — {why this category fits, one full sentence; say so when this review corrected it}.
 - 🔺 `priority-high` — {why this priority, one full sentence}.

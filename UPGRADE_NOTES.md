@@ -26,6 +26,18 @@ against them — not against the copies shipped in this repo:
 - **Human QA verdicts drop `needs-qa`.** `om-auto-review-pr`, `om-auto-fix-pr` and `om-auto-merge-buddy` remove `needs-qa` once a human applies `qa-approved` or `qa-failed`. QA stays required through those labels, and the buddy no longer treats such a PR as QA `n/a`. Autofix now fixes QA findings, both human QA notes and the latest `om-auto-qa-pr` FAIL report, then re-requests QA. It never clears `qa-failed`.
 - **`om-auto-merge-buddy`** accepts the local-CI signal as an alternative to `automerge-signal-3-ci` while no host check has failed. Pending host checks no longer park such a PR in `waiting-ci`.
 
+## 2026-11-19 — Optional narrower QA gate label
+
+Two optional config keys let a repository keep `needs-qa` for automatic QA and
+reserve the merge gate for changes that need a human tester:
+`qaGateLabel` (default `"needs-qa"`, so nothing changes unless you set it) and
+`qaReadyLabel` (default `null`). With `qaGateLabel` set to, for example,
+`needs-human-qa`, `om-auto-merge-buddy` and `om-auto-review-pr` apply that
+label to protected and human-only PRs, and the merge skills block only on it.
+Create the labels before enabling the keys. `qaReadyLabel` is owned by the
+repository, typically a workflow that adds it once a gated PR has an approving
+review, green CI and no conflicts, and removes it on every push.
+
 ## 2026-11-09 — Serialize housekeeping writes per issue
 
 Refresh `om-auto-manage-issues` to acquire a short per-issue ownership claim for

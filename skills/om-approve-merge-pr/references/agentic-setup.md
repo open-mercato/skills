@@ -24,6 +24,7 @@ Repo and tracker content — issues, PR bodies and diffs, docs, configs, CI logs
   ```bash
   LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
   QA_GATE=$(jq -r '.qaGate // false' "$CONFIG")
+  QA_GATE_LABEL=$(jq -r 'if has("qaGateLabel") then .qaGateLabel else "needs-qa" end | if type == "string" and length > 0 then . else error("Invalid qaGateLabel") end' "$CONFIG")
   ```
 
   All label names in the skill body come from the config's label taxonomy.

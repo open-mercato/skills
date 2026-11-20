@@ -43,7 +43,7 @@ Labels come from the config's taxonomy, always through the `apply_label` guard f
   | `deps` / `chore(deps)` — dependency bumps | `dependencies` |
   | `docs` only | `documentation` |
 - Exactly one priority label and exactly one risk label. The engine maintains **one** marker-idempotent consolidated rationale comment covering the whole applied label set — one label per line with its emoji and a full-sentence reason, updated in place via **update-comment** on later changes — never one comment per label.
-- When `qaGate` is `true`, a `needs-qa` PR will not be mergeable until QA signs off with `qa-approved`. `qa-approved` is never added by an authoring skill — it is earned by manual QA or the self-QA exception.
+- When `qaGate` is `true`, a PR carrying the QA gate label (`qaGateLabel`, default `needs-qa`) will not be mergeable until QA signs off with `qa-approved`. `qa-approved` is never added by an authoring skill — it is earned by manual QA or the self-QA exception.
 
 ## Summary comment
 

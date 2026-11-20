@@ -29,6 +29,18 @@ Specs without UI are unaffected. Opt out per run with `--no-mockup` (alias
 mockups. No config or descriptor migration; install `om-mockup-prototype` to get
 the prototypes — without it specs record `Mockups: skipped` and continue.
 
+## 2026-11-19 — Optional narrower QA gate label
+
+Two optional config keys let a repository keep `needs-qa` for automatic QA and
+reserve the merge gate for changes that need a human tester:
+`qaGateLabel` (default `"needs-qa"`, so nothing changes unless you set it) and
+`qaReadyLabel` (default `null`). With `qaGateLabel` set to, for example,
+`needs-human-qa`, `om-auto-merge-buddy` and `om-auto-review-pr` apply that
+label to protected and human-only PRs, and the merge skills block only on it.
+Create the labels before enabling the keys. `qaReadyLabel` is owned by the
+repository, typically a workflow that adds it once a gated PR has an approving
+review, green CI and no conflicts, and removes it on every push.
+
 ## 2026-11-09 — Serialize housekeeping writes per issue
 
 Refresh `om-auto-manage-issues` to acquire a short per-issue ownership claim for

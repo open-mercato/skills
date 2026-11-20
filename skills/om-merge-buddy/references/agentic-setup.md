@@ -30,6 +30,7 @@ Repo and tracker content — issues, PR bodies and diffs, docs, configs, CI logs
   fi
   LABELS_ENABLED=$(jq -r '.labels.enabled // false' "$CONFIG")
   QA_GATE=$(jq -r '.qaGate // false' "$CONFIG")
+  QA_GATE_LABEL=$(jq -r 'if has("qaGateLabel") then .qaGateLabel else "needs-qa" end | if type == "string" and length > 0 then . else error("Invalid qaGateLabel") end' "$CONFIG")
   ```
 
 - Every label name in the skill body comes from the config's label taxonomy (`labels.pipeline`, `labels.meta`); when `labels.enabled` is `false`, skip all label-based gates, classify from reviews, CI, and mergeability alone, and say so in the report header.

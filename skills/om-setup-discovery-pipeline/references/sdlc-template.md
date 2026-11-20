@@ -125,6 +125,7 @@ Pipeline labels are mutually exclusive: a PR carries at most one, and it names w
 - A ready, non-draft PR carries `review`.
 - The reviewer moves it: request changes → `changes-requested`; after fixes it returns to `review`; approval → `merge-queue`.
 - `merge-queue` is routing, not proof of QA: a `needs-qa` PR legitimately sits there until QA signs off.
+- When `qaGateLabel` in `.ai/agentic.config.json` names a narrower label (for example `needs-human-qa`), the QA-approval gate keys on that label: automation applies it to protected-risk and human-only PRs, a human may add it to any PR that needs a tester, and only a human QA sign-off clears it. `needs-qa` alone then asks for automatic QA and does not block the merge.
 - Only a QA reviewer sets the `qa` pipeline label. They move a queued `needs-qa` PR from `merge-queue` to `qa` while testing, then back to `merge-queue` with `qa-approved` on pass, or to `qa-failed` on failure. Automated skills request QA with `needs-qa`; they never set `qa`.
 - `blocked` and `do-not-merge` are set and cleared by humans and stop the flow wherever it is.
 

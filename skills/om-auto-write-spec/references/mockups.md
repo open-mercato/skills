@@ -1,13 +1,13 @@
 # UI mockups and current-app screenshots (step 5)
 
-Visual evidence for a UI-facing spec: what the affected screens look like **today**, and what the spec proposes they look like. Both end up on the spec PR via **attach-image-evidence**.
+Visual evidence for a UI-facing spec: what the affected screens look like **today**, and what the spec proposes they look like. Both end up on the spec PR via **attach-image-evidence**. The proposed UI normally already exists as a clickable prototype: `om-spec-writing` builds one with `om-mockup-prototype` for every UI spec (its `Proposed prototype:` line), unless mockups were opted out, declined, or supplied.
 
 ## Preconditions
 
 - `--no-mockups` skips this whole visual-evidence step. Preserve any accepted
   design reference already present in the spec; the flag does not revoke it.
-- `om-prepare-test-env` has produced (or can produce) the shared test-env descriptor, and `.ai/agentic.config.json` names a browser provider whose descriptor exists at `.ai/browsers/<provider>.md`.
-- When either is missing: **skip visuals entirely**, preserve existing design references, add a `Mockups: skipped — {reason}` line to the PR body, and continue. A text-only spec PR is a valid outcome; a failed run is not.
+- `.ai/agentic.config.json` names a browser provider whose descriptor exists at `.ai/browsers/<provider>.md` — needed for every screenshot. Current-state screenshots (§1) additionally need the `om-prepare-test-env` descriptor (produced or producible); proposed-UI screenshots of a prototype or static mockup (§2) do not.
+- Skip only the part whose precondition is missing, preserve existing design references, add a `Mockups: skipped — {reason}` (or `Current screenshots: skipped — {reason}`) line to the PR body, and continue. A committed prototype without screenshots, or a text-only spec PR, is a valid outcome; a failed run is not.
 
 ## 1. Current-state screenshots
 
@@ -35,8 +35,21 @@ accepted detailed design covers the selected screens, reuse that exact version:
    and continue with available evidence. Do not replace it with invented visuals.
 
 For **new or materially changed** screens without an accepted detailed design,
-use existing supplied proposal visuals when they cover the requested scope and
-remain identified as proposals. Otherwise create illustrative mockups:
+use the spec's `Proposed prototype:` when it exists:
+
+1. Reuse the screenshots in the prototype revision's `evidence/` when they cover
+   the screens. Otherwise open its `index.html` with the browser provider
+   (`open file://…` → walk the flow → screenshot) into
+   `${SPECS_DIR}/assets/${SLUG}/proposed-NN-<screen>.png`. Never write into the
+   prototype revision itself — `om-mockup-prototype` owns it and its manifest
+   hashes.
+2. Do not author static HTML for screens the prototype covers. State its
+   `Verification:` status with the images; `incomplete` or `not-run` is a
+   disclosed limit, not a blocker.
+
+Otherwise use existing supplied proposal visuals when they cover the requested
+scope and remain identified as proposals. Only when neither exists (for example,
+`om-mockup-prototype` is not installed) create illustrative mockups:
 
 1. Author a minimal **static HTML file** in `${SPECS_DIR}/assets/${SLUG}/mockup-NN-<screen>.html` — self-contained (inline CSS, no build step, no app code, no external requests). Match the app's rough look (reuse its visible palette/typography from the current-state screenshots) but keep it obviously illustrative; realistic placeholder data, never real user data.
 2. Render it with the browser provider (`open file://…` → screenshot) into `mockup-NN-<screen>.png`.

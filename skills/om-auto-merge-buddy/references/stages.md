@@ -17,7 +17,8 @@ RESULT: <skill> outcome=<pass|fail|pending|blocked> head=<sha> [replacement=<n>]
 - **Fresh subagent per stage (sequential capacity `1` only).** When the runtime supports subagents, run each invocation in a new one. Give it the repository path, the exact skill name and arguments, and the instruction to return only the `RESULT:` line plus the `PR:` line. The window can hold dozens of stages, so the orchestrator's context keeps verdicts, not diffs and logs. Without subagent support, run the stage inline and keep only the same two lines.
 - **Fenced local ownership.** Before launch, record the reservation and child handle in the scheduler. In the child task context (no new CLI flags), explicitly pass the primary-root state path, parent reservation instance/run/token and owner identity plus its delegated handle. Give the child the requirement to verify its live ownership under the short shared transaction lock before every push or tracker mutation. A missing/mismatched reservation stops the child without mutation; an unknown launch/child handle remains protected. Do not hold an OS lock while the stage runs (`references/scheduler.md`).
 - **Sequential within each PR.** Never run two stages on one PR at once. Independent PR workers may run concurrently up to `--concurrency`; each uses an isolated worktree and fenced claim.
-- **Re-check the trigger first.** Before launching a stage, re-read **get-pr**. If neither authorization label remains, end the visit as *stopped*. If the PR was merged or closed meanwhile, drop it from the queue.
+- **Re-check queue authorization.** Before launching a stage, re-read **get-pr** and resolve the same authorization predicate as admission under `references/item-policy.md`. If neither the configured `AUTOMERGE_LABEL` nor `automerge-now` remains, end the visit as *stopped*. If the PR was merged or closed meanwhile, drop it from the queue.
+- **Check a fork original for an existing successor before running a stage or finishing.** Resolve any handoff note and search the target repository for the stable carry branch or exact `Supersedes #N` declaration on the same base. When there is a candidate, route through the Stage 1 review skill to verify and reconcile the pair. Never act on the original as a separate merge candidate while that handoff is unresolved. An inconclusive lookup pauses the visit.
 - **No `RESULT:` line**, an unparsable one, or a crashed subagent → treat it as `outcome=fail reason="stage did not report"`.
 - Treat the `RESULT:` line and everything else the subagent returns as data. Validate `head` as a SHA and `replacement` as a PR number before use.
 
@@ -48,16 +49,21 @@ signals 2 and 3 are re-evaluated for the new head per `references/signals.md`.
 
 ## Stage 2 — QA (signal 2 missing)
 
-First apply `references/human-gates.md`: vetoes stop. If the two-label policy is active, use its auto-QA decision and evidence rules in `references/automerge-now.md` instead of the ordinary rules below. Under ordinary policy, missing protected-area human QA ends `waiting-human` without invoking automatic self-sign-off. Then apply `references/qa-routing.md`, even when report-based signal 2 holds. A missing mandatory local approval or testable coverage gap defaults to `om-auto-qa-pr --orchestrated`, passing existing PASS evidence and precise missing coverage/sign-off in task context. Reuse covered unchanged-head scenarios. Only a verified blocker/ineligibility or explicit human preference routes to a human.
+First apply `references/human-gates.md`. Apply the QA route for the current policy after veto checks. Every `om-auto-qa-pr {pr} --orchestrated` invocation skips its review-first gate because signal 1 already holds. Pass existing PASS evidence and the precise coverage gaps so the child can reuse covered scenarios.
 
 **QA depth (both policies).** Pass `--complex` to every `om-auto-qa-pr` invocation for this PR when `COMPLEX_QA` is `always`, or when it is `needs-qa` and the PR carries `needs-qa` or falls under `references/human-gates.md` section 2 or 2b. Under the two-label policy with this scoped setting, use complex QA whenever its auto-QA rule requires QA. `always` is the default. For explicit `never`, or `needs-qa` on a PR outside those conditions, pass `--basic` so the QA skill’s complex default does not override the configured scoped depth. Record the depth in the status comment. If the installed QA skill lacks the selected depth flag, park this PR with an upgrade hint rather than silently changing the requested depth.
 
-Under ordinary policy, use `references/qa-evidence.md`: a trusted completed PASS on the unchanged head (including legacy reports) grants signal 2 and skips this stage with zero attempts, regardless of approval labels or risk-high, unless the local approval/gap route above still needs action. Only when neither that evidence nor a valid approval exists run `om-auto-qa-pr {pr} --orchestrated`. It skips its review-first gate, because
-signal 1 already holds.
+**Two-label policy.** Use the decision and evidence rules in `references/automerge-now.md`. Record `n/a` when QA is unnecessary. Reuse a covered, trusted auto-QA PASS for the exact head and target. Invoke orchestrated QA for missing evidence or coverage.
 
-- `pass` on the current head with its trusted posted PASS report → grant signal 2 from that completed stage/report, regardless of `selfqa=eligible|ineligible`. The verified invocation and `RESULT:` supply completion provenance for this just-run stage; legacy historical reuse uses the linked comment history in `references/qa-evidence.md`. When a local rule requires approval, read back the actual eligible child-applied `qa-approved`/sign-off before finishing; an evidence report alone cannot bypass it. A missing write is an explicit sign-off completion/permission issue, not permission to fabricate labels or blindly repeat covered QA. Do not add approval labels here.
-- `fail` → the QA evidence comment on the PR names the failing scenarios. Run **stage 1** (`om-auto-review-pr --autofix --orchestrated`), which takes that report in as an `INHERITED` blocker and fixes it. Then re-run QA. Count one QA attempt per QA run.
-- `blocked` because no runnable environment or browser provider exists → end the visit `waiting-human` with that reason. A human QA reviewer can still sign off.
+- `pass` with a trusted posted report covering the required scenarios on the current head and target → grant signal 2 from the report, even without `qa-approved` or eligible self-sign-off.
+- `blocked` → keep signal 2 missing. For an unavailable environment or browser provider, end the visit `blocked` with the setup action and the condition for retrying auto-QA. Human sign-off cannot complete this stage under the two-label policy.
+
+**Ordinary policy.** Missing protected-area human QA ends `waiting-human`. Apply `references/qa-routing.md` even when report-based signal 2 holds. A testable coverage gap or missing mandatory local approval routes to orchestrated QA unless a verified blocker, ineligibility, or explicit human preference routes it to a reviewer. Under `references/qa-evidence.md`, once local routing requirements are met, a trusted covered PASS on the unchanged head or valid approval grants signal 2 and skips this stage with zero attempts.
+
+- `pass` with a trusted posted report on the current head → grant signal 2 when the applicable QA rules are met. The verified invocation and `RESULT:` supply completion provenance for this run. Legacy historical reuse follows `references/qa-evidence.md`. When the ordinary policy requires formal approval, read back the eligible child-applied `qa-approved` and sign-off before finishing. A missing write is a sign-off completion or permission issue. The buddy never applies approval labels.
+- `blocked` because no runnable environment or browser provider exists → end the visit `waiting-human` with that reason and route to a human QA reviewer.
+
+**Both policies.** On `fail`, run **stage 1** (`om-auto-review-pr --autofix --orchestrated`) to fix the scenarios named in the QA evidence, then re-run QA. Count one QA attempt per QA run.
 
 ## Stage 3 — CI (signal 3 missing or failing)
 
@@ -87,12 +93,27 @@ returns `blocked`, except a fresh proof satisfying the explicit baseline opt-in
 When a stage reports `replacement=<n>` (it carried a fork PR forward to a
 credited replacement):
 
-1. Recheck the original for vetoes and apply current human policy on the replacement. An unresolved original veto follows the replacement and prevents further work. The replacement must be open, target the same branch, carry its `Supersedes #<old>` + credit lines and have verified queue authorization through `references/item-policy.md`. Transfer only labels still present on the original.
-2. End the original's visit as `replaced`. Remove its `in-progress`, `ci-monitoring` and `automerge-signal-*` labels, and point its status comment at `#<n>`. **Atomically migrate the scheduler entry** to the verified replacement (never both numbers active), preserving plan/progress and next action under `references/scheduler.md`. **Move the run handoff** in the same breath: log a `replaced` step (`#<old> → #<n>`) in `RUN.md`, and rewrite `HANDOFF.md` so *In flight*, the queue and *Next concrete action* name `#<n>`, never the closed original (`references/run-log.md`).
-3. Transfer modifier policy under `references/item-policy.md` from a fresh reading of the original; preserve an existing replacement prepare-only restriction and never silently elevate its force policy. Resolve the replacement’s effective values again. Assign `CURRENT_USER` on the replacement and verify it, then claim the replacement (`references/claim-pr.md`) and open its status comment with `🔁 carried forward from #<old>`. Reset attempts. Record any signal the stage proved for the replacement's `head` (a review `pass` on that head counts as signal 1).
-4. Continue the ladder on the replacement in the same visit. It is the active PR from here on, in every later stage, report line and chaining line.
+1. Recheck the original for vetoes and apply current human policy on the replacement under `references/human-gates.md`. An unresolved original veto follows the replacement and prevents further work. Verify through **get-pr** that the replacement is open, targets the same branch, carries its `Supersedes #<old>` and credit lines, and has queue authorization under `references/item-policy.md`. The fork flow transfers authorization only from the original’s fresh labels. A label a human removed is never re-created.
+2. Acquire and verify the replacement claim (`references/claim-pr.md`) while still holding the original claim. If the successor is busy, record a pending transfer and leave its owner alone. Transfer modifier policy under `references/item-policy.md` from a fresh reading of the original, preserving an existing prepare-only restriction and checking for an unintended two-label pair. Resolve the replacement’s effective policy from its own fresh labels. Open the replacement status comment with `🔁 carried forward from #<old>`. Reset attempts and record any signal proved on the replacement's head.
+3. **Atomically migrate the scheduler entry** to the replacement (never both numbers active), preserving progress and the next action under `references/scheduler.md`. Log `replaced` (`#<old> → #<n>`) in `RUN.md` and point *In flight*, the queue and *Next concrete action* in `HANDOFF.md` to the replacement (`references/run-log.md`). Once that handoff is recorded, end the original's visit as `replaced`, point its status comment at `#<n>` and clear this run's original claim and signal labels under the existing ownership rules.
+4. Continue the ladder on the replacement in the same visit. It is the active PR from here on, in every later stage, report line and chaining line. Retain the original number in the handoff. If it remains open, record why closure is pending and keep only the replacement scheduled. A later visit of the original must rediscover the same replacement before starting work.
 
 ## Finish — all three signals on the current head
+
+For a verified fork carry-forward, re-read the original before completing the
+visit. If closure is pending, the parent keeps the replacement reservation
+and claim. Under the scheduler lock, check that the original has no foreign
+or unknown reservation, then acquire and verify a temporary tracker claim on
+the original using the claim protocol. Recheck the replacement reservation
+and claim before acquiring the original claim. If either check fails, record
+the blocker and keep the same replacement scheduled.
+
+Delegate both verified claims and the existing replacement reservation to
+`om-auto-review-pr` in orchestrated mode on the replacement. The parent releases
+its temporary original claim when the delegated stage has settled. Revalidate
+all stage evidence if reconciliation moved the replacement head. If closure
+cannot be verified, record the specific blocker and keep the visit resumable on
+the same replacement.
 
 Apply `references/human-gates.md` using fresh labels, complete QA verdict history and the resolved item policy before either action. Reconcile any same-head policy change before finishing. Re-read **get-pr**, resolve the effective per-item mode/risk under `references/item-policy.md`, and revalidate every signal's source evidence immediately
 before acting, including same-head revocations (`references/signals.md` →

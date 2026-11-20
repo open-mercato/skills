@@ -72,9 +72,10 @@ Through the descriptor's guards, copy category, priority, risk, custom labels, Q
 a documented scope increase requires raising them. Preserve human hard blocks;
 normalize one pipeline label to the replacement's actual state via
 `set_pipeline_label` without clearing a human
-block. Never copy `qa-approved`, `qa-self-verified`, `in-progress`, or
-`ci-monitoring`: approval evidence and live claims do not transfer to a new head
-or run. Conflicting QA requirements remain blocked. Honor `labels.enabled` and
+block. Exclude `qa-approved`, `qa-self-verified`, `in-progress`,
+`ci-monitoring` and all `automerge-signal-*` labels from transfer, including
+from the custom label set. Evidence and live claims are scoped to the
+original head and run. Conflicting QA requirements remain blocked. Honor `labels.enabled` and
 the guards' missing-label behavior; an unverified queue authorization or prepare-only transfer blocks
 unattended merging. Read the labels back through **get-pr** before closing the
 original, and maintain the marker-idempotent label-rationale comment.
@@ -83,8 +84,9 @@ Update the active PR number, URL, head/target branch, and claim/cleanup context;
 emit the replacement's exact `PR:` chaining line so every caller follows it.
 Under `--orchestrated` (`references/orchestrated-mode.md`), report
 `replacement=<n>` in the `RESULT:` line and hand control straight back. Do not
-wait for the original author's recheck. The orchestrator moves its claim and
-signal labels to the replacement and continues there in the same run.
+wait for the original author's recheck. The orchestrator claims the
+replacement and publishes its signals from freshly verified replacement
+evidence, then continues there in the same run.
 Reassignment and the author recheck comment are advisory, not a reason to stop.
 A standalone review never gains merge authority from this transfer.
 

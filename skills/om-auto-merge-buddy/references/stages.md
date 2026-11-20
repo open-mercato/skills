@@ -24,6 +24,8 @@ RESULT: <skill> outcome=<pass|fail|pending|blocked> head=<sha> [replacement=<n>]
 
 After each stage, read its evidence for explicitly deferred findings and file their follow-ups through `om-followup-issue-from-pr` as described in `references/followups.md`. The `RESULT:` grammar is unchanged; `evidence=` points to the stage’s work product, from which the findings are read.
 
+After every usable result, reconcile the current head and policy and publish the verified labels and status under `references/signals.md` before launching another stage or parking. Apply the same step when reusing evidence or resolving QA as `n/a`.
+
 Every stage run increments `attempts[signal]`. Reaching `MAX_ATTEMPTS` without the signal ends the visit `blocked`. A `pending` CI repair counts too, so a fix that never turns CI green cannot loop forever across runs. The counter for a signal resets when that signal is granted.
 
 | Outcome | Effect |
@@ -130,7 +132,8 @@ including runs with zero jobs. An unresolved workflow approval hold returns
 write and before any plain-squash fallback. A local-CI signal 3
 (`references/signals.md`) also requires no failed host check at this moment. If baseline errors were waived, resolve the target tip again and revalidate the exact target SHA, check attempts, logs and CI-definition proof immediately before merge; any change returns to CI evaluation (`references/ci-baseline.md`).
 
-Before either action, checkpoint current-head/policy `readyAt` and measured
+Before either action, confirm publication of all three current signals under
+`references/signals.md`. Then checkpoint current-head/policy `readyAt` and measured
 duration under `references/scheduler.md`; preserve immutable first start and
 never reuse invalidated head/policy readiness. Confirmed merges journal those
 timestamps before active cleanup.

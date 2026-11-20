@@ -3,7 +3,9 @@
 `automerge-now` authorizes a queue item and an immediate single-PR visit from
 either fixer. Both fixers hand off without holding a PR claim. A scheduled
 buddy can also discover it under `references/item-policy.md`. The buddy owns
-all evidence reconciliation and merge mutations. An immediate visit excludes
+all evidence reconciliation and merge mutations. Run the same publication
+step in `references/signals.md` after entrance and each stage for either policy.
+The policy notice augments the canonical buddy status and merge summary. An immediate visit excludes
 spec-only design PRs and drafts awaiting explicit human confirmation.
 
 ## Approval policy when both labels are present
@@ -120,7 +122,8 @@ hold returns `approval-held` even with a complete read and passing local mirror.
    Record every command and exit code in the automation-authored status
    comment, with the head/target and actual host state. Reapply the CI decision
    with fresh workflow approval state before granting a signal. A complete pass on
-   the unchanged head can grant the local CI label and `localCi:` record under
-   `references/signals.md`; do not mark host CI green. Failed or incomplete
+   the unchanged head grants the local CI signal through the shared publication
+   procedure in `references/signals.md`. Publish its label and `localCi:` record
+   while preserving the actual hosted CI state. Failed or incomplete
    local validation grants no signal. Leave it for CI repair or a fresh
    successful host run, without repeating the same local attempt in a visit.

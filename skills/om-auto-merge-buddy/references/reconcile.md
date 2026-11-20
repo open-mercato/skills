@@ -66,7 +66,9 @@ before launching a stage. For **each signal**, record:
 - `retain`, `carry-forward` or `invalidate`, its concrete reason and the next action (`delta review`, affected QA scenarios, current-head CI reading, or waiting-human).
 
 Rewrite held records to the assessed current head/target with the source link
-and carry-forward reason, and remove invalidated signal labels immediately.
+and carry-forward reason. Publish the verified labels and the same status record
+together under `references/signals.md`, restoring any missing label backed by
+current evidence and removing invalidated labels immediately.
 Keep a missing-evidence or unknown-scope reason visible. The ladder starts at
 the first **actually missing** signal; it never reruns already-supported work
 solely because a label exists, and never skips work solely because one exists.

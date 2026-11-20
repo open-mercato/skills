@@ -24,10 +24,17 @@ PR gets CI results without a separate manual approval. It is **off by default**:
 add `"approveHeldRunsOnReview": true` under `ci` in `.ai/agentic.config.json` to
 enable it. With it on, the skill releases runs only after reviewing the diff, only
 for that exact head SHA, and never when the diff touches CI, build, dependency or
-tooling definitions; it uses the existing **approve-pending-runs** operation.
-Re-sync `.ai/trackers/github.md` for the updated caller rule on that operation
-(wording only — the command is unchanged). Repositories that leave the key unset
-see no behavior change.
+tooling definitions; it uses the existing **approve-pending-runs** operation,
+and only when the tracker descriptor declares that operation
+`Reviewed-SHA binding: sha-bound`. The decision runs through the bundled
+`om-auto-review-pr/scripts/held-ci-gate.mjs` helper. GitHub (and Jira/Linear,
+which delegate to it) is `sha-bound`; GitLab's merge-request pipeline trigger
+cannot be bound to a SHA and is `not-sha-bound`, and Forgejo is `unavailable`,
+so both stay manual. Re-sync `.ai/trackers/*.md` to pick up the declarations —
+an installed descriptor without one is treated as unbound and never released
+automatically. The GitHub command now also re-checks each listed run's
+`head_sha` before approving it. Repositories that leave the key unset see no
+behavior change.
 
 ## 2026-11-19 — Optional narrower QA gate label
 

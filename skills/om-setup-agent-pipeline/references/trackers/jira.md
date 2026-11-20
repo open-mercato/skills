@@ -410,6 +410,8 @@ Delegate to GitHub **rerun-failed**.
 #### approve-pending-runs
 Delegate to GitHub **approve-pending-runs**.
 
+**Reviewed-SHA binding:** `sha-bound` — inherited from the GitHub operation it delegates to.
+
 #### watch-run
 Delegate to GitHub **watch-run**.
 

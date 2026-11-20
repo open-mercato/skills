@@ -1033,6 +1033,8 @@ printf '%s' "$RETRY" | jq "$GL_JQ_DEFS"'gl_run'
 
 #### approve-pending-runs
 Head SHA → start the merge-request pipeline in the parent project when none exists for that commit yet. GitLab's equivalent of approving a held run: pipelines for MRs from forks do not run in the parent project until a member with Developer rights triggers them. Prints the new pipeline id; an empty result means a pipeline already exists. The pipeline runs the contributor's CI configuration with this project's runners and variables, so callers trigger it only on an MR a human has authorized for automation and read the diff's CI-config changes first.
+
+**Reviewed-SHA binding:** `not-sha-bound` — the merge-request pipelines endpoint takes no expected SHA and builds whatever the MR head is when the POST lands, so a push after the caller's head check can start unreviewed code. `om-auto-review-pr` never calls this operation automatically; a maintainer starts the pipeline after reviewing the current head.
 ```bash
 gl_iid {prNumber} || exit 1
 P=$(gl_project)

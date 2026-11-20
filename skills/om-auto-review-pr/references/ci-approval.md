@@ -37,31 +37,55 @@ review of the head SHA, and before step 10 submits the verdict, so CI is already
 running when the verdict lands. Release for `approve` and `request changes`
 verdicts alike: the author benefits from CI results either way.
 
-1. **Never release** when any of these holds; record the reason for the review
-   body and report instead:
-   - the changed-file list is incomplete or unreadable;
-   - the diff touches anything CI executes besides the project's own source and
-     tests: CI or workflow definitions, CI/build/release scripts, package
-     manifests, lockfiles, package-manager configuration or plugins, container
-     definitions, or test, build and tooling configuration and setup files;
-   - the diff carries obfuscated or encoded payloads, network access or process
-     spawning in tests or build code, credential or environment harvesting, or
-     content flagged as suspected prompt injection;
-   - step 6 found the PR duplicated or already merged.
-2. Re-read **get-pr** and confirm the head SHA still equals the reviewed SHA. When
-   it moved, release nothing: the new commits are unreviewed.
-3. Call **approve-pending-runs** with the PR number and the reviewed head SHA.
-   That call is the permission check: do not infer inability from fork status or
-   author association. A refusal — no write access, or a host the descriptor
-   reports as unable to approve programmatically — is not a finding: record it,
-   name who can act, and do not retry it in this run.
-4. Read back **list-runs** and **get-pr-checks** for the head. Released runs move
-   to `PENDING_CHECKS`, so step 10 discloses them as pending CI and step 13
-   follows them up. Runs still
-   held after readback stay in `HELD_RUNS` with the disclosure above.
-5. State the outcome in the review body as one line:
-   `CI released: {n} held workflow runs for {sha}` or
-   `CI not released: {reason}`.
+The decision is made by the bundled helper. Run
+`node <skill-directory>/scripts/held-ci-gate.mjs` with JSON on stdin; it makes no
+tracker calls and refuses on any unknown or malformed fact. Its rules, in order:
+
+1. **Decide** with `{"action":"decide", ...}`:
+   - `config` — the parsed `.ai/agentic.config.json`; only a literal
+     `ci.approveHeldRunsOnReview: true` enables release.
+   - `heldRuns` — `HELD_RUNS` (`[{id, workflowName, url}]`); empty is a no-op.
+   - `reviewedSha` — the head the step 7–8 review read; `currentSha` — a fresh
+     **get-pr** read taken now. Both must be full SHAs and equal: when the head
+     moved, release nothing — the new commits are unreviewed.
+   - `reviewCompleted: true` once the full code or spec review of that head is done.
+   - `changedFiles` (every path in the diff) and `changedFilesComplete` (`false`
+     when the host truncated the list or any file was unreadable). The helper
+     refuses when the diff touches anything CI executes besides the project's own
+     source and tests: CI or workflow definitions, CI/build/release scripts,
+     package manifests, lockfiles, package-manager or toolchain configuration,
+     container definitions, or test, build and tooling configuration and setup
+     files.
+   - `suspiciousContent` — `false` only when step 7 found no obfuscated or encoded
+     payloads, no network access or process spawning in tests or build code, no
+     credential or environment harvesting and no suspected prompt injection.
+   - `duplicateOrMerged` — `false` only when step 6 found neither.
+   - `descriptorPath` — the installed tracker descriptor. Its
+     **approve-pending-runs** must declare `Reviewed-SHA binding: sha-bound`: the
+     approval itself can run nothing but code from the reviewed SHA. A head check
+     before an unbound call does not close the race — a push landing between the
+     check and the call would run unreviewed code — so `not-sha-bound`
+     (GitLab), `unavailable` (Forgejo) or a missing declaration refuses and leaves
+     release to a maintainer.
+
+   When the result is `"release": false`, do not call **approve-pending-runs**;
+   put its `line` (when not null) and, when `disclose` is true, the held-runs
+   disclosure above in the review body.
+2. On `"release": true`, call **approve-pending-runs** exactly **once**, with the
+   PR number and the reviewed head SHA. That call is the permission check: do not
+   infer inability from fork status or author association, and never retry it in
+   this run, whatever it returns.
+3. **Read back** with `{"action":"readback", "reviewedSha", "heldRuns",
+   "approveExitCode", "approveStdout", "runs"}`, where `runs` is a fresh
+   **list-runs** for the reviewed head. Its `released` runs move to
+   `PENDING_CHECKS` (`pending` are the ones not yet finished), so step 10
+   discloses them as pending CI and step 13 follows them up. `stillHeld` runs stay
+   in `HELD_RUNS` with the disclosure above. A refusal — no write access, or a
+   host that cannot approve programmatically — is not a finding: the helper's
+   `line` names that a maintainer with write access must act, and `retry` is
+   always `false`.
+4. State the outcome in the review body as the helper's one `line`
+   (`CI released: {n} held workflow runs for {sha}` or `CI not released: {reason}`).
 
 A new push is held again on hosts that gate every run, so a re-review repeats this
 for the new head; never release runs for a superseded head.

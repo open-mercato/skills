@@ -109,8 +109,10 @@ QA always runs in this mode, whether or not the diff touches UI, and even with
 2. **`pass` on the current head** → the QA evidence is its report and sign-off.
    - A `risk-high` PR gets no self-QA sign-off. The completed PASS report on the
      unchanged head is still valid buddy evidence.
-   - A PR carrying `skip-qa`, or no `needs-qa`, records QA as `n/a`. The QA pass still
-     runs and its report is linked.
+   - A PR carrying `skip-qa`, or neither `needs-qa` nor the QA gate label
+     (`qaGateLabel`, default `needs-qa`), records QA as `n/a`, unless it carries
+     `qa-approved` or `qa-failed` (a human verdict keeps QA required even after
+     `needs-qa` was dropped). The QA pass still runs and its report is linked.
 3. **`fail`** → fix every QA finding. Spawn a fresh `om-auto-review-pr {PR_NUMBER}
    --autofix` pass. It collects the QA report on the PR as an `INHERITED` finding and
    fixes it in new commits. Then rerun A1 (fresh delta review) and this step (fresh
@@ -118,7 +120,10 @@ QA always runs in this mode, whether or not the diff touches UI, and even with
    missing. Record the open findings.
 4. **Protected-area changes** (migrations, money, permissions or tenant isolation,
    architecture, backward-incompatible changes) need human QA under the buddy's gates.
-   Run QA anyway, but leave signal 2 missing and record `qa: waiting-human`.
+   Run QA anyway, but leave signal 2 missing and record `qa: waiting-human`. The same
+   holds when `qaGateLabel` names a label other than `needs-qa` and the PR carries
+   it, whoever applied it: only a pinned human QA sign-off grants signal 2 then, and
+   an automatic PASS or self-QA sign-off never does.
 
 ## A3. Local CI mirror (no host-CI wait)
 
@@ -237,7 +242,7 @@ skip it and leave the PR armed for the buddy.
      `automerge-blocked`, `automerge-prepare`);
    - the head is conflicting;
    - any host check completed `FAILURE` / `ERROR` / `CANCELLED` / `TIMED_OUT`;
-   - QA recorded `waiting-human` (protected areas).
+   - QA recorded `waiting-human` (protected areas or the human QA gate label).
    Pending or missing host checks do not stop the merge. That is the point of this
    mode.
 2. **Merge, bypassing host merge requirements when allowed.** Call **merge-pr**

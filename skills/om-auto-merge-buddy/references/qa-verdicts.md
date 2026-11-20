@@ -22,7 +22,9 @@ from comment prose alone. A human NO-GO comment stays a veto (§3) but does not 
 On a human verdict, remove `needs-qa` through the `remove_label` guard (missing
 label or `labels.enabled: false` → logged skip). Update this skill's
 label-rationale comment in place: `` `needs-qa` removed — answered by the human QA
-verdict `<label>` on <sha>. ``
+verdict `<label>` on <sha>. `` This rule removes only `needs-qa`. When `qaGateLabel`
+names a narrower label, that label keeps its own apply/remove rules and stays the
+human-QA gate.
 
 Removing `needs-qa` never makes QA "not required":
 
@@ -53,8 +55,9 @@ expected results to make QA pass.
 Fixing a finding never clears a verdict:
 
 - **Human `qa-failed` or an unresolved human NO-GO.** Keep the label and the
-  veto. Re-apply `needs-qa` to request a re-test of the new head, and post one
-  comment: `` 🔁 QA findings from <link> fixed in <sha>; ready for re-test. `` A human
+  veto. Re-apply `needs-qa` to request a re-test of the new head (when the PR
+  carries `skip-qa`, swap it out first: the two never coexist, and a human QA
+  verdict shows QA applies), and post one comment: `` 🔁 QA findings from <link> fixed in <sha>; ready for re-test. `` A human
   QA reviewer re-tests and removes `qa-failed`, or explicitly releases the NO-GO.
 - **Automatic `om-auto-qa-pr` FAIL only (no human veto).** Re-run QA on the new head
   where this skill runs QA. Otherwise leave `needs-qa` in place for the next QA

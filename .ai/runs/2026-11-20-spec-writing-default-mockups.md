@@ -73,4 +73,4 @@ PR: #195
 
 ### Phase 5: Mockup screenshots in PR comments
 
-- [x] 5.1 Publish mockup screenshots in a PR comment from om-auto-write-spec — 06b05db, 36cfa33
+- [x] 5.1 Publish mockup screenshots in a PR comment from om-auto-write-spec — 06b05db, 36cfa33, 59b3f41

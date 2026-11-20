@@ -21,9 +21,11 @@ A stale or unsuccessful write must never be presented as a confirmed merge. Keep
 
 ## Progress
 
+PR: #196
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Record direct merge evidence
 
-- [ ] 1.1 Add the merge evidence and outcome workflow to both direct automerge routes.
-- [ ] 1.2 Cover the workflow with the existing automerge contract checks and run the repository gate.
+- [x] 1.1 Add the merge evidence and outcome workflow to both direct automerge routes. — 7b90e74
+- [x] 1.2 Cover the workflow with the existing automerge contract checks and run the repository gate. — 1dc17bc

@@ -41,7 +41,9 @@ function recordFields(document) {
   assert.ok(record, 'Signal record must carry its evaluation target')
   return record[1].split('\n').map(line => line.split(':')[0])
 }
-assert.deepEqual(recordFields(signals), ['base', 'riskChecks', 'ciPolicy', 'ciTarget', 'head', 'cr', 'qa', 'ci', 'attempts'])
+assert.deepEqual(recordFields(signals), ['base', 'riskChecks', 'ciPolicy', 'ciTarget', 'head', 'cr', 'qa', 'ci', 'localCi', 'attempts'])
+assert.match(signals, /Local-CI alternative[\s\S]*?no host check on the current head completed `FAILURE`/)
+assert.match(signals, /A failed host check invalidates the alternative/)
 assert.deepEqual(recordFields(status), recordFields(signals), 'Written status and consumed signal schema must agree')
 assert.match(signals, /missing or different `base` invalidates all three signals, even when the head is unchanged/)
 assert.match(signals, /Older records without `base` are re-evaluated once/)
@@ -874,3 +876,22 @@ console.log('PASS: human policy loaders reject invalid settings; complex default
   assert.doesNotMatch(reviewLabels, /as defined in the `om-auto-merge-buddy`/, 'The review skill classifies protected areas without another skill')
 }
 console.log('PASS: qaGateLabel loaders validate; a narrower gate label is never cleared by automatic QA or self-sign-off')
+
+{
+  const shared = path => read(path).split(/\n## om-auto-[a-z-]+ specifics\n/)[0]
+  const [reviewCopy, ...others] = ['om-auto-review-pr', 'om-auto-fix-pr', 'om-auto-merge-buddy']
+    .map(name => shared(`skills/${name}/references/qa-verdicts.md`))
+  for (const copy of others) assert.equal(copy, reviewCopy, 'qa-verdicts.md shared text must be identical in every copy')
+  assert.match(reviewCopy, /This rule removes only `needs-qa`/)
+  assert.match(reviewCopy, /carries `skip-qa`, swap it out first/)
+  for (const name of ['om-auto-fix-issue', 'om-auto-fix-pr']) {
+    const mode = read(`skills/${name}/references/automerge-mode.md`)
+    assert.match(mode, /`qaGateLabel` names a label other than `needs-qa` and the PR carries\s+it/, `${name}: the human QA gate label withholds signal 2`)
+    assert.match(mode, /unless it carries\s+`qa-approved` or `qa-failed`/, `${name}: QA n/a excludes human verdicts`)
+    assert.match(mode, /QA recorded `waiting-human` \(protected areas or the human QA gate label\)/, `${name}: A6 refuses on the human QA gate`)
+  }
+  for (const path of ['skills/om-setup-agent-pipeline/references/trackers/github.md', '.ai/trackers/github.md']) {
+    assert.match(read(path), /The only permitted retry is one plain guarded squash/, `${path}: merge-pr documents the automerge-force fallback`)
+  }
+}
+console.log('PASS: qa-verdicts copies stay in sync; automerge arming honors the human QA gate label and the merge-pr fallback contract')

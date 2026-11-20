@@ -600,7 +600,7 @@ GitHub rejects self-approval (reviewing your own PR); surface that instead of wo
 gh pr merge {prNumber} --squash
 gh pr merge {prNumber} --squash --match-head-commit "<headRefOid>" --admin   # head-SHA guard + bypass-protection
 ```
-`--match-head-commit` refuses the merge when a newer commit landed after the caller's gate. `--admin` bypasses branch-protection requirements and needs admin rights on the repository. Without those rights GitHub refuses the merge; surface the refusal and never retry another way.
+`--match-head-commit` refuses the merge when a newer commit landed after the caller's gate. `--admin` bypasses branch-protection requirements and needs admin rights on the repository. Without those rights GitHub refuses the merge; surface the refusal. The only permitted retry is one plain guarded squash (`--match-head-commit` without `--admin`) when the caller's documented flow allows it (automerge force); it succeeds only when the host's own requirements already hold. Never retry any other way.
 
 #### mark-pr-ready
 Promote a draft PR.
@@ -721,6 +721,7 @@ gh label create "${AUTOMERGE_LABEL:-automerge}" --color 5319e7 --description "Hu
 gh label create automerge-signal-1-cr --color 1d76db --description "om-auto-merge-buddy: code review signal holds for the current head"
 gh label create automerge-signal-2-qa --color 1d76db --description "om-auto-merge-buddy: QA signal holds for the current head"
 gh label create automerge-signal-3-ci --color 1d76db --description "om-auto-merge-buddy: CI signal holds for the current head"
+gh label create automerge-signal-3-passes-local-ci-checks --color 1d76db --description "automerge mode: local CI passed on the current head; no host check failed"
 gh label create automerge-blocked --color b60205 --description "om-auto-merge-buddy parked this PR; a human removes this label to retry"
 gh label create priority-low      --color e4e669 --description "Cosmetic or follow-up work"
 gh label create priority-medium   --color fbca04 --description "Ordinary bug or feature"

@@ -19,6 +19,10 @@ brief mode only when filing/reusing an issue changed the outcome. Link a spec
 when the feature route produced one. Never imply this run merged or granted
 `qa-approved`.
 
+In automerge mode, add the automerge line from `references/automerge-mode.md`
+A5 (armed, armed with missing signals, declined, or unavailable). The local CI
+mirror never counts as host CI being green.
+
 When triage returned `NO_ACTION_NEEDED`, report that outcome with its existing
 PR, commit, file, or other evidence. Do not invent a branch, review, or QA result.
 

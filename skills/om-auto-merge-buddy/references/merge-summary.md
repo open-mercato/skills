@@ -68,7 +68,7 @@ important actions and final evidence; omit unused template bullets, generic
 Name concrete defects, tests and outcomes. Include conflict/base integration or
 replacement credit only when material. If nothing was changed, say which existing
 review/QA evidence was verified and reused; never claim a fix. Distinguish QA
-not required from QA passed. Never call waived red CI green. Include material
+not required from QA passed. Never call waived red CI green, nor pending host CI behind a local-CI signal. Include material
 risk/CI waivers and required human approvals when used. Link evidence instead
 of copying findings, logs, screenshots or the PR body. If an important deferred
 item has no issue yet, say filing is pending and link its source; never invent

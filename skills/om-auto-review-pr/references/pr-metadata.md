@@ -23,7 +23,7 @@ and say so in the report — inline feedback is then out of reach, not silently 
 
 **Filter, in this order.** Drop comments this collection's own skills wrote (any
 `` 🤖 `<skill-name>` — `` marker, both the backticked and the legacy bare form) — re-reading your own
-prior findings just loops. Drop pure conversation with no actionable ask (approvals, thanks,
+prior findings just loops. The one exception is the latest `om-auto-qa-pr` FAIL report: keep its failed scenarios as QA findings (`references/qa-verdicts.md` §2). Drop pure conversation with no actionable ask (approvals, thanks,
 status notes, answered questions). Then verify each remaining ask against the **current head** in
 the worktree at its `file:line`: an ask the code already satisfies is resolved feedback and is
 dropped too (thread resolution is not reliably reported by trackers, so the code is the authority).

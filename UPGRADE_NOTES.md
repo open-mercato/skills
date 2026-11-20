@@ -29,6 +29,16 @@ Specs without UI are unaffected. Opt out per run with `--no-mockup` (alias
 mockups. No config or descriptor migration; install `om-mockup-prototype` to get
 the prototypes — without it specs record `Mockups: skipped` and continue.
 
+## 2026-11-20 — `om-auto-fix-issue` automerge mode and local-CI signal
+
+- **New label `automerge-signal-3-passes-local-ci-checks`.** Create it in repos that use automerge: re-sync the tracker descriptor's label taxonomy, or run `om-auto-merge-buddy`, which creates missing signal labels. Add it to `labels.meta` next to the other signal labels.
+- **`om-auto-fix-issue --automerge`** (or an `automerge` label on the issue) arms the fix PR. It runs fresh-context review/autofix and a mandatory QA pass, then the local `validation.commands`. It applies `automerge` plus the signal labels, and seeds the buddy's status-comment record with a new `localCi:` line.
+- **`--automerge-force`** (or an `automerge-force` label on the issue) additionally squash-merges the PR once all three signals hold, without waiting for host CI. A failed host check, a human hold or a protected-area QA gate still blocks it.
+- **`om-auto-fix-pr --automerge` / `--automerge-force`** (or the PR's `automerge` / `automerge-force` labels) do the same for an existing PR. They are ignored under `--orchestrated` and `--ci-only`.
+- Under automerge force, the direct merge bypasses remaining host requirements, such as a required separate review, when the current user has the rights. Otherwise it falls back to a plain guarded merge. Re-sync the tracker descriptors: their **merge-pr** text now permits that single fallback.
+- **Human QA verdicts drop `needs-qa`.** `om-auto-review-pr`, `om-auto-fix-pr` and `om-auto-merge-buddy` remove `needs-qa` once a human applies `qa-approved` or `qa-failed`. QA stays required through those labels, and the buddy no longer treats such a PR as QA `n/a`. Autofix now fixes QA findings, both human QA notes and the latest `om-auto-qa-pr` FAIL report, then re-requests QA. It never clears `qa-failed`.
+- **`om-auto-merge-buddy`** accepts the local-CI signal as an alternative to `automerge-signal-3-ci` while no host check has failed. Pending host checks no longer park such a PR in `waiting-ci`.
+
 ## 2026-11-19 — Optional narrower QA gate label
 
 Two optional config keys let a repository keep `needs-qa` for automatic QA and

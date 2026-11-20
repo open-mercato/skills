@@ -781,7 +781,7 @@ assert.ok(override.includes('`Risk checks: skipped — operator --force`'))
 for (const child of ['om-auto-review-pr', 'om-auto-qa-pr', 'om-auto-fix-pr']) {
   assert.ok(read(`skills/${child}/references/orchestrated-mode.md`).includes('`Risk checks: skipped — operator --force`'))
 }
-assert.match(signals, /effective per-item force request is enabled/)
+assert.match(signals, /effective risk override is eligible under the current item policy/)
 console.log('PASS: per-item overrides preserve child provenance and strict CR invalidation contracts')
 
 // A final evidence comment is an audit artifact, never authorization to merge.
@@ -869,7 +869,7 @@ console.log('PASS: human policy loaders reject invalid settings; complex default
   } finally { rmSync(gateTmp, {recursive:true, force:true}) }
   assert.match(humanGates, /A present one is a human-QA\s+request whoever applied it/)
   assert.match(humanGates, /self-sign-off never satisfies it/)
-  assert.match(signals, /QA gate label narrower than `needs-qa` \(section 2c\), need valid pinned human QA/)
+  assert.match(signals, /a narrower human QA gate label need pinned human QA/)
   assert.match(read('skills/om-auto-qa-pr/SKILL.md'), /run or a PR\s+carrying a narrower QA gate label \(`qaGateLabel` ≠ `needs-qa`\)/)
   assert.match(read('skills/om-auto-qa-pr/references/orchestrated-mode.md'), /does not carry a QA gate label narrower than `needs-qa`/)
   const reviewLabels = read('skills/om-auto-review-pr/references/verdict-and-labels.md')
@@ -888,7 +888,6 @@ console.log('PASS: qaGateLabel loaders validate; a narrower gate label is never 
     const mode = read(`skills/${name}/references/automerge-mode.md`)
     assert.match(mode, /`qaGateLabel` names a label other than `needs-qa` and the PR carries\s+it/, `${name}: the human QA gate label withholds signal 2`)
     assert.match(mode, /unless it carries\s+`qa-approved` or `qa-failed`/, `${name}: QA n/a excludes human verdicts`)
-    assert.match(mode, /QA recorded `waiting-human` \(protected areas or the human QA gate label\)/, `${name}: A6 refuses on the human QA gate`)
   }
   for (const path of ['skills/om-setup-agent-pipeline/references/trackers/github.md', '.ai/trackers/github.md']) {
     assert.match(read(path), /The only permitted retry is one plain guarded squash/, `${path}: merge-pr documents the automerge-force fallback`)
@@ -897,31 +896,63 @@ console.log('PASS: qaGateLabel loaders validate; a narrower gate label is never 
 console.log('PASS: qa-verdicts copies stay in sync; automerge arming honors the human QA gate label and the merge-pr fallback contract')
 
 {
-  const directMergeSkills = ['om-auto-fix-issue', 'om-auto-fix-pr']
-  const summaries = directMergeSkills.map(name => {
+  const now = 'automerge-now'
+  const force = 'automerge-force'
+  const prepare = 'automerge-prepare'
+  const strict = { requireIndependentReview: true, protectedArea: true }
+  const immediate = labels => item({ ...strict, labels })
+  assert.equal(immediate([force]).authorized, false)
+  assert.equal(immediate([now]).authorized, true)
+  assert.equal(immediate([now]).requiresNativeReview, true)
+  assert.equal(item({ ...strict, labels: [now], skipRiskChecks: true }).automationOnly, false)
+  assert.equal(immediate([now, force]).automationOnly, true)
+  assert.equal(immediate([now, force]).requiresNativeReview, false)
+  assert.equal(immediate([now, force]).riskChecksSkipped, true)
+  assert.equal(immediate([now, force, prepare]).mode, 'prepare-to-merge')
+  assert.equal(item({ labels: [now, force], mode: 'prepare-to-merge' }).mode, 'prepare-to-merge')
+
+  // Recompute policy with unchanged head evidence after either label is removed.
+  assert.equal(immediate([now]).riskChecksSkipped, false)
+  assert.equal(immediate([now]).requiresNativeReview, true)
+  assert.equal(immediate([force]).authorized, false)
+  assert.equal(immediate(queued(force)).automationOnly, false)
+  assert.equal(immediate(queued(force)).riskChecksSkipped, false)
+  assert.equal(immediate(queued(force)).requiresNativeReview, true)
+
+  const nowPolicy = read('skills/om-auto-merge-buddy/references/automerge-now.md')
+  const decisionCode = [...nowPolicy.matchAll(/```javascript\n([\s\S]*?)\n```/g)].map(match => match[1]).join('\n')
+  const { immediateQaDecision, immediateCiDecision } = runInNewContext(
+    `${decisionCode}\n({ immediateQaDecision, immediateCiDecision })`
+  )
+  assert.equal(immediateQaDecision({ labels: ['skip-qa'] }), 'n/a')
+  for (const labels of [['qa'], ['needs-qa'], ['qa-approved'], ['needs-human-qa', 'skip-qa']]) {
+    assert.equal(immediateQaDecision({ labels, qaGateLabel: 'needs-human-qa' }), 'missing')
+    assert.equal(immediateQaDecision({ labels, qaGateLabel: 'needs-human-qa', coveredAutoPass: true }), 'pass')
+  }
+  assert.equal(immediateQaDecision({ labels: [], humanOnly: true }), 'missing')
+  assert.equal(immediateQaDecision({ labels: [], localCoverageRequired: true }), 'missing')
+  assert.equal(immediateQaDecision({ labels: ['needs-qa'], qaGate: false }), 'n/a')
+  assert.equal(immediateCiDecision({ hostReadComplete: true, hostedPassed: true }), 'host')
+  assert.equal(immediateCiDecision({ hostReadComplete: true, localMirrorPassed: true }), 'local')
+  assert.equal(immediateCiDecision({ hostReadComplete: true, currentHostFailure: true, localMirrorPassed: true }), 'missing')
+  assert.equal(immediateCiDecision({ hostReadComplete: false, localMirrorPassed: true }), 'missing')
+  assert.equal(immediateCiDecision({ hostReadComplete: true }), 'missing')
+
+  assert.match(nowPolicy, /Human QA is skipped and the protected-area check is skipped/)
+  assert.match(nowPolicy, /Both labels, ownership and current evidence must still hold/)
+  assert.match(nowPolicy, /On loss of either label, reconcile the ordinary gates/)
+  for (const name of ['om-auto-fix-pr', 'om-auto-fix-issue']) {
+    const entry = read(`skills/${name}/SKILL.md`)
     const mode = read(`skills/${name}/references/automerge-mode.md`)
-    const directMerge = mode.split('\n## A6. Direct merge')[1]
-    assert.match(directMerge, /AUTOMERGE_FORCE=true.*all three\nsignals/, name)
-    assert.match(directMerge, /host check completed `FAILURE` \/ `ERROR` \/ `CANCELLED` \/ `TIMED_OUT`/, name)
-    assert.match(directMerge, /Record the merge decision[\s\S]*references\/direct-merge-summary\.md[\s\S]*confirm the one merge summary[\s\S]*Recheck step 1[\s\S]*\*\*merge-pr\*\*[\s\S]*Confirm the outcome and update the same summary/, name)
-    assert.match(directMerge, /Refused for missing bypass rights.*plain guarded squash once,\n\s+only after refreshing the summary and repeating the final gate/, name)
-    return read(`skills/${name}/references/direct-merge-summary.md`)
-  })
-  const [summary, prSummary] = summaries
-  const fixPRSkill = read('skills/om-auto-fix-pr/SKILL.md')
-  assert.match(fixPRSkill, /stop before claiming it.*reconcile an existing unfinished summary per `references\/direct-merge-summary\.md`/)
-  assert.equal(summary, prSummary, 'Both direct merge paths ship the same standalone procedure')
-  for (const name of directMergeSkills) {
-    assert.ok(summary.includes(`🤖 \`${name}\` — merge summary`), `Recognize the ${name} marker across routes`)
+    assert.doesNotMatch(entry + mode, /--automerge-force|\*\*merge-pr\*\*/)
+    assert.match(mode, /om-auto-merge-buddy --pr \{PR_NUMBER\} --window 0 --no-dashboard/)
+    assert.match(mode, /Do not run A1–A5 first/)
   }
-  assert.match(summary, /search the full PR conversation[\s\S]*trusted prior automation author[\s\S]*\*\*update-comment\*\*[\s\S]*If none exists, create it via \*\*comment-pr\*\*/)
-  assert.match(summary, /failed or ambiguous write, read the full history again[\s\S]*Confirm the intended body and unique trusted comment ID/)
-  assert.match(summary, /evidence with the summary[\s\S]*refresh the same summary and\s+repeat the final gate once/)
-  assert.match(summary, /Use \*\*get-pr\*\* after each mutation[\s\S]*A confirmed merge ends all merge attempts/)
-  assert.match(summary, /Preserve the status comment's signal fields/)
-  for (const signal of ['automerge-signal-1-cr', 'automerge-signal-2-qa', 'automerge-signal-3-passes-local-ci-checks']) {
-    assert.ok(summary.includes(`\`${signal}\``), `Document why ${signal} held`)
-  }
-  assert.match(summary, /host\s+checks by their observed states \(passed, pending, skipped or no checks\s+reported\)/i)
+  const issueMode = read('skills/om-auto-fix-issue/references/automerge-mode.md')
+  assert.match(issueMode, /Transfer `automerge-force` only if \*\*both labels\*\* are still present/)
+  assert.match(issueMode, /pre-existing lone PR\s+force label/)
+  assert.match(issueMode, /Release the PR claim and its local ownership before invoking/)
+  assert.match(stages, /including same-head revocations/)
+  assert.match(stages, /recheck the confirmed PR notice and actual automation evidence/)
 }
-console.log('PASS: both direct merge routes record final-head evidence before the guarded merge and confirm the outcome in place')
+console.log('PASS: immediate label handoffs and two-label policy enforce revocation, prepare-only, CR provenance, auto-QA and real CI')

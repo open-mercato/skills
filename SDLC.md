@@ -172,16 +172,31 @@ When signals conflict, pick the higher label and say why in the label comment. A
 
 For existing PRs, the PR's `baseRefName` is authoritative for base updates, review diffs, required-check lookups, and the merge destination. The configured `baseBranch` supplies the default for new PRs; release and feature branch targets are preserved. Re-read the target after retargeting or a fork replacement before evaluating merge readiness.
 
-Two labels live outside this taxonomy, and only humans decide them (the automerge signal labels below are applied by `om-auto-merge-buddy`, or seeded with evidence by `om-auto-fix-issue` / `om-auto-fix-pr` in automerge mode):
+Operators control these labels outside the pipeline taxonomy:
 
-- `do-not-close` — on issues that housekeeping skills must never auto-close. Skills only ever read it.
-- `automerge` — on a PR the human wants merged without further attention. A human applies it directly, or applies it to the issue / runs `om-auto-fix-issue --automerge` so that the fix PR is armed with it (with `--automerge-force` or the `automerge-force` issue label, that skill also squash-merges the PR itself once the three signals hold), or runs `om-auto-fix-pr --automerge` on an existing PR (`--automerge-force`, or the PR's `automerge-force` label, makes it merge directly), or `om-auto-merge-triage` applies it to the PRs a human confirms from its ranked proposal (eligibility rules: `automerge.eligibility`). Its AI judgment prioritizes important fixes close to merge, inspecting older PRs with screenshots and requested changes. Requested changes must be bounded and pass that judgment before any tier can propose the PR; review, QA and CI remain required. `om-auto-merge-buddy` works these PRs one at a time within a time window (default 2 hours). It resumes due tracked work from local `.ai/meta/merge-buddy.json`, prefers current-user assigned actionable work when tracking is nonempty, and assigns/verifies the current user at the first actionable step. Empty/reset scheduling keeps the global queue; live `in-progress` claims remain protected. Readiness is three signals, each recorded as a label that only this skill applies. The exception is `om-auto-fix-issue` / `om-auto-fix-pr` in automerge mode, which seed them from its own fresh-context review, mandatory QA and local CI mirror. The buddy re-verifies that seed and host CI before merging:
+- `do-not-close` protects an issue from automated housekeeping closure.
+- `automerge` enrolls a PR in `om-auto-merge-buddy`. An operator can apply it to
+  a PR or issue, use either fixer's `--automerge` flag, or confirm the
+  `om-auto-merge-triage` proposal.
+- `automerge-now` also enrolls a PR and tells either fixer to hand off to the
+  buddy for one immediate visit. On an issue, the fixer copies the current
+  request to the implementation PR. It copies `automerge-force` from that
+  issue only when both labels are present at handoff.
+- `automerge-force` is a risk-only modifier on an authorized PR. With
+  `automerge-now` it selects the automation-only approval policy below. It
+  never authorizes queue intake by itself.
+- `automerge-prepare` restricts an authorized PR to preparation.
+
+The buddy is the automated merge owner. It tracks three evidence-backed
+signals. The fixers may seed those signals with fresh review, QA and local
+CI in ordinary queue preparation. The buddy revalidates the evidence:
+
   - `automerge-signal-1-cr` — `om-auto-review-pr` approved the current head; independent native approval is additional only when the resolved policy requires it.
   - `automerge-signal-2-qa` — QA is not required (`skip-qa`, or no `needs-qa`), or `qa-approved` is pinned to the current head by its `QA head:` line. Only `om-auto-qa-pr` may apply it through self-QA, on `risk-high` only under the explicit invocation-scoped risk override below.
   - `automerge-signal-3-ci` — every check on the current head finished green, with no conflicts.
-  - `automerge-signal-3-passes-local-ci-checks` — the alternative CI signal, seeded only by `om-auto-fix-issue` / `om-auto-fix-pr` in automerge mode: every configured validation command passed locally on the current head, no host check has failed, and there are no conflicts. Pending host checks do not block it, and they are never reported as green.
+  - `automerge-signal-3-passes-local-ci-checks` — the alternative CI signal, produced in ordinary fixer queue preparation or an immediate buddy visit: every configured validation command passed locally on the current head, no host check has failed, and there are no conflicts. Pending host checks do not block it, and they are never reported as green.
 
-  On its first visit to a PR, when no signal is recorded yet, the buddy derives the initial signals from the PR's real state: its labels, reviews and comments, and its CI checks on the current head. It then starts from the first signal still missing, so review, QA or CI work already done is not repeated. A missing signal is produced by `om-auto-review-pr --autofix`, `om-auto-qa-pr`, or `om-auto-fix-pr`, each run with `--orchestrated` so the buddy alone owns the claim and the labels. CI that is still running is parked under `ci-monitoring` and checked again later. A PR that cannot be fixed within the attempt limit is parked under `automerge-blocked`; remove that label to retry. A fork PR is carried forward to a credited replacement that keeps the label. In `prepare-to-merge` mode, a PR with all three signals gets `merge-queue`. In `prepare-and-merge` mode (the missing-config default) it is squash-merged, bypassing other labels and host merge rules, because the three signals are the gate. Removing `automerge` stops the automation.
+  On its first visit to a PR, when no signal is recorded yet, the buddy derives the initial signals from the PR's real state: its labels, reviews and comments, and its CI checks on the current head. It then starts from the first signal still missing, so review, QA or CI work already done is not repeated. A missing signal is produced by `om-auto-review-pr --autofix`, `om-auto-qa-pr`, or `om-auto-fix-pr`, each run with `--orchestrated` so the buddy alone owns the claim and the labels. CI that is still running is parked under `ci-monitoring` and checked again later. A PR that cannot be fixed within the attempt limit is parked under `automerge-blocked`; remove that label to retry. A fork PR is carried forward to a credited replacement that keeps the label. In `prepare-to-merge` mode, a PR with all three signals gets `merge-queue`. In `prepare-and-merge` mode (the missing-config default) it is squash-merged, bypassing other labels and host merge rules, because the three signals are the gate. Removing both `automerge` and `automerge-now` stops the automation.
 
 Mode and independent review come from `.ai/agentic.config.json`:
 `automerge.mode` defaults to `prepare-and-merge`, and
@@ -201,6 +216,19 @@ defaults false: missing mandatory local QA approval/testable gaps schedule real
 current covered evidence. True prefers human approval; explicit `--human-qa` or
 `--auto-qa` overrides config. Only verified ineligibility/blockers or explicit
 human routing wait for a human; no preference fabricates approval labels.
+
+### Immediate automation-only approval
+
+When an authorized PR carries both `automerge-now` and `automerge-force`,
+the buddy posts a PR comment stating that it skipped human QA and the
+protected-area check. The merge requires automated code review with actionable
+findings resolved, a real host CI pass or a complete local CI mirror, and
+current-head auto-QA PASS with coverage when QA applies. This policy skips
+ordinary human sign-offs, including separate native approval. Completed host
+failures block the local CI alternative. An explicit veto or block still
+stops the run. The active finish mode and `automerge-prepare` still control
+whether the buddy prepares or merges. Removing either label restores the
+ordinary approval rules before the next merge decision.
 
 ### Explicit automerge risk override
 

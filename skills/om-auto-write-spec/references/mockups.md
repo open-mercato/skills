@@ -84,35 +84,43 @@ Reviewers read the PR conversation, not the prototype folder, so every proposed-
 mockup is also published as a **screenshot inline in a PR comment**, not only
 linked from the spec. Commit the `assets/${SLUG}/` folder with the spec, then,
 after the PR exists, post one evidence comment via **attach-image-evidence**
-(slug `spec-${SLUG}`), marker `` 🤖 `om-auto-write-spec` — 📸 UI mockups ``:
+(slug `spec-${SLUG}`), marker `` 🤖 `om-auto-write-spec` — 📸 UI mockups `` (the
+marker text stays fixed whatever the comment holds):
 
-1. **Proposed UI first.** One screenshot per screen or state the mockup covers,
-   in flow order — the prototype revision's `evidence/` PNGs (all of them that
-   show a screen, not only the ones linked in the spec; cap at 8), the §2
-   `proposed-NN-*.png` captures, or the static fallback `mockup-NN-*.png`.
-   Caption each with its screen and state. Above the images, state that they
-   show a **proposal** (`Proposed prototype:`, not an accepted `Prototype:`),
-   the revision path, and its `Verification:` status.
-2. **Current app second**, when §1 produced screenshots, captioned the same way.
-3. Name what is missing and why, in one line each (`Current screenshots:
+1. **Images, proposed UI first.** Pass the image paths in flow order: one per
+   screen or state the mockup covers — the prototype revision's `evidence/` PNGs
+   (every one that shows a screen, not only those linked in the spec; cap at 8),
+   the §2 `proposed-NN-*.png` captures, or the static fallback `mockup-NN-*.png`
+   — then the §1 current-app screenshots. Copy them to a temporary directory
+   under names prefixed with the spec commit's short SHA (`<sha>-<name>.png`;
+   never rename inside the prototype revision) so a later run never overwrites
+   the pixels an older comment shows.
+2. **Body.** State that the mockups are a **proposal** (`Proposed prototype:`,
+   not an accepted `Prototype:`), the revision path and its `Verification:`
+   status. Caption the images as a numbered list in the same order (screen,
+   state, proposed/current) — the descriptor appends the images after the body.
+   Name what is missing and why, one line each (`Current screenshots:
    skipped — …`, a screen the evidence does not cover).
 
-Post it whenever any mockup image exists — even when current-state screenshots
-were skipped and even without a browser provider (existing `evidence/` PNGs need
+Post it whenever any image exists — even when current-state screenshots were
+skipped and even without a browser provider (existing `evidence/` PNGs need
 none). When the prototype exists but has no screenshots and no browser can
 capture them, post no image comment and write
-`Mockup screenshots: not captured — {reason}` in the PR body. A skipped,
-declined or supplied-only mockup decision posts no mockup images (supplied
-material is only referenced); the comment then carries just the current-app
-screenshots, when there are any. Never publish real user data or secrets.
+`Mockup screenshots: skipped — {reason}` in the PR body. A skipped, declined or
+supplied-only mockup decision posts no mockup images (supplied material is only
+referenced); the comment then carries just the current-app screenshots, when
+there are any.
 
-**Re-runs.** Hand the images over under names that carry the revision
-(`revision-NNN-<screen>.png`, copied to a temporary directory — never renamed
-inside the revision), so a refreshed prototype gets new URLs. Find the marker
-comment first (**list-issue-comments**): when it
-already shows the current revision, leave it; when it shows an older one, post
-the new comment and rewrite the old one in place via **update-comment** to a
-single `Superseded by {new comment URL}` line — never a second live mockup comment.
+**Look before upload.** The evidence branch is public on a public repository.
+View every image first; drop and name any that shows a credential, a token or
+real-looking personal data. Prototype data is fictitious by contract, but
+current-app screenshots can show seeded or local data.
+
+**Already posted.** A live marker comment means an earlier run on this PR posted
+one. **attach-image-evidence** can only post, so rewrite the old comment first
+via **update-comment** to the single line
+`Superseded by the next 📸 UI mockups comment on this PR.`, then post the new
+one — never two live mockup comments.
 
 The tracker descriptor owns making images render inline; when it cannot (a
 private repository, no write access to the evidence branch), it posts links or

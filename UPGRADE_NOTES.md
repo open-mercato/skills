@@ -27,9 +27,9 @@ land under `paths.prototypes` (default `.ai/prototypes`) in `specs/<slug>/`.
 Specs without UI are unaffected. Opt out per run with `--no-mockup` (alias
 `--no-mockups`), by declining mockups in the request, or by supplying your own
 mockups. `om-auto-write-spec` also posts the mockup's screens as inline
-screenshots in one `📸 UI mockups` PR comment (superseded in place when a rerun
-refreshes the prototype). No config or descriptor migration; install `om-mockup-prototype` to get
-the prototypes — without it specs record `Mockups: skipped` and continue.
+screenshots in one `📸 UI mockups` PR comment; a later post marks the earlier
+one superseded. No config or descriptor migration; install `om-mockup-prototype`
+to get the prototypes — without it specs record `Mockups: skipped` and continue.
 
 ## 2026-11-20 — `om-auto-fix-issue` automerge mode and local-CI signal
 

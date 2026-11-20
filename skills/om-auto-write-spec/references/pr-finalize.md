@@ -86,7 +86,7 @@ For a spec PR the set is: `review` (pipeline), `documentation` (category), `skip
 
 ## Evidence comment
 
-After the PR exists, publish the step-5 visuals via **attach-image-evidence** as the marker comment `` 🤖 `om-auto-write-spec` — 📸 UI mockups `` — proposed-UI mockup screenshots first, current-app screenshots second, each captioned with its screen and state, slug `spec-${SLUG}` — so they render inline on the PR, the same mechanism `om-auto-qa-pr` uses. Every generated mockup screen appears in that comment as an image, not only as a link in the spec; contents, the no-browser case and re-run supersession: `references/mockups.md` §3. When the descriptor cannot render inline, it still posts the comment with links — surface the limitation, don't fail.
+After the PR exists, publish the step-5 visuals via **attach-image-evidence** as the marker comment `` 🤖 `om-auto-write-spec` — 📸 UI mockups `` — proposed-UI mockup screenshots first, current-app screenshots second, captioned by a numbered list in the body, slug `spec-${SLUG}` — so they render inline on the PR, the same mechanism `om-auto-qa-pr` uses. Every generated mockup screen appears in that comment as an image, not only as a link in the spec; contents, the no-browser case, the look-before-upload check and supersession: `references/mockups.md` §3. When the descriptor cannot render inline, it still posts the comment with links — surface the limitation, don't fail.
 
 ## Summary comment
 

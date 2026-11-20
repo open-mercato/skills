@@ -34,7 +34,7 @@ Rules:
 
 ## 4. The only permitted edit to a prior spec
 
-For each `Supersedes:` line, and only for those, insert one annotation line directly below the prior spec's H1 title (step 9, after the new spec is final):
+For each `Supersedes:` line, and only for those, insert one annotation line directly below the prior spec's H1 title (step 10, after the new spec is final):
 
 ```markdown
 > ⚠️ Superseded by `<repo-relative path of the new spec>` (YYYY-MM-DD) — <whole spec | sections: …>. Current state: see the new spec.

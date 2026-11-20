@@ -38,24 +38,27 @@ Every feature spec that adds or changes a user-facing UI ships with a clickable 
 ## Risks
 
 - `om-mockup-prototype` was interactive-only by decision; the new `--autonomous` mode is restricted to spec-writing callers and still never decides business policy — every unresolved choice is an `[ASSUMPTION]` surfaced in the spec's Resolved assumptions.
+- Generated mockups are linked as `Proposed prototype:`, never `Prototype:` — main reserves `Prototype:` for owner-accepted designs.
 - Prototype generation adds tokens/time to every UI spec; the opt-out flag and the no-UI skip bound it.
 
 ## Progress
+
+PR: #195
 
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: om-mockup-prototype spec mode
 
-- [ ] 1.1 Add spec-driven and autonomous modes to om-mockup-prototype
+- [x] 1.1 Add spec-driven and autonomous modes to om-mockup-prototype — 1f30692
 
 ### Phase 2: om-spec-writing default mockups
 
-- [ ] 2.1 Add the default mockup step to om-spec-writing
+- [x] 2.1 Add the default mockup step to om-spec-writing — d1ea498
 
 ### Phase 3: om-auto-write-spec consumes the prototype
 
-- [ ] 3.1 Forward the opt-out and reuse the prototype in om-auto-write-spec
+- [x] 3.1 Forward the opt-out and reuse the prototype in om-auto-write-spec — 2ff2870
 
 ### Phase 4: Documentation
 
-- [ ] 4.1 Update docs, upgrade notes and decisions
+- [x] 4.1 Update docs, upgrade notes and decisions — fa698ae

@@ -14,12 +14,14 @@ An old issue force label must not authorize a merge alone. A mid-run label remov
 
 ## Progress
 
+PR: #197
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Unify automerge behavior
 
-- [ ] 1.1 Route immediate processing and approval policy through the buddy
+- [x] 1.1 Route immediate processing and approval policy through the buddy — eaf1296
 
 ### Phase 2: Document and verify
 
-- [ ] 2.1 Update pipeline documentation and add cross-skill regression scenarios
+- [x] 2.1 Update pipeline documentation and add cross-skill regression scenarios — 4755505

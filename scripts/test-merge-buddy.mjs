@@ -895,3 +895,31 @@ console.log('PASS: qaGateLabel loaders validate; a narrower gate label is never 
   }
 }
 console.log('PASS: qa-verdicts copies stay in sync; automerge arming honors the human QA gate label and the merge-pr fallback contract')
+
+{
+  const directMergeSkills = ['om-auto-fix-issue', 'om-auto-fix-pr']
+  const summaries = directMergeSkills.map(name => {
+    const mode = read(`skills/${name}/references/automerge-mode.md`)
+    const directMerge = mode.split('\n## A6. Direct merge')[1]
+    assert.match(directMerge, /AUTOMERGE_FORCE=true.*all three\nsignals/, name)
+    assert.match(directMerge, /host check completed `FAILURE` \/ `ERROR` \/ `CANCELLED` \/ `TIMED_OUT`/, name)
+    assert.match(directMerge, /Record the merge decision[\s\S]*references\/direct-merge-summary\.md[\s\S]*confirm the one merge summary[\s\S]*Recheck step 1[\s\S]*\*\*merge-pr\*\*[\s\S]*Confirm the outcome and update the same summary/, name)
+    assert.match(directMerge, /Refused for missing bypass rights.*plain guarded squash once,\n\s+only after refreshing the summary and repeating the final gate/, name)
+    return read(`skills/${name}/references/direct-merge-summary.md`)
+  })
+  const [summary, prSummary] = summaries
+  assert.equal(summary, prSummary, 'Both direct merge paths ship the same standalone procedure')
+  for (const name of directMergeSkills) {
+    assert.ok(summary.includes(`🤖 \`${name}\` — merge summary`), `Recognize the ${name} marker across routes`)
+  }
+  assert.match(summary, /search the full PR conversation[\s\S]*trusted prior automation author[\s\S]*\*\*update-comment\*\*[\s\S]*If none exists, create it via \*\*comment-pr\*\*/)
+  assert.match(summary, /failed or ambiguous write, read the full history again[\s\S]*Confirm the intended body and unique trusted comment ID/)
+  assert.match(summary, /evidence with the summary[\s\S]*refresh the same summary and\s+repeat the final gate once/)
+  assert.match(summary, /Use \*\*get-pr\*\* after each mutation[\s\S]*A confirmed merge ends all merge attempts/)
+  assert.match(summary, /Preserve the status comment's signal fields/)
+  for (const signal of ['automerge-signal-1-cr', 'automerge-signal-2-qa', 'automerge-signal-3-passes-local-ci-checks']) {
+    assert.ok(summary.includes(`\`${signal}\``), `Document why ${signal} held`)
+  }
+  assert.match(summary, /host\s+checks by their observed states \(passed, pending, skipped or no checks\s+reported\)/i)
+}
+console.log('PASS: both direct merge routes record final-head evidence before the guarded merge and confirm the outcome in place')

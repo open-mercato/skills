@@ -35,7 +35,15 @@ accepted detailed design covers the selected screens, reuse that exact version:
    and continue with available evidence. Do not replace it with invented visuals.
 
 For **new or materially changed** screens without an accepted detailed design,
-use the spec's `Proposed prototype:` when it exists:
+first honor the spec's mockup decision. When its UI/UX section says
+`Mockups: skipped — opted out` or `Mockups: skipped — declined in the request`,
+draw no proposed-UI visuals at all — no static fallback — and carry the line
+into the PR body. When `Proposed prototype:` holds anything other than a
+repository-relative `index.html` path (a design-tool link, `described in UI/UX`),
+it is supplied material: reference it in the evidence table, capture nothing
+from it, and generate nothing competing.
+
+Otherwise use the spec's `Proposed prototype:` path when it exists:
 
 1. Reuse the screenshots in the prototype revision's `evidence/` when they cover
    the screens. Otherwise open its `index.html` with the browser provider
@@ -48,8 +56,9 @@ use the spec's `Proposed prototype:` when it exists:
    disclosed limit, not a blocker.
 
 Otherwise use existing supplied proposal visuals when they cover the requested
-scope and remain identified as proposals. Only when neither exists (for example,
-`om-mockup-prototype` is not installed) create illustrative mockups:
+scope and remain identified as proposals. Only when neither exists and the
+spec's skip reason (if any) is that `om-mockup-prototype` is not installed or
+stopped without an artifact, create illustrative mockups:
 
 1. Author a minimal **static HTML file** in `${SPECS_DIR}/assets/${SLUG}/mockup-NN-<screen>.html` — self-contained (inline CSS, no build step, no app code, no external requests). Match the app's rough look (reuse its visible palette/typography from the current-state screenshots) but keep it obviously illustrative; realistic placeholder data, never real user data.
 2. Render it with the browser provider (`open file://…` → screenshot) into `mockup-NN-<screen>.png`.

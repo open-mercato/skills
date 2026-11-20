@@ -17,7 +17,7 @@ the collection's canonical wording; the skill performs no tracker operations.
 ## om-mockup-prototype specifics
 
 - **Additional markers.** `Prototype:`, `Prototype context:`, `Verification:` and `Next:` follow the exact shapes in the skill body. A `Next:` invocation is explicitly chosen and still unexecuted; otherwise the value is `none`.
-- **Read-only source context.** The brief, panel reports, application code and `.uxproof/` remain unchanged. Business decisions keep their owner and source; any proposed change follows the brief's change path.
+- **Read-only source context.** The brief, the spec (spec mode), panel reports, application code and `.uxproof/` remain unchanged. Business decisions keep their owner and source; any proposed change follows the brief's change path.
 - **Evidence distinctions.** `[SYNTHETIC]` suggestions and `[ASSUMPTION]` values keep their labels in the context record. Browser checks observe the prototype. Neither those checks nor prototype approval satisfy the Definition of Ready.
 - **Neutral simulation.** Keep low-fi styling, in-memory fictitious data and local operation. Brand decisions, design tokens and production implementation belong to later work.
 - **Preservation.** Write one new revision only. Keep previous revisions, manually edited files and decision history; recorded ownership never authorizes overwriting them.

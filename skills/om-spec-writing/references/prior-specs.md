@@ -30,7 +30,7 @@ Rules:
 - **Code is the truth about current behavior.** The skeleton's "what happens today" and the Architecture section's current consumers describe the code, not the prior spec.
 - Record material drift in the new spec under `## 📝 Prior spec drift` — one line per item: prior spec path + section, what the spec says, what the code does, with a code reference. Omit the section when everything is in sync.
 - When it is unclear whether drift is intended (a deliberate change) or a defect (code should match the spec), and the answer changes the design, raise it as an Open Question. Under `--autonomous`, default to "code is the current state; do not design to restore the prior spec's behavior". Mark `⚠ NEEDS HUMAN CONFIRMATION` when the drift touches security, data scoping, or a `BACKWARD_COMPATIBILITY.md` surface.
-- Drifted sections the new spec takes over belong in its `Supersedes:` line, so the prior spec gets marked in step 4.
+- Drifted sections the new spec takes over belong in its `Supersedes:` line, so the prior spec gets marked in step 10.
 
 ## 4. The only permitted edit to a prior spec
 

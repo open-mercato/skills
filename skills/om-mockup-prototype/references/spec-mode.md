@@ -7,9 +7,10 @@ discovery mode.
 
 ## Source
 
-- `--spec <path>` is the source document, resolved with the step-0 path and
-  containment checks. It must be a file under `SPECS_DIR`; anything else is an
-  input error.
+- `--spec <path>` is the source document: an existing repository-relative file
+  that passes the step-0 path and containment checks. It need not sit under
+  `SPECS_DIR` — without config, `om-spec-writing` writes specs into the repo's
+  own design-doc area. A missing or unsafe path is an input error.
 - Read the spec's TLDR, UI/UX, Edge Cases & Failure Scenarios, Data Model (for
   realistic fictitious fields), Decisions in play, and Open Questions or
   `Resolved assumptions (autonomous defaults)`. When `${SPECS_DIR}/product-brief.md`
@@ -39,7 +40,16 @@ discovery mode.
 - Revision directory: `${PROTOTYPES_DIR}/specs/<slug>/revision-<NNN>/`, where
   `<slug>` defaults to the spec filename's kebab title (without the date).
   Ownership, refresh and preservation rules are those of the discovery root,
-  applied to this root.
+  applied to this root, with these spec-mode differences:
+  - **Slug collision.** When `specs/<slug>/` already exists for a different spec
+    (its manifest's `spec` differs), choose a new unused slug by appending the
+    spec's date (`<slug>-<YYYY-MM-DD>`, then `-2`, …) and state it; under
+    `--autonomous` never ask. The same spec path means a refresh — under
+    `--autonomous` write the next revision without asking.
+  - **Refresh source.** The spec is the required source; the product brief is
+    optional. Stop only when the spec cannot be read.
+  - **Context record.** `README.md` records the spec path (and the brief path
+    only when one was read) in place of the brief path.
 - `prototype.json` keeps `format: "discovery-prototype-v1"` and adds
   `"source": "spec"` and `"spec": "<repo-relative spec path>"`; `brief` holds the
   product-brief path when one was read, otherwise `null`. Discovery manifests

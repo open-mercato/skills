@@ -80,7 +80,7 @@ Field defaults: `references/config-capabilities.md`.
 - `paths.analysis` — generated reports.
 - `paths.specs` — specifications (default `.ai/specs`); filenames use `{YYYY-MM-DD}-{kebab-case-title}.md`, with handoff briefs under `<paths.specs>/briefs/`.
 - `paths.dataModel` — interactive data-model HTML views (default `.ai/data-model`); autonomous spec runs keep only the embedded Mermaid diagram.
-- `paths.prototypes` — local prototypes (default `.ai/prototypes`); do not add a setup question. Discovery uses `discovery/<slug>/`; producers create directories as needed.
+- `paths.prototypes` — local prototypes (default `.ai/prototypes`); do not add a setup question. Discovery uses `discovery/<slug>/`, spec mockups `specs/<slug>/`; producers create directories as needed.
 - `designTokens` — optional repo-relative snapshot, unset by default. Preserve it without asking.
 - `paths.scripts` — reusable environment scripts (default `.ai/scripts`); `om-prepare-test-env` writes bring-up/teardown scripts here.
 - `paths.qa` — where QA working state and artifacts live (default `.ai/qa`): the shared `test-env.json` descriptor, and QA reports/screenshots under `<paths.qa>/artifacts_<runId>/`.

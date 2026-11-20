@@ -2,7 +2,7 @@
 
 [`om-ux-design`](../skills/om-ux-design.md) turns a specification or selected backlog scope into connected screens, using your repository's components, stories and prototype runtime. It checks the flow and relevant states in a browser, preserves review feedback, and hands over the selected version with its sources and acceptance status. When no suitable runtime exists, its portable HTML output states the limits of that representation.
 
-[`om-auto-write-spec`](../skills/om-auto-write-spec.md) can attach screenshots of an accepted detailed design alongside the current app. When no accepted design exists, it creates illustrative mockups. Detailed design is an optional interactive step; the spec workflow still supports text-only output and `--no-mockups`.
+[`om-auto-write-spec`](../skills/om-auto-write-spec.md) can attach screenshots of an accepted detailed design alongside the current app. When no accepted design exists, it ships the clickable `om-mockup-prototype` mockup `om-spec-writing` builds by default for UI specs as the proposed design, falling back to illustrative static mockups only when that skill is unavailable. Detailed design is an optional interactive step; the spec workflow still supports text-only output and `--no-mockups`.
 
 ← Back to the [README](../../README.md#-workflows-by-role)
 

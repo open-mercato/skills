@@ -1,6 +1,6 @@
 ---
 name: om-spec-writing
-description: Write and review feature specifications to staff-engineer standards. Skeleton-first drafting with a hard Open Questions gate, research against market leaders, a clickable om-mockup-prototype mockup by default for UI features, an implementation breakdown into phases and steps that feeds om-auto-create-pr, and a severity-ranked architectural review format. Use when starting a new spec or reviewing one.
+description: Write and review feature specs to staff-engineer standards. Skeleton-first with a hard Open Questions gate, market research, a clickable om-mockup-prototype mockup by default for UI features, a phased step breakdown feeding om-auto-create-pr, and severity-ranked architectural review. Use when starting or reviewing a spec.
 ---
 
 # Spec Writing & Review
@@ -47,7 +47,7 @@ Design and review feature specifications against the project's architecture, nam
    `WHEN`/`THEN` scenarios) → `references/delta-format.md`.
 7. **Mockup prototype** — when the spec adds or changes a user-facing UI, build a clickable low-fi mockup with the `om-mockup-prototype` skill (`--spec`, plus `--autonomous` in autonomous runs) and link it from UI/UX as `Proposed prototype:`. Skip for specs without UI (API, backend, fixes with no screen change), when `--no-mockup` was passed or the requester declined mockups; reuse instead of building when the requester supplied mockups or a mockup specification, or an accepted `Prototype:` already covers the screens. Never fails the spec. Decision table and procedure → `references/mockups.md`.
 8. **Implementation breakdown** — split delivery into **Phases** (stories) and **Steps** (testable tasks). Each step must leave the application working. This structure maps directly onto `om-auto-create-pr`'s execution plan: a well-broken-down spec can be handed to it phase by phase, with the spec referenced as `Source doc:`. With a Delta, every MODIFIED or REMOVED requirement starts its phase with a characterization-test Step, and the plan ends with the Archive step (`references/delta-format.md`).
-9. **Review** — apply the review checklist below. Delegate the scope-cohesion item to a fresh-context subagent that receives only the spec file path — an author cannot adversarially re-read their own spec.
+9. **Review** — apply the review checklist below. Delegate the scope-cohesion item to a fresh-context subagent that receives only the spec file path — an author cannot adversarially re-read their own spec. When the review changes the UI/UX section, rerun step 7 (`--refresh` of the same prototype) or mark the `Proposed prototype:` line as predating the change.
 10. **Output** — finalize the file; for each `Supersedes:` line, add the one-line `Superseded by` annotation to that prior spec (`references/prior-specs.md` §4); then report in 3–6 short lines: proposed outcome, the file link, the proposed prototype path or the reason mockups were skipped, open decisions or review blockers, and next action. Keep the design detail in the file. When the spec ships as a PR, `om-followup-issue-from-pr` can file the `Implement:` tracking issue once it merges.
 
 ## Output formats

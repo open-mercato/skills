@@ -1,6 +1,6 @@
 # Assumptions comment (step 7)
 
-Post only when `om-spec-writing --autonomous` resolved Open Questions. Use
+Post only when the spec's `Resolved assumptions (autonomous defaults)` section is non-empty — Open Questions `om-spec-writing --autonomous` resolved, or behavior-changing prototype assumptions it copied there. Use
 **comment-pr** with a body file, and **comment-issue** on the subject issue.
 Keep the exact marker below; reruns update it in place via **update-comment**.
 Aim for 40–100 words, but retain every default and its rationale when the table

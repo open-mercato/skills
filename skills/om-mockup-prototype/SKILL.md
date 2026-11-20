@@ -1,9 +1,9 @@
 ---
 name: om-mockup-prototype
-description: Build a neutral clickable low-fi prototype from a product brief during discovery, or from a feature spec's UI/UX section for om-spec-writing. Preserve business rules and explicit assumptions, simulate the chosen flow locally, and verify navigation and relevant states in a browser. Use for discovery wireframes, spec mockups, or testing a flow before detailed design.
+description: Build a neutral clickable low-fi prototype from a product brief during discovery, or from a feature spec's UI/UX for om-spec-writing. Keeps business rules and assumptions explicit, simulates the flow locally, and verifies navigation and states in a browser. Use for discovery wireframes, spec mockups, or testing a flow.
 ---
 
-# Discovery prototype
+# Low-fi prototype (discovery and spec mockups)
 
 Turn a selected flow from the product brief into neutral screens a person can
 operate. The result is self-contained local HTML with simulated data, a context
@@ -33,7 +33,7 @@ files in the selected prototype revision. Keep application code, the brief and
 ## Arguments
 
 - `{brief}` (optional): a repository-relative product-brief path. Default `${SPECS_DIR}/product-brief.md`.
-- `--flow <name-or-id>` (optional): the Key flow to simulate. Use the flow already chosen in the current conversation; otherwise propose one from the brief and confirm it.
+- `--flow <name-or-id>` (optional): the Key flow to simulate. Use the flow already chosen in the current conversation; otherwise propose one from the brief and confirm it (spec mode: the spec's primary UI/UX flow per `references/spec-mode.md`, not confirmed under `--autonomous`).
 - `--panel-report <path>` (optional): a repository-relative report from the first synthetic panel. With none supplied, use the report returned by the current discovery hand-off; otherwise proceed without one and say so.
 - `--slug <slug>` (optional): a lowercase kebab-case output name, proposed from the flow without a setup question.
 - `--spec <path>` (optional): a repository-relative feature spec to prototype instead of a brief — spec mode, `references/spec-mode.md`. The `--panel-report` argument does not apply.

@@ -7,7 +7,7 @@ preinstalled browser, or a cloud-browser account.
 
 ## Pinned release
 
-Installs are pinned to `agent-browser` **v0.41.1**; every downloaded binary is
+Installs are pinned to `agent-browser` **v0.41.2**; every downloaded binary is
 verified against the SHA-256 sums recorded in the install scripts below before
 it is executed. A binary that fails verification is deleted and the operation
 aborts. To bump the pin, update the version and the per-asset sums together —
@@ -40,7 +40,7 @@ POSIX shell (macOS, Linux, WSL2, Git Bash/MSYS):
 if command -v agent-browser >/dev/null 2>&1; then
   AGENT_BROWSER_BIN=$(command -v agent-browser)
 else
-  AGENT_BROWSER_VERSION=v0.41.1
+  AGENT_BROWSER_VERSION=v0.41.2
   CACHE_ROOT=${XDG_CACHE_HOME:-"$HOME/.cache"}
   TOOL_DIR="$CACHE_ROOT/agent-tools/agent-browser/$AGENT_BROWSER_VERSION"
   mkdir -p "$TOOL_DIR"
@@ -59,13 +59,13 @@ else
   esac
   case "$ASSET" in *unsupported*) echo "Unsupported agent-browser target: $OS/$ARCH" >&2; exit 1 ;; esac
   case "$ASSET" in
-    agent-browser-darwin-arm64) ASSET_SHA256=63b0a97b85a54b4c9b2871318af74104c29b80abd507b53a30316884e062854b ;;
-    agent-browser-darwin-x64) ASSET_SHA256=7802f053e7fb25e10548ee10ca60d892c73d42ed2dbb7fc30c2d5925a5c82859 ;;
-    agent-browser-linux-arm64) ASSET_SHA256=f0b3bdaa40abf2a5111ec08e6d242110aaf56045ef5108cbc633bacc8e53ca17 ;;
-    agent-browser-linux-musl-arm64) ASSET_SHA256=3afdec8f37bfd80b2ecc30e2297c95c3bae9ddb3775ebe531534ea6e3662f44c ;;
-    agent-browser-linux-musl-x64) ASSET_SHA256=951c795e21fddab1d4091ad2ca4f0e69f1eea6534288e6a251598df11ca8e9af ;;
-    agent-browser-linux-x64) ASSET_SHA256=2a89295b62ddd497986a9a80b52e1dbe4c1f6bd68ffde67eaae82eec2206af61 ;;
-    agent-browser-win32-x64.exe) ASSET_SHA256=ddab45e8bae84e5bc6aa1b084bceca9b579aff2e8272474d7d26953cf10965ee ;;
+    agent-browser-darwin-arm64) ASSET_SHA256=19680f06cf87d0095c318a2e80bea6b71523d95d3b651cd18d81885cd182477a ;;
+    agent-browser-darwin-x64) ASSET_SHA256=fc55608c2222650e6e0d0154f9edebd203b63bf853b85d22240bfbddbb006ea1 ;;
+    agent-browser-linux-arm64) ASSET_SHA256=00d291f45e1c4d527b3aa08c70c54c7c3030fde0794f8d4575aaa3ca1680f728 ;;
+    agent-browser-linux-musl-arm64) ASSET_SHA256=730a5168153e27ad1243ebe960157e69de0f24531fbbac9a040856a491bf491f ;;
+    agent-browser-linux-musl-x64) ASSET_SHA256=5d452d57772330fe4cef9b7aeb5e7137890dde20bbb65e82b990e0bc0b35d9cd ;;
+    agent-browser-linux-x64) ASSET_SHA256=c4351f3802ffa5254d8c69f20a52e2fcf56925c6016fcf4203db25a07d811379 ;;
+    agent-browser-win32-x64.exe) ASSET_SHA256=c2eadee7b67e326dfff02d5dd51a16ce7673eb165699d134b3ea5f05b4a7a9d0 ;;
   esac
   AGENT_BROWSER_BIN="$TOOL_DIR/$ASSET"
   if [ ! -x "$AGENT_BROWSER_BIN" ]; then
@@ -115,8 +115,8 @@ if ($onPath) { $AgentBrowser = $onPath.Source }
 else {
   $arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
   if ($arch -notin 'X64','Arm64') { throw "Unsupported agent-browser Windows architecture: $arch" }
-  $pinnedVersion = 'v0.41.1'
-  $expectedSha256 = 'ddab45e8bae84e5bc6aa1b084bceca9b579aff2e8272474d7d26953cf10965ee'
+  $pinnedVersion = 'v0.41.2'
+  $expectedSha256 = 'c2eadee7b67e326dfff02d5dd51a16ce7673eb165699d134b3ea5f05b4a7a9d0'
   $toolDir = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) "agent-tools/agent-browser/$pinnedVersion"
   New-Item -ItemType Directory -Force -Path $toolDir | Out-Null
   $AgentBrowser = Join-Path $toolDir 'agent-browser-win32-x64.exe'

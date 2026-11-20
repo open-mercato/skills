@@ -2,7 +2,7 @@
 
 > 🧑‍💻 Interactive — acts once, may ask questions, hands control back
 
-Writes and reviews feature specifications to staff-engineer standards. It drafts skeleton-first with a hard Open Questions gate (it stops and waits for your answers before designing), researches against open-source market leaders, and breaks delivery down into phases and testable steps that each leave the app working. Specs that add or change entities include a Mermaid data-model graph by default, with an optional interactive local HTML view. It can also produce a severity-ranked architectural review of an existing spec. When the change alters observable behavior, the spec carries a **Delta**: ADDED, MODIFIED, and REMOVED requirements with `WHEN`/`THEN` scenarios. Every changed or removed behavior is frozen by a characterization test before the plan changes it.
+Writes and reviews feature specifications to staff-engineer standards. It drafts skeleton-first with a hard Open Questions gate (it stops and waits for your answers before designing), researches against open-source market leaders, and breaks delivery down into phases and testable steps that each leave the app working. Specs that add or change entities include a Mermaid data-model graph by default, with an optional interactive local HTML view. It can also produce a severity-ranked architectural review of an existing spec. When the change alters observable behavior, the spec carries a **Delta**: ADDED, MODIFIED, and REMOVED requirements with `WHEN`/`THEN` scenarios. Every changed or removed behavior is frozen by a characterization test before the plan changes it. Specs that add or change a user-facing UI get a clickable low-fi mockup from [om-mockup-prototype](om-mockup-prototype.md) by default, linked as `Proposed prototype:`; specs without UI (APIs, backend work, fixes with no screen change) skip it, and so do runs where you pass `--no-mockup`, decline mockups in the request, or supply your own mockups or mockup specification.
 
 ## Parameters
 
@@ -10,6 +10,7 @@ Writes and reviews feature specifications to staff-engineer standards. It drafts
 |---|---|
 | `--autonomous` | Resolves Open Questions with documented, reversible defaults for unattended runs. |
 | `--data-model-graph` / `--no-data-model-graph` | Enables or disables step 6 graph generation; enabled by default and the last flag wins. |
+| `--no-mockup` (alias `--no-mockups`) | Skips the step 7 mockup prototype for a UI spec. |
 
 ## Works with
 

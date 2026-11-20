@@ -3,7 +3,7 @@
 These rules always apply alongside the skill body. The writing rules below use
 the collection's canonical wording; the skill performs no tracker operations.
 
-- **Interactive run.** Work within the user's confirmed scope, ask for missing product decisions, report, and return control. This skill has no autonomous mode and invokes no further skill.
+- **Interactive run.** Work within the user's confirmed scope, ask for missing product decisions, report, and return control. The one unattended path is `--spec --autonomous` from an autonomous `om-spec-writing` run: open choices become `[ASSUMPTION]`s, business policy is never chosen. This skill invokes no further skill.
 - **Secrets hygiene.** Never paste secrets, tokens, `.env` content, raw credentials or personal interview details into artifacts or reports.
 - **Marker contract.** Output reference lines go on their own lines at the end of the final report. Preserve the exact label, value shape and meaning; never translate or decorate machine fields.
 - **Emoji glossary** in user-facing output: 🎯 goal · 📋 plan · 📝 spec · 🏷️ labels · 📸 evidence · 🔍 review · 🧪 tests · 💥 breaking · ✅ pass · ❌ fail · ⚠️ needs-human · ⛔ blocked · 🔁 resume · 🚀 merge/release. Emojis decorate; parsers key on text markers only.
@@ -17,7 +17,7 @@ the collection's canonical wording; the skill performs no tracker operations.
 ## om-mockup-prototype specifics
 
 - **Additional markers.** `Prototype:`, `Prototype context:`, `Verification:` and `Next:` follow the exact shapes in the skill body. A `Next:` invocation is explicitly chosen and still unexecuted; otherwise the value is `none`.
-- **Read-only source context.** The brief, panel reports, application code and `.uxproof/` remain unchanged. Business decisions keep their owner and source; any proposed change follows the brief's change path.
+- **Read-only source context.** The brief, the spec (spec mode), panel reports, application code and `.uxproof/` remain unchanged. Business decisions keep their owner and source; any proposed change follows the brief's change path.
 - **Evidence distinctions.** `[SYNTHETIC]` suggestions and `[ASSUMPTION]` values keep their labels in the context record. Browser checks observe the prototype. Neither those checks nor prototype approval satisfy the Definition of Ready.
 - **Neutral simulation.** Keep low-fi styling, in-memory fictitious data and local operation. Brand decisions, design tokens and production implementation belong to later work.
 - **Preservation.** Write one new revision only. Keep previous revisions, manually edited files and decision history; recorded ownership never authorizes overwriting them.

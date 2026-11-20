@@ -10,7 +10,7 @@ context/checklist instead of repeating it. Omit optional lines that add nothing.
 🧪 {Browser result, evidence link, and required checks that failed or did not run. State when only static review was possible.}
 ⚠️ {Material assumptions or unresolved choices and their practical effect; the prototype and synthetic findings do not establish research evidence. Link the context record.}
 {Refresh only: previous revision link and material manual changes preserved there; what changed in this revision.}
-{Return to the discovery hand-off, or the exact next step the user chose. Do not imply an unaccepted panel, refresh or backlog filing will run.}
+{Return to the discovery hand-off, or the exact next step the user chose. Do not imply an unaccepted panel, refresh or backlog filing will run. Spec mode: return to `om-spec-writing`; `Next: none`.}
 
 Prototype: {repo-relative path to revision/index.html}
 Prototype context: {repo-relative path to revision/README.md}

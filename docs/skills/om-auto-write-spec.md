@@ -2,7 +2,7 @@
 
 > 🤖 Autonomous — runs end-to-end without supervision
 
-Turns a feature brief or a feature-request issue into a fully written spec that lands on a published PR, unattended. It runs `om-spec-writing` in autonomous mode (resolving open questions into documented default assumptions), and for UI-facing features attaches current-app screenshots and proposed-UI mockups as PR evidence when a browser provider is available. It applies the full SDLC labels, keeps high-stakes assumptions gated as a draft, and emits PR/spec markers for chaining. Use it for requests like "write a spec for X and open a PR" or "spec this issue".
+Turns a feature brief or a feature-request issue into a fully written spec that lands on a published PR, unattended. It runs `om-spec-writing` in autonomous mode (resolving open questions into documented default assumptions), and for UI-facing features ships the clickable mockup prototype `om-spec-writing` builds by default, plus current-app screenshots and screenshots of the proposed UI as PR evidence when a browser provider is available. It applies the full SDLC labels, keeps high-stakes assumptions gated as a draft, and emits PR/spec markers for chaining. Use it for requests like "write a spec for X and open a PR" or "spec this issue".
 
 ## Parameters
 
@@ -11,7 +11,7 @@ Turns a feature brief or a feature-request issue into a fully written spec that 
 | `{brief}` or `{issueId}` | Yes (one of the two) | A free-form feature brief, or a tracker issue id whose body supplies the brief. With an issue, the claim protocol applies and the PR carries `Refs #{issueId}`. |
 | `{repo}` | Optional | `owner/name`; inferred from the git remote when omitted. |
 | `--slug <kebab-case>` | Optional | Override the slug used in branch and spec filenames. |
-| `--no-mockups` | Optional | Skip the mockup/screenshot step even for UI-facing specs. |
+| `--no-mockups` (alias `--no-mockup`) | Optional | No mockups at all: no prototype from `om-spec-writing` and no mockup/screenshot step, even for UI-facing specs. |
 | `--force` | Optional | Bypass the claim-conflict check. |
 
 ## Works with

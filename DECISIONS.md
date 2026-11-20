@@ -753,3 +753,27 @@ synchronizing the shared claim consumers in the same change.
 Sources: [GitLab branches](https://docs.gitlab.com/api/branches/),
 [Git explicit leases](https://git-scm.com/docs/git-push),
 [Forgejo pre-receive source](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/routers/private/hook_pre_receive.go).
+
+## 2026-11-20 — Spec writing builds a proposed mockup for every UI spec
+
+Reviewers of UI specs were reading prose about screens, and the autonomous
+path drew one-off static HTML that nobody could click. The operator asked for
+`om-mockup-prototype` mockups by default. `om-spec-writing` now runs it for any
+spec that adds or changes a user-facing UI, and skips it for specs with no UI
+(APIs, backend work, fixes without a screen change). It also skips when the
+user passes `--no-mockup` (the existing `om-auto-write-spec --no-mockups`
+spelling is kept as an alias), declines mockups in the request, or already
+supplied mockups or a mockup specification.
+
+The generated mockup is linked as `Proposed prototype:`, never as `Prototype:`.
+`Prototype:` stays reserved for an owner-accepted design version, so the
+review skills keep comparing implementations with an accepted design only.
+
+`om-mockup-prototype` was interactive-only. It gains a spec mode (`--spec`)
+and, inside that mode only, `--autonomous`. The autonomous variant replaces the
+boundary confirmation with recorded `[ASSUMPTION]`s that the spec's Resolved
+assumptions carry forward. It still never chooses business policy, and the
+discovery mode is unchanged. The alternative was to keep static HTML in
+`om-auto-write-spec`, but that would have left two mockup generators that
+diverge. Spec prototypes get their own root (`<paths.prototypes>/specs/`) so
+discovery history and its ownership checks stay separate.

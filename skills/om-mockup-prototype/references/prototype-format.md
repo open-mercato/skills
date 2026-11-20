@@ -5,7 +5,9 @@ flow clickable and retain the context a later brief refresh needs.
 
 ## Choose a fresh revision
 
-The default output is `${PROTOTYPES_DIR}/discovery/<slug>/revision-001/`.
+The default output is `${PROTOTYPES_DIR}/discovery/<slug>/revision-001/`
+(spec mode: `${PROTOTYPES_DIR}/specs/<slug>/revision-001/` and the manifest
+additions in `references/spec-mode.md`).
 It contains `index.html`, `README.md`, `prototype.json` and an `evidence/`
 directory when browser checks produce files. Keep CSS and JavaScript inline for
 a small flow; local `styles.css` and `prototype.js` are also allowed. Everything

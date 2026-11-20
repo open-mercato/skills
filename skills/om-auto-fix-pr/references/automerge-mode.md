@@ -211,8 +211,10 @@ comment. Add one line to the result comment and the final report:
 
 - all three signals held → `🚀 Automerge: armed — all three signals on <short sha> ({source}).`;
 - some signals missing → `Automerge: armed, missing {signals} — {reason}.`;
-- A6 merged → `🚀 Automerge: merged <merge sha> (automerge force, {source}).`;
-- A6 refused → `Automerge: armed; direct merge refused — {host reason}.`
+- A6 confirmed this run merged → `🚀 Automerge: merged <merge sha> (automerge force, {source}).`;
+- A6 observed an existing merge → `🚀 Automerge: tracker confirms merge <merge sha>.`;
+- A6 stopped → `Automerge: direct merge stopped — {reason}; {next action}.`;
+- A6 outcome unconfirmed → `Automerge: merge confirmation pending — {reason}.`
 
 Never claim a merge that did not happen, and never claim that host CI is green.
 
@@ -222,35 +224,39 @@ Run this step only when `AUTOMERGE_FORCE=true` and A4 armed the PR with all thre
 signals (`1-cr`, `2-qa`, `3-passes-local-ci-checks`) on the final head. Otherwise
 skip it and leave the PR armed for the buddy.
 
-1. **Re-read fresh state** via **get-pr** and **get-pr-checks**. Do not merge, and
-   leave the PR armed, when any of these holds:
-   - the head moved;
+1. **Re-read fresh state** via **get-pr** and **get-pr-checks**. Reconcile
+   an unfinished summary on a PR that already merged, then stop. Otherwise do
+   not merge, and leave the PR armed when applicable, if any of these holds:
+   - the PR is not open and ready, the target or head moved, or ownership was lost;
+   - the force request was withdrawn, the queue label is missing, or any of the
+     three signal labels or its final-head evidence no longer holds;
    - a hold label is present (`do-not-merge`, `blocked`, `qa-failed`,
      `automerge-blocked`, `automerge-prepare`);
    - the head is conflicting;
-   - any host check completed `FAILURE` / `ERROR` / `CANCELLED` / `TIMED_OUT`;
-   - QA recorded `waiting-human` (protected areas or the human QA gate label).
-   Pending or missing host checks do not stop the merge. That is the point of this
-   mode.
-2. **Merge, bypassing host merge requirements when allowed.** Call **merge-pr**
-   with squash, the head-SHA guard on the final head, and `bypass-protection` (the
-   descriptor's admin form). That form lets `CURRENT_USER` merge past the host's
-   remaining requirements: a required separate/independent approving review,
-   still-pending required checks, and other branch-protection rules. The host
-   decides whether `CURRENT_USER` has that right; a pre-read of permissions is
-   only a hint.
-   - Refused for missing bypass rights → try the plain guarded squash once. It
-     succeeds only when the host's own requirements already hold.
-   - Any other refusal (moved head, conflict, a host without a bypass), or the
-     plain form also refused → stop. Never retry any other way, and never request
-     reviewers to satisfy the rule. Leave the PR armed for the buddy and record
-     the host's reason in the status comment.
-   The bypass covers host rules only. The gates in A6 step 1 (holds, failed
-   host checks, protected-area QA) are never bypassed.
-3. **After a merge,** rewrite the status comment's first line to
-   ``🚀 What happened: merged <merge sha> by `om-auto-fix-pr` (automerge force) on
-   <head sha>``, and release the PR lock as in A5. The PR's closing keywords let the
-   tracker close any linked issue.
+   - any host check completed `FAILURE` / `ERROR` / `CANCELLED` / `TIMED_OUT`,
+     or the hosted check state could not be read;
+   - QA recorded `waiting-human` (protected areas or the human QA gate label),
+     or fresh labels or human QA evidence now require that wait.
+   If force came from the PR label, verify it is still present.
+   Pending or missing host checks still permit the local-CI signal.
+2. **Record the merge decision.** Follow `references/direct-merge-summary.md`
+   to refresh the status and confirm the one merge summary comment. If that
+   write cannot be confirmed, leave the PR armed and report the blocker.
+3. **Recheck step 1 immediately after the confirmed write**, including ownership,
+   and reconcile any evidence change as directed by the summary reference.
+   Then call **merge-pr** with squash, the checked head SHA and
+   `bypass-protection` (the descriptor's admin form). This form can bypass
+   the host's remaining requirements, such as an independent approving review
+   or pending checks, when the host authorizes the current user to do so.
+   - Refused for missing bypass rights → try the plain guarded squash once,
+     only after refreshing the summary and repeating the final gate. The host's
+     own requirements must already hold for the plain merge to succeed.
+   - On any other refusal, or if the fallback is refused, stop and leave the PR
+     armed when applicable. Record the specific reason. Do not request reviewers.
+4. **Confirm the outcome and update the same summary** as directed by
+   `references/direct-merge-summary.md`. Update the A4 status prose with the
+   result and release the PR lock in A5. The PR's
+   closing keywords let the tracker close any linked issue.
 
 Automerge force skips only the wait. It never skips the three signals, a human
 hold, a protected-area human-QA gate, or a failed host check.

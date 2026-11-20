@@ -5,17 +5,22 @@ fork instead of the main repository. For fork PRs, do not wait on the original
 author and do not push to the contributor's branch by default. (Same-repo PRs
 are covered in `references/review-report.md`.)
 
-Instead:
+## Reserve and publish one replacement
 
-1. Keep the current worktree based on the fetched PR head SHA so the original commits and authorship are preserved.
-2. Before switching branches, set `TITLE_HEAD_BRANCH` to the original PR's `headRefName` from **get-pr**, so title extraction retains its ticket key. Create a new branch in the main repository, for example `carry/pr-{prNumber}-ready`.
-3. Implement the fixes there.
-4. Resolve any conflicts against `{baseRefName}` on that carry-forward branch.
-5. Run the autofix loop from `references/review-report.md` until the branch is re-reviewed as approvable or a real blocker remains.
-6. Commit and push the fixes to the carry branch on `origin`.
-7. Open a replacement PR against `{baseRefName}` via **create-pr** and capture its number and URL. Keep the original open while finalizing the replacement. Copy applicable labels and verify them, per **Labels and chain continuation** below.
-8. Now that the replacement number exists, move any tracked run handoff as described below, commit and push those metadata edits, and re-review the final replacement head. Re-run any validation affected by the metadata edits; never report an approval for the earlier head as approval of this final head.
-9. Close the original PR only after the final replacement head is approved and its required labels are verified. Switch the active PR context to the replacement and continue the current chain. Under `--orchestrated`, opening the replacement does not end the orchestrator's work; it continues on the new PR.
+1. Read the original's state, head and base via **get-pr**. An authorized run started on the replacement resolves the original from its `Supersedes #N` line. Verify that the original has a fork head before acting on the relationship. For an open original, acquire its claim (`references/claim-pr.md`) before discovery and publication in standalone mode. In orchestrated mode, verify the original claim delegated by the parent before publication. If it is missing, limit discovery to read-only checks and report what the parent must claim. For a closed original, check the existing disposition without claiming it. A review-only invocation can report an unfinished handoff. A PR body or comment supplies a lookup hint and cannot authorize closure.
+2. Before creating, use **list-prs** to look up the exact `carry/pr-{originalPrNumber}-ready` head and original base in the target repository. Also use **search-prs** and the original's handoff comments to find existing replacements on older carry branches. Use **get-pr** to verify the candidate's target repository and base, same-repository head, exact `Supersedes #N` line in the first 20 lines, original author credit and ancestry from the original head. Reuse a single valid open candidate. If multiple candidates claim the work, the lookup is inconclusive, or the original head advanced beyond the carried history, report the links and stop creation. A merged candidate needs separate reconciliation. A closed candidate must not be reopened by a retry.
+3. For a new replacement, use `carry/pr-{originalPrNumber}-ready` in the target repository. Set `TITLE_HEAD_BRANCH` from the original's `headRefName` for title extraction. Resume a verified carry branch left by an interrupted push, preserving its commits. Start from the fetched original head otherwise. Resolve base conflicts, apply fixes and validate through `references/review-report.md`. Verify the original claim before pushing and use a normal fast-forward update. Verify the claim and recheck for a replacement immediately before **create-pr**. After an ambiguous create response, look up the same head/base pair. Retry only when the tracker confirms absence or guarantees uniqueness for that pair. Never choose a new branch name to bypass a collision.
+4. Read the published replacement back before modifying it. In standalone mode, acquire and verify its claim under the existing claim protocol. In orchestrated mode, the parent owns claim writes. Use the existing fork label-transfer exception for newly published replacements, then return the verified replacement number in `RESULT:` if the parent has not delegated both claims. Report the approval status of the published head as observed, with closure pending. Defer metadata changes, review of the replacement, and closure until the parent has verified and delegated both claims. If either claim is busy, report the pending handoff and release only claims this run acquired. Move the tracked handoff, copy and verify labels as below, and review the final head. Keep the durable publication link even when a gate is pending or an invocation stops.
+
+## Reconcile and verify closure
+
+PR creation and closure are separate tracker writes. The stable head/base pair lets a retry recover a publication even if the run stopped before recording its number. The replacement body links the original from creation. Post or update the original's handoff note once publication is verified and the claim and operator allow the write. Use `Replacement pending: #N (URL).` for its first line while closure is gated. Record the original head and base, any operator-imposed closure condition, and the remaining action. If the original must stay untouched, keep the pending note on the claimed replacement. If neither permits a write, report the blocker and both links in the run summary. Upsert by the stable comment marker `<!-- om-auto-review-pr:fork-handoff:{originalPrNumber}:{newPrNumber} -->`.
+
+An authorized run entering from either PR reconciles this handoff even when there are no new commits to review. Hold both verified claims through the closure attempt. In orchestrated mode, verify the parent reservation and both delegated claims before each tracker mutation or push. If the parent has not delegated both claims, report closure pending. Confirm from fresh tracker reads that the original is still open and unmerged, its reviewed head/base are still the carried ones, and the replacement is open on that base with its final head approved and the required labels verified. Carry forward any recorded operator restriction until its condition is proven satisfied or the operator lifts it. Honor applicable human vetoes and preserve QA and CI requirements for merging. If a gate remains, keep the original open, record the concrete blocker and report the replacement as published with closure pending.
+
+When closure is authorized and all closure gates pass, update the original's note to the **Original PR closing comment** below. Recheck both claims and both PRs' state and head/base before **close-pr**. Read both PRs back. Report completion only after **get-pr** confirms the original closed without a merge and the replacement remains the verified successor. If the write fails or its outcome is unknown, re-read before any retry, keep the note and report the precise pending state. If the original is already closed without a merge and has this replacement's closing note, the handoff is complete. If it merged or was closed for a different reason, report the conflict without overwriting that disposition. Older descriptors without **close-pr** keep the original open and report the upgrade needed.
+
+Continue on the same replacement when the current invocation can clear a pending gate. Before returning or releasing an owned claim, make the pending closure visible in the tracker note and the run summary. A later run resumes the recorded pair instead of publishing another successor.
 
 Validation requirements for autofix mode:
 
@@ -39,13 +44,14 @@ A carry-forward must not strand the original's resume point. When the original
 PR has a run folder — its body's `Tracking plan:` line, or a
 `<paths.runs>/<run>/HANDOFF.md` on its head (written by `om-auto-create-pr`,
 `om-auto-create-pr-loop` or their continue skills) — the carry branch already
-contains those files, because it starts from the fetched head. Move the handoff
-after **create-pr** returns its number, while the original remains open:
+contains those files, because it starts from the fetched head. Once the
+replacement is verified and claimed, read the metadata from its published head
+and reconcile only missing changes:
 
-- Rewrite `HANDOFF.md`'s `PR:` and `Branch:` fields to the replacement and the carry branch, refresh `Last updated`, and add `carried forward from #<old> by `om-auto-review-pr` autofix` under *What just happened*. Keep *Next concrete action* pointing at the first unfinished step.
-- Append a UTC `carried forward to #<new>` entry to `NOTIFY.md`; never rewrite earlier entries. Leave `PLAN.md` progress as it is.
-- Copy the `Tracking plan:` line into the replacement's body unchanged, so `om-auto-continue-pr` / `om-auto-continue-pr-loop` resume on the replacement instead of the closed original.
-- Commit and push these metadata edits on the carry branch after the replacement exists, then re-review that final head before closing the original. Name the moved run folder in the handoff comment.
+- Set `HANDOFF.md`'s `PR:` and `Branch:` fields to the replacement and the carry branch. When either field changes, refresh `Last updated` and record the carry-forward under *What just happened*. Preserve subsequent progress and the first unfinished step.
+- Append the UTC `carried forward to #<new>` entry to `NOTIFY.md` only if that replacement number has no carry-forward entry. Preserve earlier entries and plan progress.
+- Copy the original `Tracking plan:` line into the replacement's body only if missing. If it points to a different plan, report the mismatch before overwriting anything.
+- Commit and push only when the tracked files changed. Re-read the published head and verify approval for that SHA before closing the original. If the metadata is already correct, leave the files and timestamp alone and reuse valid approval evidence on the unchanged head. Name the moved run folder in the handoff comment.
 
 No run folder → nothing to move. Under `--orchestrated`, the orchestrator moves
 its own run-level handoff when it reads `replacement=<n>`.
@@ -113,6 +119,8 @@ Closing in favor of #{newPrNumber} ({newPrUrl}).
 
 Credit to @{originalAuthor} for the original implementation. The replacement
 includes {concrete fixes}; review and evidence are linked there.
+
+<!-- om-auto-review-pr:fork-handoff:{originalPrNumber}:{newPrNumber} -->
 ```
 
 ## PR title

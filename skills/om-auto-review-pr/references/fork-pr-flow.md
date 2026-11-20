@@ -59,19 +59,23 @@ its own run-level handoff when it reads `replacement=<n>`.
 ## Labels and chain continuation
 
 Read the original PR's current labels through **get-pr** immediately before
-transfer. If the automerge label was removed from the original, an orchestrated
-run cancels the continuation and reports it. Never recreate the label from an
-earlier snapshot.
+transfer. If neither the configured queue label nor `automerge-now` remains
+on the original, an orchestrated run cancels the continuation and reports it.
+Never recreate an authorization label from an earlier snapshot. Before any
+policy-label write, compare fresh original and replacement labels. If combining
+them would create an `automerge-now` + `automerge-force` pair that neither PR
+already carries, stop before closing the original and report the need for
+explicit authorization.
 Through the descriptor's guards, copy category, priority, risk, custom labels, QA requirements (`needs-qa`
-/ `skip-qa`), and any configured `automerge.label` (default `automerge`) that
-was present. Keep one priority and risk label, preserving the originals unless
+/ `skip-qa`), and the fresh configured queue and policy labels (`automerge-now`,
+`automerge-force`, `automerge-prepare`). Keep one priority and risk label, preserving the originals unless
 a documented scope increase requires raising them. Preserve human hard blocks;
 normalize one pipeline label to the replacement's actual state via
 `set_pipeline_label` without clearing a human
 block. Never copy `qa-approved`, `qa-self-verified`, `in-progress`, or
 `ci-monitoring`: approval evidence and live claims do not transfer to a new head
 or run. Conflicting QA requirements remain blocked. Honor `labels.enabled` and
-the guards' missing-label behavior; a missing required automerge label blocks
+the guards' missing-label behavior; an unverified queue authorization or prepare-only transfer blocks
 unattended merging. Read the labels back through **get-pr** before closing the
 original, and maintain the marker-idempotent label-rationale comment.
 

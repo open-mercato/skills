@@ -3,7 +3,9 @@
 Apply these gates before bootstrap/reconciliation, before and after each stage,
 after a replacement/retarget, and immediately before either finish action.
 They outrank every signal, QA routing preference, `--force`, CI waiver and host
-protection bypass. Read fresh tracker facts; a saved ready record is not permission.
+protection bypass. Read fresh tracker facts. Always apply §1. When both
+`automerge-now` and `automerge-force` are currently present, skip §§2–2c and
+use the automation-only approval checks in `references/automerge-now.md`.
 
 ## Gate map
 
@@ -20,7 +22,7 @@ adapting this skill starts in one place. The detail lives where noted.
 | QA routing | Required approval is missing or coverage has gaps | `references/qa-routing.md` |
 | Risk override limits | What `--force` and `automerge-force` may skip | `references/risk-override.md` |
 | CI | A check is failing or pending; proved baseline waivers | `references/signals.md`, `references/ci-baseline.md` |
-| Off switch | The queue label is gone or `automerge-blocked` is set; only a verified approval-only buddy block permits cheap CI recovery | `SKILL.md` rules, `references/ci-approval.md` |
+| Off switch | Neither authorization label remains or `automerge-blocked` is set; only a verified approval-only buddy block permits cheap CI recovery | `SKILL.md` rules, `references/ci-approval.md` |
 
 To adapt the areas to another product, edit the area table in section 2 and
 the configuration in section 2b. Keep the stop and release rules unchanged.
@@ -34,7 +36,8 @@ relevant author identity/permission means `waiting-human`, never guessed clearan
 
 - `qa-failed` or `do-not-merge` is a hard stop by itself. No automatic FAIL report,
   `needs-qa`, current-head pin or author lookup is required for these labels.
-  Preserve the existing SDLC hard stops `blocked` and active manual-testing `qa` too.
+  Preserve `blocked` in both policies. Active manual-testing `qa` stops the visit
+  under both policies, even with current automated QA evidence.
 - An unresolved human QA **NO-GO** is a hard stop without any label. Accept a
   case-insensitive explicit verdict such as `QA verdict: NO-GO` or an unambiguous
   human QA rejection of this PR with `NO-GO` (also `NO GO`/`NO_GO`). Verify a human
@@ -189,7 +192,7 @@ as new features or UX changes. Two configuration keys name it:
 Such a PR follows section 2's human QA rule: QA cannot be `n/a`, an automatic
 PASS and `qa-self-verified` are supporting evidence only, and it needs
 `qa-approved` with a pinned `QA head:` human sign-off. `--force` and
-`automerge-force` cannot waive it. It needs no technical approval unless
+`automerge-force` cannot waive it without `automerge-now`. It needs no technical approval unless
 section 2 also applies. Record `human-only: <label | author>` in the status
 reason. Read labels fresh on every visit; removing the label returns the PR to
 the ordinary route, while an author entry applies for as long as it is configured.

@@ -10,6 +10,8 @@ source and head in the existing status/run/plan. Saved scheduler/waiting-human
 state is not routing authority. This is an approval-routing preference, never
 permission to invent `qa-approved`, ignore failing scenarios or waive eligibility.
 
+For the two-label automation-only policy, use `references/automerge-now.md` instead of the ordinary approval routing below.
+
 ## Check even when the report-based QA signal already holds
 
 Read applicable local mandatory QA rules and current-head approval evidence.

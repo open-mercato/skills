@@ -442,7 +442,7 @@ it must not reset that PR’s clock or restore its old queue position.
 
 After all three signals and the resolved independent-review policy are freshly
 verified, **before** either prepare/merge action, checkpoint `readyAt` plus
-`readyHead` and a canonical `readyPolicy` identity (target, independent-review
+`readyHead` and a canonical `readyPolicy` identity (target, two-label approval policy, independent-review
 requirement, risk and CI policies). Set it once while that exact readiness
 holds. Keep `firstReadyAt` as earliest observed readiness. Clear current
 `readyAt`/head/policy/duration on real invalidation; after successful revalidation

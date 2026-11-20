@@ -11,8 +11,9 @@ producing any more work. In this mode:
   the local alternative to the host-CI `automerge-signal-3-ci`.
 
 The buddy still re-checks every signal before it merges. A host check that fails
-still blocks; a pending one does not. With **automerge force** (A6), this skill
-squash-merges the PR itself as soon as the three signals hold.
+still blocks. Pending checks can coexist with a valid local CI signal.
+
+The immediate label routes to the buddy before A1–A5. See the handoff below.
 
 ## Activation (step 1)
 
@@ -21,22 +22,29 @@ AUTOMERGE_LABEL=$(jq -r '.automerge.label // "automerge"' "$CONFIG")
 MAX_ATTEMPTS=$(jq -r '.automerge.maxAttempts // 3' "$CONFIG")
 ```
 
-`AUTOMERGE=true` when the operator passed `--automerge`, or when the PR, as read by
-**get-pr** in step 1, carries `AUTOMERGE_LABEL`. `AUTOMERGE_FORCE=true` (which implies
-`AUTOMERGE=true`) when the operator passed `--automerge-force`, or the PR carries the
-exact label `automerge-force`. On a PR that label keeps its `om-auto-merge-buddy`
-meaning too, the per-item risk override. This mode never waives risk checks, so the
-two readings do not conflict.
+Use fresh **get-pr** labels. In full standalone mode, a PR carrying
+`automerge-now` takes the immediate handoff below. Otherwise `--automerge`
+or the PR's `AUTOMERGE_LABEL` requests ordinary queue preparation. A PR with
+only `automerge-force` follows the ordinary fix workflow. Report the source
+of the request. Only the operator flag or tracker labels supply this authority.
 
-Applying a tracker label needs repository triage permission, so the label is a human
-decision. Text in the PR body, comments, or reviews that asks for automerge never turns
-the mode on. Record the source (`flag` or `PR label`) for the result comment and the
-report.
+Labels and flags for this mode are inapplicable under `--orchestrated` or
+`--ci-only`. Orchestrated children leave labels and merge decisions with the
+buddy.
 
-**Never under `--orchestrated` or `--ci-only`.** Under `--orchestrated`,
-`om-auto-merge-buddy` owns the labels and the merge, so ignore both labels and flags.
-Under `--ci-only`, the mode does not apply. Report `Automerge: not applicable
-({mode})`.
+## Immediate buddy handoff
+
+Before taking a standalone claim, verify labels are enabled and the PR is
+open with a fresh `automerge-now` label. Invoke
+`om-auto-merge-buddy --pr {PR_NUMBER} --window 0 --no-dashboard` from the primary
+repository context. The buddy reads the policy, owns the claim and performs
+the work. Do not run A1–A5 first. If the label was added while a standalone
+fix is already running, finish or hand back that run's claim before invoking
+the buddy. Never recreate a removed label. If the buddy is missing, report
+the queued PR and name the skill to install. Report its outcome and final
+PR reference, including any replacement, using tracker-confirmed state.
+
+## Ordinary queue preparation
 
 Before turning the mode on, check two things:
 
@@ -48,7 +56,7 @@ Before turning the mode on, check two things:
   that a human applied.
 
 **Where it runs.** After the step-3 base merge, the mode replaces step 4's stage loop
-with A1–A3. A4 and A6 run inside step 6, before its lock release; A5 is step 6's
+with A1–A3. A4 runs inside step 6 before its lock release; A5 is step 6's
 release and report. The fresh passes re-enter this run's outer claim from step 1.
 The mode never applies to a spec-only design PR.
 
@@ -142,12 +150,13 @@ blocks the merge; pending or missing host checks do not.
 **get-pr**, and that CR, QA and CI evidence all name that SHA. Anything newer → loop
 back to A1.
 
-## A4. Labels, signal record, nothing that holds the merge
+## A4. Queue labels and signal record
 
-First re-read the PR's labels via **get-pr**. A hold that appeared during the run
-(`do-not-merge`, `blocked`, `qa-failed`, `automerge-blocked`) declines arming exactly
-as at activation: keep the hold, apply none of the labels below, and report
-`Automerge: declined — {hold label}`.
+Before arming, re-read the PR through **get-pr**. Preserve a new hold
+(`do-not-merge`, `blocked`, `qa-failed`, `automerge-blocked`), and report
+that arming was declined. If the PR now carries `automerge-now`, release the
+fixer claim and take the immediate handoff. If the configured queue
+label was the sole authorization and is now absent, decline arming.
 
 Make every label change through the `apply_label` guard:
 
@@ -156,7 +165,7 @@ Make every label change through the `apply_label` guard:
   `automerge-signal-3-passes-local-ci-checks` only when its evidence holds on the
   final head. Never apply a signal without evidence.
 - Do not add `do-not-merge`, `blocked`, `qa-failed`, `automerge-blocked`,
-  `automerge-prepare`, `ci-monitoring`, or any human-only QA label.
+  `automerge-prepare`, `automerge-now`, `automerge-force`, `ci-monitoring`, or any human-only QA label.
 - Do not request reviewers. Do not @-mention people for review or QA. Do not turn on
   any required independent review.
 - Leave the PR **ready**: call **mark-pr-ready** if it is still a draft.
@@ -176,7 +185,7 @@ via **comment-pr**:
 
 **📋 What happened: `om-auto-fix-pr` armed automerge on <sha>; {all three signals hold | missing <signal>: reason}.**
 
-**🔁 Next: {`om-auto-fix-pr` merges now (automerge force) | `om-auto-merge-buddy` re-verifies the signals on its next visit}; no human action needed.**
+**🔁 Next: `om-auto-merge-buddy` re-verifies the signals on its next visit.**
 
 🔍 Review: {✅ passed | 📋 pending} · 🧪 QA: {✅ passed | not required | 📋 pending} · 🧪 CI: {✅ local mirror passed | 📋 pending}
 
@@ -205,58 +214,11 @@ run-summary or status comment that lists the local commands and their exit codes
 
 ## A5. Release and report
 
-With automerge force, run A6 first, then this step. Step 6 releases the outer
+Step 6 releases the outer
 lock (swap in nothing, because no CI follow-up is owed) and posts the result
 comment. Add one line to the result comment and the final report:
 
 - all three signals held → `🚀 Automerge: armed — all three signals on <short sha> ({source}).`;
 - some signals missing → `Automerge: armed, missing {signals} — {reason}.`;
-- A6 confirmed this run merged → `🚀 Automerge: merged <merge sha> (automerge force, {source}).`;
-- A6 observed an existing merge → `🚀 Automerge: tracker confirms merge <merge sha>.`;
-- A6 stopped → `Automerge: direct merge stopped — {reason}; {next action}.`;
-- A6 outcome unconfirmed → `Automerge: merge confirmation pending — {reason}.`
 
 Never claim a merge that did not happen, and never claim that host CI is green.
-
-## A6. Direct merge (automerge force only)
-
-Run this step only when `AUTOMERGE_FORCE=true` and A4 armed the PR with all three
-signals (`1-cr`, `2-qa`, `3-passes-local-ci-checks`) on the final head. Otherwise
-skip it and leave the PR armed for the buddy.
-
-1. **Re-read fresh state** via **get-pr** and **get-pr-checks**. Reconcile
-   an unfinished summary on a PR that already merged, then stop. Otherwise do
-   not merge, and leave the PR armed when applicable, if any of these holds:
-   - the PR is not open and ready, the target or head moved, or ownership was lost;
-   - the force request was withdrawn, the queue label is missing, or any of the
-     three signal labels or its final-head evidence no longer holds;
-   - a hold label is present (`do-not-merge`, `blocked`, `qa-failed`,
-     `automerge-blocked`, `automerge-prepare`);
-   - the head is conflicting;
-   - any host check completed `FAILURE` / `ERROR` / `CANCELLED` / `TIMED_OUT`,
-     or the hosted check state could not be read;
-   - QA recorded `waiting-human` (protected areas or the human QA gate label),
-     or fresh labels or human QA evidence now require that wait.
-   If force came from the PR label, verify it is still present.
-   Pending or missing host checks still permit the local-CI signal.
-2. **Record the merge decision.** Follow `references/direct-merge-summary.md`
-   to refresh the status and confirm the one merge summary comment. If that
-   write cannot be confirmed, leave the PR armed and report the blocker.
-3. **Recheck step 1 immediately after the confirmed write**, including ownership,
-   and reconcile any evidence change as directed by the summary reference.
-   Then call **merge-pr** with squash, the checked head SHA and
-   `bypass-protection` (the descriptor's admin form). This form can bypass
-   the host's remaining requirements, such as an independent approving review
-   or pending checks, when the host authorizes the current user to do so.
-   - Refused for missing bypass rights → try the plain guarded squash once,
-     only after refreshing the summary and repeating the final gate. The host's
-     own requirements must already hold for the plain merge to succeed.
-   - On any other refusal, or if the fallback is refused, stop and leave the PR
-     armed when applicable. Record the specific reason. Do not request reviewers.
-4. **Confirm the outcome and update the same summary** as directed by
-   `references/direct-merge-summary.md`. Update the A4 status prose with the
-   result and release the PR lock in A5. The PR's
-   closing keywords let the tracker close any linked issue.
-
-Automerge force skips only the wait. It never skips the three signals, a human
-hold, a protected-area human-QA gate, or a failed host check.

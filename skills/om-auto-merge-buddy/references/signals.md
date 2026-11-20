@@ -24,7 +24,7 @@ holds on the current head. Always re-read **get-pr-checks** and **list-runs**
 (see "Recheck evidence" below). The seed then counts as the first-visit record,
 so no bootstrap is needed.
 
-Before bootstrap or retaining any recorded signal, apply `references/human-gates.md`; vetoes stop the visit and protected-area human QA outranks every `n/a`/automatic PASS rule below. Then run the entrance reconciliation in `references/reconcile.md`; labels alone never establish evidence or the scope of later changes.
+Before bootstrap or retaining any recorded signal, apply `references/human-gates.md`; vetoes stop the visit and protected-area human QA governs ordinary policy. Then run the entrance reconciliation in `references/reconcile.md`; labels alone never establish evidence or the scope of later changes.
 
 ## Bootstrap — the first visit, when no signal is recorded
 
@@ -61,7 +61,7 @@ A later strict invocation recomputes native evidence and never trusts a saved
 
 ## 2 · QA — `automerge-signal-2-qa`
 
-First apply `references/human-gates.md`: an active veto records `waiting-human`; protected changes, and a PR carrying a QA gate label narrower than `needs-qa` (section 2c), need valid pinned human QA before signal 2 can hold. The following automatic/`n/a` paths apply only outside those gates.
+First apply `references/human-gates.md`: an active veto records `waiting-human`. For the automation-only pair use `references/automerge-now.md`. Otherwise protected changes and a narrower human QA gate label need pinned human QA before signal 2 can hold.
 
 - **`n/a`** — the PR carries `skip-qa`, or carries neither `needs-qa` nor the QA gate label (`qaGateLabel`, default `needs-qa`), or `qaGate` is `false`, and in every case carries neither `qa-approved` nor `qa-failed`. A human verdict removes `needs-qa` (`references/qa-verdicts.md` §1); such a PR stays QA-required under the approval or veto rules. Record `qa: n/a` and apply the label: the signal is satisfied.
 - **Completed auto-QA PASS — check first.** Trusted same-author starter/report/completion history with explicit PASS on the unchanged current head grants signal 2 under `references/qa-evidence.md`, including legacy `Verified` short-SHA reports uniquely resolved through Git. This works without `qa-approved`, `QA head:`, self-QA eligibility or `--force`, even on `risk-high`. Keep coverage notes visible; no approval labels are fabricated and no duplicate QA is counted. This report reuse does not satisfy a mandatory local approval label: check `references/qa-routing.md` for missing formal approval/testable gaps, which default to real orchestrated QA/sign-off even when the report-based signal holds.
@@ -70,14 +70,19 @@ First apply `references/human-gates.md`: an active veto records `waiting-human`;
 
 ## 3 · CI — `automerge-signal-3-ci`
 
-Read **get-pr-checks** and **list-runs** for the current head, and `mergeable` from **get-pr**. Before classifying CI as failed, missing or human-blocked, inspect workflow approval holds under `references/ci-approval.md`; a held run may expose no check jobs yet.
+Under the two-label policy, the baseline-waiver and no-CI-configured rows do
+not grant a signal. Use a real hosted pass or the local mirror. If the immediate
+label is present and CI is pending or missing, try the eligible local mirror
+before settling on a waiting outcome.
+
+Read **get-pr-checks** and **list-runs** for the current head, and `mergeable` from **get-pr**. Before using any row below, resolve any workflow approval holds under `references/ci-approval.md`; a held run may expose no check jobs yet.
 
 | Reading | Meaning |
 |---|---|
+| any current-head workflow still awaiting approval after reconciliation, including a run with zero jobs | **approval-held** → withhold signal 3 and record the actionable blocker (below) |
 | every check completed `SUCCESS` / `NEUTRAL` / `SKIPPED`, head not conflicting | **held** |
 | explicit `--skip-pre-existing-ci-errors`, every failing check has a fresh exact-target baseline proof, all other checks pass and all runs completed | **held with baseline waivers**, never reported as all checks green (`references/ci-baseline.md`) |
 | any check `PENDING` / `QUEUED` / `IN_PROGRESS` and none failed | **pending** → `waiting-ci` (no attempt counted). A check that has been pending for more than 4 hours on one head counts as **failing**: a stuck runner is a CI problem, not a reason to wait forever |
-| any check `ACTION_REQUIRED` (runs held for maintainer approval) | approve held runs, then **pending** (below) |
 | any `FAILURE` / `ERROR` / `CANCELLED` / `TIMED_OUT`, or head `CONFLICTING` | **failing** → CI stage |
 | no checks at all | **pending** for the first 10 minutes after the head commit. After that, **held** as "no CI configured" only when **list-runs** on the target branch also shows no workflow runs; otherwise **failing** (CI did not start) |
 
@@ -89,6 +94,7 @@ also holds when all of these are true:
   linking the comment that lists every `validation.commands` entry and its exit
   code;
 - the head is not conflicting;
+- the current-head host read is complete and no workflow approval hold is unresolved;
 - no host check on the current head completed `FAILURE` / `ERROR` / `CANCELLED` /
   `TIMED_OUT`.
 
@@ -96,8 +102,7 @@ Pending, queued or missing host checks do not block this alternative, so the
 visit does not end `waiting-ci`. Record `ci:` with what the host actually shows
 and never call it green. A failed host check invalidates the alternative: remove
 the label and record `localCi: fail`, then route to the CI stage as usual. A moved
-head invalidates it like any CI evidence. Only `om-auto-fix-issue` / `om-auto-fix-pr` in
-automerge mode produce this signal; this skill never re-runs the local mirror to grant it.
+head invalidates it like any CI evidence. The fixers can seed it in ordinary queue preparation, and the buddy can produce it for `automerge-now` under `references/automerge-now.md`.
 
 All checks count, not only the required ones: the three signals replace the host's
 merge rules, so a red optional check is still red. The only opt-in exception is a fresh, fully proven baseline waiver under `--skip-pre-existing-ci-errors`; unknown, pending and unproved failures are never waived.
@@ -119,7 +124,7 @@ any signal, even when the head did not move:
 - **CR** — invalidate a dismissed or deleted approval, a newer changes-requested verdict, or newly unresolved blocker feedback. Re-establish the signal through signal 1's rules; a saved record never overrides a new verdict.
 - **Human gates** — re-read hard-stop labels and complete human QA verdict history before all signals. Reclassify protected changes; invalidate QA/readiness for an unresolved veto or missing protected-area human sign-off (`references/human-gates.md`).
 - **QA** — recompute whether QA is required from current labels and `qaGate`. Check completed same-head auto-QA evidence first. A missing `qa-approved` invalidates only approval-derived QA, never a valid completed-PASS report. A deleted/revoked qualifying report, removed or superseded sign-off, wrong head or newer trusted FAIL invalidates its respective evidence. A new QA requirement reopens `n/a`. Read new notes even when the label set is unchanged.
-- **CI** — always re-read checks and current-head workflow runs; a rerun can turn an unchanged head pending or red. Never preserve `ci: pass` from the record alone. Apply the tracker descriptor's completeness guard before granting CI.
+- **CI** — always re-read checks and current-head workflow runs; a rerun can turn an unchanged head pending or red. Never preserve `ci: pass` from the record alone. Apply the tracker descriptor's completeness guard before granting CI. Reconcile workflow approval holds before either pass path. While any hold is unresolved, withhold signal 3 and remove both signal 3 labels if present, retaining verified local results as evidence for re-evaluation after release.
 - **Target** — compare current `baseRefName` with `base` in the record. A missing or different `base` invalidates all three signals, even when the head is unchanged. Older records without `base` are re-evaluated once rather than guessed compatible.
 
 Rewrite invalidated records and remove their signal labels before proceeding.
@@ -132,7 +137,7 @@ the missing review/QA stage or wait for fresh target-specific CI.
 
 Resolve force from current CLI flags or the fresh `automerge-force` label under `references/item-policy.md`; in this section, force/non-force means that effective per-item request, never saved metadata.
 
-Record `riskChecks: skipped` only when the effective per-item force request is enabled **and this PR has no protected-area changes** (`references/human-gates.md`);
+Record `riskChecks: skipped` only when the effective risk override is eligible under the current item policy (`references/human-gates.md`);
 otherwise record `enforced`. A change from skipped to enforced invalidates waiver-derived CR before reuse; completed same-head QA PASS is accepted independently under `references/qa-evidence.md`; changing from enforced to skipped may retain strict evidence.
 A legacy record without this field is enforced only after its source evidence
 has been checked for an override marker. On a non-force run, do not bootstrap,

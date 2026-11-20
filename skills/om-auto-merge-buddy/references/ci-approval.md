@@ -17,7 +17,8 @@ sign-off, and does not authorize deployment/environment approvals.
    list touches no CI or workflow definitions; outside-contributor changes to
    those definitions require maintainer inspection. An incomplete diff or state
    read cannot authorize approval. Protected-area human review/QA gates remain
-   required for merging; releasing safe CI does not satisfy them.
+   required under ordinary policy. The two-label policy still requires
+   verified CI evidence.
 3. Call **approve-pending-runs** with the current PR number and head SHA. This is
    the permission check: do not infer inability from fork status, author
    association, or the host's phrase “requires human approval.” If the descriptor
@@ -40,7 +41,8 @@ sign-off, and does not authorize deployment/environment approvals.
    gates retain their normal routing.
 
 Run this check at entrance, on CI revisits, and immediately before launching
-stage 3 or parking a PR for workflow approval. It is a cheap prerequisite,
+stage 3, parking a PR for workflow approval, or finishing. An unresolved hold
+returns `approval-held` and blocks hosted and local CI evidence alike. It is a cheap prerequisite,
 not a producing stage; never increment or reset repair attempts merely for an
 approval. Pending run duration is measured after release, so days spent awaiting
 approval do not immediately classify a newly queued run as a stuck runner.

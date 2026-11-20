@@ -753,3 +753,12 @@ synchronizing the shared claim consumers in the same change.
 Sources: [GitLab branches](https://docs.gitlab.com/api/branches/),
 [Git explicit leases](https://git-scm.com/docs/git-push),
 [Forgejo pre-receive source](https://codeberg.org/forgejo/forgejo/src/branch/forgejo/routers/private/hook_pre_receive.go).
+
+
+## 2026-11-20 — One owner for immediate automerge
+
+Both fixers route `automerge-now` to the merge buddy after the implementation
+handoff. The buddy treats that label as queue authorization. The additional
+`automerge-force` opt-in skips human QA and protected-area classification, with
+a visible PR notice and fresh CR, CI and applicable auto-QA as the evidence
+gates. Explicit vetoes and prepare-only policy remain authoritative.

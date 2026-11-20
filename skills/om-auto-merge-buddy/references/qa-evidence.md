@@ -1,6 +1,6 @@
 # Reuse completed auto-QA evidence before launching stage 2
 
-Apply `references/human-gates.md` first. Human vetoes stop work; protected-area changes require strict risk checks and pinned human QA. Automatic PASS reuse, `n/a`, self-sign-off and automatic routing below never bypass these gates.
+Apply `references/human-gates.md` first. Human vetoes stop work. Ordinary policy retains its protected-area QA gate. Under the two-label policy, use the exact-head target and coverage conditions in `references/automerge-now.md` before accepting a PASS.
 
 For an automerge PR, a trusted completed `om-auto-qa-pr` PASS on the unchanged
 current head satisfies signal 2 by itself. It does **not** need `qa-approved`,

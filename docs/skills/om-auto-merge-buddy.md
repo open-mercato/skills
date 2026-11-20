@@ -2,14 +2,14 @@
 
 > 🤖 Autonomous — runs end-to-end without supervision
 
-Works the queue of open PRs a human labeled `automerge`, one at a time, inside a time window (default 2 hours). A PR is ready when no human veto remains, any protected-area human QA requirement is satisfied, and three signals hold on its current head. Each signal is recorded as a label that only this skill applies:
+Works the queue of open PRs authorized by the configured queue label or `automerge-now`, one at a time, inside a time window (default 2 hours). A PR is ready when no human veto remains, any applicable protected-area human QA requirement is satisfied, and three signals hold on its current head. Each signal is recorded as a label that only this skill applies:
 
 | Signal | Label | Produced, when missing, by |
 |---|---|---|
 | Code review | `automerge-signal-1-cr` | [om-auto-review-pr](om-auto-review-pr.md) `--autofix --orchestrated`; separate human native approval only when required |
 | QA | `automerge-signal-2-qa` | not needed without `needs-qa`; otherwise [om-auto-qa-pr](om-auto-qa-pr.md) `--orchestrated`, with failures fixed by the review autofix |
 | CI | `automerge-signal-3-ci` | [om-auto-fix-pr](om-auto-fix-pr.md) `--orchestrated` (base merge, conflicts, root-cause CI fixes) |
-| CI (local alternative) | `automerge-signal-3-passes-local-ci-checks` | seeded only by [om-auto-fix-issue](om-auto-fix-issue.md) / [om-auto-fix-pr](om-auto-fix-pr.md) in automerge mode; holds while no host check has failed |
+| CI (local alternative) | `automerge-signal-3-passes-local-ci-checks` | produced by the buddy for `automerge-now` or seeded by [om-auto-fix-issue](om-auto-fix-issue.md) / [om-auto-fix-pr](om-auto-fix-pr.md) in automerge mode; requires a complete host read with no failed check or unresolved workflow approval hold |
 
 The buddy alone holds the PR's `in-progress` claim and labels; the sub-skills run in `--orchestrated` mode and skip their own claim, label and CI-wait steps, so nothing is done twice. When CI is still running, the PR is parked under `ci-monitoring` and the buddy moves to the next PR, returning later in the window or in the next run. A PR that cannot be fixed within `maxAttempts` is parked under `automerge-blocked` until a human removes it. Other people's PRs remain in scope; with active plans, owned actionable work takes priority and the current user is assigned/verified at the first actionable step. Fork PRs are carried forward to a credited replacement PR, which the buddy continues in the same run.
 
@@ -40,22 +40,22 @@ Every visit starts by reconciling signal labels with actual review/QA/CI evidenc
 
 ## Per-PR labels
 
-Keep the configured queue label (`automerge` by default) on every item. Add either modifier label to choose different behavior within one run; neither enrolls a PR on its own. Create these optional labels in your tracker before applying them, even when using a custom queue label.
+Create these optional labels in the tracker. Names are exact and work with a
+custom queue label. Removing both queue authorization labels stops the visit.
 
-| Labels in addition to the queue label | Behavior |
+| PR label | Effect |
 |---|---|
-| None | Use the run’s mode and explicit risk flags. |
-| `automerge-force` | Apply `--skip-risk-checks --force` to this item only, preserving protected human gates, claims and all three signals. |
-| `automerge-prepare` | Override even `--mode prepare-and-merge` with `prepare-to-merge`: prepare and leave `merge-queue`, without merging. |
-| Both | Prepare with the force risk override; leave the PR unmerged. |
+| `automerge-now` | Authorizes the PR and tells either fixer to request one immediate buddy visit. Run `/om-auto-merge-buddy --pr 123 --window 0` for a targeted visit. |
+| `automerge-force` | Waives the risk-high review-evidence and self-QA exclusions on an authorized PR outside protected areas. |
+| `automerge-now` + `automerge-force` | Posts a PR notice and skips human QA, separate human approval and protected-area classification. Requires actual automated code review, hosted or local CI, and auto-QA when required. |
+| `automerge-prepare` | Keeps an authorized PR prepare-only, including when the other two labels are present. |
 
-For example, run `/om-auto-merge-buddy --mode prepare-and-merge` over three queued PRs: a plain item can merge, an item with `automerge-force` uses the risk override, and one with `automerge-prepare` stays ready for a separate merge decision. A global prepare-only mode still prevents every item from merging. The label `automerge-prepare` maps to the existing `prepare-to-merge` mode; it is not an additional CLI mode name.
-
-Labels are read again before stages and immediately before finishing. Adding prepare prevents the next merge; removing it restores current run mode after fresh gate checks. Removing force restores strict review unless the run explicitly supplied a risk flag. Each worker resolves its own policy, including on resume and fork replacement, so one item’s overrides cannot affect another. Queue label removal remains the off switch.
-
-Force mode and its CLI/label source are recorded in the PR status, review/QA evidence and run log. CLI flags are never inherited on resume; current modifier labels are resolved again. A visit without an effective override rejects previous override-derived CR approvals and applies strict risk gates. Protected changes enforce strict checks regardless of either force input.
-
-The CI baseline opt-in is independent of force. Every waiver records both check/run URLs, head and current target SHA, matching failure signature/root cause and unchanged CI-definition proof. A target advance or rerun invalidates that proof; subsequent runs without the flag apply strict CI and reject cached waived records. Waived failing checks remain visibly red in the report; they are never called green.
+The two-label policy still honors explicit vetoes, queue and claim ownership,
+head and target verification, and prepare-only configuration. Failed host
+checks invalidate the local CI alternative. Removing either label restores
+ordinary approval policy and triggers fresh reconciliation. CLI risk flags
+apply only to the current invocation. For ordinary policy, the separate CI
+baseline waiver still requires matching failure proof on the exact target SHA.
 
 ## Run log and resume
 
@@ -149,25 +149,24 @@ human QA NO-GO also stops the visit: its author must be verified as a human with
 repository write access. Quoted examples and copied bot markers do not count.
 Only an explicit human release resolves the veto; automatic PASS, new commits,
 self-QA labels and replacement PRs cannot clear it. Remaining hard-stop labels
-must also be removed by a human. Existing SDLC `blocked` and active `qa` stops
-remain effective.
+must also be removed by a human. The SDLC `blocked` label still stops the visit. Active `qa` stops ordinary
+processing under both approval policies, even with a current auto-QA PASS.
 
-The actual diff determines protected risk: executable migrations, money, and
+Under ordinary policy, the actual diff determines protected risk: executable migrations, money, and
 permissions/tenant-isolation changes, architecture changes and backward-incompatible changes always retain strict risk checks,
 even with `--force` or missing risk/QA labels. They require explicit human QA
 covering the protected behavior, pinned with `QA head:` and `qa-approved`.
 Automatic PASS and `qa-self-verified` supply evidence but cannot satisfy this
 human gate. Ordinary fixes outside these areas retain their automatic route.
 
-`automerge.humanOnlyLabels` and `automerge.humanOnlyAuthors` add work that needs a human tester by policy, such as features or a design owner's UX fixes. They follow the same pinned human QA rule. `automerge.complexQa` (`always` by default, or explicit `needs-qa` / `never`) decides when QA runs `om-auto-qa-pr --complex`. All gates are listed in one table at the top of `references/human-gates.md`. Protected areas are narrowed to changes that widen access, rewrite data, move money, change module boundaries or break published contracts: fail-closed tightening stays automatic with negative-case QA. A human QA reviewer may sign off a protected PR by reviewing the automatic evidence and re-running one negative case, and a clean backport inherits its merged origin's sign-off.
+`automerge.humanOnlyLabels` and `automerge.humanOnlyAuthors` add work that needs a human tester by policy, such as features or a design owner's UX fixes. They follow the same pinned human QA rule under ordinary policy. `automerge.complexQa` (`always` by default, or explicit `needs-qa` / `never`) decides when QA runs `om-auto-qa-pr --complex`. All gates are listed in one table at the top of `references/human-gates.md`. Protected areas are narrowed to changes that widen access, rewrite data, move money, change module boundaries or break published contracts: fail-closed tightening stays automatic with negative-case QA. A human QA reviewer may sign off a protected PR by reviewing the automatic evidence and re-running one negative case, and a clean backport inherits its merged origin's sign-off.
 
 The existing status comment visibly reports `waiting-human`, the exact veto or
 protected behavior with evidence links, enforced risk policy, who must act,
-what they must do, and the resume condition. It does not leave a protected PR
-showing `Risk checks: skipped` or `ready`.
+what they must do, and the resume condition. While required approval is missing, it reports `waiting-human`.
 
 
-Architecture changes and backward-incompatible changes additionally require
+Under ordinary policy, architecture and backward-incompatible changes require
 explicit current-head human technical approval from a maintainer or the
 repository's designated architecture/contract owner, even when independent
 native review is disabled. This is separate from the pinned human QA evidence.

@@ -7,7 +7,7 @@ watching a CI run while other work is available.
 ## Queue
 
 Build the queue at the start, then refresh it with **list-prs** / **search-prs**
-each time a positive-window run returns to the top of the queue, so PRs labeled mid-run join it. In one-pass mode (`--window 0`), take one initial snapshot, visit each PR once, and stop; follow a replacement as part of the original visit.
+each time a positive-window run returns to the top of the queue. Query both authorization labels and deduplicate by PR number under `references/item-policy.md`, so PRs labeled mid-run join it. In one-pass mode (`--window 0`), take one initial snapshot, visit each PR once, and stop; follow a replacement as part of the original visit.
 
 Follow `references/scheduler.md`: due tracked PRs (most recently worked first),
 then current-user assigned actionable work when the active list is nonempty,
@@ -17,6 +17,8 @@ Refresh current-head CI at entrance: newly settled CI/head/evidence makes a
 tracked PR actionable now, even before its old estimate. A future CI check
 must not block admitting new work. Never infer no owned work from an incomplete
 assigned-state reading. A replacement continues in the same visit.
+
+For `--pr`, scope admission and stage work to that PR (and its replacement), including tracked items. Re-read its fresh authorization labels even when it is already tracked. An immediate targeted invocation reassesses a stale waiting outcome when current policy changes.
 
 Skip live claims and honor blocks (`references/claim-pr.md`). Due blocked or
 waiting-human entries receive only a cheap inspection. Check for a changed head

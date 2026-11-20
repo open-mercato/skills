@@ -247,7 +247,7 @@ Before releasing, prove the exact run/comment ownership and perform label cleanu
 Before releasing, recompute/persist the current concrete reason, action owner, retry condition, outcome/schedule and evidence, and mirror it in the same status comment on every visit (`references/scheduler.md`). An unchanged outcome does not retain an obsolete reason. For merged/closed/unauthorized entries, verify the reservation, finalize the same comment and release the owned tracker claim before removing the row in the final bounded transaction. Failed cleanup retains its reserved cleanup-pending row (`references/scheduler.md`). Retain ready/human/blocked ones for scheduled inspection. Never delete pending follow-ups from the separate handoff.
 
 `ci-monitoring` from this skill means "the next visit owes a CI check". Remove it
-when that visit reads a settled CI state. A human removing `AUTOMERGE_LABEL`
+when that visit reads a settled CI state. A human removing all queue authorization labels
 also ends the obligation.
 
 ## Sub-skills under this claim

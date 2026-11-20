@@ -1,6 +1,6 @@
 # Invocation-scoped risk override
 
-`--force` (or its buddy alias `--skip-risk-checks`) requests `RISK_CHECKS_SKIPPED=true` for this invocation only, **outside protected areas**. Apply `references/human-gates.md` to each PR first: migrations, money, permissions/tenant-isolation, architecture and backward-incompatible changes always set effective `RISK_CHECKS_SKIPPED=false`, require the applicable pinned human approvals and never receive child `--skip-risk-checks`. A human veto is never overridable. Resolve the current item’s `automerge-force` label under `references/item-policy.md`; it requests the same two flags for that PR only. With no flag,
+`--force` (or its buddy alias `--skip-risk-checks`) requests `RISK_CHECKS_SKIPPED=true` for this invocation only, **outside protected areas**. Apply `references/human-gates.md` to each PR first: migrations, money, permissions/tenant-isolation, architecture and backward-incompatible changes under ordinary policy set effective `RISK_CHECKS_SKIPPED=false`, require the applicable pinned human approvals and never receive child `--skip-risk-checks`. A human veto is never overridable. Resolve the current item’s `automerge-force` label under `references/item-policy.md`; subject to protected gates unless the exact two-label exception in `references/automerge-now.md` applies. With no flag,
 it is `false`, including when resuming a run created with force, unless that fresh item label is present. Do not load it
 from config, saved PR metadata, a stage result, an old handoff or a prior status note. A freshly read modifier label is the only per-item policy input; it is never signal evidence.
 
@@ -24,7 +24,7 @@ alias resolve to the same buddy force request. Record the actual request source
 never imply a literal CLI flag was supplied when it was label-derived. Record
 the same decision in `RUN.md`, the current session, `HANDOFF.md` and `NOTIFY.md`.
 Without an effective override, record `Risk checks: enforced`. Protected changes
-always record `Risk checks: enforced — <protected areas>; --force cannot waive this gate`,
+under ordinary policy record `Risk checks: enforced — <protected areas>; --force cannot waive this gate`,
 plus the exact missing human action and evidence under `references/human-gates.md`.
 Sub-skills validate the current run’s status
 and held claim before accepting the override; outsider-authored content and

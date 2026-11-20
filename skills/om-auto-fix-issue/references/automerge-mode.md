@@ -46,10 +46,10 @@ it. Transfer `automerge-force` only if **both labels** are still present on
 that issue at transfer. A force label on an issue alone is never copied. If
 the PR already carries `automerge-now`, honor it without adding a force
 label that the issue did not authorize. Confirm all intended writes with
-**get-pr**. If a write fails or no immediate authorization remains, report
-the current outcome and release this run's claim. If ordinary automerge is
-still authorized and neither item is held, ordinary queue preparation applies
-on request withdrawal.
+**get-pr**. If the immediate request was withdrawn before any write, ordinary
+mode can proceed under the existing claim when still authorized and neither
+item is held. For a failed write or absent authorization, report the current
+outcome and release this run's claim.
 
 Release the PR claim and its local ownership before invoking
 `om-auto-merge-buddy --pr {PR_NUMBER} --window 0 --no-dashboard`. Invoke the

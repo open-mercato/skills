@@ -100,7 +100,7 @@ This skill consumes an `{issueId}` — or, in brief mode, a problem description 
 - File before fixing: brief mode files via `om-prepare-issue` (never composed inline) before any triage or claim; a numeric id that does not resolve stops the run.
 - Classify before triaging: a feature request takes the **feature route**, never the bug-confirmation gate. When unsure, default to the bug chain; when an issue mixes both, ask the user to split it.
 - On the bug route, claiming belongs to `om-fix` — never claim before the triage gate confirms work. On the feature route the delegated skills perform their own claims, so a stop before delegation leaves no lock.
-- One continuous lock, handed off — never dropped and re-acquired: issue lock from `om-fix`, moved to the PR by `om-open-pr --handoff`, re-entered (not released) by the review and UI-QA steps, released exactly once in step 12 — or by step 11 on any failure after the claim (`references/claim-pr.md`, chained hand-off).
+- Keep one owned claim through the issue-to-PR transfer and ordinary review/QA. Release it exactly once on completion or abort. For an immediate visit, release the fixer claim before the buddy acquires its own (`references/automerge-mode.md`).
 - A UI-touching bug fix gets `om-auto-qa-pr` evidence (step 10) regardless of whether a spec exists, unless `--no-ui` was passed; the QA verdict labels stay owned by the pipeline.
 - Invoke each chain skill's workflow verbatim and pass outputs between steps verbatim, in the exact marked blocks the next step parses.
 - Always use an isolated worktree; reuse the current linked worktree when already inside one; never nest; always clean up a worktree you created.

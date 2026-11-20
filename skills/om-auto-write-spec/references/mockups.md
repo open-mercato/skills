@@ -57,8 +57,8 @@ Otherwise use the spec's `Proposed prototype:` path when it exists:
 
 Otherwise use existing supplied proposal visuals when they cover the requested
 scope and remain identified as proposals. Only when neither exists and the
-spec's skip reason (if any) is that `om-mockup-prototype` is not installed or
-stopped without an artifact, create illustrative mockups:
+spec's line reads `Mockups: skipped — om-mockup-prototype not installed …` or
+`Mockups: skipped — om-mockup-prototype stopped: …`, create illustrative mockups:
 
 1. Author a minimal **static HTML file** in `${SPECS_DIR}/assets/${SLUG}/mockup-NN-<screen>.html` — self-contained (inline CSS, no build step, no app code, no external requests). Match the app's rough look (reuse its visible palette/typography from the current-state screenshots) but keep it obviously illustrative; realistic placeholder data, never real user data.
 2. Render it with the browser provider (`open file://…` → screenshot) into `mockup-NN-<screen>.png`.

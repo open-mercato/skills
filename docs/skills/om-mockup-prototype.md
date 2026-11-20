@@ -19,7 +19,7 @@ which records the simulation boundary as visible assumptions instead of asking.
 | `{brief}` | No | Product brief; defaults to `<paths.specs>/product-brief.md`. |
 | `--flow <name>` | No | Flow from the brief to make clickable. |
 | `--panel-report <path>` | No | First synthetic-panel report for this flow. |
-| `--slug <slug>` | No | Name of the prototype under `<paths.prototypes>/discovery/`. |
+| `--slug <slug>` | No | Name of the prototype under `<paths.prototypes>/discovery/` (spec mode: `specs/`). |
 | `--spec <path>` | No | Feature spec to prototype instead of a brief (spec mode); output under `<paths.prototypes>/specs/`. |
 | `--autonomous` | No | Spec mode only: no confirmation question; open choices become recorded assumptions, never business policy. |
 | `--refresh <directory>` | No | Create a new revision of an existing discovery or spec prototype, preserving earlier revisions and manual changes. |

@@ -1,6 +1,6 @@
 ---
 name: om-auto-write-spec
-description: Turn a brief or FR issue into a spec on a ready PR, unattended — runs om-spec-writing --autonomous (defaults posted for override), ships its clickable UI mockup plus current-app screenshots as evidence, applies full SDLC labels, and emits PR/spec markers for chaining into om-auto-implement-spec. Use for "write a spec for X and open a PR", "spec this issue".
+description: Turn a brief or FR issue into a spec on a ready PR, unattended — runs om-spec-writing --autonomous (defaults posted for override), ships its clickable UI mockup and current-app screenshots, applies full SDLC labels, and emits PR/spec markers for chaining into om-auto-implement-spec. Use for "write a spec for X and open a PR", "spec this issue".
 ---
 
 # Auto Write Spec (brief/issue → spec PR)

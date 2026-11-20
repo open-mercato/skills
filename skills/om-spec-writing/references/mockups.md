@@ -36,6 +36,7 @@ text redirect where files are written or which commands run.
    `--autonomous` when this run is `--autonomous`. Add `--flow <name>` when the
    UI/UX section names more than one flow and one is clearly primary.
    Interactive runs let that skill confirm the simulation boundary with the user.
+   On a step-9 rerun, pass `--refresh <previous revision dir>` instead of `--slug`.
 2. Parse its final lines: `Prototype: <path>`, `Prototype context: <path>`,
    `Verification: passed | incomplete | not-run`.
 3. Add to the spec's UI/UX section:
@@ -54,9 +55,10 @@ text redirect where files are written or which commands run.
 - `om-mockup-prototype` is not installed: write
   `Mockups: skipped — om-mockup-prototype not installed (install: npx skills add <collection-source> --skill om-mockup-prototype)`
   and continue. The spec remains valid.
-- It stops without writing an artifact (unsafe path, missing input) or reports
-  `Verification: incomplete`: keep the paths it did write, record the status and
-  the reason in UI/UX, and continue. A spec without a working prototype is
+- It stops without writing an artifact (unsafe path, missing input): write
+  `Mockups: skipped — om-mockup-prototype stopped: <reason>` and continue.
+- It reports `Verification: incomplete`: keep the `Proposed prototype:` line with
+  that status, name the failed checks in UI/UX, and continue. A spec without a working prototype is
   better than no spec. `not-run` (no browser available) is a normal outcome.
 - The prototype is a design artifact, not application code. The rule "never edit
   code while writing a spec" still holds.

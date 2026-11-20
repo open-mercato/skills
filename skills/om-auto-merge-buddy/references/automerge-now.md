@@ -100,6 +100,47 @@ function immediateCiDecision({
 }
 ```
 
+## Complete the work in the same run
+
+For a PR admitted with both labels, drive the current visit to a confirmed
+merge, the authorized prepare-only or obsolete outcome, or a verified blocker.
+The queue window limits admission. Keep the worker on this PR through repair
+and revalidation even after the window closes or under `--window 0`. On label
+loss, immediately return to ordinary policy and its window.
+
+1. Check the live head, target, ownership, policy and blockers. Resolve
+   conflicts against the actual target, fix actionable review and QA findings,
+   and provision or recover the configured QA environment where authorized.
+   Use the existing orchestrated stages and checkpoint each action. Reuse
+   evidence only where its original rules still allow it.
+2. Prefer the full local CI mirror below when hosted checks are pending or
+   absent. Run it during this visit, including after a repair returns
+   `pending`. Diagnose local failures, fix actionable defects through the
+   orchestrated repair or review stage, and verify the new head and target.
+   Re-enter the ladder after a head or target change. Retry an interrupted
+   check only after addressing the cause or proving a transient failure.
+3. With all applicable gates satisfied, finish immediately. If the merge is
+   refused, refresh the tracker state. Confirm an external merge if one
+   occurred. Follow an authorized replacement in the same visit. Resolve
+   remediable conflicts, stale evidence and authorized workflow holds, then
+   retry against the freshly verified head and target. Use the guarded plain
+   squash fallback only where `references/stages.md` permits it.
+4. If a specific required hosted check is still running and only the host can
+   clear the gate, use the configured `ci.maxWaitMinutes` budget (default 40 minutes, zero disables waiting). Use a single
+   cumulative budget per visit, including across head changes. Release the tracker claim and record
+   `ci-monitoring` before waiting, keeping the fenced reservation for this
+   visit. Recheck in chunks of at most 60 seconds within the same run. Refresh policy and discover concurrent work before
+   reacquiring the claim and making further mutations.
+   If no wait budget is available, the check cannot run, or the budget is
+   exhausted, record the workflow, reason and next retry condition.
+
+Keep the configured attempt cap and stop when the remaining obstacle has no
+authorized remedy. Record the exact blocker, evidence, attempted remedies and
+who or what can clear it. Preserve repository-required gates, explicit vetoes,
+prepare-only policy, foreign claims and host protection. Never weaken a check
+or treat pending work, an incomplete local run or a readiness-only report as
+a completed merge.
+
 ## Local CI mirror for an immediate visit
 
 If hosted CI passes, use it. When no host check has failed and the hosted
@@ -116,8 +157,8 @@ hold returns `approval-held` even with a complete read and passing local mirror.
 2. Use **checkout-pr** in an isolated worktree, install dependencies as the
    repository requires, and verify `git rev-parse HEAD` against the current
    PR head. Recheck ownership and labels before running the full list in order.
-   Scope the attempt to this head/target and the normal stage reserve and
-   attempt cap. Always clean up the worktree this step created.
+   Scope the attempt to this head/target and the configured attempt cap. Apply
+   the current visit’s stage-window rule in `references/window.md`. Always clean up the worktree this step created.
 3. Re-read head, target, queue policy, ownership, checks and workflow runs.
    Record every command and exit code in the automation-authored status
    comment, with the head/target and actual host state. Reapply the CI decision
@@ -125,5 +166,6 @@ hold returns `approval-held` even with a complete read and passing local mirror.
    the unchanged head grants the local CI signal through the shared publication
    procedure in `references/signals.md`. Publish its label and `localCi:` record
    while preserving the actual hosted CI state. Failed or incomplete
-   local validation grants no signal. Leave it for CI repair or a fresh
-   successful host run, without repeating the same local attempt in a visit.
+   local validation grants no signal. For a two-label visit, apply the repair
+   loop above immediately. Re-run local validation after a fix or an evidenced recovery. For other visits, leave
+   the failure for CI repair or a fresh successful host run.

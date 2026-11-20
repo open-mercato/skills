@@ -16,16 +16,18 @@ const stages = read('skills/om-auto-merge-buddy/references/stages.md')
 const fork = read('skills/om-auto-review-pr/references/fork-pr-flow.md')
 const start = window.match(/```bash\n([\s\S]*?)\n```/)[1]
 
-for (const [minutes, now, reserve, expected] of [
+for (const [minutes, now, reserve, expected, visitKind = ''] of [
   [0, 1000, 600, 0],
   [0, 100000, 300, 0],
   [120, 1000, 600, 0],
   [120, 1600, 600, 1],
   [120, 1600, 300, 0],
   [120, 2001, 300, 1],
+  [120, 2001, 300, 0, 'admitted-two-label-stage'],
+  [120, 2001, 300, 1, 'ordinary-stage'],
 ]) {
   const result = spawnSync('bash', ['-eu'], {
-    input: `${start}\nmerge_buddy_can_start ${now} ${reserve}\n`,
+    input: `${start}\nmerge_buddy_can_start ${now} ${reserve} "${visitKind}"\n`,
     env: { ...process.env, WINDOW_MINUTES: String(minutes), DEADLINE: '2000' },
     encoding: 'utf8',
   })
@@ -33,7 +35,7 @@ for (const [minutes, now, reserve, expected] of [
   assert.equal(result.status, expected, `${minutes}-minute window, now=${now}, reserve=${reserve}: ${result.stderr}`)
 }
 assert.match(skill, /zero window takes one snapshot[\s\S]*?each entry once/)
-assert.match(window, /do not refresh or poll after the snapshot is visited/)
+assert.match(window, /take no new queue snapshot and do no queue-level idle polling/)
 console.log('PASS: shipped deadline predicate runs a zero-window pass and enforces positive-window reserves')
 
 function recordFields(document) {

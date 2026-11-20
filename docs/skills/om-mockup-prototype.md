@@ -8,6 +8,10 @@ backlog. The prototype uses simulated data and visible assumptions, so the team
 can check navigation, states and recovery before committing to detailed design.
 It keeps the repository's design contract and application code unchanged.
 
+In **spec mode** (`--spec`), [om-spec-writing](om-spec-writing.md) calls it to
+mock up the UI a feature spec proposes; autonomous spec runs pass `--autonomous`,
+which records the simulation boundary as visible assumptions instead of asking.
+
 ## Parameters
 
 | Parameter | Required | Description |
@@ -16,6 +20,8 @@ It keeps the repository's design contract and application code unchanged.
 | `--flow <name>` | No | Flow from the brief to make clickable. |
 | `--panel-report <path>` | No | First synthetic-panel report for this flow. |
 | `--slug <slug>` | No | Name of the prototype under `<paths.prototypes>/discovery/`. |
+| `--spec <path>` | No | Feature spec to prototype instead of a brief (spec mode); output under `<paths.prototypes>/specs/`. |
+| `--autonomous` | No | Spec mode only: no confirmation question; open choices become recorded assumptions, never business policy. |
 | `--refresh <directory>` | No | Create a new revision of an existing discovery prototype, preserving earlier revisions and manual changes. |
 
 `paths.prototypes` defaults to `.ai/prototypes` without setup questions. Each

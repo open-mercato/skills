@@ -16,6 +16,19 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-11-20 — Specs with UI get a mockup prototype by default
+
+`om-spec-writing` now builds a clickable low-fi mockup with `om-mockup-prototype`
+(new `--spec` mode) for every spec that adds or changes a user-facing UI and
+links it as `Proposed prototype:`. `om-auto-write-spec` — and everything that
+delegates spec authoring to it — inherits this and screenshots the prototype as
+the proposed-UI evidence instead of authoring static HTML mockups. Prototypes
+land under `paths.prototypes` (default `.ai/prototypes`) in `specs/<slug>/`.
+Specs without UI are unaffected. Opt out per run with `--no-mockup` (alias
+`--no-mockups`), by declining mockups in the request, or by supplying your own
+mockups. No config or descriptor migration; install `om-mockup-prototype` to get
+the prototypes — without it specs record `Mockups: skipped` and continue.
+
 ## 2026-11-09 — Serialize housekeeping writes per issue
 
 Refresh `om-auto-manage-issues` to acquire a short per-issue ownership claim for

@@ -52,7 +52,7 @@ A later strict invocation recomputes native evidence and never trusts a saved
 
 ## 2 · QA — `automerge-signal-2-qa`
 
-First apply `references/human-gates.md`: an active veto records `waiting-human`; protected changes need valid pinned human QA before signal 2 can hold. The following automatic/`n/a` paths apply only outside those gates.
+First apply `references/human-gates.md`: an active veto records `waiting-human`; protected changes, and a PR carrying a QA gate label narrower than `needs-qa` (section 2c), need valid pinned human QA before signal 2 can hold. The following automatic/`n/a` paths apply only outside those gates.
 
 - **`n/a`** — the PR carries `skip-qa`, or carries neither `needs-qa` nor the QA gate label (`qaGateLabel`, default `needs-qa`), or `qaGate` is `false`. Record `qa: n/a` and apply the label: the signal is satisfied.
 - **Completed auto-QA PASS — check first.** Trusted same-author starter/report/completion history with explicit PASS on the unchanged current head grants signal 2 under `references/qa-evidence.md`, including legacy `Verified` short-SHA reports uniquely resolved through Git. This works without `qa-approved`, `QA head:`, self-QA eligibility or `--force`, even on `risk-high`. Keep coverage notes visible; no approval labels are fabricated and no duplicate QA is counted. This report reuse does not satisfy a mandatory local approval label: check `references/qa-routing.md` for missing formal approval/testable gaps, which default to real orchestrated QA/sign-off even when the report-based signal holds.

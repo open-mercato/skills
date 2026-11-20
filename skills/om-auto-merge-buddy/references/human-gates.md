@@ -201,9 +201,11 @@ comment (`human-qa label: <area | human-only label | author>`). Remove it only
 when this skill applied it and a later classification of the current head finds
 that neither section applies; never remove one a human applied.
 
-The label is a marker, not a gate input: a missing label never waives sections
-2 and 2b, and a present one adds nothing beyond them. Never apply or remove
-`qaReadyLabel`; the repository keeps it current.
+A missing label never waives sections 2 and 2b. A present one is a human-QA
+request whoever applied it: signal 2 then needs the pinned human QA sign-off of
+section 2 (`qa-approved` plus a verified human reviewer's `QA head:` note), and a
+completed automatic PASS or an `om-auto-qa-pr` self-sign-off never satisfies it.
+Never apply or remove `qaReadyLabel`; the repository keeps it current.
 
 ## 3. Make the stop visible in the existing status comment
 

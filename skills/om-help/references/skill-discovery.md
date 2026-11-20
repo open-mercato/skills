@@ -1,4 +1,4 @@
-# Skill discovery (step 3)
+# Skill discovery (step 4)
 
 How `om-help` builds its skill list at run time from what is actually installed. This replaces a hand-written catalog: a catalog drifts from the installed versions, the frontmatter cannot.
 

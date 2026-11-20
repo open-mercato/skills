@@ -100,7 +100,7 @@ When automatic review holds but required native approval is missing, end
 `waiting-human` without a stage or attempt; no mode or host bypass may bypass
 that requirement. Default policy never waits solely on absent native approval
 or a stale host requested-changes state after inherited findings are resolved. Recheck current CI rather than
-trusting a saved green record. If baseline errors were waived, resolve the target tip again and revalidate the exact target SHA, check attempts, logs and CI-definition proof immediately before merge; any change returns to CI evaluation (`references/ci-baseline.md`).
+trusting a saved green record; a local-CI signal 3 (`references/signals.md`) still requires no failed host check at this moment. If baseline errors were waived, resolve the target tip again and revalidate the exact target SHA, check attempts, logs and CI-definition proof immediately before merge; any change returns to CI evaluation (`references/ci-baseline.md`).
 
 Before either action, checkpoint current-head/policy `readyAt` and measured
 duration under `references/scheduler.md`; preserve immutable first start and

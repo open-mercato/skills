@@ -1,7 +1,7 @@
 # Release CI held for workflow approval (opt-in)
 
 Detailed procedure for the step 8 held-CI release of `om-auto-review-pr`. It runs
-only when `CI_APPROVE_HELD_RUNS` (`ci.approveHeldRunsOnReview`) is `true`; it
+only when `ci.approveHeldRunsOnReview` is `true`; it
 defaults to `false`, and with it off the skill never calls **approve-pending-runs**.
 Held runs are then reported as such (below) and left to a maintainer.
 
@@ -41,7 +41,7 @@ The decision is made by the bundled helper. Run
 `node <skill-directory>/scripts/held-ci-gate.mjs` with JSON on stdin; it makes no
 tracker calls and refuses on any unknown or malformed fact. Its inputs — the
 helper itself, `config` and `descriptorPath` — come from the step 0 load in the
-checkout the skill was started from, never from the PR worktree: the PR under
+trusted base checkout, never from the PR worktree: the PR under
 review must not be able to enable, reword or replace its own release gate. Its
 rules, in order:
 
@@ -83,13 +83,14 @@ rules, in order:
    this run, whatever it returns.
 3. **Read back** with `{"action":"readback", "reviewedSha", "heldRuns",
    "approveExitCode", "approveStdout", "runs"}`, where `runs` is a fresh
-   **list-runs** for the reviewed head. Its `released` runs move to
-   `PENDING_CHECKS` (`pending` are the ones not yet finished), so step 10
-   discloses them as pending CI and step 13 follows them up. `stillHeld` runs stay
+   **list-runs** for the reviewed head. Its `pending` runs move to `PENDING_CHECKS`.
+   Step 10 discloses them and step 13 follows them up. Released runs that
+   already finished feed back into the normal CI check classification. `stillHeld` runs stay
    in `HELD_RUNS` with the disclosure above. A refusal — no write access, or a
    host that cannot approve programmatically — is not a finding: the helper's
    `line` names that a maintainer with write access must act, and `retry` is
-   always `false`.
+   always `false`. If an acknowledged approval still appears held
+   (`approvedButStillHeld`), keep it in the held disclosure.
 4. State the outcome in the review body as the helper's one `line`
    (`CI released: {n} held workflow runs for {sha}` or `CI not released: {reason}`).
 

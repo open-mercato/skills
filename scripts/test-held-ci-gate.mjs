@@ -300,6 +300,10 @@ assert.equal(partial.readback.refused, false)
 assert.equal(partial.readback.approvalErrors, true, 'the failed approval is still surfaced')
 assert.equal(partial.readback.disclose, true, 'still-held runs keep the held disclosure')
 assert.equal(partial.readback.line, `CI released: 1 held workflow run for ${A.slice(0, 12)}; 1 still held for maintainer approval`)
+const earlyRefusal = reviewPass({ host: { ...heldHost(), denyApprove: [101] } })
+assert.deepEqual(earlyRefusal.readback.released, ['102'])
+assert.deepEqual(earlyRefusal.readback.stillHeld, ['101'])
+assert.equal(earlyRefusal.readback.approvalErrors, true, 'a later success preserves an earlier failure')
 console.log('PASS: a partial release reports released runs as pending and the rest as still held')
 
 // --- 3. readback edge cases --------------------------------------------------

@@ -600,7 +600,7 @@ GitHub rejects self-approval (reviewing your own PR); surface that instead of wo
 gh pr merge {prNumber} --squash
 gh pr merge {prNumber} --squash --match-head-commit "<headRefOid>" --admin   # head-SHA guard + bypass-protection
 ```
-`--match-head-commit` refuses the merge when a newer commit landed after the caller's gate. `--admin` bypasses branch-protection requirements and needs admin rights on the repository. Without those rights GitHub refuses the merge; surface the refusal and never retry another way.
+`--match-head-commit` refuses the merge when a newer commit landed after the caller's gate. `--admin` bypasses branch-protection requirements and needs admin rights on the repository. Without those rights GitHub refuses the merge; surface the refusal. The only permitted retry is one plain guarded squash (`--match-head-commit` without `--admin`) when the caller's documented flow allows it (automerge force); it succeeds only when the host's own requirements already hold. Never retry any other way.
 
 #### mark-pr-ready
 Promote a draft PR.
@@ -664,14 +664,26 @@ gh run rerun {runId} --failed
 ```
 
 #### approve-pending-runs
-Head SHA → approve every workflow run on that commit that is waiting for maintainer approval (`conclusion` `action_required` — GitHub holds runs from first-time or outside contributors until a maintainer approves them). Prints the approved run ids; an empty result means nothing was waiting. Approving lets the contributor's workflow code run with this repository's CI, so callers approve only on a PR a human has authorized for automation (an `automerge` label, or the repository's `ci.approveHeldRunsOnReview` opt-in on a head `om-auto-review-pr` has just reviewed) and read the diff's workflow changes first.
+Head SHA → approve every workflow run on that commit that is waiting for maintainer approval (`conclusion` `action_required` — GitHub holds runs from first-time or outside contributors until a maintainer approves them). Prints the approved run ids. An empty result with exit status 0 means nothing was waiting. A listing or approval failure returns nonzero even when some approvals succeeded. Approving lets the contributor's workflow code run with this repository's CI, so callers approve only on a PR a human has authorized for automation (an `automerge` label, or the repository's `ci.approveHeldRunsOnReview` opt-in on a head `om-auto-review-pr` has just reviewed) and read the diff's workflow changes first.
 
 **Reviewed-SHA binding:** `sha-bound` — every approval names a run id GitHub created for `{headSha}`, and the listing re-checks each run's `head_sha`, so a push made after the caller's head check gets new runs that stay held. `om-auto-review-pr` releases automatically only through operations that declare `sha-bound`.
 ```bash
-gh api "repos/{owner}/{repo}/actions/runs?head_sha={headSha}&status=action_required&per_page=100" \
-  --jq '.workflow_runs[] | select(.head_sha == "{headSha}") | .id' | while read -r run; do
-  gh api -X POST "repos/{owner}/{repo}/actions/runs/$run/approve" >/dev/null && echo "$run"
-done
+(
+  runs=$(gh api --paginate "repos/{owner}/{repo}/actions/runs?head_sha={headSha}&status=action_required&per_page=100" \
+    --jq '.workflow_runs[] | select(.head_sha == "{headSha}") | .id') || exit 1
+  failed=0
+  while IFS= read -r run; do
+    [ -n "$run" ] || continue
+    if gh api -X POST "repos/{owner}/{repo}/actions/runs/$run/approve" >/dev/null; then
+      printf '%s\n' "$run"
+    else
+      failed=1
+    fi
+  done <<EOF
+$runs
+EOF
+  exit "$failed"
+)
 ```
 
 #### watch-run
@@ -723,6 +735,7 @@ gh label create "${AUTOMERGE_LABEL:-automerge}" --color 5319e7 --description "Hu
 gh label create automerge-signal-1-cr --color 1d76db --description "om-auto-merge-buddy: code review signal holds for the current head"
 gh label create automerge-signal-2-qa --color 1d76db --description "om-auto-merge-buddy: QA signal holds for the current head"
 gh label create automerge-signal-3-ci --color 1d76db --description "om-auto-merge-buddy: CI signal holds for the current head"
+gh label create automerge-signal-3-passes-local-ci-checks --color 1d76db --description "automerge mode: local CI passed on the current head; no host check failed"
 gh label create automerge-blocked --color b60205 --description "om-auto-merge-buddy parked this PR; a human removes this label to retry"
 gh label create priority-low      --color e4e669 --description "Cosmetic or follow-up work"
 gh label create priority-medium   --color fbca04 --description "Ordinary bug or feature"

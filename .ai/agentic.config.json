@@ -50,6 +50,7 @@
       "automerge-signal-1-cr",
       "automerge-signal-2-qa",
       "automerge-signal-3-ci",
+      "automerge-signal-3-passes-local-ci-checks",
       "automerge-blocked"
     ],
     "priority": [

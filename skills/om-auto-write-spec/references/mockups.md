@@ -6,7 +6,7 @@ Visual evidence for a UI-facing spec: what the affected screens look like **toda
 
 - `--no-mockups` skips this whole visual-evidence step. Preserve any accepted
   design reference already present in the spec; the flag does not revoke it.
-- `.ai/agentic.config.json` names a browser provider whose descriptor exists at `.ai/browsers/<provider>.md` — needed for every screenshot. Current-state screenshots (§1) additionally need the `om-prepare-test-env` descriptor (produced or producible); proposed-UI screenshots of a prototype or static mockup (§2) do not.
+- `.ai/agentic.config.json` names a browser provider whose descriptor exists at `.ai/browsers/<provider>.md` — needed to capture any new screenshot. Current-state screenshots (§1) additionally need the `om-prepare-test-env` descriptor (produced or producible); proposed-UI screenshots of a prototype or static mockup (§2) do not. Publishing PNGs the prototype revision already holds in its `evidence/` (§3) needs no browser at all.
 - Skip only the part whose precondition is missing, preserve existing design references, add a `Mockups: skipped — {reason}` (or `Current screenshots: skipped — {reason}`) line to the PR body, and continue. A committed prototype without screenshots, or a text-only spec PR, is a valid outcome; a failed run is not.
 
 ## 1. Current-state screenshots
@@ -78,6 +78,42 @@ the proposed UI. `om-ux-design` is an optional interactive task for detailed
 screens; do not invoke it automatically or block this autonomous spec workflow
 on a new design session.
 
-## 3. Publish
+## 3. Publish — mockup screenshots go into a PR comment
 
-Commit the `assets/${SLUG}/` folder with the spec, then (after the PR exists) post one evidence comment via **attach-image-evidence**: `{prNumber}`, a short table mapping each image to its screen + current/proposed role, slug `spec-${SLUG}`, and the PNG paths. The tracker descriptor owns making images render inline; when it cannot, it posts links — surface the limitation and move on.
+Reviewers read the PR conversation, not the prototype folder, so every proposed-UI
+mockup is also published as a **screenshot inline in a PR comment**, not only
+linked from the spec. Commit the `assets/${SLUG}/` folder with the spec, then,
+after the PR exists, post one evidence comment via **attach-image-evidence**
+(slug `spec-${SLUG}`), marker `` 🤖 `om-auto-write-spec` — 📸 UI mockups ``:
+
+1. **Proposed UI first.** One screenshot per screen or state the mockup covers,
+   in flow order — the prototype revision's `evidence/` PNGs (all of them that
+   show a screen, not only the ones linked in the spec; cap at 8), the §2
+   `proposed-NN-*.png` captures, or the static fallback `mockup-NN-*.png`.
+   Caption each with its screen and state. Above the images, state that they
+   show a **proposal** (`Proposed prototype:`, not an accepted `Prototype:`),
+   the revision path, and its `Verification:` status.
+2. **Current app second**, when §1 produced screenshots, captioned the same way.
+3. Name what is missing and why, in one line each (`Current screenshots:
+   skipped — …`, a screen the evidence does not cover).
+
+Post it whenever any mockup image exists — even when current-state screenshots
+were skipped and even without a browser provider (existing `evidence/` PNGs need
+none). When the prototype exists but has no screenshots and no browser can
+capture them, post no image comment and write
+`Mockup screenshots: not captured — {reason}` in the PR body. A skipped,
+declined or supplied-only mockup decision posts no mockup images (supplied
+material is only referenced); the comment then carries just the current-app
+screenshots, when there are any. Never publish real user data or secrets.
+
+**Re-runs.** Hand the images over under names that carry the revision
+(`revision-NNN-<screen>.png`, copied to a temporary directory — never renamed
+inside the revision), so a refreshed prototype gets new URLs. Find the marker
+comment first (**list-issue-comments**): when it
+already shows the current revision, leave it; when it shows an older one, post
+the new comment and rewrite the old one in place via **update-comment** to a
+single `Superseded by {new comment URL}` line — never a second live mockup comment.
+
+The tracker descriptor owns making images render inline; when it cannot (a
+private repository, no write access to the evidence branch), it posts links or
+artifact paths — surface the limitation in the PR body and move on.

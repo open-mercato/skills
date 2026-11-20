@@ -19,7 +19,7 @@ When a fork becomes a replacement PR, verify the copied labels and emit the repl
 | `--max-iterations <n>` | No | Outer review→CI→UI cycles before stopping (also caps the inner CI loop). Default `3`. |
 | `--no-ui` | No | Skip UI verification even when the diff touches UI. |
 | `--automerge` | No | Arm the PR for `om-auto-merge-buddy`. This mode is also enabled by the PR's `automerge` label. Review/autofix and a mandatory QA pass each run in a fresh-context subagent, QA findings are fixed, and the full CI mirror runs locally. The PR ends with the queue label and the evidence-backed signal labels, CI via `automerge-signal-3-passes-local-ci-checks`. |
-| `--automerge-force` | No | Implies `--automerge`. This mode is also enabled by the PR's `automerge-force` label. Once all three signals hold, the skill squash-merges the PR directly. When the current user has the rights, the merge bypasses remaining host requirements, such as a required separate review. |
+| `--automerge-force` | No | Implies `--automerge`. This mode is also enabled by the PR's `automerge-force` label. Once all three signals hold, the skill squash-merges the PR directly. When the current user has the rights, the merge bypasses remaining host requirements, such as a required separate review. A PR comment records the review, QA and CI evidence and the merge outcome. |
 | `--force` | No | Bypass the in-progress claim check; use only when intentionally taking over a PR another actor claimed. |
 | `--orchestrated` | No | Set only by an orchestrator holding the claim and owning the labels ([om-auto-merge-buddy](om-auto-merge-buddy.md)). Skips this skill's claim, label and CI-wait steps and ends with a `RESULT:` line. |
 

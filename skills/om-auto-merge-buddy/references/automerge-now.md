@@ -3,7 +3,8 @@
 `automerge-now` authorizes a queue item and an immediate single-PR visit from
 either fixer. Both fixers hand off without holding a PR claim. A scheduled
 buddy can also discover it under `references/item-policy.md`. The buddy owns
-all evidence reconciliation and merge mutations.
+all evidence reconciliation and merge mutations. An immediate visit excludes
+spec-only design PRs and drafts awaiting explicit human confirmation.
 
 ## Approval policy when both labels are present
 
@@ -56,7 +57,7 @@ even if the head is unchanged. Record the approval policy and run id that produc
   check invalidates the local alternative.
 - **Merge controls.** Keep explicit vetoes (`do-not-merge`, `blocked`,
   `qa-failed`, unresolved human QA NO-GO and `automerge-blocked`), queue
-  authorization, ownership, mergeability and the head/target guards. A spec-only PR or a draft awaiting an explicit human decision stays out of this route.
+  authorization, ownership, mergeability and the head/target guards.
   `automerge-prepare` and an effective `prepare-to-merge` mode still limit
   the result to preparation.
 

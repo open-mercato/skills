@@ -30,10 +30,9 @@ labels through **get-pr** and resolve:
 In a globally prepare-only run, force never opts an item into merging.
 
 The buddy’s `--skip-risk-checks` is an alias for its existing risk-only
-`--force`; accepting both is idempotent. Apply protected-area classification
-and vetoes under `references/human-gates.md` before using the request:
-protected changes enforce risk checks under ordinary policy. The exact
-`automerge-now` + `automerge-force` pair selects the documented exception.
+`--force`; accepting both is idempotent. Apply explicit vetoes under `references/human-gates.md` in both policies.
+Classify protected areas and enforce their risk checks under ordinary policy.
+Skip classification only for the exact `automerge-now` + `automerge-force` pair.
 Claims, explicit vetoes, automated code review, applicable auto-QA, actual CI
 evidence and head/target guards still apply.
 Only children’s documented `--skip-risk-checks --orchestrated` is forwarded;
@@ -47,8 +46,8 @@ no CLI risk flag requires strict CR reconciliation, including unchanged heads;
 removing prepare restores current invocation mode only after full finish
 revalidation. Newly added prepare prevents the next merge; a label-only change
 must not reuse cached readiness. Loss of either member of the pair restores
-ordinary gates and invalidates policy-dependent signals on the same head. These checks cannot undo an already completed
-merge; keep the fresh label read adjacent to the guarded merge mutation.
+ordinary gates and invalidates policy-dependent signals on the same head.
+Keep the fresh label read adjacent to the guarded merge mutation.
 
 ## Audit and replacement
 
@@ -66,8 +65,9 @@ replacement via `apply_label`, verify it through **get-pr**, and block merging
 if transfer cannot be verified. Never re-create a modifier removed by a human.
 Transfer `automerge-force` only when still present on the original at transfer,
 using the same guard/readback; if its transfer fails, continue with strict risk
-checks and disclose it. Preserve existing replacement restrictions. Copy `automerge-now` only from fresh original labels
-and verify it on the replacement, just like the configured queue label. Never
+checks and disclose it. Preserve existing replacement restrictions. Copy
+`automerge-now` only from fresh original labels and verify it on the
+replacement, just like the configured queue label. Never
 create an automation-only pair by combining a lone modifier on the original
 with a lone modifier on the replacement. Halt the transfer for explicit
 authorization if the label union would create a new pair. Re-resolve
@@ -75,8 +75,8 @@ from the replacement’s actual labels; never reuse the old worker’s effective
 values or turn a failed force-label write into an implicit CLI override.
 
 The following decision function consumes normalized fresh label names and an
-already validated invocation mode; `protectedArea` comes from actual diff
-classification. Missing queue authorization yields no stage flags.
+already validated invocation policy. Supply `protectedArea` from actual diff
+classification only under ordinary policy. Missing queue authorization yields no stage flags.
 
 ```javascript
 function resolveAutomergeItemPolicy({ labels, queueLabel = 'automerge', mode = 'prepare-and-merge', force = false, skipRiskChecks = false, protectedArea = false, requireIndependentReview = false }) {

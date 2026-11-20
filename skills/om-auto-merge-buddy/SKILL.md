@@ -1,11 +1,11 @@
 ---
 name: om-auto-merge-buddy
-description: Unattended queue worker for PRs a human labeled `automerge`. Within a time window (default 2h), works up to the configured number of PRs concurrently to get three signals, each recorded as a label — code review, QA, CI. A missing signal goes to om-auto-review-pr, om-auto-qa-pr or om-auto-fix-pr in orchestrated mode. Never waits on slow CI. Defaults to guarded squash-merge; config/CLI can select prepare-only and independent native review.
+description: Unattended worker for PRs with the queue label or `automerge-now`. Within a time window (default 2h), works up to the configured number of PRs concurrently to get three signals, each recorded as a label — code review, QA, CI. A missing signal goes to om-auto-review-pr, om-auto-qa-pr or om-auto-fix-pr in orchestrated mode. Never waits on slow CI. Defaults to guarded squash-merge; config/CLI can select prepare-only and independent native review.
 ---
 
 # Auto Merge Buddy
 
-Work the queue of open PRs a human labeled `automerge` until each one is
+Work PRs carrying the configured queue label or `automerge-now` until each one is
 provably ready to merge — and, in `prepare-and-merge` mode, merged. Readiness requires **no human veto**, protected-area human approval when applicable, and
 **three signals**, each recorded as a label this skill alone writes:
 

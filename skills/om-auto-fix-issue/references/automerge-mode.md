@@ -58,6 +58,14 @@ If the buddy is missing, report the queued PR and name the skill to install.
 Report the buddy's outcome and final PR reference, including any replacement,
 without claiming a merge unless the tracker confirms it.
 
+Verify any terminal fixer claim state, lock release and local ownership release
+so the buddy can claim the PR immediately. The buddy publishes the signal labels
+and its canonical status as evidence is verified. Only the buddy publishes the `Merging now` comment, immediately before
+a real merge attempt. Read back the final PR's signal labels and link the
+buddy's owned status and merge summary when present in the handoff report.
+If publication is incomplete, relay the failed item and retry action. Leave
+publication and merge decisions with the buddy.
+
 ## Ordinary queue preparation
 
 Before turning the mode on, check two things:
@@ -178,30 +186,32 @@ back to A1.
 ## A4. Queue labels and signal record
 
 Before arming, re-read the PR through **get-pr**. Preserve a new hold
-(`do-not-merge`, `blocked`, `qa-failed`, `automerge-blocked`), and report
+(`do-not-merge`, `blocked`, `qa`, `qa-failed`, `automerge-blocked`), and report
 that arming was declined. If the PR now carries `automerge-now`, release the
 fixer claim and take the immediate handoff. Re-read the issue too. A new
 issue hold or removal of the sole source label declines arming. Honor a fresh
 issue `automerge-now` through the immediate handoff.
 
-Make every label change through the `apply_label` guard:
+Apply `AUTOMERGE_LABEL` through the guard because the human authorized it.
+From the verified final-head evidence, reconcile the three signal labels the
+buddy uses. Review PASS grants `automerge-signal-1-cr`; QA PASS or `n/a` grants
+`automerge-signal-2-qa`; a complete local mirror PASS grants
+`automerge-signal-3-passes-local-ci-checks`. This preparation path leaves hosted
+CI for the buddy to check. Remove invalidated signal labels via **unlabel-pr**
+when their head, target, or underlying evidence is known stale. A seed with
+no fresh host read leaves the hosted-CI signal unverified. Remove its active
+label and retain links to earlier host evidence for the buddy to recheck.
 
-- Apply `AUTOMERGE_LABEL`, because the human authorized it. Apply each of
-  `automerge-signal-1-cr`, `automerge-signal-2-qa` and
-  `automerge-signal-3-passes-local-ci-checks` only when its evidence holds on the
-  final head. Never apply a signal without evidence.
 - Do not add `do-not-merge`, `blocked`, `qa-failed`, `automerge-blocked`,
   `automerge-prepare`, `automerge-now`, `automerge-force`, `ci-monitoring`, or any human-only QA label.
 - Do not request reviewers. Do not @-mention people for review or QA. Do not turn on
   any required independent review.
-- Leave the PR **ready**: call **mark-pr-ready** if it is still a draft.
 - Leave the pipeline label as the review and QA skills set it.
 
-Then add the applied labels to this skill's one consolidated `🏷️ label rationale`
-comment, one line each (`references/pr-finalize.md`).
-
-Create or rewrite the buddy's status comment, so its trust rule (a record written by
-`CURRENT_USER`) accepts the seed. Find the marker
+Write the buddy status record before applying missing verified signal labels
+through `apply_label`. Keep the common status marker, compact signal readings,
+evidence rows and machine record below. Search for both the current and legacy
+marker spellings. Find the marker
 `` 🤖 `om-auto-merge-buddy` — status `` via **list-issue-comments**, counting only
 `CURRENT_USER`'s comment. Update it in place via **update-comment**, or create it once
 via **comment-pr**:
@@ -209,11 +219,11 @@ via **comment-pr**:
 ~~~markdown
 🤖 `om-auto-merge-buddy` — status
 
-**📋 What happened: `om-auto-fix-issue` armed automerge on <sha>; {all three signals hold | missing <signal>: reason}.**
+**📋 What happened: `om-auto-fix-issue` evaluated automerge preparation on <sha>. {Evidence-backed outcome and any missing signal or unconfirmed write}.**
 
 **🔁 Next: `om-auto-merge-buddy` re-verifies the signals on its next visit.**
 
-🔍 Review: {✅ passed | 📋 pending} · 🧪 QA: {✅ passed | not required | 📋 pending} · 🧪 CI: {✅ local mirror passed | 📋 pending}
+🔍 Review: {✅ passed | 📋 pending} · 🧪 QA: {✅ passed | not required | 📋 pending} · 🧪 CI: {✅ local mirror passed (hosted CI: not recorded) | 📋 pending}
 
 ```text
 base: <baseRefName>
@@ -237,6 +247,15 @@ attempts: cr=0 qa=0 ci=0
 `attempts` stays `0` because these are the buddy's own counters. `ci:` stays
 `missing`, because this run never read host CI. On the `localCi:` line, link the
 run-summary or status comment that lists the local commands and their exit codes.
+Include any earlier hosted evidence as historical context with its revision.
+
+Read **get-pr** and the owned status comment back. Confirm the intended signal
+labels, status record, head and target before reporting the seed as armed. If a
+write was skipped or unconfirmed, report the affected label or comment and the
+retry action in the existing status where possible. Mark a draft ready only after confirmed publication. A standalone
+fixer never posts a pre-merge summary for ordinary queue preparation. Add the
+confirmed applied labels to this skill's consolidated `🏷️ label rationale`
+comment, one line each (`references/pr-finalize.md`).
 
 ## A5. Release and report
 
@@ -249,5 +268,6 @@ one line to the final report:
 
 - all three signals held → `🚀 Automerge: armed — all three signals on <short sha> ({source}).`;
 - some signals missing → `Automerge: armed, missing {signals} — {reason}.`;
+- publication incomplete → report the unconfirmed label or status write and the retry action.
 
 Never claim a merge that did not happen, and never claim that host CI is green.

@@ -45,6 +45,40 @@ assert.deepEqual(recordFields(signals), ['base', 'riskChecks', 'ciPolicy', 'ciTa
 assert.match(signals, /Local-CI alternative[\s\S]*?no host check on the current head completed `FAILURE`/)
 assert.match(signals, /A failed host check invalidates the alternative/)
 assert.deepEqual(recordFields(status), recordFields(signals), 'Written status and consumed signal schema must agree')
+
+const publicationCode = signals.match(/```javascript\n([\s\S]*?)\n```/)[1]
+const signalLabelsFor = runInNewContext(`${publicationCode}\nsignalLabelsFor`)
+const crSignal = 'automerge-signal-1-cr'
+const qaSignal = 'automerge-signal-2-qa'
+const hostSignal = 'automerge-signal-3-ci'
+const localSignal = 'automerge-signal-3-passes-local-ci-checks'
+for (const [facts, expected] of [
+  [{}, []],
+  [{ cr: 'pass', qa: 'missing', ci: 'pending' }, [crSignal]],
+  [{ cr: 'pass', qa: 'n/a', ci: 'approval-held', localCi: 'pass' }, [crSignal, qaSignal]],
+  [{ cr: 'pass', qa: 'pass', ci: 'pending', localCi: 'pass' }, [crSignal, qaSignal, localSignal]],
+  [{ cr: 'pass', qa: 'pass', ci: 'pass', localCi: 'pass' }, [crSignal, qaSignal, hostSignal]],
+  [{ cr: 'missing', qa: 'waiting-human', ci: 'fail', localCi: 'pass' }, []],
+]) {
+  assert.deepEqual(Array.from(signalLabelsFor(facts)), expected, 'Publish every verified signal with one active CI source')
+}
+assert.match(read('skills/om-auto-merge-buddy/references/reconcile.md'), /restoring any missing label backed by\s+current evidence/)
+assert.match(stages, /After every usable result[\s\S]*?publish the verified labels and status[\s\S]*?before launching another stage or parking/)
+assert.match(signals, /Read \*\*get-pr\*\* and the same status comment back[\s\S]*?exact signal\s+label set/)
+assert.match(signals, /Do not report readiness, post the `Merging now` comment, or merge\s+until publication is confirmed/)
+assert.match(fork, /Exclude `qa-approved`[\s\S]*?all `automerge-signal-\*` labels from transfer/)
+assert.match(read('skills/om-auto-merge-buddy/references/claim-pr.md'), /A verified terminal candidate with\s+`Claim-State: released` or `Claim-State: withdrawn` never starts that wait/)
+assert.match(window, /A targeted immediate visit reconciles once even if a saved next-check time\s+is in the future or a prior run reported readiness/)
+
+const fixerModes = ['om-auto-fix-issue', 'om-auto-fix-pr'].map(name => read(`skills/${name}/references/automerge-mode.md`))
+const seedTemplates = fixerModes.map(mode => mode.match(/~~~markdown\n(🤖 `om-auto-merge-buddy` — status[\s\S]*?)\n~~~/)[1])
+for (const [index, mode] of fixerModes.entries()) {
+  assert.deepEqual(recordFields(seedTemplates[index]), recordFields(signals), 'Fixer seeds preserve the canonical signal record')
+  assert.match(mode, /The buddy publishes the signal labels\s+and its canonical status[\s\S]*?Only the buddy publishes the `Merging now` comment/)
+  assert.match(mode, /Read \*\*get-pr\*\* and the owned status comment back[\s\S]*?Mark a draft ready only after confirmed publication/)
+}
+assert.equal(seedTemplates[0].replace('om-auto-fix-issue', 'om-auto-fix-pr'), seedTemplates[1], 'Both fixers seed the same status format')
+
 assert.match(signals, /missing or different `base` invalidates all three signals, even when the head is unchanged/)
 assert.match(signals, /Older records without `base` are re-evaluated once/)
 assert.match(stages, /target must still equal `base`/)
@@ -600,6 +634,12 @@ const formatStatusReason = runInNewContext(`${formatCode}\nformatStatusReason`)
 const readableStatus = formatStatusReason({ reason: automaticReason, nextAction: 'Run a fresh browser QA worker for the recorded scenario.', head: qaHead, signals: { cr: 'pass', qa: 'pass', ci: 'pending' } })
 assert.match(readableStatus, /^\*\*📋 What happened: Current-head QA PASS exists; required approval is absent\*\*\n\n\*\*🔁 Next: Run a fresh browser QA worker for the recorded scenario\. No human action needed\.\*\*/)
 assert.match(readableStatus, /🔍 Review: ✅ passed · 🧪 QA: ✅ passed · 🧪 CI: 📋 pending/)
+const localStatus = formatStatusReason({ reason: automaticReason, nextAction: 'Recheck the host.', signals: { cr: 'pass', qa: 'n/a', ci: 'pending', localCi: 'pass' } })
+assert.match(localStatus, /🔍 Review: ✅ passed · 🧪 QA: not required · 🧪 CI: ✅ local mirror passed \(hosted CI: pending\)/)
+const hostedStatus = formatStatusReason({ reason: automaticReason, nextAction: 'Finish.', signals: { ci: 'pass', localCi: 'pass' } })
+assert.match(hostedStatus, /CI: ✅ passed/)
+assert.doesNotMatch(hostedStatus, /local mirror passed/)
+
 assert.ok(readableStatus.indexOf('**🔁 Next:') < readableStatus.indexOf('<details>'), 'Next action must be visible before collapsed evidence')
 const humanStatus = formatStatusReason({ reason: humanReason, nextAction: 'Wait for the named tenant permission to be granted.', head: qaHead })
 assert.ok(humanStatus.includes(`**⚠️ Next: ${humanReason.owner}: ${humanReason.requiredAction}**`), 'Human owner and exact action belong in the bold opening')
@@ -802,7 +842,11 @@ assert.match(mergeSummary, /Incomplete or unreadable history[\s\S]*stops creatio
 assert.match(mergeSummary, /cannot be updated, do not post a duplicate/)
 assert.match(mergeSummary, /inability to confirm the one summary parks the PR `ready` without[\s\S]*merging/)
 assert.match(mergeSummary, /Immediately after the confirmed summary write, re-read head\/target, queue and[\s\S]*modifier labels, human vetoes\/approvals and signal evidence/)
-assert.match(mergeSummary, /No new[\s\S]*producing stage or unrelated work belongs between summary and merge/)
+assert.match(mergeSummary, /No new\s+producing stage or unrelated work belongs\s+between summary and merge/)
+assert.match(mergeSummary, /Publish and confirm the current signal labels and existing status comment[\s\S]*?same summary below for scheduled and immediate merges/)
+assert.match(mergeSummary, /Confirm that the\s+signal labels and status still match the evaluated head, target and policy/)
+assert.match(mergeSummary, /the evidence bullets and the signal labels on the merged PR/)
+
 assert.match(mergeSummary, /Confirm the merge via \*\*get-pr\*\*/)
 assert.match(mergeSummary, /failed post-merge edit[\s\S]*never a reason to retry a confirmed merge/)
 assert.match(mergeSummary, /2–6 short factual bullets/)

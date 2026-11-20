@@ -217,7 +217,14 @@ Old installed versions do not participate in election; upgrade all claimers toge
 - **Skip** a PR carrying `automerge-blocked`: it is parked until a human clears it.
 - **Assignee priority and first action.** A foreign assignee alone is not a lock here; the global queue still includes other people's PRs. With a nonempty active scheduler prefer current-user assigned actionable work (`references/scheduler.md`). At the first actionable step acquire this visit's atomic lock (fallback election when unsupported) before **assign-pr** `CURRENT_USER`, then verify assignment and the secondary label through **get-pr** before producing work. Preserve other assignees; never unassign on release or reset. A failed/unknown assignment blocks that visit unless the confirmed bot-assignment exception above applies.
 - **`ci-monitoring` is not a lock.** A PR carrying it (from this skill or any other) is claimable; for this skill it just means "check CI first".
-- A `🤖` claim or take-over comment (not a review, evidence or summary comment) from another skill within the last 30 minutes, on a PR without `in-progress`, means that skill is between steps of a chain. Skip the PR this round and revisit it later in the window. Sub-skills running under this skill's `--orchestrated` flag post no claim comments, so they never trigger this rule.
+- A recent unresolved `🤖` claim or take-over comment from another skill
+  blocks this visit even when `in-progress` is absent. Apply the existing
+  30-minute chain window only to candidates that remain live or uncertain
+  after the claim/reset checks above. A verified terminal candidate with
+  `Claim-State: released` or `Claim-State: withdrawn` never starts that wait.
+  For a fixer handoff verify that the tracker lock, secondary label and live
+  local reservation are gone before taking the buddy claim. Unknown or live
+  ownership still blocks. Orchestrated sub-skills post no claim candidates.
 
 ## Claim (before any other work on the PR)
 

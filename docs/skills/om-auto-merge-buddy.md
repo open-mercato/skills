@@ -38,6 +38,12 @@ Outside the human veto and protected-area gates, completed trusted `om-auto-qa-p
 
 Every visit starts by reconciling signal labels with actual review/QA/CI evidence and the changes since each evidence revision. The buddy inspects the delta, judges its effect on the tested behavior, carries forward only supported evidence and runs delta review, QA or current-head CI checks as needed. It logs the scope judgment and next action before launching a stage; unknown scope or untrusted evidence never counts as a pass.
 
+The buddy updates the same status comment and confirms the signal labels after
+reconciling existing evidence and after each stage. An immediate visit from
+either fixer follows this same path. Once all three signals are confirmed, a
+merge attempt adds one **Merging now** comment. A prepare-only visit ends with
+its ready status and signal labels.
+
 ## Per-PR labels
 
 Create these optional labels in the tracker. Names are exact and work with a

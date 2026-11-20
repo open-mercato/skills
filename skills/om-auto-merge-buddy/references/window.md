@@ -18,7 +18,9 @@ tracked PR actionable now, even before its old estimate. A future CI check
 must not block admitting new work. Never infer no owned work from an incomplete
 assigned-state reading. A replacement continues in the same visit.
 
-For `--pr`, scope admission and stage work to that PR (and its replacement), including tracked items. Re-read its fresh authorization labels even when it is already tracked. An immediate targeted invocation reassesses a stale waiting outcome when current policy changes.
+For `--pr`, scope admission and stage work to that PR (and its replacement), including tracked items. Re-read its fresh authorization labels even when it is already tracked. A targeted immediate visit reconciles once even if a saved next-check time
+is in the future or a prior run reported readiness. Continue to honor current
+claims, vetoes and attempt-cap blocks.
 
 Skip live claims and honor blocks (`references/claim-pr.md`). Due blocked or
 waiting-human entries receive only a cheap inspection. Check for a changed head

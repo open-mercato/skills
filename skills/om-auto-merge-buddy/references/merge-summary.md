@@ -17,7 +17,9 @@ closed or externally merged items. It never grants a signal or approval.
    must cover the final head under the normal signal rules; do not present stale
    tests as current. Link the decisive commit, report, run or comparison for each
    bullet. Unknown history is not permission to invent work.
-2. Refresh the existing status comment with current readiness and next action.
+2. Publish and confirm the current signal labels and existing status comment
+   under `references/signals.md`. Include the ready state and next action.
+   Use the same summary below for scheduled and immediate merges.
    Then find the merge-summary marker via **list-issue-comments**, accepting the
    canonical backticked marker, its legacy bare-skill spelling and a trusted
    existing merge summary from either fixer. For the two-label policy, include
@@ -33,14 +35,18 @@ closed or externally merged items. It never grants a signal or approval.
    merging, with the concrete blocker in its status. Do not spend a stage attempt.
 3. Immediately after the confirmed summary write, re-read head/target, queue and
    modifier labels, human vetoes/approvals and signal evidence. Apply all final
-   gates again, including CI baseline proof when applicable. Recheck fenced
-   ownership. Only then invoke **merge-pr** with the checked head SHA. No new
-   producing stage or unrelated work belongs between summary and merge. The
+   gates again, including CI baseline proof when applicable. Confirm that the
+   signal labels and status still match the evaluated head, target and policy.
+   If they changed, reconcile publication and refresh the same summary before
+   another merge attempt. Recheck fenced ownership. Only then invoke **merge-pr**
+   with the checked head SHA. No new producing stage or unrelated work belongs
+   between summary and merge. The
    comment says merging is about to happen, never that it has already happened.
 4. Confirm the merge via **get-pr**. On success, rewrite the same summary's bold
    action line to `🚀 Merged <head> into <target> — <merge commit link>.` Retain
-   the evidence bullets. A refusal, changed head/mode, removed queue label, lost
-   ownership or new blocker instead updates that same line to
+   the evidence bullets and the signal labels on the merged PR. The owned
+   status is updated to merged during claim release. A refusal, changed head or
+   mode, removed queue label, lost ownership or new blocker updates that line to
    `⛔ Not merged: <specific reason>. Next: <action / owner>.` Reconcile under the
    normal finish rules. If the mutation result is unknown, read tracker state
    before any retry and say confirmation is pending until proved. A crash after

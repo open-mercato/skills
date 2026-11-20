@@ -40,7 +40,57 @@ the first signal still missing. Never start from an empty slate and re-produce w
    - **QA** — signal 2's rules as written (`n/a`, trusted completed same-head auto-QA PASS, pinned approval or carry-forward). An `om-auto-qa-pr` FAIL report on the current head records `qa: fail`; a `qa-failed` label with or without a report is a hard stop under `references/human-gates.md`, recording `qa: waiting-human`. The fix loop below applies only to automatic failures without a human veto. Once CR holds, a `qa: fail` sends the visit straight to stage 2's fix loop (stage 1 with that report `INHERITED`, counted as a CR attempt), without re-running a QA that already failed on this head. The QA re-run after the fix counts as a QA attempt.
    - **CI** — signal 3's table, read once for the current head.
 3. **Trust only real evidence.** A comment carrying a skill marker (`🤖 <skill> —`) counts only when `CURRENT_USER` wrote it, except completed QA source history verified from a write-author under `references/qa-evidence.md`; anyone can paste a marker. A human reviewer's review or QA note counts only from an account with write access to the repository. Pipeline labels (`review`, `changes-requested`, `merge-queue`, `qa`) are hints about where to look, never evidence by themselves. Existing `automerge-signal-*` labels are verified like any label without a record. Evidence for an older head goes through "Invalidation when the head moves" below. A review of an older head with only clean target-branch merges after it still holds.
-4. **Write the record and the labels in one step.** Apply the label of every held signal, remove the label of every signal that is not held, and add one line to the status comment, for example `📋 Initial signals derived from the PR's existing state: review approved on <sha>, QA not required, CI pending.` Bootstrapping counts no attempts.
+4. **Publish the verified signals** using the procedure below. Add one line to the status comment with the initial evidence and what is still missing. Bootstrapping counts no attempts.
+
+## Publish verified signals
+
+Use this procedure for every authorized visit, including `automerge-now` with
+or without `automerge-force`. Run it after entrance reconciliation, after each
+stage result or local CI mirror, and before either finish action. Publish the
+signals that hold even when another signal is missing, waiting or failed. The
+status and labels use the same evidence for the same head, target and resolved
+policy. Label repair alone counts no attempt and never reruns a producing stage.
+
+1. Recheck claim/reservation, queue authorization, head, target, current policy
+   and applicable gates. Resolve CR, QA and both CI records from trusted
+   evidence. A state read failure leaves the affected signal unverified. For the
+   two-label policy apply `references/automerge-now.md` before selecting any
+   signal. In particular, approval-held or failing hosted CI cannot use a
+   local pass. For ordinary policy keep its documented CI eligibility rules.
+2. Compute the labels from those verified outcomes using the mapping below.
+   Remove invalidated or superseded signal labels through **unlabel-pr**.
+   Rewrite the existing automation-owned buddy status in the canonical format
+   in `references/report-templates.md`, including the full signal record and
+   current evidence links. Apply missing supported signal labels through
+   `apply_label`. Use the setup taxonomy procedure if a required label is missing
+   from the tracker. Reuse the existing comment via the marker/author lookup
+   and reconcile uncertain writes by reading it back before retrying.
+3. Read **get-pr** and the same status comment back. Confirm the exact signal
+   label set, matching status/evidence record, head and target. A skipped or
+   unconfirmed label/comment write is a reporting blocker. Record what failed
+   and the retry action in the existing status when possible, and keep the visit
+   resumable. Do not report readiness, post the `Merging now` comment, or merge
+   until publication is confirmed. If the head, target or applicable policy
+   moved, return to evidence reconciliation.
+
+Use this mapping with normalized outcomes already evaluated under the current
+policy. An `approval-held` host outcome stays in the status reason and uses the
+existing unsatisfied CI record value. Compute labels from these outcomes. QA
+`n/a` earns the same label as a QA pass. Prefer a valid hosted signal when both
+CI sources qualify and retain the local run as supporting evidence.
+
+```javascript
+function signalLabelsFor({ cr, qa, ci, localCi }) {
+  const labels = []
+  if (cr === 'pass') labels.push('automerge-signal-1-cr')
+  if (qa === 'pass' || qa === 'n/a') labels.push('automerge-signal-2-qa')
+  if (ci === 'pass') labels.push('automerge-signal-3-ci')
+  else if (localCi === 'pass' && ['pending', 'missing'].includes(ci)) {
+    labels.push('automerge-signal-3-passes-local-ci-checks')
+  }
+  return labels
+}
+```
 
 ## 1 · Code review — `automerge-signal-1-cr`
 

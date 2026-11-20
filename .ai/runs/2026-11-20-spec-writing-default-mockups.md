@@ -41,6 +41,10 @@ Every feature spec that adds or changes a user-facing UI ships with a clickable 
 - Generated mockups are linked as `Proposed prototype:`, never `Prototype:` — main reserves `Prototype:` for owner-accepted designs.
 - Prototype generation adds tokens/time to every UI spec; the opt-out flag and the no-UI skip bound it.
 
+### Phase 5: Mockup screenshots in PR comments
+
+1. `om-auto-write-spec` posts every generated mockup screen as an inline screenshot in one marker-idempotent `📸 UI mockups` PR comment (requested on resume, 2026-11-20).
+
 ## Progress
 
 PR: #195
@@ -66,3 +70,7 @@ PR: #195
 ### Review fixes
 
 - [x] R.1 Apply om-auto-review-pr findings — 060ea8e, 447efed
+
+### Phase 5: Mockup screenshots in PR comments
+
+- [x] 5.1 Publish mockup screenshots in a PR comment from om-auto-write-spec — 06b05db

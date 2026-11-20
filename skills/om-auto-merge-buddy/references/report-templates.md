@@ -129,8 +129,6 @@ existing scheduler checkpoint and signal record, with no invented passes.
 
 **🔁 Next: None — complete. Reopen only if a remaining change is identified.**
 
-
-
 <details>
 <summary>📋 Evidence and policy details</summary>
 

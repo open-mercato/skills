@@ -19,9 +19,11 @@ Treat incomplete host evidence conservatively and preserve human vetoes, prepare
 
 ## Progress
 
+PR: #202
+
 > Convention: `- [ ]` pending, `- [x]` done. Append ` — <commit sha>` when a step lands. Do not rename step titles.
 
 ### Phase 1: Handle host review refusals
 
 - [x] 1.1 Define and test the merge refusal policy — d801bf4
-- [ ] 1.2 Run validation and review the final change
+- [x] 1.2 Run validation and review the final change — 16ad0b1

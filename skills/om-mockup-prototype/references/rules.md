@@ -3,7 +3,7 @@
 These rules always apply alongside the skill body. The writing rules below use
 the collection's canonical wording; the skill performs no tracker operations.
 
-- **Interactive run.** Work within the user's confirmed scope, ask for missing product decisions, report, and return control. This skill has no autonomous mode and invokes no further skill.
+- **Interactive run.** Work within the user's confirmed scope, ask for missing product decisions, report, and return control. The one unattended path is `--spec --autonomous` from an autonomous `om-spec-writing` run: open choices become `[ASSUMPTION]`s, business policy is never chosen. This skill invokes no further skill.
 - **Secrets hygiene.** Never paste secrets, tokens, `.env` content, raw credentials or personal interview details into artifacts or reports.
 - **Marker contract.** Output reference lines go on their own lines at the end of the final report. Preserve the exact label, value shape and meaning; never translate or decorate machine fields.
 - **Emoji glossary** in user-facing output: 🎯 goal · 📋 plan · 📝 spec · 🏷️ labels · 📸 evidence · 🔍 review · 🧪 tests · 💥 breaking · ✅ pass · ❌ fail · ⚠️ needs-human · ⛔ blocked · 🔁 resume · 🚀 merge/release. Emojis decorate; parsers key on text markers only.

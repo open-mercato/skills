@@ -6,11 +6,11 @@ product assumptions are true.
 
 ## Static review
 
-- Every required screen/action in the confirmed flow has a destination and expected state; included edge/recovery states match the brief. No rule, non-goal or owned decision changed without its stated change path.
+- Every required screen/action in the confirmed flow has a destination and expected state; included edge/recovery states match the brief (spec mode: the spec). No rule, non-goal or owned decision changed without its stated change path.
 - Context records identify sources, assumptions, synthetic suggestions and unsupported policy choices. The UI itself contains no persona-coaching text or expected research conclusions.
 - HTML/CSS/JavaScript references are local to the revision. Inspect all destinations, form actions, scripts, stylesheets and assets; reject external URLs, network APIs, dependency imports, storage and accidental application endpoints. Form handlers prevent real submission.
 - Check semantic headings, labels, buttons/links, useful validation text, focus visibility, appropriate contrast, and responsive layout. All records are fictitious. Do not infer successful keyboard use from markup alone.
-- The output path and refresh history satisfy the ownership rules. Older revisions, manual files, `.uxproof/`, the brief and production code remain unchanged.
+- The output path and refresh history satisfy the ownership rules. Older revisions, manual files, `.uxproof/`, the brief, the spec and production code remain unchanged.
 
 A failing static check requires a fix within the new revision or an explicit
 incomplete result. Do not open a prototype containing out-of-scope scripts or

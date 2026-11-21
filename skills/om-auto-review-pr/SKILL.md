@@ -13,6 +13,7 @@ Review a pull request by number without touching the current worktree. Fetch the
 - `--autofix` (optional) — run the step 11 autofix loop even when the PR belongs to another author (without it, the loop runs only on PRs authored by `$CURRENT_USER` — the automation fixing its own work). Pass it when the user asked for the PR to be fixed; the fixing chains (`om-auto-fix-pr`, `om-auto-fix-issue`) pass it explicitly.
 - `--force` (optional) — bypass the in-progress concurrency check; use when intentionally taking over a PR that another auto-skill or human already claimed
 - `--skip-risk-checks` (optional, only with `--orchestrated`) — the buddy’s recorded risk override; preserves validation and actual findings. Scope and provenance: `references/orchestrated-mode.md`. Distinct from claim-takeover `--force`.
+- `--triage-only`: see step 2a.
 - `--orchestrated` (optional) — only from `om-auto-merge-buddy`, which holds the claim and labels; implies `--autofix`. Read `references/orchestrated-mode.md` before step 0.
 
 ## Chaining
@@ -30,6 +31,8 @@ This skill consumes a `{prNumber}` (the `PR:` reference line a PR-producing skil
 1. **Claim the PR.** Follow `references/claim-pr.md` before review work, including UI resets, run-id election, secondary-label verification and inherited ownership. Register owned-release cleanup; orchestrated runs use the driver's verified claim.
 
 2. **Fetch PR metadata and reviewer context.** The tracker is the source of truth. Run **get-pr** for `{prNumber}` (all metadata, review and file fields — full list: `references/pr-metadata.md`), capturing base/head branches, head SHA, author, cross-repository status, labels and existing reviews by the current reviewer. Classify the PR now: `SPEC_ONLY=true` when every changed file lives under `paths.specs` or the repo's design-doc areas, assets included — one code/config/CI file means it is not (`references/spec-review.md`). Also set `AUTOFIX_ELIGIBLE=true` when `--autofix` was passed **or** the PR author is `$CURRENT_USER` — this one flag decides step 11; nothing else ever enables autofix. **Collect the review feedback already on the PR** — `reviews` bodies, conversation comments (**list-issue-comments**), inline diff comments (**list-review-comments**) — from actors other than this skill's own markers, and carry each still-unaddressed actionable ask as an `INHERITED` finding through steps 9–11. Collection, filtering, and severity rules: `references/pr-metadata.md`. QA findings (human notes, the latest `om-auto-qa-pr` FAIL) are inherited too, and a human `qa-approved`/`qa-failed` drops `needs-qa`: `references/qa-verdicts.md`.
+
+2a. **QA triage, every run:** `references/qa-triage.md` (`--triage-only` then jumps to 12, 14).
 
 3. **Review or re-review?** Before a no-new-commits exit, check for an unfinished fork handoff when the run may carry a fork forward or the PR names an original in `Supersedes #N`. Follow `references/fork-pr-flow.md` for discovery and reconciliation. Treat the run as a **re-review** when the current reviewer already submitted one (use `reviews`, fall back to `latestReviews`). Continue the code review only when there are new commits; re-reviews re-check every previous blocker, retitle the report `Re-review:`, and submit a fresh review. Full rules: `references/pr-metadata.md`.
 

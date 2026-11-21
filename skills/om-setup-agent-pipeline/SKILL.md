@@ -71,8 +71,8 @@ Field defaults: `references/config-capabilities.md`.
 - `labels.meta` — additive process labels. `needs-qa` requests manual QA; `skip-qa` opts out (never combine them); `qa-approved` records passed QA; `qa-self-verified` marks self-QA. `in-progress` claims actively worked items. `ci-monitoring` means work is complete and reported, with only a CI-result follow-up owed; it never blocks another actor. `claim-reset` records a human request to recover a stopped runner; automation only reads its authenticated label-event audit and never applies it. The human-only issue label `do-not-close` is outside this taxonomy; skills only read it to protect issues from auto-closure.
 - `labels.priority` — mutually exclusive urgency of the work. Unset is treated as medium.
 - `labels.risk` — mutually exclusive blast radius of the change. Unset is treated as medium. Priority is how urgent the work is; risk is how dangerous the change is to ship.
-- `qaGate` — when `true`, a PR carrying the gate label (`qaGateLabel`, default `needs-qa`) must not merge until it also carries `qa-approved`, even when every other check is green. When `false`, it is advisory only.
-- `qaGateLabel` / `qaReadyLabel` — optional; see `references/config-capabilities.md`.
+- `qaGate` — when `true`, a PR carrying the gate label (`qaGateLabel`, default `needs-qa`) must not merge until it also carries `qa-approved`, even with green checks. When `false`, it is advisory only.
+- `qaGateLabel` / `qaReadyLabel` / `humanQaPolicy` — optional; see `references/config-capabilities.md`.
 - `autofix` — issue-triage queue label and eligibility; defaults and behavior: `references/config-capabilities.md`.
 - `automerge` — queue label, merge mode, review/QA policies, human-only arrays, QA depth, queue limits and triage. Schema above; fields/defaults in `references/config-capabilities.md`.
 - `ci.maxWaitMinutes` — CI wait cap in minutes, default `40`; `0` skips waiting. It never relaxes required checks for merging. Wait-budget behavior: `references/config-capabilities.md`.

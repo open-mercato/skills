@@ -58,7 +58,8 @@ First apply `references/human-gates.md`. Apply the QA route for the current poli
 **Two-label policy.** Use the decision and evidence rules in `references/automerge-now.md`. Record `n/a` when QA is unnecessary. Reuse a covered, trusted auto-QA PASS for the exact head and target. Invoke orchestrated QA for missing evidence or coverage.
 
 - `pass` with a trusted posted report covering the required scenarios on the current head and target → grant signal 2 from the report, even without `qa-approved` or eligible self-sign-off.
-- `blocked` → keep signal 2 missing. For an unavailable environment or browser provider, end the visit `blocked` with the setup action and the condition for retrying auto-QA. Human sign-off cannot complete this stage under the two-label policy.
+- `blocked` → keep signal 2 missing. For an unavailable environment or browser provider, end the visit `blocked` with the setup action and the condition for retrying auto-QA. Human sign-off cannot replace missing automatic QA under the two-label policy.
+- An active narrower `qaGateLabel` → signal 2 also needs the human sign-off of `references/human-gates.md` §2c; without it end the visit `waiting-human`. Automatic QA evidence never replaces it.
 
 **Ordinary policy.** Missing protected-area human QA ends `waiting-human`. Apply `references/qa-routing.md` even when report-based signal 2 holds. A testable coverage gap or missing mandatory local approval routes to orchestrated QA unless a verified blocker, ineligibility, or explicit human preference routes it to a reviewer. Under `references/qa-evidence.md`, once local routing requirements are met, a trusted covered PASS on the unchanged head or valid approval grants signal 2 and skips this stage with zero attempts.
 

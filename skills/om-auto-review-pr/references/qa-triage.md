@@ -67,12 +67,11 @@ Evaluate in order. Record every rule that fired, not only the first.
       integration whose behavior needs a live third party (payments,
       carriers, identity providers, marketplaces) and has no sandbox the
       automatic QA environment can reach.
-   7. **New user experience without an agreed design.** A new screen, flow or
-      feature, or a visible change to an existing layout or interaction, with
-      no linked design the project treats as approved (signal configured in
-      `humanQaPolicy.approvedDesignSignal`; when unset, assume no approved
-      design). A small fix to existing UI that automatic QA can verify by a
-      before/after comparison does not count.
+   7. **New user experience without an approved design.** A new screen, flow
+      or feature, or a visible change to an existing layout or interaction,
+      without an approved design (see "Approved design" below). A small fix to
+      existing UI that automatic QA can verify by a before/after comparison
+      does not count.
    8. **Interactions automatic QA judges poorly.** Drag and drop, keyboard
       navigation and shortcuts, focus management, animation timing,
       responsive breakpoints, printing.
@@ -100,6 +99,32 @@ Apply labels through the `apply_label` guard. Remove `skip-qa` when a later
 triage on a new head puts the PR in a QA lane. Never remove `needs-qa` here:
 QA verdicts own that (`references/qa-verdicts.md`).
 
+## Approved design
+
+Automation decides this, so nobody has to remember to set a flag. With
+`humanQaPolicy.approvedDesign.source` set to `merged-spec` (the default), a
+design counts as approved when the PR body, its linked issue or its changed
+files reference a spec under `paths.specs` that:
+
+- already exists on the PR's base branch (it went through spec review and was
+  merged), and
+- has a section with mockups, wireframes or screen descriptions for the
+  screens this PR changes (images, ASCII layouts, or a component-by-component
+  description).
+
+A spec added or changed in the same PR does not count: it has not been
+reviewed yet. When a design is found and `humanQaPolicy.approvedDesign.label`
+names a label, apply it through the `apply_label` guard and remove it when a
+later triage no longer finds the design. Record `design` as `approved`,
+`missing` or `n/a` in the output block. With `source: none`, every new UX
+counts as unapproved.
+
+## Risk labels
+
+Risk labels (`risk-low`, `risk-medium`, `risk-high`) are information about
+blast radius only. They never decide the QA lane and never block or allow a
+merge on their own.
+
 ## Impact record (informational)
 
 Triage also records, without letting it change the lane:
@@ -123,15 +148,15 @@ in place on every run:
 ```
 <!-- qa-triage v1
 {"head":"<full sha>","lane":"none|auto|human","rules":["3.5","3.11"],
- "direction":"raises|lowers|neutral","impact":"improves|adds|removes-harmful|removes-simplifying",
+ "direction":"raises|lowers|neutral","design":"approved|missing|n/a","impact":"improves|adds|removes-harmful|removes-simplifying",
  "integrationTests":{"count":0,"paths":[]},"unitTests":{"count":0,"paths":[]},
  "suggestedTests":[],"assumptions":[]}
 -->
 ```
 
 Parsers key on the `<!-- qa-triage v1` marker. `assumptions` lists every
-autonomous default triage used (for example "no approved design signal
-configured").
+autonomous default triage used (for example "linked spec has no mockup
+section for the changed screen").
 
 ## `--triage-only`
 
@@ -150,12 +175,13 @@ checked as in step 10. Report one line per PR: number, lane, rules fired.
   "uiPaths": [],
   "uiFileThreshold": 0,
   "whenUnsure": "human",
-  "approvedDesignSignal": null,
+  "approvedDesign": { "source": "merged-spec", "label": null },
   "humanVerdictLabels": []
 }
 ```
 
-With the defaults only the built-in judgment rules (3.2 to 3.8, 3.11) apply.
+With the defaults only the built-in judgment rules (3.2 to 3.8, 3.11) and the
+merged-spec design check apply.
 
 ## Legacy keys
 

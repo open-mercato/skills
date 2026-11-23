@@ -268,11 +268,37 @@ When the same run (same `CLAIM_RUN_ID`, owned comment id and `CLAIM_LOCK_SHA` in
 
 ## om-auto-merge-buddy-streamlined specifics
 
-Each worker owns its outer claim and invokes its companions as re-entry.
-Register cleanup before the first claim mutation. On release remove only
-the claim this worker owns, restore pre-claim assignees where appropriate,
-and update the handoff marker. Verify that a forced takeover succeeded
-before work. If the tracker cannot establish a verifiable claim, park the
-item with the permission or tracker error. At a replacement, transfer
-ownership to the same worker and release the original claim. A force
-takeover never takes a PR reserved by another worker in this invocation.
+Apply these skill-specific rules before the shared claim checks. They
+override the assignee signal, default stale window, and ordinary `--force`
+eligibility above. Keep atomic acquisition, exact ownership checks, and
+the fallback election on providers that explicitly support that fallback.
+
+- **Assignees.** A foreign assignee alone is never a claim. Preserve any
+  existing assignees during acquisition, recovery, and release. If no
+  assignees exist, follow normal assignment handling. Read the atomic lock,
+  claim comments, and `in-progress` state. Unexplained claim signals and
+  incomplete reads remain blockers. When no live or unresolved claim
+  remains, acquire normally regardless of assignee.
+- **Stale takeover.** Before using `--force`, verify that both the claim
+  and the latest observed PR activity are strictly older than 120 minutes.
+  Check complete tracker activity and known runtime records for claim
+  updates, worker heartbeats, head changes, reviews, comments, label
+  changes, and current-head CI activity. Treat pending or running CI and
+  missing or uncertain evidence as blockers. Use verified server or
+  runtime timestamps. Confirm the original worker and its delegates have
+  stopped. A different assignee, shared login, or old claim timestamp
+  alone never authorizes recovery.
+- **Recover once.** Re-read the claim and activity immediately before
+  cleanup. Record the observed owner, exact claim identity, last activity,
+  and stopped-worker evidence in the takeover note. Recover only that
+  generation through the shared release and acquisition procedure. Any
+  new activity, changed claim, or live reservation stops the takeover.
+  Verify the new claim before working, and never forward `--force` to
+  companion skills under it.
+
+Each worker owns its outer claim and passes its exact identity to companions
+as re-entry. Register cleanup before the first claim mutation. On release
+remove only the claim this worker owns and update the handoff marker. If the
+tracker cannot establish a verifiable claim, report the blocker. At a
+replacement, transfer ownership to the same worker and release the original
+claim.

@@ -27,6 +27,12 @@ selecting checks, deciding QA or review requirements, or deciding whether to
 merge. Base review and test coverage on the actual diff. Fix concrete
 findings and honor the repository's explicit gates.
 
+**MUST:** A different assignee does not block work. Acquire an unclaimed PR
+normally and preserve its assignees. Use `--force` only when the existing
+claim is older than two hours, the PR has had no activity for more than two
+hours, and the previous worker and its delegates are confirmed stopped.
+Follow the ownership checks in `references/claim-pr.md`.
+
 Process the open PR queue for the configured base branch. Each worker takes one
 PR through implementation, review, QA, and local checks.
 
@@ -65,9 +71,10 @@ by its `Issue:` line when there is a subject issue.
    Keep a reservation for each active number, including any replacement.
    If subagents are unavailable, report the queue and the capability blocker.
 2. **Claim and run Autopilot.** Have the worker refresh eligibility and acquire
-   the outer claim using `references/claim-pr.md`, with `--force` and a takeover
-   comment where applicable. Run `om-pr-autopilot {prNumber} --force --local-checks`
-   under that claim. Resume the tracked implementation if needed and accept
+   the outer claim using `references/claim-pr.md`. Use `--force` only for a
+   verified stale claim and record the takeover. Run
+   `om-pr-autopilot {prNumber} --local-checks` as a re-entry under that claim.
+   Resume the tracked implementation if needed and accept
    a credited replacement per `references/worker.md`.
 3. **Earn review, QA, and CI signals.** Run the loop in `references/worker.md`.
    **MUST:** For each stage, review or test, fix what failed, then run the

@@ -5,9 +5,19 @@ description: Drain the automerge PR queue with up to two subagents. Fix review a
 
 # Automerge Buddy Streamlined
 
+**MUST:** Resolve every actionable issue in automatic QA, code review, and
+continuous integration. Keep the PR in the fix-and-retest loop until all three
+signals are green for its current head and base. If the PR cannot merge, keep
+working on every signal you can still improve, including independent stages,
+until all three are green, the time window closes, or no authorized action can
+make progress. Treat merge eligibility as a separate decision.
+
+**MUST:** Treat `needs-qa` as a request to run automatic QA. Once automatic QA
+passes, the label itself imposes no further merge requirement. Apply any
+separate human-QA gate at the merge step.
+
 Process the open PR queue for the configured base branch. Each worker takes one
-PR through implementation, review, QA, and local checks. Squash-merge after all
-three signals pass.
+PR through implementation, review, QA, and local checks.
 
 ## Arguments
 
@@ -51,17 +61,16 @@ by its `Issue:` line when there is a subject issue.
 3. **Earn review, QA, and CI signals.** Run the loop in `references/worker.md`.
    Fix and re-review concrete failures, re-run QA and local checks as needed,
    and publish each signal with evidence for the current head and base.
-   When `needs-human-qa` (or the configured narrower QA gate) is still present,
-   ordinary PRs need a current `qa-approved` or `qa-human-approved` verdict.
-   The combination of the queue label, `automerge-force`, and `automerge-now`
-   instead requires a complete automatic pass wherever QA applies. Under
-   either policy, run `om-auto-qa-pr` for `needs-qa`.
+   Run `om-auto-qa-pr` for `needs-qa`. Record automatic QA independently
+   of any human QA needed for merge.
 4. **Squash-merge or hand off.** Serialize final merge attempts. Refresh the
-   claim, PR, policy, SHA and all three signals. Request the descriptor's
-   guarded `--admin` squash. This authorizes bypassing the host's extra
-   maintainer-approval count and hosted checks covered by local evidence.
-   Honor unresolved review findings, explicit vetoes, conflicts, and authority
-   limits. Record a confirmed merge, or add `automerge-blocked` when a human
+   claim, PR, policy, SHA and all three signals. When `needs-human-qa` or a
+   configured narrower gate applies, require a current human approval unless
+   both `automerge-force` and `automerge-now` are present. When merge is
+   permitted, request the descriptor's guarded `--admin` squash. Limit the
+   override to the host's extra maintainer-approval count and hosted checks
+   covered by local evidence. Honor unresolved review findings, explicit
+   vetoes, conflicts, and authority limits. Record a confirmed merge, or add `automerge-blocked` when a human
    action is needed. Follow `references/report-templates.md` for comments
    and label cleanup, then release the claim.
 5. **Finish within the window.** Stop dispatching and entering new stages at
@@ -72,7 +81,8 @@ by its `Issue:` line when there is a subject issue.
 ## Rules
 
 - Use the latest tracker state before every stage and mutation. Time expiry is a
-  resumable handoff. A withdrawn queue label or explicit veto stops the worker.
+  resumable handoff. Stop work when queue authorization is withdrawn or an
+  explicit instruction forbids work on the PR. Apply merge vetoes at finish.
 - Keep sub-skill invocations inline inside the PR worker. Never multiply the
   configured number of subagents or let two workers fix the same PR.
 - Run validation in an isolated worktree using operator-vouched commands.

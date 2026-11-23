@@ -158,6 +158,21 @@ Parsers key on the `<!-- qa-triage v1` marker. `assumptions` lists every
 autonomous default triage used (for example "linked spec has no mockup
 section for the changed screen").
 
+**Trust.** Anyone who can comment on a PR can paste the same marker, so a
+consumer trusts the block only when all of these hold, and ignores it
+otherwise:
+
+- its comment author is the automation's own identity (the account this skill
+  posts as) or a login in `humanQaPolicy.trustedTriageAuthors`; a block in a
+  comment by anyone else, or in the PR body, is ignored;
+- its `head` equals the PR's current head SHA (a stale block says nothing
+  about new commits).
+
+The block is advisory. Nothing may skip a required check, choose the QA lane
+or allow a merge because of it. A CI job that wants selective tests computes
+its own list from the diff and may only add tests from the block, never drop
+any.
+
 ## `--triage-only`
 
 A light pass for re-labeling many PRs at once. Steps: 0 (setup), 1 (claim;
@@ -176,7 +191,8 @@ checked as in step 10. Report one line per PR: number, lane, rules fired.
   "uiFileThreshold": 0,
   "whenUnsure": "human",
   "approvedDesign": { "source": "merged-spec", "label": null },
-  "humanVerdictLabels": []
+  "humanVerdictLabels": [],
+  "trustedTriageAuthors": []
 }
 ```
 

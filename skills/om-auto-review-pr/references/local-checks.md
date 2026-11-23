@@ -4,7 +4,11 @@ Accept `--local-checks` only when the calling
 `om-auto-merge-buddy-streamlined` worker provides a verified live outer
 claim for this PR. Apply `references/orchestrated-mode.md`, including
 `--autofix`, no hosted CI repair or wait, immutable review evidence, and
-its `RESULT:` and fork contracts. Keep the worker's claim and no risk waiver.
+its `RESULT:` and fork contracts. Keep the worker's claim.
+Pass the verified streamlined invocation context to `om-code-review` so
+priority and risk labels cannot trigger the built-in evidence gate. Apply
+that gate to the diff itself and preserve all concrete findings and required
+checks.
 
 Evaluate and publish just the ordinary QA routing labels from step 10
 against the final reviewed head. When the review workflow has a dedicated

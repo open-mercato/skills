@@ -39,6 +39,9 @@ Callers (`om-auto-review-pr`, `om-review-prs`) read the verdict and blocker/majo
 5. **Run the checklists**: Apply all applicable sections of `references/review-checklist.md`. When `reviewChecklist` is set in the config, read that repo-local file and apply it IN ADDITION to the built-in checklist; do the same with `CODE_REVIEW.md` from the repo root when it exists — repo-local rules extend the built-in ones, never replace them. When `BACKWARD_COMPATIBILITY.md` exists at the repo root, check every touched surface against it: a change that breaks a protected surface without following the documented deprecation/migration path is a Critical finding, and the report must explicitly WARN the user about it. Flag violations with severity, file, line, and fix suggestion.
 6. **Test coverage**: Verify changed behavior is covered by unit tests and/or integration tests. If coverage is missing, flag it with severity, file references, and the exact test cases to add.
    **Risk-high evidence gate**: when the PR carries `risk-high`, or its diff touches an area `SDLC.md` infers as `risk-high` (auth and sessions, data scoping, money, schema migrations, shared contract surfaces), the change needs integration-level evidence in the diff for that area — a test that exercises the boundary: permission denied and the wrong-scope read for auth and scoping; the failure, retry, and idempotency paths for money; up and down for a migration; the consuming side for a shared contract. Missing evidence is a **blocker** naming the area and the test to add; a maintainer's documented waiver on the PR is the only substitute.
+   Under verified `om-auto-review-pr --local-checks` invocation context,
+   evaluate this gate from the diff alone. Ignore priority and risk labels
+   as gate inputs. Keep repository-required evidence and concrete findings.
 7. **Cross-boundary impact**: Trace current consumers of changed events, messages, shared contracts, and extension points. Identify relevant commitments in stored data, public interfaces, permissions, defaults, and shared infrastructure. Verify the consuming side still works. Scope absence claims to the symbols, paths, and revision actually searched; distinguish existing consumers from planned ones.
 8. **Output**: Produce the review report in the format below and state the verdict.
 
@@ -148,7 +151,7 @@ When reviewing, pay special attention to:
 
 - Shared rules: `references/rules.md` — label discipline, claim etiquette, secrets hygiene, marker contract, emoji glossary. They always apply.
 - Never approve a review without running the full validation gate and reporting per-command results. An incomplete review still reports its findings and `NOT RUN` limitations; it cannot authorize approval or merge.
-- A `risk-high` change without integration-level evidence for its area is a blocker, unless a maintainer's waiver is documented on the PR.
+- Under the step 6 risk-high evidence gate, missing integration-level evidence is a blocker unless a maintainer documents a waiver on the PR.
 - A failing gate command is always a blocker finding, regardless of whose change broke it.
 - Apply the built-in checklist on every review; apply the repo-local `reviewChecklist` file and the repo-root `CODE_REVIEW.md` in addition whenever they exist.
 - When `BACKWARD_COMPATIBILITY.md` exists, verify every touched contract surface against it and flag violations as Critical with an explicit warning to the user.

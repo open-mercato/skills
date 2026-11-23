@@ -266,7 +266,7 @@ When the same run (same `CLAIM_RUN_ID`, owned comment id and `CLAIM_LOCK_SHA` in
 - **Crash recovery (adoption):** a hand-off lock is live only while its chain is running. A **standalone** run (one not invoked as a chain step) that re-enters a same-login lock (not proof of re-entry) whose newest 🤖 claim/take-over/hand-off comment is older than the stale window treats the chain as dead: post an adoption note — `` 🤖 Adopting a stale chain lock ({age}) — previous run presumed dead. `` — then acquire (Git hosts) / elect (fallback) a new claim through the ownership procedure above, releasing it at the end. Never rewrite another run's candidate. Record the specifically recovered stale comment ids in the takeover note; concurrent recovering runs must still acquire one atomic owner or elect one fallback winner. Chained invocations never adopt; their driver owns release.
 - **Invariant:** an item under active automation is never observably unclaimed — the claim or take-over comment precedes any work product, and the hand-off or release is the step's last tracker mutation.
 
-## om-automerge-buddy-streamlined specifics
+## om-auto-merge-buddy-streamlined specifics
 
 Each worker owns its outer claim and invokes its companions as re-entry.
 Register cleanup before the first claim mutation. On release remove only

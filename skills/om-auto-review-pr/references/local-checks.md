@@ -1,7 +1,7 @@
 # Local-checks review
 
 Accept `--local-checks` only when the calling
-`om-automerge-buddy-streamlined` worker provides a verified live outer
+`om-auto-merge-buddy-streamlined` worker provides a verified live outer
 claim for this PR. Apply `references/orchestrated-mode.md`, including
 `--autofix`, no hosted CI repair or wait, immutable review evidence, and
 its `RESULT:` and fork contracts. Keep the worker's claim and no risk waiver.

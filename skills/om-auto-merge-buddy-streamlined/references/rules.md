@@ -16,7 +16,7 @@ Canonical rules shared by every skill in this collection. They always apply, in 
 - **Length follows the decision.** Aim for 150–300 words for a substantive PR/issue body, 40–100 for a routine update, and 3–6 lines for a final handoff; simple work needs less. These are editing targets, not caps. Keep every actionable finding, required evidence, material uncertainty, and recovery instruction. Put long logs and inventories in linked artifacts or collapsible detail.
 - **Template contract.** Use the skill's template for its purpose and required fields; omit optional sections that add no information. Preserve exact machine fields, verdicts, stable comment markers, and chaining lines even when shortening prose. The complete agent artifact stays complete when a skill defines a shorter human projection; disclose omitted counts and link the full findings. Use glossary emojis for meaningful headings or states, and backticks around skill names in human-facing prose.
 
-## om-automerge-buddy-streamlined specifics
+## om-auto-merge-buddy-streamlined specifics
 
 Use the queue-specific QA gate in the skill body and `references/worker.md`.
 A current automatic QA pass earns this queue's QA signal. The queue itself

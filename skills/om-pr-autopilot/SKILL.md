@@ -30,7 +30,7 @@ already know the PR's state; use this one when you do not.
 - `--force` (optional) — take over an `in-progress` claim held by another actor.
 - `--local-checks` (optional, requires an explicit PR number) — run diagnosis
   and resume any tracked implementation, then hand the PR back to the
-  `om-automerge-buddy-streamlined` worker for review, QA, local validation,
+  `om-auto-merge-buddy-streamlined` worker for review, QA, local validation,
   and merge. The worker owns any administrative merge. Reject this mode with
   `--allow-merge`. With `--dry-run`, print the local chain without executing it.
 - `--max-iterations <n>` (optional) — forwarded to `om-auto-fix-pr`. Default `3`.

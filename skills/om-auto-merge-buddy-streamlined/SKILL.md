@@ -1,5 +1,5 @@
 ---
-name: om-automerge-buddy-streamlined
+name: om-auto-merge-buddy-streamlined
 description: Drain the automerge PR queue with up to two subagents. Fix review and QA findings, run affected checks locally, and squash-merge eligible PRs with a guarded admin merge. Record human QA blockers or hand off at the time limit. Use for "merge the automerge queue" or "przejdź kolejkę automerge".
 ---
 
@@ -29,7 +29,7 @@ by its `Issue:` line when there is a subject issue.
 
 ## Workflow
 
-**ALWAYS check first:** Apply `.ai/skills/om-automerge-buddy-streamlined/SKILL.md` when present; safety rules still win.
+**ALWAYS check first:** Apply `.ai/skills/om-auto-merge-buddy-streamlined/SKILL.md` when present; safety rules still win.
 
 0. **Set up.** Start the shared clock. Load `references/agentic-setup.md` and
    `references/rules.md`. Resolve `baseBranch`, `labels.enabled`,

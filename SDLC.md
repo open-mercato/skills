@@ -283,7 +283,7 @@ Under ordinary policy, **a PR carrying `needs-qa` requires `qa-approved` to merg
 
 ### Streamlined queue
 
-`om-automerge-buddy-streamlined` uses the configured `automerge` queue label.
+`om-auto-merge-buddy-streamlined` uses the configured `automerge` queue label.
 `needs-qa` requests automated QA. `needs-human-qa` additionally requires
 `qa-approved` or `qa-human-approved` from a human for an ordinary queue item.
 When both `automerge-force` and `automerge-now` are also present, a complete

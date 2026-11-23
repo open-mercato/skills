@@ -140,6 +140,8 @@ to authenticated recovered checkpoints, without changing the source records.
 Unsupported parseable checkpoint shapes stop recovery with the original state
 intact; never substitute an empty queue or discard a reservation. An explicit
 reset still requires the caller's positive liveness checks and protected rows.
+Validate supplied scheduling and readiness values before migration can replace
+them; only missing/null scheduling values receive the due-now default.
 
 Before each actionable step, persist its plan as `working` with `nextAction`;
 after it ends, persist progress, evidence, outcome and `nextCheckAt`. Mirror the
@@ -219,8 +221,12 @@ function restoreScheduler({ raw, repository, currentUser, now, reset = false, re
     && Number.isInteger(reservation.pid) && reservation.pid > 0 && utc(reservation.processStartedAt)
     && Array.isArray(reservation.delegatedHandles) && reservation.delegatedHandles.every(handle => handle && typeof handle.id === 'string' && typeof handle.type === 'string' && ['live', 'dead', 'unknown'].includes(handle.status))
   if (state && Array.isArray(state.activePrs) && state.activePrs.some(entry => entry?.reservation != null && !validReservation(entry.reservation))) throw new Error('Invalid scheduler reservation; ownership unknown')
+  const validReadiness = entry => (entry.readyAt == null || utc(entry.readyAt))
+    && (entry.readyHead == null || typeof entry.readyHead === 'string')
+    && (entry.mergeableDurationMs == null || (Number.isFinite(entry.mergeableDurationMs) && entry.mergeableDurationMs >= 0))
   const normalizeEntry = entry => {
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return entry
+    if ((entry.nextCheckAt != null && !utc(entry.nextCheckAt)) || !validReadiness(entry)) throw new Error('Invalid scheduler checkpoints; preserve original state for recovery')
     const next = { ...entry }
     if (next.lastWorkedAt === undefined) next.lastWorkedAt = null
     if (next.nextCheckAt == null) next.nextCheckAt = now
@@ -258,9 +264,9 @@ function restoreScheduler({ raw, repository, currentUser, now, reset = false, re
     && (entry.reasonCheckedAt == null || utc(entry.reasonCheckedAt))
     && [entry.nextCheckAt, entry.updatedAt].every(value => utc(value))
     && (entry.lastWorkedAt == null || utc(entry.lastWorkedAt))
-    && ['firstStartedAt', 'firstReadyAt', 'readyAt'].every(key => entry[key] == null || utc(entry[key]))
-    && ['readyHead', 'readyPolicy'].every(key => entry[key] == null || typeof entry[key] === 'string')
-    && (entry.mergeableDurationMs == null || (Number.isFinite(entry.mergeableDurationMs) && entry.mergeableDurationMs >= 0))
+    && ['firstStartedAt', 'firstReadyAt'].every(key => entry[key] == null || utc(entry[key]))
+    && (entry.readyPolicy == null || typeof entry.readyPolicy === 'string')
+    && validReadiness(entry)
     && Array.isArray(entry.plan) && entry.plan.every(step => step && typeof step.step === 'string' && ['pending', 'working', 'done', 'blocked'].includes(step.status))
   const validEntries = entries => Array.isArray(entries) && entries.every(validEntry) && new Set(entries.map(entry => entry.number)).size === entries.length
   if (state) {

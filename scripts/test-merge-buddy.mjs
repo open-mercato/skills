@@ -277,7 +277,7 @@ assert.equal(oldState.activePrs[0].attempts, 2, 'Reset does not mutate source at
 for (const change of [{ currentUser: 'foreign-user' }, { repository: 'foreign/repo' }, { version: 2 }]) {
   assert.throws(() => restoreScheduler({ ...restoreInput, raw: JSON.stringify({ ...oldState, ...change }), reset: true }), /Foreign or unsupported/, 'Reset cannot overwrite foreign state')
 }
-assert.throws(() => restoreScheduler({ ...restoreInput, recovered: [{ ...tracked(1), nextCheckAt: 'invalid' }] }), /Invalid recovered/)
+assert.throws(() => restoreScheduler({ ...restoreInput, recovered: [{ ...tracked(1), nextCheckAt: 'invalid' }] }), /Invalid scheduler checkpoints; preserve original state/)
 const heartbeat = checkpointPlan(tracked(1), { heartbeat: scheduleNow, instanceId: 'new-instance' }, scheduleNow)
 assert.equal(heartbeat.updatedAt, earlierTime, 'Heartbeat/instance changes do not masquerade as plan progress')
 assert.equal(heartbeat.lastWorkedAt, earlierTime)
@@ -391,6 +391,19 @@ const malformedRecovered = { ...reservedEntry, reservation: { instanceId: 'unkno
 assert.throws(() => restoreScheduler({ ...restoreInput, recovered: [malformedRecovered] }), /ownership unknown/)
 const legacyRecovered = restoreScheduler({ ...restoreInput, recovered: legacyRows })
 assert.equal(legacyRecovered.state.activePrs.length, 92, 'Authenticated legacy status checkpoints use the same compatibility path')
+for (const change of [{ nextCheckAt: 'invalid' }, { nextCheckAt: 42 }, { readyAt: 'invalid' }, { readyHead: {} }, { mergeableDurationMs: -1 }, { mergeableDurationMs: 'invalid' }]) {
+  const entry = { ...reservedEntry, readyPolicy: { base: 'target' }, ...change }
+  const before = JSON.stringify(entry)
+  const raw = JSON.stringify({ ...oldState, activePrs: [entry] })
+  assert.throws(() => restoreScheduler({ ...restoreInput, raw }), /preserve/, 'Readiness migration cannot hide supplied invalid schedule or readiness fields')
+  assert.throws(() => restoreScheduler({ ...restoreInput, recovered: [entry] }), /preserve/, 'Recovered legacy checkpoints validate supplied data before overwriting it')
+  assert.equal(JSON.stringify(entry), before, 'Failed recovery preserves the source record and reservation')
+}
+for (const nextCheckAt of [undefined, null, futureTime]) {
+  const entry = { ...reservedEntry, readyPolicy: { base: 'target' }, nextCheckAt }
+  const result = restoreScheduler({ ...restoreInput, recovered: [entry] })
+  assert.equal(result.state.activePrs[0].nextCheckAt, scheduleNow, 'Missing, null and valid schedules remain due for legacy readiness reconciliation')
+}
 const legacyReset = restoreScheduler({ ...restoreInput, raw: legacyBefore, reset: true, protectedNumbers: [1] })
 assert.equal(legacyReset.state.activePrs.length, 1)
 assert.equal(JSON.stringify(legacyReset.state.activePrs[0].reservation), JSON.stringify(legacyRows[0].reservation), 'Reset preserves the exact protected legacy reservation')

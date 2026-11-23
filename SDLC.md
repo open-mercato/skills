@@ -268,7 +268,7 @@ manual-approval gates unchanged.
 
 ## The QA gate
 
-Under ordinary policy, **a PR carrying `needs-qa` requires `qa-approved` to merge**, even when every other check is green. `om-merge-buddy` classifies such a PR as blocked and `om-approve-merge-pr` refuses to merge it. Only the immediate two-label policy in `om-auto-merge-buddy` can satisfy this requirement with a covered current-head auto-QA PASS. Active `qa` blocks both policies.
+Under ordinary policy, **a PR carrying `needs-qa` requires `qa-approved` to merge**, even when every other check is green. `om-merge-buddy` classifies such a PR as blocked and `om-approve-merge-pr` refuses to merge it. The immediate policy in `om-auto-merge-buddy` and the streamlined queue below define their own evidence-based exceptions. Active `qa` blocks both policies.
 
 - Apply `needs-qa` to UI changes, new features, and other user-facing behavior that needs manual exercise.
 - For a UI change, QA covers more than "it works": the state matrix (default, empty, loading, error, no-permission, long content, narrow viewport) is part of the pass/fail, and so is conformance to the design contract in `.uxproof/` when the repository has one. A missing state fails QA. `om-ux-review-pr` remains the advisory design review; its objective checks are the ones QA runs.
@@ -279,6 +279,20 @@ Under ordinary policy, **a PR carrying `needs-qa` requires `qa-approved` to merg
 - **`qa-approved` is pinned to a commit.** The comment that grants it — the QA reviewer's note, or the self-QA evidence comment — carries the line `QA head: <sha>` for the head that was tested. A push after that line leaves the label in place but stales it: `om-merge-buddy` reports "QA evidence older than head", and `om-approve-merge-pr` asks for confirmation before merging. The way back is a QA reviewer re-testing, or stating on the PR that the new commits do not touch the tested scope, with a fresh `QA head:` line.
 - **Self-QA exception**: when no QA reviewer has capacity in time, any engineer — or `om-auto-qa-pr --self-qa-signoff` — may sign off instead, on a `risk-low` or `risk-medium` PR only. The evidence attached to the PR names the scenario exercised, the environment, the test data, the observed result, the negative cases tried, and the `QA head:` line. Then apply both `qa-approved` (so the gate passes) and `qa-self-verified` (so the exception is auditable). No evidence, no `qa-approved`.
 - **No self-QA on `risk-high`.** A PR labeled `risk-high`, or one whose diff touches auth, sessions, data scoping, money, schema migrations, or shared contracts (the `risk-high` inference above), needs a QA reviewer, or a maintainer's explicit exception stated on the PR; `om-auto-qa-pr` withholds the sign-off on such a PR and posts the evidence only. A change to auth or money also needs a second person's review regardless of the QA path.
+
+
+### Streamlined queue
+
+`om-automerge-buddy-streamlined` uses the configured `automerge` queue label.
+`needs-qa` requests automated QA. `needs-human-qa` additionally requires
+`qa-approved` or `qa-human-approved` from a human for an ordinary queue item.
+When both `automerge-force` and `automerge-now` are also present, a complete
+current-head automatic QA pass satisfies the human lane for this queue.
+Explicit vetoes and active manual QA remain binding. The queue records its
+three current-head signals and test selection before its guarded admin squash.
+The admin operation may waive the host's extra reviewer count and hosted
+checks with verified local coverage after the automated review has addressed
+all blocking findings.
 
 ## The claim protocol
 

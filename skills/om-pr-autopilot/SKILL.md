@@ -28,6 +28,11 @@ already know the PR's state; use this one when you do not.
 - `--allow-merge` (optional) — permit the chain to end in an actual merge via
   `om-approve-merge-pr`. **Off by default**: the run stops at merge-ready.
 - `--force` (optional) — take over an `in-progress` claim held by another actor.
+- `--local-checks` (optional, requires an explicit PR number) — run diagnosis
+  and resume any tracked implementation, then hand the PR back to the
+  `om-automerge-buddy-streamlined` worker for review, QA, local validation,
+  and merge. The worker owns any administrative merge. Reject this mode with
+  `--allow-merge`. With `--dry-run`, print the local chain without executing it.
 - `--max-iterations <n>` (optional) — forwarded to `om-auto-fix-pr`. Default `3`.
 
 ## Chaining
@@ -88,7 +93,16 @@ absence never stops a run.
    unresolved conversations, CI, mergeability, labels, QA evidence, claim state
    — into a single `PR State Report`. Never guess a signal you did not read.
 
-4. **Classify and build the chain.** Match the report against
+4. **Classify and build the chain.** With `--local-checks`, honor state-matrix
+   rows 0–0c and any draft-by-intent or human-confirmation guard. Use row 1 for
+   tracked implementation only. Forward `--local-checks` to the chosen
+   continuation skill and preserve the outer claim. On a fork requiring
+   carry-forward, return the unfinished-plan state so the worker can obtain
+   a pushable replacement before resuming. Re-read the PR after continuation and
+   return the state and chaining lines as soon as the implementation is
+   complete or blocked. The caller owns rows 3–10 under its own gates. Fetch
+   hosted status for context only, skip CI follow-up, and keep the caller's
+   outer claim intact. For the ordinary mode, match the report against
    `references/state-matrix.md`, which maps each state to its chain in order. A
    PR usually matches several rows; run them in matrix order (implementation →
    merge-readiness → QA → merge), skipping rows whose exit condition already
@@ -111,9 +125,10 @@ absence never stops a run.
    Keep the applied label set in its consolidated rationale comment; permission
    failures name the requested maintainer action. Disclose pending required checks.
    Return a short session handoff with links and the exact chaining fields.
-   Release the outer lock in the `trap`, swapping `in-progress` for `ci-monitoring`
-   only when a CI-result follow-up is owed. Follow `references/ci-followup.md` for
-   the bounded wait and removal of `ci-monitoring` when it ends.
+   In `--local-checks` mode return without a CI wait or claim swap. Preserve
+   an inherited claim and release any claim this invocation opened in the
+   `trap`. In ordinary mode, swap `in-progress` for `ci-monitoring` only
+   when CI follow-up is owed, then follow `references/ci-followup.md`.
 
 ## Rules
 

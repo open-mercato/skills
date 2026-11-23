@@ -468,6 +468,17 @@ gh pr list --state merged --search "merged:>=${SINCE_DATE}" --json number,title,
 gh pr list --state closed --search "closed:>=${SINCE_DATE} is:unmerged" --json number,createdAt,title,url,body,author,closedAt,baseRefName,headRefName,closingIssuesReferences,labels --limit {limit}
 ```
 
+
+For a complete open-PR queue, request all pages (the limit examples above
+are for bounded reads). Return an array of lightweight records with the
+same label, base, and URL fields as **get-pr**. A pagination error fails the
+whole read.
+
+```bash
+pages=$(gh api --paginate --slurp "repos/$(tracker_repo)/pulls?state=open&per_page=100&sort=created&direction=asc") || exit 1
+printf '%s\n' "$pages" | jq '[.[][] | {number, title, url: .html_url, state: "OPEN", labels, baseRefName: .base.ref}]'
+```
+
 #### search-prs
 Free-text query (for example an issue reference) and state → matching PRs.
 ```bash

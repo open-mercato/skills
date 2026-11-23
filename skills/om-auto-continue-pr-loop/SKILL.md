@@ -11,6 +11,7 @@ Resume an `om-auto-create-pr-loop` run that did not finish in one go. Given a PR
 
 - `{prNumber}` (required) — the PR number to resume (for example `1492`).
 - `--force` (optional) — bypass the in-progress concurrency check; use when intentionally taking over a PR that another auto-skill or human already claimed.
+- `--local-checks` (optional, inherited queue claim) — use the local-checks review mode for the final review. Return without hosted CI follow-up.
 - `--from <phase.step>` (optional) — override the resume point (e.g. `2.1`). Only honored when the `## Tasks` table (and any legacy `## Progress` fallback) cannot be parsed unambiguously.
 
 ## Chaining
@@ -58,7 +59,7 @@ This skill resumes an existing loop run: it consumes a `{prNumber}` and reads th
 
 7. **Final gate before flipping to `complete` (spec completion).** When every Tasks row is `done` (subsumes any pending checkpoint), record in `${RUN_DIR}/final-gate-checks.md` and run in order: the **full `validation.commands` gate**; the **full integration suite** via `om-integration-tests` (skip only docs-only/no-suite, with reason); the **style-compliance pass** (auto-fixes as `X.Y-ds-fix` Steps). Never skip on external advice. **Post the final-gate outcome to the PR** as an idempotent `` 🤖 `om-auto-continue-pr-loop` — final gate verification `` comment (integration/UI evidence via **attach-image-evidence**). Full procedure: `references/final-gate.md`.
 
-8. **Run `om-auto-review-pr` and apply fixes.** Subject the resumed PR to a single authoritative code-review pass with `om-auto-review-pr {prNumber} --autofix` (the chain owns this PR) before posting the summary, pushing final changes, or flipping to `complete` (it re-enters as the current user, already holding the lock from step 1). Apply fixes as new lean `X.Y-review-fix` Steps (never history rewrites), checkpoint/re-gate as needed, and loop until the verdict is clean or only non-actionable findings remain. If it cannot run, leave `Status: in-progress`, update `HANDOFF.md`/`NOTIFY.md` with the blocker, and tell the user how to re-enter. Full procedure: `references/review-report.md`.
+8. **Run `om-auto-review-pr` and apply fixes.** Subject the resumed PR to a single authoritative code-review pass with `om-auto-review-pr {prNumber} --autofix` (append `--local-checks` when passed to this run) (the chain owns this PR) before posting the summary, pushing final changes, or flipping to `complete` (it re-enters as the current user, already holding the lock from step 1). Apply fixes as new lean `X.Y-review-fix` Steps (never history rewrites), checkpoint/re-gate as needed, and loop until the verdict is clean or only non-actionable findings remain. If it cannot run, leave `Status: in-progress`, update `HANDOFF.md`/`NOTIFY.md` with the blocker, and tell the user how to re-enter. Full procedure: `references/review-report.md`.
 
 9. **Post the outcome and handoff comment.** End every resume with a single outcome and handoff comment (this resume's changes on top of the previous state) via **comment-pr** with a body file — full structure and rules in `references/summary-comment-template.md`. Never post before step 8 finishes, never claim an unreached completion, never paste secrets.
 

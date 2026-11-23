@@ -43,6 +43,7 @@ read-only ask ("analyse issue N, don't fix it" / "is issue N still real?").
 | `om-auto-fix-pr` / `om-pr-autopilot` / `om-approve-merge-pr` | State already known, never merges / state unknown, diagnose first / merge now. |
 | `om-auto-review-pr` / `om-review-prs` / `om-code-review` | One PR / a sweep of other authors' unreviewed PRs (`--subagents` for a fresh reviewer per PR, `--parallel N` to bound concurrency) / a local report only, no tracker mutation. |
 | `om-merge-buddy` vs `om-pr-autopilot` | A read-only scan of the whole open queue vs diagnosing and driving one PR. |
+| `om-automerge-buddy-streamlined` | Drain the labeled queue with up to two PR workers, local checks, and guarded squash merges. |
 | `om-auto-implement-spec` vs `om-pre-implement-spec` | Spec readiness — see the spec-state classification in `references/context-signals.md`. |
 | `om-auto-sec-report-pr` vs `om-auto-sec-report` | Security report on one unit (a PR, spec, or branch diff) vs a window of merged PRs since a date or PR number (default last 7 days). |
 | `om-qa-buddy` / `om-auto-qa-pr` / `om-ux-review-pr` / `om-integration-tests` / `om-smart-test` | Human-led manual QA with a published runbook / automated browser evidence / advisory design-contract review / writes and runs E2E coverage for a flow worth keeping / re-runs only the tests affected by the diff. |

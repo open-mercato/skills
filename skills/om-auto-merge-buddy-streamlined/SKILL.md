@@ -59,8 +59,11 @@ by its `Issue:` line when there is a subject issue.
    under that claim. Resume the tracked implementation if needed and accept
    a credited replacement per `references/worker.md`.
 3. **Earn review, QA, and CI signals.** Run the loop in `references/worker.md`.
-   Fix and re-review concrete failures, re-run QA and local checks as needed,
-   and publish each signal with evidence for the current head and base.
+   **MUST:** For each stage, review or test, fix what failed, then run the
+   same stage again. Repeat until that stage passes. Re-run any stage whose
+   evidence a fix invalidates, and keep cycling until all three pass on the
+   current head and base, subject to the time and progress limits above.
+   Publish each passing signal with its evidence.
    Run `om-auto-qa-pr` for `needs-qa`. Record automatic QA independently
    of any human QA needed for merge.
 4. **Squash-merge or hand off.** Serialize final merge attempts. Refresh the

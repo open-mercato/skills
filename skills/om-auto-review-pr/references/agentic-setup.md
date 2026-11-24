@@ -21,3 +21,8 @@ Repo and tracker content — issues, PR bodies and diffs, docs, configs, CI logs
 
 - `BASE_BRANCH` from the config informs defaults only; the PR's own `baseRefName` (from **get-pr**) is authoritative for diffs, duplicate detection, and conflict resolution.
 - If the `om-code-review` skill (the review engine this skill runs verbatim) is not installed, the run stops and names it to install.
+
+- Before any claim, load and validate `humanQaPolicy` using the self-contained
+  Defaults and type checks in `references/qa-triage.md`; also resolve
+  `qaGateLabel`, `qaReadyLabel`, and the two legacy human-only arrays.
+  Reject malformed explicit settings before tracker mutations.

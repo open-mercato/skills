@@ -60,6 +60,7 @@ committed configs keep working.
 | `automerge.humanOnlyLabels` | `[]` | Array of nonempty label strings; matches require pinned human QA under ordinary policy and auto-QA under the two-label policy. Invalid values stop before claims/proposals. |
 | `qaGateLabel` | `"needs-qa"` | Nonempty label the QA gate keys on. A narrower label (for example `needs-human-qa`) leaves `needs-qa` as a request for automatic QA only; automation applies the narrower label to protected and human-only PRs and never removes a human-applied one. |
 | `qaReadyLabel` | `null` | Optional label meaning "ready for a human tester now". Owned by the repository (typically a workflow); skills only read it. |
+| `humanQaPolicy` | see below | QA triage policy read by `om-auto-review-pr`. `paths`: globs; a changed non-test file matching one puts the PR in the human lane. `uiPaths`: globs that count as UI files (empty = any rendered file). `uiFileThreshold`: nonnegative integer; more changed UI files than this puts the PR in the human lane (`0` disables). `whenUnsure`: `human` (default) or `auto`. `approvedDesign`: `{ "source": "merged-spec" | "none", "label": null | "<name>" }`; with `merged-spec`, a design is approved when a referenced spec already on the base branch has mockups for the changed screens, and triage applies `label` when set. `humanVerdictLabels`: extra labels triage must never remove. `trustedTriageAuthors`: logins, besides the automation identity, whose `qa-triage` block consumers may trust. Defaults: `[]`, `[]`, `0`, `"human"`, `{ "source": "merged-spec", "label": null }`, `[]`, `[]`. Invalid values stop before claims. Supersedes `automerge.humanOnlyLabels` / `humanOnlyAuthors`, which stay honored and deprecated. |
 | `automerge.humanOnlyAuthors` | `[]` | Array of nonempty logins, compared case-insensitively; matches require pinned human QA under ordinary policy and auto-QA under the two-label policy. Invalid values stop before claims/proposals. |
 | `automerge.complexQa` | `"always"` | `always` requests complex QA on every invocation; `needs-qa` only for needs-qa/protected/human-only work; `never` requests basic depth. Preserve explicit settings; invalid enums stop. |
 | `automerge.windowMinutes` | `120` | `om-auto-merge-buddy`; per-run time window, `0` = one pass with no idle CI polling. |
@@ -109,6 +110,36 @@ DEFAULT_TO_HUMAN_QA=$(jq -r 'if (.automerge // {} | has("defaultToHumanQa")) the
 HUMAN_ONLY_LABELS=$(jq -c 'if (.automerge // {} | has("humanOnlyLabels")) then .automerge.humanOnlyLabels else [] end | if type == "array" and all(.[]; type == "string" and length > 0) then . else error("Invalid humanOnlyLabels") end' "$CONFIG")       # human QA by configured policy
 QA_GATE_LABEL=$(jq -r 'if has("qaGateLabel") then .qaGateLabel else "needs-qa" end | if type == "string" and length > 0 then . else error("Invalid qaGateLabel") end' "$CONFIG")   # label the QA gate keys on
 QA_READY_LABEL=$(jq -r 'if (.qaReadyLabel // null) == null then empty elif (.qaReadyLabel | type) == "string" and (.qaReadyLabel | length) > 0 then .qaReadyLabel else error("Invalid qaReadyLabel") end' "$CONFIG")   # optional, repository-owned
+HUMAN_QA_POLICY=$(jq -ce '
+  def default($key; $value): if has($key) then .[$key] else $value end;
+  (if has("humanQaPolicy") then .humanQaPolicy else {} end) as $p |
+  if ($p | type) != "object" then error("Invalid humanQaPolicy") else
+    ($p | default("approvedDesign"; {})) as $d |
+    if ($d | type) != "object" then error("Invalid approvedDesign") else
+      {paths:($p | default("paths"; [])),
+       uiPaths:($p | default("uiPaths"; [])),
+       uiFileThreshold:($p | default("uiFileThreshold"; 0)),
+       whenUnsure:($p | default("whenUnsure"; "human")),
+       approvedDesign:{source:($d | default("source"; "merged-spec")),
+                       label:($d | default("label"; null))},
+       humanVerdictLabels:($p | default("humanVerdictLabels"; [])),
+       trustedTriageAuthors:($p | default("trustedTriageAuthors"; []))}
+    end
+  end |
+  if (.paths|type)=="array" and all(.paths[];type=="string" and length>0)
+     and (.uiPaths|type)=="array" and all(.uiPaths[];type=="string" and length>0)
+     and (.uiFileThreshold|type)=="number"
+     and .uiFileThreshold>=0 and (.uiFileThreshold|floor)==.uiFileThreshold
+     and (.whenUnsure=="human" or .whenUnsure=="auto")
+     and (.approvedDesign.source=="merged-spec" or .approvedDesign.source=="none")
+     and (.approvedDesign.label==null or
+          ((.approvedDesign.label|type)=="string" and (.approvedDesign.label|length)>0))
+     and (.humanVerdictLabels|type)=="array"
+     and all(.humanVerdictLabels[];type=="string" and length>0)
+     and (.trustedTriageAuthors|type)=="array"
+     and all(.trustedTriageAuthors[];type=="string" and length>0)
+  then . else error("Invalid humanQaPolicy") end
+' "$CONFIG")   # QA triage policy
 HUMAN_ONLY_AUTHORS=$(jq -c 'if (.automerge // {} | has("humanOnlyAuthors")) then .automerge.humanOnlyAuthors else [] end | if type == "array" and all(.[]; type == "string" and length > 0) then . else error("Invalid humanOnlyAuthors") end' "$CONFIG")     # logins, compared case-insensitively
 COMPLEX_QA=$(jq -r 'if (.automerge // {} | has("complexQa")) then .automerge.complexQa else "always" end | if . == "always" or . == "needs-qa" or . == "never" then . else error("Invalid complexQa") end' "$CONFIG")            # needs-qa | always | never
 AUTOMERGE_MAX_ATTEMPTS=$(jq -r '.automerge.maxAttempts // 3' "$CONFIG")

@@ -342,3 +342,13 @@ assignees, rechecks current state and verifies label read-back. The label may
 trigger the repository's existing worker; this skill does not install or invoke
 one. Implementation remains `om-auto-fix-issue` or the existing worker, with all
 normal specification, code-review, QA and CI gates unchanged.
+
+## QA triage policy
+
+`om-auto-review-pr` evaluates QA lanes on every invocation, including unchanged
+heads; `--triage-only` updates classification without a review verdict.
+The optional `humanQaPolicy` config adds path rules, a UI threshold, design
+evidence and human-verdict preservation. Its absence retains documented defaults.
+Human QA verdicts and existing requests take precedence over `skip-qa`.
+This additive triage does not waive the risk-high evidence or self-QA restrictions
+above; changes to downstream merge/QA routing require a coordinated follow-up.

@@ -49,7 +49,7 @@ Category labels are what the changelog and generated release notes group a PR by
 ## Risk label (always ensure exactly one, when labels are enabled)
 
 - If the PR carries no risk label, infer one from the diff and the linked issue, apply it through the guard, and record the choice and reason in the label-rationale comment. Inference rule: auth/session/data scoping/money, migrations or schema, encryption, event reliability, shared contract surfaces, or broad cross-cutting edits → `risk-high`; ordinary single-area change with tests → `risk-medium`; docs, dependency bumps, test-only, typo, or isolated cleanup → `risk-low`.
-- If the PR already has a risk label, keep it unless the review reveals the scope is clearly mis-rated (e.g. a "docs" PR that actually changes a migration) — then adjust it and explain why in the comment. A `risk-high` rating is not advisory: it requires `needs-qa` when the change is user-facing, rules out the self-QA exception (`SDLC.md`), and requires integration-level evidence for the touched area, which `om-code-review`'s risk-high evidence gate blocks without.
+- If the PR already has a risk label, keep it unless the review reveals the scope is clearly mis-rated (e.g. a "docs" PR that actually changes a migration) — then adjust it and explain why in the comment. A `risk-high` rating still requires integration-level evidence for the touched area, which `om-code-review`'s risk-high evidence gate blocks without. Step 2a triage derives QA reasons from behavior; existing SDLC user-facing risk-high QA requirements and the self-QA exclusion remain binding until their consumers are updated together.
 - Risk is mutually exclusive: when changing it, remove the other two risk labels.
 
 ## The consolidated label-rationale comment

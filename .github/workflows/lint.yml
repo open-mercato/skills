@@ -32,3 +32,5 @@ jobs:
         run: node scripts/test-issue-triage.mjs
       - name: Spec Delta and capability-spec contract
         run: node scripts/test-spec-delta.mjs
+      - name: QA triage configuration and safety contract
+        run: node scripts/test-qa-triage.mjs

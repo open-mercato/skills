@@ -76,14 +76,12 @@ function immediateQaDecision({
   localCoverageRequired = false, coveredAutoPass = false, humanSignoff = false
 }) {
   if (labels.includes('qa')) return 'waiting-human'
-  if (qaGateLabel !== 'needs-qa' && labels.includes(qaGateLabel)) {
-    if (!humanSignoff) return 'waiting-human'
-    if (!(qaGate && labels.includes('needs-qa'))) return 'pass'
-  }
-  const required = humanOnly || localCoverageRequired
-    || labels.includes('qa-approved')
+  const humanLane = qaGateLabel !== 'needs-qa' && labels.includes(qaGateLabel)
+  if (humanLane && !humanSignoff) return 'waiting-human'
+  const autoRequired = humanOnly || localCoverageRequired
+    || (labels.includes('qa-approved') && !humanLane)
     || (qaGate && labels.includes('needs-qa'))
-  if (!required) return 'n/a'
+  if (!autoRequired) return humanLane ? 'pass' : 'n/a'
   return coveredAutoPass ? 'pass' : 'missing'
 }
 ```

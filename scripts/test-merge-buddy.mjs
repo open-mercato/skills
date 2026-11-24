@@ -986,7 +986,7 @@ console.log('PASS: qa-verdicts copies stay in sync; automerge arming honors the 
   assert.match(twoLabelQa, /grant signal 2 from the report, even without `qa-approved`/)
   assert.match(twoLabelQa, /keep signal 2 missing[\s\S]*?condition for retrying auto-QA/)
   assert.doesNotMatch(twoLabelQa, /child-applied/)
-  assert.match(twoLabelQa, /narrower `qaGateLabel` → signal 2 also needs the human sign-off[sS]*?`waiting-human`/)
+  assert.match(twoLabelQa, /narrower `qaGateLabel` → signal 2 also needs the human sign-off[\s\S]*?`waiting-human`/)
   assert.match(ordinaryQa, /read back the eligible child-applied `qa-approved`/)
   assert.match(ordinaryQa, /end the visit `waiting-human` with that reason and route to a human QA reviewer/)
   assert.equal(immediateQaDecision({ labels: ['qa', 'needs-qa'], coveredAutoPass: true }), 'waiting-human')
@@ -1002,6 +1002,13 @@ console.log('PASS: qa-verdicts copies stay in sync; automerge arming honors the 
   assert.equal(immediateQaDecision({ labels: ['needs-human-qa', 'needs-qa'], qaGateLabel: 'needs-human-qa', humanSignoff: true }), 'missing',
     'Human sign-off on the human lane still leaves needs-qa to automatic QA')
   assert.equal(immediateQaDecision({ labels: ['needs-human-qa', 'needs-qa'], qaGateLabel: 'needs-human-qa', humanSignoff: true, coveredAutoPass: true }), 'pass')
+  for (const extra of [{ humanOnly: true }, { localCoverageRequired: true }]) {
+    assert.equal(immediateQaDecision({ labels: ['needs-human-qa'], qaGateLabel: 'needs-human-qa', humanSignoff: true, ...extra }), 'missing',
+      'Human sign-off never replaces automatic QA the two-label policy still requires')
+    assert.equal(immediateQaDecision({ labels: ['needs-human-qa'], qaGateLabel: 'needs-human-qa', humanSignoff: true, coveredAutoPass: true, ...extra }), 'pass')
+  }
+  assert.equal(immediateQaDecision({ labels: ['needs-human-qa', 'qa-approved'], qaGateLabel: 'needs-human-qa', humanSignoff: true }), 'pass',
+    'The qa-approved of the human sign-off does not add an automatic QA requirement')
   assert.equal(immediateQaDecision({ labels: [], humanOnly: true }), 'missing')
   assert.equal(immediateQaDecision({ labels: [], localCoverageRequired: true }), 'missing')
   assert.equal(immediateQaDecision({ labels: ['needs-qa'], qaGate: false }), 'n/a')

@@ -34,3 +34,5 @@ jobs:
         run: node scripts/test-spec-delta.mjs
       - name: QA triage configuration and safety contract
         run: node scripts/test-qa-triage.mjs
+      - name: Batch QA classifier and configuration contract
+        run: node scripts/test-qa-batch.mjs

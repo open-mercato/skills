@@ -16,6 +16,25 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-11-25 — Batch QA: a batch-check lane and `om-qa-batch`
+
+Additive; nothing changes until a project opts in.
+
+- `humanQaPolicy.batchCheckLabel` (default `null`) and `humanQaPolicy.batchPaths`
+  (default `[]`) add a batch lane to `om-auto-review-pr` triage: work a human
+  should look at after merge, in the next batch, gets the label next to
+  `needs-qa` and is never held back from merging. With the label set, rules
+  3.8 (hard-to-automate interactions) and 3.9 (UI file safety net) move from
+  the human lane to the batch lane, and `whenUnsure: "batch"` becomes valid.
+  Create the label in the tracker before enabling it.
+- New skill `om-qa-batch` and optional config object `qaBatch` (batch branch
+  prefix, verified-batch tag prefix, project smoke file, in-progress, bug and
+  blocker labels, automatic QA evidence labels). Create the in-progress,
+  bug and blocker labels you configure; the defaults are `qa-in-progress`,
+  `bug` and `qa-blocker`.
+- Consumers that parse the `qa-triage v1` block may now see `lane: "batch"`,
+  which means the auto lane plus the batch-check label.
+
 ## 2026-11-20 — Immediate automerge is label-driven
 
 - Create `automerge-now` in the tracker and update both fixers and the merge buddy

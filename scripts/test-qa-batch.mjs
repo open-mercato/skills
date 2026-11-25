@@ -1,0 +1,100 @@
+#!/usr/bin/env node
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+
+const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8')
+const helper = fileURLToPath(new URL('../skills/om-qa-batch/scripts/classify-batch.mjs', import.meta.url))
+const run = input => spawnSync(process.execPath, [helper], { encoding: 'utf8', input: JSON.stringify(input) })
+const good = input => { const result = run(input); assert.equal(result.status, 0, result.stderr); return JSON.parse(result.stdout) }
+
+const config = {
+  baseBranch: 'main',
+  qaGateLabel: 'needs-human-qa',
+  humanQaPolicy: {
+    paths: ['app/styles/tokens.css'],
+    batchCheckLabel: 'qa-batch-check',
+    batchPaths: ['src/portal/**'],
+    uiPaths: ['**/*.tsx'],
+    uiFileThreshold: 3,
+    trustedTriageAuthors: ['review-bot']
+  }
+}
+const pr = (number, values = {}) => ({ number, title: `PR ${number}`, baseRefName: 'main', author: 'dev', headSha: `sha${number}`, labels: [], files: [], comments: [], ...values })
+const triage = (head, lane) => ({ author: 'review-bot[bot]', createdAt: '2026-11-25T10:00:00Z', body: `rationale\n<!-- qa-triage v1\n{"head":"${head}","lane":"${lane}","rules":["B1"]}\n-->` })
+
+const result = good({
+  config,
+  batchBranch: 'stabilize/main-2026-11-26',
+  automationIdentities: [],
+  prs: [
+    pr(1, { labels: ['needs-human-qa', 'needs-qa'] }),
+    pr(2, { labels: ['needs-human-qa', 'qa-approved'] }),
+    pr(3, { labels: ['needs-qa', 'qa-batch-check'] }),
+    pr(4, { comments: [triage('sha4', 'batch')], labels: ['needs-qa'] }),
+    pr(5, { comments: [triage('stale', 'batch')], labels: ['skip-qa'] }),
+    pr(6, { labels: ['needs-qa'], files: [{ path: 'src/portal/login/page.tsx', status: 'modified' }] }),
+    pr(7, { labels: ['needs-qa', 'qa-self-verified'], files: [{ path: 'src/admin/List.tsx', status: 'modified' }] }),
+    pr(8, { labels: ['needs-qa'], files: [{ path: 'src/admin/List.tsx', status: 'modified' }] }),
+    pr(9, { labels: ['skip-qa'], files: [{ path: 'README.md', status: 'modified' }] }),
+    pr(10, { baseRefName: 'stabilize/main-2026-11-26' }),
+    pr(11, { baseRefName: 'release/1.x' }),
+    pr(12, { labels: ['needs-qa'], files: ['a.tsx', 'b.tsx', 'c.tsx', 'd.tsx'].map(path => ({ path, status: 'modified' })) }),
+    pr(13, { labels: ['needs-qa', 'qa-self-verified'], files: [{ path: 'src/admin/New.tsx', status: 'added' }] }),
+    pr(14, { comments: [{ ...triage('sha14', 'human'), author: 'someone-else' }], labels: ['skip-qa'] }),
+    pr(15, { comments: [triage('sha15', 'human')], labels: ['needs-qa'] }),
+    pr(16, { labels: ['needs-human-qa', 'qa-failed'] }),
+    pr(17, { labels: ['needs-qa'], files: [{ path: 'src/admin/__tests__/List.test.tsx', status: 'modified' }] }),
+    pr(1, { labels: [] })
+  ]
+})
+const ids = name => result.buckets[name].map(entry => entry.number)
+assert.deepEqual(ids('gateMissed'), [1, 15, 16])
+assert.deepEqual(ids('coveredHuman'), [2])
+assert.deepEqual(ids('batchCheck'), [3, 4])
+assert.deepEqual(ids('candidates'), [6, 8, 12, 13])
+assert.deepEqual(ids('coveredAuto'), [7])
+assert.deepEqual(ids('noManualQa'), [5, 9, 14, 17])
+assert.deepEqual(ids('stabilization'), [10])
+assert.deepEqual(ids('otherBase'), [11])
+assert.equal(result.counts.total, 17)
+assert.match(result.buckets.candidates.find(entry => entry.number === 13).reasons.join(' '), /adds UI files/)
+console.log('PASS: batch classifier buckets the human gate, batch lane, trusted triage, evidence and bases')
+
+const collapsed = good({ config: { ...config, qaGateLabel: 'needs-qa' }, prs: [pr(1, { labels: ['needs-human-qa'] })] })
+assert.equal(collapsed.gateLabel, null)
+assert.deepEqual(collapsed.buckets.gateMissed, [])
+for (const bad of [
+  { config: { ...config, humanQaPolicy: { batchPaths: [1] } }, prs: [] },
+  { config: { ...config, humanQaPolicy: { uiFileThreshold: -1 } }, prs: [] },
+  { config: { ...config, qaBatch: [] }, prs: [] },
+  { config, prs: [{ number: 'x' }] },
+  { config: { qaGateLabel: 'needs-human-qa' }, prs: [] }
+]) assert.notEqual(run(bad).status, 0, 'must reject ' + JSON.stringify(bad).slice(0, 80))
+console.log('PASS: classifier rejects malformed policy, config and PR input')
+
+const setup = read('skills/om-qa-batch/references/agentic-setup.md')
+const filter = setup.match(/QA_BATCH=\$\(jq -ce '([^']+)'/)[1]
+const load = value => spawnSync('jq', ['-ce', filter], { input: JSON.stringify(value), encoding: 'utf8', timeout: 5000 })
+const defaults = JSON.parse(load({}).stdout)
+assert.equal(defaults.branchPrefix, 'stabilize/')
+assert.equal(defaults.inProgressLabel, 'qa-in-progress')
+assert.equal(defaults.blockerLabel, 'qa-blocker')
+assert.deepEqual(defaults.bugLabels, ['bug'])
+assert.equal(defaults.smoke, null)
+const custom = { branchPrefix: 'batch/', greenTagPrefix: 'verified/', smoke: '.ai/qa/smoke.md', inProgressLabel: 'testing', bugLabels: ['bug', 'daily-qa'], blockerLabel: 'blocker', autoQaEvidenceLabels: ['qa-self-verified'] }
+assert.deepEqual(JSON.parse(load({ qaBatch: custom }).stdout), custom)
+for (const qaBatch of [[], 'x', { branchPrefix: 'no-slash' }, { branchPrefix: '../x/' }, { bugLabels: [] }, { bugLabels: [''] }, { smoke: '' }, { blockerLabel: 'qa-approved' }, { inProgressLabel: 'qa-failed' }]) {
+  assert.notEqual(load({ qaBatch }).status, 0, 'must reject qaBatch ' + JSON.stringify(qaBatch))
+}
+console.log('PASS: qaBatch loader defaults, custom values and malformed inputs')
+
+const skill = read('skills/om-qa-batch/SKILL.md')
+const writes = read('skills/om-qa-batch/references/tracker-writes.md')
+assert.match(skill, /Never merge, tag, push, refresh or close the batch/)
+assert.match(skill, /Automation never gives a verdict/)
+assert.match(writes, /`stable` is refused while \*\*search-issues\*\* finds an open issue/)
+assert.match(writes, /Refuse when \*\*current-user\*\* is a bot or automation identity/)
+assert.match(writes, /stop and name who holds\s+it/)
+console.log('PASS: batch skill keeps verdicts human, read-only by default, and refuses stable with open blockers')

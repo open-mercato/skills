@@ -1,0 +1,93 @@
+---
+import type { ui } from '../data/locales';
+interface Props { stage: string; t: typeof ui.en }
+const { stage, t } = Astro.props;
+const icons = {
+  file: 'M6 3h8l4 4v14H6z M14 3v5h4',
+  filter: 'M3 5h18l-7 8v5l-4 2v-7z',
+  download: 'M12 3v12m-5-5 5 5 5-5 M4 16v5h16v-5',
+  check: 'm5 12 4 4L19 6',
+  lock: 'M6 10h12v11H6z M8 10V7a4 4 0 0 1 8 0v3',
+  swap: 'M3 8h16l-4-4 M21 16H5l4 4',
+};
+---
+  {stage === "Discover" && <svg width="0" height="0" aria-hidden="true" class="symbols">
+    {Object.entries(icons).map(([key, path]) => <symbol id={`sample-${key}`} viewBox="0 0 24 24"><path d={path}/></symbol>)}
+  </svg>}
+<div class="specimen" data-phase-view={stage} inert={stage !== 'Discover'}>
+
+  {stage === 'Discover' && <div class="scope-flow">
+    <span><svg><use href="#sample-filter"/></svg>{t.paid}</span>
+    <span class="flow-line" aria-hidden="true"></span>
+    <span><svg><use href="#sample-download"/></svg>orders.csv</span>
+  </div>}
+  {['Design', 'Prototype'].includes(stage) && <>
+    <div class="bar"><strong>{t.orders}</strong><span class="chip"><svg><use href="#sample-filter"/></svg>{t.paid}</span></div>
+    {stage === 'Prototype' ? <div class="empty">∅ <span>{t.noOrders}</span></div> :
+      <div class="order-row"><code>#1042</code><span>{t.paid}</span><code>89.00</code></div>}
+    <div class="export"><svg><use href="#sample-download"/></svg>{t.exportCsv}</div>
+  </>}
+  {['Specify', 'Build', 'Release'].includes(stage) && <>
+    <div class="bar"><span class="filename"><svg><use href="#sample-file"/></svg>orders.csv</span>
+      {stage === 'Release' && <span class="verified"><svg><use href="#sample-check"/></svg>{t.checked}</span>}</div>
+    <table><thead><tr><th>order_id</th><th>status</th><th>total</th></tr></thead><tbody>
+      {stage === 'Specify' ? <tr><td colspan="3" class="no-rows">{t.headerOnly}</td></tr> : <tr><td>1042</td><td>paid</td><td>89.00</td></tr>}
+    </tbody></table>
+  </>}
+  {stage === 'Verify' && <>
+    <div class="bar"><strong>{t.exportAccess}</strong><svg><use href="#sample-lock"/></svg></div>
+    <div class="access"><span>{t.ownStore}</span><span><svg><use href="#sample-check"/></svg>orders.csv</span></div>
+    <div class="access"><span>{t.otherStore}</span><span><svg><use href="#sample-lock"/></svg>{t.denied}</span></div>
+  </>}
+  {stage === 'Observe' && <>
+    <div class="bar"><strong>{t.columnOrder}</strong><svg><use href="#sample-swap"/></svg></div>
+    <div class="columns"><span>orders.csv</span><code>order_id</code><code>status</code><code>total</code></div>
+    <div class="columns"><span>{t.report}</span><code>order_id</code><code>total</code><code>status</code></div>
+  </>}
+</div>
+<style>
+  .specimen {
+    min-width: 0;
+    border: 1px solid var(--border);
+    background: var(--panel, white);
+    border-radius: .65rem;
+    padding: .875rem 1rem;
+    color: var(--ink);
+    font-size: .85rem;
+  }
+  .specimen svg:not(.symbols) {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .scope-flow { display: flex; align-items: center; justify-content: center; padding: .75rem 0; }
+  .scope-flow span:not(.flow-line) { display: grid; justify-items: center; gap: .6rem; }
+  .scope-flow span > svg:not(.symbols) { width: 2.5rem; height: 2.5rem; padding: .55rem; border: 1px solid var(--border); border-radius: .5rem; }
+  .flow-line { flex: 0 1 4rem; margin: 0 .4rem 1.75rem; height: 1px; background: var(--seam); position: relative; }
+  .flow-line::after { content: ''; position: absolute; right: 0; top: -2px; width: 4px; height: 4px; border: solid var(--seam); border-width: 1px 1px 0 0; transform: rotate(45deg); }
+  .symbols { position: absolute; }
+  .bar, .access, .order-row, .columns {
+    display: flex; align-items: center; gap: .5rem;
+  }
+  .bar { justify-content: space-between; margin-bottom: .625rem; }
+  .chip, .filename, .export, .verified, .access span:last-child {
+    display: inline-flex; align-items: center; gap: .45rem;
+  }
+  .chip, .columns code { padding: .22rem .45rem; background: var(--paper); border: 1px solid var(--border); border-radius: .3rem; }
+  .order-row { justify-content: space-between; border-block: 1px solid var(--border); padding: .68rem 0; }
+  .export { margin-top: .625rem; color: var(--ink); }
+  .export svg, .verified svg { background: var(--accent); color: #262626; padding: .12rem; border-radius: .2rem; }
+  .empty { display: grid; place-content: center; text-align: center; font-size: 1.45rem; padding: .5rem; border: 1px dashed var(--border); color: var(--muted); }
+  .empty span, .no-rows { font: .78rem var(--sans); }
+  table { width: 100%; border-collapse: collapse; text-align: left; font: .78rem/1.5 var(--mono); }
+  th, td { padding: .5rem .25rem; }
+  th { border-bottom: 1px solid var(--border); color: var(--muted); font-weight: 400; }
+  .access, .columns { justify-content: space-between; padding: .6rem 0; border-top: 1px solid var(--border); flex-wrap: wrap; }
+  .columns { font-size: .75rem; }
+  .columns span { flex: 1 1 auto; }
+</style>

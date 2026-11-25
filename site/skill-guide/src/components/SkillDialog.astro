@@ -1,0 +1,74 @@
+---
+import type { ui } from '../data/locales';
+interface Props { t: typeof ui.en }
+const { t } = Astro.props;
+---
+<dialog id="skill-dialog" class="skill-dialog" aria-labelledby="dialog-title">
+  <header class="dialog-heading">
+    <div class="dialog-title-group">
+      <p class="meta" id="dialog-group"></p>
+      <h2 id="dialog-title"></h2>
+    </div>
+    <button type="button" class="icon-button" id="dismiss" aria-label={t.close} title={t.close} autofocus>
+      <svg class="glyph-close" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m6 6 12 12M18 6 6 18"/>
+      </svg>
+    </button>
+  </header>
+  <div class="dialog-body">
+    <p id="dialog-outcome"></p>
+    <div class="prompt">
+      <div class="prompt-heading">
+        <span class="meta">{t.example}</span>
+        <button type="button" class="icon-button" id="dialog-copy" aria-label={t.copy} title={t.copy}>
+          <svg class="glyph-copy" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="8" y="8" width="12" height="13" rx="2"/>
+            <path d="M15 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/>
+          </svg>
+          <svg class="glyph-check" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m4 12 5 5L20 6"/>
+          </svg>
+        </button>
+      </div>
+      <p id="dialog-prompt"></p>
+      <span class="copy-status" role="status"></span>
+    </div>
+  </div>
+  <footer class="actions">
+    <a id="dialog-doc">{t.docs}</a>
+  </footer>
+</dialog>
+
+<style>
+  .dialog-heading,
+  .dialog-body,
+  footer.actions {
+    padding-inline: var(--dialog-gutter);
+  }
+  .dialog-heading {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 1rem;
+    padding-block: clamp(1.25rem, 3vw, 2rem);
+    border-bottom: 1px solid var(--border);
+  }
+  .dialog-heading h2 {
+    margin: .5rem 0 0;
+  }
+  .dialog-body {
+    display: grid;
+    gap: clamp(1.5rem, 3vw, 2rem);
+    padding-block: clamp(1.5rem, 3.5vw, 2.5rem);
+  }
+  .dialog-body .prompt {
+    margin: 0;
+    padding: clamp(1rem, 2.5vw, 1.5rem);
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+  }
+  footer.actions {
+    border-top: 1px solid var(--border);
+    padding-block: 1.15rem;
+  }
+</style>

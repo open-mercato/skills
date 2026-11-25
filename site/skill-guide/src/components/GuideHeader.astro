@@ -1,0 +1,46 @@
+---
+import BrandMark from "./BrandMark.astro";
+import type { ui, Locale } from '../data/locales';
+interface Props { t: typeof ui.en; locale: Locale }
+const { t, locale } = Astro.props;
+---
+<header class="mast">
+  <div class="top wrap">
+    <a class="brand" href="https://www.openmercato.com/">
+      <BrandMark />Open Mercato</a>
+    <span class="divider" aria-hidden="true">/</span>
+    <span>{t.title}</span>
+    <nav aria-label={t.resources}>
+      <a class="catalog-link" href="https://github.com/open-mercato/skills">
+        {t.catalog}
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12l8-8M5 4h7v7"/></svg>
+      </a>
+      <span class="languages" role="group" aria-label={t.language}>
+        <a href={locale === 'en' ? './' : '../'} hreflang="en" lang="en" aria-label="English" aria-current={locale === 'en' ? 'page' : undefined}>EN</a>
+        <a href={locale === 'pl' ? './' : './pl/'} hreflang="pl" lang="pl" aria-label="Polski" aria-current={locale === 'pl' ? 'page' : undefined}>PL</a>
+      </span>
+      <div class="header-tools">
+        <button class="icon-button" id="map-theme" type="button" aria-label={t.theme}>
+          <svg class="moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M20 15.1A8.6 8.6 0 0 1 8.9 4a8.6 8.6 0 1 0 11.1 11.1Z"/>
+          </svg>
+          <svg class="sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2"/>
+          </svg>
+        </button>
+        <a class="icon-button" href={locale === 'pl' ? '../open-mercato-skills-pl.pdf' : './open-mercato-skills-en.pdf'} download aria-label={t.pdf} title={t.pdf}>
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+          </svg>
+        </a>
+        <button type="button" class="icon-button" id="print" aria-label={t.print} title={t.print}>
+          <svg class="glyph-print" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 9V3h12v6M6 17H4a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2"/>
+            <path d="M6 14h12v7H6zM17 12h1"/>
+          </svg>
+        </button>
+      </div>
+    </nav>
+  </div>
+</header>

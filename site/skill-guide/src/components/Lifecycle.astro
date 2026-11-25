@@ -1,0 +1,82 @@
+---
+import PhasePreview from "./PhasePreview.astro";
+import StableText from "./StableText.astro";
+import MapModule from "../components/MapModule.astro";
+import type { ui, getGuide } from '../data/locales';
+interface Props { t: typeof ui.en; guide: ReturnType<typeof getGuide> }
+const { t, guide } = Astro.props;
+const firstPhase = guide.phases[0];
+const skillAccents = new Map(guide.groups.flatMap(group =>
+  group.skills.map(skill => [skill.name, group.accent] as const)
+));
+---
+<section class="visual wrap" id="cykl" aria-labelledby="cycle-heading">
+  <header class="visual-head">
+    <h1 id="cycle-heading">{t.cycle}</h1>
+    <p>{t.cycleIntro}</p>
+  </header>
+  <div class="lifecycle-panel">
+    <div id="scene" class="scene" role="group" aria-label={t.stageGroup}>
+      <svg id="routes" aria-hidden="true"></svg>
+      <div class="note request">
+        <code>interview.md</code>
+        <p>{t.quote}</p>
+      </div>
+      <div class="note sample">
+        <code>orders.csv</code>
+        <p>order_id,status,total<br>1042,paid,89.00</p>
+      </div>
+      {guide.phases.map(phase => (
+        <button type="button" class="stage" data-accent={skillAccents.get(phase.skills[0]) ?? 'build'} aria-controls="phase-detail" aria-label={phase.name}>
+          <span class="stage-name">
+            <svg class="stage-symbol" viewBox="-12 -12 24 24" aria-hidden="true"><path d={phase.icon} /></svg>
+            {phase.name}
+          </span>
+          <MapModule id={phase.key} />
+        </button>
+      ))}
+    </div>
+    <section id="phase-detail" class="phase-detail" aria-labelledby="phase-title">
+      <header class="phase-header">
+        <div class="phase-toolbar">
+          <p class="meta" id="phase-count" aria-live="polite" aria-atomic="true"></p>
+          <div class="phase-arrows">
+            <button id="prev-phase" class="icon-button" type="button" aria-controls="phase-detail" aria-disabled="true" aria-label={t.previousPhase} title={t.previousPhase}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m6-6-6 6 6 6"/></svg>
+            </button>
+            <button id="next-phase" class="icon-button" type="button" aria-controls="phase-detail" aria-label={t.nextPhase} title={t.nextPhase}>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg>
+            </button>
+          </div>
+        </div>
+        <h2><StableText id="phase-title" value={firstPhase.title} alternatives={guide.phases.map(p => p.title)} /></h2>
+      </header>
+      <div class="stage-story">
+        <div class="phase-notes">
+          <dl class="role-steps">
+            <div class="role-agent">
+              <dt><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><path d="M12 3v3M7 11l3 2-3 2m5 0h4"/></svg>{t.agent}</dt>
+              <dd><StableText id="phase-agent" value={firstPhase.agent} alternatives={guide.phases.map(p => p.agent)} /></dd>
+            </div>
+            <div class="role-team">
+              <dt><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2m1-15a3 3 0 0 1 0 6m2 3q3 1 3 5"/></svg>{t.decision}</dt>
+              <dd><StableText id="phase-human" value={firstPhase.human} alternatives={guide.phases.map(p => p.human)} /></dd>
+            </div>
+          </dl>
+          <div class="phase-skills" id="phase-resources">
+            <h3>{t.related}</h3>
+            <div class="phase-stack" id="phase-skills">
+              {guide.phases.map(phase => <div class="tags" data-phase-view={phase.key} inert={phase !== firstPhase}>
+                {phase.skills.map(name => <button type="button" data-related-skill={name} data-accent={skillAccents.get(name)}>{name}</button>)}
+              </div>)}
+            </div>
+          </div>
+        </div>
+        <figure class="phase-artifact">
+          <div class="phase-stack">{guide.phases.map(phase => <PhasePreview stage={phase.key} t={t} />)}</div>
+          <figcaption><StableText id="phase-result" value={firstPhase.result} alternatives={guide.phases.map(p => p.result)} /></figcaption>
+        </figure>
+      </div>
+    </section>
+  </div>
+</section>

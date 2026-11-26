@@ -121,6 +121,28 @@ carries invocation-only risk/CI waivers.
   grant signals or inherit waivers. Source evidence still gets reconciled.
 - **`--fresh`:** only chooses a new run log; the scheduler still resumes.
 
+Version-1 checkpoints from older runs remain readable. Accept UTC `Z` and
+`+00:00` timestamps with up to nine fractional digits, preserving the original
+process-start string because it is part of reservation identity. Reject invalid
+calendar dates, nonzero/unknown offsets and malformed reservations. Missing
+`lastWorkedAt` becomes null (unknown), missing/null `nextCheckAt` becomes due
+now for reconciliation, and absent plan/evidence collections become empty.
+Legacy plan `failed`/`pass` maps to `blocked`/`done`, retaining `legacyStatus`
+and evidence. These historical step states never grant a gate or approval.
+Missing reason gate/retry fields receive explicit unassessed reconciliation
+defaults; other incomplete reasons still fail validation.
+
+Retain an object-valued old `readyPolicy` as `legacyReadyPolicy` and clear
+current readiness/head/duration until the existing gates are freshly verified.
+Preserve all other fields, including attempts, findings, protected approvals,
+reservations, queue snapshots and dismissal records. Apply this same migration
+to authenticated recovered checkpoints, without changing the source records.
+Unsupported parseable checkpoint shapes stop recovery with the original state
+intact; never substitute an empty queue or discard a reservation. An explicit
+reset still requires the caller's positive liveness checks and protected rows.
+Validate supplied scheduling and readiness values before migration can replace
+them; only missing/null scheduling values receive the due-now default.
+
 Before each actionable step, persist its plan as `working` with `nextAction`;
 after it ends, persist progress, evidence, outcome and `nextCheckAt`. Mirror the
 same plan/progress and `updatedAt` in the existing status comment, updating its
@@ -191,13 +213,47 @@ function restoreScheduler({ raw, repository, currentUser, now, reset = false, re
   let state
   let corrupt = false
   try { state = raw?.trim() ? JSON.parse(raw) : null } catch { corrupt = true }
-  if (state && (state.repository !== repository || state.currentUser !== currentUser || state.version !== 1)) throw new Error('Foreign or unsupported scheduler state')
-  const utc = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value) && Number.isFinite(Date.parse(value))
+  if (state != null && (state.repository !== repository || state.currentUser !== currentUser || state.version !== 1)) throw new Error('Foreign or unsupported scheduler state')
+  const utc = value => typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(?:Z|\+00:00)$/.test(value)
+    && Number.isFinite(Date.parse(value)) && new Date(value).toISOString().slice(0, 19) === value.slice(0, 19)
+  if (!utc(now)) throw new Error('UTC checkpoint time required')
   const validReservation = reservation => reservation && ['instanceId', 'runId', 'token', 'host'].every(key => typeof reservation[key] === 'string' && reservation[key].length > 0)
     && Number.isInteger(reservation.pid) && reservation.pid > 0 && utc(reservation.processStartedAt)
     && Array.isArray(reservation.delegatedHandles) && reservation.delegatedHandles.every(handle => handle && typeof handle.id === 'string' && typeof handle.type === 'string' && ['live', 'dead', 'unknown'].includes(handle.status))
   if (state && Array.isArray(state.activePrs) && state.activePrs.some(entry => entry?.reservation != null && !validReservation(entry.reservation))) throw new Error('Invalid scheduler reservation; ownership unknown')
+  const validReadiness = entry => (entry.readyAt == null || utc(entry.readyAt))
+    && (entry.readyHead == null || typeof entry.readyHead === 'string')
+    && (entry.mergeableDurationMs == null || (Number.isFinite(entry.mergeableDurationMs) && entry.mergeableDurationMs >= 0))
+  const normalizeEntry = entry => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return entry
+    if ((entry.nextCheckAt != null && !utc(entry.nextCheckAt)) || !validReadiness(entry)) throw new Error('Invalid scheduler checkpoints; preserve original state for recovery')
+    const next = { ...entry }
+    if (next.lastWorkedAt === undefined) next.lastWorkedAt = null
+    if (next.nextCheckAt == null) next.nextCheckAt = now
+    if (next.plan === undefined) next.plan = []
+    if (next.evidence === undefined) next.evidence = []
+    if (Array.isArray(next.plan)) next.plan = next.plan.map(step => {
+      const status = step?.status === 'failed' ? 'blocked' : step?.status === 'pass' ? 'done' : null
+      return status ? { ...step, status, legacyStatus: step.legacyStatus ?? step.status } : step
+    })
+    if (next.reason && typeof next.reason === 'object' && !Array.isArray(next.reason)) {
+      next.reason = { ...next.reason, gate: next.reason.gate ?? 'unassessed',
+        retryWhen: next.reason.retryWhen ?? 'Reconcile current tracker evidence before scheduling a stage',
+        evidence: next.reason.evidence === undefined ? [] : next.reason.evidence }
+    }
+    if (next.readyPolicy && typeof next.readyPolicy === 'object' && !Array.isArray(next.readyPolicy)) {
+      if (next.legacyReadyPolicy !== undefined && JSON.stringify(next.legacyReadyPolicy) !== JSON.stringify(next.readyPolicy)) throw new Error('Conflicting legacy readiness policies; preserve original state for recovery')
+      next.legacyReadyPolicy = next.readyPolicy
+      next.readyPolicy = null
+      next.readyAt = null
+      next.readyHead = null
+      next.mergeableDurationMs = null
+      next.nextCheckAt = now
+    }
+    return next
+  }
   const validEntry = entry => entry && Number.isInteger(entry.number) && entry.number > 0
+    && (entry.reservation == null || validReservation(entry.reservation))
     && typeof entry.nextAction === 'string' && typeof entry.outcome === 'string'
     && ['title', 'statusCommentUrl'].every(key => entry[key] == null || typeof entry[key] === 'string')
     && (entry.reason == null || (['code', 'summary', 'gate', 'requiredAction', 'owner', 'retryWhen'].every(key => typeof entry.reason[key] === 'string' && entry.reason[key].length > 0)
@@ -206,16 +262,22 @@ function restoreScheduler({ raw, repository, currentUser, now, reset = false, re
       && ['whyAgentCannotAct', 'actionLocation', 'actionUrl'].every(key => entry.reason[key] == null || typeof entry.reason[key] === 'string')
       && (entry.reason.humanActionRequired !== true || (typeof entry.reason.whyAgentCannotAct === 'string' && entry.reason.whyAgentCannotAct.length > 0)) && Array.isArray(entry.reason.evidence) && entry.reason.evidence.every(link => typeof link === 'string')))
     && (entry.reasonCheckedAt == null || utc(entry.reasonCheckedAt))
-    && [entry.nextCheckAt, entry.lastWorkedAt, entry.updatedAt].every(value => utc(value))
-    && ['firstStartedAt', 'firstReadyAt', 'readyAt'].every(key => entry[key] == null || utc(entry[key]))
-    && ['readyHead', 'readyPolicy'].every(key => entry[key] == null || typeof entry[key] === 'string')
-    && (entry.mergeableDurationMs == null || (Number.isFinite(entry.mergeableDurationMs) && entry.mergeableDurationMs >= 0))
+    && [entry.nextCheckAt, entry.updatedAt].every(value => utc(value))
+    && (entry.lastWorkedAt == null || utc(entry.lastWorkedAt))
+    && ['firstStartedAt', 'firstReadyAt'].every(key => entry[key] == null || utc(entry[key]))
+    && (entry.readyPolicy == null || typeof entry.readyPolicy === 'string')
+    && validReadiness(entry)
     && Array.isArray(entry.plan) && entry.plan.every(step => step && typeof step.step === 'string' && ['pending', 'working', 'done', 'blocked'].includes(step.status))
   const validEntries = entries => Array.isArray(entries) && entries.every(validEntry) && new Set(entries.map(entry => entry.number)).size === entries.length
-  if (state && (!utc(state.updatedAt) || !validEntries(state.activePrs))) { corrupt = true; state = null }
+  if (state) {
+    state = { ...state, activePrs: Array.isArray(state.activePrs) ? state.activePrs.map(normalizeEntry) : state.activePrs }
+    if (!utc(state.updatedAt) || !validEntries(state.activePrs)) throw new Error('Invalid scheduler checkpoints; preserve original state for recovery')
+  }
   if (reset || !state) {
-    if (!reset && !validEntries(recovered)) throw new Error('Invalid recovered scheduler checkpoints')
-    state = { version: 1, repository, currentUser, updatedAt: now, activePrs: reset ? (state?.activePrs ?? []).filter(entry => protectedNumbers.includes(entry.number)) : recovered }
+    if (!reset && Array.isArray(recovered) && recovered.some(entry => entry?.reservation != null && !validReservation(entry.reservation))) throw new Error('Invalid scheduler reservation; ownership unknown')
+    const restored = Array.isArray(recovered) ? recovered.map(normalizeEntry) : recovered
+    if (!reset && !validEntries(restored)) throw new Error('Invalid recovered scheduler checkpoints')
+    state = { version: 1, repository, currentUser, updatedAt: now, activePrs: reset ? (state?.activePrs ?? []).filter(entry => protectedNumbers.includes(entry.number)) : restored }
   }
   return { state, quarantine: corrupt, reset }
 }
@@ -240,7 +302,7 @@ function checkpointPlan(previous, update, now, worked = false) {
   const reasonFields = ['code', 'summary', 'gate', 'head', 'humanActionRequired', 'requiredAction', 'owner', 'actionLocation', 'actionUrl', 'whyAgentCannotAct', 'retryWhen', 'evidence']
   const semantic = record => JSON.stringify(keys.map(key => key === 'reason' && record?.reason ? reasonFields.map(field => record.reason[field]) : record?.[key]))
   next.updatedAt = semantic(previous) === semantic(next) ? previous.updatedAt : now
-  next.lastWorkedAt = worked ? now : previous?.lastWorkedAt ?? now
+  next.lastWorkedAt = worked ? now : previous?.lastWorkedAt ?? null
   return next
 }
 function replaceTracked(activePrs, original, replacement) {
@@ -271,6 +333,7 @@ function schedulerDecision({ activePrs, candidates, currentUser, now, ownedCompl
   })
   const allowed = pr => pr.state === 'open' && pr.authorized && pr.claimable && pr.actionable
   const reasonNeedsInspection = entry => !entry.reason || !entry.reason.summary?.trim()
+    || entry.reason.gate === 'unassessed'
     || /^(blocked|waiting|pending|missing signal|ready|merged)[.!]?$/i.test(entry.reason.summary.trim())
     || typeof entry.reason.humanActionRequired !== 'boolean'
     || (entry.outcome === 'waiting-human' && entry.reason.humanActionRequired === false)
@@ -280,7 +343,8 @@ function schedulerDecision({ activePrs, candidates, currentUser, now, ownedCompl
     const canInspect = pr && pr.state === 'open' && pr.authorized && (pr.claimable || (inspect && pr.inspectionAllowed))
     return canInspect && (pr.actionable || inspect) && (pr.changed || inspect || Date.parse(entry.nextCheckAt) <= Date.parse(now))
   }
-  const recent = (left, right) => Date.parse(right.lastWorkedAt) - Date.parse(left.lastWorkedAt) || left.number - right.number
+  const recency = entry => entry.lastWorkedAt == null ? -Infinity : Date.parse(entry.lastWorkedAt)
+  const recent = (left, right) => recency(right) - recency(left) || left.number - right.number
   const tracked = active.filter(due).sort(recent)
   if (tracked.length) return { activePrs: active, next: tracked[0].number, source: 'tracked', inspectionOnly: !facts.get(tracked[0].number).claimable }
   const available = visible.filter(allowed).filter(pr => !active.some(entry => entry.number === pr.number))

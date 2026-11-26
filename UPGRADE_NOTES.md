@@ -16,6 +16,22 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-11-23 — Preserve legacy Merge Buddy scheduler checkpoints
+
+Update `om-auto-merge-buddy` through the normal shared-skill installer before
+resuming older `.ai/meta/merge-buddy.json` checkpoints. Version-1 records accept
+UTC `Z` and `+00:00` timestamps, including microseconds, without rewriting
+process-start reservation identity. Known legacy plan/reason/scheduling fields
+are recovered while attempts, findings, evidence and protected approvals remain
+intact. Missing work times stay unknown; old object-valued readiness policies
+are retained as history and require fresh gate verification.
+
+The migration is idempotent and requires no reset or manual state deletion.
+Unsupported parseable shapes stop with the original state preserved; malformed
+reservations and foreign repository/user/version state still block recovery.
+Keep the existing transaction lock, backup/quarantine and positive owner/delegated
+process liveness checks. Historical plan completion never authorizes a merge.
+
 ## 2026-11-20 — Immediate automerge is label-driven
 
 - Create `automerge-now` in the tracker and update both fixers and the merge buddy

@@ -277,7 +277,7 @@ assert.equal(oldState.activePrs[0].attempts, 2, 'Reset does not mutate source at
 for (const change of [{ currentUser: 'foreign-user' }, { repository: 'foreign/repo' }, { version: 2 }]) {
   assert.throws(() => restoreScheduler({ ...restoreInput, raw: JSON.stringify({ ...oldState, ...change }), reset: true }), /Foreign or unsupported/, 'Reset cannot overwrite foreign state')
 }
-assert.throws(() => restoreScheduler({ ...restoreInput, recovered: [{ ...tracked(1), nextCheckAt: 'invalid' }] }), /Invalid recovered/)
+assert.throws(() => restoreScheduler({ ...restoreInput, recovered: [{ ...tracked(1), nextCheckAt: 'invalid' }] }), /Invalid scheduler checkpoints; preserve original state/)
 const heartbeat = checkpointPlan(tracked(1), { heartbeat: scheduleNow, instanceId: 'new-instance' }, scheduleNow)
 assert.equal(heartbeat.updatedAt, earlierTime, 'Heartbeat/instance changes do not masquerade as plan progress')
 assert.equal(heartbeat.lastWorkedAt, earlierTime)
@@ -323,6 +323,97 @@ const reservedEntry = { ...tracked(1), reservation: { ...reservation, host: 'mac
 assert.equal(decide({ activePrs: [reservedEntry], candidates: [candidate(1, { state: 'merged' }), candidate(3)] }).activePrs.length, 1, 'Terminal reserved row survives until final fenced claim cleanup')
 assert.throws(() => restoreScheduler({ ...restoreInput, raw: JSON.stringify({ ...oldState, activePrs: [{ ...tracked(1), reservation: { instanceId: 'partial' } }] }), reset: true }), /ownership unknown/, 'Malformed reservation cannot be wiped by reset/corruption recovery')
 assert.equal(restoreScheduler({ ...restoreInput, raw: JSON.stringify({ ...oldState, activePrs: [reservedEntry] }) }).state.activePrs.length, 1)
+for (const timestamp of ['2026-11-05T22:51:40Z', '2026-11-05T22:51:40.5Z', '2026-11-05T22:51:40.569516Z', '2026-11-05T22:51:40.569516+00:00', '2026-11-05T22:51:40.569516123+00:00']) {
+  const entry = { ...reservedEntry, updatedAt: timestamp, lastWorkedAt: timestamp, nextCheckAt: timestamp,
+    reservation: { ...reservedEntry.reservation, processStartedAt: timestamp } }
+  const input = { ...oldState, updatedAt: timestamp, activePrs: [entry] }
+  const restored = restoreScheduler({ ...restoreInput, raw: JSON.stringify(input) })
+  assert.equal(restored.quarantine, false, 'Equivalent UTC timestamps must not quarantine valid queue state')
+  assert.equal(JSON.stringify(restored.state.activePrs[0].reservation), JSON.stringify(entry.reservation), 'Process-start precision is ownership identity and must remain byte-for-byte unchanged')
+}
+for (const timestamp of ['invalid', '2026-02-30T22:51:40Z', '2026-11-05T24:51:40Z', '2026-11-05T22:51:40', '2026-11-05T22:51:40+01:00', '2026-11-05T22:51:40-00:00']) {
+  const entry = { ...reservedEntry, reservation: { ...reservedEntry.reservation, processStartedAt: timestamp } }
+  assert.throws(() => restoreScheduler({ ...restoreInput, raw: JSON.stringify({ ...oldState, activePrs: [entry] }) }), /ownership unknown/)
+}
+const legacyRows = Array.from({ length: 92 }, (_, index) => {
+  const entry = { ...tracked(index + 1), updatedAt: '2026-11-05T22:51:40.569516+00:00', nextCheckAt: null,
+    attempts: { review: 2, qa: 1 }, findings: [{ id: 'finding', status: 'open' }],
+    protectedApproval: { actor: 'human', head: qaHead, evidence: 'approval-url' },
+    readyAt: earlierTime, readyHead: qaHead, readyPolicy: { base: 'target', requireIndependentReview: true },
+    mergeableDurationMs: 1000, plan: [{ step: 'Review', status: 'failed', evidence: 'finding-url' }, { step: 'QA', status: 'pass', evidence: 'qa-url' }] }
+  delete entry.lastWorkedAt
+  delete entry.reason.gate
+  delete entry.reason.retryWhen
+  if (index === 2) delete entry.reason.evidence
+  if (index === 0) entry.reservation = { ...reservedEntry.reservation, processStartedAt: '2026-11-05T22:51:40.569516+00:00' }
+  if (index === 1) delete entry.plan
+  return entry
+})
+const legacyInput = { ...oldState, activePrs: legacyRows, dismissedPrs: [123], queue: [{ number: 123 }] }
+const legacyBefore = JSON.stringify(legacyInput)
+const restoredLegacy = restoreScheduler({ ...restoreInput, raw: legacyBefore })
+assert.equal(restoredLegacy.quarantine, false)
+assert.equal(restoredLegacy.state.activePrs.length, 92, 'Known legacy shapes recover the complete nonempty queue')
+assert.equal(JSON.stringify(restoredLegacy.state.dismissedPrs), JSON.stringify(legacyInput.dismissedPrs))
+assert.equal(JSON.stringify(restoredLegacy.state.queue), JSON.stringify(legacyInput.queue))
+for (const [index, entry] of restoredLegacy.state.activePrs.entries()) {
+  const previous = legacyRows[index]
+  for (const key of ['number', 'attempts', 'findings', 'protectedApproval', 'reservation']) {
+    assert.equal(JSON.stringify(entry[key]), JSON.stringify(previous[key]), `Recovery preserves ${key}`)
+  }
+  assert.equal(entry.lastWorkedAt, null, 'Missing work time remains unknown rather than fabricated')
+  assert.equal(entry.nextCheckAt, scheduleNow, 'Missing schedule is due for cheap reconciliation')
+  assert.equal(JSON.stringify(entry.legacyReadyPolicy), JSON.stringify(previous.readyPolicy))
+  assert.equal(entry.readyPolicy, null, 'Legacy object policy never grants current readiness')
+  assert.equal(entry.readyAt, null)
+  assert.equal(entry.readyHead, null)
+  assert.equal(entry.mergeableDurationMs, null)
+  assert.equal(entry.reason.evidence.length, 0)
+  if (previous.plan) {
+    assert.equal(entry.plan[0].status, 'blocked')
+    assert.equal(entry.plan[0].legacyStatus, 'failed')
+    assert.equal(entry.plan[0].evidence, 'finding-url')
+    assert.equal(entry.plan[1].status, 'done')
+    assert.equal(entry.plan[1].legacyStatus, 'pass')
+    assert.equal(entry.plan[1].evidence, 'qa-url')
+  } else assert.equal(entry.plan.length, 0, 'Absent plan is unknown work, never inferred completed work')
+}
+assert.equal(JSON.stringify(legacyInput), legacyBefore, 'Recovery does not mutate caller-owned checkpoint records')
+const legacyRoundTrip = restoreScheduler({ ...restoreInput, raw: JSON.stringify(restoredLegacy.state) })
+assert.equal(JSON.stringify(legacyRoundTrip.state), JSON.stringify(restoredLegacy.state), 'Persisted migration is idempotent')
+assert.equal(checkpointPlan(restoredLegacy.state.activePrs[0], { heartbeat: scheduleNow }, scheduleNow).lastWorkedAt, null, 'A heartbeat never invents legacy work recency')
+assert.equal(decide({ activePrs: [restoredLegacy.state.activePrs[0]], candidates: [candidate(1, { claimable: false }), candidate(2)] }).next, 2, 'Restored foreign reservations stay fenced from admission')
+for (const change of [{ nextCheckAt: 'invalid' }, { plan: [{ step: 'Review', status: 'unsupported' }] }, { reason: { summary: 'partial' } }, { readyPolicy: { base: 'new' }, legacyReadyPolicy: { base: 'old' } }]) {
+  const input = { ...oldState, activePrs: [{ ...reservedEntry, ...change }] }
+  assert.throws(() => restoreScheduler({ ...restoreInput, raw: JSON.stringify(input) }), /preserve|ownership/i, 'Unsupported checkpoint data cannot silently discard a protected reservation')
+}
+const malformedRecovered = { ...reservedEntry, reservation: { instanceId: 'unknown' } }
+assert.throws(() => restoreScheduler({ ...restoreInput, recovered: [malformedRecovered] }), /ownership unknown/)
+const legacyRecovered = restoreScheduler({ ...restoreInput, recovered: legacyRows })
+assert.equal(legacyRecovered.state.activePrs.length, 92, 'Authenticated legacy status checkpoints use the same compatibility path')
+for (const change of [{ nextCheckAt: 'invalid' }, { nextCheckAt: 42 }, { readyAt: 'invalid' }, { readyHead: {} }, { mergeableDurationMs: -1 }, { mergeableDurationMs: 'invalid' }]) {
+  const entry = { ...reservedEntry, readyPolicy: { base: 'target' }, ...change }
+  const before = JSON.stringify(entry)
+  const raw = JSON.stringify({ ...oldState, activePrs: [entry] })
+  assert.throws(() => restoreScheduler({ ...restoreInput, raw }), /preserve/, 'Readiness migration cannot hide supplied invalid schedule or readiness fields')
+  assert.throws(() => restoreScheduler({ ...restoreInput, recovered: [entry] }), /preserve/, 'Recovered legacy checkpoints validate supplied data before overwriting it')
+  assert.equal(JSON.stringify(entry), before, 'Failed recovery preserves the source record and reservation')
+}
+for (const nextCheckAt of [undefined, null, futureTime]) {
+  const entry = { ...reservedEntry, readyPolicy: { base: 'target' }, nextCheckAt }
+  const result = restoreScheduler({ ...restoreInput, recovered: [entry] })
+  assert.equal(result.state.activePrs[0].nextCheckAt, scheduleNow, 'Missing, null and valid schedules remain due for legacy readiness reconciliation')
+}
+const legacyReset = restoreScheduler({ ...restoreInput, raw: legacyBefore, reset: true, protectedNumbers: [1] })
+assert.equal(legacyReset.state.activePrs.length, 1)
+assert.equal(JSON.stringify(legacyReset.state.activePrs[0].reservation), JSON.stringify(legacyRows[0].reservation), 'Reset preserves the exact protected legacy reservation')
+assert.equal(legacyReset.state.activePrs[0].attempts.review, 2)
+for (const raw of ['false', '0', '[]', JSON.stringify({ ...oldState, activePrs: [{ ...tracked(1), readyPolicy: [] }] })]) {
+  assert.throws(() => restoreScheduler({ ...restoreInput, raw }), /unsupported|preserve/i, 'Unrecognized parseable state never becomes an empty queue')
+}
+assert.equal(decide({ activePrs: [{ ...tracked(1), lastWorkedAt: null }, tracked(4)], candidates: [candidate(1), candidate(4)] }).next, 4, 'Known actual work sorts ahead of unknown legacy recency')
+assert.equal(decide({ activePrs: [{ ...tracked(1), reason: { ...tracked(1).reason, gate: 'unassessed' }, nextCheckAt: futureTime }], candidates: [candidate(1, { actionable: false, inspectionAllowed: true, claimable: false })] }).inspectionOnly, true, 'Legacy unassessed reasons receive a fenced cheap inspection')
+console.log('PASS: scheduler recovers legacy UTC timestamps and all checkpoint rows without granting readiness or weakening ownership')
 let released = false
 const finalized = await finalizeTracked({ activePrs: [reservedEntry], number: 1, ownsReservation: true, releaseOwnedClaim: () => { released = true } })
 assert.equal(released, true)

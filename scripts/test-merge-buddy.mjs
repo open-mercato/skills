@@ -985,14 +985,30 @@ console.log('PASS: qa-verdicts copies stay in sync; automerge arming honors the 
   const [, twoLabelQa, ordinaryQa] = stages.match(/\*\*Two-label policy\.\*\*([\s\S]+?)\*\*Ordinary policy\.\*\*([\s\S]+?)\*\*Both policies\.\*\*/)
   assert.match(twoLabelQa, /grant signal 2 from the report, even without `qa-approved`/)
   assert.match(twoLabelQa, /keep signal 2 missing[\s\S]*?condition for retrying auto-QA/)
-  assert.doesNotMatch(twoLabelQa, /waiting-human|child-applied/)
+  assert.doesNotMatch(twoLabelQa, /child-applied/)
+  assert.match(twoLabelQa, /narrower `qaGateLabel` → signal 2 also needs the human sign-off[\s\S]*?`waiting-human`/)
   assert.match(ordinaryQa, /read back the eligible child-applied `qa-approved`/)
   assert.match(ordinaryQa, /end the visit `waiting-human` with that reason and route to a human QA reviewer/)
   assert.equal(immediateQaDecision({ labels: ['qa', 'needs-qa'], coveredAutoPass: true }), 'waiting-human')
-  for (const labels of [['needs-qa'], ['qa-approved'], ['needs-human-qa', 'skip-qa']]) {
+  for (const labels of [['needs-qa'], ['qa-approved']]) {
     assert.equal(immediateQaDecision({ labels, qaGateLabel: 'needs-human-qa' }), 'missing')
     assert.equal(immediateQaDecision({ labels, qaGateLabel: 'needs-human-qa', coveredAutoPass: true }), 'pass')
   }
+  for (const labels of [['needs-human-qa', 'skip-qa'], ['needs-human-qa', 'needs-qa']]) {
+    assert.equal(immediateQaDecision({ labels, qaGateLabel: 'needs-human-qa', coveredAutoPass: true }), 'waiting-human',
+      'The two-label policy never waives an active human-QA label')
+  }
+  assert.equal(immediateQaDecision({ labels: ['needs-human-qa', 'skip-qa'], qaGateLabel: 'needs-human-qa', humanSignoff: true }), 'pass')
+  assert.equal(immediateQaDecision({ labels: ['needs-human-qa', 'needs-qa'], qaGateLabel: 'needs-human-qa', humanSignoff: true }), 'missing',
+    'Human sign-off on the human lane still leaves needs-qa to automatic QA')
+  assert.equal(immediateQaDecision({ labels: ['needs-human-qa', 'needs-qa'], qaGateLabel: 'needs-human-qa', humanSignoff: true, coveredAutoPass: true }), 'pass')
+  for (const extra of [{ humanOnly: true }, { localCoverageRequired: true }]) {
+    assert.equal(immediateQaDecision({ labels: ['needs-human-qa'], qaGateLabel: 'needs-human-qa', humanSignoff: true, ...extra }), 'missing',
+      'Human sign-off never replaces automatic QA the two-label policy still requires')
+    assert.equal(immediateQaDecision({ labels: ['needs-human-qa'], qaGateLabel: 'needs-human-qa', humanSignoff: true, coveredAutoPass: true, ...extra }), 'pass')
+  }
+  assert.equal(immediateQaDecision({ labels: ['needs-human-qa', 'qa-approved'], qaGateLabel: 'needs-human-qa', humanSignoff: true }), 'pass',
+    'The qa-approved of the human sign-off does not add an automatic QA requirement')
   assert.equal(immediateQaDecision({ labels: [], humanOnly: true }), 'missing')
   assert.equal(immediateQaDecision({ labels: [], localCoverageRequired: true }), 'missing')
   assert.equal(immediateQaDecision({ labels: ['needs-qa'], qaGate: false }), 'n/a')
@@ -1012,7 +1028,8 @@ console.log('PASS: qa-verdicts copies stay in sync; automerge arming honors the 
   assert.equal(immediateCiDecision({ hostReadComplete: false, localMirrorPassed: true }), 'missing')
   assert.equal(immediateCiDecision({ hostReadComplete: true }), 'missing')
 
-  assert.match(nowPolicy, /Human QA is skipped and the protected-area check is skipped/)
+  assert.match(nowPolicy, /The protected-area check is skipped and automatic QA can satisfy `needs-qa`/)
+  assert.match(nowPolicy, /An active human-QA label still needs a human sign-off/)
   assert.match(nowPolicy, /Both labels, ownership and current evidence must still hold/)
   assert.match(nowPolicy, /On loss of either label, reconcile the ordinary gates/)
   for (const name of ['om-auto-fix-pr', 'om-auto-fix-issue']) {

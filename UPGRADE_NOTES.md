@@ -16,6 +16,27 @@ against them — not against the copies shipped in this repo:
 | `SDLC.md`, `CODE_REVIEW.md`, `BACKWARD_COMPATIBILITY.md`, `AGENTS.md` starter | `om-setup-agent-pipeline` | Regenerated only when missing — edit or regenerate deliberately |
 | `.ai/skills/<name>/SKILL.md` repo-local overrides | you | Never touched by upgrades; review them against new skill behavior |
 
+## 2026-11-26: PR routing with `om-triage-pr` and `om-review-pr`
+
+Additive; existing skills and their labels are unchanged.
+
+- New skill `om-triage-pr` sets category, priority, risk, the QA lane (the
+  same `humanQaPolicy` rules `om-auto-review-pr` uses) and, with
+  `prTriage.ciScopeFile`, CI level and area labels from that file. It is
+  raise-only and writes one comment per PR whose last line is
+  `CI-Triage-Head: <sha>`; a CI check can require that line from a trusted
+  identity on the current head.
+- New skill `om-review-pr` gives the merge decision without an autofix loop:
+  the `om-code-review` checklist, hosted CI on the head instead of the local
+  validation gate, approve or request changes, raise-only routing labels,
+  and `merge-queue` only when every gate holds.
+- Optional config object `prTriage` (`ciScopeFile`, `areaLabelPrefix`,
+  `acceptanceLabel`). Without it, triage sets no CI label and drafts no
+  acceptance. Create the level and area labels your scope file names before
+  pointing `ciScopeFile` at it, and list the login triage posts as in
+  `humanQaPolicy.trustedTriageAuthors` when it is not the automation
+  identity.
+
 ## 2026-11-25 — Batch QA: a batch-check lane and `om-qa-batch`
 
 Additive; nothing changes until a project opts in.

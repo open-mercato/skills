@@ -214,11 +214,12 @@ human routing wait for a human; no preference fabricates approval labels.
 ### Immediate automation-only approval
 
 When an authorized PR carries both `automerge-now` and `automerge-force`,
-the buddy posts a PR comment stating that it skipped human QA and the
-protected-area check. The merge requires automated code review with actionable
+the buddy posts a PR comment stating that it skipped the protected-area
+check and let automatic QA satisfy `needs-qa`. The merge requires automated code review with actionable
 findings resolved, a real host CI pass or a complete local CI mirror, and
 current-head auto-QA PASS with coverage when QA applies. This policy skips
-ordinary human sign-offs, including separate native approval. A covered
+ordinary human sign-offs, including separate native approval, except an
+active narrower human-QA gate label, which still needs a human sign-off. A covered
 current-head auto-QA PASS satisfies `needs-qa` without `qa-approved` when the
 QA gate applies. Active `qa` stops preparation and merge under either policy
 until the QA reviewer removes it. Unresolved workflow approval holds block

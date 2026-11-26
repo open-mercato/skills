@@ -4,8 +4,10 @@ Apply these gates before bootstrap/reconciliation, before and after each stage,
 after a replacement/retarget, and immediately before either finish action.
 They outrank every signal, QA routing preference, `--force`, CI waiver and host
 protection bypass. Read fresh tracker facts. Always apply §1. When both
-`automerge-now` and `automerge-force` are currently present, skip §§2–2c and
-use the automation-only approval checks in `references/automerge-now.md`.
+`automerge-now` and `automerge-force` are currently present, skip §§2 to 2b and
+the labeling step of §2c, and use the automation-only approval checks in
+`references/automerge-now.md`. An active human-QA gate label still needs the
+human sign-off of §2c under that pair.
 
 ## Gate map
 

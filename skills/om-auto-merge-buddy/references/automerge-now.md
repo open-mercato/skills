@@ -18,7 +18,7 @@ override is insufficient.
 After checking explicit human vetoes, update the existing buddy status
 comment with this visible line and confirm the write before running stages:
 
-> ⚠️ Human QA is skipped and the protected-area check is skipped because this PR carries `automerge-now` and `automerge-force`. Automated code review, CI and auto-QA when required still gate the merge.
+> ⚠️ The protected-area check is skipped and automatic QA can satisfy `needs-qa` because this PR carries `automerge-now` and `automerge-force`. An active human-QA label still needs a human sign-off. Automated code review, CI and auto-QA when required still gate the merge.
 
 Bind the notice to the current run, head and target in the status details.
 Include the same line in the pre-merge evidence summary and confirm the write
@@ -37,9 +37,10 @@ even if the head is unchanged. Record the approval policy and run id that produc
   `--skip-risk-checks` to children. Keep the ordinary provenance marker.
 - **QA.** Active `qa` stops the visit even with a current auto-QA PASS. Once
   the QA reviewer removes it, `needs-qa` can be satisfied by a covered auto-QA
-  PASS without `qa-approved` when the QA gate applies. QA is also required by
-  `qa-approved`, an active narrower
-  `qaGateLabel`, a matching configured human-only label/author, mandatory
+  PASS without `qa-approved` when the QA gate applies. An active narrower `qaGateLabel` is never waived by this
+  policy: it needs the human sign-off of `references/human-gates.md` §2c, and
+  without it the visit ends `waiting-human`. QA is also required by
+  `qa-approved`, a matching configured human-only label/author, mandatory
   local test coverage, or the ordinary `qaGate`/`needs-qa` combination. The
   protected-area classification is skipped. Determine applicable coverage
   from the actual diff and the repository's ordinary QA requirements. Use
@@ -72,14 +73,15 @@ This QA decision consumes normalized labels and trusted evidence facts:
 ```javascript
 function immediateQaDecision({
   labels, qaGate = true, qaGateLabel = 'needs-qa', humanOnly = false,
-  localCoverageRequired = false, coveredAutoPass = false
+  localCoverageRequired = false, coveredAutoPass = false, humanSignoff = false
 }) {
   if (labels.includes('qa')) return 'waiting-human'
-  const required = humanOnly || localCoverageRequired
-    || labels.includes('qa-approved')
-    || (qaGateLabel !== 'needs-qa' && labels.includes(qaGateLabel))
+  const humanLane = qaGateLabel !== 'needs-qa' && labels.includes(qaGateLabel)
+  if (humanLane && !humanSignoff) return 'waiting-human'
+  const autoRequired = humanOnly || localCoverageRequired
+    || (labels.includes('qa-approved') && !humanLane)
     || (qaGate && labels.includes('needs-qa'))
-  if (!required) return 'n/a'
+  if (!autoRequired) return humanLane ? 'pass' : 'n/a'
   return coveredAutoPass ? 'pass' : 'missing'
 }
 ```

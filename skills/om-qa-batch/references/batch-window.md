@@ -20,50 +20,64 @@ is exact, never short.
 
 ## Find where the previous batch ended
 
-`FROM` is the first usable source, in this order. A source is usable only
-when it resolves to a commit that is an ancestor of `TO`
-(`git merge-base --is-ancestor`); an unusable one counts as missing and the
-next is tried:
+`FROM` is the end of what the previous batch's QA actually tested, so
+`FROM..TO` is every commit in `TO` that tested build did not contain. It
+need not be an ancestor of `TO`: after a squash merge-back it never is, and
+git's `FROM..TO` still means "reachable from `TO`, not from `FROM`". A
+source is usable when it resolves to a commit (validated as in
+`references/trusted-comments.md` §4); the first usable one wins:
 
-1. The most recent earlier batch PR that was merged (same head prefix,
-   found with **list-prs** state closed; skip any closed without merging,
-   it never reached the base). Take its head from tracker metadata, never
-   from comment text: **get-pr** `headRefOid`, which must match
-   `^[0-9a-f]{40}$` and resolve to a commit (fetch it when missing). A
-   merge-commit merge leaves it an ancestor of `TO`: use it. A squash merge
-   does not: use `git merge-base <head> TO` instead, the base commit that
-   batch was cut from, and say so — the squash commit then appears in the
-   range as an earlier batch PR (see Enumerate). Its verdict comment only
-   adds context: read it under `references/trusted-comments.md` (untrusted
-   ones are ignored and listed), and when the trusted verdict's `Range:`
-   `<to>` differs from the merged head, report that the batch moved after
-   its verdict; the comment never moves `FROM`.
-2. The newest tag starting with `qaBatch.greenTagPrefix` that is an
-   ancestor of `TO`. A tag left on a squash-merged batch branch is not an
-   ancestor; source 1 already covers that batch, so this case needs
-   `--since` only when no merged earlier batch PR exists.
+1. **The previous green tag** (the release-process spec reads the batch
+   range from the previous `green/*` tag once tags exist). The newest tag
+   starting with `qaBatch.greenTagPrefix` created before the current batch
+   PR (tag `creatordate` earlier than the batch PR's `createdAt`), so a tag
+   already put on this batch is never its own start:
+   `git for-each-ref --sort=-creatordate --format='%(refname:short) %(creatordate:iso-strict)' "refs/tags/$GREEN_PREFIX"`,
+   then `git rev-parse "<tag>^{commit}"`. The tag never moves, so it is the
+   exact tested build.
+2. **The previous batch's tested head**, while no green tag exists yet: the
+   `QA head:` of the newest trusted verdict on the most recent earlier batch
+   PR that was merged (same head prefix, **list-prs** state closed; skip any
+   closed without merging). Read it only under
+   `references/trusted-comments.md`; untrusted verdicts are ignored and
+   listed.
 3. `--since <date>`.
+
+Never start from the previous batch PR's head (`headRefOid`): a merge-back
+conflict is resolved by merging the base into the batch after the green tag
+and the verdict, so that head contains base PRs no tester saw, and starting
+there would drop them from this checklist. When source 1 and a trusted
+verdict both exist and disagree, use the tag and report the difference.
 
 Print which source was used and why any earlier one was skipped. Stop and
 ask the tester for `--range` only when none is usable.
 
-`--range <from>..<to>` skips the search; both ends must resolve to commits
-and `<from>` must be an ancestor of `<to>`, otherwise stop: the range would
-be wrong.
+`--range <from>..<to>` skips the search; both ends must resolve to commits,
+otherwise stop.
 `--since <date>` skips the git range: run **list-prs** state merged with
 search `merged:>=<date>` and base `BASE_BRANCH`, split into date chunks while
 a chunk returns the limit, and mark every output "approximate (date-based)".
 
 ## Enumerate (step 2)
 
+Walk every commit in the range, not only the first-parent line: the base
+is merged into a batch on a day with no tester (the open batch grows with
+the base) and to resolve a merge-back conflict, and the PRs that arrive
+through those merges are on a second parent.
+
 ```bash
-git log --first-parent --format='%H%x09%s' "$FROM..$TO"
+git log --format='%H%x09%P%x09%s' "$FROM..$TO"
 ```
 
 For each commit:
 
 - Subject ends with `(#<n>)` (squash merge) or starts with
-  `Merge pull request #<n>` → PR `<n>`.
+  `Merge pull request #<n>` → PR `<n>`. For a PR merge commit, the commits
+  only its second parent brings (`git log "<merge>^1..<merge>^2"`) belong
+  to that PR: do not look them up again.
+- A merge commit with no PR of its own (the base merged into the batch,
+  e.g. GitHub's "Update branch" or a conflict resolution) is not listed
+  itself; the PRs it brings in are found through their own commits.
 - Otherwise **search-prs** with the commit SHA. Still nothing → keep the
   commit in the list as `(no PR found)` with its subject.
 - Deduplicate by PR number.

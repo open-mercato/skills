@@ -137,9 +137,13 @@ after a stable verdict needs a new verdict for that head, and the stale
    first pass. Use the `QA head:` of the trusted verdict
    instead only when it is newer (a descendant of the tested head). Neither
    exists → refuse and point to `--start`.
-2. `git log --first-parent "$RETEST_FROM..<current batch head>"` on the
-   batch branch: map each commit to its stabilization PR (**search-prs** by
-   SHA, base = batch branch); keep a commit with no PR as `(no PR found)`.
+2. `git log "$RETEST_FROM..<current batch head>"` (every commit, so base
+   merges into the batch are included; a merge commit without a PR of its
+   own is skipped and its PRs found through their commits) on the
+   batch branch: map each commit to its PR as in `references/batch-window.md`
+   (Enumerate) — stabilization PRs (base = batch branch) and any base PRs a
+   base merge brought in, which get the step 3-4 check; keep a commit with
+   no PR as `(no PR found)`.
    Add every open `qaBatch.blockerLabel` issue.
 3. Checklist: each fix with the blocker it closes, the areas it touched, and
    a short smoke of those areas. Write it to

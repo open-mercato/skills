@@ -5,16 +5,32 @@ Label changes go through the descriptor's guards; `LABELS_ENABLED=false`
 skips them and the report says so. Read the batch PR again (**get-pr**)
 right before each action and compare its head with the **tested head**.
 
+**Trusted authors.** A login listed in `qaBatch.testers` (compared
+case-insensitively) or **current-user**. Assignment proves nothing: anyone
+with triage access can self-assign. When `qaBatch.testers` is non-empty,
+`--start`, `--retest` and `--verdict` refuse a **current-user** not in it.
+
+**The checklist comment.** Each batch has exactly one: the earliest
+`` 🤖 `om-qa-batch` — 🧪 batch checklist `` comment by a trusted author
+(**list-issue-comments**, oldest first). Record its comment id; every later
+action reads and updates that id only and never posts a second one. When
+it was written by someone other than **current-user**, the batch is theirs:
+stop and name them. Marker comments by anyone else are ignored and listed
+as untrusted.
+
 **Tested head.** It is recorded on the batch PR, never in a local file: the
-`Tested head: <full sha>` line of the `` 🤖 `om-qa-batch` — 🧪 batch
-checklist `` comment, which `--start` sets to the `TO` it checklisted and
-`--retest` moves to the head it checklisted. Read it with
-**list-issue-comments** and trust only a comment authored by
-**current-user** or by an assignee of the batch PR; anyone can paste the
-marker. The local `checklist.md` is a working copy and never answers this.
-No trusted comment, or no `Tested head:` line in it, means the tested head
-is unknown. A moved head never joins the tested build silently: say so, name
-the new commits, and point to `--retest`.
+`Tested head: <full sha>` line of the checklist comment. The first `--start`
+sets it to the `TO` it checklisted; after that only `--retest` moves it. The
+local `checklist.md` is a working copy and never answers this. No checklist
+comment, or no `Tested head:` line in it, means the tested head is unknown.
+A moved head never joins the tested build silently: say so, name the new
+commits, and point to `--retest`.
+
+**Residual risk.** A repository admin, or anyone with write access, can
+edit another user's comment, including `Tested head:`. The batch gate is a
+process control between tester and stabilizer, not a security boundary;
+branch protection on the base branch and the tracker's audit log (comment
+edit history) are the backstop.
 
 **Stale approval.** When the batch carries `qa-approved` and its head differs
 from the `QA head:` of the latest verdict comment, the approval no longer
@@ -41,10 +57,13 @@ fixed through the normal flow.
    assigned to someone other than **current-user**, stop and name who holds
    it. The same user re-running `--start` updates in place.
 2. **assign-pr** current user; **label-pr** `qaBatch.inProgressLabel`.
-3. Find the `` 🤖 `om-qa-batch` — 🧪 batch checklist `` comment
-   (**list-issue-comments**); **update-comment** it, or **comment-pr** a new one
-   (template in `references/report-templates.md`) with `Tested head:` set to
-   the `TO` of the checklist just written.
+3. Find the checklist comment (above). None → **comment-pr** it (template in
+   `references/report-templates.md`) with `Tested head:` set to the `TO` of
+   the checklist just written. It exists with a `Tested head:` → `--start`
+   never moves it: when the batch head equals it, **update-comment** the
+   must-test list in place and keep the line; when the head moved, refuse,
+   name the new commits and point to `--retest`, which checklists the
+   stabilization fixes that `--start` never shows.
 4. Tell the tester: the in-progress label is the agreed signal that the
    batch is being tested and must not be refreshed with newer base commits.
 
@@ -77,8 +96,10 @@ blockers, nothing else.
    no longer reproduces on the tested head is closed by the tester first; this
    skill never closes it.
 3. `stable` is refused when the tested head is unknown: say that no trusted
-   batch checklist comment records one, and tell the tester to run `--start`
-   (or `--retest`) on the head they tested, then `--verdict` again. `stable`
+   batch checklist comment records one, so nothing proves which head was
+   tested. Tell the tester to run `--start`, test the head it records, then
+   `--verdict` again; a head tested before it was recorded is never
+   certified after the fact. `stable`
    is also refused when the batch head differs from the tested head: commits
    landed after testing. Name them and point to `--retest`. `unstable` is
    still recorded, against the tested head, or the current head marked
@@ -99,14 +120,19 @@ after a stable verdict needs a new verdict for that head, and the stale
 
 ## `--retest`
 
-1. Find the latest verdict comment's time and head.
-2. Stabilization PRs merged into the batch branch after it (**list-prs**
-   state merged, base = batch branch) and every open `qaBatch.blockerLabel`
-   issue.
+1. `RETEST_FROM` = the `Tested head:` of the checklist comment. It works
+   before any verdict exists, the common case: a stabilizer pushed during the
+   first pass. Use the `QA head:` of the latest trusted verdict comment
+   instead only when it is newer (a descendant of the tested head). Neither
+   exists → refuse and point to `--start`.
+2. `git log --first-parent "$RETEST_FROM..<current batch head>"` on the
+   batch branch: map each commit to its stabilization PR (**search-prs** by
+   SHA, base = batch branch); keep a commit with no PR as `(no PR found)`.
+   Add every open `qaBatch.blockerLabel` issue.
 3. Checklist: each fix with the blocker it closes, the areas it touched, and
    a short smoke of those areas. Write it to
    `$QA_DIR/batches/<batch-slug>/retest.md` with
-   `Range: <last QA head>..<current batch head>`.
-4. **update-comment** the batch checklist comment (or **comment-pr** it when
-   missing): `Tested head:` becomes that current batch head and
-   `Retest range:` names the range. Then `--verdict` again.
+   `Range: <RETEST_FROM>..<current batch head>`.
+4. **update-comment** the checklist comment by its id: `Tested head:`
+   becomes that current batch head and `Retest range:` names the range. Then
+   `--verdict` again.

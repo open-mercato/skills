@@ -86,7 +86,9 @@ HUMAN_QA_POLICY=$(jq -c '.humanQaPolicy // {}' "$CONFIG")   # read by the classi
   in-progress label `qa-in-progress`, bug labels `["bug"]`, blocker label
   `qa-blocker`, automatic QA evidence labels `qa-self-verified` and
   `automerge-signal-2-qa`, no `testers` (only the current user is trusted,
-  so the tester who ran `--start` gives the verdict).
+  so the tester who ran `--start` gives the verdict). Teams with more than
+  one tester set `testers`: with an empty list one tester's write action
+  treats another's verdict as untrusted and withdraws a valid `qa-approved`.
 - The human QA gate label is `qaGateLabel` when it is not `needs-qa`; the
   batch-check label is `humanQaPolicy.batchCheckLabel` (null = none). Both
   come from the config; the classifier receives the whole config object.

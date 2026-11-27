@@ -29,7 +29,10 @@ from the `QA head:` of the trusted verdict, or no trusted verdict exists
 (an untrusted one never vouches for the label), the approval no longer
 covers the build: every write action first **unlabel-pr** `qa-approved` and
 says why; read-only runs report it as stale and tell the tester to run
-`--retest`, then `--verdict`.
+`--retest`, then `--verdict`. With an empty `qaBatch.testers` only
+**current-user** is trusted, so tester B's write action treats tester A's
+verdict as untrusted and withdraws a valid `qa-approved`: teams with more
+than one tester set `qaBatch.testers`.
 
 ## Blocker definition
 
@@ -52,9 +55,12 @@ fixed through the normal flow.
 2. **assign-pr** current user; **label-pr** `qaBatch.inProgressLabel`.
 3. Find the checklist comment (above). None → **comment-pr** it (template in
    `references/report-templates.md`) with `Tested head:` set to the `TO` of
-   the checklist just written. It exists without a `Tested head:` line → treat
-it as no tested head recorded: **update-comment** it with the must-test list
-and `Tested head:` set to `TO`. It exists with a `Tested head:` → `--start`
+   the checklist just written, and `Stabilizer:` set to the `--stabilizer`
+   login or, without it, the batch PR author. `--start` never changes a
+   recorded `Stabilizer:`. It exists without a `Tested head:` line → treat
+   it as no tested head recorded: **update-comment** it with the must-test
+   list and `Tested head:` set to `TO` (and `Stabilizer:` when missing). It
+   exists with a `Tested head:` → `--start`
    never moves it: when the batch head equals it, **update-comment** the
    must-test list in place and keep the line; when the head moved, refuse,
    name the new commits and point to `--retest`, which checklists the
@@ -84,10 +90,18 @@ PR (**get-pr**), the tested head from the checklist comment, and the open
 blockers, nothing else.
 
 1. Refuse when **current-user** is a bot or automation identity: the verdict
-   is a human's. Refuse `stable` when **current-user** is the stabilizer —
-   the batch PR author, or the `--stabilizer` login given to this run —
-   whatever `qaBatch.testers` contains: the stabilizer never certifies their
-   own batch. `unstable` stays allowed.
+   is a human's. Refuse `stable` when **current-user** stabilized the batch,
+   whatever `qaBatch.testers` contains — the stabilizer never certifies their
+   own fixes. **current-user** stabilized it when it is:
+   - the batch PR author;
+   - the `Stabilizer:` login of the checklist comment (read under
+     `references/trusted-comments.md`), or the `--stabilizer` login given to
+     this run;
+   - the author or the merger of any stabilization PR (**list-prs** state
+     merged, base = batch branch, with author and merged-by);
+   - the author of any commit on the batch branch (**get-pr** the batch with
+     its commits' author logins).
+   Name which of these matched. `unstable` stays allowed.
 2. `stable` is refused while **search-issues** finds an open issue labelled
    `qaBatch.blockerLabel`, whichever batch it names: a blocker from an
    earlier batch is still in this build until it is fixed. List them. One that

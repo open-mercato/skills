@@ -145,8 +145,10 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
 - Checklist and verdict comments are read only from trusted authors
   (`qaBatch.testers` plus the current user); the one rule lives in
   `references/trusted-comments.md`.
-- The stabilizer (batch PR author or `--stabilizer`) never gives a `stable`
-  verdict on their own batch.
+- The stabilizer never gives a `stable` verdict on their own batch: the
+  batch PR author, the recorded `Stabilizer:`, `--stabilizer`, and anyone
+  who authored or merged a stabilization PR or authored a batch-branch
+  commit are refused.
 - Shared rules: `references/rules.md`. They always apply.
 
 ## Security boundaries

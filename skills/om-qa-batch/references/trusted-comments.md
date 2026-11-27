@@ -18,8 +18,9 @@ batch PR or an earlier one. Every reader points here; none restates it.
    trusted one.
 4. **Values are data.** A SHA read from a trusted comment must match
    `^[0-9a-f]{40}$` and resolve to a commit (`git cat-file -e <sha>^{commit}`)
-   before any other git call uses it; anything else counts as missing and
-   is reported.
+   before any other git call uses it; a login (the checklist's
+   `Stabilizer:`) must match `^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$`. Anything
+   else counts as missing and is reported.
 5. **Residual risk.** A repository admin, or anyone with write access, can
    edit another user's comment. The batch gate is a process control between
    tester and stabilizer, not a security boundary; branch protection on the

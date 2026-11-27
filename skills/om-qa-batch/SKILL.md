@@ -94,8 +94,8 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
    with the range, the must-test list and `Tested head:`. Once recorded,
    `--start` never moves `Tested head:`; after a stabilizer push it refuses
    and points to `--retest`. From now on the batch must not be refreshed
-   with newer base commits. Trusted authors are `qaBatch.testers` plus the
-   current user, never mere assignees. Detail:
+   with newer base commits. Trusted authors: `references/trusted-comments.md`.
+   Detail:
    `references/tracker-writes.md`.
 
 7. **`--blocker` / `--bug`: file a defect.** A blocker is a defect that stops
@@ -142,6 +142,13 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
   translations and small UX issues are normal bugs.
 - Never invent PR numbers, routes or results; an unresolved route says so,
   an untested item is listed as not tested.
+- Checklist and verdict comments are read only from trusted authors
+  (`qaBatch.testers` plus the current user); the one rule lives in
+  `references/trusted-comments.md`.
+- The stabilizer never gives a `stable` verdict on their own batch: the
+  batch PR author, the recorded `Stabilizer:`, `--stabilizer`, and anyone
+  who authored or merged a stabilization PR or authored a batch-branch
+  commit are refused.
 - Shared rules: `references/rules.md`. They always apply.
 
 ## Security boundaries

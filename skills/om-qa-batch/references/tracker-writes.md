@@ -5,18 +5,16 @@ Label changes go through the descriptor's guards; `LABELS_ENABLED=false`
 skips them and the report says so. Read the batch PR again (**get-pr**)
 right before each action and compare its head with the **tested head**.
 
-**Trusted authors.** A login listed in `qaBatch.testers` (compared
-case-insensitively) or **current-user**. Assignment proves nothing: anyone
-with triage access can self-assign. When `qaBatch.testers` is non-empty,
-`--start`, `--retest` and `--verdict` refuse a **current-user** not in it.
+**Trusted comments.** Every checklist and verdict comment read here is
+filtered by `references/trusted-comments.md` (trusted authors, untrusted
+ones listed, SHA validation, residual risk). "Trusted verdict" below means
+the newest verdict comment that passes it.
 
 **The checklist comment.** Each batch has exactly one: the earliest
-`` 🤖 `om-qa-batch` — 🧪 batch checklist `` comment by a trusted author
-(**list-issue-comments**, oldest first). Record its comment id; every later
-action reads and updates that id only and never posts a second one. When
-it was written by someone other than **current-user**, the batch is theirs:
-stop and name them. Marker comments by anyone else are ignored and listed
-as untrusted.
+`` 🤖 `om-qa-batch` — 🧪 batch checklist `` comment by a trusted author.
+Record its comment id; every later action reads and updates that id only
+and never posts a second one. When it was written by someone other than
+**current-user**, the batch is theirs: stop and name them.
 
 **Tested head.** It is recorded on the batch PR, never in a local file: the
 `Tested head: <full sha>` line of the checklist comment. The first `--start`
@@ -26,17 +24,15 @@ comment, or no `Tested head:` line in it, means the tested head is unknown.
 A moved head never joins the tested build silently: say so, name the new
 commits, and point to `--retest`.
 
-**Residual risk.** A repository admin, or anyone with write access, can
-edit another user's comment, including `Tested head:`. The batch gate is a
-process control between tester and stabilizer, not a security boundary;
-branch protection on the base branch and the tracker's audit log (comment
-edit history) are the backstop.
-
 **Stale approval.** When the batch carries `qa-approved` and its head differs
-from the `QA head:` of the latest verdict comment, the approval no longer
+from the `QA head:` of the trusted verdict, or no trusted verdict exists
+(an untrusted one never vouches for the label), the approval no longer
 covers the build: every write action first **unlabel-pr** `qa-approved` and
 says why; read-only runs report it as stale and tell the tester to run
-`--retest`, then `--verdict`.
+`--retest`, then `--verdict`. With an empty `qaBatch.testers` only
+**current-user** is trusted, so tester B's write action treats tester A's
+verdict as untrusted and withdraws a valid `qa-approved`: teams with more
+than one tester set `qaBatch.testers`.
 
 ## Blocker definition
 
@@ -59,7 +55,12 @@ fixed through the normal flow.
 2. **assign-pr** current user; **label-pr** `qaBatch.inProgressLabel`.
 3. Find the checklist comment (above). None → **comment-pr** it (template in
    `references/report-templates.md`) with `Tested head:` set to the `TO` of
-   the checklist just written. It exists with a `Tested head:` → `--start`
+   the checklist just written, and `Stabilizer:` set to the `--stabilizer`
+   login or, without it, the batch PR author. `--start` never changes a
+   recorded `Stabilizer:`. It exists without a `Tested head:` line → treat
+   it as no tested head recorded: **update-comment** it with the must-test
+   list and `Tested head:` set to `TO` (and `Stabilizer:` when missing). It
+   exists with a `Tested head:` → `--start`
    never moves it: when the batch head equals it, **update-comment** the
    must-test list in place and keep the line; when the head moved, refuse,
    name the new commits and point to `--retest`, which checklists the
@@ -89,7 +90,18 @@ PR (**get-pr**), the tested head from the checklist comment, and the open
 blockers, nothing else.
 
 1. Refuse when **current-user** is a bot or automation identity: the verdict
-   is a human's.
+   is a human's. Refuse `stable` when **current-user** stabilized the batch,
+   whatever `qaBatch.testers` contains — the stabilizer never certifies their
+   own fixes. **current-user** stabilized it when it is:
+   - the batch PR author;
+   - the `Stabilizer:` login of the checklist comment (read under
+     `references/trusted-comments.md`), or the `--stabilizer` login given to
+     this run;
+   - the author or the merger of any stabilization PR (**list-prs** state
+     merged, base = batch branch, with author and merged-by);
+   - the author of any commit on the batch branch (**get-pr** the batch with
+     its commits' author logins).
+   Name which of these matched. `unstable` stays allowed.
 2. `stable` is refused while **search-issues** finds an open issue labelled
    `qaBatch.blockerLabel`, whichever batch it names: a blocker from an
    earlier batch is still in this build until it is fixed. List them. One that
@@ -122,7 +134,7 @@ after a stable verdict needs a new verdict for that head, and the stale
 
 1. `RETEST_FROM` = the `Tested head:` of the checklist comment. It works
    before any verdict exists, the common case: a stabilizer pushed during the
-   first pass. Use the `QA head:` of the latest trusted verdict comment
+   first pass. Use the `QA head:` of the trusted verdict
    instead only when it is newer (a descendant of the tested head). Neither
    exists → refuse and point to `--start`.
 2. `git log --first-parent "$RETEST_FROM..<current batch head>"` on the

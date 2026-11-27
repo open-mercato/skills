@@ -43,6 +43,7 @@ Testing started by @<tester> at <UTC time>. This batch is frozen for refresh unt
 
 Range: <from>..<to>
 Tested head: <full sha of to; --retest moves it>
+Stabilizer: <login from --stabilizer, else the batch PR author; never changed>
 Retest range: <last QA head>..<tested head> (omit before the first --retest)
 Must test (<n>): #<pr>, #<pr>, ...
 Agent-picked (<n>): #<pr>, ...

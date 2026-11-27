@@ -8,9 +8,10 @@ batch PR or an earlier one. Every reader points here; none restates it.
 1. **Trusted authors.** A login listed in `qaBatch.testers` (compared
    case-insensitively) or **current-user**. Assignment, PR authorship and
    repository role prove nothing: anyone with triage access can
-   self-assign, and anyone who can comment can paste a marker. When
-   `qaBatch.testers` is non-empty, `--start`, `--retest` and `--verdict`
-   refuse a **current-user** not in it.
+   self-assign, and anyone who can comment can paste a marker. The person
+   running the skill is always trusted for their own action, so a verdict
+   or `--retest` is never refused for a login missing from `qaBatch.testers`;
+   the list decides whose comments, besides their own, are read back.
 2. **Untrusted marker comments** are ignored, never parsed for values, and
    listed in the report as untrusted (author, link) so a human can look.
 3. **Choosing one.** The checklist comment is the earliest trusted one

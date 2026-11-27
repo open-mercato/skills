@@ -50,7 +50,8 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
    reads: **current-user**, **list-prs**, **search-prs**, **get-pr**,
    **get-pr-files**, **list-issue-comments**, **search-issues**. Tracker
    writes, only under the actions in steps 6-9: **assign-pr**, **label-pr**,
-   **unlabel-pr**, **comment-pr**, **update-comment**, **create-issue**.
+   **unlabel-pr**, **set_pipeline_label**, **comment-pr**, **update-comment**,
+   **create-issue**.
    Write actions also use **get-lock**, **acquire-lock**, **release-lock**,
    **get-claim-reset** and the claim operations in `references/claim-pr.md`.
    Before any write, acquire that action-scoped claim, verify it again, and
@@ -123,10 +124,14 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
    PR, never a local file; unknown → `stable` is refused. Only a human tester
    gives it, from the current user's own account. `stable` is refused while
    any blocker issue is open, from this batch or an earlier one, and while
-   the batch head differs from the tested head. Post or update
+   the batch head differs from the tested head; `unstable` needs at least one
+   open blocker. Post or update
    `` 🤖 `om-qa-batch` — batch verdict `` with `QA verdict:`, `QA head:` (the
-   tested head) and the range; label `qa-approved` (stable) or `qa-failed` (unstable) and remove
-   the other; on stable remove the in-progress label. Print the short channel
+   tested head) and the range; stable → `qa-approved` plus pipeline
+   `merge-queue`, unstable → pipeline `qa-failed` (pipeline labels only
+   through `set_pipeline_label`); on stable remove the in-progress label. A
+   merge-back conflict fix after the green tag keeps the verdict on the
+   tagged commit and needs no new one. Print the short channel
    message for the team. Detail: `references/tracker-writes.md`.
 
 9. **`--retest`: only what changed.** Start from the recorded `Tested head:`

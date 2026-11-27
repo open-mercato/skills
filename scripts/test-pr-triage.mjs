@@ -106,7 +106,7 @@ assert.match(triageTemplates, /HTTP 403/, 'triage report-templates must post wit
 assert.match(reviewTemplates, /author being\s+`CURRENT_USER`/, 'review update-comment lookup must match only CURRENT_USER')
 
 // Merge-queue gates: re-read labels and withhold merge-queue after raising CI/QA labels, action_required non-green
-assert.match(review, /re-read the PR's labels/, 'review must re-read labels after raising routing labels')
+assert.match(review, /re-read the\s+PR's labels/, 'review must re-read labels after raising routing labels')
 assert.match(merge, /no CI or QA routing label was\s+raised in this run/, 'merge-ready must withhold merge-queue in the same run after raising CI/QA labels')
 assert.match(merge, /action_required/, 'merge-ready must treat action_required fork runs as non-green')
 assert.match(merge, /Current-head trusted triage/, 'merge-ready must require current-head trusted triage')

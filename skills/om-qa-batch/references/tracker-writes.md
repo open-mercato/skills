@@ -74,6 +74,7 @@ after tagging). Verify that per commit, never from its subject:
 
 ```bash
 git fetch origin "$BASE_BRANCH" || exit 1
+git merge-base --is-ancestor "$QA_HEAD" "$BATCH_HEAD" || exit 1        # QA head is in the batch history
 MERGE_BACK_COMMITS=$(git rev-list --first-parent "$QA_HEAD..$BATCH_HEAD") || exit 1
 for c in $MERGE_BACK_COMMITS; do
   [ "$(git rev-list --parents -n 1 "$c" | wc -w)" -eq 3 ] || exit 1   # exactly two parents
@@ -102,6 +103,12 @@ human merge hold would silently go: when the batch PR carries
 `do-not-merge` or `blocked`, keep it and skip the pipeline change
 (`merge-queue` or `qa-failed`); still post the verdict, still add or remove
 `qa-approved`, and name the hold in the report and the label rationale.
+A stable verdict under a hold removes `qa-failed` directly with
+**unlabel-pr** (the skipped `merge-queue` change would have cleared it), so
+`qa-failed` never sits next to `qa-approved`. An unstable verdict under a
+hold defers `qa-failed` until the hold is lifted: the verdict comment and
+the removed `qa-approved` record it, and the report says the failed label
+is deferred.
 
 ## Blocker definition
 
@@ -216,7 +223,9 @@ blockers, nothing else.
    `qaBatch.inProgressLabel`. Unstable → **set_pipeline_label** `qa-failed`,
    **unlabel-pr** `qa-approved`, keep the in-progress label so the batch stays
    frozen while the stabilizer fixes it. With a `do-not-merge` or `blocked`
-   hold on the PR, skip the pipeline change in both cases and name the hold.
+   hold on the PR, skip the pipeline change in both cases and name the hold;
+   stable still **unlabel-pr** `qa-failed`, unstable defers `qa-failed`
+   until the hold is lifted (see Pipeline labels above).
 6. Print the channel message from the templates for the tester to send.
 
 The stabilizer decides when fixes are in and tags the batch. Any moved

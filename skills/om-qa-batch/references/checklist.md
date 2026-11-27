@@ -47,8 +47,8 @@ Malformed or head-unbound triage records are ignored.
 | `coveredHuman` | A qualifying human approval is pinned to this head. | Appendix; re-check only when a later PR in the batch touches the same area. |
 | `coveredAuto` | Automatic QA evidence label present. | Appendix. |
 | `noManualQa` | `skip-qa`, or no UI file changed. | Appendix; the smoke and CI cover it. |
-| `stabilization` | Merged into the batch branch with no manual-QA signal or UI change. | Covered appendix. Other stabilization fixes use the normal QA buckets, including on the first checklist. |
-| `otherBase` | Merged into another branch (a release line, an earlier batch). | Appendix. |
+| `stabilization` | Merged into the batch branch, or into an earlier batch branch (any base starting with `qaBatch.branchPrefix`) after its green tag, with no manual-QA signal or UI change. | Covered appendix. Other stabilization fixes use the normal QA buckets, including on the first checklist. |
+| `otherBase` | Merged into another branch that is neither the base nor a batch branch (a release line). | Appendix. |
 
 A fix merged into the current batch before the first `--start` is part of
 the initial tested build. Classify it by the same verdict, lane and UI

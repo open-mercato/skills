@@ -107,6 +107,16 @@ assert.deepEqual(firstPassFixes.buckets.candidates.map(entry => entry.number), [
 assert.deepEqual(firstPassFixes.buckets.batchCheck.map(entry => entry.number), [42])
 assert.deepEqual(firstPassFixes.buckets.coveredHuman.map(entry => entry.number), [43])
 assert.equal(firstPassFixes.counts.total, 4)
+// A fix merged into an earlier batch after its green tag keeps normal QA buckets, never otherBase.
+const earlierBatchFixes = good({ config, batchBranch: 'stabilize/today', prs: [
+  pr(50, { baseRefName: 'stabilize/main-2026-11-25', labels: ['needs-qa'], files: [{ path: 'src/admin/List.tsx', status: 'modified' }] }),
+  pr(51, { baseRefName: 'stabilize/main-2026-11-25', labels: ['skip-qa'] }),
+  pr(52, { baseRefName: 'release/1.x', labels: ['needs-qa'] })
+] })
+assert.deepEqual(earlierBatchFixes.buckets.candidates.map(entry => entry.number), [50])
+assert.deepEqual(earlierBatchFixes.buckets.stabilization.map(entry => entry.number), [51])
+assert.deepEqual(earlierBatchFixes.buckets.otherBase.map(entry => entry.number), [52])
+assert.equal(earlierBatchFixes.buckets.candidates[0].earlierBatch, 'stabilize/main-2026-11-25')
 for (const bucket of Object.values(firstPassFixes.buckets)) {
   assert.ok(bucket.every(entry => entry.stabilization === true), 'stabilization remains provenance, not an exemption')
 }
@@ -250,6 +260,10 @@ assert.match(writes, /[Aa] write action under this exception removes `qa-approve
 assert.doesNotMatch(writes, /tester eligibility/)
 assert.match(read('skills/om-qa-batch/references/report-templates.md'), /tag green\/<date> on QA head <sha> before merging/)
 assert.match(window, /Any other commit after the tag[\s\S]*?was never tested: list it/)
+assert.match(writes, /git merge-base --is-ancestor "\$QA_HEAD" "\$BATCH_HEAD" \|\| exit 1/)
+assert.match(writes, /A stable verdict under a hold removes `qa-failed` directly/)
+assert.match(writes, /An unstable verdict under a\s+hold defers `qa-failed` until the hold is lifted/)
+assert.match(window, /newest green tag\s+on that batch, the same tag source 1 picks as `FROM`/)
 console.log('PASS: batch skill keeps verdicts human, read-only by default, and refuses stable with open blockers')
 
 // The write workflow must preserve the collection's claim and reporting contract.

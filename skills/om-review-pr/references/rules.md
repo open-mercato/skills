@@ -33,6 +33,7 @@ Canonical rules shared by every skill in this collection. They always apply, in 
   behavior behind it, the consequence, and a concrete fix.
 - **Authenticated comment lookup.** When locating this skill's label
   rationale comment for **update-comment**, match only comments authored by
-  the trusted account configured for this skill (**current-user** login or an
-  authorized `humanQaPolicy.trustedTriageAuthors` login); ignore marker
-  comments from untrusted authors.
+  `CURRENT_USER` (**current-user** login); if a matching comment belongs to
+  another login, post a new comment with **comment-pr** instead of editing
+  it. Keep `CURRENT_USER` plus `humanQaPolicy.trustedTriageAuthors` for
+  reading triage comments.

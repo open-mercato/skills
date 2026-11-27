@@ -29,9 +29,11 @@ Canonical rules shared by every skill in this collection. They always apply, in 
   the run, triage starts again from the new head.
 - **Label commentary.** The triage comment is this skill's label rationale
   comment; it carries the machine blocks as well, so there is no second one.
-  When looking up the comment for **update-comment**, match only comments
-  authored by the trusted account configured for this skill (**current-user**
-  login or an authorized `humanQaPolicy.trustedTriageAuthors` login); ignore
-  marker comments from untrusted authors.
+  When looking up a comment for **update-comment**, match only comments
+  authored by `CURRENT_USER` (**current-user** login); if an existing trusted
+  triage comment belongs to another login in
+  `humanQaPolicy.trustedTriageAuthors`, post a new comment with **comment-pr**
+  instead of editing it. Keep `CURRENT_USER` plus
+  `humanQaPolicy.trustedTriageAuthors` for reading triage comments.
 - **Bulk runs.** `--open` processes PRs one by one and reports each; a
   failure on one PR is reported and the run continues with the next.

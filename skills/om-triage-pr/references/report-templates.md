@@ -2,16 +2,20 @@
 
 ## Triage comment
 
-Exactly one per PR, found through **list-issue-comments** by matching **both**
-its first-line marker (`` 🤖 `om-triage-pr` — 🏷️ triage `` or legacy
-`🤖 om-triage-pr — 🏷️ triage`) **and** its author being the trusted account
-configured for this skill (the **current-user** login, or an authorized login
-in `humanQaPolicy.trustedTriageAuthors` — never match or edit a comment
-authored by an untrusted user even if it contains the marker). Create it with
-**comment-pr** when no matching trusted comment exists, and rewrite it in
-place with **update-comment** on every subsequent run. When the descriptor has
-no **update-comment**, post a replacement that says it supersedes the previous
-triage comment.
+Exactly one per PR. For **reading** an earlier triage comment, trust comments
+authored by `CURRENT_USER` (**current-user** login) or a login in
+`humanQaPolicy.trustedTriageAuthors`. For **update-comment**, find the comment
+through **list-issue-comments** by matching **both** its first-line marker
+(`` 🤖 `om-triage-pr` — 🏷️ triage `` or legacy `🤖 om-triage-pr — 🏷️ triage`)
+**and** its author being `CURRENT_USER` — never edit a comment authored by
+anyone else (if the existing trusted triage comment belongs to another login
+in `humanQaPolicy.trustedTriageAuthors`, post a new comment with
+**comment-pr** instead of calling **update-comment**, since a non-admin bot
+gets HTTP 403 editing another account's comment). Create it with
+**comment-pr** when no matching `CURRENT_USER` comment exists, and rewrite it
+in place with **update-comment** on every subsequent run. When the descriptor
+has no **update-comment**, post a replacement that says it supersedes the
+previous triage comment.
 
 ````markdown
 🤖 `om-triage-pr` — 🏷️ triage

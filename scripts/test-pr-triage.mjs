@@ -76,13 +76,16 @@ assert.match(triage, /apply_label/, 'triage must check apply_label skips before 
 assert.match(triage, /never\s+lowers one/, 'triage must state the raise-only rule')
 assert.match(triage, /Never remove the human QA\s+label/, 'triage must never remove the human QA label')
 assert.match(triage, /approvedDesign\.label/, 'triage Rules must include approvedDesign.label in allowed removals')
+assert.match(triage, /lower CI level label/, 'triage Rules must include replaced lower CI level label in allowed removals')
 assert.match(triage, /never posts a\s+commit status \(such as `ci-triage`\)/, 'triage must never post a ci-triage commit status')
 
-// ci-level.md contracts: base-branch-only reads and fail-closed on parse failure
+// ci-level.md contracts: base-branch-only reads, fail-closed, implies same-run labels, lower level removal
 for (const [name, content] of [['om-triage-pr', triageCiLevel], ['om-review-pr', reviewCiLevel]]) {
   assert.match(content, /origin\/\$PR_BASE:\$CI_SCOPE_FILE/, `${name} ci-level.md must read ciScopeFile from origin/$PR_BASE`)
   assert.match(content, /never from the PR head/, `${name} ci-level.md must forbid reading ciScopeFile from the PR head`)
   assert.match(content, /omit\s+`CI-Triage-Head:`/, `${name} ci-level.md must fail closed on invalid/missing scope file`)
+  assert.match(content, /added earlier\s+in the same run.*risk-high.*ci-area:\*/s, `${name} ci-level.md must count implies labels added earlier in the same run (risk-high, ci-area:*)`)
+  assert.match(content, /remove the replaced lower level\s+label/, `${name} ci-level.md must remove the replaced lower level label when raising`)
 }
 
 // acceptance.md contracts: outside-contribution acceptance and automerge limits
@@ -94,12 +97,13 @@ assert.match(reviewProcedure, /om-code-review/, 'review-procedure.md must follow
 assert.match(reviewProcedure, /does not run `validation\.commands` locally/, 'review-procedure.md must not run local validation commands')
 assert.match(reviewProcedure, /origin\/\$PR_BASE/, 'review-procedure.md must read repo checklists from base branch')
 
-// Trusted-author checks on CI-Triage-Head and update-comment marker lookups
+// Trusted-author checks on CI-Triage-Head and CURRENT_USER-only update-comment marker lookups
 assert.match(review, /CI-Triage-Head:/, 'review must look for current-head triage')
 assert.match(review, /trustedTriageAuthors/, 'review must verify trusted author on CI-Triage-Head')
 assert.match(triageTemplates, /comment by a trusted identity/, 'triage report-templates must document trusted-author check on CI-Triage-Head')
-assert.match(triageTemplates, /author being the trusted account/, 'triage update-comment lookup must verify trusted author')
-assert.match(reviewTemplates, /author being the trusted\s+account/, 'review update-comment lookup must verify trusted author')
+assert.match(triageTemplates, /author being `CURRENT_USER`/, 'triage update-comment lookup must match only CURRENT_USER')
+assert.match(triageTemplates, /HTTP 403/, 'triage report-templates must post with comment-pr instead of editing another trusted login')
+assert.match(reviewTemplates, /author being\s+`CURRENT_USER`/, 'review update-comment lookup must match only CURRENT_USER')
 
 // Merge-queue gates: re-read labels and withhold merge-queue after raising CI/QA labels, action_required non-green
 assert.match(review, /re-read the PR's labels/, 'review must re-read labels after raising routing labels')

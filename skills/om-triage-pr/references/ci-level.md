@@ -36,8 +36,9 @@ satisfy a CI triage gate). Never guess a label name.
    - A changed file matches `fullSuitePatterns`, or the PR edits the scope
      file itself → CI runs the highest level on its own; add no level label
      for that reason.
-   - A label listed in `implies` is already on the PR → CI runs at least that
-     level.
+   - A label listed in `implies` is already on the PR **or was added earlier
+     in the same run** (such as `risk-high` from step 3 or `ci-area:*` area
+     labels added in this run) → CI runs at least that level.
 2. **Modules the PR touches.** Map changed files to module names as the
    scope file's `areas` spell them (a module directory name in the path). CI
    already tests touched modules when it runs a targeted level; areas are for
@@ -68,11 +69,13 @@ satisfy a CI triage gate). Never guess a label name.
 ## Comparing with the current labels
 
 - Add a level label only when it is higher than both the floor and the
-  level label already present. When a higher level label is already present,
-  keep it.
+  level label already present. When raising from a lower level label already
+  on the PR, add the higher level label and remove the replaced lower level
+  label (one level label per PR, matching how risk labels are handled). When
+  a higher level label is already present, keep it.
 - Add each needed area label that is missing.
-- Never remove a level or area label, even one this run would not set: a
-  person or an earlier run had a reason.
+- Never lower a level label or remove an area label, even one this run would
+  not set: a person or an earlier run had a reason.
 - A label with the level or area prefix that the scope file does not define,
   or two level labels at once, is reported in the comment as a likely typo;
   leave it in place.

@@ -87,12 +87,13 @@ checked and does not move the PR to `merge-queue`).
    risk), add the QA lane, risk, CI level or area label through the guards,
    using the local triage rules (`references/labels.md`,
    `references/ci-level.md`, `references/qa-triage.md`). Raise-only: never
-   remove a routing label. Explain each in this skill's label rationale
-   comment. Whenever this step raises any CI level, area, CI-implying risk,
-   or QA label, **re-read the PR's labels** (**get-pr**) and treat CI for the
-   new level (and any newly added QA gate) as unverified in this run — do not
-   set `merge-queue` until CI passes for the raised labels and every gate
-   holds.
+   lower a routing label or remove an area/QA label (when raising risk or a
+   CI level, remove only the replaced lower risk or lower CI level label).
+   Explain each in this skill's label rationale comment. Whenever this step
+   raises any CI level, area, CI-implying risk, or QA label, **re-read the
+   PR's labels** (**get-pr**) and treat CI for the new level (and any newly
+   added QA gate) as unverified in this run — do not set `merge-queue` until
+   CI passes for the raised labels and every gate holds.
 
 7. **Verdict.** Any blocker, or a major without a documented waiver:
    request changes. Otherwise: approve, listing minors and nits. Re-read the

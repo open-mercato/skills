@@ -36,6 +36,7 @@ Configure `.ai/agentic.config.json` when missing or when the pipeline changes.
   "qaGateLabel": "needs-qa",
   "qaReadyLabel": null,
   "humanQaPolicy": {},
+  "qaBatch": {},
   "ci": { "maxWaitMinutes": 40 },
   "autofix": { "label": "cez-autofix", "eligibility": { "lookbackDays": 30, "analyzeLimit": 100, "limit": 20, "excludeLabels": ["blocked", "do-not-fix"] } },
   "automerge": { "label": "automerge", "mode": "prepare-and-merge", "requireIndependentReview": false, "defaultToHumanQa": false, "humanOnlyLabels": [], "humanOnlyAuthors": [], "complexQa": "always", "windowMinutes": 120, "maxAttempts": 3 },
@@ -73,7 +74,7 @@ Field defaults: `references/config-capabilities.md`.
 - `labels.priority` — mutually exclusive urgency of the work. Unset is treated as medium.
 - `labels.risk` — mutually exclusive blast radius of the change. Unset is treated as medium. Priority is how urgent the work is; risk is how dangerous the change is to ship.
 - `qaGate` — when `true`, the gate label (`qaGateLabel`, default `needs-qa`) requires `qa-approved` before merge. When `false`, it is advisory.
-- `qaGateLabel` / `qaReadyLabel` / `humanQaPolicy` — optional; see `references/config-capabilities.md`.
+- `qaGateLabel` / `qaReadyLabel` / `humanQaPolicy` / `qaBatch` — optional; see `references/config-capabilities.md`.
 - `autofix` — issue-triage queue label and eligibility; defaults and behavior: `references/config-capabilities.md`.
 - `automerge` — queue label, merge mode, review/QA policies, human-only arrays, QA depth, queue limits and triage. Schema above; fields/defaults in `references/config-capabilities.md`.
 - `ci.maxWaitMinutes` — CI wait cap in minutes, default `40`; `0` skips waiting. It never relaxes required checks for merging. Wait-budget behavior: `references/config-capabilities.md`.

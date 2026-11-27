@@ -87,6 +87,7 @@ evolve-harness.
 |---|---|
 | `om-auto-audit-dependencies` | Dependency advisories across every detected ecosystem. |
 | `om-auto-qa-scenarios` | A QA plan for a window of merged PRs. |
+| `om-qa-batch` | The tester's pass over a daily batch or a release line: which merged PRs need a human eye, the smoke-plus-checklist, the testing-started marker, blockers and the stable/unstable verdict. |
 
 ### Knowledge and discovery-adjacent
 

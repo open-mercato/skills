@@ -15,6 +15,8 @@ const defaults = JSON.parse(load({}).stdout);
 assert.equal(defaults.whenUnsure, 'human');
 assert.equal(defaults.approvedDesign.source, 'merged-spec');
 assert.equal(defaults.uiFileThreshold, 0);
+assert.equal(defaults.batchCheckLabel, null);
+assert.deepEqual(defaults.batchPaths, []);
 assert.deepEqual(JSON.parse(load({humanQaPolicy:{}}).stdout), defaults);
 assert.deepEqual(JSON.parse(load({humanQaPolicy:{approvedDesign:{}}}).stdout), defaults);
 for (const policy of [false, null, [], 1, 'human',
@@ -22,18 +24,45 @@ for (const policy of [false, null, [], 1, 'human',
   { uiFileThreshold: -1 }, { uiFileThreshold: 0.5 }, { uiFileThreshold: null },
   { whenUnsure: false }, { whenUnsure: 'guess' }, { approvedDesign: [] }, { approvedDesign: false },
   { approvedDesign: { source: null } }, { approvedDesign: { source: 'body' } }, { approvedDesign: { label: false } },
-  { humanVerdictLabels: false }, { trustedTriageAuthors: [''] }]) {
+  { humanVerdictLabels: false }, { trustedTriageAuthors: [''] },
+  { batchCheckLabel: false }, { batchCheckLabel: '' }, { batchPaths: null }, { batchPaths: [1] },
+  { whenUnsure: 'batch' }, { whenUnsure: 'batch', batchCheckLabel: null }]) {
   assert.notEqual(load({ humanQaPolicy: policy }).status, 0,
     'must reject malformed policy: ' + JSON.stringify(policy));
 }
 const custom = {
   paths: ['src/auth/**'], uiPaths: ['src/ui/**'], uiFileThreshold: 10,
   whenUnsure: 'auto', approvedDesign: { source: 'none', label: 'design-approved' },
-  humanVerdictLabels: ['qa-human-approved'], trustedTriageAuthors: ['reviewer']
+  humanVerdictLabels: ['qa-human-approved'], trustedTriageAuthors: ['reviewer'],
+  batchCheckLabel: 'qa-batch-check', batchPaths: ['src/portal/**']
 };
 assert.deepEqual(JSON.parse(load({ humanQaPolicy: custom }).stdout), custom);
+const batchUnsure = { ...custom, whenUnsure: 'batch' };
+assert.deepEqual(JSON.parse(load({ humanQaPolicy: batchUnsure }).stdout), batchUnsure);
 assert.equal(JSON.parse(load({ humanQaPolicy: { approvedDesign: { label: null } } }).stdout)
   .approvedDesign.label, null);
+for (const label of ['qa-approved', 'qa-failed', 'needs-qa', 'skip-qa']) {
+  assert.notEqual(load({ humanQaPolicy: { batchCheckLabel: label } }).status, 0, 'must reject reserved batchCheckLabel ' + label);
+}
+assert.notEqual(load({ qaGateLabel: 'needs-human-qa', humanQaPolicy: { batchCheckLabel: 'needs-human-qa' } }).status, 0,
+  'must reject batchCheckLabel equal to qaGateLabel');
+assert.notEqual(load({ humanQaPolicy: { batchCheckLabel: 'qa-human-ok', humanVerdictLabels: ['qa-human-ok'] } }).status, 0,
+  'must reject batchCheckLabel equal to a human verdict label');
+assert.equal(load({ qaGateLabel: 'needs-human-qa', humanQaPolicy: { batchCheckLabel: 'qa-batch-check' } }).status, 0);
+
+for (const label of ['in-progress', 'claim-reset', 'ci-monitoring', 'review', 'merge-queue',
+  'blocked', 'do-not-merge', 'qa', 'qa-self-verified', 'risk-high', 'priority-high',
+  'automerge', 'automerge-now', 'automerge-signal-1-cr', 'automerge-signal-2-qa',
+  'automerge-signal-3-ci', 'automerge-signal-3-passes-local-ci-checks']) {
+  assert.notEqual(load({ humanQaPolicy: { batchCheckLabel: label } }).status, 0, 'must reject workflow batch label ' + label);
+}
+for (const extra of [
+  { qaReadyLabel: 'batch-check' }, { automerge: { label: 'batch-check' } },
+  { labels: { pipeline: ['batch-check'] } }, { labels: { risk: ['batch-check'] } },
+  { labels: { priority: ['batch-check'] } }
+]) assert.notEqual(load({ ...extra, humanQaPolicy: { batchCheckLabel: 'batch-check' } }).status, 0);
+assert.notEqual(load({ humanQaPolicy: { batchCheckLabel: 'design-ok', approvedDesign: { label: 'design-ok' } } }).status, 0);
+
 console.log('PASS: actual QA policy loader defaults, custom values, null label, and malformed inputs');
 
 // The executable deliverable is prose: freeze safety boundaries at the consuming
@@ -45,6 +74,10 @@ assert.match(triage, /never exempts money or architecture/i);
 assert.match(triage, /Reject collisions rather than granting approval/);
 assert.match(triage, /TRIAGED[^\n]*not (?:an? )?review verdict/i);
 assert.match(triage, /orchestrated[^.]*driver owns/i);
+assert.match(triage, /Never blocks the merge/);
+assert.match(triage, /Never remove `BATCH_CHECK_LABEL`/);
+assert.match(triage, /When it is null \(the\s+default\) there is no batch lane/);
+assert.match(triage, /3b\. \*\*Batch lane\*\* \(only when `BATCH_CHECK_LABEL` is set and no step 3\s+rule fired\)/);
 const setup = read('skills/om-auto-review-pr/references/agentic-setup.md');
 assert.match(setup, /humanQaPolicy/);
 assert.match(setup, /before[^\n]*claim/i);

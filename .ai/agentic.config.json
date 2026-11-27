@@ -18,7 +18,8 @@
       "node scripts/test-review-sweep.mjs",
       "node scripts/test-issue-triage.mjs",
       "node scripts/test-spec-delta.mjs",
-      "node scripts/test-qa-triage.mjs"
+      "node scripts/test-qa-triage.mjs",
+      "node scripts/test-qa-batch.mjs"
     ]
   },
   "labels": {

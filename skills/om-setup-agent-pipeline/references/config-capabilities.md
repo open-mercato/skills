@@ -60,7 +60,8 @@ committed configs keep working.
 | `automerge.humanOnlyLabels` | `[]` | Array of nonempty label strings; matches require pinned human QA under ordinary policy and auto-QA under the two-label policy. Invalid values stop before claims/proposals. |
 | `qaGateLabel` | `"needs-qa"` | Nonempty label the QA gate keys on. A narrower label (for example `needs-human-qa`) leaves `needs-qa` as a request for automatic QA only; automation applies the narrower label to protected and human-only PRs and never removes a human-applied one. |
 | `qaReadyLabel` | `null` | Optional label meaning "ready for a human tester now". Owned by the repository (typically a workflow); skills only read it. |
-| `humanQaPolicy` | see below | QA triage policy read by `om-auto-review-pr`. `paths`: globs; a changed non-test file matching one puts the PR in the human lane. `uiPaths`: globs that count as UI files (empty = any rendered file). `uiFileThreshold`: nonnegative integer; more changed UI files than this puts the PR in the human lane (`0` disables). `whenUnsure`: `human` (default) or `auto`. `approvedDesign`: `{ "source": "merged-spec" | "none", "label": null | "<name>" }`; with `merged-spec`, a design is approved when a referenced spec already on the base branch has mockups for the changed screens, and triage applies `label` when set. `humanVerdictLabels`: extra labels triage must never remove. `trustedTriageAuthors`: logins, besides the automation identity, whose `qa-triage` block consumers may trust. Defaults: `[]`, `[]`, `0`, `"human"`, `{ "source": "merged-spec", "label": null }`, `[]`, `[]`. Invalid values stop before claims. Supersedes `automerge.humanOnlyLabels` / `humanOnlyAuthors`, which stay honored and deprecated. |
+| `humanQaPolicy` | see below | QA triage policy read by `om-auto-review-pr`. `paths`: globs; a changed non-test file matching one puts the PR in the human lane. `uiPaths`: globs that count as UI files (empty = any rendered file). `uiFileThreshold`: nonnegative integer; more changed UI files than this puts the PR in the human lane (`0` disables). `whenUnsure`: `human` (default), `auto`, or `batch` (only with `batchCheckLabel`). `approvedDesign`: `{ "source": "merged-spec" | "none", "label": null | "<name>" }`; with `merged-spec`, a design is approved when a referenced spec already on the base branch has mockups for the changed screens, and triage applies `label` when set. `humanVerdictLabels`: extra labels triage must never remove. `trustedTriageAuthors`: logins, besides the automation identity, whose `qa-triage` block consumers may trust. `batchCheckLabel`: `null` or a label; when set, triage adds it to merged-later work a human should check in the next batch (approved-design UX, hard-to-automate interactions, the size net, unsure cases with `whenUnsure: "batch"`) instead of blocking the merge, and `om-qa-batch` builds the batch checklist from it. `batchPaths`: globs; a changed non-test file matching one adds the batch-check label. Defaults: `[]`, `[]`, `0`, `"human"`, `{ "source": "merged-spec", "label": null }`, `[]`, `[]`, `null`, `[]`. Invalid values stop before claims. Supersedes `automerge.humanOnlyLabels` / `humanOnlyAuthors`, which stay honored and deprecated. |
+| `qaBatch` | see below | `om-qa-batch`; batch QA settings. `branchPrefix` (`"stabilize/"`): head-branch prefix of a batch PR. `greenTagPrefix` (`"green/"`): tag prefix of a verified batch, used to find where the previous batch ended. `smoke` (`null`): repo path of the project's smoke checklist; null uses the generic smoke. `inProgressLabel` (`"qa-in-progress"`): on the batch PR while a tester works on it; the batch must not be refreshed while it is present. `bugLabels` (`["bug"]`): labels for every defect filed from a batch. `blockerLabel` (`"qa-blocker"`): added to a defect that blocks the batch. `autoQaEvidenceLabels` (`["qa-self-verified","automerge-signal-2-qa"]`): labels that count as automatic QA evidence. `testers` (`[]`): human logins whose batch checklist comment (and its `Tested head:`) is trusted, besides the current user; assignees are never trusted. Teams with more than one tester must set it: with an empty list one tester's write action treats another's verdict as untrusted and withdraws a valid `qa-approved`. The batch verdict uses `qa-approved` / `qa-failed`. Invalid values stop before any tracker call. |
 | `automerge.humanOnlyAuthors` | `[]` | Array of nonempty logins, compared case-insensitively; matches require pinned human QA under ordinary policy and auto-QA under the two-label policy. Invalid values stop before claims/proposals. |
 | `automerge.complexQa` | `"always"` | `always` requests complex QA on every invocation; `needs-qa` only for needs-qa/protected/human-only work; `never` requests basic depth. Preserve explicit settings; invalid enums stop. |
 | `automerge.windowMinutes` | `120` | `om-auto-merge-buddy`; per-run time window, `0` = one pass with no idle CI polling. |
@@ -112,6 +113,18 @@ QA_GATE_LABEL=$(jq -r 'if has("qaGateLabel") then .qaGateLabel else "needs-qa" e
 QA_READY_LABEL=$(jq -r 'if (.qaReadyLabel // null) == null then empty elif (.qaReadyLabel | type) == "string" and (.qaReadyLabel | length) > 0 then .qaReadyLabel else error("Invalid qaReadyLabel") end' "$CONFIG")   # optional, repository-owned
 HUMAN_QA_POLICY=$(jq -ce '
   def default($key; $value): if has($key) then .[$key] else $value end;
+  . as $root |
+  (["review","changes-requested","qa","blocked","do-not-merge",
+    "qa-approved","qa-failed","qa-self-verified","needs-qa","skip-qa",
+    "in-progress","claim-reset","ci-monitoring","automerge","automerge-now",
+    "automerge-force","automerge-prepare","automerge-blocked","merge-queue",
+    "automerge-signal-1-cr","automerge-signal-2-qa","automerge-signal-3-ci",
+    "automerge-signal-3-passes-local-ci-checks",
+    "priority-low","priority-medium","priority-high","priority-extreme",
+    "risk-low","risk-medium","risk-high"]
+   + ($root.labels.pipeline // []) + ($root.labels.priority // []) + ($root.labels.risk // [])
+   + [$root.qaGateLabel // "needs-qa",$root.qaReadyLabel,$root.automerge.label]) as $reserved |
+  (if has("qaGateLabel") then .qaGateLabel else "needs-qa" end) as $gate |
   (if has("humanQaPolicy") then .humanQaPolicy else {} end) as $p |
   if ($p | type) != "object" then error("Invalid humanQaPolicy") else
     ($p | default("approvedDesign"; {})) as $d |
@@ -123,14 +136,20 @@ HUMAN_QA_POLICY=$(jq -ce '
        approvedDesign:{source:($d | default("source"; "merged-spec")),
                        label:($d | default("label"; null))},
        humanVerdictLabels:($p | default("humanVerdictLabels"; [])),
-       trustedTriageAuthors:($p | default("trustedTriageAuthors"; []))}
+       trustedTriageAuthors:($p | default("trustedTriageAuthors"; [])),
+       batchCheckLabel:($p | default("batchCheckLabel"; null)),
+       batchPaths:($p | default("batchPaths"; []))}
     end
   end |
   if (.paths|type)=="array" and all(.paths[];type=="string" and length>0)
      and (.uiPaths|type)=="array" and all(.uiPaths[];type=="string" and length>0)
      and (.uiFileThreshold|type)=="number"
      and .uiFileThreshold>=0 and (.uiFileThreshold|floor)==.uiFileThreshold
-     and (.whenUnsure=="human" or .whenUnsure=="auto")
+     and (.batchCheckLabel==null or
+          ((.batchCheckLabel|type)=="string" and (.batchCheckLabel|length)>0))
+     and (.batchPaths|type)=="array" and all(.batchPaths[];type=="string" and length>0)
+     and (.whenUnsure=="human" or .whenUnsure=="auto"
+          or (.whenUnsure=="batch" and .batchCheckLabel!=null))
      and (.approvedDesign.source=="merged-spec" or .approvedDesign.source=="none")
      and (.approvedDesign.label==null or
           ((.approvedDesign.label|type)=="string" and (.approvedDesign.label|length)>0))
@@ -138,6 +157,8 @@ HUMAN_QA_POLICY=$(jq -ce '
      and all(.humanVerdictLabels[];type=="string" and length>0)
      and (.trustedTriageAuthors|type)=="array"
      and all(.trustedTriageAuthors[];type=="string" and length>0)
+     and (.batchCheckLabel as $l | $l==null or
+          all(($reserved + [$gate,.approvedDesign.label] + .humanVerdictLabels)[]; . != $l))
   then . else error("Invalid humanQaPolicy") end
 ' "$CONFIG")   # QA triage policy
 HUMAN_ONLY_AUTHORS=$(jq -c 'if (.automerge // {} | has("humanOnlyAuthors")) then .automerge.humanOnlyAuthors else [] end | if type == "array" and all(.[]; type == "string" and length > 0) then . else error("Invalid humanOnlyAuthors") end' "$CONFIG")     # logins, compared case-insensitively

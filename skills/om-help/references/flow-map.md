@@ -42,6 +42,7 @@ read-only ask ("analyse issue N, don't fix it" / "is issue N still real?").
 | `om-auto-continue-pr` vs `-loop` | The plan artifact: a run folder or a PR carrying `Tracking run folder:` means the loop; a flat plan file means `om-auto-continue-pr`. |
 | `om-auto-fix-pr` / `om-pr-autopilot` / `om-approve-merge-pr` | State already known, never merges / state unknown, diagnose first / merge now. |
 | `om-auto-review-pr` / `om-review-prs` / `om-code-review` | One PR / a sweep of other authors' unreviewed PRs (`--subagents` for a fresh reviewer per PR, `--parallel N` to bound concurrency) / a local report only, no tracker mutation. |
+| `om-triage-pr` / `om-review-pr` | Routing labels for one PR or all open PRs (category, priority, risk, QA lane, CI test level; raise-only, with a head marker CI can check) / the merge decision for one PR: checklist review plus hosted CI on the head, approve or request changes, `merge-queue` only when every gate holds; no autofix. |
 | `om-merge-buddy` vs `om-pr-autopilot` | A read-only scan of the whole open queue vs diagnosing and driving one PR. |
 | `om-auto-implement-spec` vs `om-pre-implement-spec` | Spec readiness — see the spec-state classification in `references/context-signals.md`. |
 | `om-auto-sec-report-pr` vs `om-auto-sec-report` | Security report on one unit (a PR, spec, or branch diff) vs a window of merged PRs since a date or PR number (default last 7 days). |

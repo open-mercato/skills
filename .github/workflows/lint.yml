@@ -36,3 +36,5 @@ jobs:
         run: node scripts/test-qa-triage.mjs
       - name: Batch QA classifier and configuration contract
         run: node scripts/test-qa-batch.mjs
+      - name: PR triage and review configuration and contract
+        run: node scripts/test-pr-triage.mjs

@@ -37,6 +37,7 @@ Configure `.ai/agentic.config.json` when missing or when the pipeline changes.
   "qaReadyLabel": null,
   "humanQaPolicy": {},
   "qaBatch": {},
+  "prTriage": { "ciScopeFile": null, "areaLabelPrefix": "ci-area:", "acceptanceLabel": null },
   "ci": { "maxWaitMinutes": 40 },
   "autofix": { "label": "cez-autofix", "eligibility": { "lookbackDays": 30, "analyzeLimit": 100, "limit": 20, "excludeLabels": ["blocked", "do-not-fix"] } },
   "automerge": { "label": "automerge", "mode": "prepare-and-merge", "requireIndependentReview": false, "defaultToHumanQa": false, "humanOnlyLabels": [], "humanOnlyAuthors": [], "complexQa": "always", "windowMinutes": 120, "maxAttempts": 3 },
@@ -72,11 +73,11 @@ Field defaults: `references/config-capabilities.md`.
 - `labels.category` — additive kind-of-change labels.
 - `labels.meta` — additive process labels. `needs-qa` requests manual QA; `skip-qa` opts out (never combine them); `qa-approved` records passed QA; `qa-self-verified` marks self-QA. `in-progress` claims actively worked items. `ci-monitoring` means work is complete and reported, with only a CI-result follow-up owed; it never blocks another actor. `claim-reset` records a human request to recover a stopped runner; automation only reads its authenticated label-event audit and never applies it. The human-only issue label `do-not-close` is outside this taxonomy; skills only read it to protect issues from auto-closure.
 - `labels.priority` — mutually exclusive urgency of the work. Unset is treated as medium.
-- `labels.risk` — mutually exclusive blast radius of the change. Unset is treated as medium. Priority is how urgent the work is; risk is how dangerous the change is to ship.
+- `labels.risk` — mutually exclusive blast radius, default medium; priority measures urgency.
 - `qaGate` — when `true`, the gate label (`qaGateLabel`, default `needs-qa`) requires `qa-approved` before merge. When `false`, it is advisory.
-- `qaGateLabel` / `qaReadyLabel` / `humanQaPolicy` / `qaBatch` — optional; see `references/config-capabilities.md`.
-- `autofix` — issue-triage queue label and eligibility; defaults and behavior: `references/config-capabilities.md`.
-- `automerge` — queue label, merge mode, review/QA policies, human-only arrays, QA depth, queue limits and triage. Schema above; fields/defaults in `references/config-capabilities.md`.
+- `qaGateLabel` / `qaReadyLabel` / `humanQaPolicy` / `qaBatch` / `prTriage` — defaults and rules: `references/config-capabilities.md`.
+- `autofix` — issue-triage queue/eligibility: `references/config-capabilities.md`.
+- `automerge` — queue, mode, review/QA policies, limits, triage: `references/config-capabilities.md`.
 - `ci.maxWaitMinutes` — CI wait cap in minutes, default `40`; `0` skips waiting. It never relaxes required checks for merging. Wait-budget behavior: `references/config-capabilities.md`.
 - `engine.executorTier` — optional; the default abstract model tier (`cheap` / `standard` / `capable`) for executor subagents dispatched by the loop skills when a Tasks-table `Exec` cell names none. Harnesses that support subagent model selection map the tier onto their closest model class; others ignore it. Configs without the key behave as `standard`.
 - `engine.loopStepThreshold` — the Step count above which `om-auto-create-pr` hands a run off to `om-auto-create-pr-loop` (default 20). Raise it to keep more runs on the cheaper plain engine; `--loop` always forces the loop regardless.

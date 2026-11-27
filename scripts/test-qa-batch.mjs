@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, mkdtempSync, rmSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8')
 const helper = fileURLToPath(new URL('../skills/om-qa-batch/scripts/classify-batch.mjs', import.meta.url))
@@ -93,6 +95,23 @@ const malformedTriage = good({ config, prs: [
 assert.deepEqual(malformedTriage.buckets.candidates.map(entry => entry.number), [36, 37, 38])
 assert.deepEqual(malformedTriage.buckets.gateMissed, [])
 console.log('PASS: failed/stale QA stays must-test and malformed or unbound triage is ignored')
+
+const firstPassFixes = good({ config, batchBranch: 'stabilize/today', prs: [
+  pr(40, { baseRefName: 'stabilize/today', labels: ['qa-failed'], files: [{ path: 'src/checkout/page.tsx', status: 'added' }] }),
+  pr(41, { baseRefName: 'stabilize/today', labels: ['needs-qa'], files: [{ path: 'src/account/page.tsx', status: 'added' }] }),
+  pr(42, { baseRefName: 'stabilize/today', labels: ['qa-batch-check'] }),
+  pr(43, { baseRefName: 'stabilize/today', labels: ['qa-approved'], qaApproval: { head: 'sha43', human: true } })
+] })
+assert.deepEqual(firstPassFixes.buckets.gateMissed.map(entry => entry.number), [40])
+assert.deepEqual(firstPassFixes.buckets.candidates.map(entry => entry.number), [41])
+assert.deepEqual(firstPassFixes.buckets.batchCheck.map(entry => entry.number), [42])
+assert.deepEqual(firstPassFixes.buckets.coveredHuman.map(entry => entry.number), [43])
+assert.equal(firstPassFixes.counts.total, 4)
+for (const bucket of Object.values(firstPassFixes.buckets)) {
+  assert.ok(bucket.every(entry => entry.stabilization === true), 'stabilization remains provenance, not an exemption')
+}
+console.log('PASS: stabilization fixes present before the first start keep normal QA selection and failure precedence')
+
 
 
 const collapsed = good({ config: { ...config, qaGateLabel: 'needs-qa' }, prs: [pr(1, { labels: ['needs-human-qa'] })] })
@@ -225,3 +244,72 @@ assert.match(read('skills/om-setup-agent-pipeline/SKILL.md'), /"qaBatch": \{\}/)
 const configCommands = JSON.parse(read('.ai/agentic.config.json')).validation.commands
 for (const command of configCommands) assert.ok(read('SDLC.md').includes('`' + command + '`'), 'SDLC must document ' + command)
 console.log('PASS: batch writes keep atomic ownership, refusal before mutation, persistent tester freeze and head-bound evidence')
+
+// Execute the actual freeze preflight: a successful guard that skipped a label
+// can no longer reach the checklist/frozen announcement.
+const freezePreflight = writes.match(/```bash\n([\s\S]*?)```/)[1]
+for (const [available, status] of [['yes', 0], ['no', 1]]) {
+  const result = spawnSync('bash', ['-c', `label_exists() { [ "$LABEL_AVAILABLE" = yes ] && [ "$1" = qa-in-progress ]; }\n${freezePreflight}\nprintf 'preflight-passed'`], {
+    encoding: 'utf8', timeout: 5000,
+    env: { ...process.env, QA_BATCH: JSON.stringify({ inProgressLabel: 'qa-in-progress' }), LABEL_AVAILABLE: available }
+  })
+  assert.equal(result.status, status, result.stderr)
+  assert.equal(result.stdout.includes('preflight-passed'), available === 'yes')
+}
+assert.match(writes, /require that exact label and the tester\s+assignment in the read-back/)
+assert.match(writes, /stop before publishing a checklist or announcing a freeze/)
+assert.match(writes, /undo only this invocation.s new assignment\/freeze mutations/)
+assert.match(window, /complete result set before\s+filtering/)
+assert.match(window, /double it until the\s+returned count is below/)
+assert.match(window, /unverifiable completeness is a discovery blocker/)
+assert.doesNotMatch(window, /state open, limit 20/)
+console.log('PASS: missing freeze labels abort before success; discovery and freeze read-back require complete evidence')
+
+// Run the published Git snippets against real merge history rather than only
+// asserting their wording. A pre-start stabilization fix and a later base PR
+// must both appear, including through the merge's second parent.
+const historyDir = mkdtempSync(join(tmpdir(), 'qa-batch-history-'))
+try {
+  const git = (...args) => {
+    const result = spawnSync('git', args, { cwd: historyDir, encoding: 'utf8', timeout: 5000 })
+    assert.equal(result.status, 0, result.stderr)
+    return result.stdout.trim()
+  }
+  git('init', '-q')
+  git('config', 'user.name', 'Batch QA fixture')
+  git('config', 'user.email', 'qa-fixture@example.invalid')
+  git('checkout', '-b', 'fixture-base')
+  git('commit', '--allow-empty', '-m', 'previous tested build')
+  const from = git('rev-parse', 'HEAD')
+  git('tag', 'green/previous')
+  git('commit', '--allow-empty', '-m', 'feat: account view (#501)')
+  git('checkout', '-b', 'fixture-batch')
+  git('commit', '--allow-empty', '-m', 'fix: stabilization before start (#502)')
+  git('checkout', 'fixture-base')
+  git('commit', '--allow-empty', '-m', 'feat: checkout from newer base (#503)')
+  git('checkout', 'fixture-batch')
+  git('merge', '--no-edit', 'fixture-base')
+  const to = git('rev-parse', 'HEAD')
+  git('tag', 'green/current', to)
+  git('tag', '-a', 'green/annotated', from, '-m', 'annotated previous build')
+  const logSnippet = window.match(/```bash\n([^`]+)```/)[1]
+  const log = spawnSync('bash', ['-c', logSnippet], {
+    cwd: historyDir, encoding: 'utf8', timeout: 5000,
+    env: { ...process.env, FROM: from, TO: to }
+  })
+  assert.equal(log.status, 0, log.stderr)
+  assert.deepEqual([...log.stdout.matchAll(/\(#(\d+)\)/g)].map(match => Number(match[1])).sort(), [501, 502, 503])
+  const tagSnippet = window.match(/`(git for-each-ref [^`]+)`/)[1]
+  const tags = spawnSync('bash', ['-c', tagSnippet], {
+    cwd: historyDir, encoding: 'utf8', timeout: 5000,
+    env: { ...process.env, GREEN_PREFIX: 'green/' }
+  })
+  assert.equal(tags.status, 0, tags.stderr)
+  assert.match(tags.stdout, /green\/current commit /)
+  assert.match(tags.stdout, /green\/annotated tag /)
+  assert.equal(git('rev-parse', 'green/current^{commit}'), to)
+  assert.equal(git('rev-parse', 'green/previous^{commit}'), from)
+} finally {
+  rmSync(historyDir, { recursive: true, force: true })
+}
+console.log('PASS: published history snippets retain pre-start fixes and second-parent PRs and distinguish current/annotated tags')

@@ -127,8 +127,9 @@ for (const pr of prs) {
   const approvalCurrent = Boolean(pr.headSha && pr.qaApproval?.head === pr.headSha)
   const humanApproved = labels.includes('qa-approved') && approvalCurrent && pr.qaApproval?.human === true && !labels.includes('qa-self-verified')
 
-  if (batchBranch && pr.baseRefName === batchBranch) { entry.reasons.push('stabilization fix merged into the batch'); buckets.stabilization.push(entry); continue }
-  if (pr.baseRefName && pr.baseRefName !== baseBranch) { entry.reasons.push(`merged into ${pr.baseRefName}, not ${baseBranch}`); buckets.otherBase.push(entry); continue }
+  const isStabilization = Boolean(batchBranch && pr.baseRefName === batchBranch)
+  if (isStabilization) entry.stabilization = true
+  if (!isStabilization && pr.baseRefName && pr.baseRefName !== baseBranch) { entry.reasons.push(`merged into ${pr.baseRefName}, not ${baseBranch}`); buckets.otherBase.push(entry); continue }
 
   if (labels.includes('qa-failed')) { entry.reasons.push('merged with an unresolved failed QA verdict'); buckets.gateMissed.push(entry); continue }
   if (labels.includes('qa-approved') && !approvalCurrent) { entry.reasons.push('QA approval is stale or its tested head is unverified'); buckets.gateMissed.push(entry); continue }
@@ -156,6 +157,7 @@ for (const pr of prs) {
   if (entry.reasons.length > 0) { entry.evidence = evidence; buckets.candidates.push(entry); continue }
 
   if (evidence) { entry.reasons.push(`automatic QA evidence (${evidence})`); buckets.coveredAuto.push(entry); continue }
+  if (isStabilization && uiFiles.length === 0) { entry.reasons.push('stabilization fix with no manual-QA signal; CI and the smoke cover it'); buckets.stabilization.push(entry); continue }
   if (labels.includes('skip-qa')) { entry.reasons.push('skip-qa: nothing user-visible to exercise'); buckets.noManualQa.push(entry); continue }
   if (uiFiles.length === 0) { entry.reasons.push('no UI file changed; CI and the smoke cover it'); buckets.noManualQa.push(entry); continue }
   entry.reasons.push('small UI change with no lane label; agent judgment')

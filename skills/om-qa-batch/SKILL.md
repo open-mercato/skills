@@ -99,7 +99,9 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
 
 6. **`--start`: mark that testing started.** Refuse when another tester
    already holds the batch (in-progress label plus a different assignee).
-   Otherwise assign the current user, apply `qaBatch.inProgressLabel`, and
+   Otherwise require and read back `qaBatch.inProgressLabel` plus the tester
+   assignment before claiming success; missing freeze labels block writes.
+   Assign the current user, apply that persistent label, and
    post the one marker comment `` 🤖 `om-qa-batch` — 🧪 batch checklist ``
    with the range, the must-test list and `Tested head:`. Once recorded,
    `--start` never moves `Tested head:`; after a stabilizer push it refuses

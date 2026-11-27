@@ -11,8 +11,9 @@ right before each action and compare its head with the **tested head**.
 Before **any** mutation, including stale-approval withdrawal:
 
 1. Require an exact batch PR; reject `--range` or `--since` with write flags.
-   Validate the requested action, tester eligibility, checklist ownership
-   and stable-verdict guards first. A refused action makes no changes.
+   Validate the requested action, tester eligibility, checklist ownership,
+   `--start` freeze-label availability and stable-verdict guards first.
+   A refused action makes no changes.
 2. Acquire and verify the action-scoped PR claim under
    `references/claim-pr.md`, with an owned-release finally/trap. An explicit
    `--force` authorizes only the documented claim takeover; it never
@@ -81,7 +82,23 @@ fixed through the normal flow.
 1. **get-pr** the batch. When it carries `qaBatch.inProgressLabel` and is
    assigned to someone other than **current-user**, stop and name who holds
    it. The same user re-running `--start` updates in place.
-2. **assign-pr** current user; **label-pr** `qaBatch.inProgressLabel`.
+2. Before assignment or any other mutation, require the configured
+   persistent freeze label to exist, using the descriptor's guard:
+
+   ```bash
+   BATCH_FREEZE_LABEL=$(printf %s "$QA_BATCH" | jq -er .inProgressLabel)
+   if ! label_exists "$BATCH_FREEZE_LABEL"; then
+     printf "Batch freeze label unavailable: %s; provision it before --start.\n" "$BATCH_FREEZE_LABEL" >&2
+     exit 1
+   fi
+   ```
+
+   Then **assign-pr** current user and **label-pr** the freeze label.
+   **get-pr** the batch again and require that exact label and the tester
+   assignment in the read-back. A skipped guard is not success. Failed
+   read-back → stop before publishing a checklist or announcing a freeze;
+   undo only this invocation's new assignment/freeze mutations under the
+   owned lock, retaining any pre-existing tester freeze or checklist.
 3. Find the checklist comment (above). None → **comment-pr** it (template in
    `references/report-templates.md`) with `Tested head:` set to the `TO` of
    the checklist just written, and `Stabilizer:` set to the `--stabilizer`
@@ -93,8 +110,9 @@ fixed through the normal flow.
    never moves it: when the batch head equals it, **update-comment** the
    must-test list in place and keep the line; when the head moved, refuse,
    name the new commits and point to `--retest`, which checklists the
-   stabilization fixes that `--start` never shows.
-4. Tell the tester: the in-progress label is the agreed signal that the
+   fixes added after the recorded tested head.
+4. Only after the verified freeze read-back and checklist publication,
+   tell the tester: the in-progress label is the agreed signal that the
    batch is being tested and must not be refreshed with newer base commits.
 
 ## `--blocker <bug-file>` / `--bug <bug-file>`

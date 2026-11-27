@@ -113,6 +113,7 @@ QA_GATE_LABEL=$(jq -r 'if has("qaGateLabel") then .qaGateLabel else "needs-qa" e
 QA_READY_LABEL=$(jq -r 'if (.qaReadyLabel // null) == null then empty elif (.qaReadyLabel | type) == "string" and (.qaReadyLabel | length) > 0 then .qaReadyLabel else error("Invalid qaReadyLabel") end' "$CONFIG")   # optional, repository-owned
 HUMAN_QA_POLICY=$(jq -ce '
   def default($key; $value): if has($key) then .[$key] else $value end;
+  (if has("qaGateLabel") then .qaGateLabel else "needs-qa" end) as $gate |
   (if has("humanQaPolicy") then .humanQaPolicy else {} end) as $p |
   if ($p | type) != "object" then error("Invalid humanQaPolicy") else
     ($p | default("approvedDesign"; {})) as $d |
@@ -145,6 +146,8 @@ HUMAN_QA_POLICY=$(jq -ce '
      and all(.humanVerdictLabels[];type=="string" and length>0)
      and (.trustedTriageAuthors|type)=="array"
      and all(.trustedTriageAuthors[];type=="string" and length>0)
+     and (.batchCheckLabel as $l | $l==null or
+          all((["qa-approved","qa-failed","needs-qa","skip-qa",$gate] + .humanVerdictLabels)[]; . != $l))
   then . else error("Invalid humanQaPolicy") end
 ' "$CONFIG")   # QA triage policy
 HUMAN_ONLY_AUTHORS=$(jq -c 'if (.automerge // {} | has("humanOnlyAuthors")) then .automerge.humanOnlyAuthors else [] end | if type == "array" and all(.[]; type == "string" and length > 0) then . else error("Invalid humanOnlyAuthors") end' "$CONFIG")     # logins, compared case-insensitively

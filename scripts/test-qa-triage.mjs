@@ -41,6 +41,14 @@ const batchUnsure = { ...custom, whenUnsure: 'batch' };
 assert.deepEqual(JSON.parse(load({ humanQaPolicy: batchUnsure }).stdout), batchUnsure);
 assert.equal(JSON.parse(load({ humanQaPolicy: { approvedDesign: { label: null } } }).stdout)
   .approvedDesign.label, null);
+for (const label of ['qa-approved', 'qa-failed', 'needs-qa', 'skip-qa']) {
+  assert.notEqual(load({ humanQaPolicy: { batchCheckLabel: label } }).status, 0, 'must reject reserved batchCheckLabel ' + label);
+}
+assert.notEqual(load({ qaGateLabel: 'needs-human-qa', humanQaPolicy: { batchCheckLabel: 'needs-human-qa' } }).status, 0,
+  'must reject batchCheckLabel equal to qaGateLabel');
+assert.notEqual(load({ humanQaPolicy: { batchCheckLabel: 'qa-human-ok', humanVerdictLabels: ['qa-human-ok'] } }).status, 0,
+  'must reject batchCheckLabel equal to a human verdict label');
+assert.equal(load({ qaGateLabel: 'needs-human-qa', humanQaPolicy: { batchCheckLabel: 'qa-batch-check' } }).status, 0);
 console.log('PASS: actual QA policy loader defaults, custom values, null label, and malformed inputs');
 
 // The executable deliverable is prose: freeze safety boundaries at the consuming

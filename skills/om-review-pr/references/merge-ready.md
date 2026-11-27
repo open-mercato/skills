@@ -88,7 +88,11 @@ Move the PR to `merge-queue` only when all of these hold on the current head:
    never let self-QA answer a human-only gate. Missing evidence blocks the
    queue; do not remove a human verdict or manufacture a new one.
 5. **External PR acceptance**: the PR must not carry
-   `prTriage.acceptanceLabel`. Additionally, for any author without `write`,
+   `prTriage.acceptanceLabel`. Classify core vs external authors strictly by
+   repository permission (`write`, `maintain` or `admin` from the
+   collaborator permission API — never `author_association`, since
+   `COLLABORATOR` and `MEMBER` can hold only `read` or `triage`; fail closed
+   when permission cannot be read). For any author without `write`,
    `maintain` or `admin` permission, require an `accepted` label added by a
    **human** with `write`, `maintain` or `admin` permission who is not a bot
    or the skill's account/automation identity (verified from the label's

@@ -44,8 +44,9 @@ checked and does not move the PR to `merge-queue`).
    Tracker reads: **current-user**, **get-pr**, **get-pr-diff**,
    **get-pr-files**, **get-pr-checks**, **get-required-checks**,
    **list-runs**, **list-issue-comments**, **list-review-comments**,
-   **get-issue**, **get-pr-author-association**, **get-lock** (plus timeline-event and
-   collaborator-permission reads when the descriptor provides them; fail
+   **get-issue**, **get-lock** (plus collaborator-permission and
+   timeline-event reads when the descriptor provides them; do not use
+   `author_association` to classify core vs external authors, and fail
    closed on external-PR acceptance when unavailable). Tracker writes, never
    under `--dry-run`: **review-pr**, **comment-pr**, **update-comment**, the
    label guards and `set_pipeline_label`.

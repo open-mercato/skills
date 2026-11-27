@@ -124,6 +124,8 @@ assert.match(merge, /never\s+count `om-review-pr`'s own approval toward `merge-q
 assert.match(merge, /Never count an `accepted` label added by\s+a bot or this skill's account toward `merge-queue`/, 'merge-ready must require human accepted label for external authors')
 assert.match(merge, /verified from the label's\s+timeline event; fail closed when unverifiable/, 'merge-ready must verify accepted label via timeline events and fail closed when unverifiable')
 assert.match(merge, /write`,\s+`maintain`\s+or `admin` permission/, 'merge-ready must check write/maintain/admin permission for external authors')
+assert.match(merge, /never `author_association`/, 'merge-ready must forbid using author_association to classify core vs external authors')
+assert.doesNotMatch(review, /\*\*get-pr-author-association\*\*/, 'review must not use get-pr-author-association for core/external classification')
 assert.match(review, /never count this\s+skill's own approval or an `accepted` label added by a bot or this skill's\s+account/, 'review Rules must forbid counting own approval or bot accepted label for external PRs')
 for (const gate of ['qa-failed', 'changes-requested', 'blocked', 'do-not-merge', 'the human QA label without `qa-approved`', 'acceptanceLabel']) {
   assert.ok(merge.includes(gate), `merge gates must include ${gate}`)

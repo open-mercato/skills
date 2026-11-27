@@ -64,6 +64,11 @@ assert.deepEqual(ids('stabilization'), [10])
 assert.deepEqual(ids('otherBase'), [11])
 assert.equal(result.counts.total, 20)
 assert.match(result.buckets.candidates.find(entry => entry.number === 13).reasons.join(' '), /adds UI files/)
+const edited = good({ config, prs: [pr(21, { labels: ['needs-qa'], comments: [
+  { ...triage('sha21', 'batch'), createdAt: '2026-11-25T09:00:00Z', updatedAt: '2026-11-25T12:00:00Z' },
+  { ...triage('sha21', 'auto'), createdAt: '2026-11-25T10:00:00Z' }
+] })] })
+assert.deepEqual(edited.buckets.batchCheck.map(entry => entry.number), [21], 'an edited triage comment wins by updatedAt')
 const noAutoEvidence = good({ config: { ...config, qaBatch: { autoQaEvidenceLabels: [] } }, prs: [pr(7, { labels: ['skip-qa', 'qa-self-verified'] })] })
 assert.deepEqual(noAutoEvidence.buckets.coveredAuto, [], 'an explicit empty autoQaEvidenceLabels must not fall back to defaults')
 console.log('PASS: batch classifier buckets the human gate, batch lane, trusted triage, evidence and bases')

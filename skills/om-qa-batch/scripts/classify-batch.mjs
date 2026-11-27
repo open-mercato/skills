@@ -76,7 +76,7 @@ const readTriage = pr => {
     try {
       const block = JSON.parse(match[1])
       if (pr.headSha && block.head !== pr.headSha) continue
-      blocks.push({ ...block, at: comment.createdAt ?? '' })
+      blocks.push({ ...block, at: comment.updatedAt ?? comment.createdAt ?? '' })
     } catch { continue }
   }
   blocks.sort((left, right) => String(left.at).localeCompare(String(right.at)))

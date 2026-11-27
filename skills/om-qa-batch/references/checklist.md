@@ -16,7 +16,7 @@ It makes no tracker calls and no writes.
     "baseRefName": "...", "headSha": "<full sha>",
     "labels": ["needs-qa", "..."],
     "files": [{ "path": "src/app/page.tsx", "status": "added" }],
-    "comments": [{ "author": "login", "body": "...", "createdAt": "..." }]
+    "comments": [{ "author": "login", "body": "...", "createdAt": "...", "updatedAt": "..." }]
   }]
 }
 ```

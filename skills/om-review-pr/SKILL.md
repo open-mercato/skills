@@ -44,17 +44,21 @@ checked and does not move the PR to `merge-queue`).
    Tracker reads: **current-user**, **get-pr**, **get-pr-diff**,
    **get-pr-files**, **get-pr-checks**, **get-required-checks**,
    **list-runs**, **list-issue-comments**, **list-review-comments**,
-   **get-issue**. Tracker writes, never under `--dry-run`: **review-pr**,
-   **comment-pr**, **update-comment**, the label guards and
-   `set_pipeline_label`.
+   **get-issue**, **get-pr-author-association** (plus timeline-event and
+   collaborator-permission reads when the descriptor provides them; fail
+   closed on external-PR acceptance when unavailable). Tracker writes, never
+   under `--dry-run`: **review-pr**, **comment-pr**, **update-comment**, the
+   label guards and `set_pipeline_label`.
 
 1. **Gate the start.** Validate the target. Stop and report as skipped (with
-   the reason) for a draft, a closed or merged PR, a daily batch PR (head
-   branch starting with `qaBatch.branchPrefix`, default `stabilize/`), a
-   release-line backport PR (base branch is not `BASE_BRANCH`, or created by
-   a backport workflow such as `backport.yml`), and for a PR another actor
-   has claimed (assignee, `in-progress` label and a live claim comment)
-   unless `--force`. Record the head SHA: the verdict is for that SHA only.
+   the reason) for a draft, a closed or merged PR, a daily batch PR
+   (same-repository PR where head repository equals base repository and head
+   branch starts with `qaBatch.branchPrefix`, default `stabilize/`; a fork
+   PR with such a branch name is treated as a normal PR), a release-line
+   backport PR (base branch is not `BASE_BRANCH`, or created by a backport
+   workflow such as `backport.yml`), and for a PR another actor has claimed
+   (assignee, `in-progress` label and a live claim comment) unless
+   `--force`. Record the head SHA: the verdict is for that SHA only.
 
 2. **Triage first.** Find the `om-triage-pr` comment whose
    `CI-Triage-Head:` line equals the head SHA and whose author is trusted

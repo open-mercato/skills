@@ -80,9 +80,10 @@ assert.doesNotMatch(triage, /lower CI level label when\s+it raises the CI level/
 assert.match(triage, /leave any lower\s+level label in place/, 'triage Rules must leave lower CI level labels in place on raise')
 assert.match(triage, /never posts a\s+commit status \(such as `ci-triage`\)/, 'triage must never post a ci-triage commit status')
 
-// Skip daily batch PRs and release-line backport PRs in both skills
+// Skip daily batch PRs (same-repo only) and release-line backport PRs in both skills
 for (const [name, content] of [['om-triage-pr', triage], ['om-review-pr', review]]) {
   assert.match(content, /qaBatch\.branchPrefix/, `${name} must skip daily batch PRs matching qaBatch.branchPrefix`)
+  assert.match(content, /head repository\s+equals base repository/, `${name} must restrict batch PR skip to same-repository PRs`)
   assert.match(content, /BASE_BRANCH/, `${name} must skip PRs whose base branch is not BASE_BRANCH`)
   assert.match(content, /backport\.yml/, `${name} must skip release-line backport PRs`)
 }
@@ -121,6 +122,7 @@ assert.match(merge, /action_required/, 'merge-ready must treat action_required f
 assert.match(merge, /Current-head trusted triage/, 'merge-ready must require current-head trusted triage')
 assert.match(merge, /never\s+count `om-review-pr`'s own approval toward `merge-queue`/, 'merge-ready must not count om-review-pr own approval for external authors')
 assert.match(merge, /Never count an `accepted` label added by\s+a bot or this skill's account toward `merge-queue`/, 'merge-ready must require human accepted label for external authors')
+assert.match(merge, /verified from the label's\s+timeline event; fail closed when unverifiable/, 'merge-ready must verify accepted label via timeline events and fail closed when unverifiable')
 assert.match(merge, /write`,\s+`maintain`\s+or `admin` permission/, 'merge-ready must check write/maintain/admin permission for external authors')
 assert.match(review, /never count this\s+skill's own approval or an `accepted` label added by a bot or this skill's\s+account/, 'review Rules must forbid counting own approval or bot accepted label for external PRs')
 for (const gate of ['qa-failed', 'changes-requested', 'blocked', 'do-not-merge', 'the human QA label without `qa-approved`', 'acceptanceLabel']) {

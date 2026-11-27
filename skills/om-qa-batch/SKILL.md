@@ -90,9 +90,12 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
 6. **`--start`: mark that testing started.** Refuse when another tester
    already holds the batch (in-progress label plus a different assignee).
    Otherwise assign the current user, apply `qaBatch.inProgressLabel`, and
-   post or update the marker comment `` 🤖 `om-qa-batch` — 🧪 batch
-   checklist `` with the range, the must-test list and `Tested head:`. From now on the batch
-   must not be refreshed with newer base commits. Detail:
+   post the one marker comment `` 🤖 `om-qa-batch` — 🧪 batch checklist ``
+   with the range, the must-test list and `Tested head:`. Once recorded,
+   `--start` never moves `Tested head:`; after a stabilizer push it refuses
+   and points to `--retest`. From now on the batch must not be refreshed
+   with newer base commits. Trusted authors are `qaBatch.testers` plus the
+   current user, never mere assignees. Detail:
    `references/tracker-writes.md`.
 
 7. **`--blocker` / `--bug`: file a defect.** A blocker is a defect that stops
@@ -114,8 +117,9 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
    the other; on stable remove the in-progress label. Print the short channel
    message for the team. Detail: `references/tracker-writes.md`.
 
-9. **`--retest`: only what changed.** List the PRs merged into the batch
-   branch after the last verdict and every open blocker; the checklist covers
+9. **`--retest`: only what changed.** Start from the recorded `Tested head:`
+   (or a newer verdict's `QA head:`) and list the stabilization PRs and
+   commits after it plus every open blocker; the checklist covers
    only their areas plus a two-minute smoke; update `Tested head:` in the
    batch checklist comment to the head it checklisted. Then step 8 again.
 

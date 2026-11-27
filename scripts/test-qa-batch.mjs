@@ -96,9 +96,11 @@ assert.equal(defaults.inProgressLabel, 'qa-in-progress')
 assert.equal(defaults.blockerLabel, 'qa-blocker')
 assert.deepEqual(defaults.bugLabels, ['bug'])
 assert.equal(defaults.smoke, null)
-const custom = { branchPrefix: 'batch/', greenTagPrefix: 'verified/', smoke: '.ai/qa/smoke.md', inProgressLabel: 'testing', bugLabels: ['bug', 'daily-qa'], blockerLabel: 'blocker', autoQaEvidenceLabels: ['qa-self-verified'] }
+assert.deepEqual(defaults.testers, [])
+const custom = { branchPrefix: 'batch/', greenTagPrefix: 'verified/', smoke: '.ai/qa/smoke.md', inProgressLabel: 'testing', bugLabels: ['bug', 'daily-qa'], blockerLabel: 'blocker', autoQaEvidenceLabels: ['qa-self-verified'], testers: ['qa-anna', 'Tester2'] }
 assert.deepEqual(JSON.parse(load({ qaBatch: custom }).stdout), custom)
 for (const qaBatch of [[], 'x', { branchPrefix: 'no-slash' }, { branchPrefix: '../x/' }, { bugLabels: [] }, { bugLabels: [''] }, { smoke: '' }, { blockerLabel: 'qa-approved' }, { inProgressLabel: 'qa-failed' },
+  { testers: 'qa-anna' }, { testers: [''] }, { testers: [1] }, { testers: ['ci-bot[bot]'] }, { testers: ['app/ci'] }, { testers: ['-x'] },
   ...['in-progress', 'ci-monitoring', 'needs-qa', 'skip-qa'].flatMap(label => [{ inProgressLabel: label }, { blockerLabel: label }, { bugLabels: ['bug', label] }])]) {
   assert.notEqual(load({ qaBatch }).status, 0, 'must reject qaBatch ' + JSON.stringify(qaBatch))
 }
@@ -120,10 +122,15 @@ assert.match(writes, /`QA head: <tested head sha>`/)
 assert.match(writes, /\*\*unlabel-pr\*\* `qa-approved`/)
 assert.match(writes, /A verdict run skips steps 1-5/)
 assert.match(writes, /recorded on the batch PR, never in a local file/)
-assert.match(writes, /authored by\s+\*\*current-user\*\* or by an assignee of the batch PR/)
 assert.match(writes, /`stable` is refused when the tested head is unknown/)
 assert.match(skill, /Skips steps 1-5/)
 assert.match(read('skills/om-qa-batch/references/report-templates.md'), /^Tested head: /m)
+assert.match(writes, /Assignment proves nothing/)
+assert.match(writes, /Each batch has exactly one: the earliest/)
+assert.match(writes, /`--start`\s+never moves it/)
+assert.match(writes, /`RETEST_FROM` = the `Tested head:` of the checklist comment/)
+assert.match(writes, /\*\*Residual risk\.\*\*/)
+assert.doesNotMatch(writes, /on the head they tested/)
 assert.match(writes, /Refuse when \*\*current-user\*\* is a bot or automation identity/)
 assert.match(writes, /stop and name who holds\s+it/)
 console.log('PASS: batch skill keeps verdicts human, read-only by default, and refuses stable with open blockers')

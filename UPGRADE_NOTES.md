@@ -50,7 +50,8 @@ Additive; nothing changes until a project opts in.
   Create the label in the tracker before enabling it.
 - New skill `om-qa-batch` and optional config object `qaBatch` (batch branch
   prefix, verified-batch tag prefix, project smoke file, in-progress, bug and
-  blocker labels, automatic QA evidence labels). Create the in-progress,
+  blocker labels, automatic QA evidence labels, trusted `testers` logins).
+  Create the in-progress,
   bug and blocker labels you configure; the defaults are `qa-in-progress`,
   `bug` and `qa-blocker`.
 - Consumers that parse the `qa-triage v1` block may now see `lane: "batch"`,

@@ -56,7 +56,8 @@ QA_BATCH=$(jq -ce '
      inProgressLabel:($b.inProgressLabel // "qa-in-progress"),
      bugLabels:($b.bugLabels // ["bug"]),
      blockerLabel:($b.blockerLabel // "qa-blocker"),
-     autoQaEvidenceLabels:($b.autoQaEvidenceLabels // ["qa-self-verified","automerge-signal-2-qa"])}
+     autoQaEvidenceLabels:($b.autoQaEvidenceLabels // ["qa-self-verified","automerge-signal-2-qa"]),
+     testers:($b.testers // [])}
   end
   | if (.branchPrefix|type)=="string" and (.branchPrefix|test("^[A-Za-z0-9._-]+/$"))
      and (.greenTagPrefix|type)=="string" and (.greenTagPrefix|test("^[A-Za-z0-9._-]+/$"))
@@ -65,6 +66,7 @@ QA_BATCH=$(jq -ce '
      and (.blockerLabel|type)=="string" and (.blockerLabel|length)>0
      and (.bugLabels|type)=="array" and (.bugLabels|length)>0 and all(.bugLabels[];type=="string" and length>0)
      and (.autoQaEvidenceLabels|type)=="array" and all(.autoQaEvidenceLabels[];type=="string" and length>0)
+     and (.testers|type)=="array" and all(.testers[];type=="string" and test("^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$"))
      and ([.inProgressLabel,.blockerLabel] + .bugLabels | all(.[]; . as $l | all($reserved[]; . != $l)))
     then . else error("Invalid qaBatch") end' "$CONFIG") || { echo "Invalid qaBatch config" >&2; exit 1; }
 HUMAN_QA_POLICY=$(jq -c '.humanQaPolicy // {}' "$CONFIG")   # read by the classifier
@@ -74,6 +76,7 @@ HUMAN_QA_POLICY=$(jq -c '.humanQaPolicy // {}' "$CONFIG")   # read by the classi
   `inProgressLabel`, `blockerLabel` and every `bugLabels` entry must not
   reuse `qa-approved`, `qa-failed`, `in-progress`, `ci-monitoring`,
   `needs-qa`, `skip-qa`, the `qaGateLabel` or the batch-check label.
+  `testers` holds human tracker logins only (no `[bot]` or `app/` forms).
 - `--range`, `--since`, `{target}` and `--stabilizer` values are validated
   as above before use.
 - `LABELS_ENABLED=false` → the write actions skip every label change and
@@ -82,7 +85,8 @@ HUMAN_QA_POLICY=$(jq -c '.humanQaPolicy // {}' "$CONFIG")   # read by the classi
   batch tags `green/`, no project smoke file (the generic smoke applies),
   in-progress label `qa-in-progress`, bug labels `["bug"]`, blocker label
   `qa-blocker`, automatic QA evidence labels `qa-self-verified` and
-  `automerge-signal-2-qa`.
+  `automerge-signal-2-qa`, no `testers` (only the current user is trusted,
+  so the tester who ran `--start` gives the verdict).
 - The human QA gate label is `qaGateLabel` when it is not `needs-qa`; the
   batch-check label is `humanQaPolicy.batchCheckLabel` (null = none). Both
   come from the config; the classifier receives the whole config object.

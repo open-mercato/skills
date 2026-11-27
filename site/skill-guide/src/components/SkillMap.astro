@@ -1,0 +1,36 @@
+---
+import BrandMark from "./BrandMark.astro";
+import type { ui, getGuide } from '../data/locales';
+interface Props { t: typeof ui.en; guide: ReturnType<typeof getGuide> }
+const { t, guide } = Astro.props;
+---
+<section class="visual" id="mapa" aria-labelledby="map-heading">
+  <header class="visual-head">
+    <h1 id="map-heading">{t.map}</h1>
+    <p>{t.mapIntro}</p>
+  </header>
+  <div class="tree" id="tree">
+    <svg aria-hidden="true" id="wires"></svg>
+    <div class="branch-grid" id="branch-grid">
+      <div class="map-hub" id="map-hub">
+        <BrandMark />
+        <span class="hub-badge">{t.hubBadge}</span>
+      </div>
+      {guide.groups.map((group, index) => (
+        <section data-accent={group.accent} class:list={["branch", { active: index === 0 }]} style={{ "--column": index < 3 ? 1 : 3, "--row": index % 3 + 1 }}>
+          <h3 class="branch-node">
+            <button type="button" class="branch-select" aria-controls={`skills-${index}`}>
+              <span class="branch-badge" aria-hidden="true">{group.badge}</span>
+              {group.name}
+            </button>
+          </h3>
+          <ul class="leaf-list" id={`skills-${index}`}>
+            {group.skills.map(skill => (
+              <li><button type="button" class="leaf"><span>{skill.label}</span><code>{skill.name}</code></button></li>
+            ))}
+          </ul>
+        </section>
+      ))}
+    </div>
+  </div>
+</section>

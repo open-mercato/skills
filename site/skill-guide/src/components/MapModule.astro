@@ -1,0 +1,21 @@
+---
+interface Props { id: string }
+const { id } = Astro.props;
+const gradient = `cube-glass-${id}`;
+const outline = "M36 4 64 18V55L36 69 8 55V18Z";
+---
+<svg class="stage-cube" aria-hidden="true" viewBox="0 0 72 74">
+  <defs>
+    <linearGradient id={gradient} x1="0" y1="0" x2="0.14" y2="1">
+      <stop offset="0" class="cube-highlight" />
+      <stop offset=".58" class="cube-mid" />
+      <stop offset="1" class="cube-low" />
+    </linearGradient>
+  </defs>
+  <path fill="var(--skin)" d={outline} />
+  <path class="cube-glass" fill={`url(#${gradient})`} d={outline} />
+  <path class="cube-shade" d="M36 32 64 18V55L36 69Z" />
+  <path class="cube-back" d="M36 4V41L8 55M36 41 64 55" />
+  <path class="cube-edge" d={outline} />
+  <path class="cube-edge" d="M8 18 36 32 64 18M36 32V69" />
+</svg>

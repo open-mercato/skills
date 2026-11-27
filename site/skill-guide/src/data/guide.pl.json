@@ -1,0 +1,178 @@
+{
+  "groups": {
+    "Discovery": "Badanie potrzeb",
+    "Prototypes & design": "Prototypy i projektowanie",
+    "Specifications": "Specyfikacje",
+    "Implementation": "Implementacja",
+    "Bug reports": "Zgłoszenia błędów",
+    "Verification": "Weryfikacja"
+  },
+  "skills": {
+    "om-brainstorm": {
+      "question": "Czy warto rozwijać ten pomysł?",
+      "outcome": "Porównaj możliwe rozwiązania i zdecyduj, które wypróbować jako pierwsze.",
+      "prompt": "Kierownicy sklepów chcą co tydzień dostawać e-mail z wynikami sprzedaży. Pomóż mi ocenić, czy taka wiadomość ułatwi im pracę.",
+      "label": "Rozważ pomysł"
+    },
+    "om-discover": {
+      "question": "Kogo dotyczy ten problem?",
+      "outcome": "Na podstawie wywiadów opisz potrzeby użytkowników. Zbierz obserwacje, które je potwierdzają, i pytania do kolejnych rozmów.",
+      "prompt": "Przeczytaj notatki z rozmów w sklepach. Kto kopiuje zamówienia do arkusza i do czego go później używa?",
+      "label": "Poznaj potrzeby użytkowników"
+    },
+    "om-synthetic-users": {
+      "question": "W którym miejscu użytkownik może utknąć?",
+      "outcome": "Odtwórz ten sam scenariusz z symulowanymi użytkownikami, których profile wynikają z wywiadów. O powtarzające się trudności zapytaj później prawdziwych użytkowników.",
+      "prompt": "Na podstawie wywiadów wciel się kolejno w różnych kierowników sklepów i przejdź z ich perspektywy przez piątkowy eksport. Zapisz pytania na kolejną wizytę w sklepie.",
+      "label": "Sprawdź scenariusz z personami"
+    },
+    "om-ux-shape": {
+      "question": "Który wariant interakcji warto wypróbować?",
+      "outcome": "Wybierz sposób wykonania zadania, naszkicuj stany interfejsu i ustal, które założenie sprawdzić najpierw.",
+      "prompt": "Czy kierownicy powinni eksportować bieżącą listę, czy konfigurować osobny raport? Przejrzyj notatki z wywiadów i wybierz wariant do przetestowania.",
+      "label": "Wybierz sposób interakcji"
+    },
+    "om-mockup-prototype": {
+      "question": "Czy możemy przetestować pomysł przed napisaniem specyfikacji?",
+      "outcome": "Zbuduj prosty, klikalny prototyp na podstawie opisu potrzeb i pierwszej próby z personą. Sprawdź na nim decyzje projektowe i uzupełnij opis o wnioski zespołu.",
+      "prompt": "Wykorzystaj opis eksportu i wnioski z pierwszej próby. Przygotuj prototyp wyboru filtra i pobierania zamówień. Pokaż też pustą listę.",
+      "label": "Zbuduj klikalny prototyp"
+    },
+    "om-ux-design": {
+      "question": "Jak mają wyglądać ekrany w uzgodnionym scenariuszu?",
+      "outcome": "Zaprojektuj przejścia między ekranami na podstawie specyfikacji lub wybranych zadań. Użyj istniejących komponentów i sprawdź poszczególne stany w przeglądarce.",
+      "prompt": "Zaprojektuj eksport zgodnie ze specyfikacją. Wykorzystaj obecną listę zamówień. Pokaż, co zobaczy osoba, która ma pustą listę lub nie ma uprawnień.",
+      "label": "Zaprojektuj ekrany"
+    },
+    "om-app-spec-writing": {
+      "question": "Co powinna obejmować specyfikacja aplikacji?",
+      "outcome": "Opisz procesy biznesowe, model danych i plan wdrożenia. Po zatwierdzeniu specyfikacji przygotuj osobny opis każdej funkcji.",
+      "prompt": "Napisz specyfikację aplikacji do raportowania w sklepach. Określ, kto odpowiada za zamówienia, kto czyta raporty i który proces wdrożyć jako pierwszy.",
+      "label": "Określ zakres aplikacji"
+    },
+    "om-spec-writing": {
+      "question": "Jak opisać przetestowany scenariusz w specyfikacji funkcji?",
+      "outcome": "Na podstawie aktualnego opisu potrzeb i próby z prototypem określ działanie funkcji, uprawnienia i testy akceptacyjne. Wypisz kwestie, które wymagają decyzji.",
+      "prompt": "Napisz szkic specyfikacji eksportu na podstawie tego opisu i prototypu. Zachowaj uzgodnione zasady filtrowania. Zapytaj, kto może pobierać zamówienia z kilku sklepów.",
+      "label": "Napisz specyfikację funkcji"
+    },
+    "om-pre-implement-spec": {
+      "question": "Czy można zacząć pracę według tej specyfikacji?",
+      "outcome": "Sprawdź, których decyzji brakuje i gdzie mogą wystąpić problemy ze zgodnością. Oceń gotowość specyfikacji i wypisz luki.",
+      "prompt": "Przejrzyj specyfikację eksportu. Czy programista dowie się z niej, co powinno się stać, gdy lista zamówień jest pusta?",
+      "label": "Sprawdź specyfikację"
+    },
+    "om-backlog": {
+      "question": "Jak podzielić pracę?",
+      "outcome": "Rozpisz uzgodniony zakres lub etapy specyfikacji na zadania z kryteriami akceptacji. Przejrzyj listę przed utworzeniem zgłoszeń.",
+      "prompt": "Zaproponuj listę zadań do specyfikacji eksportu. Wydziel generowanie pliku, uprawnienia i pobieranie tak, by każdą zmianę można było ocenić osobno.",
+      "label": "Podziel zakres na zadania"
+    },
+    "om-implement-spec": {
+      "question": "Jak zaimplementować uzgodniony zakres?",
+      "outcome": "Zaimplementuj całą specyfikację lub jeden etap. Uruchom testy i odnotuj w specyfikacji, co jest już gotowe.",
+      "prompt": "Zaimplementuj pierwszy etap specyfikacji eksportu. Sprawdź, czy przykładowy plik spełnia kryteria akceptacji.",
+      "label": "Zaimplementuj specyfikację"
+    },
+    "om-auto-create-pr": {
+      "question": "Czy agent może przygotować zmianę do przeglądu?",
+      "outcome": "Zleć agentowi zadanie. Agent zaplanuje i wykona pracę, sprawdzi zmiany i otworzy pull request do przeglądu.",
+      "prompt": "Dodaj filtr statusu do listy zamówień. Przetestuj go i otwórz pull request.",
+      "label": "Otwórz pull request"
+    },
+    "om-verify-in-repo": {
+      "question": "Czy zgłoszenie jest nadal aktualne?",
+      "outcome": "Sprawdź błąd w bieżącej wersji kodu. Zanim przydzielisz zgłoszenie, poszukaj istniejącej poprawki.",
+      "prompt": "Sprawdź zgłoszenie nr 123 na bieżącej gałęzi. Czy eksport nadal pomija filtr statusu?",
+      "label": "Zweryfikuj zgłoszenie"
+    },
+    "om-root-cause": {
+      "question": "Umiemy odtworzyć błąd. Co go powoduje?",
+      "outcome": "Prześledź działanie kodu, znajdź przyczynę błędu i wskaż najmniejszą zmianę, która go usunie.",
+      "prompt": "Prześledź błąd potwierdzony w zgłoszeniu nr 123. W którym miejscu eksport gubi filtr statusu?",
+      "label": "Znajdź przyczynę"
+    },
+    "om-fix": {
+      "question": "Znamy przyczynę. Jak naprawić błąd?",
+      "outcome": "Wprowadź poprawkę wynikającą z diagnozy, dodaj test regresji i uruchom kontrole przewidziane w projekcie.",
+      "prompt": "Wprowadź poprawkę opisaną w diagnozie zgłoszenia nr 123. Dodaj test eksportu przefiltrowanej listy.",
+      "label": "Wprowadź poprawkę"
+    },
+    "om-smart-test": {
+      "question": "Które testy obejmują tę zmianę?",
+      "outcome": "Uruchom testy obejmujące zmieniony kod. Jeśli trudno ustalić ich zakres, uruchom cały zestaw.",
+      "prompt": "Uruchom testy, których dotyczą zmiany w eksporcie zamówień na tej gałęzi.",
+      "label": "Uruchom właściwe testy"
+    },
+    "om-code-review": {
+      "question": "Czy zmiana może zepsuć istniejącą funkcję?",
+      "outcome": "Przejrzyj zmiany pod kątem błędów, bezpieczeństwa i wpływu na działające funkcje. Uszereguj uwagi według wagi.",
+      "prompt": "Przejrzyj zmiany w eksporcie. Sprawdź uprawnienia oraz zachowanie funkcji, gdy żadne zamówienie nie spełnia kryteriów.",
+      "label": "Zrób przegląd kodu"
+    },
+    "om-qa-buddy": {
+      "question": "Jak sprawdzić tę funkcję w aplikacji?",
+      "outcome": "Przejdź z agentem przez plan testów ręcznych i zapisz zaobserwowane wyniki.",
+      "prompt": "Przeprowadź mnie przez eksport najpierw jako kierownika sklepu, a później jako osobę bez uprawnień do eksportu.",
+      "label": "Przetestuj w aplikacji"
+    }
+  },
+  "phases": {
+    "Discover": {
+      "name": "Badanie",
+      "title": "Co zajmowało tyle czasu przy raporcie?",
+      "agent": "Porównał wywiad z piątkowym arkuszem.",
+      "human": "Wybrał opłacone zamówienia z jednego sklepu.",
+      "result": "Pierwszy prototyp: filtr i pobranie pliku."
+    },
+    "Prototype": {
+      "name": "Prototyp",
+      "title": "Czy wystarczy przefiltrowana lista?",
+      "agent": "Przygotował klikalną listę zamówień.",
+      "human": "Sprawdził piątek bez sprzedaży.",
+      "result": "Co powinien zawierać pusty plik?"
+    },
+    "Specify": {
+      "name": "Specyfikacja",
+      "title": "Co powinien zawierać pusty plik?",
+      "agent": "Rozpisał testy dla obu wyników filtrowania.",
+      "human": "Ustalił wspólne nagłówki dla obu plików.",
+      "result": "Wzór pliku dla pustej listy."
+    },
+    "Design": {
+      "name": "Projekt",
+      "title": "Gdzie kierowniczka będzie szukać pliku?",
+      "agent": "Umieścił pobieranie obok filtrów.",
+      "human": "Wybrał przycisk na liście zamówień.",
+      "result": "Eksport korzysta z filtrów widocznych na ekranie."
+    },
+    "Build": {
+      "name": "Kodowanie",
+      "title": "Które wiersze ma pobrać przycisk?",
+      "agent": "Połączył zapytanie listy z zapisem do CSV.",
+      "human": "Zachował uprawnienia z listy zamówień.",
+      "result": "Do testu potrzebne są dwa konta o różnych uprawnieniach."
+    },
+    "Verify": {
+      "name": "Testy",
+      "title": "Czy można pobrać zamówienia innego sklepu?",
+      "agent": "Sprawdził filtr i uprawnienia do pobierania.",
+      "human": "Porównał pobrane pliki z listą na każdym koncie.",
+      "result": "Można wdrażać przed piątkiem."
+    },
+    "Release": {
+      "name": "Wdrożenie",
+      "title": "Czy eksport będzie gotowy na piątek?",
+      "agent": "Wybrał zamówienie o znanej kwocie.",
+      "human": "Wdrożył zmianę i sprawdził plik na produkcji.",
+      "result": "Kierowniczka może pobrać dane do piątkowego raportu."
+    },
+    "Observe": {
+      "name": "Obserwacja",
+      "title": "Co w piątek nadal trzeba było zrobić ręcznie?",
+      "agent": "Porównał plik z arkuszem raportowym.",
+      "human": "Zauważył, że nadal trzeba przestawiać kolumny.",
+      "result": "Pytanie na kolejny wywiad: w jakiej kolejności ułożyć kolumny?"
+    }
+  }
+}

@@ -1,0 +1,76 @@
+---
+import GuideHeader from './GuideHeader.astro';
+import BrandMark from './BrandMark.astro';
+import SkillMap from './SkillMap.astro';
+import Lifecycle from './Lifecycle.astro';
+import SkillDialog from './SkillDialog.astro';
+import { getGuide, ui, type Locale } from '../data/locales';
+import interactions from '../scripts/guide.js?raw';
+import '../styles/guide.css';
+
+interface Props { locale: Locale }
+const { locale } = Astro.props;
+const guide = getGuide(locale);
+const t = ui[locale];
+const serializedGuide = JSON.stringify({ ...guide, t }).replaceAll('<', '\\u003c');
+---
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{t.title} · Open Mercato</title>
+  </head>
+  <body>
+    <GuideHeader t={t} locale={locale} />
+    <main>
+      <SkillMap t={t} guide={guide} />
+      <Lifecycle t={t} guide={guide} />
+      <SkillDialog t={t} />
+    </main>
+    <footer class="foot" id="footer">
+      <svg class="footer-wordmark" viewBox="0 0 1000 126" role="img" aria-label={t.footerBrand}>
+        <defs>
+          <text id="footer-lettering" x="500" y="93" text-anchor="middle" textLength="914" lengthAdjust="spacingAndGlyphs">{t.footerBrand}</text>
+        </defs>
+        <use href="#footer-lettering"/>
+        <use href="#footer-lettering" class="footer-trace"/>
+      </svg>
+      <div class="wrap footer-links">
+        <span>AI Tech Leaders</span>
+        <a href="https://github.com/open-mercato/skills/blob/main/docs/skills/om-help.md">{t.help}</a>
+      </div>
+    </footer>
+    <article class="print" id="poster">
+      <header class="sheet-head">
+        <div class="sheet-brand"><BrandMark size={24} />Open Mercato</div>
+        <h1>{t.finder}</h1>
+        <p>{t.printIntro}</p>
+      </header>
+      <div class="sheet-groups">
+        {guide.groups.map(group => (
+          <section class="sheet-group" data-accent={group.accent}>
+            <h2><span class="branch-badge" aria-hidden="true">{group.badge}</span>{group.name}</h2>
+            <dl>
+              {group.skills.map(skill => <div>
+                <dt>{skill.label}</dt>
+                <dd><a href={`https://github.com/open-mercato/skills/blob/main/docs/skills/${skill.name}.md`}><code>{skill.name}</code></a></dd>
+              </div>)}
+            </dl>
+          </section>
+        ))}
+      </div>
+      <section class="sheet-example">
+        <h2>{t.example}</h2>
+        <code id="print-skill">{guide.groups[0].skills[0].name}</code>
+        <p id="print-prompt">{guide.groups[0].skills[0].prompt}</p>
+      </section>
+      <footer class="sheet-foot">
+        <span>{t.help}</span>
+        <a href="https://github.com/open-mercato/skills">github.com/open-mercato/skills</a>
+      </footer>
+    </article>
+    <script is:inline type="application/json" id="guide-data" set:html={serializedGuide}></script>
+    <script is:inline set:html={interactions}></script>
+  </body>
+</html>

@@ -1,0 +1,21 @@
+---
+interface Props { id?: string; value: string; alternatives: string[] }
+const { id, value, alternatives } = Astro.props;
+---
+<span class="text-slot">
+  <span id={id} data-value>{value}</span>
+  {alternatives.map(text => <span class="measure" aria-hidden="true">{text}</span>)}
+</span>
+
+<style>
+  .text-slot {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .text-slot > span { grid-area: 1 / 1; }
+  .measure {
+    visibility: hidden;
+    user-select: none;
+    pointer-events: none;
+  }
+</style>

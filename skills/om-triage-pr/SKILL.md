@@ -40,9 +40,13 @@ The merge decision belongs to `om-review-pr`.
    Tracker writes, never under `--dry-run`: the label guards, **comment-pr**,
    **update-comment**.
 
-1. **Resolve the targets.** Validate every value. Skip drafts and closed or
-   merged PRs, and list them in the report. Record each PR's head SHA: every
-   decision below is about that SHA.
+1. **Resolve the targets.** Validate every value. Skip drafts, closed or
+   merged PRs, daily batch PRs (head branch starting with
+   `qaBatch.branchPrefix`, default `stabilize/`), and release-line backport
+   PRs (base branch is not `BASE_BRANCH`, or created by a backport workflow
+   such as `backport.yml`), and list each in the report as skipped with the
+   reason. Record each remaining PR's head SHA: every decision below is
+   about that SHA.
 
 2. **Read the change.** Title, body, linked issue, labels, author, base
    branch, changed files with their status, the full diff, and this skill's
@@ -102,10 +106,11 @@ The merge decision belongs to `om-review-pr`.
 - **Raise-only.** A later run may add a CI level, an area, a QA lane or a
   higher risk; it never removes or lowers one. The only removals this skill
   makes: a stale `skip-qa` when the PR now needs QA, the lower risk label
-  when it raises risk (one risk label per PR), the lower CI level label when
-  it raises the CI level (one level label per PR), and a configured
+  when it raises risk (one risk label per PR), and a configured
   `humanQaPolicy.approvedDesign.label` when a later triage no longer finds
-  an approved design on the base branch.
+  an approved design on the base branch. CI level labels are strictly
+  raise-only: on a raise, add the higher level label and leave any lower
+  level label in place (removing a human-set label requires a human).
 - **Human decisions stand.** Never remove the human QA label, the
   batch-check label, `qa-approved`, `qa-failed`, or any label listed in
   `humanQaPolicy.humanVerdictLabels`. `--audit-human-lane` only reports.

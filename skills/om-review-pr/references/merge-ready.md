@@ -53,16 +53,25 @@ Move the PR to `merge-queue` only when all of these hold on the current head:
    `CI-Triage-Head: <current head sha>`.
 3. **An approving review on the head** from someone other than the author:
    this review, or another one bound to the same SHA (never set `merge-queue`
-   on the current user's own PR).
+   on the current user's own PR). For an external author (without `write`,
+   `maintain` or `admin` permission), this review must be a **human**
+   approving review on the current head from a user with `write`, `maintain`
+   or `admin` permission who is not a bot or an automation identity — never
+   count `om-review-pr`'s own approval toward `merge-queue`.
 4. **No blocking label or state**: no `qa-failed`, `changes-requested`,
    `blocked`, `do-not-merge`, or the human QA label without `qa-approved`.
    When `QA_GATE_LABEL` is `needs-qa` (no separate human lane), `needs-qa`
    without `qa-approved` blocks as well. The PR must be open, non-draft, and
    have no unresolved merge conflicts.
-5. **No open acceptance**: the PR does not carry `prTriage.acceptanceLabel`.
-   This skill cannot verify who added an acceptance decision, so an outside
-   contribution waiting for one stays in `review` with "waiting for a
-   maintainer's acceptance".
+5. **External PR acceptance**: the PR must not carry
+   `prTriage.acceptanceLabel`. Additionally, for any author without `write`,
+   `maintain` or `admin` permission, require an `accepted` label added by a
+   **human** with `write`, `maintain` or `admin` permission who is not a bot
+   or the skill's account/automation identity (verified from the label's
+   timeline event; fail closed when unverifiable), together with the human
+   current-head approval in gate 3. Never count an `accepted` label added by
+   a bot or this skill's account toward `merge-queue`; keep `review` with
+   "waiting for a maintainer's acceptance and human approval".
 
 When a gate is open, set or keep `review` and name the open gates in the
 report and the label rationale: "waiting for CI", "waiting for CI on raised

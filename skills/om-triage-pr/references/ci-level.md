@@ -69,16 +69,15 @@ satisfy a CI triage gate). Never guess a label name.
 ## Comparing with the current labels
 
 - Add a level label only when it is higher than both the floor and the
-  level label already present. When raising from a lower level label already
-  on the PR, add the higher level label and remove the replaced lower level
-  label (one level label per PR, matching how risk labels are handled). When
-  a higher level label is already present, keep it.
+  highest level label already present. On a raise, add the higher level label
+  and leave any lower level label in place (CI accepts two level labels and
+  uses the higher one; removing a human-set label requires a human). When a
+  higher level label is already present, keep it.
 - Add each needed area label that is missing.
-- Never lower a level label or remove an area label, even one this run would
-  not set: a person or an earlier run had a reason.
-- A label with the level or area prefix that the scope file does not define,
-  or two level labels at once, is reported in the comment as a likely typo;
-  leave it in place.
+- Never remove a level or area label, even one this run would not set: a
+  person or an earlier run had a reason.
+- A label with the level or area prefix that the scope file does not define
+  is reported in the comment as a likely typo; leave it in place.
 - Fork PRs: some projects ignore level labels on PRs from forks. When the
   agent instructions or the CI docs say so, add a note to the CI line.
 

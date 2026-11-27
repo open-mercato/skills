@@ -48,10 +48,13 @@ checked and does not move the PR to `merge-queue`).
    **comment-pr**, **update-comment**, the label guards and
    `set_pipeline_label`.
 
-1. **Gate the start.** Validate the target. Stop and report for a draft, a
-   closed or merged PR, and for a PR another actor has claimed (assignee,
-   `in-progress` label and a live claim comment) unless `--force`. Record the
-   head SHA: the verdict is for that SHA only.
+1. **Gate the start.** Validate the target. Stop and report as skipped (with
+   the reason) for a draft, a closed or merged PR, a daily batch PR (head
+   branch starting with `qaBatch.branchPrefix`, default `stabilize/`), a
+   release-line backport PR (base branch is not `BASE_BRANCH`, or created by
+   a backport workflow such as `backport.yml`), and for a PR another actor
+   has claimed (assignee, `in-progress` label and a live claim comment)
+   unless `--force`. Record the head SHA: the verdict is for that SHA only.
 
 2. **Triage first.** Find the `om-triage-pr` comment whose
    `CI-Triage-Head:` line equals the head SHA and whose author is trusted
@@ -87,13 +90,14 @@ checked and does not move the PR to `merge-queue`).
    risk), add the QA lane, risk, CI level or area label through the guards,
    using the local triage rules (`references/labels.md`,
    `references/ci-level.md`, `references/qa-triage.md`). Raise-only: never
-   lower a routing label or remove an area/QA label (when raising risk or a
-   CI level, remove only the replaced lower risk or lower CI level label).
-   Explain each in this skill's label rationale comment. Whenever this step
-   raises any CI level, area, CI-implying risk, or QA label, **re-read the
-   PR's labels** (**get-pr**) and treat CI for the new level (and any newly
-   added QA gate) as unverified in this run — do not set `merge-queue` until
-   CI passes for the raised labels and every gate holds.
+   remove a CI level, area or QA label (on a CI level raise, add the higher
+   label and leave any lower level label in place; when raising risk, remove
+   only the replaced lower risk label). Explain each in this skill's label
+   rationale comment. Whenever this step raises any CI level, area,
+   CI-implying risk, or QA label, **re-read the PR's labels** (**get-pr**)
+   and treat CI for the new level (and any newly added QA gate) as unverified
+   in this run — do not set `merge-queue` until CI passes for the raised
+   labels and every gate holds.
 
 7. **Verdict.** Any blocker, or a major without a documented waiver:
    request changes. Otherwise: approve, listing minors and nits. Re-read the
@@ -128,8 +132,11 @@ checked and does not move the PR to `merge-queue`).
   `review` and say which gate.
 - Raise-only for routing labels; human decisions stand (the human QA label,
   the batch-check label and QA verdicts are never removed).
-- An outside contribution waiting for acceptance is never moved to
-  `merge-queue` by this skill; a maintainer's acceptance comes first.
+- External PRs (authors without `write`, `maintain` or `admin` permission)
+  are never moved to `merge-queue` without both a human-applied `accepted`
+  label and a human approving review on the current head: never count this
+  skill's own approval or an `accepted` label added by a bot or this skill's
+  account toward `merge-queue`.
 - Shared rules: `references/rules.md`. They always apply.
 
 ## Security boundaries

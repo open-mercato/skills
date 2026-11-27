@@ -76,16 +76,25 @@ assert.match(triage, /apply_label/, 'triage must check apply_label skips before 
 assert.match(triage, /never\s+lowers one/, 'triage must state the raise-only rule')
 assert.match(triage, /Never remove the human QA\s+label/, 'triage must never remove the human QA label')
 assert.match(triage, /approvedDesign\.label/, 'triage Rules must include approvedDesign.label in allowed removals')
-assert.match(triage, /lower CI level label/, 'triage Rules must include replaced lower CI level label in allowed removals')
+assert.doesNotMatch(triage, /lower CI level label when\s+it raises the CI level/, 'triage Rules must not remove lower CI level labels')
+assert.match(triage, /leave any lower\s+level label in place/, 'triage Rules must leave lower CI level labels in place on raise')
 assert.match(triage, /never posts a\s+commit status \(such as `ci-triage`\)/, 'triage must never post a ci-triage commit status')
 
-// ci-level.md contracts: base-branch-only reads, fail-closed, implies same-run labels, lower level removal
+// Skip daily batch PRs and release-line backport PRs in both skills
+for (const [name, content] of [['om-triage-pr', triage], ['om-review-pr', review]]) {
+  assert.match(content, /qaBatch\.branchPrefix/, `${name} must skip daily batch PRs matching qaBatch.branchPrefix`)
+  assert.match(content, /BASE_BRANCH/, `${name} must skip PRs whose base branch is not BASE_BRANCH`)
+  assert.match(content, /backport\.yml/, `${name} must skip release-line backport PRs`)
+}
+
+// ci-level.md contracts: base-branch-only reads, fail-closed, implies same-run labels, raise-only (leave lower level in place)
 for (const [name, content] of [['om-triage-pr', triageCiLevel], ['om-review-pr', reviewCiLevel]]) {
   assert.match(content, /origin\/\$PR_BASE:\$CI_SCOPE_FILE/, `${name} ci-level.md must read ciScopeFile from origin/$PR_BASE`)
   assert.match(content, /never from the PR head/, `${name} ci-level.md must forbid reading ciScopeFile from the PR head`)
   assert.match(content, /omit\s+`CI-Triage-Head:`/, `${name} ci-level.md must fail closed on invalid/missing scope file`)
   assert.match(content, /added earlier\s+in the same run.*risk-high.*ci-area:\*/s, `${name} ci-level.md must count implies labels added earlier in the same run (risk-high, ci-area:*)`)
-  assert.match(content, /remove the replaced lower level\s+label/, `${name} ci-level.md must remove the replaced lower level label when raising`)
+  assert.match(content, /leave any lower level label in place/, `${name} ci-level.md must leave lower level labels in place on raise`)
+  assert.doesNotMatch(content, /two level labels at once/, `${name} ci-level.md must not report two level labels as a typo`)
 }
 
 // acceptance.md contracts: outside-contribution acceptance and automerge limits
@@ -110,6 +119,10 @@ assert.match(review, /re-read the\s+PR's labels/, 'review must re-read labels af
 assert.match(merge, /no CI or QA routing label was\s+raised in this run/, 'merge-ready must withhold merge-queue in the same run after raising CI/QA labels')
 assert.match(merge, /action_required/, 'merge-ready must treat action_required fork runs as non-green')
 assert.match(merge, /Current-head trusted triage/, 'merge-ready must require current-head trusted triage')
+assert.match(merge, /never\s+count `om-review-pr`'s own approval toward `merge-queue`/, 'merge-ready must not count om-review-pr own approval for external authors')
+assert.match(merge, /Never count an `accepted` label added by\s+a bot or this skill's account toward `merge-queue`/, 'merge-ready must require human accepted label for external authors')
+assert.match(merge, /write`,\s+`maintain`\s+or `admin` permission/, 'merge-ready must check write/maintain/admin permission for external authors')
+assert.match(review, /never count this\s+skill's own approval or an `accepted` label added by a bot or this skill's\s+account/, 'review Rules must forbid counting own approval or bot accepted label for external PRs')
 for (const gate of ['qa-failed', 'changes-requested', 'blocked', 'do-not-merge', 'the human QA label without `qa-approved`', 'acceptanceLabel']) {
   assert.ok(merge.includes(gate), `merge gates must include ${gate}`)
 }

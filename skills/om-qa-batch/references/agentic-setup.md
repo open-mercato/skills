@@ -44,6 +44,10 @@ QA_DIR=$(jq -r '.paths.qa // ".ai/qa"' "$CONFIG")
 LABELS_ENABLED=$(jq -r 'if .labels.enabled == false then "false" else "true" end' "$CONFIG")
 QA_GATE_LABEL=$(jq -r '.qaGateLabel // "needs-qa"' "$CONFIG")
 QA_BATCH=$(jq -ce '
+  (if has("qaGateLabel") then .qaGateLabel else "needs-qa" end) as $gate |
+  (if (.humanQaPolicy|type)=="object" then (.humanQaPolicy.batchCheckLabel // null) else null end) as $batch |
+  (["qa-approved","qa-failed","in-progress","ci-monitoring","needs-qa","skip-qa",$gate]
+   + (if $batch==null then [] else [$batch] end)) as $reserved |
   (if has("qaBatch") then .qaBatch else {} end) as $b |
   if ($b | type) != "object" then error("Invalid qaBatch") else
     {branchPrefix:($b.branchPrefix // "stabilize/"),
@@ -61,12 +65,15 @@ QA_BATCH=$(jq -ce '
      and (.blockerLabel|type)=="string" and (.blockerLabel|length)>0
      and (.bugLabels|type)=="array" and (.bugLabels|length)>0 and all(.bugLabels[];type=="string" and length>0)
      and (.autoQaEvidenceLabels|type)=="array" and all(.autoQaEvidenceLabels[];type=="string" and length>0)
-     and ([.inProgressLabel,.blockerLabel] | all(. != "qa-approved" and . != "qa-failed"))
+     and ([.inProgressLabel,.blockerLabel] + .bugLabels | all(.[]; . as $l | all($reserved[]; . != $l)))
     then . else error("Invalid qaBatch") end' "$CONFIG") || { echo "Invalid qaBatch config" >&2; exit 1; }
 HUMAN_QA_POLICY=$(jq -c '.humanQaPolicy // {}' "$CONFIG")   # read by the classifier
 ```
 
 - Stop before any tracker read when `qaBatch` is invalid, naming the field.
+  `inProgressLabel`, `blockerLabel` and every `bugLabels` entry must not
+  reuse `qa-approved`, `qa-failed`, `in-progress`, `ci-monitoring`,
+  `needs-qa`, `skip-qa`, the `qaGateLabel` or the batch-check label.
 - `--range`, `--since`, `{target}` and `--stabilizer` values are validated
   as above before use.
 - `LABELS_ENABLED=false` → the write actions skip every label change and

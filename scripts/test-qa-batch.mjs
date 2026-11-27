@@ -93,9 +93,15 @@ assert.deepEqual(defaults.bugLabels, ['bug'])
 assert.equal(defaults.smoke, null)
 const custom = { branchPrefix: 'batch/', greenTagPrefix: 'verified/', smoke: '.ai/qa/smoke.md', inProgressLabel: 'testing', bugLabels: ['bug', 'daily-qa'], blockerLabel: 'blocker', autoQaEvidenceLabels: ['qa-self-verified'] }
 assert.deepEqual(JSON.parse(load({ qaBatch: custom }).stdout), custom)
-for (const qaBatch of [[], 'x', { branchPrefix: 'no-slash' }, { branchPrefix: '../x/' }, { bugLabels: [] }, { bugLabels: [''] }, { smoke: '' }, { blockerLabel: 'qa-approved' }, { inProgressLabel: 'qa-failed' }]) {
+for (const qaBatch of [[], 'x', { branchPrefix: 'no-slash' }, { branchPrefix: '../x/' }, { bugLabels: [] }, { bugLabels: [''] }, { smoke: '' }, { blockerLabel: 'qa-approved' }, { inProgressLabel: 'qa-failed' },
+  ...['in-progress', 'ci-monitoring', 'needs-qa', 'skip-qa'].flatMap(label => [{ inProgressLabel: label }, { blockerLabel: label }, { bugLabels: ['bug', label] }])]) {
   assert.notEqual(load({ qaBatch }).status, 0, 'must reject qaBatch ' + JSON.stringify(qaBatch))
 }
+const qaBatchConfig = { qaGateLabel: 'needs-human-qa', humanQaPolicy: { batchCheckLabel: 'qa-batch-check' } }
+for (const qaBatch of [{ inProgressLabel: 'needs-human-qa' }, { blockerLabel: 'qa-batch-check' }, { bugLabels: ['qa-approved'] }]) {
+  assert.notEqual(load({ ...qaBatchConfig, qaBatch }).status, 0, 'must reject colliding qaBatch ' + JSON.stringify(qaBatch))
+}
+assert.equal(load(qaBatchConfig).status, 0)
 console.log('PASS: qaBatch loader defaults, custom values and malformed inputs')
 
 const skill = read('skills/om-qa-batch/SKILL.md')

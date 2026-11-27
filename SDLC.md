@@ -327,6 +327,11 @@ Every PR passes the full validation gate before review sign-off, in this order:
 - `node scripts/test-agent-harness.mjs`
 - `node scripts/test-agent-harness-security.mjs`
 - `node scripts/test-review-sweep.mjs`
+- `node scripts/test-issue-triage.mjs`
+- `node scripts/test-spec-delta.mjs`
+- `node scripts/test-qa-triage.mjs`
+- `node scripts/test-qa-batch.mjs`
+- `node scripts/test-pr-triage.mjs`
 
 Any non-zero exit fails the gate and blocks the PR. The implementing skills run the gate before opening a PR, and `om-check-and-commit` runs it before pushing a hand-worked branch. The command list lives in `.ai/agentic.config.json`; when it changes, update it there and in this section together.
 
@@ -353,3 +358,18 @@ evidence and human-verdict preservation. Its absence retains documented defaults
 Human QA verdicts and existing requests take precedence over `skip-qa`.
 This additive triage does not waive the risk-high evidence or self-QA restrictions
 above; changes to downstream merge/QA routing require a coordinated follow-up.
+
+
+## Optional batch QA
+
+With `humanQaPolicy.batchCheckLabel` configured, triage can request a human
+check after merge alongside automatic QA. The extra label does not waive
+`needs-qa`, the configured human gate, or any existing merge requirement.
+Without the optional label, the previous triage rules remain in force.
+
+`om-qa-batch` builds a checklist from the exact batch range. Its explicit
+write actions use the normal action-scoped claim and consolidated label
+rationale. The separate `qaBatch.inProgressLabel` freezes refresh while a
+human tests. Only that human may record the batch verdict; a stable verdict
+requires the tested head to match the batch and no open blockers. Optional
+`qaBatch` settings and their defaults are owned by the pipeline setup skill.

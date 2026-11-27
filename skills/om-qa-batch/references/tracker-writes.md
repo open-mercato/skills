@@ -1,9 +1,38 @@
 # Tracker writes (steps 6-9)
 
 Every write here happens only when the tester runs the matching action.
-Label changes go through the descriptor's guards; `LABELS_ENABLED=false`
-skips them and the report says so. Read the batch PR again (**get-pr**)
+Label changes go through the descriptor's guards. With
+`LABELS_ENABLED=false`, write actions stop before mutations because the
+mandatory claim label cannot be verified. Read the batch PR again (**get-pr**)
 right before each action and compare its head with the **tested head**.
+
+## Action preflight and cleanup
+
+Before **any** mutation, including stale-approval withdrawal:
+
+1. Require an exact batch PR; reject `--range` or `--since` with write flags.
+   Validate the requested action, tester eligibility, checklist ownership,
+   `--start` freeze-label availability and stable-verdict guards first.
+   A refused action makes no changes.
+2. Acquire and verify the action-scoped PR claim under
+   `references/claim-pr.md`, with an owned-release finally/trap. An explicit
+   `--force` authorizes only the documented claim takeover; it never
+   overrides a different recorded tester or any verdict guard. `labels.enabled:
+   false` or an unavailable `in-progress` label prevents write actions,
+   because the claim's mandatory second check cannot be verified.
+3. Re-read the exact lock, reset history, PR head and relevant comments
+   before each mutation. A change invalidates the preflight; stop or
+   re-evaluate without assuming the earlier reading still authorizes it.
+4. Keep one marker-idempotent label-rationale comment using
+   `references/report-templates.md`, updating it after label changes.
+   Run owned label/assignment cleanup, mark the claim comment released,
+   and release the exact lock SHA last, on success and failure. Keep the
+   persistent `qaBatch.inProgressLabel` and tested-head checklist.
+
+When `--start` intentionally assigns the tester, preserve that assignment
+as the persistent tester signal after transient claim cleanup; record this
+handoff explicitly. Other actions restore only assignments they changed.
+The action lock is never held while the tester exercises the application.
 
 **Trusted comments.** Every checklist and verdict comment read here is
 filtered by `references/trusted-comments.md` (trusted authors, untrusted
@@ -27,12 +56,29 @@ commits, and point to `--retest`.
 **Stale approval.** When the batch carries `qa-approved` and its head differs
 from the `QA head:` of the trusted verdict, or no trusted verdict exists
 (an untrusted one never vouches for the label), the approval no longer
-covers the build: every write action first **unlabel-pr** `qa-approved` and
+covers the build: after preflight, every eligible write action first
+**unlabel-pr** `qa-approved` and
 says why; read-only runs report it as stale and tell the tester to run
-`--retest`, then `--verdict`. With an empty `qaBatch.testers` only
+`--retest`, then `--verdict` — except for a merge-back conflict fix (below).
+With an empty `qaBatch.testers` only
 **current-user** is trusted, so tester B's write action treats tester A's
 verdict as untrusted and withdraws a valid `qa-approved`: teams with more
 than one tester set `qaBatch.testers`.
+
+**Merge-back conflict fix.** The trusted verdict is STABLE, a tag starting
+with `qaBatch.greenTagPrefix` points at its `QA head:`, and every commit
+after that head on the batch branch's first-parent line is a merge of the
+base branch into the batch (the stabilizer resolving a merge-back conflict
+after tagging). Then the verdict stays on the green-tagged commit: no
+`--retest` and no new verdict is asked for. Report `qa-approved` on the
+moved head as stale so the stabilizer merges without it (the merge back is
+pinned to the resolved head once the full suite is green on it), and list
+the base PRs the merge brought in as not covered by this verdict: the next
+batch's range starts at that green tag, so they are tested there.
+
+**Pipeline labels.** `qa-failed` is a pipeline label: set it only through
+the descriptor's `set_pipeline_label` guard, which removes every other
+pipeline label, never with a bare **label-pr** next to another one.
 
 ## Blocker definition
 
@@ -52,7 +98,23 @@ fixed through the normal flow.
 1. **get-pr** the batch. When it carries `qaBatch.inProgressLabel` and is
    assigned to someone other than **current-user**, stop and name who holds
    it. The same user re-running `--start` updates in place.
-2. **assign-pr** current user; **label-pr** `qaBatch.inProgressLabel`.
+2. Before assignment or any other mutation, require the configured
+   persistent freeze label to exist, using the descriptor's guard:
+
+   ```bash
+   BATCH_FREEZE_LABEL=$(printf %s "$QA_BATCH" | jq -er .inProgressLabel)
+   if ! label_exists "$BATCH_FREEZE_LABEL"; then
+     printf "Batch freeze label unavailable: %s; provision it before --start.\n" "$BATCH_FREEZE_LABEL" >&2
+     exit 1
+   fi
+   ```
+
+   Then **assign-pr** current user and **label-pr** the freeze label.
+   **get-pr** the batch again and require that exact label and the tester
+   assignment in the read-back. A skipped guard is not success. Failed
+   read-back → stop before publishing a checklist or announcing a freeze;
+   undo only this invocation's new assignment/freeze mutations under the
+   owned lock, retaining any pre-existing tester freeze or checklist.
 3. Find the checklist comment (above). None → **comment-pr** it (template in
    `references/report-templates.md`) with `Tested head:` set to the `TO` of
    the checklist just written, and `Stabilizer:` set to the `--stabilizer`
@@ -64,8 +126,9 @@ fixed through the normal flow.
    never moves it: when the batch head equals it, **update-comment** the
    must-test list in place and keep the line; when the head moved, refuse,
    name the new commits and point to `--retest`, which checklists the
-   stabilization fixes that `--start` never shows.
-4. Tell the tester: the in-progress label is the agreed signal that the
+   fixes added after the recorded tested head.
+4. Only after the verified freeze read-back and checklist publication,
+   tell the tester: the in-progress label is the agreed signal that the
    batch is being tested and must not be refreshed with newer base commits.
 
 ## `--blocker <bug-file>` / `--bug <bug-file>`
@@ -80,7 +143,7 @@ fixed through the normal flow.
 4. `--blocker` only: **comment-pr** on the batch PR with the blocker template,
    mentioning `--stabilizer` or the batch PR author, and the issue link.
    Then, when the batch carries `qa-approved`, **unlabel-pr** it and
-   **label-pr** `qa-failed`.
+   **set_pipeline_label** `qa-failed`.
 
 ## `--verdict stable|unstable`
 
@@ -104,31 +167,37 @@ blockers, nothing else.
    Name which of these matched. `unstable` stays allowed.
 2. `stable` is refused while **search-issues** finds an open issue labelled
    `qaBatch.blockerLabel`, whichever batch it names: a blocker from an
-   earlier batch is still in this build until it is fixed. List them. One that
-   no longer reproduces on the tested head is closed by the tester first; this
-   skill never closes it.
+   earlier batch is still in this build until it is fixed. List them. After a
+   passing retest of the fix, QA (or the stabilizer) closes the blocker issue
+   by hand; this skill never closes it. `unstable` is refused while no
+   blocker issue is open: unstable means at least one open blocker, so file
+   it with `--blocker` first; a defect that does not block is a `--bug` and
+   never makes the batch unstable.
 3. `stable` is refused when the tested head is unknown: say that no trusted
    batch checklist comment records one, so nothing proves which head was
    tested. Tell the tester to run `--start`, test the head it records, then
    `--verdict` again; a head tested before it was recorded is never
    certified after the fact. `stable`
    is also refused when the batch head differs from the tested head: commits
-   landed after testing. Name them and point to `--retest`. `unstable` is
+   landed after testing. Name them and point to `--retest` (a merge-back
+   conflict fix after the green tag needs no new verdict; see above). `unstable` is
    still recorded, against the tested head, or the current head marked
    "tested head unknown" when none is recorded.
 4. Post or update `` 🤖 `om-qa-batch` — batch verdict `` (template in
    `references/report-templates.md`): `QA verdict: STABLE` or
    `QA verdict: UNSTABLE`, `QA head: <tested head sha>`, `Range:` ending at
    that head, blockers, what was tested and what was not.
-5. Labels: stable → **label-pr** `qa-approved`, **unlabel-pr** `qa-failed` and
-   `qaBatch.inProgressLabel`. Unstable → **label-pr** `qa-failed`,
+5. Labels: stable → **set_pipeline_label** `merge-queue` (which clears
+   `qa-failed` and `qa`), **label-pr** `qa-approved`, **unlabel-pr**
+   `qaBatch.inProgressLabel`. Unstable → **set_pipeline_label** `qa-failed`,
    **unlabel-pr** `qa-approved`, keep the in-progress label so the batch stays
    frozen while the stabilizer fixes it.
 6. Print the channel message from the templates for the tester to send.
 
 The stabilizer decides when fixes are in and tags the batch; a new head
 after a stable verdict needs a new verdict for that head, and the stale
-`qa-approved` is withdrawn as above.
+`qa-approved` is withdrawn as above — except the merge-back conflict fix
+after the green tag, where the verdict stays on the tagged commit.
 
 ## `--retest`
 

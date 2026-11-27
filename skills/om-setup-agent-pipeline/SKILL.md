@@ -36,6 +36,7 @@ Configure `.ai/agentic.config.json` when missing or when the pipeline changes.
   "qaGateLabel": "needs-qa",
   "qaReadyLabel": null,
   "humanQaPolicy": {},
+  "qaBatch": {},
   "prTriage": { "ciScopeFile": null, "areaLabelPrefix": "ci-area:", "acceptanceLabel": null },
   "ci": { "maxWaitMinutes": 40 },
   "autofix": { "label": "cez-autofix", "eligibility": { "lookbackDays": 30, "analyzeLimit": 100, "limit": 20, "excludeLabels": ["blocked", "do-not-fix"] } },
@@ -74,9 +75,9 @@ Field defaults: `references/config-capabilities.md`.
 - `labels.priority` — mutually exclusive urgency of the work. Unset is treated as medium.
 - `labels.risk` — mutually exclusive blast radius, default medium; priority measures urgency.
 - `qaGate` — when `true`, the gate label (`qaGateLabel`, default `needs-qa`) requires `qa-approved` before merge. When `false`, it is advisory.
-- `qaGateLabel` / `qaReadyLabel` / `humanQaPolicy` / `prTriage` — defaults and rules: `references/config-capabilities.md`.
-- `autofix` — issue-triage queue label and eligibility; defaults and behavior: `references/config-capabilities.md`.
-- `automerge` — queue label, merge mode, review/QA policies, human-only arrays, QA depth, queue limits and triage. Schema above; fields/defaults in `references/config-capabilities.md`.
+- `qaGateLabel` / `qaReadyLabel` / `humanQaPolicy` / `qaBatch` / `prTriage` — defaults and rules: `references/config-capabilities.md`.
+- `autofix` — issue-triage queue/eligibility: `references/config-capabilities.md`.
+- `automerge` — queue, mode, review/QA policies, limits, triage: `references/config-capabilities.md`.
 - `ci.maxWaitMinutes` — CI wait cap in minutes, default `40`; `0` skips waiting. It never relaxes required checks for merging. Wait-budget behavior: `references/config-capabilities.md`.
 - `engine.executorTier` — optional; the default abstract model tier (`cheap` / `standard` / `capable`) for executor subagents dispatched by the loop skills when a Tasks-table `Exec` cell names none. Harnesses that support subagent model selection map the tier onto their closest model class; others ignore it. Configs without the key behave as `standard`.
 - `engine.loopStepThreshold` — the Step count above which `om-auto-create-pr` hands a run off to `om-auto-create-pr-loop` (default 20). Raise it to keep more runs on the cheaper plain engine; `--loop` always forces the loop regardless.

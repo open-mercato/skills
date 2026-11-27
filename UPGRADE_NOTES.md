@@ -58,6 +58,14 @@ Additive; nothing changes until a project opts in.
   Create the in-progress,
   bug and blocker labels you configure; the defaults are `qa-in-progress`,
   `bug` and `qa-blocker`.
+- Batch write actions retain the collection's action-scoped atomic claim
+  and one label-rationale comment. The tester's separate in-progress label
+  remains while testing; disabled or unverifiable claim labels block writes.
+  `--range` and `--since` stay read-only. Human verdict safeguards are unchanged.
+- The classifier keeps unresolved failed QA and stale/unverified approvals in
+  must-test. Its optional normalized `qaApproval` input carries the qualifying
+  grant's tested head and whether it came from a human; an arbitrary comment
+  containing a SHA never proves coverage. Malformed triage records are ignored.
 - Consumers that parse the `qa-triage v1` block may now see `lane: "batch"`,
   which means the auto lane plus the batch-check label.
 

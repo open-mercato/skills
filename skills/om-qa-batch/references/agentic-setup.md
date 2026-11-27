@@ -44,20 +44,31 @@ QA_DIR=$(jq -r '.paths.qa // ".ai/qa"' "$CONFIG")
 LABELS_ENABLED=$(jq -r 'if .labels.enabled == false then "false" else "true" end' "$CONFIG")
 QA_GATE_LABEL=$(jq -r '.qaGateLabel // "needs-qa"' "$CONFIG")
 QA_BATCH=$(jq -ce '
+  def default($key; $value): if has($key) then .[$key] else $value end;
   (if has("qaGateLabel") then .qaGateLabel else "needs-qa" end) as $gate |
   (if (.humanQaPolicy|type)=="object" then (.humanQaPolicy.batchCheckLabel // null) else null end) as $batch |
-  (["qa-approved","qa-failed","in-progress","ci-monitoring","needs-qa","skip-qa",$gate]
+  (["review","changes-requested","qa","blocked","do-not-merge","merge-queue",
+    "qa-approved","qa-failed","qa-self-verified","in-progress","claim-reset",
+    "ci-monitoring","needs-qa","skip-qa","automerge","automerge-now",
+    "automerge-force","automerge-prepare","automerge-blocked",
+    "automerge-signal-1-cr","automerge-signal-2-qa","automerge-signal-3-ci",
+    "automerge-signal-3-passes-local-ci-checks",
+    "priority-low","priority-medium","priority-high","priority-extreme",
+    "risk-low","risk-medium","risk-high",$gate,.qaReadyLabel,.automerge.label,
+    .humanQaPolicy.approvedDesign.label]
+   + (.labels.pipeline // []) + (.labels.priority // []) + (.labels.risk // [])
+   + (.humanQaPolicy.humanVerdictLabels // [])
    + (if $batch==null then [] else [$batch] end)) as $reserved |
   (if has("qaBatch") then .qaBatch else {} end) as $b |
   if ($b | type) != "object" then error("Invalid qaBatch") else
-    {branchPrefix:($b.branchPrefix // "stabilize/"),
-     greenTagPrefix:($b.greenTagPrefix // "green/"),
+    {branchPrefix:($b | default("branchPrefix"; "stabilize/")),
+     greenTagPrefix:($b | default("greenTagPrefix"; "green/")),
      smoke:(if ($b | has("smoke")) then $b.smoke else null end),
-     inProgressLabel:($b.inProgressLabel // "qa-in-progress"),
-     bugLabels:($b.bugLabels // ["bug"]),
-     blockerLabel:($b.blockerLabel // "qa-blocker"),
-     autoQaEvidenceLabels:($b.autoQaEvidenceLabels // ["qa-self-verified","automerge-signal-2-qa"]),
-     testers:($b.testers // [])}
+     inProgressLabel:($b | default("inProgressLabel"; "qa-in-progress")),
+     bugLabels:($b | default("bugLabels"; ["bug"])),
+     blockerLabel:($b | default("blockerLabel"; "qa-blocker")),
+     autoQaEvidenceLabels:($b | default("autoQaEvidenceLabels"; ["qa-self-verified","automerge-signal-2-qa"])),
+     testers:($b | default("testers"; []))}
   end
   | if (.branchPrefix|type)=="string" and (.branchPrefix|test("^[A-Za-z0-9._-]+/$"))
      and (.greenTagPrefix|type)=="string" and (.greenTagPrefix|test("^[A-Za-z0-9._-]+/$"))
@@ -75,12 +86,14 @@ HUMAN_QA_POLICY=$(jq -c '.humanQaPolicy // {}' "$CONFIG")   # read by the classi
 - Stop before any tracker read when `qaBatch` is invalid, naming the field.
   `inProgressLabel`, `blockerLabel` and every `bugLabels` entry must not
   reuse `qa-approved`, `qa-failed`, `in-progress`, `ci-monitoring`,
-  `needs-qa`, `skip-qa`, the `qaGateLabel` or the batch-check label.
+  `needs-qa`, `skip-qa`, pipeline, priority, risk, merge-signal, design or
+  human-verdict labels, the `qaGateLabel`, `qaReadyLabel` or batch-check label.
   `testers` holds human tracker logins only (no `[bot]` or `app/` forms).
 - `--range`, `--since`, `{target}` and `--stabilizer` values are validated
   as above before use.
-- `LABELS_ENABLED=false` → the write actions skip every label change and
-  say so in their report; comments and issues are still written.
+- `LABELS_ENABLED=false` → read-only reporting remains available; write
+  actions stop because the mandatory claim label cannot be verified. Never
+  publish a verdict or freeze claim while skipping its required labels.
 - Defaults when `qaBatch` is absent: batch branches `stabilize/`, verified
   batch tags `green/`, no project smoke file (the generic smoke applies),
   in-progress label `qa-in-progress`, bug labels `["bug"]`, blocker label

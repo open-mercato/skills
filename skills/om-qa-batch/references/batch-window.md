@@ -8,8 +8,13 @@ is exact, never short.
 1. `{target}` given → **get-pr** with `number,title,url,state,author,headRefName,headRefOid,baseRefName,labels,assignees,createdAt`.
    Its head branch must start with `qaBatch.branchPrefix`; otherwise stop
    and say it is not a batch PR.
-2. No target → **list-prs** state open, limit 20, and keep PRs whose head
-   branch starts with the prefix. None → tell the tester there is no open
+2. No target → **list-prs** state open over the complete result set before
+   filtering head branches by the prefix. Page until exhausted; when the
+   descriptor exposes only a limit, start at 100 and double it until the
+   returned count is below the requested limit. A provider cap, failed page
+   or unverifiable completeness is a discovery blocker, never “no batch”.
+   Never filter only the first 20 ordinary open PRs. Keep every matching
+   branch so the one-open-batch check includes older batches too. None → tell the tester there is no open
    batch and offer `--range` or `--since`. More than one → the process keeps
    one open batch at a time: take the oldest, list the others, and warn.
 3. `TO` = the batch PR's head SHA. Record it: every output and the verdict
@@ -104,7 +109,10 @@ For each commit:
   appendix.
 
 PRs whose base is the batch branch are this batch's stabilization fixes.
-They matter for `--retest`, not for the first checklist.
+Include every such fix in the selected range on the first checklist too;
+apply the same failure, lane and UI rules as other PRs. A later `--retest`
+selects only commits after its recorded tested head, never fixes that were
+silently omitted from the initial checklist.
 
 ## Per-PR facts (step 3)
 
@@ -115,7 +123,10 @@ For each PR:
 - **list-issue-comments** for author, body and time; keep only comments that
   carry a `<!-- qa-triage v1` block or the review automation's QA test
   instructions (a comment whose marker names `om-auto-review-pr` and
-  🧪 QA test instructions), plus the PR body's own testing notes.
+  🧪 QA test instructions), plus the PR body's own testing notes. Also read
+  the latest qualifying QA grant or scope reconfirmation and its provenance
+  when `qa-approved` is present; normalize it as `qaApproval` under
+  `references/checklist.md`. Missing or stale evidence is never coverage.
 
 A PR whose metadata cannot be fetched stays in the checklist appendix as
 `(metadata unavailable)` and is counted; never guess its bucket.

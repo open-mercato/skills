@@ -33,6 +33,8 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
 - `--verdict stable|unstable` — record the tester's verdict (see step 8).
 - `--retest` — checklist of only the fixes merged into the batch since the
   last verdict, plus open blockers; records the new tested head (see step 9).
+- `--force` (optional) — intentionally take over an automation claim under
+  `references/claim-pr.md`; never bypass tester ownership or verdict guards.
 - `--stabilizer <login>` (optional) — who to mention on blockers. Default:
   the batch PR author.
 
@@ -48,7 +50,14 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
    reads: **current-user**, **list-prs**, **search-prs**, **get-pr**,
    **get-pr-files**, **list-issue-comments**, **search-issues**. Tracker
    writes, only under the actions in steps 6-9: **assign-pr**, **label-pr**,
-   **unlabel-pr**, **comment-pr**, **update-comment**, **create-issue**.
+   **unlabel-pr**, **set_pipeline_label**, **comment-pr**, **update-comment**,
+   **create-issue**.
+   Write actions also use **get-lock**, **acquire-lock**, **release-lock**,
+   **get-claim-reset** and the claim operations in `references/claim-pr.md`.
+   Before any write, acquire that action-scoped claim, verify it again, and
+   register owned cleanup on every exit. Read-only runs never claim.
+   `--range` and `--since` are read-only: reject combinations with write
+   actions rather than certifying an approximate or unrelated build.
 
 1. **Resolve the batch and its range.** Find the batch PR (or take
    `--range` / `--since`), read its head SHA, and find where the previous
@@ -65,7 +74,8 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
    drop it silently. Detail: `references/batch-window.md`.
 
 3. **Gather facts per PR.** Labels, author, base, head SHA, changed files
-   with status, the trusted `qa-triage v1` block, and any QA test
+   with status, the trusted `qa-triage v1` block, head-bound approval
+   evidence (when available), and any QA test
    instructions the review automation posted. Build the normalized input and
    run `scripts/classify-batch.mjs`; it buckets every PR without tracker
    calls. Input shape and buckets: `references/checklist.md`.
@@ -90,7 +100,9 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
 
 6. **`--start`: mark that testing started.** Refuse when another tester
    already holds the batch (in-progress label plus a different assignee).
-   Otherwise assign the current user, apply `qaBatch.inProgressLabel`, and
+   Otherwise require and read back `qaBatch.inProgressLabel` plus the tester
+   assignment before claiming success; missing freeze labels block writes.
+   Assign the current user, apply that persistent label, and
    post the one marker comment `` 🤖 `om-qa-batch` — 🧪 batch checklist ``
    with the range, the must-test list and `Tested head:`. Once recorded,
    `--start` never moves `Tested head:`; after a stabilizer push it refuses
@@ -112,10 +124,14 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
    PR, never a local file; unknown → `stable` is refused. Only a human tester
    gives it, from the current user's own account. `stable` is refused while
    any blocker issue is open, from this batch or an earlier one, and while
-   the batch head differs from the tested head. Post or update
+   the batch head differs from the tested head; `unstable` needs at least one
+   open blocker. Post or update
    `` 🤖 `om-qa-batch` — batch verdict `` with `QA verdict:`, `QA head:` (the
-   tested head) and the range; label `qa-approved` (stable) or `qa-failed` (unstable) and remove
-   the other; on stable remove the in-progress label. Print the short channel
+   tested head) and the range; stable → `qa-approved` plus pipeline
+   `merge-queue`, unstable → pipeline `qa-failed` (pipeline labels only
+   through `set_pipeline_label`); on stable remove the in-progress label. A
+   merge-back conflict fix after the green tag keeps the verdict on the
+   tagged commit and needs no new one. Print the short channel
    message for the team. Detail: `references/tracker-writes.md`.
 
 9. **`--retest`: only what changed.** Start from the recorded `Tested head:`
@@ -125,7 +141,10 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
    batch checklist comment to the head it checklisted. Then step 8 again.
 
 10. **Report.** Batch, range, counts per bucket, the kept checklist, files
-    written, and every tracker write performed (none by default).
+    written, and every tracker write performed (none by default). Write
+    actions update one label-rationale comment and release their transient
+    claim, retaining the tester freeze until its documented transition.
+    End PR reports with the reference in `references/report-templates.md`.
 
 ## Rules
 

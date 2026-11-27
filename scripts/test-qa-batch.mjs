@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict'
-import { readFileSync } from 'node:fs'
+import { readFileSync, mkdtempSync, rmSync } from 'node:fs'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8')
 const helper = fileURLToPath(new URL('../skills/om-qa-batch/scripts/classify-batch.mjs', import.meta.url))
@@ -31,7 +33,7 @@ const result = good({
   automationIdentities: [],
   prs: [
     pr(1, { labels: ['needs-human-qa', 'needs-qa'] }),
-    pr(2, { labels: ['needs-human-qa', 'qa-approved'] }),
+    pr(2, { labels: ['needs-human-qa', 'qa-approved'], qaApproval: { head: 'sha2', human: true } }),
     pr(3, { labels: ['needs-qa', 'qa-batch-check'] }),
     pr(4, { comments: [triage('sha4', 'batch')], labels: ['needs-qa'] }),
     pr(5, { comments: [triage('stale', 'batch')], labels: ['skip-qa'] }),
@@ -73,6 +75,45 @@ const noAutoEvidence = good({ config: { ...config, qaBatch: { autoQaEvidenceLabe
 assert.deepEqual(noAutoEvidence.buckets.coveredAuto, [], 'an explicit empty autoQaEvidenceLabels must not fall back to defaults')
 console.log('PASS: batch classifier buckets the human gate, batch lane, trusted triage, evidence and bases')
 
+// A failed verdict remains must-test even after its request label was removed.
+const verdicts = good({ config, prs: [
+  pr(30, { labels: ['qa-failed', 'qa-self-verified'] }),
+  pr(31, { labels: ['qa-failed', 'skip-qa'] }),
+  pr(32, { labels: ['needs-human-qa', 'qa-approved'], qaApproval: { head: 'old-head', human: true } }),
+  pr(33, { labels: ['needs-human-qa', 'qa-approved'] }),
+  pr(34, { labels: ['qa-approved'], qaApproval: { head: 'sha34', human: true }, comments: [triage('sha34', 'human')] }),
+  pr(35, { labels: ['qa-approved', 'qa-self-verified'], qaApproval: { head: 'old-head', human: false } })
+] })
+assert.deepEqual(verdicts.buckets.gateMissed.map(entry => entry.number), [30, 31, 32, 33, 35])
+assert.deepEqual(verdicts.buckets.coveredHuman.map(entry => entry.number), [34])
+assert.deepEqual(verdicts.buckets.coveredAuto, [])
+const malformedTriage = good({ config, prs: [
+  pr(36, { comments: [{ ...triage('sha36', 'human'), body: '<!-- qa-triage v1\n{"head":"sha36","lane":"human","rules":"3.2"}\n-->' }], files: ['view.tsx'] }),
+  pr(37, { comments: [triage('unbound', 'human')], headSha: undefined, files: ['view.tsx'] }),
+  pr(38, { comments: [{ ...triage('sha38', 'human'), body: '<!-- qa-triage v1\nnull\n-->' }], files: ['view.tsx'] })
+] })
+assert.deepEqual(malformedTriage.buckets.candidates.map(entry => entry.number), [36, 37, 38])
+assert.deepEqual(malformedTriage.buckets.gateMissed, [])
+console.log('PASS: failed/stale QA stays must-test and malformed or unbound triage is ignored')
+
+const firstPassFixes = good({ config, batchBranch: 'stabilize/today', prs: [
+  pr(40, { baseRefName: 'stabilize/today', labels: ['qa-failed'], files: [{ path: 'src/checkout/page.tsx', status: 'added' }] }),
+  pr(41, { baseRefName: 'stabilize/today', labels: ['needs-qa'], files: [{ path: 'src/account/page.tsx', status: 'added' }] }),
+  pr(42, { baseRefName: 'stabilize/today', labels: ['qa-batch-check'] }),
+  pr(43, { baseRefName: 'stabilize/today', labels: ['qa-approved'], qaApproval: { head: 'sha43', human: true } })
+] })
+assert.deepEqual(firstPassFixes.buckets.gateMissed.map(entry => entry.number), [40])
+assert.deepEqual(firstPassFixes.buckets.candidates.map(entry => entry.number), [41])
+assert.deepEqual(firstPassFixes.buckets.batchCheck.map(entry => entry.number), [42])
+assert.deepEqual(firstPassFixes.buckets.coveredHuman.map(entry => entry.number), [43])
+assert.equal(firstPassFixes.counts.total, 4)
+for (const bucket of Object.values(firstPassFixes.buckets)) {
+  assert.ok(bucket.every(entry => entry.stabilization === true), 'stabilization remains provenance, not an exemption')
+}
+console.log('PASS: stabilization fixes present before the first start keep normal QA selection and failure precedence')
+
+
+
 const collapsed = good({ config: { ...config, qaGateLabel: 'needs-qa' }, prs: [pr(1, { labels: ['needs-human-qa'] })] })
 assert.equal(collapsed.gateLabel, null)
 assert.deepEqual(collapsed.buckets.gateMissed, [])
@@ -82,7 +123,9 @@ for (const bad of [
   { config: { ...config, qaBatch: [] }, prs: [] },
   { config, prs: [{ number: 'x' }] },
   { config: { qaGateLabel: 'needs-human-qa' }, prs: [] },
-  ...['qa-approved', 'qa-failed', 'needs-qa', 'skip-qa', 'needs-human-qa', 'qa-human-ok'].map(label =>
+  ...['qa-approved', 'qa-failed', 'needs-qa', 'skip-qa', 'needs-human-qa', 'qa-human-ok',
+    'in-progress', 'claim-reset', 'merge-queue', 'automerge-signal-1-cr', 'automerge-signal-2-qa',
+    'automerge-signal-3-passes-local-ci-checks', 'risk-high', 'priority-high'].map(label =>
     ({ config: { ...config, humanQaPolicy: { ...config.humanQaPolicy, batchCheckLabel: label } }, prs: [] }))
 ]) assert.notEqual(run(bad).status, 0, 'must reject ' + JSON.stringify(bad).slice(0, 80))
 console.log('PASS: classifier rejects malformed policy, config and PR input')
@@ -99,9 +142,11 @@ assert.equal(defaults.smoke, null)
 assert.deepEqual(defaults.testers, [])
 const custom = { branchPrefix: 'batch/', greenTagPrefix: 'verified/', smoke: '.ai/qa/smoke.md', inProgressLabel: 'testing', bugLabels: ['bug', 'daily-qa'], blockerLabel: 'blocker', autoQaEvidenceLabels: ['qa-self-verified'], testers: ['qa-anna', 'Tester2'] }
 assert.deepEqual(JSON.parse(load({ qaBatch: custom }).stdout), custom)
-for (const qaBatch of [[], 'x', { branchPrefix: 'no-slash' }, { branchPrefix: '../x/' }, { bugLabels: [] }, { bugLabels: [''] }, { smoke: '' }, { blockerLabel: 'qa-approved' }, { inProgressLabel: 'qa-failed' },
+for (const qaBatch of [[], 'x',
+  ...['branchPrefix', 'greenTagPrefix', 'inProgressLabel', 'blockerLabel', 'bugLabels', 'autoQaEvidenceLabels', 'testers'].flatMap(key => [{ [key]: null }, { [key]: false }]), { branchPrefix: 'no-slash' }, { branchPrefix: '../x/' }, { bugLabels: [] }, { bugLabels: [''] }, { smoke: '' }, { blockerLabel: 'qa-approved' }, { inProgressLabel: 'qa-failed' },
   { testers: 'qa-anna' }, { testers: [''] }, { testers: [1] }, { testers: ['ci-bot[bot]'] }, { testers: ['app/ci'] }, { testers: ['-x'] },
-  ...['in-progress', 'ci-monitoring', 'needs-qa', 'skip-qa'].flatMap(label => [{ inProgressLabel: label }, { blockerLabel: label }, { bugLabels: ['bug', label] }])]) {
+  ...['in-progress', 'ci-monitoring', 'needs-qa', 'skip-qa', 'merge-queue', 'qa', 'qa-self-verified',
+    'automerge-signal-1-cr', 'automerge-signal-2-qa', 'automerge-signal-3-passes-local-ci-checks', 'risk-high', 'priority-high'].flatMap(label => [{ inProgressLabel: label }, { blockerLabel: label }, { bugLabels: ['bug', label] }])]) {
   assert.notEqual(load({ qaBatch }).status, 0, 'must reject qaBatch ' + JSON.stringify(qaBatch))
 }
 const qaBatchConfig = { qaGateLabel: 'needs-human-qa', humanQaPolicy: { batchCheckLabel: 'qa-batch-check' } }
@@ -109,6 +154,9 @@ for (const qaBatch of [{ inProgressLabel: 'needs-human-qa' }, { blockerLabel: 'q
   assert.notEqual(load({ ...qaBatchConfig, qaBatch }).status, 0, 'must reject colliding qaBatch ' + JSON.stringify(qaBatch))
 }
 assert.equal(load(qaBatchConfig).status, 0)
+// The release-process spec's own qaBatch settings load unchanged.
+const specQaBatch = { branchPrefix: 'stabilize/', greenTagPrefix: 'green/', smoke: '.ai/qa/batch-smoke.md', inProgressLabel: 'qa-in-progress', bugLabels: ['bug', 'daily-qa'], blockerLabel: 'qa-blocker', testers: [] }
+assert.equal(load({ qaGateLabel: 'needs-human-qa', humanQaPolicy: { batchCheckLabel: 'qa-batch-check', whenUnsure: 'batch' }, qaBatch: specQaBatch }).status, 0)
 console.log('PASS: qaBatch loader defaults, custom values and malformed inputs')
 
 const skill = read('skills/om-qa-batch/SKILL.md')
@@ -179,4 +227,104 @@ assert.match(writes, /`RETEST_FROM` = the `Tested head:` of the checklist commen
 assert.doesNotMatch(writes, /on the head they tested/)
 assert.match(writes, /Refuse when \*\*current-user\*\* is a bot or automation identity/)
 assert.match(writes, /stop and name who holds\s+it/)
+// Release-process spec alignment.
+assert.match(writes, /\*\*Merge-back conflict fix\.\*\*[\s\S]*?the verdict stays on the green-tagged commit: no\s+`--retest` and no new verdict/)
+assert.match(writes, /next\s+batch's range starts at that green tag, so they are tested there/)
+assert.match(writes, /`qa-failed` is a pipeline label: set it only through\s+the descriptor's `set_pipeline_label` guard/)
+assert.match(writes, /stable → \*\*set_pipeline_label\*\* `merge-queue`/)
+assert.match(writes, /Unstable → \*\*set_pipeline_label\*\* `qa-failed`/)
+assert.doesNotMatch(writes, /\*\*label-pr\*\* `qa-failed`/)
+assert.match(writes, /`unstable` is refused while no\s+blocker issue is open/)
+assert.match(writes, /QA \(or the stabilizer\) closes the blocker issue\s+by hand/)
+assert.match(trust, /never refused for a login missing from `qaBatch\.testers`/)
+assert.doesNotMatch(trust, /refuse a \*\*current-user\*\* not in it/)
+assert.match(skill, /merge-back conflict fix after the green tag keeps the verdict/)
 console.log('PASS: batch skill keeps verdicts human, read-only by default, and refuses stable with open blockers')
+
+// The write workflow must preserve the collection's claim and reporting contract.
+const claim = read('skills/om-qa-batch/references/claim-pr.md')
+assert.equal(claim, read('skills/om-auto-create-pr/references/claim-pr.md'), 'batch installs its own unchanged canonical claim protocol')
+const rules = read('skills/om-qa-batch/references/rules.md')
+assert.ok(rules.startsWith(read('skills/om-auto-create-pr/references/rules.md')), 'shared rules remain canonical before batch specifics')
+assert.doesNotMatch(rules, /No claim protocol|No label rationale comment/)
+assert.match(writes, /Before \*\*any\*\* mutation, including stale-approval withdrawal/)
+assert.match(writes, /A refused action makes no changes/)
+assert.match(writes, /action-scoped PR claim under\s+`references\/claim-pr\.md`/)
+assert.match(writes, /release the exact lock SHA last, on success and failure/)
+assert.match(writes, /Keep the\s+persistent `qaBatch\.inProgressLabel`/)
+assert.match(read('skills/om-qa-batch/references/report-templates.md'), /🤖 `om-qa-batch` — 🏷️ label rationale/)
+assert.match(read('skills/om-qa-batch/references/checklist.md'), /qaApproval/)
+assert.match(window, /qualifying QA grant/)
+assert.match(read('skills/om-setup-agent-pipeline/SKILL.md'), /"qaBatch": \{\}/)
+const configCommands = JSON.parse(read('.ai/agentic.config.json')).validation.commands
+for (const command of configCommands) assert.ok(read('SDLC.md').includes('`' + command + '`'), 'SDLC must document ' + command)
+console.log('PASS: batch writes keep atomic ownership, refusal before mutation, persistent tester freeze and head-bound evidence')
+
+// Execute the actual freeze preflight: a successful guard that skipped a label
+// can no longer reach the checklist/frozen announcement.
+const freezePreflight = writes.match(/```bash\n([\s\S]*?)```/)[1]
+for (const [available, status] of [['yes', 0], ['no', 1]]) {
+  const result = spawnSync('bash', ['-c', `label_exists() { [ "$LABEL_AVAILABLE" = yes ] && [ "$1" = qa-in-progress ]; }\n${freezePreflight}\nprintf 'preflight-passed'`], {
+    encoding: 'utf8', timeout: 5000,
+    env: { ...process.env, QA_BATCH: JSON.stringify({ inProgressLabel: 'qa-in-progress' }), LABEL_AVAILABLE: available }
+  })
+  assert.equal(result.status, status, result.stderr)
+  assert.equal(result.stdout.includes('preflight-passed'), available === 'yes')
+}
+assert.match(writes, /require that exact label and the tester\s+assignment in the read-back/)
+assert.match(writes, /stop before publishing a checklist or announcing a freeze/)
+assert.match(writes, /undo only this invocation.s new assignment\/freeze mutations/)
+assert.match(window, /complete result set before\s+filtering/)
+assert.match(window, /double it until the\s+returned count is below/)
+assert.match(window, /unverifiable completeness is a discovery blocker/)
+assert.doesNotMatch(window, /state open, limit 20/)
+console.log('PASS: missing freeze labels abort before success; discovery and freeze read-back require complete evidence')
+
+// Run the published Git snippets against real merge history rather than only
+// asserting their wording. A pre-start stabilization fix and a later base PR
+// must both appear, including through the merge's second parent.
+const historyDir = mkdtempSync(join(tmpdir(), 'qa-batch-history-'))
+try {
+  const git = (...args) => {
+    const result = spawnSync('git', ['-c', 'tag.gpgSign=false', '-c', 'commit.gpgSign=false', ...args], { cwd: historyDir, encoding: 'utf8', timeout: 5000 })
+    assert.equal(result.status, 0, result.stderr)
+    return result.stdout.trim()
+  }
+  git('init', '-q')
+  git('config', 'user.name', 'Batch QA fixture')
+  git('config', 'user.email', 'qa-fixture@example.invalid')
+  git('checkout', '-b', 'fixture-base')
+  git('commit', '--allow-empty', '-m', 'previous tested build')
+  const from = git('rev-parse', 'HEAD')
+  git('tag', 'green/previous')
+  git('commit', '--allow-empty', '-m', 'feat: account view (#501)')
+  git('checkout', '-b', 'fixture-batch')
+  git('commit', '--allow-empty', '-m', 'fix: stabilization before start (#502)')
+  git('checkout', 'fixture-base')
+  git('commit', '--allow-empty', '-m', 'feat: checkout from newer base (#503)')
+  git('checkout', 'fixture-batch')
+  git('merge', '--no-edit', 'fixture-base')
+  const to = git('rev-parse', 'HEAD')
+  git('tag', 'green/current', to)
+  git('tag', '-a', 'green/annotated', from, '-m', 'annotated previous build')
+  const logSnippet = window.match(/```bash\n([^`]+)```/)[1]
+  const log = spawnSync('bash', ['-c', logSnippet], {
+    cwd: historyDir, encoding: 'utf8', timeout: 5000,
+    env: { ...process.env, FROM: from, TO: to }
+  })
+  assert.equal(log.status, 0, log.stderr)
+  assert.deepEqual([...log.stdout.matchAll(/\(#(\d+)\)/g)].map(match => Number(match[1])).sort(), [501, 502, 503])
+  const tagSnippet = window.match(/`(git for-each-ref [^`]+)`/)[1]
+  const tags = spawnSync('bash', ['-c', tagSnippet], {
+    cwd: historyDir, encoding: 'utf8', timeout: 5000,
+    env: { ...process.env, GREEN_PREFIX: 'green/' }
+  })
+  assert.equal(tags.status, 0, tags.stderr)
+  assert.match(tags.stdout, /green\/current commit /)
+  assert.match(tags.stdout, /green\/annotated tag /)
+  assert.equal(git('rev-parse', 'green/current^{commit}'), to)
+  assert.equal(git('rev-parse', 'green/previous^{commit}'), from)
+} finally {
+  rmSync(historyDir, { recursive: true, force: true })
+}
+console.log('PASS: published history snippets retain pre-start fixes and second-parent PRs and distinguish current/annotated tags')

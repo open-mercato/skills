@@ -28,13 +28,24 @@ source is usable when it resolves to a commit (validated as in
 `references/trusted-comments.md` §4); the first usable one wins:
 
 1. **The previous green tag** (the release-process spec reads the batch
-   range from the previous `green/*` tag once tags exist). The newest tag
-   starting with `qaBatch.greenTagPrefix` created before the current batch
-   PR (tag `creatordate` earlier than the batch PR's `createdAt`), so a tag
-   already put on this batch is never its own start:
-   `git for-each-ref --sort=-creatordate --format='%(refname:short) %(creatordate:iso-strict)' "refs/tags/$GREEN_PREFIX"`,
-   then `git rev-parse "<tag>^{commit}"`. The tag never moves, so it is the
-   exact tested build.
+   range from the previous `green/*` tag once tags exist). List the tags
+   starting with `qaBatch.greenTagPrefix` with their kind and dates:
+   `git for-each-ref --format='%(refname:short) %(objecttype) %(taggerdate:iso-strict) %(creatordate:iso-strict)' "refs/tags/$GREEN_PREFIX"`,
+   and resolve each with `git rev-parse "<tag>^{commit}"`.
+   - **Never this batch's own tag.** Skip a tag that points at `TO` or at
+     any of the batch PR's own commits (**get-pr** the batch with its
+     commit SHAs). A batch that passes with no stabilization fix has `TO` =
+     the cut commit, dated before the batch PR opened; once it is tagged,
+     a later checklist build (a default run, or `--start` on the same head)
+     would otherwise start at `TO` and drop every PR. List skipped tags.
+   - **Dates.** An annotated tag (`objecttype` `tag`) is dated by its
+     `taggerdate`. A lightweight tag (`objecttype` `commit`) has no date of
+     its own — `creatordate` is the tagged commit's date — so it is
+     accepted only through the skip rule above, and the report names it
+     lightweight. The release-process spec creates green tags with plain
+     `git tag green/<date> <sha>` (lightweight), so they cannot be ignored.
+   - Of the rest, take the newest dated before the current batch PR's
+     `createdAt`. The tag never moves, so it is the exact tested build.
 2. **The previous batch's tested head**, while no green tag exists yet: the
    `QA head:` of the newest trusted verdict on the most recent earlier batch
    PR that was merged (same head prefix, **list-prs** state closed; skip any
@@ -46,8 +57,10 @@ source is usable when it resolves to a commit (validated as in
 Never start from the previous batch PR's head (`headRefOid`): a merge-back
 conflict is resolved by merging the base into the batch after the green tag
 and the verdict, so that head contains base PRs no tester saw, and starting
-there would drop them from this checklist. When source 1 and a trusted
-verdict both exist and disagree, use the tag and report the difference.
+there would drop them from this checklist. When source 1 and the trusted
+verdict's `QA head:` (source 2) both exist and disagree, `FROM` =
+`git merge-base <tag> <QA head>`, which can only over-include, and the
+report names both and the difference.
 
 Print which source was used and why any earlier one was skipped. Stop and
 ask the tester for `--range` only when none is usable.

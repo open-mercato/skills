@@ -42,6 +42,8 @@ Must test: <n> · agent-picked: <n> · covered: <n>
 Testing started by @<tester> at <UTC time>. This batch is frozen for refresh until the verdict.
 
 Range: <from>..<to>
+Tested head: <full sha of to; --retest moves it>
+Retest range: <last QA head>..<tested head> (omit before the first --retest)
 Must test (<n>): #<pr>, #<pr>, ...
 Agent-picked (<n>): #<pr>, ...
 Covered without manual check: <n> PRs

@@ -137,9 +137,15 @@ for (const [name, text] of [['tracker-writes', writes], ['batch-window', window]
   assert.match(text, /references\/trusted-comments\.md/, name + ' must point to the shared trust rule')
   assert.doesNotMatch(text, /Assignment proves nothing|\*\*Residual risk/, name + ' must not restate the trust rule')
 }
-// 1: FROM comes from tracker metadata of the merged batch, never from verdict comment text.
 // Range start follows the release-process spec: previous green tag first, then the trusted QA head.
 assert.match(window, /1\. \*\*The previous green tag\*\*/)
+assert.match(window, /Skip a tag that points at `TO` or at\s+any of the batch PR's own commits/)
+assert.match(window, /take the newest dated before the current batch PR's\s+`createdAt`/)
+assert.match(window, /%\(objecttype\) %\(taggerdate:iso-strict\)/)
+assert.match(window, /annotated tag \(`objecttype` `tag`\) is dated by its\s+`taggerdate`/)
+assert.match(window, /report names it\s+lightweight/)
+assert.match(window, /`FROM` =\s+`git merge-base <tag> <QA head>`, which can only over-include/)
+assert.doesNotMatch(window, /use the tag and report the difference/)
 assert.match(window, /2\. \*\*The previous batch's tested head\*\*[\s\S]*?`QA head:` of the newest trusted verdict[\s\S]*?`references\/trusted-comments\.md`/)
 assert.match(window, /skip any\s+closed without merging/)
 assert.match(window, /Never start from the previous batch PR's head \(`headRefOid`\)/)

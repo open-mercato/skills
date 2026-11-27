@@ -89,6 +89,8 @@ Normal bugs filed: #<issue>, ... (omit when empty)
 ```text
 Batch <name>: <stable|unstable>. <n> PRs, <n> checked by hand, smoke OK|failed.
 Blockers: #<issue>, ... (or none). Bugs: #<issue>, ... (or none). <batch PR URL>
+Stable only: tag green/<date> on QA head <sha> before merging.
+With a hold: merge hold <do-not-merge|blocked> stays on the batch PR.
 ```
 
 ## Label rationale (write actions)

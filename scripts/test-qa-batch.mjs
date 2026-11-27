@@ -228,8 +228,8 @@ assert.doesNotMatch(writes, /on the head they tested/)
 assert.match(writes, /Refuse when \*\*current-user\*\* is a bot or automation identity/)
 assert.match(writes, /stop and name who holds\s+it/)
 // Release-process spec alignment.
-assert.match(writes, /\*\*Merge-back conflict fix\.\*\*[\s\S]*?the verdict stays on the green-tagged commit: no\s+`--retest` and no new verdict/)
-assert.match(writes, /next\s+batch's range starts at that green tag, so they are tested there/)
+assert.match(writes, /\*\*Merge-back conflict fix\.\*\*[\s\S]*?the verdict stays on the\s+green-tagged commit: no\s+`--retest` and no new verdict/)
+assert.match(writes, /next\s+batch's range starts at that green tag, so they are\s+tested there/)
 assert.match(writes, /`qa-failed` is a pipeline label: set it only through\s+the descriptor's `set_pipeline_label` guard/)
 assert.match(writes, /stable → \*\*set_pipeline_label\*\* `merge-queue`/)
 assert.match(writes, /Unstable → \*\*set_pipeline_label\*\* `qa-failed`/)
@@ -239,6 +239,17 @@ assert.match(writes, /QA \(or the stabilizer\) closes the blocker issue\s+by han
 assert.match(trust, /never refused for a login missing from `qaBatch\.testers`/)
 assert.doesNotMatch(trust, /refuse a \*\*current-user\*\* not in it/)
 assert.match(skill, /merge-back conflict fix after the green tag keeps the verdict/)
+// Re-review: merge holds survive, the merge-back exception is verified per commit.
+assert.match(writes, /carries\s+`do-not-merge` or `blocked`, keep it and skip the pipeline change/)
+assert.match(writes, /hold on the PR, skip the pipeline change in both cases and name the hold/)
+assert.match(writes, /unless a `do-not-merge` or `blocked`\s+hold is on the PR/)
+assert.match(writes, /-eq 3 \] \|\| exit 1   # exactly two parents/)
+assert.match(writes, /git merge-base --is-ancestor "\$c\^2" "origin\/\$BASE_BRANCH"/)
+assert.match(writes, /Any commit that fails → not this exception/)
+assert.match(writes, /a write action under this exception removes `qa-approved`/)
+assert.doesNotMatch(writes, /tester eligibility/)
+assert.match(read('skills/om-qa-batch/references/report-templates.md'), /tag green\/<date> on QA head <sha> before merging/)
+assert.match(window, /Any other commit after the tag[\s\S]*?was never tested: list it/)
 console.log('PASS: batch skill keeps verdicts human, read-only by default, and refuses stable with open blockers')
 
 // The write workflow must preserve the collection's claim and reporting contract.

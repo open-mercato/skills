@@ -11,7 +11,8 @@ right before each action and compare its head with the **tested head**.
 Before **any** mutation, including stale-approval withdrawal:
 
 1. Require an exact batch PR; reject `--range` or `--since` with write flags.
-   Validate the requested action, tester eligibility, checklist ownership,
+   Validate the requested action, the verdict identity checks (bot
+   identity, and for `stable` the stabilizer check), checklist ownership,
    `--start` freeze-label availability and stable-verdict guards first.
    A refused action makes no changes.
 2. Acquire and verify the action-scoped PR claim under
@@ -69,16 +70,34 @@ than one tester set `qaBatch.testers`.
 with `qaBatch.greenTagPrefix` points at its `QA head:`, and every commit
 after that head on the batch branch's first-parent line is a merge of the
 base branch into the batch (the stabilizer resolving a merge-back conflict
-after tagging). Then the verdict stays on the green-tagged commit: no
-`--retest` and no new verdict is asked for. Report `qa-approved` on the
-moved head as stale so the stabilizer merges without it (the merge back is
-pinned to the resolved head once the full suite is green on it), and list
-the base PRs the merge brought in as not covered by this verdict: the next
-batch's range starts at that green tag, so they are tested there.
+after tagging). Verify that per commit, never from its subject:
+
+```bash
+git fetch origin "$BASE_BRANCH"
+for c in $(git rev-list --first-parent "$QA_HEAD..$BATCH_HEAD"); do
+  [ "$(git rev-list --parents -n 1 "$c" | wc -w)" -eq 3 ] || exit 1   # exactly two parents
+  git merge-base --is-ancestor "$c^2" "origin/$BASE_BRANCH" || exit 1  # second parent is base history
+done
+```
+
+Any commit that fails → not this exception: use the normal stale-approval
+and `--retest` path. When every commit passes, the verdict stays on the
+green-tagged commit: no `--retest` and no new verdict is asked for. Report
+`qa-approved` on the moved head as stale so the stabilizer merges without it
+(the merge back is pinned to the resolved head once the full suite is green
+on it); a write action under this exception removes `qa-approved` like any
+other stale approval, and its report says the verdict still stands on the
+tagged commit. List the base PRs the merge brought in as not covered by
+this verdict: the next batch's range starts at that green tag, so they are
+tested there.
 
 **Pipeline labels.** `qa-failed` is a pipeline label: set it only through
-the descriptor's `set_pipeline_label` guard, which removes every other
-pipeline label, never with a bare **label-pr** next to another one.
+the descriptor's `set_pipeline_label` guard, never with a bare **label-pr**
+next to another one. That guard removes every other pipeline label, so a
+human merge hold would silently go: when the batch PR carries
+`do-not-merge` or `blocked`, keep it and skip the pipeline change
+(`merge-queue` or `qa-failed`); still post the verdict, still add or remove
+`qa-approved`, and name the hold in the report and the label rationale.
 
 ## Blocker definition
 
@@ -143,7 +162,8 @@ fixed through the normal flow.
 4. `--blocker` only: **comment-pr** on the batch PR with the blocker template,
    mentioning `--stabilizer` or the batch PR author, and the issue link.
    Then, when the batch carries `qa-approved`, **unlabel-pr** it and
-   **set_pipeline_label** `qa-failed`.
+   **set_pipeline_label** `qa-failed`, unless a `do-not-merge` or `blocked`
+   hold is on the PR (see Pipeline labels above).
 
 ## `--verdict stable|unstable`
 
@@ -191,7 +211,8 @@ blockers, nothing else.
    `qa-failed` and `qa`), **label-pr** `qa-approved`, **unlabel-pr**
    `qaBatch.inProgressLabel`. Unstable → **set_pipeline_label** `qa-failed`,
    **unlabel-pr** `qa-approved`, keep the in-progress label so the batch stays
-   frozen while the stabilizer fixes it.
+   frozen while the stabilizer fixes it. With a `do-not-merge` or `blocked`
+   hold on the PR, skip the pipeline change in both cases and name the hold.
 6. Print the channel message from the templates for the tester to send.
 
 The stabilizer decides when fixes are in and tags the batch; a new head

@@ -49,6 +49,20 @@ assert.notEqual(load({ qaGateLabel: 'needs-human-qa', humanQaPolicy: { batchChec
 assert.notEqual(load({ humanQaPolicy: { batchCheckLabel: 'qa-human-ok', humanVerdictLabels: ['qa-human-ok'] } }).status, 0,
   'must reject batchCheckLabel equal to a human verdict label');
 assert.equal(load({ qaGateLabel: 'needs-human-qa', humanQaPolicy: { batchCheckLabel: 'qa-batch-check' } }).status, 0);
+
+for (const label of ['in-progress', 'claim-reset', 'ci-monitoring', 'review', 'merge-queue',
+  'blocked', 'do-not-merge', 'qa', 'qa-self-verified', 'risk-high', 'priority-high',
+  'automerge', 'automerge-now', 'automerge-signal-1-cr', 'automerge-signal-2-qa',
+  'automerge-signal-3-ci', 'automerge-signal-3-passes-local-ci-checks']) {
+  assert.notEqual(load({ humanQaPolicy: { batchCheckLabel: label } }).status, 0, 'must reject workflow batch label ' + label);
+}
+for (const extra of [
+  { qaReadyLabel: 'batch-check' }, { automerge: { label: 'batch-check' } },
+  { labels: { pipeline: ['batch-check'] } }, { labels: { risk: ['batch-check'] } },
+  { labels: { priority: ['batch-check'] } }
+]) assert.notEqual(load({ ...extra, humanQaPolicy: { batchCheckLabel: 'batch-check' } }).status, 0);
+assert.notEqual(load({ humanQaPolicy: { batchCheckLabel: 'design-ok', approvedDesign: { label: 'design-ok' } } }).status, 0);
+
 console.log('PASS: actual QA policy loader defaults, custom values, null label, and malformed inputs');
 
 // The executable deliverable is prose: freeze safety boundaries at the consuming

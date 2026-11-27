@@ -29,7 +29,21 @@ if (batchBranch !== null && typeof batchBranch !== 'string') fail('batchBranch m
 const gateLabel = typeof config.qaGateLabel === 'string' && config.qaGateLabel.length > 0 ? config.qaGateLabel : 'needs-qa'
 const humanLane = gateLabel === 'needs-qa' ? null : gateLabel
 const humanVerdictLabels = stringList(policy.humanVerdictLabels, 'humanQaPolicy.humanVerdictLabels')
-const batchLabel = optionalLabel(policy.batchCheckLabel, 'humanQaPolicy.batchCheckLabel', ['qa-approved', 'qa-failed', 'needs-qa', 'skip-qa', gateLabel, ...humanVerdictLabels])
+const reservedLabels = [
+  'review', 'changes-requested', 'qa', 'blocked', 'do-not-merge', 'merge-queue',
+  'qa-approved', 'qa-failed', 'qa-self-verified', 'needs-qa', 'skip-qa',
+  'in-progress', 'claim-reset', 'ci-monitoring', 'automerge', 'automerge-now',
+  'automerge-force', 'automerge-prepare', 'automerge-blocked',
+  'automerge-signal-1-cr', 'automerge-signal-2-qa', 'automerge-signal-3-ci',
+  'automerge-signal-3-passes-local-ci-checks',
+  'priority-low', 'priority-medium', 'priority-high', 'priority-extreme',
+  'risk-low', 'risk-medium', 'risk-high', gateLabel, config.qaReadyLabel,
+  config.automerge?.label, policy.approvedDesign?.label, ...humanVerdictLabels,
+  ...stringList(config.labels?.pipeline, 'labels.pipeline'),
+  ...stringList(config.labels?.priority, 'labels.priority'),
+  ...stringList(config.labels?.risk, 'labels.risk')
+]
+const batchLabel = optionalLabel(policy.batchCheckLabel, 'humanQaPolicy.batchCheckLabel', reservedLabels)
 const humanPaths = stringList(policy.paths, 'humanQaPolicy.paths')
 const batchPaths = stringList(policy.batchPaths, 'humanQaPolicy.batchPaths')
 const uiPaths = stringList(policy.uiPaths, 'humanQaPolicy.uiPaths')
@@ -75,7 +89,9 @@ const readTriage = pr => {
     if (!match) continue
     try {
       const block = JSON.parse(match[1])
-      if (pr.headSha && block.head !== pr.headSha) continue
+      if (!isObject(block) || !pr.headSha || block.head !== pr.headSha) continue
+      if (!['none', 'auto', 'human', 'batch'].includes(block.lane)) continue
+      if (block.rules !== undefined && (!Array.isArray(block.rules) || block.rules.some(rule => typeof rule !== 'string'))) continue
       blocks.push({ ...block, at: comment.updatedAt ?? comment.createdAt ?? '' })
     } catch { continue }
   }
@@ -107,23 +123,26 @@ for (const pr of prs) {
   const triage = readTriage(pr)
   const entry = { number: pr.number, title: pr.title ?? '', url: pr.url ?? '', author: normalizeLogin(pr.author), areas, uiFiles: uiFiles.length, priority: priorityRank(labels), reasons: [] }
   const has = name => name !== null && labels.includes(name)
-  // Only a human qa-approved counts: not with qa-failed, not self-QA (qa-self-verified); custom verdict labels never grant approval.
-  const humanApproved = labels.includes('qa-approved') && !labels.includes('qa-failed') && !labels.includes('qa-self-verified')
+  // The collector supplies the qualifying grant/reconfirmation, never an arbitrary comment's SHA.
+  const approvalCurrent = Boolean(pr.headSha && pr.qaApproval?.head === pr.headSha)
+  const humanApproved = labels.includes('qa-approved') && approvalCurrent && pr.qaApproval?.human === true && !labels.includes('qa-self-verified')
 
   if (batchBranch && pr.baseRefName === batchBranch) { entry.reasons.push('stabilization fix merged into the batch'); buckets.stabilization.push(entry); continue }
   if (pr.baseRefName && pr.baseRefName !== baseBranch) { entry.reasons.push(`merged into ${pr.baseRefName}, not ${baseBranch}`); buckets.otherBase.push(entry); continue }
 
+  if (labels.includes('qa-failed')) { entry.reasons.push('merged with an unresolved failed QA verdict'); buckets.gateMissed.push(entry); continue }
+  if (labels.includes('qa-approved') && !approvalCurrent) { entry.reasons.push('QA approval is stale or its tested head is unverified'); buckets.gateMissed.push(entry); continue }
   if (has(humanLane)) {
     if (humanApproved) { entry.reasons.push('a human tester signed it off before merge (qa-approved)'); buckets.coveredHuman.push(entry); continue }
-    if (labels.includes('qa-failed')) entry.reasons.push(`merged with ${humanLane} and a failed human QA verdict`)
-    else if (labels.includes('qa-approved')) entry.reasons.push(`merged with ${humanLane}; qa-approved came from self-QA (qa-self-verified), not a human`)
+    if (labels.includes('qa-approved')) entry.reasons.push(`merged with ${humanLane}; qa-approved has no qualifying human grant`)
     else entry.reasons.push(`merged while ${humanLane} had no human qa-approved verdict`)
     buckets.gateMissed.push(entry)
     continue
   }
-  if (triage?.lane === 'human') { entry.reasons.push(`trusted triage put it in the human lane (rules ${(triage.rules ?? []).join(', ') || 'unspecified'}) but the gate label is missing`); buckets.gateMissed.push(entry); continue }
+  if (triage?.lane === 'human' && !humanApproved) { entry.reasons.push(`trusted triage put it in the human lane (rules ${(triage.rules ?? []).join(', ') || 'unspecified'}) but the gate label is missing`); buckets.gateMissed.push(entry); continue }
   if (has(batchLabel)) { entry.reasons.push(`labelled ${batchLabel}`); buckets.batchCheck.push(entry); continue }
   if (triage?.lane === 'batch') { entry.reasons.push(`trusted triage put it in the batch lane (rules ${(triage.rules ?? []).join(', ') || 'unspecified'})`); buckets.batchCheck.push(entry); continue }
+  if (humanApproved) { entry.reasons.push('a human tester signed off this head (qa-approved)'); buckets.coveredHuman.push(entry); continue }
 
   const humanHit = productFiles.find(matchesHuman)
   const batchHit = productFiles.find(matchesBatch)

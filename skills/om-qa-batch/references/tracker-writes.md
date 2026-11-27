@@ -1,9 +1,37 @@
 # Tracker writes (steps 6-9)
 
 Every write here happens only when the tester runs the matching action.
-Label changes go through the descriptor's guards; `LABELS_ENABLED=false`
-skips them and the report says so. Read the batch PR again (**get-pr**)
+Label changes go through the descriptor's guards. With
+`LABELS_ENABLED=false`, write actions stop before mutations because the
+mandatory claim label cannot be verified. Read the batch PR again (**get-pr**)
 right before each action and compare its head with the **tested head**.
+
+## Action preflight and cleanup
+
+Before **any** mutation, including stale-approval withdrawal:
+
+1. Require an exact batch PR; reject `--range` or `--since` with write flags.
+   Validate the requested action, tester eligibility, checklist ownership
+   and stable-verdict guards first. A refused action makes no changes.
+2. Acquire and verify the action-scoped PR claim under
+   `references/claim-pr.md`, with an owned-release finally/trap. An explicit
+   `--force` authorizes only the documented claim takeover; it never
+   overrides a different recorded tester or any verdict guard. `labels.enabled:
+   false` or an unavailable `in-progress` label prevents write actions,
+   because the claim's mandatory second check cannot be verified.
+3. Re-read the exact lock, reset history, PR head and relevant comments
+   before each mutation. A change invalidates the preflight; stop or
+   re-evaluate without assuming the earlier reading still authorizes it.
+4. Keep one marker-idempotent label-rationale comment using
+   `references/report-templates.md`, updating it after label changes.
+   Run owned label/assignment cleanup, mark the claim comment released,
+   and release the exact lock SHA last, on success and failure. Keep the
+   persistent `qaBatch.inProgressLabel` and tested-head checklist.
+
+When `--start` intentionally assigns the tester, preserve that assignment
+as the persistent tester signal after transient claim cleanup; record this
+handoff explicitly. Other actions restore only assignments they changed.
+The action lock is never held while the tester exercises the application.
 
 **Trusted comments.** Every checklist and verdict comment read here is
 filtered by `references/trusted-comments.md` (trusted authors, untrusted
@@ -27,7 +55,8 @@ commits, and point to `--retest`.
 **Stale approval.** When the batch carries `qa-approved` and its head differs
 from the `QA head:` of the trusted verdict, or no trusted verdict exists
 (an untrusted one never vouches for the label), the approval no longer
-covers the build: every write action first **unlabel-pr** `qa-approved` and
+covers the build: after preflight, every eligible write action first
+**unlabel-pr** `qa-approved` and
 says why; read-only runs report it as stale and tell the tester to run
 `--retest`, then `--verdict`. With an empty `qaBatch.testers` only
 **current-user** is trusted, so tester B's write action treats tester A's

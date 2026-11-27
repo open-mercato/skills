@@ -31,7 +31,7 @@ const result = good({
   automationIdentities: [],
   prs: [
     pr(1, { labels: ['needs-human-qa', 'needs-qa'] }),
-    pr(2, { labels: ['needs-human-qa', 'qa-approved'] }),
+    pr(2, { labels: ['needs-human-qa', 'qa-approved'], qaApproval: { head: 'sha2', human: true } }),
     pr(3, { labels: ['needs-qa', 'qa-batch-check'] }),
     pr(4, { comments: [triage('sha4', 'batch')], labels: ['needs-qa'] }),
     pr(5, { comments: [triage('stale', 'batch')], labels: ['skip-qa'] }),
@@ -73,6 +73,28 @@ const noAutoEvidence = good({ config: { ...config, qaBatch: { autoQaEvidenceLabe
 assert.deepEqual(noAutoEvidence.buckets.coveredAuto, [], 'an explicit empty autoQaEvidenceLabels must not fall back to defaults')
 console.log('PASS: batch classifier buckets the human gate, batch lane, trusted triage, evidence and bases')
 
+// A failed verdict remains must-test even after its request label was removed.
+const verdicts = good({ config, prs: [
+  pr(30, { labels: ['qa-failed', 'qa-self-verified'] }),
+  pr(31, { labels: ['qa-failed', 'skip-qa'] }),
+  pr(32, { labels: ['needs-human-qa', 'qa-approved'], qaApproval: { head: 'old-head', human: true } }),
+  pr(33, { labels: ['needs-human-qa', 'qa-approved'] }),
+  pr(34, { labels: ['qa-approved'], qaApproval: { head: 'sha34', human: true }, comments: [triage('sha34', 'human')] }),
+  pr(35, { labels: ['qa-approved', 'qa-self-verified'], qaApproval: { head: 'old-head', human: false } })
+] })
+assert.deepEqual(verdicts.buckets.gateMissed.map(entry => entry.number), [30, 31, 32, 33, 35])
+assert.deepEqual(verdicts.buckets.coveredHuman.map(entry => entry.number), [34])
+assert.deepEqual(verdicts.buckets.coveredAuto, [])
+const malformedTriage = good({ config, prs: [
+  pr(36, { comments: [{ ...triage('sha36', 'human'), body: '<!-- qa-triage v1\n{"head":"sha36","lane":"human","rules":"3.2"}\n-->' }], files: ['view.tsx'] }),
+  pr(37, { comments: [triage('unbound', 'human')], headSha: undefined, files: ['view.tsx'] }),
+  pr(38, { comments: [{ ...triage('sha38', 'human'), body: '<!-- qa-triage v1\nnull\n-->' }], files: ['view.tsx'] })
+] })
+assert.deepEqual(malformedTriage.buckets.candidates.map(entry => entry.number), [36, 37, 38])
+assert.deepEqual(malformedTriage.buckets.gateMissed, [])
+console.log('PASS: failed/stale QA stays must-test and malformed or unbound triage is ignored')
+
+
 const collapsed = good({ config: { ...config, qaGateLabel: 'needs-qa' }, prs: [pr(1, { labels: ['needs-human-qa'] })] })
 assert.equal(collapsed.gateLabel, null)
 assert.deepEqual(collapsed.buckets.gateMissed, [])
@@ -82,7 +104,9 @@ for (const bad of [
   { config: { ...config, qaBatch: [] }, prs: [] },
   { config, prs: [{ number: 'x' }] },
   { config: { qaGateLabel: 'needs-human-qa' }, prs: [] },
-  ...['qa-approved', 'qa-failed', 'needs-qa', 'skip-qa', 'needs-human-qa', 'qa-human-ok'].map(label =>
+  ...['qa-approved', 'qa-failed', 'needs-qa', 'skip-qa', 'needs-human-qa', 'qa-human-ok',
+    'in-progress', 'claim-reset', 'merge-queue', 'automerge-signal-1-cr', 'automerge-signal-2-qa',
+    'automerge-signal-3-passes-local-ci-checks', 'risk-high', 'priority-high'].map(label =>
     ({ config: { ...config, humanQaPolicy: { ...config.humanQaPolicy, batchCheckLabel: label } }, prs: [] }))
 ]) assert.notEqual(run(bad).status, 0, 'must reject ' + JSON.stringify(bad).slice(0, 80))
 console.log('PASS: classifier rejects malformed policy, config and PR input')
@@ -99,9 +123,11 @@ assert.equal(defaults.smoke, null)
 assert.deepEqual(defaults.testers, [])
 const custom = { branchPrefix: 'batch/', greenTagPrefix: 'verified/', smoke: '.ai/qa/smoke.md', inProgressLabel: 'testing', bugLabels: ['bug', 'daily-qa'], blockerLabel: 'blocker', autoQaEvidenceLabels: ['qa-self-verified'], testers: ['qa-anna', 'Tester2'] }
 assert.deepEqual(JSON.parse(load({ qaBatch: custom }).stdout), custom)
-for (const qaBatch of [[], 'x', { branchPrefix: 'no-slash' }, { branchPrefix: '../x/' }, { bugLabels: [] }, { bugLabels: [''] }, { smoke: '' }, { blockerLabel: 'qa-approved' }, { inProgressLabel: 'qa-failed' },
+for (const qaBatch of [[], 'x',
+  ...['branchPrefix', 'greenTagPrefix', 'inProgressLabel', 'blockerLabel', 'bugLabels', 'autoQaEvidenceLabels', 'testers'].flatMap(key => [{ [key]: null }, { [key]: false }]), { branchPrefix: 'no-slash' }, { branchPrefix: '../x/' }, { bugLabels: [] }, { bugLabels: [''] }, { smoke: '' }, { blockerLabel: 'qa-approved' }, { inProgressLabel: 'qa-failed' },
   { testers: 'qa-anna' }, { testers: [''] }, { testers: [1] }, { testers: ['ci-bot[bot]'] }, { testers: ['app/ci'] }, { testers: ['-x'] },
-  ...['in-progress', 'ci-monitoring', 'needs-qa', 'skip-qa'].flatMap(label => [{ inProgressLabel: label }, { blockerLabel: label }, { bugLabels: ['bug', label] }])]) {
+  ...['in-progress', 'ci-monitoring', 'needs-qa', 'skip-qa', 'merge-queue', 'qa', 'qa-self-verified',
+    'automerge-signal-1-cr', 'automerge-signal-2-qa', 'automerge-signal-3-passes-local-ci-checks', 'risk-high', 'priority-high'].flatMap(label => [{ inProgressLabel: label }, { blockerLabel: label }, { bugLabels: ['bug', label] }])]) {
   assert.notEqual(load({ qaBatch }).status, 0, 'must reject qaBatch ' + JSON.stringify(qaBatch))
 }
 const qaBatchConfig = { qaGateLabel: 'needs-human-qa', humanQaPolicy: { batchCheckLabel: 'qa-batch-check' } }
@@ -174,3 +200,22 @@ assert.doesNotMatch(writes, /on the head they tested/)
 assert.match(writes, /Refuse when \*\*current-user\*\* is a bot or automation identity/)
 assert.match(writes, /stop and name who holds\s+it/)
 console.log('PASS: batch skill keeps verdicts human, read-only by default, and refuses stable with open blockers')
+
+// The write workflow must preserve the collection's claim and reporting contract.
+const claim = read('skills/om-qa-batch/references/claim-pr.md')
+assert.equal(claim, read('skills/om-auto-create-pr/references/claim-pr.md'), 'batch installs its own unchanged canonical claim protocol')
+const rules = read('skills/om-qa-batch/references/rules.md')
+assert.ok(rules.startsWith(read('skills/om-auto-create-pr/references/rules.md')), 'shared rules remain canonical before batch specifics')
+assert.doesNotMatch(rules, /No claim protocol|No label rationale comment/)
+assert.match(writes, /Before \*\*any\*\* mutation, including stale-approval withdrawal/)
+assert.match(writes, /A refused action makes no changes/)
+assert.match(writes, /action-scoped PR claim under\s+`references\/claim-pr\.md`/)
+assert.match(writes, /release the exact lock SHA last, on success and failure/)
+assert.match(writes, /Keep the\s+persistent `qaBatch\.inProgressLabel`/)
+assert.match(read('skills/om-qa-batch/references/report-templates.md'), /🤖 `om-qa-batch` — 🏷️ label rationale/)
+assert.match(read('skills/om-qa-batch/references/checklist.md'), /qaApproval/)
+assert.match(window, /qualifying QA grant/)
+assert.match(read('skills/om-setup-agent-pipeline/SKILL.md'), /"qaBatch": \{\}/)
+const configCommands = JSON.parse(read('.ai/agentic.config.json')).validation.commands
+for (const command of configCommands) assert.ok(read('SDLC.md').includes('`' + command + '`'), 'SDLC must document ' + command)
+console.log('PASS: batch writes keep atomic ownership, refusal before mutation, persistent tester freeze and head-bound evidence')

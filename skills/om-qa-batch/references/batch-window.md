@@ -102,7 +102,10 @@ For each PR:
 - **list-issue-comments** for author, body and time; keep only comments that
   carry a `<!-- qa-triage v1` block or the review automation's QA test
   instructions (a comment whose marker names `om-auto-review-pr` and
-  🧪 QA test instructions), plus the PR body's own testing notes.
+  🧪 QA test instructions), plus the PR body's own testing notes. Also read
+  the latest qualifying QA grant or scope reconfirmation and its provenance
+  when `qa-approved` is present; normalize it as `qaApproval` under
+  `references/checklist.md`. Missing or stale evidence is never coverage.
 
 A PR whose metadata cannot be fetched stays in the checklist appendix as
 `(metadata unavailable)` and is counted; never guess its bucket.

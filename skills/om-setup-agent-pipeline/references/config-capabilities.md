@@ -113,6 +113,17 @@ QA_GATE_LABEL=$(jq -r 'if has("qaGateLabel") then .qaGateLabel else "needs-qa" e
 QA_READY_LABEL=$(jq -r 'if (.qaReadyLabel // null) == null then empty elif (.qaReadyLabel | type) == "string" and (.qaReadyLabel | length) > 0 then .qaReadyLabel else error("Invalid qaReadyLabel") end' "$CONFIG")   # optional, repository-owned
 HUMAN_QA_POLICY=$(jq -ce '
   def default($key; $value): if has($key) then .[$key] else $value end;
+  . as $root |
+  (["review","changes-requested","qa","blocked","do-not-merge",
+    "qa-approved","qa-failed","qa-self-verified","needs-qa","skip-qa",
+    "in-progress","claim-reset","ci-monitoring","automerge","automerge-now",
+    "automerge-force","automerge-prepare","automerge-blocked","merge-queue",
+    "automerge-signal-1-cr","automerge-signal-2-qa","automerge-signal-3-ci",
+    "automerge-signal-3-passes-local-ci-checks",
+    "priority-low","priority-medium","priority-high","priority-extreme",
+    "risk-low","risk-medium","risk-high"]
+   + ($root.labels.pipeline // []) + ($root.labels.priority // []) + ($root.labels.risk // [])
+   + [$root.qaGateLabel // "needs-qa",$root.qaReadyLabel,$root.automerge.label]) as $reserved |
   (if has("qaGateLabel") then .qaGateLabel else "needs-qa" end) as $gate |
   (if has("humanQaPolicy") then .humanQaPolicy else {} end) as $p |
   if ($p | type) != "object" then error("Invalid humanQaPolicy") else
@@ -147,7 +158,7 @@ HUMAN_QA_POLICY=$(jq -ce '
      and (.trustedTriageAuthors|type)=="array"
      and all(.trustedTriageAuthors[];type=="string" and length>0)
      and (.batchCheckLabel as $l | $l==null or
-          all((["qa-approved","qa-failed","needs-qa","skip-qa",$gate] + .humanVerdictLabels)[]; . != $l))
+          all(($reserved + [$gate,.approvedDesign.label] + .humanVerdictLabels)[]; . != $l))
   then . else error("Invalid humanQaPolicy") end
 ' "$CONFIG")   # QA triage policy
 HUMAN_ONLY_AUTHORS=$(jq -c 'if (.automerge // {} | has("humanOnlyAuthors")) then .automerge.humanOnlyAuthors else [] end | if type == "array" and all(.[]; type == "string" and length > 0) then . else error("Invalid humanOnlyAuthors") end' "$CONFIG")     # logins, compared case-insensitively

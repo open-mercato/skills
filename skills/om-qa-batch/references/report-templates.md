@@ -90,3 +90,25 @@ Normal bugs filed: #<issue>, ... (omit when empty)
 Batch <name>: <stable|unstable>. <n> PRs, <n> checked by hand, smoke OK|failed.
 Blockers: #<issue>, ... (or none). Bugs: #<issue>, ... (or none). <batch PR URL>
 ```
+
+## Label rationale (write actions)
+
+```markdown
+🤖 `om-qa-batch` — 🏷️ label rationale
+
+🧪 `<qaBatch.inProgressLabel>`: The recorded tester is exercising this batch, so refresh is frozen.
+✅ `qa-approved`: The human tester confirmed this tested head is stable with no open blockers.
+❌ `qa-failed`: The human tester found a blocking failure on the recorded head.
+🔁 `in-progress`: This invocation holds the verified action claim while it updates the tracker.
+```
+
+Include only the actual current labels, one full-sentence reason per line;
+explain removals in that same comment. Rewrite it after transient claim
+cleanup so it no longer says this run is active. Keep category, priority
+and risk reasons when those labels are present; never invent a label.
+
+End reports about a batch PR with the exact chaining line:
+
+```text
+PR: #<number> (link: <full PR URL>)
+```

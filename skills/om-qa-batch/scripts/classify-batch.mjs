@@ -26,6 +26,8 @@ const baseBranch = input.baseBranch ?? config.baseBranch
 if (typeof baseBranch !== 'string' || baseBranch.length === 0) fail('baseBranch must be resolved before classification')
 const batchBranch = input.batchBranch ?? null
 if (batchBranch !== null && typeof batchBranch !== 'string') fail('batchBranch must be a string or null')
+const branchPrefix = batchConfig.branchPrefix === undefined ? 'stabilize/' : batchConfig.branchPrefix
+if (typeof branchPrefix !== 'string' || !/^[A-Za-z0-9._-]+\/$/.test(branchPrefix)) fail('qaBatch.branchPrefix must be a branch prefix ending in /')
 const gateLabel = typeof config.qaGateLabel === 'string' && config.qaGateLabel.length > 0 ? config.qaGateLabel : 'needs-qa'
 const humanLane = gateLabel === 'needs-qa' ? null : gateLabel
 const humanVerdictLabels = stringList(policy.humanVerdictLabels, 'humanQaPolicy.humanVerdictLabels')
@@ -127,8 +129,11 @@ for (const pr of prs) {
   const approvalCurrent = Boolean(pr.headSha && pr.qaApproval?.head === pr.headSha)
   const humanApproved = labels.includes('qa-approved') && approvalCurrent && pr.qaApproval?.human === true && !labels.includes('qa-self-verified')
 
-  const isStabilization = Boolean(batchBranch && pr.baseRefName === batchBranch)
+  // A fix merged into an earlier batch after its green tag reaches this range untested: same QA buckets as this batch's fixes.
+  const isEarlierBatchFix = Boolean(pr.baseRefName && pr.baseRefName !== batchBranch && pr.baseRefName.startsWith(branchPrefix))
+  const isStabilization = Boolean(batchBranch && pr.baseRefName === batchBranch) || isEarlierBatchFix
   if (isStabilization) entry.stabilization = true
+  if (isEarlierBatchFix) entry.earlierBatch = pr.baseRefName
   if (!isStabilization && pr.baseRefName && pr.baseRefName !== baseBranch) { entry.reasons.push(`merged into ${pr.baseRefName}, not ${baseBranch}`); buckets.otherBase.push(entry); continue }
 
   if (labels.includes('qa-failed')) { entry.reasons.push('merged with an unresolved failed QA verdict'); buckets.gateMissed.push(entry); continue }

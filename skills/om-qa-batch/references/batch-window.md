@@ -106,8 +106,10 @@ For each commit:
   `candidates`, and put it in the covered appendix as "earlier batch #<n>".
   Expand it: **list-prs** state merged with base = its head branch gives its
   stabilization PRs; those merged up to its green tag were tested in that
-  batch and go to the same appendix. Then walk that batch's own commits
-  after its green tag (`git rev-list --first-parent "<tag>..<its headRefOid>"`,
+  batch and go to the same appendix. "Its green tag" is the newest green tag
+  on that batch, the same tag source 1 picks as `FROM` (for a batch tagged
+  twice, the later tag). Then walk that batch's own commits
+  after that tag (`git rev-list --first-parent "<tag>..<its headRefOid>"`,
   fetching `pull/<n>/head` when the branch is gone). A base merge (two
   parents, second parent in base history, as checked in
   `references/tracker-writes.md`) brings base PRs this range already lists.
@@ -115,7 +117,9 @@ For each commit:
   merged after the tag, since the spec requires a new verdict for any new
   head except the merge-back conflict fix — was never tested: list it (by
   PR, or as `(no PR found)`) in the PR list so it is classified and
-  tested, never dropped into the appendix.
+  tested, never dropped into the appendix. The classifier treats a base
+  starting with `qaBatch.branchPrefix` as a stabilization base, so such a
+  PR gets the normal QA buckets, not `otherBase`.
 
 PRs whose base is the batch branch are this batch's stabilization fixes.
 Include every such fix in the selected range on the first checklist too;

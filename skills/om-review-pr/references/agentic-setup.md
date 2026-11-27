@@ -54,17 +54,57 @@ PR_TRIAGE=$(jq -ce '
      acceptanceLabel:(if ($t | has("acceptanceLabel")) then $t.acceptanceLabel else null end)}
   end
   | if (.ciScopeFile==null or ((.ciScopeFile|type)=="string"
-         and (.ciScopeFile|test("^[A-Za-z0-9._][A-Za-z0-9._/-]*$"))
+         and (.ciScopeFile|test("\\A[A-Za-z0-9._][A-Za-z0-9._/-]*\\z"))
          and (.ciScopeFile|test("(^|/)[.][.](/|$)")|not)))
-     and (.areaLabelPrefix|type)=="string" and (.areaLabelPrefix|test("^[A-Za-z0-9._:/-]+$"))
-     and (.acceptanceLabel==null or ((.acceptanceLabel|type)=="string" and (.acceptanceLabel|length)>0
-          and ([.acceptanceLabel] | all(. != "qa-approved" and . != "qa-failed" and . != "merge-queue"))))
+     and (.areaLabelPrefix|type)=="string" and (.areaLabelPrefix|test("\\A[A-Za-z0-9._:/-]+\\z"))
+     and (.acceptanceLabel==null or ((.acceptanceLabel|type)=="string"
+          and (.acceptanceLabel|test("\\A[A-Za-z0-9._:/-]+\\z"))
+          and (.acceptanceLabel as $a | ["qa-approved","qa-failed","merge-queue","review","changes-requested","blocked","do-not-merge","in-progress","needs-qa","skip-qa"] | index($a) == null)))
     then . else error("Invalid prTriage") end' "$CONFIG")   # PR triage policy
+QA_GATE_LABEL=$(jq -r 'if has("qaGateLabel") then .qaGateLabel else "needs-qa" end | if type == "string" and length > 0 then . else error("Invalid qaGateLabel") end' "$CONFIG")
+HUMAN_QA_POLICY=$(jq -ce '
+  def default($key; $value): if has($key) then .[$key] else $value end;
+  (if has("qaGateLabel") then .qaGateLabel else "needs-qa" end) as $gate |
+  (if has("humanQaPolicy") then .humanQaPolicy else {} end) as $p |
+  if ($p | type) != "object" then error("Invalid humanQaPolicy") else
+    ($p | default("approvedDesign"; {})) as $d |
+    if ($d | type) != "object" then error("Invalid approvedDesign") else
+      {paths:($p | default("paths"; [])),
+       uiPaths:($p | default("uiPaths"; [])),
+       uiFileThreshold:($p | default("uiFileThreshold"; 0)),
+       whenUnsure:($p | default("whenUnsure"; "human")),
+       approvedDesign:{source:($d | default("source"; "merged-spec")),
+                       label:($d | default("label"; null))},
+       humanVerdictLabels:($p | default("humanVerdictLabels"; [])),
+       trustedTriageAuthors:($p | default("trustedTriageAuthors"; [])),
+       batchCheckLabel:($p | default("batchCheckLabel"; null)),
+       batchPaths:($p | default("batchPaths"; []))}
+    end
+  end |
+  if (.paths|type)=="array" and all(.paths[];type=="string" and length>0)
+     and (.uiPaths|type)=="array" and all(.uiPaths[];type=="string" and length>0)
+     and (.uiFileThreshold|type)=="number"
+     and .uiFileThreshold>=0 and (.uiFileThreshold|floor)==.uiFileThreshold
+     and (.batchCheckLabel==null or
+          ((.batchCheckLabel|type)=="string" and (.batchCheckLabel|length)>0))
+     and (.batchPaths|type)=="array" and all(.batchPaths[];type=="string" and length>0)
+     and (.whenUnsure=="human" or .whenUnsure=="auto"
+          or (.whenUnsure=="batch" and .batchCheckLabel!=null))
+     and (.approvedDesign.source=="merged-spec" or .approvedDesign.source=="none")
+     and (.approvedDesign.label==null or
+          ((.approvedDesign.label|type)=="string" and (.approvedDesign.label|length)>0))
+     and (.humanVerdictLabels|type)=="array"
+     and all(.humanVerdictLabels[];type=="string" and length>0)
+     and (.trustedTriageAuthors|type)=="array"
+     and all(.trustedTriageAuthors[];type=="string" and length>0)
+     and (.batchCheckLabel as $l | $l==null or
+          all((["qa-approved","qa-failed","needs-qa","skip-qa",$gate] + .humanVerdictLabels)[]; . != $l))
+  then . else error("Invalid humanQaPolicy") end
+' "$CONFIG")
+HUMAN_ONLY_LABELS=$(jq -c 'if (.automerge // {} | has("humanOnlyLabels")) then .automerge.humanOnlyLabels else [] end | if type == "array" and all(.[]; type == "string" and length > 0) then . else error("Invalid humanOnlyLabels") end' "$CONFIG")
+HUMAN_ONLY_AUTHORS=$(jq -c 'if (.automerge // {} | has("humanOnlyAuthors")) then .automerge.humanOnlyAuthors else [] end | if type == "array" and all(.[]; type == "string" and length > 0) then . else error("Invalid humanOnlyAuthors") end' "$CONFIG")
 ```
 
-Load `QA_GATE_LABEL`, `HUMAN_QA_POLICY`, `HUMAN_ONLY_LABELS` and
-`HUMAN_ONLY_AUTHORS` exactly as the Default-loading snippet in
-`om-setup-agent-pipeline/references/config-capabilities.md` defines them.
 The `PR_TRIAGE` loader is the same as in `om-triage-pr`; keep both copies
 identical.
 
@@ -74,7 +114,10 @@ identical.
   `needs-qa`; with the default `needs-qa`, `needs-qa` itself is the QA gate.
   The batch-check label is `humanQaPolicy.batchCheckLabel` (null = none).
 - `REVIEW_CHECKLIST`, when set, is a repository path; reject `..` and
-  absolute paths. It extends the built-in checklist, never replaces it.
+  absolute paths, and read it (along with `CODE_REVIEW.md` and
+  `BACKWARD_COMPATIBILITY.md`) from the PR's base branch (`origin/$PR_BASE`)
+  so a PR cannot weaken its own review checklist. It extends the built-in
+  checklist, never replaces it.
 - The automation identity is the **current-user** login.
 - `LABELS_ENABLED=false` → submit the review, change no label, and say so in
   the report.

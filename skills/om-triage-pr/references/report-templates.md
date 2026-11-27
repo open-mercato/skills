@@ -2,10 +2,16 @@
 
 ## Triage comment
 
-Exactly one per PR, found by its first line through **list-issue-comments**,
-created with **comment-pr** and rewritten in place with **update-comment** on
-every run. When the descriptor has no **update-comment**, post a replacement
-that says it supersedes the previous triage comment.
+Exactly one per PR, found through **list-issue-comments** by matching **both**
+its first-line marker (`` 🤖 `om-triage-pr` — 🏷️ triage `` or legacy
+`🤖 om-triage-pr — 🏷️ triage`) **and** its author being the trusted account
+configured for this skill (the **current-user** login, or an authorized login
+in `humanQaPolicy.trustedTriageAuthors` — never match or edit a comment
+authored by an untrusted user even if it contains the marker). Create it with
+**comment-pr** when no matching trusted comment exists, and rewrite it in
+place with **update-comment** on every subsequent run. When the descriptor has
+no **update-comment**, post a replacement that says it supersedes the previous
+triage comment.
 
 ````markdown
 🤖 `om-triage-pr` — 🏷️ triage
@@ -27,18 +33,28 @@ CI-Triage-Head: <full head sha>
 ````
 
 - One line per routing label actually on the PR after this run, including
-  labels kept from earlier. Use the emoji map in
-  `om-auto-review-pr/references/label-transitions.md`; 🧭 marks the CI line.
+  labels kept from earlier. Label emoji map (decoration only): 🔍 `review` ·
+  ❌ `changes-requested` / `qa-failed` · 🧪 `qa` / `needs-qa` · 🚀 `merge-queue` ·
+  ⛔ `blocked` / `do-not-merge` · 🐛 `bug` · ✨ `feature` · ♻️ `refactor` ·
+  🔒 `security` · 📦 `dependencies` · 📚 `documentation` · ⏭️ `skip-qa` ·
+  ✅ `qa-approved` · 📸 `qa-self-verified` · 🔥 `priority-extreme` ·
+  🔺 `priority-high` · 🔹 `priority-medium` · 🔽 `priority-low` ·
+  ⚠️ `risk-high` · 🟡 `risk-medium` · 🟢 `risk-low` · 🤖 `in-progress` ·
+  ⏱️ `ci-monitoring`; 🧭 marks the CI line.
 - The QA line names the human QA label, `needs-qa` plus the batch-check
   label, `needs-qa`, or `skip-qa`, matching the lane.
 - Omit **Acceptance (draft)** when step 6 did not run and **Notes** when there
   is nothing to say.
 - The `qa-triage v1` block follows the format and trust rules of
-  `om-auto-review-pr/references/qa-triage.md` (Output).
-- `CI-Triage-Head:` is always the last line, with the full 40-character head
-  SHA the triage was made for. A CI check that requires triage looks for this
-  line in a comment by a trusted identity and compares the SHA with the PR
-  head.
+  `references/qa-triage.md` (Output).
+- **Fail-closed `CI-Triage-Head:`:** write `CI-Triage-Head:` as the last line,
+  with the full 40-character head SHA the triage was made for, **only when
+  triage completed fully** (`LABELS_ENABLED=true`, any configured
+  `prTriage.ciScopeFile` loaded from `origin/$PR_BASE` and parsed cleanly, and
+  `apply_label` did not skip or fail any label). Otherwise omit
+  `CI-Triage-Head:` and explain the gap in **Notes**. A CI check that requires
+  triage looks for this line in a comment by a trusted identity and compares
+  the SHA with the PR head.
 
 ## Run report
 

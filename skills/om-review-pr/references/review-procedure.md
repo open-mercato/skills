@@ -19,9 +19,10 @@ validation gate):
    from a code defect; cite the repository rule before calling a design
    choice a violation.
 3. **Breaking-change and product-decision gates.** Its step 4.
-4. **Checklists.** `om-code-review/references/review-checklist.md`, plus
-   `REVIEW_CHECKLIST`, `CODE_REVIEW.md` and `BACKWARD_COMPATIBILITY.md` when
-   present. Repository rules extend the built-in checklist.
+4. **Checklists.** `references/review-checklist.md`, plus
+   `REVIEW_CHECKLIST`, `CODE_REVIEW.md` and `BACKWARD_COMPATIBILITY.md` read
+   from the PR's base branch (`origin/$PR_BASE`) when present. Repository
+   rules extend the built-in checklist.
 5. **Test coverage**, including the risk-high evidence gate. Its step 6.
 6. **Cross-boundary impact.** Trace the consumers of changed events,
    contracts and extension points (its step 7). A consumer in another module

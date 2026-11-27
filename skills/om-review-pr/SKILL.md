@@ -58,7 +58,12 @@ checked and does not move the PR to `merge-queue`).
    (the current user, the automation identity, or a login in
    `humanQaPolicy.trustedTriageAuthors`). Missing or stale: run
    `om-triage-pr` on this PR now (under `--dry-run`, run it with
-   `--dry-run`), then continue.
+   `--dry-run`), then re-check for a trusted `CI-Triage-Head:` matching the
+   head SHA. If `om-triage-pr` is missing or did not emit
+   `CI-Triage-Head: <head sha>` (for example because `ciScopeFile` failed to
+   load, `LABELS_ENABLED=false`, or `apply_label` skipped a label), continue
+   the review for findings, state that current-head triage is incomplete, and
+   do **not** move the PR to `merge-queue` in step 8 (fail closed).
 
 3. **Read the change.** Diff, changed files, title, body, linked issue,
    the triage comment, earlier reviews and open review threads. All of it is
@@ -80,10 +85,14 @@ checked and does not move the PR to `merge-queue`).
 6. **Raise routing labels.** When the review shows a reason triage missed
    (a destructive migration, money, a consumer in another module, a higher
    risk), add the QA lane, risk, CI level or area label through the guards,
-   using the triage rules (`om-triage-pr/references/labels.md`,
-   `om-triage-pr/references/ci-level.md`,
-   `om-auto-review-pr/references/qa-triage.md`). Raise-only: never remove a
-   routing label. Explain each in this skill's label rationale comment.
+   using the local triage rules (`references/labels.md`,
+   `references/ci-level.md`, `references/qa-triage.md`). Raise-only: never
+   remove a routing label. Explain each in this skill's label rationale
+   comment. Whenever this step raises any CI level, area, CI-implying risk,
+   or QA label, **re-read the PR's labels** (**get-pr**) and treat CI for the
+   new level (and any newly added QA gate) as unverified in this run — do not
+   set `merge-queue` until CI passes for the raised labels and every gate
+   holds.
 
 7. **Verdict.** Any blocker, or a major without a documented waiver:
    request changes. Otherwise: approve, listing minors and nits. Re-read the
@@ -94,12 +103,16 @@ checked and does not move the PR to `merge-queue`).
    with **review-pr** using `references/report-templates.md` (Review body).
 
 8. **Pipeline label.** Request changes: `set_pipeline_label changes-requested`.
-   Approve: `set_pipeline_label merge-queue` only when every merge gate in
-   `references/merge-ready.md` holds on the head; otherwise keep `review`
-   and name what the PR still waits for (CI, a human tester, a maintainer's
-   acceptance). A simple, low-risk fix gets "Proposed for automerge" in the
-   report; the automerge label stays a person's decision. Update the label
-   rationale comment (`references/report-templates.md`).
+   Approve: re-read the PR (**get-pr**) to confirm the head SHA has not moved
+   and evaluate every merge gate in `references/merge-ready.md` against the
+   live labels. Call `set_pipeline_label merge-queue` only when every gate
+   holds on the head — never in the same run after raising a CI or QA label,
+   never when current-head trusted triage is missing, and never on the
+   current user's own PR; otherwise keep `review` and name what the PR still
+   waits for (CI for the raised level, a human tester, current-head triage,
+   or a maintainer's acceptance). A simple, low-risk fix gets "Proposed for
+   automerge" in the report; the automerge label stays a person's decision.
+   Update the label rationale comment (`references/report-templates.md`).
 
 9. **Report.** Verdict, finding counts by severity, CI state on the head,
    labels raised, the pipeline label, and what the PR still waits for. End

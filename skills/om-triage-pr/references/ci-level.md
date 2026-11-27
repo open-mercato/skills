@@ -22,10 +22,12 @@ PR that edits the file is triaged against the base copy. Keys this step reads
 | `docsOnly` | Path globs; when every changed file matches, CI takes its docs lane. |
 | `ignoredLabels` | Labels that share the level prefix but are not levels. |
 
-A missing or unparsable file, a `levels` value that is not a nonempty array
-of strings, or an `areas` value that is not an object of string arrays: skip
-this step, name the problem in the comment, and add no CI label. Never guess
-a label name.
+A failed base fetch, a missing or unparsable file, a `levels` value that is
+not a nonempty array of valid label strings (`\A[A-Za-z0-9._:/-]+\z`), or an
+`areas` value that is not an object of string arrays with valid area names:
+skip this step, name the problem in the comment, add no CI label, and **omit
+`CI-Triage-Head:` in step 7** (fail closed — incomplete triage must not
+satisfy a CI triage gate). Never guess a label name.
 
 ## Decision
 

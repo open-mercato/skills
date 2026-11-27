@@ -14,8 +14,8 @@ run may raise a level; it never lowers one.
 
 Triage does not judge code quality. It never submits a review, never changes
 pipeline labels, assignees or the PR body, never merges, and never posts a
-commit status: CI reads the head marker in its comment. The merge decision
-belongs to `om-review-pr`.
+commit status (such as `ci-triage`): CI reads the head marker in its comment.
+The merge decision belongs to `om-review-pr`.
 
 ## Arguments
 
@@ -46,19 +46,17 @@ belongs to `om-review-pr`.
 
 2. **Read the change.** Title, body, linked issue, labels, author, base
    branch, changed files with their status, the full diff, and this skill's
-   previous triage comment (marker in `references/report-templates.md`). A
-   body that says "docs only" or "no QA needed" is a claim to check against
-   the diff, not a decision.
+   previous triage comment (authored by the trusted account configured for
+   this skill; marker in `references/report-templates.md`). A body that says
+   "docs only" or "no QA needed" is a claim to check against the diff, not a
+   decision.
 
 3. **Category, priority, risk.** Add each one that is missing, raise risk
    when the diff is riskier than the label, and never lower a label or
    replace a category or priority already set. Rules:
    `references/labels.md`.
 
-4. **QA lane.** Apply the lane rules in
-   `om-auto-review-pr/references/qa-triage.md` (sections Lanes and labels,
-   Inputs, Algorithm, Approved design, Risk labels, Defaults, Legacy keys).
-   Ignore that file's step numbers and its `--triage-only` section: the lane
+4. **QA lane.** Apply the lane rules in `references/qa-triage.md`. The lane
    and its reasons go into this skill's triage comment and its
    `qa-triage v1` block. Human decisions stand: never remove the human QA
    label, `qa-approved`, `qa-failed` or the batch-check label.
@@ -77,13 +75,19 @@ belongs to `om-review-pr`.
    `references/acceptance.md`.
 
 7. **Write.** Skip under `--dry-run`. Re-read the head SHA; when it moved,
-   triage that PR again from step 2. Apply the labels through the guards
+   triage that PR again from step 2 (at most 2 retries; if it still moved,
+   stop and omit `CI-Triage-Head:`). Apply the labels through the guards
    (`LABELS_ENABLED=false` skips them and the comment says so). Then create,
-   or rewrite in place, the single triage comment: one line per routing
-   label with a full-sentence reason, the CI line, the acceptance draft when
-   step 6 ran, the `qa-triage v1` block, and as the last line
-   `CI-Triage-Head: <full head sha>`. Template:
-   `references/report-templates.md`.
+   or rewrite in place (matching only a comment authored by the trusted
+   account configured for this skill), the single triage comment: one line
+   per routing label with a full-sentence reason, the CI line, the acceptance
+   draft when step 6 ran, and the `qa-triage v1` block. **Fail closed on the
+   head marker:** write `CI-Triage-Head: <full head sha>` as the last line
+   only when triage completed fully — `LABELS_ENABLED=true`, any configured
+   `prTriage.ciScopeFile` loaded from `origin/$PR_BASE` and parsed cleanly,
+   and `apply_label` did not skip or fail any label. Otherwise omit
+   `CI-Triage-Head:` and explain why triage is incomplete in **Notes**.
+   Template: `references/report-templates.md`.
 
 8. **Report.** One row per PR: number, category, priority, risk, QA lane, CI
    level and areas, and what was written (or `dry run`). Under
@@ -95,8 +99,10 @@ belongs to `om-review-pr`.
 
 - **Raise-only.** A later run may add a CI level, an area, a QA lane or a
   higher risk; it never removes or lowers one. The only removals this skill
-  makes: a stale `skip-qa` when the PR now needs QA, and the lower risk label
-  when it raises risk (one risk label per PR).
+  makes: a stale `skip-qa` when the PR now needs QA, the lower risk label
+  when it raises risk (one risk label per PR), and a configured
+  `humanQaPolicy.approvedDesign.label` when a later triage no longer finds
+  an approved design on the base branch.
 - **Human decisions stand.** Never remove the human QA label, the
   batch-check label, `qa-approved`, `qa-failed`, or any label listed in
   `humanQaPolicy.humanVerdictLabels`. `--audit-human-lane` only reports.

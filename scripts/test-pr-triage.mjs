@@ -80,10 +80,11 @@ assert.doesNotMatch(triage, /lower CI level label when\s+it raises the CI level/
 assert.match(triage, /leave any lower\s+level label in place/, 'triage Rules must leave lower CI level labels in place on raise')
 assert.match(triage, /never posts a\s+commit status \(such as `ci-triage`\)/, 'triage must never post a ci-triage commit status')
 
-// Skip daily batch PRs (same-repo only) and release-line backport PRs in both skills
+// Skip daily batch PRs (same-repo only), stabilization fix PRs, and release-line backport PRs in both skills
 for (const [name, content] of [['om-triage-pr', triage], ['om-review-pr', review]]) {
   assert.match(content, /qaBatch\.branchPrefix/, `${name} must skip daily batch PRs matching qaBatch.branchPrefix`)
   assert.match(content, /head repository\s+equals base repository/, `${name} must restrict batch PR skip to same-repository PRs`)
+  assert.match(content, /stabilization fix\s+PRs and release-line backport PRs/, `${name} must name stabilization fix PRs and release-line backport PRs`)
   assert.match(content, /BASE_BRANCH/, `${name} must skip PRs whose base branch is not BASE_BRANCH`)
   assert.match(content, /backport\.yml/, `${name} must skip release-line backport PRs`)
 }
@@ -173,4 +174,8 @@ for (const qaGate of [null, 'false', 0]) {
   assert.notEqual(spawnSync('jq', ['-r', qaGateFilter], { input: JSON.stringify({ qaGate }), encoding: 'utf8', timeout: 5000 }).status, 0)
 }
 assert.match(merge, /QA_GATE=false[\s\S]*advisory[\s\S]*vetoes/, 'disabled QA gate must remain advisory without waiving human vetoes')
-console.log('PASS: auto base resolution, schema defaults, claims, routing CI and current-head QA gates')
+assert.match(review, /`do-not-merge`, `blocked`, `qa-failed`, or an active `qa`[\s\S]*?skip `set_pipeline_label`/, 'review must preserve do-not-merge, blocked, qa-failed and active qa holds without calling set_pipeline_label')
+assert.match(merge, /no `qa-failed`, active `qa`[\s\S]*?`blocked`,\s+`do-not-merge`/, 'merge-ready Gate 4 must include active qa alongside qa-failed, blocked and do-not-merge')
+assert.match(merge, /`do-not-merge`, `blocked`,\s+`qa-failed`, or an active `qa` label\), preserve it and skip\s+`set_pipeline_label`/, 'merge-ready must preserve hard pipeline holds and skip set_pipeline_label')
+assert.match(read(reviewSetup), /PIPELINE_LABELS=\$\(jq -r '\.labels\.pipeline \/\/ \[\] \| join\(" "\)' "\$CONFIG"\)/, 'review agentic-setup must load PIPELINE_LABELS for set_pipeline_label')
+console.log('PASS: auto base resolution, schema defaults, claims, routing CI, pipeline holds and current-head QA gates')

@@ -68,7 +68,8 @@ Move the PR to `merge-queue` only when all of these hold on the current head:
    approving review on the current head from a user with `write`, `maintain`
    or `admin` permission who is not a bot or an automation identity — never
    count `om-review-pr`'s own approval toward `merge-queue`.
-4. **No blocking label or state**: no `qa-failed`, `changes-requested`,
+4. **No blocking label or state**: no `qa-failed`, active `qa` (manual QA in
+   progress — never merge under an active tester), `changes-requested`,
    `blocked`, `do-not-merge`, or the human QA label without `qa-approved`
    supported by current-head QA evidence when `QA_GATE=true`.
    When `QA_GATE_LABEL` is `needs-qa` (no separate human lane), `needs-qa`
@@ -101,12 +102,17 @@ Move the PR to `merge-queue` only when all of these hold on the current head:
    a bot or this skill's account toward `merge-queue`; keep `review` with
    "waiting for a maintainer's acceptance and human approval".
 
-When a gate is open, set or keep `review` and name the open gates in the
-report and the label rationale: "waiting for CI", "waiting for CI on raised
-labels", "waiting for current-head triage", "waiting for a human tester",
-"waiting for a maintainer's acceptance". A project may also run a workflow
-that removes `merge-queue` when a blocking label appears later; this skill
-does not rely on it.
+When the PR carries a hard pipeline hold (`do-not-merge`, `blocked`,
+`qa-failed`, or an active `qa` label), preserve it and skip
+`set_pipeline_label` — `set_pipeline_label` removes every other pipeline
+label, so calling it would silently clear the hold. Do not set `merge-queue`,
+and state in the report and label rationale that the hold was preserved.
+Otherwise, when a gate is open, set or keep `review` and name the open gates
+in the report and the label rationale: "waiting for CI", "waiting for CI on
+raised labels", "waiting for current-head triage", "waiting for a human
+tester", "waiting for a maintainer's acceptance". A project may also run a
+workflow that removes `merge-queue` when a blocking label appears later; this
+skill does not rely on it.
 
 ## Automerge proposal
 

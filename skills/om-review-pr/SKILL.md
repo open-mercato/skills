@@ -55,16 +55,16 @@ checked and does not move the PR to `merge-queue`).
    the reason) for a draft, a closed or merged PR, a daily batch PR
    (same-repository PR where head repository equals base repository and head
    branch starts with `qaBatch.branchPrefix`, default `stabilize/`; a fork
-   PR with such a branch name is treated as a normal PR), a release-line
-   backport PR (base branch is not `BASE_BRANCH`, or created by a backport
-   workflow such as `backport.yml`), and for a PR another run has claimed
-   unless `--force`. Inspect **get-lock**, all conversation comments and
-   assignees: any one claim signal (an atomic lock, another assignee,
-   `in-progress`, or a live/uncertain claim comment) blocks review. The same
-   login alone never proves re-entry. An unreadable lock is a blocker, not
-   an absent lock. Never acquire or release another run's lock; `--force`
-   permits only this read-only review and must be disclosed in its body.
-   Record the head SHA: the verdict is for that SHA only.
+   PR with such a branch name is treated as a normal PR), stabilization fix
+   PRs and release-line backport PRs (base branch is not `BASE_BRANCH`, or
+   created by a backport workflow such as `backport.yml`), and for a PR
+   another run has claimed unless `--force`. Inspect **get-lock**, all
+   conversation comments and assignees: any one claim signal (an atomic lock,
+   another assignee, `in-progress`, or a live/uncertain claim comment) blocks
+   review. The same login alone never proves re-entry. An unreadable lock is
+   a blocker, not an absent lock. Never acquire or release another run's
+   lock; `--force` permits only this read-only review and must be disclosed
+   in its body. Record the head SHA: the verdict is for that SHA only.
 
 2. **Triage first.** Record routing labels before invoking triage, and
    compare with live labels after triage. Carry every CI/QA raise into the
@@ -123,17 +123,25 @@ checked and does not move the PR to `merge-queue`).
    pipeline label alone. Submit
    with **review-pr** using `references/report-templates.md` (Review body).
 
-8. **Pipeline label.** Request changes: `set_pipeline_label changes-requested`.
-   Approve: re-read the PR (**get-pr**) to confirm the head SHA has not moved
-   and evaluate every merge gate in `references/merge-ready.md` against the
-   live labels. Call `set_pipeline_label merge-queue` only when every gate
-   holds on the head — never in the same run after triage or review raises a CI or QA label,
-   never when current-head trusted triage is missing, and never on the
-   current user's own PR; otherwise keep `review` and name what the PR still
-   waits for (CI for the raised level, a human tester, current-head triage,
-   or a maintainer's acceptance). A simple, low-risk fix gets "Proposed for
-   automerge" in the report; the automerge label stays a person's decision.
-   Update the label rationale comment (`references/report-templates.md`).
+8. **Pipeline label.** Re-read the PR (**get-pr**) to confirm the head SHA
+   has not moved and inspect the live labels. Because `set_pipeline_label`
+   removes every other pipeline label, **preserve hard pipeline holds**: when
+   the PR carries `do-not-merge`, `blocked`, `qa-failed`, or an active `qa`
+   label (manual QA in progress), keep it, skip `set_pipeline_label` (do not
+   set `merge-queue`, `review`, or `changes-requested` over it; the review
+   verdict in step 7 still stands), and state in the report and label
+   rationale that the hold was preserved. Otherwise:
+   - Request changes: `set_pipeline_label changes-requested`.
+   - Approve: evaluate every merge gate in `references/merge-ready.md`
+     against the live labels. Call `set_pipeline_label merge-queue` only when
+     every gate holds on the head — never in the same run after triage or
+     review raises a CI or QA label, never when current-head trusted triage
+     is missing, and never on the current user's own PR; otherwise keep
+     `review` and name what the PR still waits for (CI for the raised level,
+     a human tester, current-head triage, or a maintainer's acceptance).
+   A simple, low-risk fix gets "Proposed for automerge" in the report; the
+   automerge label stays a person's decision. Update the label rationale
+   comment (`references/report-templates.md`).
 
 9. **Report.** Verdict, finding counts by severity, CI state on the head,
    labels raised, the pipeline label, and what the PR still waits for. End

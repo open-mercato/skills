@@ -44,10 +44,11 @@ The merge decision belongs to `om-review-pr`.
    merged PRs, daily batch PRs (same-repository PRs where head repository
    equals base repository and head branch starts with `qaBatch.branchPrefix`,
    default `stabilize/`; a fork PR with such a branch name is treated as a
-   normal PR), and release-line backport PRs (base branch is not
-   `BASE_BRANCH`, or created by a backport workflow such as `backport.yml`),
-   and list each in the report as skipped with the reason. Record each
-   remaining PR's head SHA: every decision below is about that SHA.
+   normal PR), and stabilization fix PRs and release-line backport PRs (base
+   branch is not `BASE_BRANCH`, or created by a backport workflow such as
+   `backport.yml`), and list each in the report as skipped with the reason.
+   Record each remaining PR's head SHA: every decision below is about that
+   SHA.
 
 2. **Read the change.** Title, body, linked issue, labels, author, base
    branch, changed files with their status, the full diff, and this skill's

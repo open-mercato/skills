@@ -28,10 +28,15 @@ next is tried:
 1. The `Range: <from>..<to>` line in the `` 🤖 `om-qa-batch` — batch verdict ``
    comment of the most recent earlier batch PR (closed or merged, same head
    prefix, found with **list-prs** state closed). Use its `<to>`. A batch
-   that was squash-merged or closed unmerged leaves a `<to>` outside `TO`'s
-   history: say so and fall through.
+   that was squash-merged leaves a `<to>` outside `TO`'s history: use
+   `git merge-base <to> TO` instead, the base commit that batch was cut
+   from, and say so — the squash commit then appears in the range as an
+   earlier batch PR (see Enumerate). A batch closed unmerged never reached
+   the base: say so and fall through.
 2. The newest tag starting with `qaBatch.greenTagPrefix` that is an
-   ancestor of `TO`.
+   ancestor of `TO`. A tag left on a squash-merged batch branch is not an
+   ancestor; source 1 already covers that batch, so this case needs
+   `--since` only when source 1 found no verdict comment.
 3. `--since <date>`.
 
 Print which source was used and why any earlier one was skipped. Stop and

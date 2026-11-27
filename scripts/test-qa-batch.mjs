@@ -154,6 +154,9 @@ for (const qaBatch of [{ inProgressLabel: 'needs-human-qa' }, { blockerLabel: 'q
   assert.notEqual(load({ ...qaBatchConfig, qaBatch }).status, 0, 'must reject colliding qaBatch ' + JSON.stringify(qaBatch))
 }
 assert.equal(load(qaBatchConfig).status, 0)
+// The release-process spec's own qaBatch settings load unchanged.
+const specQaBatch = { branchPrefix: 'stabilize/', greenTagPrefix: 'green/', smoke: '.ai/qa/batch-smoke.md', inProgressLabel: 'qa-in-progress', bugLabels: ['bug', 'daily-qa'], blockerLabel: 'qa-blocker', testers: [] }
+assert.equal(load({ qaGateLabel: 'needs-human-qa', humanQaPolicy: { batchCheckLabel: 'qa-batch-check', whenUnsure: 'batch' }, qaBatch: specQaBatch }).status, 0)
 console.log('PASS: qaBatch loader defaults, custom values and malformed inputs')
 
 const skill = read('skills/om-qa-batch/SKILL.md')
@@ -224,6 +227,18 @@ assert.match(writes, /`RETEST_FROM` = the `Tested head:` of the checklist commen
 assert.doesNotMatch(writes, /on the head they tested/)
 assert.match(writes, /Refuse when \*\*current-user\*\* is a bot or automation identity/)
 assert.match(writes, /stop and name who holds\s+it/)
+// Release-process spec alignment.
+assert.match(writes, /\*\*Merge-back conflict fix\.\*\*[\s\S]*?the verdict stays on the green-tagged commit: no\s+`--retest` and no new verdict/)
+assert.match(writes, /next\s+batch's range starts at that green tag, so they are tested there/)
+assert.match(writes, /`qa-failed` is a pipeline label: set it only through\s+the descriptor's `set_pipeline_label` guard/)
+assert.match(writes, /stable → \*\*set_pipeline_label\*\* `merge-queue`/)
+assert.match(writes, /Unstable → \*\*set_pipeline_label\*\* `qa-failed`/)
+assert.doesNotMatch(writes, /\*\*label-pr\*\* `qa-failed`/)
+assert.match(writes, /`unstable` is refused while no\s+blocker issue is open/)
+assert.match(writes, /QA \(or the stabilizer\) closes the blocker issue\s+by hand/)
+assert.match(trust, /never refused for a login missing from `qaBatch\.testers`/)
+assert.doesNotMatch(trust, /refuse a \*\*current-user\*\* not in it/)
+assert.match(skill, /merge-back conflict fix after the green tag keeps the verdict/)
 console.log('PASS: batch skill keeps verdicts human, read-only by default, and refuses stable with open blockers')
 
 // The write workflow must preserve the collection's claim and reporting contract.
@@ -271,7 +286,7 @@ console.log('PASS: missing freeze labels abort before success; discovery and fre
 const historyDir = mkdtempSync(join(tmpdir(), 'qa-batch-history-'))
 try {
   const git = (...args) => {
-    const result = spawnSync('git', args, { cwd: historyDir, encoding: 'utf8', timeout: 5000 })
+    const result = spawnSync('git', ['-c', 'tag.gpgSign=false', '-c', 'commit.gpgSign=false', ...args], { cwd: historyDir, encoding: 'utf8', timeout: 5000 })
     assert.equal(result.status, 0, result.stderr)
     return result.stdout.trim()
   }

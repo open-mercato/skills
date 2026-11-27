@@ -70,8 +70,8 @@ Found in batch #<batch pr> at QA head: <full sha>.
 🤖 `om-qa-batch` — <✅|❌> batch verdict
 
 QA verdict: <STABLE|UNSTABLE>
-QA head: <full batch head sha>
-Range: <from>..<to>
+QA head: <tested head sha>
+Range: <from>..<tested head sha>
 
 <One sentence: what this means for the stabilizer.>
 

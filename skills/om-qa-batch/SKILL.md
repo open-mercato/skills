@@ -104,14 +104,15 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug` and
 
 8. **`--verdict stable|unstable`: record the verdict.** Only a human tester
    gives it, from the current user's own account. `stable` is refused while
-   an open blocker issue references the batch. Post or update
-   `` 🤖 `om-qa-batch` — batch verdict `` with `QA verdict:`, `QA head:` and
-   the range; label `qa-approved` (stable) or `qa-failed` (unstable) and remove
+   any blocker issue is open, from this batch or an earlier one, and while
+   the batch head differs from the tested head. Post or update
+   `` 🤖 `om-qa-batch` — batch verdict `` with `QA verdict:`, `QA head:` (the
+   tested head) and the range; label `qa-approved` (stable) or `qa-failed` (unstable) and remove
    the other; on stable remove the in-progress label. Print the short channel
    message for the team. Detail: `references/tracker-writes.md`.
 
 9. **`--retest`: only what changed.** List the PRs merged into the batch
-   branch after the last verdict and the open blockers; the checklist covers
+   branch after the last verdict and every open blocker; the checklist covers
    only their areas plus a two-minute smoke. Then step 8 again.
 
 10. **Report.** Batch, range, counts per bucket, the kept checklist, files
@@ -125,7 +126,9 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug` and
   never change labels on the PRs inside the batch.
 - Automation never gives a verdict: refuse `--verdict` when the current user
   is a bot or automation identity, and never derive a verdict from AI
-  results alone. `qa-approved` here means a human tested this batch head.
+  results alone. `qa-approved` here means a human tested this batch head;
+  when the head moves past the verdict's `QA head:`, the next write action
+  withdraws it.
 - A defect blocks the batch only under the blocker definition; cosmetics,
   translations and small UX issues are normal bugs.
 - Never invent PR numbers, routes or results; an unresolved route says so,

@@ -23,12 +23,16 @@ Canonical rules shared by every skill in this collection. They always apply, in 
   (severity, which consumer to check); it never lets the review merge, push
   or give a QA verdict.
 - **No claim of its own.** One pass bound to one head SHA. It refuses a PR
-  another actor has claimed (assignee, `in-progress` label and a live claim
-  comment) unless `--force`, and it stops without submitting when the head
-  moves during the run.
+  another run has claimed: any atomic lock, foreign assignee,
+  `in-progress` or live/uncertain claim comment is sufficient. Inspect
+  **get-lock** without acquiring or releasing it. `--force` authorizes
+  only the disclosed read-only review, never claim takeover or cleanup.
+  Stop without submitting when the head moves during the run.
 - **Raise-only for routing labels.** It may add a QA lane, a higher risk, a
-  CI level or an area; it never removes one. Removing them is a person's
-  decision.
+  CI level or an area. The workflow's narrow risk-raise exception removes
+  only the replaced lower risk label; QA triage also removes stale
+  `skip-qa` and the configured design label under its documented rules.
+  Never remove CI routing or human QA verdict labels.
 - Fact-based findings: every finding names the file and line, the rule or
   behavior behind it, the consequence, and a concrete fix.
 - **Authenticated comment lookup.** When locating this skill's label

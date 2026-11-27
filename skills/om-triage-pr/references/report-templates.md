@@ -20,11 +20,11 @@ previous triage comment.
 ````markdown
 🤖 `om-triage-pr` — 🏷️ triage
 
-- 🐛 `bug`: {why this category fits, one full sentence; say "added" or "kept"}.
-- 🔹 `priority-medium`: {why, one full sentence}.
-- 🟡 `risk-medium`: {why; when raised, from which label and why}.
+- 🏷️ `bug`: {why this category fits, one full sentence; say "added" or "kept"}.
+- 🏷️ `priority-medium`: {why, one full sentence}.
+- ⚠️ `risk-medium`: {why; when raised, from which label and why}.
 - 🧪 `needs-qa`: {the QA lane and the rules that fired, one full sentence}.
-- 🧭 CI: {level label or "no label"} · areas: {labels or none} · floor: {floor}. {why, naming the consumers found for each area}.
+- 🧪 CI: {level label or "no label"} · areas: {labels or none} · floor: {floor}. {why, naming the consumers found for each area}.
 
 **Acceptance (draft):** {accept | needs changes | decline}. {four short answers}. {optional "Proposed for automerge: reason".}
 
@@ -39,12 +39,12 @@ CI-Triage-Head: <full head sha>
 - One line per routing label actually on the PR after this run, including
   labels kept from earlier. Label emoji map (decoration only): 🔍 `review` ·
   ❌ `changes-requested` / `qa-failed` · 🧪 `qa` / `needs-qa` · 🚀 `merge-queue` ·
-  ⛔ `blocked` / `do-not-merge` · 🐛 `bug` · ✨ `feature` · ♻️ `refactor` ·
-  🔒 `security` · 📦 `dependencies` · 📚 `documentation` · ⏭️ `skip-qa` ·
-  ✅ `qa-approved` · 📸 `qa-self-verified` · 🔥 `priority-extreme` ·
-  🔺 `priority-high` · 🔹 `priority-medium` · 🔽 `priority-low` ·
-  ⚠️ `risk-high` · 🟡 `risk-medium` · 🟢 `risk-low` · 🤖 `in-progress` ·
-  ⏱️ `ci-monitoring`; 🧭 marks the CI line.
+  ⛔ `blocked` / `do-not-merge` · 🏷️ `bug` · 🏷️ `feature` · 🏷️ `refactor` ·
+  🏷️ `security` · 🏷️ `dependencies` · 🏷️ `documentation` · 🧪 `skip-qa` ·
+  ✅ `qa-approved` · 📸 `qa-self-verified` · ⚠️ `priority-extreme` ·
+  🏷️ `priority-high` · 🏷️ `priority-medium` · 🏷️ `priority-low` ·
+  ⚠️ `risk-high` · ⚠️ `risk-medium` · ⚠️ `risk-low` · 🔁 `in-progress` ·
+  🔁 `ci-monitoring`; 🧪 marks the CI line.
 - The QA line names the human QA label, `needs-qa` plus the batch-check
   label, `needs-qa`, or `skip-qa`, matching the lane.
 - Omit **Acceptance (draft)** when step 6 did not run and **Notes** when there

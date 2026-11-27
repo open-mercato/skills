@@ -3,7 +3,8 @@
 ## CI evidence on the head (step 5)
 
 1. **get-required-checks** for the PR's base branch: the check names the
-   branch requires.
+   branch requires. Preserve the descriptor's 404 fallback: treat all reported checks as required
+   when branch protection is unavailable. Other query failures remain pending.
 2. **get-pr-checks** for the PR, keeping only results for the head SHA.
 3. **list-runs** for the head branch, keeping runs whose head SHA is the PR
    head. A run that is not completed counts as pending. A short check list
@@ -13,7 +14,7 @@
 Result:
 
 - **green**: **get-required-checks**, **get-pr-checks**, and **list-runs**
-  all succeeded; every required check passed on the head; every workflow run
+  all succeeded (or the documented 404 fallback applies); every required check passed on the head; every workflow run
   for the head SHA completed with a passing conclusion (`success`, or
   `skipped`/`neutral` only when the project's CI reports it as passing by
   design — never `failure`, `cancelled`, `timed_out`, `action_required`, or
@@ -32,6 +33,14 @@ A check skipped by design (for example a lane the project's CI picks for
 docs-only changes) counts as passed only when the project's CI reports it as
 successful; never infer success from absence.
 
+**Routing evidence.** A matching head SHA alone does not prove the selected
+CI level and areas ran. Read the scope file's implications against the live
+labels, and confirm the required jobs or run logs show that level and those
+areas were exercised. When routing labels changed on the same head, use a
+run triggered after the raise or explicit job evidence covering the final
+selection; an older lower-level pass stays pending. If the workflow cannot
+prove its selection, report the missing evidence and keep `review`.
+
 ## Merge gates (step 8)
 
 Re-read the PR (**get-pr**) after step 6 so every gate below is checked
@@ -41,7 +50,8 @@ SHA moved, stop and do not set `merge-queue`.
 Move the PR to `merge-queue` only when all of these hold on the current head:
 
 1. **CI is green** on the head (above), and **no CI or QA routing label was
-   raised in this run**. When step 6 raised any CI level label, area label,
+   raised in this run**. Count both step 2 (delegated triage) and step 6
+   (review) raises. When either raised any CI level label, area label,
    risk label that implies a higher CI level, or blocking QA label, re-read
    labels and leave `merge-queue` off (keep `review`): CI from step 5 ran
    under the old labels and must run and pass for the new level (and any
@@ -59,10 +69,24 @@ Move the PR to `merge-queue` only when all of these hold on the current head:
    or `admin` permission who is not a bot or an automation identity — never
    count `om-review-pr`'s own approval toward `merge-queue`.
 4. **No blocking label or state**: no `qa-failed`, `changes-requested`,
-   `blocked`, `do-not-merge`, or the human QA label without `qa-approved`.
+   `blocked`, `do-not-merge`, or the human QA label without `qa-approved`
+   supported by current-head QA evidence when `QA_GATE=true`.
    When `QA_GATE_LABEL` is `needs-qa` (no separate human lane), `needs-qa`
-   without `qa-approved` blocks as well. The PR must be open, non-draft, and
+   without `qa-approved` blocks as well when `QA_GATE=true`. With
+   `QA_GATE=false`, QA requests are advisory; explicit human vetoes and
+   other hard blocks still apply. The PR must be open, non-draft, and
    have no unresolved merge conflicts.
+   Inspect each reviewer's latest effective review: a latest changes-requested
+   verdict remains a hold until that reviewer approves or a maintainer
+   explicitly dismisses it; this skill's own approval cannot erase it.
+   An unresolved human QA NO-GO from a verified repository writer remains
+   a veto without a label, until that reviewer or a maintainer releases it.
+   A required QA approval must have trusted evidence pinned by
+   `QA head: <current-full-sha>` covering the changed behavior; a stale
+   `qa-approved` label is insufficient. Preserve the existing self-QA
+   exception only with its current-head PASS and eligibility evidence;
+   never let self-QA answer a human-only gate. Missing evidence blocks the
+   queue; do not remove a human verdict or manufacture a new one.
 5. **External PR acceptance**: the PR must not carry
    `prTriage.acceptanceLabel`. Additionally, for any author without `write`,
    `maintain` or `admin` permission, require an `accepted` label added by a

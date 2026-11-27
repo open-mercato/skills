@@ -140,3 +140,35 @@ assert.match(capabilities, /\| `prTriage` \|/, 'config-capabilities must documen
 const roster = read('skills/om-setup-agent-pipeline/references/skill-coverage.md')
 for (const name of ['om-triage-pr', 'om-review-pr']) assert.ok(roster.includes(` ${name} `), `roster must list ${name}`)
 console.log('PASS: prTriage is documented and both skills are on the roster')
+
+// A configured "auto" must resolve before the non-default-target skip decision.
+for (const path of [triageSetup, reviewSetup]) {
+  const setup = read(path)
+  assert.match(setup, /resolve `BASE_BRANCH`[\s\S]*?`auto`[\s\S]*?\*\*default-branch\*\*/, `${path} must resolve auto through the tracker`)
+  assert.match(setup, /git check-ref-format --branch/, `${path} must validate resolved branches`)
+}
+const setupSkill = read('skills/om-setup-agent-pipeline/SKILL.md')
+const schema = JSON.parse(setupSkill.match(/```json\n([\s\S]*?)\n```/)[1])
+assert.deepEqual(schema.prTriage, defaults, 'pipeline setup must publish the same prTriage defaults')
+
+// Triage itself can raise routing labels before code review sees the diff.
+assert.match(review, /before.*triage[\s\S]*after.*triage/i, 'review must compare labels around delegated triage')
+assert.match(merge, /step 2[\s\S]*step 6/, 'both triage and review raises must invalidate old CI evidence')
+assert.match(merge, /selected\s+CI level and areas/i, 'hosted CI evidence must cover the final routing labels')
+assert.match(merge, /404[\s\S]*all reported checks as required/, 'legacy descriptors must retain branch-protection 404 fallback')
+assert.match(merge, /QA head: <current-full-sha>/, 'QA approval must be pinned to the current head')
+assert.match(merge, /NO-GO/, 'an unresolved human QA veto must block queue admission')
+assert.match(merge, /latest.*changes.requested/i, 'other reviewers requested changes must not be overwritten by approval')
+assert.match(review, /\*\*get-lock\*\*/, 'read-only reviews must inspect authoritative atomic claims')
+assert.match(review, /any one.*signal/i, 'claim signals must be independent rather than conjunctive')
+const qaGateFilter = read(reviewSetup).match(/QA_GATE=\$\(jq -r '([^']+)' "\$CONFIG"\)/)[1]
+for (const [config, expected] of [[{}, 'true'], [{ qaGate: false }, 'false'], [{ qaGate: true }, 'true']]) {
+  const result = spawnSync('jq', ['-r', qaGateFilter], { input: JSON.stringify(config), encoding: 'utf8', timeout: 5000 })
+  assert.equal(result.status, 0, result.stderr)
+  assert.equal(result.stdout.trim(), expected)
+}
+for (const qaGate of [null, 'false', 0]) {
+  assert.notEqual(spawnSync('jq', ['-r', qaGateFilter], { input: JSON.stringify({ qaGate }), encoding: 'utf8', timeout: 5000 }).status, 0)
+}
+assert.match(merge, /QA_GATE=false[\s\S]*advisory[\s\S]*vetoes/, 'disabled QA gate must remain advisory without waiving human vetoes')
+console.log('PASS: auto base resolution, schema defaults, claims, routing CI and current-head QA gates')

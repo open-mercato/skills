@@ -45,7 +45,7 @@ triage are explained in the triage comment.
 - 🔍 `review`: approved on {short sha}; still waiting for {gate}.
 - ❌ `changes-requested`: {n} findings must be fixed first: {short list}.
 - ⚠️ `risk-high`: raised from `risk-medium` because {reason}.
-- 🧭 `ci-area:<area>`: {consumer} in {module} reads the changed {contract}.
+- 🧪 `ci-area:<area>`: {consumer} in {module} reads the changed {contract}.
 ```
 
 Keep only the lines that apply.

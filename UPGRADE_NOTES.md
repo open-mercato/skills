@@ -29,7 +29,11 @@ Additive; existing skills and their labels are unchanged.
 - New skill `om-review-pr` gives the merge decision without an autofix loop:
   the `om-code-review` checklist, hosted CI on the head instead of the local
   validation gate, approve or request changes, raise-only routing labels,
-  and `merge-queue` only when every gate holds.
+  and `merge-queue` only when every gate holds. Resolves `baseBranch: "auto"`
+  through the tracker before target filtering, inspects atomic claims without
+  acquiring them, and requires current-head QA evidence and CI for the final
+  routing labels (including raises made by delegated triage). Human QA vetoes
+  and other reviewers' outstanding changes requests remain holds.
 - Optional config object `prTriage` (`ciScopeFile`, `areaLabelPrefix`,
   `acceptanceLabel`). Without it, triage sets no CI label and drafts no
   acceptance. Create the level and area labels your scope file names before

@@ -3,8 +3,24 @@
 Every write here happens only when the tester runs the matching action.
 Label changes go through the descriptor's guards; `LABELS_ENABLED=false`
 skips them and the report says so. Read the batch PR again (**get-pr**)
-right before each action; if its head moved since the checklist, say so and
-include the new commits before continuing.
+right before each action and compare its head with the **tested head**.
+
+**Tested head.** It is recorded on the batch PR, never in a local file: the
+`Tested head: <full sha>` line of the `` 🤖 `om-qa-batch` — 🧪 batch
+checklist `` comment, which `--start` sets to the `TO` it checklisted and
+`--retest` moves to the head it checklisted. Read it with
+**list-issue-comments** and trust only a comment authored by
+**current-user** or by an assignee of the batch PR; anyone can paste the
+marker. The local `checklist.md` is a working copy and never answers this.
+No trusted comment, or no `Tested head:` line in it, means the tested head
+is unknown. A moved head never joins the tested build silently: say so, name
+the new commits, and point to `--retest`.
+
+**Stale approval.** When the batch carries `qa-approved` and its head differs
+from the `QA head:` of the latest verdict comment, the approval no longer
+covers the build: every write action first **unlabel-pr** `qa-approved` and
+says why; read-only runs report it as stale and tell the tester to run
+`--retest`, then `--verdict`.
 
 ## Blocker definition
 
@@ -27,7 +43,8 @@ fixed through the normal flow.
 2. **assign-pr** current user; **label-pr** `qaBatch.inProgressLabel`.
 3. Find the `` 🤖 `om-qa-batch` — 🧪 batch checklist `` comment
    (**list-issue-comments**); **update-comment** it, or **comment-pr** a new one
-   (template in `references/report-templates.md`).
+   (template in `references/report-templates.md`) with `Tested head:` set to
+   the `TO` of the checklist just written.
 4. Tell the tester: the in-progress label is the agreed signal that the
    batch is being tested and must not be refreshed with newer base commits.
 
@@ -47,27 +64,49 @@ fixed through the normal flow.
 
 ## `--verdict stable|unstable`
 
+A verdict run skips steps 1-5: it never rebuilds the checklist, because a
+rebuilt checklist would take the current head as tested. It reads the batch
+PR (**get-pr**), the tested head from the checklist comment, and the open
+blockers, nothing else.
+
 1. Refuse when **current-user** is a bot or automation identity: the verdict
    is a human's.
 2. `stable` is refused while **search-issues** finds an open issue labelled
-   `qaBatch.blockerLabel` that names this batch PR. List them.
-3. Post or update `` 🤖 `om-qa-batch` — batch verdict `` (template in
+   `qaBatch.blockerLabel`, whichever batch it names: a blocker from an
+   earlier batch is still in this build until it is fixed. List them. One that
+   no longer reproduces on the tested head is closed by the tester first; this
+   skill never closes it.
+3. `stable` is refused when the tested head is unknown: say that no trusted
+   batch checklist comment records one, and tell the tester to run `--start`
+   (or `--retest`) on the head they tested, then `--verdict` again. `stable`
+   is also refused when the batch head differs from the tested head: commits
+   landed after testing. Name them and point to `--retest`. `unstable` is
+   still recorded, against the tested head, or the current head marked
+   "tested head unknown" when none is recorded.
+4. Post or update `` 🤖 `om-qa-batch` — batch verdict `` (template in
    `references/report-templates.md`): `QA verdict: STABLE` or
-   `QA verdict: UNSTABLE`, `QA head: <full batch head sha>`, `Range:`,
-   blockers, what was tested and what was not.
-4. Labels: stable → **label-pr** `qa-approved`, **unlabel-pr** `qa-failed` and
+   `QA verdict: UNSTABLE`, `QA head: <tested head sha>`, `Range:` ending at
+   that head, blockers, what was tested and what was not.
+5. Labels: stable → **label-pr** `qa-approved`, **unlabel-pr** `qa-failed` and
    `qaBatch.inProgressLabel`. Unstable → **label-pr** `qa-failed`,
    **unlabel-pr** `qa-approved`, keep the in-progress label so the batch stays
    frozen while the stabilizer fixes it.
-5. Print the channel message from the templates for the tester to send.
+6. Print the channel message from the templates for the tester to send.
 
 The stabilizer decides when fixes are in and tags the batch; a new head
-after a stable verdict needs a new verdict for that head.
+after a stable verdict needs a new verdict for that head, and the stale
+`qa-approved` is withdrawn as above.
 
 ## `--retest`
 
 1. Find the latest verdict comment's time and head.
 2. Stabilization PRs merged into the batch branch after it (**list-prs**
-   state merged, base = batch branch) and open blocker issues for the batch.
+   state merged, base = batch branch) and every open `qaBatch.blockerLabel`
+   issue.
 3. Checklist: each fix with the blocker it closes, the areas it touched, and
-   a short smoke of those areas. Then `--verdict` again.
+   a short smoke of those areas. Write it to
+   `$QA_DIR/batches/<batch-slug>/retest.md` with
+   `Range: <last QA head>..<current batch head>`.
+4. **update-comment** the batch checklist comment (or **comment-pr** it when
+   missing): `Tested head:` becomes that current batch head and
+   `Retest range:` names the range. Then `--verdict` again.

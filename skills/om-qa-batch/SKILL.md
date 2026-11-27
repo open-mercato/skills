@@ -15,8 +15,8 @@ owns the batch branch) knows what blocks it.
 
 It never merges, tags, pushes, refreshes the batch, or fixes code: QA judges
 quality, the stabilizer owns the branch. By default it is read-only; tracker
-writes happen only through the explicit `--start`, `--blocker`, `--bug` and
-`--verdict` actions, each on the tester's request.
+writes happen only through the explicit `--start`, `--blocker`, `--bug`,
+`--verdict` and `--retest` actions, each on the tester's request.
 
 ## Arguments
 
@@ -32,7 +32,7 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug` and
   batch from a written bug file (see step 7).
 - `--verdict stable|unstable` — record the tester's verdict (see step 8).
 - `--retest` — checklist of only the fixes merged into the batch since the
-  last verdict, plus open blockers (see step 9).
+  last verdict, plus open blockers; records the new tested head (see step 9).
 - `--stabilizer <login>` (optional) — who to mention on blockers. Default:
   the batch PR author.
 
@@ -47,7 +47,7 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug` and
    `qaGateLabel`, `humanQaPolicy` and `qaBatch` (defaults there). Tracker
    reads: **current-user**, **list-prs**, **search-prs**, **get-pr**,
    **get-pr-files**, **list-issue-comments**, **search-issues**. Tracker
-   writes, only under the actions in steps 6-8: **assign-pr**, **label-pr**,
+   writes, only under the actions in steps 6-9: **assign-pr**, **label-pr**,
    **unlabel-pr**, **comment-pr**, **update-comment**, **create-issue**.
 
 1. **Resolve the batch and its range.** Find the batch PR (or take
@@ -91,7 +91,7 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug` and
    already holds the batch (in-progress label plus a different assignee).
    Otherwise assign the current user, apply `qaBatch.inProgressLabel`, and
    post or update the marker comment `` 🤖 `om-qa-batch` — 🧪 batch
-   checklist `` with the range and the must-test list. From now on the batch
+   checklist `` with the range, the must-test list and `Tested head:`. From now on the batch
    must not be refreshed with newer base commits. Detail:
    `references/tracker-writes.md`.
 
@@ -102,30 +102,38 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug` and
    batch PR mentioning the stabilizer. Anything else is a normal bug and never
    blocks the batch. Templates: `references/report-templates.md`.
 
-8. **`--verdict stable|unstable`: record the verdict.** Only a human tester
+8. **`--verdict stable|unstable`: record the verdict.** Skips steps 1-5:
+   never rebuild the checklist for a verdict. The tested head comes from the
+   `Tested head:` line of the trusted batch checklist comment on the batch
+   PR, never a local file; unknown → `stable` is refused. Only a human tester
    gives it, from the current user's own account. `stable` is refused while
-   an open blocker issue references the batch. Post or update
-   `` 🤖 `om-qa-batch` — batch verdict `` with `QA verdict:`, `QA head:` and
-   the range; label `qa-approved` (stable) or `qa-failed` (unstable) and remove
+   any blocker issue is open, from this batch or an earlier one, and while
+   the batch head differs from the tested head. Post or update
+   `` 🤖 `om-qa-batch` — batch verdict `` with `QA verdict:`, `QA head:` (the
+   tested head) and the range; label `qa-approved` (stable) or `qa-failed` (unstable) and remove
    the other; on stable remove the in-progress label. Print the short channel
    message for the team. Detail: `references/tracker-writes.md`.
 
 9. **`--retest`: only what changed.** List the PRs merged into the batch
-   branch after the last verdict and the open blockers; the checklist covers
-   only their areas plus a two-minute smoke. Then step 8 again.
+   branch after the last verdict and every open blocker; the checklist covers
+   only their areas plus a two-minute smoke; update `Tested head:` in the
+   batch checklist comment to the head it checklisted. Then step 8 again.
 
 10. **Report.** Batch, range, counts per bucket, the kept checklist, files
     written, and every tracker write performed (none by default).
 
 ## Rules
 
-- Read-only unless the tester runs `--start`, `--blocker`, `--bug` or
-  `--verdict`; each action performs only the writes listed for it.
+- Read-only unless the tester runs `--start`, `--blocker`, `--bug`,
+  `--verdict` or `--retest`; each action performs only the writes listed for
+  it.
 - Never merge, tag, push, refresh or close the batch, never edit code, and
   never change labels on the PRs inside the batch.
 - Automation never gives a verdict: refuse `--verdict` when the current user
   is a bot or automation identity, and never derive a verdict from AI
-  results alone. `qa-approved` here means a human tested this batch head.
+  results alone. `qa-approved` here means a human tested this batch head;
+  when the head moves past the verdict's `QA head:`, the next write action
+  withdraws it.
 - A defect blocks the batch only under the blocker definition; cosmetics,
   translations and small UX issues are normal bugs.
 - Never invent PR numbers, routes or results; an unresolved route says so,

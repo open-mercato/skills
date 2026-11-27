@@ -18,7 +18,8 @@ const config = {
     batchPaths: ['src/portal/**'],
     uiPaths: ['**/*.tsx'],
     uiFileThreshold: 3,
-    trustedTriageAuthors: ['review-bot']
+    trustedTriageAuthors: ['review-bot'],
+    humanVerdictLabels: ['qa-human-ok']
   }
 }
 const pr = (number, values = {}) => ({ number, title: `PR ${number}`, baseRefName: 'main', author: 'dev', headSha: `sha${number}`, labels: [], files: [], comments: [], ...values })
@@ -46,11 +47,14 @@ const result = good({
     pr(15, { comments: [triage('sha15', 'human')], labels: ['needs-qa'] }),
     pr(16, { labels: ['needs-human-qa', 'qa-failed'] }),
     pr(17, { labels: ['needs-qa'], files: [{ path: 'src/admin/__tests__/List.test.tsx', status: 'modified' }] }),
+    pr(18, { labels: ['needs-human-qa', 'qa-approved', 'qa-failed'] }),
+    pr(19, { labels: ['needs-human-qa', 'qa-human-ok'] }),
+    pr(20, { labels: ['needs-human-qa', 'qa-approved', 'qa-self-verified'] }),
     pr(1, { labels: [] })
   ]
 })
 const ids = name => result.buckets[name].map(entry => entry.number)
-assert.deepEqual(ids('gateMissed'), [1, 15, 16])
+assert.deepEqual(ids('gateMissed'), [1, 15, 16, 18, 19, 20])
 assert.deepEqual(ids('coveredHuman'), [2])
 assert.deepEqual(ids('batchCheck'), [3, 4])
 assert.deepEqual(ids('candidates'), [6, 8, 12, 13])
@@ -58,8 +62,15 @@ assert.deepEqual(ids('coveredAuto'), [7])
 assert.deepEqual(ids('noManualQa'), [5, 9, 14, 17])
 assert.deepEqual(ids('stabilization'), [10])
 assert.deepEqual(ids('otherBase'), [11])
-assert.equal(result.counts.total, 17)
+assert.equal(result.counts.total, 20)
 assert.match(result.buckets.candidates.find(entry => entry.number === 13).reasons.join(' '), /adds UI files/)
+const edited = good({ config, prs: [pr(21, { labels: ['needs-qa'], comments: [
+  { ...triage('sha21', 'batch'), createdAt: '2026-11-25T09:00:00Z', updatedAt: '2026-11-25T12:00:00Z' },
+  { ...triage('sha21', 'auto'), createdAt: '2026-11-25T10:00:00Z' }
+] })] })
+assert.deepEqual(edited.buckets.batchCheck.map(entry => entry.number), [21], 'an edited triage comment wins by updatedAt')
+const noAutoEvidence = good({ config: { ...config, qaBatch: { autoQaEvidenceLabels: [] } }, prs: [pr(7, { labels: ['skip-qa', 'qa-self-verified'] })] })
+assert.deepEqual(noAutoEvidence.buckets.coveredAuto, [], 'an explicit empty autoQaEvidenceLabels must not fall back to defaults')
 console.log('PASS: batch classifier buckets the human gate, batch lane, trusted triage, evidence and bases')
 
 const collapsed = good({ config: { ...config, qaGateLabel: 'needs-qa' }, prs: [pr(1, { labels: ['needs-human-qa'] })] })
@@ -70,7 +81,9 @@ for (const bad of [
   { config: { ...config, humanQaPolicy: { uiFileThreshold: -1 } }, prs: [] },
   { config: { ...config, qaBatch: [] }, prs: [] },
   { config, prs: [{ number: 'x' }] },
-  { config: { qaGateLabel: 'needs-human-qa' }, prs: [] }
+  { config: { qaGateLabel: 'needs-human-qa' }, prs: [] },
+  ...['qa-approved', 'qa-failed', 'needs-qa', 'skip-qa', 'needs-human-qa', 'qa-human-ok'].map(label =>
+    ({ config: { ...config, humanQaPolicy: { ...config.humanQaPolicy, batchCheckLabel: label } }, prs: [] }))
 ]) assert.notEqual(run(bad).status, 0, 'must reject ' + JSON.stringify(bad).slice(0, 80))
 console.log('PASS: classifier rejects malformed policy, config and PR input')
 
@@ -85,9 +98,15 @@ assert.deepEqual(defaults.bugLabels, ['bug'])
 assert.equal(defaults.smoke, null)
 const custom = { branchPrefix: 'batch/', greenTagPrefix: 'verified/', smoke: '.ai/qa/smoke.md', inProgressLabel: 'testing', bugLabels: ['bug', 'daily-qa'], blockerLabel: 'blocker', autoQaEvidenceLabels: ['qa-self-verified'] }
 assert.deepEqual(JSON.parse(load({ qaBatch: custom }).stdout), custom)
-for (const qaBatch of [[], 'x', { branchPrefix: 'no-slash' }, { branchPrefix: '../x/' }, { bugLabels: [] }, { bugLabels: [''] }, { smoke: '' }, { blockerLabel: 'qa-approved' }, { inProgressLabel: 'qa-failed' }]) {
+for (const qaBatch of [[], 'x', { branchPrefix: 'no-slash' }, { branchPrefix: '../x/' }, { bugLabels: [] }, { bugLabels: [''] }, { smoke: '' }, { blockerLabel: 'qa-approved' }, { inProgressLabel: 'qa-failed' },
+  ...['in-progress', 'ci-monitoring', 'needs-qa', 'skip-qa'].flatMap(label => [{ inProgressLabel: label }, { blockerLabel: label }, { bugLabels: ['bug', label] }])]) {
   assert.notEqual(load({ qaBatch }).status, 0, 'must reject qaBatch ' + JSON.stringify(qaBatch))
 }
+const qaBatchConfig = { qaGateLabel: 'needs-human-qa', humanQaPolicy: { batchCheckLabel: 'qa-batch-check' } }
+for (const qaBatch of [{ inProgressLabel: 'needs-human-qa' }, { blockerLabel: 'qa-batch-check' }, { bugLabels: ['qa-approved'] }]) {
+  assert.notEqual(load({ ...qaBatchConfig, qaBatch }).status, 0, 'must reject colliding qaBatch ' + JSON.stringify(qaBatch))
+}
+assert.equal(load(qaBatchConfig).status, 0)
 console.log('PASS: qaBatch loader defaults, custom values and malformed inputs')
 
 const skill = read('skills/om-qa-batch/SKILL.md')
@@ -95,6 +114,16 @@ const writes = read('skills/om-qa-batch/references/tracker-writes.md')
 assert.match(skill, /Never merge, tag, push, refresh or close the batch/)
 assert.match(skill, /Automation never gives a verdict/)
 assert.match(writes, /`stable` is refused while \*\*search-issues\*\* finds an open issue/)
+assert.match(writes, /`qaBatch\.blockerLabel`, whichever batch it names/)
+assert.match(writes, /`stable`\s+is also refused when the batch head differs from the tested head/)
+assert.match(writes, /`QA head: <tested head sha>`/)
+assert.match(writes, /\*\*unlabel-pr\*\* `qa-approved`/)
+assert.match(writes, /A verdict run skips steps 1-5/)
+assert.match(writes, /recorded on the batch PR, never in a local file/)
+assert.match(writes, /authored by\s+\*\*current-user\*\* or by an assignee of the batch PR/)
+assert.match(writes, /`stable` is refused when the tested head is unknown/)
+assert.match(skill, /Skips steps 1-5/)
+assert.match(read('skills/om-qa-batch/references/report-templates.md'), /^Tested head: /m)
 assert.match(writes, /Refuse when \*\*current-user\*\* is a bot or automation identity/)
 assert.match(writes, /stop and name who holds\s+it/)
 console.log('PASS: batch skill keeps verdicts human, read-only by default, and refuses stable with open blockers')

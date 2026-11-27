@@ -10,9 +10,10 @@ const stringList = (value, name) => {
   if (!Array.isArray(value) || value.some(item => typeof item !== 'string' || item.length === 0)) fail(`${name} must be an array of nonempty strings`)
   return value
 }
-const optionalLabel = (value, name) => {
+const optionalLabel = (value, name, reserved) => {
   if (value === undefined || value === null) return null
   if (typeof value !== 'string' || !/^[A-Za-z0-9._/: -]+$/.test(value)) fail(`${name} must be a label name or null`)
+  if (reserved.includes(value)) fail(`${name} must not reuse the QA label ${value}`)
   return value
 }
 
@@ -27,15 +28,14 @@ const batchBranch = input.batchBranch ?? null
 if (batchBranch !== null && typeof batchBranch !== 'string') fail('batchBranch must be a string or null')
 const gateLabel = typeof config.qaGateLabel === 'string' && config.qaGateLabel.length > 0 ? config.qaGateLabel : 'needs-qa'
 const humanLane = gateLabel === 'needs-qa' ? null : gateLabel
-const batchLabel = optionalLabel(policy.batchCheckLabel, 'humanQaPolicy.batchCheckLabel')
+const humanVerdictLabels = stringList(policy.humanVerdictLabels, 'humanQaPolicy.humanVerdictLabels')
+const batchLabel = optionalLabel(policy.batchCheckLabel, 'humanQaPolicy.batchCheckLabel', ['qa-approved', 'qa-failed', 'needs-qa', 'skip-qa', gateLabel, ...humanVerdictLabels])
 const humanPaths = stringList(policy.paths, 'humanQaPolicy.paths')
 const batchPaths = stringList(policy.batchPaths, 'humanQaPolicy.batchPaths')
 const uiPaths = stringList(policy.uiPaths, 'humanQaPolicy.uiPaths')
 const threshold = policy.uiFileThreshold === undefined ? 0 : policy.uiFileThreshold
 if (!Number.isSafeInteger(threshold) || threshold < 0) fail('humanQaPolicy.uiFileThreshold must be a nonnegative integer')
-const verdictLabels = ['qa-approved', 'qa-failed', ...stringList(policy.humanVerdictLabels, 'humanQaPolicy.humanVerdictLabels')]
-const selfEvidenceLabels = stringList(batchConfig.autoQaEvidenceLabels, 'qaBatch.autoQaEvidenceLabels')
-const autoEvidence = selfEvidenceLabels.length > 0 ? selfEvidenceLabels : ['qa-self-verified', 'automerge-signal-2-qa']
+const autoEvidence = batchConfig.autoQaEvidenceLabels === undefined ? ['qa-self-verified', 'automerge-signal-2-qa'] : stringList(batchConfig.autoQaEvidenceLabels, 'qaBatch.autoQaEvidenceLabels')
 const normalizeLogin = login => String(login ?? '').toLowerCase().replace(/^app\//, '').replace(/\[bot\]$/, '')
 const trusted = new Set([...stringList(input.automationIdentities, 'automationIdentities'), ...stringList(policy.trustedTriageAuthors, 'humanQaPolicy.trustedTriageAuthors')].map(normalizeLogin))
 
@@ -76,7 +76,7 @@ const readTriage = pr => {
     try {
       const block = JSON.parse(match[1])
       if (pr.headSha && block.head !== pr.headSha) continue
-      blocks.push({ ...block, at: comment.createdAt ?? '' })
+      blocks.push({ ...block, at: comment.updatedAt ?? comment.createdAt ?? '' })
     } catch { continue }
   }
   blocks.sort((left, right) => String(left.at).localeCompare(String(right.at)))
@@ -107,15 +107,17 @@ for (const pr of prs) {
   const triage = readTriage(pr)
   const entry = { number: pr.number, title: pr.title ?? '', url: pr.url ?? '', author: normalizeLogin(pr.author), areas, uiFiles: uiFiles.length, priority: priorityRank(labels), reasons: [] }
   const has = name => name !== null && labels.includes(name)
-  const verdict = verdictLabels.find(name => labels.includes(name)) ?? null
+  // Only a human qa-approved counts: not with qa-failed, not self-QA (qa-self-verified); custom verdict labels never grant approval.
+  const humanApproved = labels.includes('qa-approved') && !labels.includes('qa-failed') && !labels.includes('qa-self-verified')
 
   if (batchBranch && pr.baseRefName === batchBranch) { entry.reasons.push('stabilization fix merged into the batch'); buckets.stabilization.push(entry); continue }
   if (pr.baseRefName && pr.baseRefName !== baseBranch) { entry.reasons.push(`merged into ${pr.baseRefName}, not ${baseBranch}`); buckets.otherBase.push(entry); continue }
 
   if (has(humanLane)) {
-    if (verdict === 'qa-failed') { entry.reasons.push(`merged with ${humanLane} and a failed human QA verdict`); buckets.gateMissed.push(entry); continue }
-    if (verdict) { entry.reasons.push(`a human tester signed it off before merge (${verdict})`); buckets.coveredHuman.push(entry); continue }
-    entry.reasons.push(`merged while ${humanLane} had no human verdict`)
+    if (humanApproved) { entry.reasons.push('a human tester signed it off before merge (qa-approved)'); buckets.coveredHuman.push(entry); continue }
+    if (labels.includes('qa-failed')) entry.reasons.push(`merged with ${humanLane} and a failed human QA verdict`)
+    else if (labels.includes('qa-approved')) entry.reasons.push(`merged with ${humanLane}; qa-approved came from self-QA (qa-self-verified), not a human`)
+    else entry.reasons.push(`merged while ${humanLane} had no human qa-approved verdict`)
     buckets.gateMissed.push(entry)
     continue
   }
@@ -130,7 +132,7 @@ for (const pr of prs) {
   if (threshold > 0 && uiFiles.length > threshold) entry.reasons.push(`${uiFiles.length} UI files changed (safety net ${threshold})`)
   if (addedUiFiles.length > 0) entry.reasons.push(`adds UI files (${addedUiFiles.slice(0, 2).join(', ')})`)
   if (labels.includes('feature') && uiFiles.length > 0) entry.reasons.push('feature with UI changes')
-  const evidence = autoEvidence.find(name => labels.includes(name)) ?? (verdict === 'qa-approved' ? 'qa-approved' : null)
+  const evidence = autoEvidence.find(name => labels.includes(name)) ?? (labels.includes('qa-approved') ? 'qa-approved' : null)
   if (!evidence && labels.includes('needs-qa') && uiFiles.length > 0) entry.reasons.push('UI change with no recorded QA evidence')
   if (entry.reasons.length > 0) { entry.evidence = evidence; buckets.candidates.push(entry); continue }
 

@@ -73,22 +73,26 @@ base branch into the batch (the stabilizer resolving a merge-back conflict
 after tagging). Verify that per commit, never from its subject:
 
 ```bash
-git fetch origin "$BASE_BRANCH"
-for c in $(git rev-list --first-parent "$QA_HEAD..$BATCH_HEAD"); do
+git fetch origin "$BASE_BRANCH" || exit 1
+MERGE_BACK_COMMITS=$(git rev-list --first-parent "$QA_HEAD..$BATCH_HEAD") || exit 1
+for c in $MERGE_BACK_COMMITS; do
   [ "$(git rev-list --parents -n 1 "$c" | wc -w)" -eq 3 ] || exit 1   # exactly two parents
   git merge-base --is-ancestor "$c^2" "origin/$BASE_BRANCH" || exit 1  # second parent is base history
 done
 ```
 
 Any commit that fails → not this exception: use the normal stale-approval
-and `--retest` path. When every commit passes, the verdict stays on the
-green-tagged commit: no `--retest` and no new verdict is asked for. Report
-`qa-approved` on the moved head as stale so the stabilizer merges without it
-(the merge back is pinned to the resolved head once the full suite is green
-on it); a write action under this exception removes `qa-approved` like any
-other stale approval, and its report says the verdict still stands on the
-tagged commit. List the base PRs the merge brought in as not covered by
-this verdict: the next batch's range starts at that green tag, so they are
+and `--retest` path. For the historical record, the verdict stays on the
+green-tagged commit: no `--retest` and no new verdict is needed merely to
+rewrite that record. A write action under this exception removes `qa-approved`
+like any other stale approval, and its report says the verdict still stands
+on the tagged commit. The existing QA gate and exact-head approval requirements still apply
+to the merge-back PR. Obtain a qualifying human scope reconfirmation on the exact current head
+only when the reviewer verifies the merge result leaves the tested scope
+unchanged; otherwise retest the changed scope. Green CI or first-parent
+merge shape alone never waives approval or authorizes a merge.
+List the base PRs the merge brought in as not covered by the historical
+verdict: the next batch's range starts at that green tag, so they are
 tested there.
 
 **Pipeline labels.** `qa-failed` is a pipeline label: set it only through
@@ -215,10 +219,11 @@ blockers, nothing else.
    hold on the PR, skip the pipeline change in both cases and name the hold.
 6. Print the channel message from the templates for the tester to send.
 
-The stabilizer decides when fixes are in and tags the batch; a new head
-after a stable verdict needs a new verdict for that head, and the stale
-`qa-approved` is withdrawn as above — except the merge-back conflict fix
-after the green tag, where the verdict stays on the tagged commit.
+The stabilizer decides when fixes are in and tags the batch. Any moved
+head makes `qa-approved` stale and it is withdrawn on an eligible write
+action as above. A merge-back conflict fix may retain the historical
+verdict on the green-tagged commit; its current merge approval still
+follows the existing QA gate and scope-reconfirmation rules above.
 
 ## `--retest`
 

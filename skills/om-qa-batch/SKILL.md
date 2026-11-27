@@ -131,7 +131,8 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
    `merge-queue`, unstable → pipeline `qa-failed` (pipeline labels only
    through `set_pipeline_label`); on stable remove the in-progress label. A
    merge-back conflict fix after the green tag keeps the verdict on the
-   tagged commit and needs no new one. Print the short channel
+   tagged commit; the merge PR still needs its normal head-bound QA
+   approval or qualifying scope reconfirmation. Print the short channel
    message for the team. Detail: `references/tracker-writes.md`.
 
 9. **`--retest`: only what changed.** Start from the recorded `Tested head:`

@@ -200,8 +200,8 @@ assert.match(window, /Never start from the previous batch PR's head \(`headRefOi
 assert.match(window, /It\s+need not be an ancestor of `TO`/)
 assert.doesNotMatch(window, /is an\s+ancestor of `TO`\s+\(`git merge-base --is-ancestor`\)/)
 // Enumeration walks every commit, so PRs that arrive through a base merge are never dropped.
-assert.doesNotMatch(window, /--first-parent/)
-assert.doesNotMatch(writes, /--first-parent/)
+assert.doesNotMatch(window.match(/```bash\n([^`]+)```/)[1], /--first-parent/)
+assert.doesNotMatch(writes.split('## `--retest`')[1], /--first-parent/)
 assert.match(window, /git log --format='%H%x09%P%x09%s' "\$FROM\.\.\$TO"/)
 assert.match(window, /A merge commit with no PR of its own/)
 assert.doesNotMatch(skill, /every first-parent commit/)
@@ -246,7 +246,7 @@ assert.match(writes, /unless a `do-not-merge` or `blocked`\s+hold is on the PR/)
 assert.match(writes, /-eq 3 \] \|\| exit 1   # exactly two parents/)
 assert.match(writes, /git merge-base --is-ancestor "\$c\^2" "origin\/\$BASE_BRANCH"/)
 assert.match(writes, /Any commit that fails → not this exception/)
-assert.match(writes, /a write action under this exception removes `qa-approved`/)
+assert.match(writes, /[Aa] write action under this exception removes `qa-approved`/)
 assert.doesNotMatch(writes, /tester eligibility/)
 assert.match(read('skills/om-qa-batch/references/report-templates.md'), /tag green\/<date> on QA head <sha> before merging/)
 assert.match(window, /Any other commit after the tag[\s\S]*?was never tested: list it/)
@@ -273,7 +273,7 @@ console.log('PASS: batch writes keep atomic ownership, refusal before mutation, 
 
 // Execute the actual freeze preflight: a successful guard that skipped a label
 // can no longer reach the checklist/frozen announcement.
-const freezePreflight = writes.match(/```bash\n([\s\S]*?)```/)[1]
+const freezePreflight = writes.split('## `--start`')[1].match(/```bash\n([\s\S]*?)```/)[1]
 for (const [available, status] of [['yes', 0], ['no', 1]]) {
   const result = spawnSync('bash', ['-c', `label_exists() { [ "$LABEL_AVAILABLE" = yes ] && [ "$1" = qa-in-progress ]; }\n${freezePreflight}\nprintf 'preflight-passed'`], {
     encoding: 'utf8', timeout: 5000,
@@ -335,7 +335,36 @@ try {
   assert.match(tags.stdout, /green\/annotated tag /)
   assert.equal(git('rev-parse', 'green/current^{commit}'), to)
   assert.equal(git('rev-parse', 'green/previous^{commit}'), from)
+
+  // Exercise the newly published per-commit merge-back verifier offline.
+  git('remote', 'add', 'origin', historyDir)
+  git('checkout', 'fixture-base')
+  git('commit', '--allow-empty', '-m', 'feat: later base change (#504)')
+  git('checkout', 'fixture-batch')
+  git('merge', '--no-edit', 'fixture-base')
+  const validMerge = git('rev-parse', 'HEAD')
+  const mergeCheck = writes.split('**Merge-back conflict fix.**')[1].match(/```bash\n([\s\S]*?)```/)[1]
+  const verifyMergeBack = batchHead => spawnSync('bash', ['-c', mergeCheck], {
+    cwd: historyDir, encoding: 'utf8', timeout: 5000,
+    env: { ...process.env, BASE_BRANCH: 'fixture-base', QA_HEAD: to, BATCH_HEAD: batchHead }
+  })
+  assert.equal(verifyMergeBack(validMerge).status, 0, 'a real base merge qualifies for the historical-record exception')
+  assert.notEqual(verifyMergeBack('f'.repeat(40)).status, 0, 'missing history must fail instead of acting like an empty range')
+  git('commit', '--allow-empty', '-m', 'untested direct change')
+  assert.notEqual(verifyMergeBack(git('rev-parse', 'HEAD')).status, 0, 'a one-parent change cannot use the exception')
+  git('checkout', '-b', 'fixture-foreign', to)
+  git('commit', '--allow-empty', '-m', 'unmerged feature change')
+  git('checkout', '-b', 'fixture-foreign-merge', validMerge)
+  git('merge', '--no-edit', 'fixture-foreign')
+  assert.notEqual(verifyMergeBack(git('rev-parse', 'HEAD')).status, 0, 'a two-parent feature merge is not a base merge')
+
 } finally {
   rmSync(historyDir, { recursive: true, force: true })
 }
 console.log('PASS: published history snippets retain pre-start fixes and second-parent PRs and distinguish current/annotated tags')
+
+assert.doesNotMatch(writes, /so the stabilizer merges without it/)
+assert.match(writes, /existing QA gate and exact-head approval requirements still apply/)
+assert.match(writes, /scope reconfirmation on the exact current head/)
+assert.match(writes, /otherwise retest the changed scope/)
+console.log('PASS: a historical green-tag verdict never waives the current merge QA gate')

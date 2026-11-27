@@ -138,9 +138,19 @@ for (const [name, text] of [['tracker-writes', writes], ['batch-window', window]
   assert.doesNotMatch(text, /Assignment proves nothing|\*\*Residual risk/, name + ' must not restate the trust rule')
 }
 // 1: FROM comes from tracker metadata of the merged batch, never from verdict comment text.
-assert.match(window, /never\s+from comment text: \*\*get-pr\*\* `headRefOid`/)
-assert.match(window, /the comment never moves `FROM`/)
-assert.match(window, /skip any closed without merging/)
+// Range start follows the release-process spec: previous green tag first, then the trusted QA head.
+assert.match(window, /1\. \*\*The previous green tag\*\*/)
+assert.match(window, /2\. \*\*The previous batch's tested head\*\*[\s\S]*?`QA head:` of the newest trusted verdict[\s\S]*?`references\/trusted-comments\.md`/)
+assert.match(window, /skip any\s+closed without merging/)
+assert.match(window, /Never start from the previous batch PR's head \(`headRefOid`\)/)
+assert.match(window, /It\s+need not be an ancestor of `TO`/)
+assert.doesNotMatch(window, /is an\s+ancestor of `TO`\s+\(`git merge-base --is-ancestor`\)/)
+// Enumeration walks every commit, so PRs that arrive through a base merge are never dropped.
+assert.doesNotMatch(window, /--first-parent/)
+assert.doesNotMatch(writes, /--first-parent/)
+assert.match(window, /git log --format='%H%x09%P%x09%s' "\$FROM\.\.\$TO"/)
+assert.match(window, /A merge commit with no PR of its own/)
+assert.doesNotMatch(skill, /every first-parent commit/)
 // 2: stale approval uses the trusted verdict only.
 assert.match(writes, /`QA head:` of the trusted verdict, or no trusted verdict exists/)
 assert.doesNotMatch(writes, /latest verdict comment/)

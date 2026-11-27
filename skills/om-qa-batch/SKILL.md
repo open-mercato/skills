@@ -57,8 +57,9 @@ writes happen only through the explicit `--start`, `--blocker`, `--bug`,
    else. Method, fallbacks and the one-open-batch check:
    `references/batch-window.md`.
 
-2. **Enumerate the PRs in the range.** Map every first-parent commit in the
-   range to its PR (squash subject `(#N)`, merge subject, or **search-prs**
+2. **Enumerate the PRs in the range.** Map every commit in the range, not
+   only first-parent ones (base merges bring PRs in on a second parent), to
+   its PR (squash subject `(#N)`, merge subject, or **search-prs**
    by SHA). Commits whose PR targets the batch branch are stabilization
    fixes. A commit with no PR stays in the list as `(no PR found)`; never
    drop it silently. Detail: `references/batch-window.md`.

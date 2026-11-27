@@ -18,7 +18,8 @@ const config = {
     batchPaths: ['src/portal/**'],
     uiPaths: ['**/*.tsx'],
     uiFileThreshold: 3,
-    trustedTriageAuthors: ['review-bot']
+    trustedTriageAuthors: ['review-bot'],
+    humanVerdictLabels: ['qa-human-ok']
   }
 }
 const pr = (number, values = {}) => ({ number, title: `PR ${number}`, baseRefName: 'main', author: 'dev', headSha: `sha${number}`, labels: [], files: [], comments: [], ...values })
@@ -46,11 +47,14 @@ const result = good({
     pr(15, { comments: [triage('sha15', 'human')], labels: ['needs-qa'] }),
     pr(16, { labels: ['needs-human-qa', 'qa-failed'] }),
     pr(17, { labels: ['needs-qa'], files: [{ path: 'src/admin/__tests__/List.test.tsx', status: 'modified' }] }),
+    pr(18, { labels: ['needs-human-qa', 'qa-approved', 'qa-failed'] }),
+    pr(19, { labels: ['needs-human-qa', 'qa-human-ok'] }),
+    pr(20, { labels: ['needs-human-qa', 'qa-approved', 'qa-self-verified'] }),
     pr(1, { labels: [] })
   ]
 })
 const ids = name => result.buckets[name].map(entry => entry.number)
-assert.deepEqual(ids('gateMissed'), [1, 15, 16])
+assert.deepEqual(ids('gateMissed'), [1, 15, 16, 18, 19, 20])
 assert.deepEqual(ids('coveredHuman'), [2])
 assert.deepEqual(ids('batchCheck'), [3, 4])
 assert.deepEqual(ids('candidates'), [6, 8, 12, 13])
@@ -58,8 +62,10 @@ assert.deepEqual(ids('coveredAuto'), [7])
 assert.deepEqual(ids('noManualQa'), [5, 9, 14, 17])
 assert.deepEqual(ids('stabilization'), [10])
 assert.deepEqual(ids('otherBase'), [11])
-assert.equal(result.counts.total, 17)
+assert.equal(result.counts.total, 20)
 assert.match(result.buckets.candidates.find(entry => entry.number === 13).reasons.join(' '), /adds UI files/)
+const noAutoEvidence = good({ config: { ...config, qaBatch: { autoQaEvidenceLabels: [] } }, prs: [pr(7, { labels: ['skip-qa', 'qa-self-verified'] })] })
+assert.deepEqual(noAutoEvidence.buckets.coveredAuto, [], 'an explicit empty autoQaEvidenceLabels must not fall back to defaults')
 console.log('PASS: batch classifier buckets the human gate, batch lane, trusted triage, evidence and bases')
 
 const collapsed = good({ config: { ...config, qaGateLabel: 'needs-qa' }, prs: [pr(1, { labels: ['needs-human-qa'] })] })
@@ -70,7 +76,9 @@ for (const bad of [
   { config: { ...config, humanQaPolicy: { uiFileThreshold: -1 } }, prs: [] },
   { config: { ...config, qaBatch: [] }, prs: [] },
   { config, prs: [{ number: 'x' }] },
-  { config: { qaGateLabel: 'needs-human-qa' }, prs: [] }
+  { config: { qaGateLabel: 'needs-human-qa' }, prs: [] },
+  ...['qa-approved', 'qa-failed', 'needs-qa', 'skip-qa', 'needs-human-qa', 'qa-human-ok'].map(label =>
+    ({ config: { ...config, humanQaPolicy: { ...config.humanQaPolicy, batchCheckLabel: label } }, prs: [] }))
 ]) assert.notEqual(run(bad).status, 0, 'must reject ' + JSON.stringify(bad).slice(0, 80))
 console.log('PASS: classifier rejects malformed policy, config and PR input')
 
